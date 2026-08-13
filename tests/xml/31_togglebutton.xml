@@ -1,0 +1,10 @@
+<!-- DESC: togglebutton état enfoncé/relâché -->
+<window title="Test togglebutton" width-request="300" height-request="150">
+  <vbox>
+    <togglebutton>
+      <label>Activer le mode</label>
+      <variable>TOGGLE_STATE</variable>
+    </togglebutton>
+    <button ok></button>
+  </vbox>
+</window>

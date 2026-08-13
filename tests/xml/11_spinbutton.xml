@@ -1,0 +1,7 @@
+<!-- DESC: Selecteur numerique spinbutton -->
+<window title="Test 11">
+  <vbox>
+    <spinbutton range-min="1" range-max="10" range-step="1"><input>echo 5</input><variable>NUM</variable></spinbutton>
+    <button ok></button>
+  </vbox>
+</window>

@@ -1,0 +1,11 @@
+<!-- DESC: Liste déroulante texte -->
+<window title="Test 07">
+  <vbox>
+    <comboboxtext><variable>CHOIX</variable>
+      <item>Option A</item>
+      <item>Option B</item>
+      <item>Option C</item>
+    </comboboxtext>
+    <button ok></button>
+  </vbox>
+</window>

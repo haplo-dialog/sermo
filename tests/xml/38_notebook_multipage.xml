@@ -1,0 +1,19 @@
+<!-- DESC: notebook 3 pages -->
+<window title="Test notebook 3 pages" width-request="500" height-request="350">
+  <vbox>
+    <notebook labels="Page 1|Page 2|Page 3">
+      <vbox>
+        <text><label>Contenu de la page 1</label></text>
+        <entry><variable>PAGE1_VAL</variable></entry>
+      </vbox>
+      <vbox>
+        <checkbox><label>Option A</label><variable>OPT_A</variable></checkbox>
+        <checkbox><label>Option B</label><variable>OPT_B</variable></checkbox>
+      </vbox>
+      <vbox>
+        <hscale range-min="0" range-max="100"><input>echo 50</input><variable>PAGE3_SLIDER</variable></hscale>
+      </vbox>
+    </notebook>
+    <button ok></button>
+  </vbox>
+</window>

@@ -1,0 +1,9 @@
+<!-- DESC: fontbutton avec variable export -->
+<window title="Test fontbutton" width-request="300" height-request="120">
+  <vbox>
+    <fontbutton>
+      <variable>MY_FONT</variable>
+    </fontbutton>
+    <button ok></button>
+  </vbox>
+</window>

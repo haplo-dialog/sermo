@@ -1,0 +1,14 @@
+<!-- DESC: list avec sélection simple et items -->
+<window title="Test list" width-request="300" height-request="250">
+  <vbox>
+    <list>
+      <variable>LIST_SEL</variable>
+      <item>Debian</item>
+      <item>Arch Linux</item>
+      <item>Fedora</item>
+      <item>openSUSE</item>
+      <item>Gentoo</item>
+    </list>
+    <button ok></button>
+  </vbox>
+</window>

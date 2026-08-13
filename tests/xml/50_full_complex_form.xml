@@ -1,0 +1,48 @@
+<!-- DESC: formulaire complexe complet — test d integration global -->
+<window title="Formulaire complexe — haplo-dialog 1.0" width-request="600" height-request="500">
+  <vbox>
+    <notebook labels="Informations|Configuration">
+      <vbox>
+        <frame label="Identite">
+          <vbox>
+            <hbox><text><label>Nom :</label></text><entry><variable>NOM</variable><default>Dupont</default></entry></hbox>
+            <hbox><text><label>Email :</label></text><entry><variable>EMAIL</variable></entry></hbox>
+            <hbox><text><label>Mot de passe :</label></text><password><variable>MDP</variable></password></hbox>
+          </vbox>
+        </frame>
+        <frame label="Preferences">
+          <vbox>
+            <hbox>
+              <text><label>Langue :</label></text>
+              <comboboxtext>
+                <variable>LANGUE</variable>
+                <item>Francais</item>
+                <item>English</item>
+                <item>Espanol</item>
+              </comboboxtext>
+            </hbox>
+            <checkbox><label>Recevoir les notifications</label><variable>NOTIFS</variable></checkbox>
+            <switch><label>Mode sombre</label><variable>DARK_MODE</variable></switch>
+          </vbox>
+        </frame>
+      </vbox>
+      <vbox>
+        <frame label="Priorite">
+          <vbox>
+            <hscale range-min="1" range-max="10"><input>echo 5</input><variable>PRIORITY</variable></hscale>
+            <spinbutton range-min="1" range-max="24"><input>echo 8</input><variable>HOURS</variable></spinbutton>
+          </vbox>
+        </frame>
+        <frame label="Notes">
+          <edit><variable>NOTES</variable><default>Entrez vos notes ici...</default></edit>
+        </frame>
+      </vbox>
+    </notebook>
+    <hseparator></hseparator>
+    <hbox>
+      <checkbox><label>J accepte les conditions</label><variable>CGU</variable></checkbox>
+      <button ok></button>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

@@ -1,0 +1,47 @@
+#!/bin/sh
+# linkbutton — example for the <linkbutton> widget (GtkLinkButton)
+# gtkdialog-1.0.0 — haplo-dialog 2026
+#
+# The <linkbutton> widget opens a URI in the default browser when clicked.
+# The variable exports the URI. The signal is "clicked".
+# The <label> overrides the display text; the URI is set via <default>.
+#
+# Usage:
+#   ./linkbutton          — launch the dialog
+#   ./linkbutton --dump   — print the XML definition
+
+GTKDIALOG=gtkdialog
+
+MAIN_DIALOG='
+<window title="LinkButton example" resizable="false">
+	<vbox>
+		<frame GtkLinkButton — hyperlink button>
+			<vbox>
+				<linkbutton>
+					<label>haplo-dialog website</label>
+					<default>https://haplo-dialog.fr</default>
+					<variable>LINK1</variable>
+					<action>echo "Clicked: $LINK1"</action>
+				</linkbutton>
+				<linkbutton>
+					<label>GTK3 documentation</label>
+					<default>https://docs.gtk.org/gtk3/</default>
+					<variable>LINK2</variable>
+				</linkbutton>
+			</vbox>
+		</frame>
+		<hbox>
+			<button ok></button>
+			<button cancel></button>
+		</hbox>
+	</vbox>
+</window>
+'
+export MAIN_DIALOG
+
+case $1 in
+	-d | --dump) echo "$MAIN_DIALOG" ;;
+	*) $GTKDIALOG --program=MAIN_DIALOG
+	   echo "LINK1=$LINK1"
+	   echo "LINK2=$LINK2" ;;
+esac

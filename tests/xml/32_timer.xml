@@ -1,0 +1,10 @@
+<!-- DESC: timer avec interval et action -->
+<window title="Test timer" width-request="300" height-request="150">
+  <vbox>
+    <timer interval="5000" visible="false">
+      <action>EXIT:0</action>
+    </timer>
+    <text><label>Fermeture automatique dans 5s</label></text>
+    <button cancel></button>
+  </vbox>
+</window>

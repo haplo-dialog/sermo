@@ -1,0 +1,28 @@
+gtkdialog — Programme original
+==============================
+Program:       Pere László <pipas@linux.pte.hu>
+Documentation: Kiss Gábor <gabor@gamma.ttk.pte.hu>
+Maintenu par:  Thunor <thunorsif@hotmail.com> (2011-2012)
+
+Patches d'origine:
+  Moose On The Loose <kensmith1313666@gmail.com>  — PRG_STDIN, 2011-04-04
+  Patriot                                          — closewindow, 2009-10-27
+  Fabio Tranchitella <kobold@debian.org>           — Debian 03_stdin
+  Luca Falavigna <dktrkranz@ubuntu.com>            — Debian 01_bashism / 02_documentation_paths
+  Szabo Viktor <wyck@freemail.hu>
+  Csaszar-Csutoras Peter <spy@c2.hu>
+
+gtkdialog-1.0.0 — Fork haplo-dialog
+====================================
+Distributeur : haplo-dialog (https://haplo-dialog.fr)
+Distribution : Debian Testing
+Noyau cible  : Linux 7.0.4+deb14-amd64
+Environnement: Xfce4 4.20 / Xfwm4 (X11)
+Thème GTK    : Haplo-Dark [GTK2/3/4] — safe-eyes
+Icônes       : Papirus-Dark
+
+Mainteneur   : <devel@haplo-dialog.fr>
+Développeurs : haplo-dialog
+
+Migration GTK3, correctifs sécurité, modernisation : Mai 2026
+

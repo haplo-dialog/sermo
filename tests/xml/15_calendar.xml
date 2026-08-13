@@ -1,0 +1,7 @@
+<!-- DESC: Sélecteur de date calendrier -->
+<window title="Test 15" width-request="300" height-request="250">
+  <vbox>
+    <calendar><variable>DATE</variable></calendar>
+    <button ok></button>
+  </vbox>
+</window>

@@ -1,0 +1,12 @@
+<!-- DESC: vseparator et hseparator dans hbox -->
+<window title="Test separators" width-request="400" height-request="200">
+  <vbox>
+    <hbox>
+      <text><label>Gauche</label></text>
+      <vseparator></vseparator>
+      <text><label>Droite</label></text>
+    </hbox>
+    <hseparator></hseparator>
+    <button ok></button>
+  </vbox>
+</window>

@@ -1,0 +1,22 @@
+<!-- DESC: Formulaire complet multi-widgets -->
+<window title="Test 18 — Formulaire" width-request="400" height-request="300">
+  <vbox>
+    <frame label="Identification">
+      <vbox>
+        <hbox>
+          <text><label>Nom :</label></text>
+          <entry><variable>NOM</variable></entry>
+        </hbox>
+        <hbox>
+          <text><label>Mot de passe :</label></text>
+          <password><variable>MDP</variable></password>
+        </hbox>
+        <checkbox><label>Se souvenir</label><variable>REMEMBER</variable></checkbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button ok></button>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

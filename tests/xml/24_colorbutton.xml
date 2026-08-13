@@ -1,0 +1,9 @@
+<!-- DESC: colorbutton avec variable export -->
+<window title="Test colorbutton" width-request="300" height-request="120">
+  <vbox>
+    <colorbutton>
+      <variable>MY_COLOR</variable>
+    </colorbutton>
+    <button ok></button>
+  </vbox>
+</window>

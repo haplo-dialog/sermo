@@ -1,0 +1,111 @@
+# haplo-dialog .gitignore
+
+# Build autotools
+Makefile
+Makefile.in
+configure
+aclocal.m4
+autom4te.cache/
+config.h
+config.h.in
+config.log
+config.status
+config.guess
+config.sub
+install-sh
+missing
+depcomp
+compile
+ltmain.sh
+libtool
+stamp-h1
+.deps/
+.libs/
+
+# Objets compilés
+*.o
+*.lo
+*.la
+*.so
+*.a
+
+# Binaires produits — motifs **/src/ pour matcher à toute profondeur
+# (les anciens motifs ancrés à la racine ne matchaient jamais les ports imbriqués)
+# Noms courts hérités
+**/src/gtk3d
+# Noms complets uniformisés v1.0.0
+**/src/gtkdialog
+**/src/gtk3dialog
+
+# CMake
+build/
+cmake-build-*/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CPackConfig.cmake
+CPackSourceConfig.cmake
+_CPack_Packages/
+
+# Fichiers générés par flex/bison
+gtkdialog_lexer.c
+gtkdialog_parser.c
+gtkdialog_parser.h
+
+# Archives dist
+*.tar.gz
+*.tar.xz
+*.tar.bz2
+
+# Paquets binaires (ne pas versionner — produits de release / deps externes)
+*.deb
+*.rpm
+*.pkg.tar.zst
+dist/
+
+# Packaging temporaire
+packaging/debian/gtk3d/
+packaging/debian/files
+packaging/debian/*.debhelper
+packaging/debian/*.substvars
+packaging/debian/.debhelper/
+
+# Éditeurs
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+*.orig
+*.rej
+
+# Backup configure.in
+configure.in.bak
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Logs de build temporaires
+build_err.log
+build_out.log
+*.debhelper.log
+
+# Config Claude Code locale (personnelle, ne pas committer)
+.claude/settings.local.json
+
+**/obj-*-linux-gnu/
+**/packaging/debian/.debhelper/
+**/packaging/debian/debhelper-build-stamp
+**/packaging/debian/*.substvars
+**/packaging/debian/files
+**/packaging/debian/*dialog/
+
+# Produits dpkg-buildpackage (à côté du dossier source)
+**/*.buildinfo
+**/*.changes
+
+**/imgui.ini
+
+# Symlink debian -> packaging/debian, aide au build (dpkg-buildpackage attend debian/ à la racine du source). Recréé au build, non versionné.
+/gtk3dialog/gtk3dialog_1.0.0/debian

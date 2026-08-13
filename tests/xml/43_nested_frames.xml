@@ -1,0 +1,23 @@
+<!-- DESC: frames imbriquees vbox dans hbox -->
+<window title="Test nested frames" width-request="500" height-request="300">
+  <vbox>
+    <hbox>
+      <frame label="Identite">
+        <vbox>
+          <hbox><text><label>Nom :</label></text><entry><variable>NOM</variable></entry></hbox>
+          <hbox><text><label>Prenom :</label></text><entry><variable>PRENOM</variable></entry></hbox>
+        </vbox>
+      </frame>
+      <frame label="Preferences">
+        <vbox>
+          <checkbox><label>Newsletter</label><variable>NEWSLETTER</variable></checkbox>
+          <checkbox><label>Notifications</label><variable>NOTIFS</variable></checkbox>
+        </vbox>
+      </frame>
+    </hbox>
+    <hbox>
+      <button ok></button>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

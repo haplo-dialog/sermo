@@ -1,0 +1,87 @@
+# Tests gtk3dialog 1.0.0
+
+## Organisation
+
+```
+tests/
+├── run_tests.sh        — Tests fonctionnels shell (sans GTK display)
+├── test_safe_exec.c    — Tests unitaires C : safe_system(), safe_popen()
+├── test_stringman.c    — Tests unitaires C : fonctions command_is_*()
+├── Makefile.am         — Intégration Autotools (make check)
+└── README.tests        — Ce fichier
+```
+
+## Lancer les tests
+
+### Après compilation du projet
+
+```bash
+cd gtk3dialog_1.0.0
+./configure
+make
+make check
+```
+
+### Sans compilation (tests shell uniquement)
+
+```bash
+cd tests/
+bash run_tests.sh                         # utilise gtkdialog du PATH
+bash run_tests.sh /path/to/gtkdialog      # binaire explicite
+```
+
+### Tests unitaires C seuls
+
+```bash
+# Compiler manuellement test_safe_exec :
+gcc -Wall $(pkg-config --cflags --libs check glib-2.0) \
+    test_safe_exec.c ../src/safe_exec.c \
+    -I../src -o test_safe_exec
+./test_safe_exec
+```
+
+## Dépendances
+
+| Paquet          | Rôle                          | Obligatoire |
+|-----------------|-------------------------------|-------------|
+| `libcheck-dev`  | Framework de tests unitaires  | Oui (tests C) |
+| `libglib2.0-dev`| GLib                          | Oui         |
+| `libgtk-3-dev`  | GTK3 (test_stringman)         | Non (--enable-unit-tests) |
+| `xvfb`          | Display virtuel               | Optionnel   |
+
+## Résultats attendus (codebase saine)
+
+```
+=== 1. Disponibilité du binaire ===
+  [PASS] gtkdialog trouvé : /usr/local/bin/gtkdialog
+
+=== 2. Parsing XML (--print-ir, sans display) ===
+  [PASS] Fenêtre minimale : parsing OK
+  [PASS] Balise inconnue : dégradation propre
+  [PASS] XML malformé : pas de crash
+  [PASS] Entrée vide : pas de crash
+
+=== 3. Intégrité des exemples ===
+  [PASS] Exemple 'switch' : OK
+  [PASS] Exemple 'filechooser' : OK
+  ... (48 exemples)
+
+=== 6. Vérifications statiques ===
+  [PASS] fprintf(stderr) non protégés : 0
+  [PASS] Aucun strcpy/strcat/sprintf non borné
+  [PASS] Aucun putenv() résiduel
+  [PASS] Aucun system()/popen() direct
+
+==================================================
+  Résultats : 35 passés | 0 échoués | 0 ignorés | 35 total
+==================================================
+```
+
+## Ajout de nouveaux tests
+
+Pour ajouter un test shell : éditer `run_tests.sh`, ajouter un appel `pass`/`fail`.
+
+Pour ajouter un test C :
+1. Écrire un nouveau `START_TEST(test_nom) ... END_TEST`
+2. L'ajouter dans la fonction `*_suite()` via `tcase_add_test()`
+3. `make check` recompile automatiquement

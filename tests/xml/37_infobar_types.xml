@@ -1,0 +1,15 @@
+<!-- DESC: infobar avec message-type info warning error -->
+<window title="Test infobar types" width-request="400" height-request="300">
+  <vbox>
+    <infobar message-type="info">
+      <label>Information : tout va bien</label>
+    </infobar>
+    <infobar message-type="warning">
+      <label>Avertissement : vérifiez vos données</label>
+    </infobar>
+    <infobar message-type="error">
+      <label>Erreur : opération échouée</label>
+    </infobar>
+    <button ok></button>
+  </vbox>
+</window>

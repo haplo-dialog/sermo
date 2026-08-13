@@ -1,0 +1,10 @@
+<!-- DESC: searchentry avec variable et default -->
+<window title="Test searchentry" width-request="300" height-request="120">
+  <vbox>
+    <searchentry>
+      <variable>SEARCH_TERM</variable>
+      <default>haplo</default>
+    </searchentry>
+    <button ok></button>
+  </vbox>
+</window>

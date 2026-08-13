@@ -1,0 +1,8 @@
+<!-- DESC: Bandeau d'information infobar -->
+<window title="Test 19">
+  <vbox>
+    <infobar message-type="info"><label>Information importante</label></infobar>
+    <text><label>Contenu principal</label></text>
+    <button ok></button>
+  </vbox>
+</window>

@@ -1,0 +1,11 @@
+<!-- DESC: Jauge levelbar avec plage et mode discret -->
+<window title="Test 51">
+  <vbox>
+    <levelbar range-min="0" range-max="100" mode="discrete">
+      <variable>NIVEAU</variable>
+      <input>echo 60</input>
+    </levelbar>
+    <text><label>Niveau de charge</label></text>
+    <button ok></button>
+  </vbox>
+</window>

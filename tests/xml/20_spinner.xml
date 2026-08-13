@@ -1,0 +1,8 @@
+<!-- DESC: Indicateur d activite spinner -->
+<window title="Test 20">
+  <vbox>
+    <spinner></spinner>
+    <text><label>Chargement en cours...</label></text>
+    <button ok></button>
+  </vbox>
+</window>

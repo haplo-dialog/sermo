@@ -1,0 +1,7 @@
+<!-- DESC: Glissieres horizontale et verticale -->
+<window title="Test 10" width-request="300" height-request="200">
+  <hbox>
+    <hscale range-min="0" range-max="100"><input>echo 50</input><variable>H_VAL</variable></hscale>
+    <vscale range-min="0" range-max="100"><input>echo 50</input><variable>V_VAL</variable></vscale>
+  </hbox>
+</window>

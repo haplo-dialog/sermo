@@ -1,0 +1,35 @@
+gtk3dialog (1.0.0-2) unstable; urgency=high
+
+  * Security hardening pass (pre-publication audit, 2026-08-11):
+    - automaton.c: bound _sum() to MAXWIDGETS to prevent a stack buffer
+      overflow when a container holds more than 256 direct child widgets
+      (CWE-787).
+    - variables.c: replace an unterminated strncpy() into variable->Name
+      with g_strlcpy() (CWE-125/CWE-170).
+    - widget_terminal.c: size argv[]/envv[] with a guaranteed NULL terminator
+      so the vte spawn never reads past the array (CWE-170).
+    - safe_exec.c: wire the previously-dead _build_child_env() into both spawn
+      paths so spawned children no longer inherit the multi-KiB DIALOG blob
+      (avoids spurious E2BIG); free the built environment on all paths.
+    - actions.c: fix the append action's first-operand copy offset (functional
+      bug on indented XML).
+    - automaton.c: drop two per-instruction memory leaks (a redundant g_malloc
+      before strdup, and leaked strdup()s passed to new_tag_attributeset()).
+    - widgets.c: correct a misleading comment about shell-injection safety.
+    - gtk3dialog.1: document HAPLO_NO_SHELL_FALLBACK in the ENVIRONMENT section.
+  * Packaging: move the source-stanza build dependencies from the invalid
+    "Depends" field to "Build-Depends" (silences dpkg-gencontrol's
+    "unknown information field Depends" warning); drop the now-redundant
+    debian/compat file (compat level set via debhelper-compat in Build-Depends).
+
+ -- haplo-dialog <devel@haplo-dialog.fr>  Tue, 11 Aug 2026 11:05:32 +0200
+
+gtk3dialog (1.0.0-1) unstable; urgency=medium
+
+  * Initial Debian packaging for gtk3dialog — haplo-dialog fork.
+  * GTK3 dialog window creator for shell scripts.
+  * Toolkit: GTK3.
+  * Security hardening: safe_exec, FORTIFY_SOURCE=3, PIE, Full RELRO,
+    stack-protector-strong.
+
+ -- haplo-dialog <devel@haplo-dialog.fr>  Fri, 29 May 2026 12:00:00 +0200

@@ -1,0 +1,6 @@
+<!-- DESC: Fenetre minimale avec un widget -->
+<window title="Test 01" width-request="200" height-request="100">
+  <vbox>
+    <text><label>Fenetre minimale</label></text>
+  </vbox>
+</window>

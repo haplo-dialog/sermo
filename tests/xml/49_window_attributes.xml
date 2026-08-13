@@ -1,0 +1,9 @@
+<!-- DESC: window avec resizable icon-name decorated -->
+<window title="Test attributs window" width-request="400" height-request="200"
+        resizable="true" icon-name="dialog-information" decorated="true">
+  <vbox>
+    <text><label>Fenêtre avec attributs étendus</label></text>
+    <text><label>resizable=true, icon-name=dialog-information</label></text>
+    <button ok></button>
+  </vbox>
+</window>

@@ -1,0 +1,7 @@
+<!-- DESC: Champ de saisie avec variable exportée -->
+<window title="Test 03">
+  <vbox>
+    <entry><variable>MON_NOM</variable><default>Haplo</default></entry>
+    <button ok></button>
+  </vbox>
+</window>

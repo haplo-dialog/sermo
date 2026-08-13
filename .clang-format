@@ -1,0 +1,32 @@
+# .clang-format — Style commun famille haplo-dialog
+# Basé sur LLVM avec ajustements haplo-dialog
+# Appliquer : clang-format -i src/*.c src/*.h
+
+---
+Language: Cpp
+BasedOnStyle: LLVM
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 100
+BreakBeforeBraces: Linux
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+SortIncludes: CaseSensitive
+IncludeCategories:
+  # System headers first
+  - Regex:    '^<'
+    Priority: 1
+  # Config
+  - Regex:    '"config\.h"'
+    Priority: 2
+  # Local headers
+  - Regex:    '.*'
+    Priority: 3
+SpaceBeforeParens: ControlStatements
+AlwaysBreakAfterReturnType: None
+PointerAlignment: Right
+AlignTrailingComments: true
+CommentPragmas: '(NOLINT|TODO|FIXME|HACK|NOTE|SECURITY)'
+...

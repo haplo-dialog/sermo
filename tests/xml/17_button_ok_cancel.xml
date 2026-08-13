@@ -1,0 +1,10 @@
+<!-- DESC: Boutons OK et Cancel standards -->
+<window title="Test 17">
+  <vbox>
+    <text><label>Confirmez-vous ?</label></text>
+    <hbox>
+      <button ok></button>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

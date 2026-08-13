@@ -1,0 +1,7 @@
+<!-- DESC: Barre d information infobar -->
+<window title="Test 26" width-request="400" height-request="120">
+  <vbox>
+    <infobar><label>Operation reussie</label></infobar>
+    <button ok></button>
+  </vbox>
+</window>

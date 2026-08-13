@@ -1,0 +1,9 @@
+<!-- DESC: spinbutton avec digits décimaux -->
+<window title="Test spinbutton décimal" width-request="300" height-request="150">
+  <vbox>
+    <spinbutton value="3.14" min="0.0" max="10.0" step="0.01" digits="2">
+      <variable>DECIMAL_VAL</variable>
+    </spinbutton>
+    <button ok></button>
+  </vbox>
+</window>

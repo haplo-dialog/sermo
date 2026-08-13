@@ -1,0 +1,9 @@
+<!-- DESC: Section repliable expander -->
+<window title="Test 16">
+  <vbox>
+    <expander label="Details">
+      <text><label>Contenu masque</label></text>
+    </expander>
+    <button ok></button>
+  </vbox>
+</window>

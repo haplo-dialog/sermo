@@ -1,0 +1,55 @@
+# .gitlab-ci.yml — Intégration continue haplo-dialog
+# Compile gtk3dialog (seul port distribué), puis valide le binaire contre la suite de
+# régression XML (tests/xml/run_tests.sh, 52 cas en mode --print-ir : parse
+# seul, sans serveur X — 100 % headless, OK en CI).
+#
+# Image debian:testing = cible : Debian testing.
+# Un job par port ; ils tournent en parallèle.
+
+stages:
+  - build-test
+
+# N'ouvrir qu'un pipeline (pas de doublon branche + merge request).
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+
+default:
+  image: debian:testing
+  interruptible: true
+  before_script:
+    - apt-get update -qq
+    - DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends
+      build-essential flex bison pkg-config ca-certificates $DEPS
+
+# ──────────────────────────── modèles ────────────────────────────
+.autotools:
+  stage: build-test
+  script:
+    - cd "$PORT/${PORT}_1.0.0"
+    - autoreconf -fi
+    - ./configure --prefix="$CI_PROJECT_DIR/inst"
+    - make -j"$(nproc)"
+    - make install
+    - test -x "$CI_PROJECT_DIR/inst/bin/$PORT"   # le build a bien produit le binaire
+    - PATH="$CI_PROJECT_DIR/inst/bin:$PATH" sh "$CI_PROJECT_DIR/tests/xml/run_tests.sh" "$PORT"
+    - sh "$CI_PROJECT_DIR/tests/run_unit_tests.sh" "$PORT"   # tests de comportement (cœur)
+
+.cmake:
+  stage: build-test
+  script:
+    - cd "$PORT/${PORT}_1.0.0"
+    - cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX="$CI_PROJECT_DIR/inst"
+    - cmake --build build -j"$(nproc)"
+    - cmake --install build
+    - test -x "$CI_PROJECT_DIR/inst/bin/$PORT"
+    - PATH="$CI_PROJECT_DIR/inst/bin:$PATH" sh "$CI_PROJECT_DIR/tests/xml/run_tests.sh" "$PORT"
+    - sh "$CI_PROJECT_DIR/tests/run_unit_tests.sh" "$PORT"   # tests de comportement (cœur)
+
+# ──────────────────────────── ports (autotools) ────────────────────────────
+gtk3dialog:
+  extends: .autotools
+  variables:
+    PORT: gtk3dialog
+    DEPS: "automake autoconf libtool libgtk-3-dev libvte-2.91-dev"

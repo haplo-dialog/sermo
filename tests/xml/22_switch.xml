@@ -1,0 +1,7 @@
+<!-- DESC: Interrupteur switch on/off -->
+<window title="Test 22" width-request="300" height-request="120">
+  <vbox>
+    <switch><label>Activer</label><variable>ETAT</variable></switch>
+    <button ok></button>
+  </vbox>
+</window>

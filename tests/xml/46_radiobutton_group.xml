@@ -1,0 +1,13 @@
+<!-- DESC: groupe de radiobuttons avec variable commune -->
+<window title="Test radiobutton group" width-request="300" height-request="200">
+  <vbox>
+    <frame label="Choisir un port">
+      <vbox>
+        <radiobutton><label>gtk3dialog</label><variable>PORT_CHOICE</variable><default>true</default></radiobutton>
+        <radiobutton><label>option</label><variable>PORT_CHOICE</variable></radiobutton>
+        <radiobutton><label>option</label><variable>PORT_CHOICE</variable></radiobutton>
+      </vbox>
+    </frame>
+    <button ok></button>
+  </vbox>
+</window>

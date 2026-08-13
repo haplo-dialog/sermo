@@ -1,0 +1,13 @@
+<!-- DESC: combobox avec items et sélection par défaut -->
+<window title="Test combobox" width-request="300" height-request="150">
+  <vbox>
+    <combobox>
+      <variable>COMBO_SEL</variable>
+      <item>Debian</item>
+      <item>Arch</item>
+      <item>Fedora</item>
+      <item>openSUSE</item>
+    </combobox>
+    <button ok></button>
+  </vbox>
+</window>

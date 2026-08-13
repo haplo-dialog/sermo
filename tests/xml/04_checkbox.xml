@@ -1,0 +1,7 @@
+<!-- DESC: Case à cocher -->
+<window title="Test 04">
+  <vbox>
+    <checkbox><label>Option</label><variable>OPT</variable></checkbox>
+    <button ok></button>
+  </vbox>
+</window>

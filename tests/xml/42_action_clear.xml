@@ -1,0 +1,14 @@
+<!-- DESC: action CLEAR sur entry et edit -->
+<window title="Test CLEAR action" width-request="350" height-request="200">
+  <vbox>
+    <entry>
+      <variable>CLEARABLE_ENTRY</variable>
+      <default>Texte à effacer</default>
+    </entry>
+    <button>
+      <label>Vider le champ</label>
+      <action>CLEAR:CLEARABLE_ENTRY</action>
+    </button>
+    <button ok></button>
+  </vbox>
+</window>

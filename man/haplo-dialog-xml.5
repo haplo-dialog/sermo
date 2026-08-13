@@ -1,0 +1,449 @@
+.\" haplo-dialog-xml.5 — Référence de la syntaxe XML de gtk3dialog
+.\" haplo-dialog 1.0.0 — haplo-dialog <devel@haplo-dialog.fr>
+.\" Licence : CC-BY-SA 4.0
+.\"
+.TH HAPLO-DIALOG-XML 5 "06 June 2026" "haplo-dialog 1.0.0" "haplo-dialog File Formats"
+.SH NOM
+haplo-dialog-xml \- syntaxe XML des dialogues gtk3dialog
+.SH DESCRIPTION
+gtk3dialog lit une description d'interface graphique écrite dans un dialecte
+XML et affiche la fenêtre correspondante. Cette page documente cette syntaxe
+XML, telle qu'interprétée par
+.BR gtk3dialog (1).
+.PP
+La syntaxe est héritée de
+.BR gtkdialog (1)
+(László Pere, 2003\-2013). Là où gtkdialog est aujourd'hui abandonné,
+haplo-dialog le fait revivre : corrigé, durci et maintenu. Pour les scripts
+existants, gtk3dialog fournit un alias rétro-compatible nommé \fBgtkdialog\fR.
+
+.SH STRUCTURE GÉNÉRALE
+
+.RS 4
+.nf
+<window title="Titre" width-request="400" height-request="200">
+  <vbox>
+    <text><label>Bonjour !</label></text>
+    <entry><variable>MON_CHAMP</variable></entry>
+    <button ok></button>
+  </vbox>
+</window>
+.fi
+.RE
+
+Chaque dialogue doit avoir un unique élément racine
+.BR <window> .
+Les widgets sont imbriqués dans des conteneurs
+.RB ( <hbox> ,
+.BR <vbox> ,
+.BR <frame> ,
+etc.).
+
+.SH ATTRIBUTS COMMUNS
+
+Les attributs suivants sont disponibles sur la plupart des widgets :
+
+.TP
+.B width-request=\fIN\fR
+Largeur minimale en pixels.
+.TP
+.B height-request=\fIN\fR
+Hauteur minimale en pixels.
+.TP
+.B visible=\fItrue|false\fR
+Visibilité initiale du widget (défaut : true).
+.TP
+.B sensitive=\fItrue|false\fR
+Interactivité du widget (défaut : true).
+.TP
+.B tooltip-text=\fItexte\fR
+Infobulle affichée au survol.
+
+.SH SOUS-ÉLÉMENTS COMMUNS
+
+.TP
+.B <label>texte</label>
+Texte affiché ou étiquette du widget.
+.TP
+.B <variable>NOM</variable>
+Nom de la variable d'environnement exportée à la fermeture.
+.TP
+.B <action>commande</action>
+Commande shell exécutée via
+.BR safe_exec ()
+lors d'un événement (clic, changement...).
+.TP
+.B <input>commande</input>
+Commande shell dont la sortie alimente le widget.
+.TP
+.B <default>valeur</default>
+Valeur initiale du widget.
+
+.SH WIDGETS — RÉFÉRENCE COMPLÈTE
+
+.SS Fenêtre principale
+.TP
+.B <window>
+Fenêtre principale du dialogue.
+.br
+Attributs : \fBtitle\fR, \fBwidth-request\fR, \fBheight-request\fR,
+\fBresizable\fR, \fBicon-name\fR, \fBdecorated\fR.
+
+.SS Conteneurs
+.TP
+.B <hbox>
+Conteneur horizontal. Enfants alignés de gauche à droite.
+.br
+Attributs : \fBspacing\fR, \fBhomogeneous\fR.
+.TP
+.B <vbox>
+Conteneur vertical. Enfants alignés de haut en bas.
+.TP
+.B <frame>
+Conteneur avec bordure et titre optionnel.
+.br
+Sous-éléments : \fB<label>\fR pour le titre.
+.TP
+.B <notebook>
+Onglets. Chaque enfant direct est une page.
+.br
+Sous-éléments : \fB<label>\fR pour le titre de chaque onglet.
+.TP
+.B <expander>
+Section repliable/dépliable.
+.br
+Sous-éléments : \fB<label>\fR pour le titre.
+.TP
+.B <aspectframe>
+Conteneur maintenant le ratio largeur/hauteur de son enfant.
+.br
+Attributs : \fBratio\fR (ex: \fI1.333\fR), \fBobey-child\fR.
+.TP
+.B <eventbox>
+Conteneur invisible captant les événements (souris, clavier) pour son enfant.
+
+.SS Boutons et contrôles booléens
+.TP
+.B <button>
+Bouton cliquable.
+.br
+Formes courtes : \fB<button ok>\fR \fB<button cancel>\fR \fB<button help>\fR
+.br
+Attributs : \fBstock\fR (icône GTK).
+.TP
+.B <checkbox>
+Case à cocher. Exporte \fBtrue\fR ou \fBfalse\fR.
+.TP
+.B <radiobutton>
+Bouton radio. Groupe via \fB<variable>\fR commune.
+.TP
+.B <togglebutton>
+Bouton avec état enfoncé/relâché.
+.TP
+.B <switch>
+Interrupteur on/off style mobile. Exporte \fBtrue\fR ou \fBfalse\fR.
+.TP
+.B <linkbutton>
+Bouton hyperlien. L'URI provient de \fB<default>\fR, le libellé de \fB<label>\fR.
+
+.SS Saisie de texte
+.TP
+.B <entry>
+Champ de saisie mono-ligne.
+.br
+Attributs : \fBmax-length\fR, \fBeditable\fR.
+.TP
+.B <password>
+Champ de saisie masqué (●●●●). Identique à \fB<entry>\fR en comportement.
+.TP
+.B <searchentry>
+Champ de recherche avec icône loupe intégrée.
+.TP
+.B <edit>
+Zone de texte multi-lignes (éditeur).
+.br
+Attributs : \fBeditable\fR, \fBwrap-mode\fR.
+
+.SS Affichage de texte
+.TP
+.B <text>
+Étiquette texte statique.
+.br
+Sous-éléments : \fB<label>\fR, \fB<input>\fR pour texte dynamique.
+.TP
+.B <statusbar>
+Barre d'état en bas de fenêtre.
+.TP
+.B <infobar>
+Bandeau d'information coloré (info/warning/error).
+.br
+Attributs : \fBmessage-type\fR (info|warning|error|question).
+
+.SS Listes et sélection
+.TP
+.B <combobox>
+Liste déroulante avec saisie libre possible.
+.br
+Sous-éléments : \fB<item>\fR pour chaque entrée.
+.TP
+.B <comboboxtext>
+Liste déroulante texte seulement (plus simple).
+.br
+Sous-éléments : \fB<item>texte</item>\fR.
+.TP
+.B <list>
+Liste à défilement, sélection simple ou multiple.
+.br
+Sous-éléments : \fB<item>\fR, \fB<column-header>\fR.
+.TP
+.B <tree>
+Arbre hiérarchique.
+.br
+Sous-éléments : \fB<item>\fR (format \fIParent/Enfant\fR).
+.TP
+.B <table>
+Grille de données tabulaires multi-colonnes.
+.br
+Sous-éléments : \fB<column-header>\fR, \fB<item>\fR.
+
+.SS Valeurs numériques
+.TP
+.B <hscale>
+Glissière horizontale.
+.br
+Attributs : \fBvalue\fR, \fBmin\fR, \fBmax\fR, \fBstep\fR.
+.TP
+.B <vscale>
+Glissière verticale.
+.TP
+.B <spinbutton>
+Sélecteur numérique avec boutons +/\-.
+.br
+Attributs : \fBvalue\fR, \fBmin\fR, \fBmax\fR, \fBstep\fR, \fBdigits\fR.
+.TP
+.B <levelbar>
+Barre de niveau (lecture seule).
+.br
+Attributs : \fBvalue\fR, \fBmin\fR, \fBmax\fR, \fBmode\fR (continuous|discrete).
+
+.SS Progression et animation
+.TP
+.B <progressbar>
+Barre de progression.
+.br
+Attributs : \fBvalue\fR (0.0\-1.0), \fBtext\fR.
+.TP
+.B <spinner>
+Indicateur d'activité animé (roue de chargement).
+.br
+Attributs : \fBactive\fR (true|false).
+.TP
+.B <pulse>
+Barre de progression en mode indéterminé (va-et-vient continu).
+.br
+Attributs : \fBtext\fR.
+
+.SS Date et heure
+.TP
+.B <calendar>
+Sélecteur de date graphique.
+.br
+Exporte la date sélectionnée au format \fBAAAA-MM-JJ\fR.
+
+.SS Médias et dessin
+.TP
+.B <pixmap>
+Affichage d'image.
+.br
+Sous-éléments : \fB<input file>\fR\fIchemin\fR\fB</input>\fR.
+.TP
+.B <image>
+Affichage d'image GTK 3 : icône nommée du thème courant ou fichier.
+.br
+Attributs : \fBicon-name\fR, \fBicon-size\fR.
+.TP
+.B <drawingarea>
+Zone de dessin personnalisée.
+.TP
+.B <colorbutton>
+Sélecteur de couleur.
+.br
+Exporte une couleur au format \fI#RRGGBB\fR.
+.TP
+.B <fontbutton>
+Sélecteur de police.
+.br
+Exporte le nom de la police sélectionnée.
+.TP
+.B <filechooser>
+Bouton de sélection de fichier ou de dossier. Exporte le chemin choisi.
+
+.SS Menus et navigation
+.TP
+.B <menubar>
+Barre de menus principale.
+.br
+Sous-éléments : \fB<menu>\fR puis \fB<menuitem>\fR.
+.TP
+.B <menuitem>
+Entrée de menu.
+.br
+Attributs : \fBlabel\fR, \fBstock\fR, \fBaccel\fR.
+
+.SS Terminal et séparateurs
+.TP
+.B <terminal>
+Terminal interactif embarqué.
+.br
+Sous-éléments : \fB<input>\fR pour commande initiale.
+.TP
+.B <hseparator>
+Séparateur horizontal.
+.TP
+.B <vseparator>
+Séparateur vertical.
+
+.SS Contrôle du flux
+.TP
+.B <timer>
+Déclencheur temporel.
+.br
+Attributs : \fBinterval\fR (ms), \fBvisible\fR.
+.br
+Sous-éléments : \fB<action>\fR exécutée à chaque tick.
+
+.SH VARIABLES D'ENVIRONNEMENT
+
+À la fermeture du dialogue (bouton \fBOK\fR ou \fBEXIT\fR), gtk3dialog
+exporte chaque widget ayant une \fB<variable>\fR dans l'environnement shell :
+
+.RS 4
+.nf
+export MON_CHAMP="valeur saisie"
+export MA_CASE="true"
+export MON_SLIDER="0.75"
+.fi
+.RE
+
+Le script appelant récupère ces valeurs directement :
+
+.RS 4
+.nf
+gtk3dialog --program DIALOG_VAR
+echo "Nom saisi : $NOM"
+.fi
+.RE
+
+.SH ACTIONS SPÉCIALES
+
+Les \fB<action>\fR reconnaissent les mots-clés suivants :
+
+.TP
+.B EXIT:valeur
+Ferme le dialogue et retourne \fIvaleur\fR comme code de sortie.
+.TP
+.B REFRESH:variable
+Rafraîchit le widget identifié par \fIvariable\fR via sa balise \fB<input>\fR.
+.TP
+.B ENABLE:variable
+Active le widget identifié par \fIvariable\fR.
+.TP
+.B DISABLE:variable
+Désactive le widget identifié par \fIvariable\fR.
+.TP
+.B SHOW:variable
+Rend visible le widget identifié par \fIvariable\fR.
+.TP
+.B HIDE:variable
+Cache le widget identifié par \fIvariable\fR.
+.TP
+.B CLEAR:variable
+Vide le contenu du widget identifié par \fIvariable\fR.
+
+.SH SÉCURITÉ
+
+Les commandes des balises \fB<action>\fR et \fB<input>\fR ne passent jamais
+par
+.BR system (3) :
+gtk3dialog les exécute au moyen des primitives GLib
+.RB ( g_spawn ).
+Une commande sans métacaractère shell est lancée directement par
+.BR exec ()
+sans aucun shell. Une commande qui contient un métacaractère shell
+(\fB|\fR, \fB&\fR, \fB;\fR, \fB<\fR, \fB>\fR, \fB$\fR, \fB\(ga\fR, etc.)
+retombe sur \fB/bin/sh \-c\fR — ce qui rétablit le risque d'injection pour
+cette commande — et cette retombée est journalisée. Positionner la variable
+d'environnement \fBHAPLO_NO_SHELL_FALLBACK\fR (à n'importe quelle valeur)
+refuse cette retombée et fait échouer la commande en sécurité
+(\fIfail-closed\fR). Le parser XML rejette proprement les documents malformés.
+.PP
+Ne jamais passer de données non validées dans une \fB<action>\fR ou un
+\fB<input>\fR. Voir \fBSECURITY.md\fR et
+.BR gtk3dialog (1)
+pour la politique de sécurité complète.
+
+.SH EXEMPLE COMPLET
+
+.RS 4
+.nf
+#!/bin/sh
+export FORMULAIRE='
+<window title="Inscription" width-request="380" height-request="260">
+  <vbox spacing="8">
+    <frame><label>Vos informations</label>
+      <vbox>
+        <hbox>
+          <text><label>Nom :</label></text>
+          <entry><variable>NOM</variable><default>Dupont</default></entry>
+        </hbox>
+        <hbox>
+          <text><label>Mot de passe :</label></text>
+          <password><variable>MDP</variable></password>
+        </hbox>
+        <checkbox>
+          <label>Accepter les conditions</label>
+          <variable>CGU</variable>
+        </checkbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button ok></button>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>'
+
+gtk3dialog --program FORMULAIRE
+
+if [ "$CGU" = "true" ] && [ -n "$NOM" ]; then
+    echo "Inscription de $NOM — CGU acceptées"
+else
+    echo "Inscription annulée ou CGU refusées"
+fi
+.fi
+.RE
+
+.SH VOIR AUSSI
+.BR gtk3dialog (1),
+.BR gtkdialog (1),
+.BR zenity (1),
+.BR yad (1)
+
+.SH HISTORIQUE
+
+haplo-dialog est un fork de
+.BR gtkdialog (1)
+(László Pere, 2003\-2013), modernisé et étendu par haplo-dialog en 2026.
+
+.SH AUTEURS
+.B haplo-dialog
+.br
+haplo-dialog — devel@haplo-dialog.fr
+.br
+Site : https://haplo-dialog.fr
+
+.SH LICENCE
+Documentation sous licence CC-BY-SA 4.0.
+.br
+Logiciel sous licence GPL-2.0-or-later.
+.\" 2026-08-11 : page réalignée sur le code source (widgets d'après src/, <pixmap> via <input file>, calendrier AAAA-MM-JJ, SÉCURITÉ d'après safe_exec.c) — GTK 3 uniquement.

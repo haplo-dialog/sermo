@@ -1,0 +1,298 @@
+.\" gtk3dialog.1 — man page for gtk3dialog 1.0.0
+.\" haplo-dialog <devel@haplo-dialog.fr>
+.\" This file is installed as /usr/share/man/man1/gtk3dialog.1
+.\"
+.TH GTK3DIALOG 1 "June 2026" "gtk3dialog 1.0.0" "haplo-dialog User Commands"
+.SH NAME
+gtk3dialog \- GTK3 dialog box creator for shell scripts
+.SH SYNOPSIS
+.B gtk3dialog
+[\fIOPTION\fR]...
+.br
+.B gtk3dialog
+\fB\-\-program\fR=\fIVARIABLE\fR
+.br
+.B gtk3dialog
+\fB\-\-file\fR=\fIFILE\fR
+.br
+.B gtk3dialog
+\fB\-\-stdin\fR
+.br
+.B VARIABLE=\(aq<window>...</window>\(aq gtk3dialog
+\fB\-\-program\fR=\fIVARIABLE\fR
+.SH DESCRIPTION
+.B gtk3dialog
+reads a GTK3 GUI description written in an XML-like language and displays
+the resulting dialog window. It is designed to be called from shell scripts
+to present interactive forms, file choosers, progress bars, list views,
+and other widgets without the script needing any knowledge of GTK
+programming.
+.PP
+The GUI description can be supplied from an environment variable
+.RB ( \-\-program ),
+a file
+.RB ( \-\-file ),
+or standard input
+.RB ( \-\-stdin ).
+.PP
+When a button action produces output (EXIT, REFRESH, etc.), gtk3dialog
+prints the current value of each named widget to standard output in the
+form
+\fINAME\fR=\(dq\fIvalue\fR\(dq, which the calling shell can then
+.BR eval .
+.SH OPTIONS
+.TP
+.BR \-v ", " \-\-version
+Print version information and exit.
+.TP
+.BR \-d ", " \-\-debug
+Enable debug mode. Each character read from the dialog description is echoed
+to standard output as it is fed to the lexer. Useful for diagnosing parser
+issues.
+.TP
+.BI \-p " VARIABLE" "\fR,\fP \-\-program=" VARIABLE
+Read the GUI description from the shell environment variable
+.IR VARIABLE .
+This is the most common invocation style in scripts:
+.RS
+.PP
+.nf
+MYGUI='<window>...</window>'
+gtk3dialog --program=MYGUI
+.fi
+.RE
+.TP
+.BI \-f " FILE" "\fR,\fP \-\-file=" FILE
+Read the GUI description from
+.IR FILE .
+.TP
+.BR \-s ", " \-\-stdin
+Read the GUI description from standard input.
+.TP
+.BI \-i " FILE" "\fR,\fP \-\-include=" FILE
+Include and execute
+.I FILE
+before running the main GUI description.
+.TP
+.BI \-e " FILE" "\fR,\fP \-\-event-driven=" FILE
+Execute
+.I FILE
+as an event-driven program. In this mode gtk3dialog acts as a dispatcher,
+re-invoking
+.I FILE
+for each widget event.
+.TP
+.BR \-w ", " \-\-no-warning
+Suppress non-fatal warning messages.
+.TP
+.BI \-G " GEOMETRY" "\fR,\fP \-\-geometry=" GEOMETRY
+Set the initial window placement and size.
+.I GEOMETRY
+has the form
+.RI [ W x H ][ + X + Y ]
+following the X11 convention (e.g. \fB800x600+0+0\fR).
+.TP
+.BR \-c ", " \-\-center
+Centre all windows on the screen.
+.TP
+.B \-\-print-ir
+Parse the GUI description, print the internal representation, and exit
+without displaying any window. Useful for debugging XML syntax errors.
+.TP
+.BI \-\-space-expand= STATE
+Set the default
+.I expand
+packing state for all widgets.
+.I STATE
+is
+.B true
+or
+.BR false .
+.TP
+.BI \-\-space-fill= STATE
+Set the default
+.I fill
+packing state for all widgets.
+.I STATE
+is
+.B true
+or
+.BR false .
+.TP
+.BI \-g " FILE" "\fR,\fP \-\-glade-xml=" FILE
+Load a GtkBuilder UI file (.glade / .ui) instead of using the gtk3dialog
+XML language.
+.SH WIDGETS
+gtk3dialog renders every widget with a native GTK 3 widget. The XML dialog
+description language supports the following tags.
+.SS Layout containers
+.BR window ", " vbox ", " hbox ", " frame ", " notebook ", " expander ,
+.BR eventbox ", " aspectframe
+.SS Display widgets
+.BR text ", " image ", " pixmap ", " statusbar ", " infobar ", " drawingarea
+.SS Input widgets
+.BR entry ", " edit ", " password ", " searchentry ", " spinbutton ", " hscale ,
+.BR vscale ", " checkbox ", " togglebutton ", " radiobutton ", " switch
+.SS Selection widgets
+.BR combobox ", " comboboxtext ", " list ", " tree ", " table ", " colorbutton ,
+.BR fontbutton ", " filechooser ", " calendar
+.SS Progress and activity indicators
+.BR progressbar ", " pulse ", " spinner ", " levelbar
+.SS Button widgets
+.BR button ", " linkbutton
+.br
+The
+.B button
+tag also accepts the stock short forms
+.BR "button ok" ,
+.BR "button cancel" ,
+.BR "button help" ,
+.BR "button yes"
+and
+.BR "button no" .
+.SS Menu widgets
+.BR menubar ", " menu ", " menuitem ", " separator
+.SS Terminal and separators
+.BR terminal ", " hseparator ", " vseparator
+.SS Timers
+.BR timer
+.PP
+Each widget exports its current value as a shell environment variable
+(via
+.BR eval )
+when the dialog exits or an action requests a refresh.
+.SH EXIT STATUS
+gtk3dialog exits with status
+.B 0
+on normal termination. The exit value printed on standard output by an
+EXIT action is a string, not a numeric exit code; the calling shell must
+interpret it.
+.SH ENVIRONMENT
+.TP
+.B G_MESSAGES_DEBUG=all
+Enable
+.BR g_debug ()
+messages (verbose runtime tracing). Combined with
+.B \-\-debug
+this gives maximum diagnostic output.
+.TP
+.B GTK_DEBUG=interactive
+Open the GTK Inspector inside the running window
+.RB ( Ctrl\-Shift\-I ).
+.TP
+.B GTK_THEME
+Override the GTK theme, e.g.
+.BR GTK_THEME=Adwaita:dark .
+.TP
+.B HAPLO_NO_SHELL_FALLBACK
+When set (to any value), refuse the
+.B /bin/sh \-c
+fallback used for
+.RB < input >/< action >
+commands that contain shell metacharacters, and fail closed instead. Commands
+without shell metacharacters still run via direct
+.BR exec ()
+(no shell). Use this to harden gtk3dialog when rendering XML whose command
+strings may come from a less-trusted source than the local script author (see
+.B safe_exec.c
+design note 1).
+.TP
+.B GTKDIALOG_PIXMAP_PATH
+Colon\-separated list of directories in which gtk3dialog searches for image
+files that are not found at the path given in the XML. It is consulted when
+loading
+.BR <pixmap> ,
+window and button icons, and menu\-item images.
+.TP
+.B MAIN_DIALOG
+Fallback source variable. When none of
+.BR \-\-program ,
+.BR \-\-file ,
+.BR \-\-stdin ,
+.B \-\-event\-driven
+or
+.B \-\-glade\-xml
+is given, gtk3dialog reads the GUI description from the environment variable
+named
+.BR MAIN_DIALOG .
+.SH EXAMPLES
+Display a minimal dialog from a shell variable:
+.PP
+.nf
+DIALOG='
+<window title="Hello">
+  <vbox>
+    <text><label>Hello, world!</label></text>
+    <button><label>OK</label><action>EXIT:ok</action></button>
+  </vbox>
+</window>'
+gtk3dialog --program=DIALOG
+.fi
+.PP
+Read a dialog description from a file and capture the output:
+.PP
+.nf
+eval $(gtk3dialog --file=my_form.xml)
+echo "User entered: $ENTRY"
+.fi
+.PP
+Display a dialog from standard input (pipe):
+.PP
+.nf
+cat my_form.xml | gtk3dialog --stdin
+.fi
+.SH FILES
+.TP
+.I /usr/bin/gtk3dialog
+The gtk3dialog executable.
+.TP
+.I /usr/share/doc/gtk3dialog/examples/
+Shell script examples for each supported widget type.
+.SH COMPATIBILITY
+.B gtk3dialog
+is upward compatible with the original
+.BR gtkdialog (1).
+On installation,
+.B make install
+creates a
+.B gtkdialog
+symlink to
+.B gtk3dialog
+and a
+.I gtkdialog.1
+manual-page alias, so legacy dialogs (XML, command-line options, and the
+.B \-\-program
+environment-variable invocation) continue to work unchanged and print their
+output in the historical
+.IR NAME =\(dq value \(dq
+form. Only gtk3dialog provides this alias, so there is no conflict between
+packages.
+.SH SEE ALSO
+.BR gtkdialog (1),
+.BR bash (1),
+.BR zenity (1),
+.BR yad (1)
+.PP
+Online documentation and widget reference:
+.I https://haplo-dialog.fr
+.SH BUGS
+Report bugs to
+.I devel@haplo-dialog.fr
+or via the issue tracker at
+.IR https://haplo-dialog.fr/haplo-dialog/haplo-dialog .
+.SH AUTHORS
+Pere Laszlo <pipas@linux.pte.hu> (original author, 2003-2011).
+.br
+Thunor <thunorsif@hotmail.com> (2011-2014).
+.br
+haplo-dialog <devel@haplo-dialog.fr> (GTK3 port, 2026).
+.SH COPYRIGHT
+Copyright \(co 2003-2011 Pere Laszlo.
+Copyright \(co 2011-2014 Thunor.
+Copyright \(co 2026 haplo-dialog.
+.PP
+License GPLv2+: GNU GPL version 2 or later
+.RI < https://gnu.org/licenses/gpl.html >.
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+.\" 2026-08-11 : pages man réalignées sur le code source (liste des widgets d'après src/widget_*.c + automaton.h, option \-\-debug, section ENVIRONMENT d'après getenv/g_getenv) — GTK3 uniquement.

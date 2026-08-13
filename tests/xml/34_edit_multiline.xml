@@ -1,0 +1,12 @@
+<!-- DESC: edit zone multi-lignes editable -->
+<window title="Test edit" width-request="400" height-request="300">
+  <vbox>
+    <edit editable="true" wrap-mode="word">
+      <variable>EDIT_CONTENT</variable>
+      <default>Ligne 1
+Ligne 2
+Ligne 3</default>
+    </edit>
+    <button ok></button>
+  </vbox>
+</window>

@@ -1,0 +1,55 @@
+haplo-dialog — Annonces pour les utilisateurs
+==============================================
+
+Ce fichier résume les changements importants du point de vue de l'utilisateur.
+Pour l'historique technique complet, voir CHANGELOG.md.
+
+──────────────────────────────────────────────────
+Version 1.0.0 (2026-05-29) — Première version publique
+──────────────────────────────────────────────────
+
+haplo-dialog 1.0.0 est la première version publique stable.
+
+haplo-dialog est le successeur moderne, durci et maintenu de gtkdialog.
+Décrivez une interface en XML, lancez-la depuis le shell, récupérez les
+valeurs saisies. Là où gtkdialog est abandonné, haplo-dialog le fait revivre :
+corrigé, durci, maintenu.
+
+* Un port unique : gtk3dialog, le backend GTK 3 de référence. Il implémente
+  43 widgets et se pilote entièrement en XML depuis le shell.
+
+* Compatibilité ascendante gtkdialog : l'installation de gtk3dialog crée un
+  alias « gtkdialog » — vos anciens scripts gtkdialog 0.8.x fonctionnent
+  tels quels (XML, options et variables d'environnement).
+
+* Sécurité renforcée : toutes les commandes passent par safe_exec.
+  Plus aucun appel direct à system() dans le code. Le parseur rejette
+  proprement l'XML malformé, et le code est soumis à du fuzzing.
+
+* Hardening binaires : _FORTIFY_SOURCE=3, PIE, Full RELRO,
+  stack-protector-strong, -fcf-protection (selon le compilateur).
+
+* Suite de tests : 52 cas XML de régression et 9 tests de comportement
+  (safe_exec).
+
+* Packaging pour Debian, Fedora, Arch, Gentoo, Slackware.
+
+Pour installer :
+
+  # Debian / Ubuntu
+  sudo apt install gtk3dialog
+
+  # Arch Linux (depuis les sources)
+  cd gtk3dialog/gtk3dialog_1.0.0/packaging/arch && makepkg -si
+
+  # Depuis les sources (autotools)
+  cd gtk3dialog/gtk3dialog_1.0.0 && autoreconf -fi && ./configure && make && sudo make install
+
+Documentation : https://haplo-dialog.fr
+Rapport de bugs : devel@haplo-dialog.fr
+Sécurité : devel@haplo-dialog.fr
+
+──────────────────────────────────────────────────
+
+---
+

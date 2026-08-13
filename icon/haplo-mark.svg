@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="haplo">
+  <title>haplo — une fenêtre, une scène, une seule ligne</title>
+  <defs>
+    <linearGradient id="haplo-g" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#89b4fa"/>
+      <stop offset=".55" stop-color="#cba6f7"/>
+      <stop offset="1" stop-color="#94e2d5"/>
+    </linearGradient>
+  </defs>
+  <!-- Fenêtre native = scène de théâtre (monoline = simplicité, haplóos) -->
+  <g fill="none" stroke="url(#haplo-g)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="8" y="12" width="48" height="40" rx="7"/>
+    <line x1="8" y1="24" x2="56" y2="24"/>
+    <!-- une seule ligne de contenu : « votre script, une fenêtre » -->
+    <line x1="18" y1="40" x2="46" y2="40"/>
+  </g>
+  <!-- Deux points : contrôles de fenêtre = yeux du masque (clin d'œil théâtral) -->
+  <g fill="url(#haplo-g)">
+    <circle cx="16" cy="18" r="2.1"/>
+    <circle cx="24" cy="18" r="2.1"/>
+  </g>
+</svg>

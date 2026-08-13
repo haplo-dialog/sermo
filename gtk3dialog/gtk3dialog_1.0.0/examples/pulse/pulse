@@ -1,0 +1,92 @@
+#!/bin/sh
+# pulse — example for the <pulse> widget (GtkProgressBar pulse mode)
+# gtkdialog-1.0.0 — haplo-dialog 2026
+#
+# <pulse> is a GtkProgressBar in indeterminate mode.
+# Each call to gtk_progress_bar_pulse() advances the bouncing block.
+# Use a <timer> widget to auto-animate, or call <action>pulse:VAR</action>
+# manually from a button.
+#
+# Tag attributes:
+#   text="string"        — text displayed on the bar
+#   show-text="true"     — show text (auto-set when text= is given)
+#
+# <input> "pulse"  → advance one step
+#         "reset"  → reset to left
+#         any text → update label on bar
+#
+# Exported variable: always "pulse" (constant)
+#
+# Usage:
+#   ./pulse            — launch the dialog
+#   ./pulse --dump     — print the XML definition
+
+GTKDIALOG=gtk3dialog
+
+MAIN_DIALOG='
+<window title="Pulse example" resizable="false">
+  <vbox spacing="8">
+
+    <frame Barre dactivite indefinie>
+
+      <!-- Barre avec texte fixe -->
+      <pulse text="En attente...">
+        <variable>PULSE1</variable>
+      </pulse>
+
+      <!-- Barre sans texte -->
+      <pulse>
+        <variable>PULSE2</variable>
+      </pulse>
+
+      <hbox spacing="4">
+        <button>
+          <label>Avancer (+1 pas)</label>
+          <action>pulse:PULSE1</action>
+          <action>pulse:PULSE2</action>
+        </button>
+        <button>
+          <label>Réinitialiser</label>
+          <action>clear:PULSE1</action>
+          <action>clear:PULSE2</action>
+        </button>
+      </hbox>
+
+    </frame>
+
+    <frame Animation automatique via timer>
+
+      <pulse text="Traitement en cours...">
+        <variable>PULSE_AUTO</variable>
+      </pulse>
+
+      <!-- Timer qui pulse toutes les 100ms -->
+      <timer milliseconds="true" interval="100" visible="false">
+        <variable>TIMER1</variable>
+        <action condition="active_is_true">pulse:PULSE_AUTO</action>
+      </timer>
+
+      <hbox spacing="4">
+        <button>
+          <label>Démarrer</label>
+          <action>enable:TIMER1</action>
+        </button>
+        <button>
+          <label>Arrêter</label>
+          <action>disable:TIMER1</action>
+          <action>clear:PULSE_AUTO</action>
+        </button>
+      </hbox>
+
+    </frame>
+
+    <button ok></button>
+  </vbox>
+</window>
+'
+export MAIN_DIALOG
+
+case $1 in
+  -d | --dump) echo "$MAIN_DIALOG" ;;
+  *) $GTKDIALOG --program=MAIN_DIALOG ;;
+esac

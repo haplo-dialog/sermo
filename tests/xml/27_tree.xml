@@ -1,0 +1,13 @@
+<!-- DESC: tree hierarchique avec items Parent/Enfant -->
+<window title="Test tree" width-request="300" height-request="250">
+  <vbox>
+    <tree>
+      <variable>TREE_SEL</variable>
+      <item>Fruits/Pomme</item>
+      <item>Fruits/Banane</item>
+      <item>Légumes/Carotte</item>
+      <item>Légumes/Poireau</item>
+    </tree>
+    <button ok></button>
+  </vbox>
+</window>

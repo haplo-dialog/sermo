@@ -1,0 +1,12 @@
+<!-- DESC: table multi-colonnes -->
+<window title="Test table" width-request="400" height-request="250">
+  <vbox>
+    <table>
+      <variable>TABLE_SEL</variable>
+      <item>gtk3dialog</item>
+      <item>option</item>
+      <item>option</item>
+    </table>
+    <button ok></button>
+  </vbox>
+</window>

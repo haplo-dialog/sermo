@@ -1,0 +1,20 @@
+<!-- DESC: actions SHOW et HIDE sur un widget -->
+<window title="Test SHOW/HIDE" width-request="350" height-request="200">
+  <vbox>
+    <text visible="false">
+      <variable>HIDDEN_MSG</variable>
+      <label>Ce message était caché !</label>
+    </text>
+    <hbox>
+      <button>
+        <label>Afficher</label>
+        <action>SHOW:HIDDEN_MSG</action>
+      </button>
+      <button>
+        <label>Cacher</label>
+        <action>HIDE:HIDDEN_MSG</action>
+      </button>
+    </hbox>
+    <button ok></button>
+  </vbox>
+</window>

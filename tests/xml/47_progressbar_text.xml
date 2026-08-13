@@ -1,0 +1,12 @@
+<!-- DESC: progressbar avec text overlay -->
+<window title="Test progressbar texte" width-request="350" height-request="150">
+  <vbox>
+    <progressbar value="0.65" text="65% complété">
+      <variable>PROGRESS</variable>
+    </progressbar>
+    <progressbar value="0.33" text="Étape 1/3">
+      <variable>STEP_PROGRESS</variable>
+    </progressbar>
+    <button ok></button>
+  </vbox>
+</window>

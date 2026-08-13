@@ -1,0 +1,11 @@
+<!-- DESC: Conteneur a onglets -->
+<window title="Test 12" width-request="350" height-request="200">
+  <notebook labels="Onglet 1|Onglet 2">
+    <vbox>
+      <text><label>Contenu 1</label></text>
+    </vbox>
+    <vbox>
+      <text><label>Contenu 2</label></text>
+    </vbox>
+  </notebook>
+</window>

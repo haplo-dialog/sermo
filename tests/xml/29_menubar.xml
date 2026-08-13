@@ -1,0 +1,18 @@
+<!-- DESC: menubar avec menu et menuitem -->
+<window title="Test menubar" width-request="500" height-request="300">
+  <vbox>
+    <menubar>
+      <menu label="Fichier">
+        <menuitem label="Ouvrir" accel="ctrl-o"></menuitem>
+        <menuitem label="Quitter" accel="ctrl-q">
+          <action>EXIT:0</action>
+        </menuitem>
+      </menu>
+      <menu label="Aide">
+        <menuitem label="À propos"></menuitem>
+      </menu>
+    </menubar>
+    <text><label>Contenu principal</label></text>
+    <button ok></button>
+  </vbox>
+</window>

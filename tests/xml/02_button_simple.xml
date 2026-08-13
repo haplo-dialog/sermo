@@ -1,0 +1,6 @@
+<!-- DESC: Bouton simple avec action EXIT -->
+<window title="Test 02">
+  <vbox>
+    <button><label>OK</label><action>EXIT:0</action></button>
+  </vbox>
+</window>

@@ -1,0 +1,7 @@
+<!-- DESC: Interrupteur switch on/off -->
+<window title="Test 13">
+  <vbox>
+    <switch><variable>SW</variable></switch>
+    <button ok></button>
+  </vbox>
+</window>

@@ -1,0 +1,20 @@
+<!-- DESC: actions ENABLE et DISABLE sur un widget -->
+<window title="Test ENABLE/DISABLE" width-request="350" height-request="200">
+  <vbox>
+    <entry sensitive="false">
+      <variable>LOCKED_FIELD</variable>
+      <default>Champ verrouillé</default>
+    </entry>
+    <hbox>
+      <button>
+        <label>Activer</label>
+        <action>ENABLE:LOCKED_FIELD</action>
+      </button>
+      <button>
+        <label>Désactiver</label>
+        <action>DISABLE:LOCKED_FIELD</action>
+      </button>
+    </hbox>
+    <button ok></button>
+  </vbox>
+</window>

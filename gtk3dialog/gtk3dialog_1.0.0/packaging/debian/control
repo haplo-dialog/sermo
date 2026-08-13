@@ -1,0 +1,26 @@
+Source: gtk3dialog
+Section: utils
+Priority: optional
+Maintainer: haplo-dialog <devel@haplo-dialog.fr>
+Build-Depends: debhelper-compat (= 13), libgtk-3-dev (>= 3.22.0), libvte-2.91-dev, flex, bison, autoconf (>= 2.69), automake (>= 1.14), pkg-config
+Standards-Version: 4.6.2
+Homepage: https://haplo-dialog.fr
+Vcs-Browser: https://haplo-dialog.fr/haplo-dialog/haplo-dialog
+Vcs-Git: https://haplo-dialog.fr/haplo-dialog/haplo-dialog.git
+
+Package: gtk3dialog
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libgtk-3-0 (>= 3.22), libvte-2.91-0
+Conflicts: gtkdialog (<< 1.0.0)
+Provides: gtkdialog
+Replaces: gtkdialog
+Description: GTK3 dialog window creator for shell scripts
+ gtk3dialog builds GTK3 dialog windows from an XML-like description
+ language, allowing shell scripts to display interactive GUI windows without
+ knowledge of any graphical toolkit. This is the haplo-dialog fork
+ (1.0.0) with security hardening (safe_exec, FORTIFY_SOURCE=3, PIE,
+ Full RELRO, stack-protector-strong).
+ .
+ Toolkit: GTK3 — haplo-dialog fork 1.0.0.
+ Security: safe_exec (no system()), FORTIFY_SOURCE=3, PIE, Full RELRO,
+ stack-protector-strong.

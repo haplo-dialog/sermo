@@ -1,0 +1,70 @@
+gtk3dialog-1.0.0
+=======================
+
+Utilitaire C pour créer des interfaces GTK3 depuis des scripts shell ou
+tout autre langage interprété, via une syntaxe XML simple.
+
+Fork modernisé de gtkdialog 0.8.3 par haplo-dialog.
+
+  Distributeur : haplo-dialog
+  Distribution : Debian Testing
+  Noyau cible  : Linux 7.0.4+deb14-amd64
+  GTK          : GTK3 >= 3.22
+  VTE          : vte-2.91
+  Contact      : devel@haplo-dialog.fr
+  Dépôt        : https://haplo-dialog.fr
+
+Changements par rapport à 0.8.3
+--------------------------------
+  - Migration complète GTK2 → GTK3
+  - Suppression de libglade → GtkBuilder natif
+  - Correctifs de sécurité : safe_system(), safe_popen()
+    * Correction UB : pclose() → fclose() dans tous les appelants de
+      safe_popen() (FILE* issu de fdopen(), pas de popen())
+  - Remplacement de strcpy/strcat/sprintf par équivalents GLib bornés
+  - Flags de compilation sécurisés : FORTIFY_SOURCE, stack-protector, PIE/RELRO
+  - Mise à jour VTE → vte-2.91
+  - 6 nouveaux widgets GTK3 natifs (patch 9) :
+    <switch>, <filechooser>, <calendar>, <linkbutton>, <searchentry>, <infobar>
+  - Compatibilité 100% avec les scripts gtk3dialog 0.8.3
+  - Compatibilité ascendante gtkdialog : make install pose le symlink
+    gtkdialog→gtk3dialog (binaire) et l'alias man gtkdialog.1 ; les dialogues
+    d'époque (XML / CLI / --program via variable d'environnement) parsent et
+    s'exécutent, sortie au format historique VAR="valeur". Seul gtk3dialog
+    fournit l'alias gtkdialog (pas de conflit entre paquets).
+  - Commentaires XML <!-- ... --> supportés dans les dialogs (patch 18)
+  - <frame label="..."> fonctionne correctement (patch 18)
+  - <window> accepte default-width, default-height, resizable (patch 18)
+  - <window> se dimensionne automatiquement à l'écran (patch 18)
+  - <edit> avec <input command> pré-remplit la zone de texte (patch 18)
+
+État de vérification (2026-06-06)
+---------------------------------
+  - Build make → rc=0, 0 erreur ; binaire gtk3dialog (1,4 Mo) exécutable.
+  - Tests XML tests/xml/ : 52/52 PASS (--print-ir, headless).
+  - Warnings : 34 (idiomes amont gtkdialog, non bloquants).
+
+Compilation
+-----------
+  sudo apt-get install libgtk-3-dev libvte-2.91-dev flex bison autoconf automake
+  ./autogen.sh
+  cd /tmp/gtk3dialog-build
+  make -j$(nproc)
+  sudo make install
+
+Documentation
+-------------
+  MANUEL_UTILISATEUR.md  — Guide d'utilisation
+  MANUEL_DEVELOPPEUR.md  — Architecture et contribution
+  COMPILE.md             — Instructions de compilation rapide
+  doc/gtk3dialog.texi    — Manuel Texinfo (source) ; doc/gtk3dialog.info généré
+  examples/              — Exemples par widget (53 répertoires)
+
+Licence
+-------
+  GPL-2.0-or-later — voir COPYING
+
+Auteurs originaux
+-----------------
+  László Pere <pipas@linux.pte.hu>
+  Thunor <thunorsif@hotmail.com>

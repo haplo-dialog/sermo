@@ -1,0 +1,14 @@
+<!-- DESC: action REFRESH sur un widget texte avec input -->
+<window title="Test REFRESH action" width-request="350" height-request="200">
+  <vbox>
+    <text>
+      <variable>DYN_TEXT</variable>
+      <input>date '+%H:%M:%S'</input>
+    </text>
+    <button>
+      <label>Rafraîchir l'heure</label>
+      <action>REFRESH:DYN_TEXT</action>
+    </button>
+    <button ok></button>
+  </vbox>
+</window>

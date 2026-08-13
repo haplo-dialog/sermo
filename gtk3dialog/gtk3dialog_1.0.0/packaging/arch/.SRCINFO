@@ -1,0 +1,22 @@
+pkgbase = gtk3dialog
+	pkgdesc = GTK3 dialog window creator for shell scripts
+	pkgver = 1.0.0
+	pkgrel = 1
+	url = https://haplo-dialog.fr
+	arch = x86_64
+	arch = aarch64
+	license = GPL-2.0-or-later
+	makedepends = gtk3
+	makedepends = vte3
+	makedepends = flex
+	makedepends = bison
+	makedepends = autoconf
+	makedepends = automake
+	makedepends = pkgconfig
+	depends = gtk3
+	depends = vte3
+	provides = gtk3dialog
+	source = gtk3dialog-1.0.0.tar.gz::https://haplo-dialog.fr/pub/gtk3dialog/gtk3dialog-1.0.0.tar.gz
+	sha256sums = SKIP
+
+pkgname = gtk3dialog

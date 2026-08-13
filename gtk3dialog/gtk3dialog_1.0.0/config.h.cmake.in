@@ -1,0 +1,33 @@
+/* config.h — généré par CMake (équivalent de la version autotools) */
+#ifndef GTK3DIALOG_CONFIG_H
+#define GTK3DIALOG_CONFIG_H
+
+#define PACKAGE         "@PROJECT_NAME@"
+#define PACKAGE_NAME    "@PROJECT_NAME@"
+#define PACKAGE_VERSION "@PROJECT_VERSION@"
+#define PACKAGE_STRING  "@PROJECT_NAME@ @PROJECT_VERSION@"
+#define PACKAGE_TARNAME "@PROJECT_NAME@"
+#define PACKAGE_BUGREPORT "devel@haplo-dialog.fr"
+#define PACKAGE_URL     ""
+#define VERSION         "@PROJECT_VERSION@"
+#define BUILD_DETAILS   "@PROJECT_NAME@ @PROJECT_VERSION@ (CMake)"
+
+/* GtkBuilder-based glade support is always available with GTK3. */
+#define HAVE_GLADE_LIB  1
+
+/* En-têtes standard présents sur les cibles POSIX/Linux. */
+#define STDC_HEADERS    1
+#define HAVE_STDIO_H    1
+#define HAVE_STDLIB_H   1
+#define HAVE_STRING_H   1
+#define HAVE_STRINGS_H  1
+#define HAVE_STDINT_H   1
+#define HAVE_INTTYPES_H 1
+#define HAVE_UNISTD_H   1
+#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TYPES_H 1
+#define HAVE_LOCALE_H   1
+#define HAVE_SETLOCALE  1
+#define YYTEXT_POINTER  1
+
+#endif /* GTK3DIALOG_CONFIG_H */

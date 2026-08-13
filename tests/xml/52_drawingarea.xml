@@ -1,0 +1,10 @@
+<!-- DESC: Zone de dessin drawingarea avec dimensions demandees -->
+<window title="Test 52">
+  <vbox>
+    <drawingarea width-request="200" height-request="120">
+      <variable>CANEVAS</variable>
+    </drawingarea>
+    <text><label>Surface de dessin</label></text>
+    <button ok></button>
+  </vbox>
+</window>

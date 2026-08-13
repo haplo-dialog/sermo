@@ -1,0 +1,44 @@
+#!/bin/sh
+# calendar — example for the <calendar> widget (GtkCalendar)
+# gtkdialog-1.0.0 — haplo-dialog 2026
+#
+# The <calendar> widget exports the selected date as YYYY-MM-DD.
+# The signal is "day-selected".
+#
+# Usage:
+#   ./calendar          — launch the dialog
+#   ./calendar --dump   — print the XML definition
+
+GTKDIALOG=gtkdialog
+
+MAIN_DIALOG='
+<window title="Calendar example" resizable="false">
+	<vbox>
+		<frame GtkCalendar — date picker>
+			<calendar>
+				<variable>SELECTED_DATE</variable>
+				<action>echo "Selected date: $SELECTED_DATE"</action>
+			</calendar>
+			<hbox>
+				<text><label>Selected:</label></text>
+				<entry>
+					<variable>DATE_DISPLAY</variable>
+					<input>echo "$SELECTED_DATE"</input>
+					<sensitive>false</sensitive>
+				</entry>
+			</hbox>
+		</frame>
+		<hbox>
+			<button ok></button>
+			<button cancel></button>
+		</hbox>
+	</vbox>
+</window>
+'
+export MAIN_DIALOG
+
+case $1 in
+	-d | --dump) echo "$MAIN_DIALOG" ;;
+	*) $GTKDIALOG --program=MAIN_DIALOG
+	   echo "SELECTED_DATE=$SELECTED_DATE" ;;
+esac

@@ -1,0 +1,12 @@
+<!-- DESC: vscale vertical avec min max step -->
+<window title="Test vscale" width-request="200" height-request="300">
+  <hbox>
+    <vscale value="50" min="0" max="100" step="1">
+      <variable>VSLIDER</variable>
+    </vscale>
+    <vscale value="0" min="-10" max="10" step="0.5">
+      <variable>VSLIDER2</variable>
+    </vscale>
+    <button ok></button>
+  </hbox>
+</window>
