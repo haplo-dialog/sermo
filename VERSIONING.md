@@ -176,7 +176,7 @@ périmètre exact des fichiers est fixé par la table de la §2.
 ---
 
 *haplo-dialog est un fork de gtkdialog 0.8.3 (László Pere, GPL-2.0+),*
-*modernisé par haplo-dialog. SemVer appliqué depuis la 1.0.0.*
+*modernisé par le projet haplo-dialog. SemVer appliqué depuis la 1.0.0.*
 
 ---
 

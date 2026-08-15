@@ -113,7 +113,7 @@ Voir aussi `ci/build.sh` (`./ci/build.sh`, ou `./ci/build.sh gtk3dialog --test`)
 ---
 
 *haplo-dialog est un fork de gtkdialog 0.8.3 (László Pere, GPL-2.0+),*
-*modernisé par haplo-dialog. Dépendances vérifiées sur l'arbre v1.0.0.*
+*modernisé par le projet haplo-dialog. Dépendances vérifiées sur l'arbre v1.0.0.*
 
 ---
 

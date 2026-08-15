@@ -1,6 +1,6 @@
 #!/bin/sh
 # build.sh — Script de build universel haplo-dialog
-# haplo-dialog 1.0.0 — haplo-dialog — GPL-2.0-or-later
+# haplo-dialog 1.0.0 — GPL-2.0-or-later
 #
 # Usage :
 #   ./ci/build.sh                    # build gtk3dialog (seul port distribué)

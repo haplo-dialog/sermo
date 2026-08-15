@@ -82,4 +82,4 @@ cd gtk3dialog/gtk3dialog_1.0.0 && autoreconf -fi && ./configure && make -j"$(npr
 
 ---
 
-*haplo-dialog — haplo-dialog — GPL-2.0-or-later*
+*haplo-dialog — GPL-2.0-or-later*

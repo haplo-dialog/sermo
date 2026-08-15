@@ -128,10 +128,10 @@ Contributions bienvenues — voir [CONTRIBUTING.md](CONTRIBUTING.md) et
 
 ## Développement assisté par IA — dit franchement
 
-gtk3dialog a été écrit par haplo-dialog avec l'aide d'une IA (Claude, d'Anthropic) —
+gtk3dialog a été écrit avec l'aide d'une IA (Claude, d'Anthropic) —
 conception, code, tests, documentation — sous ma relecture et ma responsabilité.
 Je le dis ouvertement : l'honnêteté ne se négocie pas. Je crois qu'un outil bien
 employé, sans rien masquer, sert la qualité au lieu de lui nuire. Le code est à
 moi ; les erreurs aussi.
 
-> *haplo-dialog — haplo-dialog*
+> *haplo-dialog*

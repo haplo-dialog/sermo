@@ -84,7 +84,7 @@ Référence : https://github.com/01micko/gtkdialog
 ---
 
 *haplo-dialog est un fork de gtkdialog 0.8.3 (GPL-2.0+),  
-modernisé et étendu par haplo-dialog (GPL-2.0-or-later).*
+modernisé et étendu par le projet haplo-dialog (GPL-2.0-or-later).*
 
 ---
 
