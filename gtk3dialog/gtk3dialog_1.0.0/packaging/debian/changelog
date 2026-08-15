@@ -1,3 +1,16 @@
+gtk3dialog (1.0.0-3) unstable; urgency=medium
+
+  * Public identity. The Maintainer field and the changelog signatures now use
+    the project identity, haplo-dialog <devel@haplo-dialog.fr>, instead of a
+    personal name and a company domain that shipped to every installation and
+    showed up in "apt show gtk3dialog".
+  * Packaging metadata. Vcs-Git and Vcs-Browser point at the real repository,
+    https://gitlab.com/haplo-dialog/gtk3dialog; they previously referenced a
+    forge that never existed.
+  * No functional change: the built binary is identical to 1.0.0-2.
+
+ -- haplo-dialog <devel@haplo-dialog.fr>  Sat, 15 Aug 2026 20:52:43 +0200
+
 gtk3dialog (1.0.0-2) unstable; urgency=high
 
   * Security hardening pass (pre-publication audit, 2026-08-11):
