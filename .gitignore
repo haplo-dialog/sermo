@@ -109,3 +109,7 @@ build_out.log
 
 # Symlink debian -> packaging/debian, aide au build (dpkg-buildpackage attend debian/ à la racine du source). Recréé au build, non versionné.
 /gtk3dialog/gtk3dialog_1.0.0/debian
+
+# artefacts de construction (2026-08-15)
+/gtk3dialog/SHA256SUMS
+/gtk3dialog/gtk3dialog_1.0.0/gtk3dialog.spec
