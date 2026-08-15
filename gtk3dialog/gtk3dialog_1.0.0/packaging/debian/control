@@ -5,8 +5,8 @@ Maintainer: haplo-dialog <devel@haplo-dialog.fr>
 Build-Depends: debhelper-compat (= 13), libgtk-3-dev (>= 3.22.0), libvte-2.91-dev, flex, bison, autoconf (>= 2.69), automake (>= 1.14), pkg-config
 Standards-Version: 4.6.2
 Homepage: https://haplo-dialog.fr
-Vcs-Browser: https://haplo-dialog.fr/haplo-dialog/haplo-dialog
-Vcs-Git: https://haplo-dialog.fr/haplo-dialog/haplo-dialog.git
+Vcs-Browser: https://gitlab.com/haplo-dialog/gtk3dialog
+Vcs-Git: https://gitlab.com/haplo-dialog/gtk3dialog.git
 
 Package: gtk3dialog
 Architecture: any
