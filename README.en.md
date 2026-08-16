@@ -1,13 +1,27 @@
 # haplo-dialog
 
-**Build native GTK3 graphical interfaces from your shell scripts.**
+**The modern, hardened and maintained successor to gtkdialog (GTK 3).**
+
+[![Licence](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-1.0.0-informational.svg)](CHANGELOG.en.md)
+[![Toolkit](https://img.shields.io/badge/toolkit-GTK%203-success.svg)](#the-gtk3dialog-port)
+[![Tests](https://img.shields.io/badge/tests-52%2F52%20XML%20·%209%2F9%20behaviour-brightgreen.svg)](#tests--quality)
+
+Describe an interface in XML, export it into a variable, run the binary —
+a real **native GTK 3** window opens, and the values you enter come back
+in your shell variables. Where **gtkdialog** has been abandoned, haplo-dialog
+brings it back to life: fixed, hardened, maintained. From the Greek *haplóos*, "simple".
+
+---
+
+## The signature gesture
 
 ```sh
 export MAIN_DIALOG='
-<window title="Hello!" width-request="320" height-request="140">
+<window title="Hello!" width-request="320">
   <vbox>
     <text><label>Enter your name:</label></text>
-    <entry><variable>NOM</variable></entry>
+    <entry><variable>NAME</variable></entry>
     <hbox>
       <button ok></button>
       <button cancel></button>
@@ -15,190 +29,111 @@ export MAIN_DIALOG='
   </vbox>
 </window>'
 
-gtk3dialog --program MAIN_DIALOG
-echo "Hello, $NOM!"
+gtk3dialog --program=MAIN_DIALOG     # → a native GTK 3 window opens
 ```
 
-This script works **as is**, whether you call it with `gtk3dialog` or with
-`gtkdialog`: it's the **same binary** (see below). Scripts written for
-gtkdialog run without modification.
-
----
-
-## Quick install
+On confirmation, the output comes back to the shell, ready to `eval`:
 
 ```sh
-# Debian and derivatives — a .deb is attached to every release of the repository.
-# Download it along with SHA256SUMS, then:
-sha256sum -c SHA256SUMS
-sudo apt install ./gtk3dialog_1.0.0-3_amd64.deb
-
-# From source
-cd gtk3dialog/gtk3dialog_1.0.0
-./configure && make && sudo make install
+NAME="Ada"
+EXIT="OK"
 ```
 
-There is **no APT repository** to add: download the package, verify its checksum,
-install it.
-
-The package installs the `gtk3dialog` command and **provides `gtkdialog`**
-(symbolic link): both names launch the same program.
-
----
-
-## gtk3dialog, the successor to gtkdialog
-
-haplo-dialog builds on **gtkdialog 0.8.3** (László Pere, GPL-2.0+), which
-remained on GTK2, and modernises it onto **GTK3** while keeping its XML syntax
-**identical**.
-
-- **One single binary, two names.** `gtkdialog` is a link to `gtk3dialog`. The
-  same window, described just once in XML, opens identically through both
-  commands — your old gtkdialog scripts work without touching them.
-- **Same XML language.** gtkdialog window descriptions are read as is.
-- **GTK3.** Modern native rendering, GNOME and Xfce integration.
+**~10 lines of shell → a native window.**
 
 ---
 
 ## Why haplo-dialog?
 
-The shell is a first-class language. It orchestrates, filters, decides — but
-delegates display. haplo-dialog is the missing link: a declarative XML syntax,
-a binary to invoke, a native interface that integrates with the desktop.
-
-**Versus the alternatives:**
-- `zenity` / `kdialog`: limited to a few fixed dialog boxes
-- `yad`: richer, but a command-line syntax that is hard to maintain
-- `python3 + tkinter`: requires Python, breaks the shell paradigm
-- `haplo-dialog`: structured XML, around forty widgets, gtkdialog-compatible
-
-**Philosophy:**
-- Strict separation of structure (XML) and logic (shell)
-- Security — `safe_system()` executes without a shell when possible (see below)
-- gtkdialog compatibility — a legacy script runs without rewriting
-- Minimal runtime dependencies
+| | haplo-dialog | zenity / yad | gtkdialog (upstream) |
+|---|:--:|:--:|:--:|
+| Arbitrary XML interfaces (widgets, containers, signals) | ✅ | ⚠️ limited | ✅ |
+| Values returned in shell variables | ✅ | partial | ✅ |
+| Hardened by default (no `system()`, FORTIFY, PIE, RELRO) | ✅ | — | ❌ |
+| Maintained | ✅ | ✅ | ❌ (abandoned) |
+| Backward-compatible with gtkdialog | ✅ (alias) | — | — |
 
 ---
 
-## Complete example — form with validation
+## The gtk3dialog port
+
+A C core (flex/bison grammar + state machine + `safe_exec`) and a GTK 3 backend.
+
+| Port | Binary | Toolkit | Widgets | Notes |
+|------|---------|---------|:------:|---------------|
+| **gtk3dialog** | `gtk3dialog` | GTK 3 | 43 | **Reference** · backward-compatible `gtkdialog` alias |
+
+> **43 widgets** described by a single grammar. The binary provides the
+> `gtkdialog` alias: scripts written for gtkdialog run without modification.
+
+---
+
+## Installation
+
+### Debian package (.deb)
 
 ```sh
-#!/bin/sh
-# Developed with the assistance of Claude (Anthropic).
-
-export DIALOG='
-<window title="New connection" width-request="400" height-request="220">
-  <vbox>
-    <frame><label>Credentials</label>
-      <vbox>
-        <hbox>
-          <text><label>User:</label></text>
-          <entry><variable>USER_INPUT</variable></entry>
-        </hbox>
-        <hbox>
-          <text><label>Password:</label></text>
-          <password><variable>PASS_INPUT</variable></password>
-        </hbox>
-      </vbox>
-    </frame>
-    <hbox>
-      <button ok></button>
-      <button cancel></button>
-    </hbox>
-  </vbox>
-</window>'
-
-gtk3dialog --program DIALOG
-
-if [ -n "$USER_INPUT" ]; then
-    echo "Connection from: $USER_INPUT"
-fi
+# The .deb is attached to every release of the repository, with its checksums.
+# Download both, then:
+sha256sum -c SHA256SUMS
+sudo apt install ./gtk3dialog_1.0.0-3_amd64.deb
 ```
 
----
+### From source
 
-## Available widgets
-
-`<window>` `<button>` `<entry>` `<password>` `<checkbox>` `<radiobutton>`  
-`<switch>` `<combobox>` `<comboboxtext>` `<list>` `<tree>` `<table>`  
-`<hbox>` `<vbox>` `<frame>` `<notebook>` `<expander>` `<separator>`  
-`<progressbar>` `<hscale>` `<vscale>` `<spinbutton>` `<calendar>`  
-`<menubar>` `<terminal>` `<pixmap>` `<text>` `<edit>` `<statusbar>`  
-`<timer>` `<infobar>` `<levelbar>` `<spinner>` `<searchentry>`  
-`<drawingarea>` `<aspectframe>` `<togglebutton>` and more…
-
-Full reference: `man 5 haplo-dialog-xml` or `doc/reference/`
-
----
-
-## Repository structure
-
+```sh
+# autotools
+cd gtk3dialog/gtk3dialog_1.0.0 && autoreconf -fi && ./configure && make -j"$(nproc)" && sudo make install
 ```
-haplo-dialog/
-├── README.md               ← you are here
-├── CHANGELOG.md            ← version history
-├── AUTHORS                 ← authors and contributors
-├── NEWS                    ← user announcements
-├── CONTRIBUTING.md         ← how to contribute
-├── SECURITY.md             ← security policy
-├── LICENCES.md             ← licence summary
-├── ROADMAP.md              ← roadmap
-├── gtk3dialog/             ← the GTK3 port
-│   └── gtk3dialog_1.0.0/
-│       ├── src/            ← C sources
-│       ├── examples/       ← demonstration scripts
-│       ├── doc/            ← Texinfo documentation
-│       └── packaging/      ← .deb, .rpm, PKGBUILD, .ebuild
-└── tests/
-    └── xml/                ← XML regression suite
-```
+
+Packaging recipes are provided (`packaging/`: Debian, RPM, Arch,
+Gentoo, Slackware). See [PACKAGING.md](PACKAGING.md).
 
 ---
 
 ## Security
 
-haplo-dialog is designed to run in an unprivileged user context.
-
-- Commands go through `safe_system()` / `safe_popen()`, which replace
-  `system()` / `popen()`: when the command **contains no shell metacharacters**,
-  it is executed **directly, without a shell** — which avoids shell injection in
-  this common case. When metacharacters are present, it falls back to
-  `/bin/sh -c` (full shell functionality); this fallback can be **refused** by
-  setting the `HAPLO_NO_SHELL_FALLBACK` variable.
-- Binaries compiled with: `FORTIFY_SOURCE`, PIE, Full RELRO, non-executable
-  stack (NX), stack canary — verifiable via `checksec --file=/usr/bin/gtk3dialog`.
-- Full security policy: [SECURITY.md](SECURITY.md)
-- Vulnerability reporting: `devel@haplo-dialog.fr`
+Hardened by default: execution through **`safe_exec`** (no `system()`),
+**`_FORTIFY_SOURCE=3`**, **PIE**, **Full RELRO**, `stack-protector-strong`,
+`-fcf-protection`. The parser **cleanly rejects** malformed XML (message +
+non-zero exit code, never an `abort`) — validated by **fuzzing** (`tests/fuzz/`).
+Vulnerability report: see [SECURITY.md](SECURITY.en.md).
 
 ---
 
-## Contributing
+## Tests & quality
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the complete workflow.
-
-In short:
-1. Read `SECURITY.md` before any change to the core
-2. Follow the provided `.clang-format` and `.editorconfig` style
-3. Test with `make check`
-4. One patch per feature, commit message in English
+- **XML regression**: `./tests/xml/run_tests.sh all` — **52/52** (headless parse `--print-ir`).
+- **Behaviour**: `./tests/run_unit_tests.sh all` — `safe_exec`, **9/9** (without an X server).
+- **Fuzzing** of the parser: `./tests/fuzz/run_fuzz.sh 60` (afl++ or built-in fallback).
+- **CI**: build + tests — `.gitlab-ci.yml` and `.gitea/workflows/`.
 
 ---
 
-## Licence
+## Documentation
 
-| Component | Licence |
-|-----------|---------|
-| Code — binary, widgets, C core | GPL-2.0-or-later |
-| Documentation | CC-BY-SA 4.0 |
-| Examples (`examples/`) | CC0 (public domain) |
-
-Inherits from **gtkdialog 0.8.3** (László Pere, GPL-2.0+) — modernised and
-ported to GTK3.
+- User/developer manuals (`gtk3dialog/gtk3dialog_1.0.0/MANUEL_*.md`).
+- Man pages `gtk3dialog(1)` and XML reference `haplo-dialog-xml(5)`.
+- Texinfo manuals (`gtk3dialog/gtk3dialog_1.0.0/doc/`).
+- Website: <https://haplo-dialog.fr>.
 
 ---
 
-## Contact
+## Contributing & licence
 
-`devel@haplo-dialog.fr` · https://haplo-dialog.fr
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.en.md) and
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
-> *Developed with the assistance of Claude (Anthropic).*
+**GPL-2.0-or-later** — see [LICENSE](LICENSE). The examples (`examples/`) are under CC0.
+
+---
+
+## AI-assisted development — stated plainly
+
+gtk3dialog was written with the help of an AI (Claude, by Anthropic) —
+design, code, tests, documentation — under my review and my responsibility.
+I say so openly: honesty is not negotiable. I believe that a tool used well,
+with nothing concealed, serves quality instead of harming it. The code is
+mine; so are the mistakes.
+
+> *haplo-dialog*

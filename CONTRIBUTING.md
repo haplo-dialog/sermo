@@ -123,7 +123,7 @@ Scopes valides : `core`, `widget_button`, `gtk3dialog`, `packaging`, `doc`
 ### C (core et widgets GTK 3)
 
 - Standard : **C11** (`-std=c11`)
-- Formattage : `.clang-format` fourni à la racine — **obligatoire**
+- Formatage : `.clang-format` fourni à la racine — **obligatoire**
 - Pas de `system()`, `popen()`, `strcpy()`, `sprintf()` directs — utiliser `safe_system()`, `safe_popen()`, `g_strlcpy()`, `snprintf()`
 - Tout `FILE*` issu de `safe_popen()` → `fclose()`, **jamais `pclose()`**
 - Vérifier le retour de `malloc()` / `calloc()` — `NULL` = fatal log + return
@@ -333,7 +333,7 @@ Pour signaler une vulnérabilité : `devel@haplo-dialog.fr` (chiffrement GPG dis
 ## 10. Revue de code
 
 La revue vérifie dans l'ordre :
-1. **Sécurité** — les 6 règles absolues ci-dessus
+1. **Sécurité** — les 5 règles absolues ci-dessus
 2. **Compilation** — gcc et clang sans warning avec `-Wall -Wextra`
 3. **Format** — `clang-format` sans diff
 4. **Tests** — `make check` passe

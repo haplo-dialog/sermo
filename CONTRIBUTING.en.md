@@ -21,13 +21,13 @@ Thank you for your interest in haplo-dialog. This document explains how to contr
 
 ## 1. Before you begin
 
-- Read [SECURITY.md](SECURITY.md) **in full** before any change to the core
+- Read [SECURITY.md](SECURITY.en.md) **in full** before any change to the core
 - Follow the [Code of Conduct](CODE_OF_CONDUCT.md)
 - For security bugs: write to `devel@haplo-dialog.fr` — **do not open a public ticket**
 - For functional bugs: open a ticket with a minimal reproducible XML script
 
-**Target: gtk3dialog (GTK3), which provides `gtkdialog`.**  
-Fixes on these two ports are handled as a priority. The other ports are "community ports" — patches are welcome but review may be slower.
+**Reference port:**  
+haplo-dialog provides a single port, `gtk3dialog` (GTK 3 backend), which provides the backwards-compatible alias `gtkdialog`. It is the maintained successor to gtkdialog (a fork of Laszlo Pere's gtkdialog 0.8.3): where gtkdialog is abandoned, haplo-dialog brings it back to life — fixed, hardened, maintained.
 
 ---
 
@@ -35,32 +35,32 @@ Fixes on these two ports are handled as a priority. The other ports are "communi
 
 ```
 haplo-dialog/
-├── {port}dialog/{bin}_{version}/
-│   ├── src/
-│   │   ├── gtk3dialog.c          ← main entry point
-│   │   ├── safe_exec.c      ← GPL-2.0-or-later
-│   │   ├── variables.c      ← GPL-2.0-or-later
-│   │   ├── stringman.c      ← GPL-2.0-or-later
-│   │   ├── widget_*.c       ← one file per widget (GPL-2.0-or-later)
-│   │   └── {compat}.h       ← toolkit compatibility layer
-│   ├── tests/
-│   │   ├── test_safe_exec.c ← CTest — compiles without a toolkit
-│   │   └── test_*.c
-│   ├── examples/
-│   │   └── {widget}/demo.sh ← CC0 — usable without restriction
-│   ├── doc/
-│   └── packaging/
-└── tests/xml/               ← XML regression common to all ports
+├── gtk3dialog/
+│   └── gtk3dialog_1.0.0/
+│       ├── src/
+│       │   ├── gtk3dialog.c      ← main entry point
+│       │   ├── safe_exec.c       ← GPL-2.0-or-later
+│       │   ├── variables.c       ← GPL-2.0-or-later
+│       │   ├── stringman.c       ← GPL-2.0-or-later
+│       │   └── widget_*.c        ← one file per widget (GPL-2.0-or-later)
+│       ├── tests/
+│       ├── examples/             ← #!/bin/sh scripts, one per widget (CC0)
+│       ├── doc/
+│       └── packaging/
+└── tests/
+    ├── xml/                      ← XML regression (52 cases)
+    ├── unit/test_safe_exec.c     ← behaviour tests (safe_exec)
+    └── fuzz/                     ← fuzzing corpus
 ```
 
 ---
 
 ## 3. Setting up the environment
 
-### Minimal dependencies (gtk3dialog)
+### Build dependencies
 
 ```sh
-# Debian / Haplo-Linux
+# Debian / Ubuntu
 sudo apt install build-essential flex bison libgtk-3-dev pkg-config
 
 # Arch
@@ -78,9 +78,6 @@ autoreconf -fi
 ./configure --prefix=/usr/local CFLAGS="-g -O0 -fsanitize=address"
 make -j$(nproc)
 make check        # run the tests
-
-# Check gtkdialog compatibility: the same binary answers to both names
-ls -l /usr/local/bin/gtkdialog   # -> gtk3dialog
 ```
 
 ### Recommended tools
@@ -99,8 +96,8 @@ clang-format --dry-run --Werror src/widget_button.c
 1. Fork / clone the repository
 2. Create a branch: git checkout -b fix/widget-entry-null-crash
 3. Modify the code — one subject per branch
-4. Test: make check && ctest
-5. Check the format: clang-format -i src/*.c src/*.cpp
+4. Test: make check
+5. Check the format: clang-format -i src/*.c
 6. Commit: git commit -m "fix(widget_entry): handle NULL label gracefully"
 7. Submit a patch by email to devel@haplo-dialog.fr
    or open a Merge Request if a public Git repository is available
@@ -123,7 +120,7 @@ Valid scopes: `core`, `widget_button`, `gtk3dialog`, `packaging`, `doc`
 
 ## 5. Code standards
 
-### C (core and GTK/EFL widgets)
+### C (core and GTK 3 widgets)
 
 - Standard: **C11** (`-std=c11`)
 - Formatting: `.clang-format` provided at the root — **mandatory**
@@ -134,19 +131,13 @@ Valid scopes: `core`, `widget_button`, `gtk3dialog`, `packaging`, `doc`
 
 ```c
 /* ✅ Correct */
-WidgetNode *n = calloc(1, sizeof(WidgetNode));
-if (!n) { fprintf(stderr, "OOM\n"); return NULL; }
+char *buf = calloc(count, size);
+if (!buf) { fprintf(stderr, "OOM\n"); return NULL; }
 
 /* ❌ Forbidden */
 system("ls");
 char *p = malloc(strlen(user_input) + 1); /* unbounded */
 ```
-
-### C++ (Qt6/FLTK widgets)
-
-- Standard: **C++17**
-- No `new` without a matching `delete` — prefer Qt smart pointers (`QScopedPointer`) or FLTK RAII
-- Classes inheriting from `QObject`: always pass the parent in the constructor
 
 ### Shell (examples)
 
@@ -158,66 +149,135 @@ char *p = malloc(strlen(user_input) + 1); /* unbounded */
 
 ## 6. Adding a widget
 
-To add `<monwidget>` to an existing port:
+A widget is wired in at **several points**: the implementation, the grammar
+(lexer + parser) and the dispatch points (`automaton.c`, `widgets.c`). Take an
+existing widget as a model — here `<switch>` (`src/widget_switch.c/.h`).
 
-**1. Create `src/widget_monwidget.c` (or `.cpp`)**
+**1. Implement `src/widget_monwidget.c` + `src/widget_monwidget.h`**
+
+The actual prototype follows that of the existing widgets (see `src/widget_switch.h`):
 
 ```c
-/* widget_monwidget.c — <monwidget> for gtk3dialog
- * haplo-dialog 1.0.0 — GPL-2.0-or-later
- * The haplo-dialog team <devel@haplo-dialog.fr> */
+/* widget_monwidget.h */
+GtkWidget *widget_monwidget_create(AttributeSet *Attr, tag_attr *attr, gint Type);
+gchar     *widget_monwidget_envvar_construct(GtkWidget *widget);
+```
 
-#include "dialog_state.h"
+```c
+/* widget_monwidget.c */
+#include <gtk/gtk.h>
+#include "gtk3d.h"
 #include "widget_monwidget.h"
 
-GtkWidget *widget_monwidget_create(WidgetNode *wnode) {
-    /* ... */
+GtkWidget *widget_monwidget_create(AttributeSet *Attr, tag_attr *attr, gint Type)
+{
+    GtkWidget *widget = /* … create the native GtkWidget … */;
+    return widget;
 }
 
-char *widget_monwidget_envvar_construct(WidgetNode *wnode) {
-    /* Export the value to the shell environment */
-    return g_strdup_printf("%s=%s", wnode->var_name, /* value */);
+/* Exports the widget state in the historical VAR="value" format */
+gchar *widget_monwidget_envvar_construct(GtkWidget *widget)
+{
+    /* … read the value and return the string … */
 }
 ```
 
-**2. Create `src/widget_monwidget.h`**
+**2. Declare the type constant in `src/automaton.h`**
 
-**3. Add to `src/automaton.h`** (or equivalent depending on the port):
 ```c
-#define WIDGET_MONWIDGET  0x00C10000
+#define WIDGET_MONWIDGET  0x00C00000   /* next free value in the sequence */
 ```
 
-**4. Wire it in `src/widgets.c` / `widgets.cpp`**:
+**3. Recognise the tags in the lexer `src/gtkdialog_lexer.l`**
+
+Following the `<switch>` model, return the opening / with-attributes / closing tokens:
+
+```
+\<monwidget\>    { Token="<monwidget>"; return(MONWIDGET); }
+\<monwidget[ ]+  { Token="<monwidget>"; BEGIN(ST_TAG_ATTR); return(PART_MONWIDGET); }
+\<\/monwidget\>  { Token="</monwidget>"; return(EMONWIDGET); }
+```
+
+**4. Declare the tokens and the rules in `src/gtkdialog_parser.y`**
+
+```
+%token MONWIDGET PART_MONWIDGET EMONWIDGET
+```
+
+then add the productions that push the type — as for `SWITCH`, which
+calls `token_store(PUSH | WIDGET_SWITCH)` (and `token_store_attr(...)` for the
+form with attributes).
+
+**5. Instantiate it in `src/automaton.c`**
+
+This is where — and not in `widgets.c` — the widget is created (see the
+`case WIDGET_SWITCH`):
+
 ```c
 case WIDGET_MONWIDGET:
-    widget = widget_monwidget_create(wnode);
+    Widget = widget_monwidget_create(Attr, tag_attributes, Widget_Type);
+    push_widget(Widget, Widget_Type);
     break;
 ```
 
-**5. Add to `CMakeLists.txt` or `Makefile.am`**
+Also add the `case WIDGET_MONWIDGET:` to the `--print-ir` representation
+in the same file.
 
-**6. Create `examples/monwidget/demo.sh`**
+**6. Dispatch the output in `src/widgets.c`**
 
-**7. Update the port's `BILAN_SANTE.md` and `BILAN_GENERAL.md`**
+In `widget_get_text_value()` (value export) and `widgets_to_str()`
+(human-readable name):
+
+```c
+case WIDGET_MONWIDGET:
+    string = widget_monwidget_envvar_construct(widget);
+    return string;
+/* … and, in widgets_to_str() … */
+case WIDGET_MONWIDGET:
+    type = "MONWIDGET";
+    break;
+```
+
+**7. Add the sources to `src/Makefile.am`**
+
+```
+    widget_monwidget.c widget_monwidget.h \
+```
+
+**8. Provide an example and a test**
+
+- an example script under `examples/monwidget/` (like the existing examples:
+  `#!/bin/sh`, named after the widget);
+- an XML regression case in `tests/xml/`.
 
 ---
 
 ## 7. Tests
 
-### Unit tests (C core)
+### Unit tests (toolkit-free)
 
 ```sh
-cd gtk3dialog/gtk3dialog_1.0.0/tests
-make check        # test_safe_exec, test_stringman
+cd gtk3dialog/gtk3dialog_1.0.0
+autoreconf -fi && ./configure && make check
 ```
 
-The C core unit tests must **not** depend on GTK — only pure C.
+The unit tests must **not** depend on GTK 3 — only on the pure C core (`safe_exec`, `variables`, `stringman`).
 
 ### XML regression tests
 
 ```sh
 cd tests/xml
-./run_tests.sh gtk3dialog    # 52 XML conformance test cases
+./run_tests.sh gtk3dialog    # tests the 52 reference XML files (--print-ir mode, headless)
+```
+
+### Behaviour tests (unit)
+
+Beyond parsing, the core logic is actually **executed** (`safe_exec`
+security: `safe_system`/`safe_popen`). "Plain `main()`": neither libcheck nor an
+X server required, so runnable in CI. 9 behaviour tests.
+
+```sh
+./tests/run_unit_tests.sh gtk3dialog
 ```
 
 ### Valgrind (memory)
@@ -227,13 +287,31 @@ valgrind --leak-check=full --error-exitcode=1 \
   gtk3dialog --file tests/xml/01_button.xml --do EXIT:exit
 ```
 
+### Continuous integration (CI)
+
+The repository provides `.gitlab-ci.yml` (GitLab CI, `debian:testing` image, target: Debian testing). On every push / merge request, the job:
+
+1. installs the build dependencies;
+2. compiles (autotools);
+3. validates the binary against the 52 XML cases (`tests/xml/run_tests.sh`, `--print-ir`,
+   without an X server).
+
+A broken build or a single failing test fails the pipeline. Before pushing,
+you can reproduce the job locally:
+
+```sh
+cd gtk3dialog/gtk3dialog_1.0.0
+autoreconf -fi && ./configure --prefix="$PWD/inst" && make -j"$(nproc)" && make install
+PATH="$PWD/inst/bin:$PATH" sh ../../tests/xml/run_tests.sh gtk3dialog
+```
+
 ---
 
 ## 8. Documentation
 
-- Manpages are in **roff** format (`src/{bin}.1`) — kept up to date with each new widget
-- The common XML reference is in `haplo-dialog-xml(5)` — `man/haplo-dialog-xml.5`
-- The Texinfo documentation is in `doc/{port}.texi`
+- Manpages are in **roff** format (`src/gtk3dialog.1`) — kept up to date with each new widget
+- The XML reference is in `haplo-dialog-xml(5)` — `man/haplo-dialog-xml.5`
+- The Texinfo documentation is in `doc/`
 - The examples (`examples/`) are **CC0** — use them without restriction
 
 ---
@@ -243,11 +321,10 @@ valgrind --leak-check=full --error-exitcode=1 \
 **Absolute rules — any patch that violates them will be rejected:**
 
 1. Never direct `system()` / `popen()` — always `safe_system()` / `safe_popen()`
-2. gtk3dialog performs no privilege escalation — do not add any
-3. Validate all file paths before opening
-4. Do not bypass the shell-free fallback of `safe_exec.c` (metacharacters → `/bin/sh -c`, refusable via `HAPLO_NO_SHELL_FALLBACK`)
-5. No `eval` on user data
-6. `fclose()` on any `FILE*` — never `pclose()`
+2. `<action>`/`<input>` commands go through `safe_exec`: direct execution without a shell when possible; **logged** `/bin/sh -c` fallback, which can be disabled (`HAPLO_NO_SHELL_FALLBACK`)
+3. Systematic bounds on buffers — `g_strlcpy`/`g_strlcat`, never `strcpy`/`strcat`/`sprintf`
+4. No `eval`: values come back through the environment/the output, never evaluated by the tool
+5. `fclose()` on any `FILE*` — never `pclose()`
 
 To report a vulnerability: `devel@haplo-dialog.fr` (GPG encryption available).
 
@@ -256,12 +333,12 @@ To report a vulnerability: `devel@haplo-dialog.fr` (GPG encryption available).
 ## 10. Code review
 
 Review checks, in order:
-1. **Security** — the 6 absolute rules above
+1. **Security** — the 5 absolute rules above
 2. **Compilation** — gcc and clang warning-free with `-Wall -Wextra`
 3. **Formatting** — `clang-format` with no diff
-4. **Tests** — `make check` / `ctest` passes
-5. **Documentation** — BILAN_SANTE and manpage updated if a new widget
-6. **Style** — clarity, naming consistent with the existing port
+4. **Tests** — `make check` passes
+5. **Documentation** — manpage(s) and examples updated if a new widget
+6. **Style** — clarity, naming consistent with the existing code
 
 ---
 
@@ -269,4 +346,3 @@ Review checks, in order:
 
 ---
 
-*Timestamped document — last updated: 2026-06-07 (audit #3 — haplo-dialog v1.0.0).*

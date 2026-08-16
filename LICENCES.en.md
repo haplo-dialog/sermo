@@ -1,16 +1,20 @@
-# Licences — gtk3dialog
+# Licences — haplo-dialog
 
-## Overview
+## Summary
 
-gtk3dialog is a GTK3 port of **gtkdialog 0.8.3** (László Pere, Thunor),
-distributed under GPL-2.0-or-later. In direct continuity with this upstream,
-gtk3dialog is distributed under the following licences:
+| Component | Files | Licence | Reason |
+|-----------|-------|---------|--------|
+| Core and widgets | `src/*.c`, `src/*.h`, `src/safe_exec.c`, `src/variables.c`, `src/stringman.c`, `src/stack.c` | **GPL-2.0-or-later** | Direct gtkdialog heritage (László Pere), strong copyleft |
+| XML parser | `src/gtkdialog_lexer.l`, `src/gtkdialog_parser.y` | **GPL-2.0-or-later** | Direct heritage from the original gtkdialog |
+| Documentation | `doc/*.texi`, `doc/*.info`, `man/`, `*-site/*.html` | **CC-BY-SA 4.0** | Standard free documentation |
+| Examples | `examples/`, `tests/xml/*.xml` | **CC0-1.0** | Public domain — usable without restriction |
+| Packaging | `packaging/` | **GPL-2.0-or-later** | Build scripts tied to the project |
 
-| Component | Licence |
-|-----------|---------|
-| Code — binary, widgets, parser, C core | **GPL-2.0-or-later** |
-| Documentation — `doc/`, `man/`, site pages | **CC-BY-SA 4.0** |
-| Examples — `examples/`, `tests/xml/` | **CC0-1.0** |
+> **Status verified against the source.** The source files carry the
+> clause "either version 2 of the License, or (at your option) any later
+> version"; none of them references version 3. The SPDX headers and the
+> `debian/copyright` files confirm **GPL-2.0-or-later** throughout, apart from the
+> examples (CC0-1.0).
 
 ## Full texts
 
@@ -18,20 +22,24 @@ gtk3dialog is distributed under the following licences:
 - **CC-BY-SA 4.0**: https://creativecommons.org/licenses/by-sa/4.0/
 - **CC0-1.0**: https://creativecommons.org/publicdomain/zero/1.0/
 
-## Heritage
+## Provenance
 
-gtk3dialog derives from **gtkdialog 0.8.3** by László Pere and Thunor,
-distributed under GPL-2.0+. It keeps **GPL-2.0-or-later** (direct continuity with
-upstream).
+haplo-dialog is a fork of **gtkdialog 0.8.3** by László Pere and Thunor,
+distributed under GPL-2.0+. haplo-dialog keeps **GPL-2.0-or-later** (direct
+continuity with upstream).
 
-Upstream: https://github.com/01micko/gtkdialog
+Original upstream: https://github.com/01micko/gtkdialog
 
-## Licence headers
+## SPDX identification in the sources
 
-Generalising SPDX headers (`SPDX-License-Identifier`) across all source files is
-work in progress. The project licence remains **GPL-2.0-or-later**; it is the one
-that applies by default to any file that does not carry a specific header.
+Every source file carries an SPDX identifier in its header:
 
-## Acknowledgements
+```c
+/* SPDX-License-Identifier: GPL-2.0-or-later */  // core, widgets, compat
+```
 
-Developed with the assistance of **Claude** (Anthropic).
+```sh
+# SPDX-License-Identifier: CC0-1.0               // examples
+```
+
+---
