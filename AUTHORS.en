@@ -1,0 +1,41 @@
+haplo-dialog — Authors and contributors
+=======================================
+
+Project: haplo-dialog
+Site   : https://haplo-dialog.fr
+Email  : devel@haplo-dialog.fr
+
+──────────────────────────────────────────────────
+Development
+──────────────────────────────────────────────────
+
+The haplo-dialog team <devel@haplo-dialog.fr>
+  - Port to GTK3 (gtk3dialog) and C core
+  - Build system (autotools)
+  - Security: safe_system / safe_popen, hardening
+  - Packaging
+
+──────────────────────────────────────────────────
+Upstream — gtkdialog
+──────────────────────────────────────────────────
+
+gtk3dialog derives from gtkdialog, whose XML language it keeps.
+
+László Pere <laszlo.pere@gmx.net>
+  - Original author of gtkdialog 0.1 – 0.8.3 (2003–2013)
+
+Thunor
+  - Main contributor to gtkdialog 0.8.x
+  - https://github.com/01micko/gtkdialog
+
+──────────────────────────────────────────────────
+Acknowledgements
+──────────────────────────────────────────────────
+
+Claude (Anthropic — https://www.anthropic.com)
+  - Development assistance: architecture, code, documentation, tests
+
+──────────────────────────────────────────────────
+
+To contribute: see CONTRIBUTING.md
+To report a vulnerability: devel@haplo-dialog.fr

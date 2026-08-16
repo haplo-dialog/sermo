@@ -1,0 +1,49 @@
+haplo-dialog — Announcements for users
+======================================
+
+This file summarises the important changes from the user's point of view.
+For the complete technical history, see CHANGELOG.md.
+
+──────────────────────────────────────────────────
+Version 1.1.0 (in preparation)
+──────────────────────────────────────────────────
+
+* The XML test suite goes from 20 to 50 test cases.
+
+* Auto-detection of the graphical environment (terminal and editor) and
+  command allowlist broadened to other package managers.
+
+──────────────────────────────────────────────────
+Version 1.0.0 (2026-05-29) — First public release
+──────────────────────────────────────────────────
+
+haplo-dialog 1.0.0 is the first stable public release: gtk3dialog, the
+port of gtkdialog 0.8.3 onto GTK3.
+
+* gtkdialog compatibility: the package provides gtkdialog (symbolic link). A
+  single binary answers to both names, gtkdialog and gtk3dialog — your legacy
+  gtkdialog scripts run as is.
+
+* gtkdialog's XML syntax is kept identical.
+
+* Strengthened security: all commands go through safe_system().
+  No more direct calls to system() in the code.
+
+* Binary hardening: FORTIFY_SOURCE=3, PIE, Full RELRO, NX stack,
+  stack canary.
+
+* Packaging for Debian, Fedora, Arch, Gentoo, Slackware.
+
+To install:
+
+  # Debian / Ubuntu / Haplo-Linux
+  sudo apt install gtk3dialog
+
+  # From source
+  cd gtk3dialog/gtk3dialog_1.0.0 && ./configure && make && sudo make install
+
+Documentation: https://haplo-dialog.fr
+Bug reports: devel@haplo-dialog.fr
+Security: devel@haplo-dialog.fr
+
+──────────────────────────────────────────────────
