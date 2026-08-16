@@ -26,6 +26,26 @@ Versionning : [Semantic Versioning](https://semver.org/lang/fr/) à partir de 1.
 
 ---
 
+## Révisions d'empaquetage de la 1.0.0
+
+Le **logiciel** reste en version 1.0.0 : ces révisions ne changent que le paquet
+Debian. Le binaire livré est identique d'une révision à l'autre.
+
+### [1.0.0-3] — 2026-08-16
+- Identité du mainteneur du paquet : le champ `Maintainer` portait un nom
+  personnel et un domaine privé, visibles par `apt show gtk3dialog` chez chaque
+  utilisateur. Il porte désormais l'identité du projet.
+- `Vcs-Git` et `Vcs-Browser` pointent sur le dépôt réel ; ils désignaient
+  auparavant une forge qui n'a jamais existé.
+- Aucun changement fonctionnel.
+
+### [1.0.0-2] — 2026-08-11
+- Première construction propre du paquet, après la passe de sécurité
+  d'avant-publication (voir la 1.0.0 ci-dessous) : `lintian` sans signalement,
+  durcissement PIE / RELRO / stack-protector / FORTIFY vérifié.
+
+---
+
 ## [1.0.0] — 2026-05-29
 
 Première version publique stable — refonte complète de gtkdialog 0.8.3.

@@ -73,8 +73,10 @@ Un cœur C (grammaire flex/bison + automate + `safe_exec`) et un backend GTK 3.
 ### Paquet Debian (.deb)
 
 ```sh
-# Le .deb est fourni avec chaque version (voir les Releases du dépôt) :
-sudo apt install ./gtk3dialog_1.0.0-2_amd64.deb
+# Le .deb est joint à chaque release du dépôt, avec ses sommes de contrôle.
+# Téléchargez les deux, puis :
+sha256sum -c SHA256SUMS
+sudo apt install ./gtk3dialog_1.0.0-3_amd64.deb
 ```
 
 ### Depuis les sources
