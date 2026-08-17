@@ -60,7 +60,7 @@ First stable public version, complete rework of gtkdialog 0.8.3.
 - `haplo-dialog-xml(5)`, reference manpage for the XML syntax
 - Texinfo documentation (`.texi` → `.info`)
 - Documentation website (static HTML)
-- Packaging: `.deb` (Debian), `.rpm` (Fedora/SUSE), `PKGBUILD` (Arch), `.ebuild` (Gentoo), `.SlackBuild` (Slackware)
+- Packaging recipes: `.deb` (Debian, the only one built by the project), `.rpm` (Fedora/SUSE), `PKGBUILD` (Arch), `.ebuild` (Gentoo), `.SlackBuild` (Slackware)
 - Example scripts covering every widget (`examples/`, 53 directories)
 - XML regression suite (`tests/xml/`)
 - `SECURITY.md`, `.clang-format`, `.editorconfig`

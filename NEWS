@@ -32,14 +32,17 @@ corrigé, durci, maintenu.
 * Suite de tests : 52 cas XML de régression et 9 tests de comportement
   (safe_exec).
 
-* Packaging pour Debian, Fedora, Arch, Gentoo, Slackware.
+* Paquet .deb construit et verifie a chaque version. Recettes fournies,
+  non construites par nos soins, pour RPM, Arch, Gentoo et Slackware.
 
 Pour installer :
 
-  # Debian / Ubuntu
-  sudo apt install gtk3dialog
+  # Debian / Ubuntu : telecharger le .deb joint a la release, puis
+  sudo apt install ./gtk3dialog_1.0.0-3_amd64.deb
+  # (il n'y a PAS de depot APT a ajouter : « apt install gtk3dialog » seul
+  #  ne trouvera rien)
 
-  # Arch Linux (depuis les sources)
+  # Arch Linux (recette fournie, jamais construite par nos soins)
   cd gtk3dialog/gtk3dialog_1.0.0/packaging/arch && makepkg -si
 
   # Depuis les sources (autotools)

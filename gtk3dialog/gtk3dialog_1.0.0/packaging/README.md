@@ -5,15 +5,23 @@
 **Binaire :** `/usr/bin/gtk3dialog` (+ alias rétro-compatible `gtkdialog`)
 **Licence :** GPL-2.0-or-later
 
-## Formats disponibles
+## Formats disponibles, et ce qu'ils valent
 
-| Format | OS cibles | Dossier |
-|--------|-----------|---------|
-| `.deb` | Debian, Ubuntu, Linux Mint | `packaging/debian/` |
-| `.rpm` (spec) | Fedora, RHEL, CentOS, openSUSE | `packaging/rpm/` |
-| `PKGBUILD` | Arch Linux, Manjaro, EndeavourOS | `packaging/arch/` |
-| `ebuild` | Gentoo, Calculate Linux | `packaging/gentoo/` |
-| `.SlackBuild` | Slackware, Salix | `packaging/slackware/` |
+**Une recette fournie n'est pas un paquet testé.** Seul le `.deb` est construit
+et vérifié par le projet à chaque version. Les quatre autres sont un point de
+départ pour un empaqueteur : elles n'ont jamais tourné chez nous.
+
+| Format | OS cibles | Dossier | Construit par le projet |
+|--------|-----------|---------|:--:|
+| `.deb` | Debian, Ubuntu, Linux Mint | `packaging/debian/` | ✅ à chaque version |
+| `.rpm` (spec) | Fedora, RHEL, CentOS, openSUSE | `packaging/rpm/` | ❌ |
+| `PKGBUILD` | Arch Linux, Manjaro, EndeavourOS | `packaging/arch/` | ❌ |
+| `ebuild` | Gentoo, Calculate Linux | `packaging/gentoo/` | ❌ |
+| `.SlackBuild` | Slackware, Salix | `packaging/slackware/` | ❌ |
+
+Vous en faites tourner une ? Dites-le nous (`devel@haplo-dialog.fr`) : elle
+passera dans la colonne de droite, avec la version et la distribution où elle
+a marché.
 
 ## Construction rapide
 
