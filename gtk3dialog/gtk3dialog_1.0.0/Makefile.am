@@ -62,6 +62,7 @@ EXTRA_DIST = \
 	examples/vscale/* \
 	examples/vseparator/* \
 	examples/showcase/* \
+	examples/system-tools/* \
 	examples/window/*
 
 # ---------------------------------------------------------------------------
