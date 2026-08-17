@@ -1,4 +1,4 @@
-# Code de Conduite — haplo-dialog
+# Code de Conduite - haplo-dialog
 
 ## Notre engagement
 

@@ -1,6 +1,6 @@
-# Security Policy — haplo-dialog
+# Security Policy - haplo-dialog
 
-**Maintainer:** haplo-dialog — devel@haplo-dialog.fr
+**Maintainer:** haplo-dialog, devel@haplo-dialog.fr
 **Date:** 2026-05-29
 
 ---
@@ -40,7 +40,7 @@ Send an email to **devel@haplo-dialog.fr** with:
 | Stack canary | `-fstack-protector-strong` | Stack smashing detection |
 | Stack clash | `-fstack-clash-protection` | Protection against stack clash attacks |
 | Control Flow | `-fcf-protection=full` | Hardware CFI (x86 CET) |
-| PIE | `-fPIE -pie` | ASLR — randomised addresses |
+| PIE | `-fPIE -pie` | ASLR, randomised addresses |
 | Full RELRO | `-Wl,-z,relro -Wl,-z,now` | Read-only GOT |
 | NX Stack | `-Wl,-z,noexecstack` | Non-executable stack |
 | Format security | `-Wformat=2 -Werror=format-security` | Blocks dangerous format strings |
@@ -59,7 +59,7 @@ Send an email to **devel@haplo-dialog.fr** with:
 
 ### Trust model
 
-gtk3dialog runs the interface described by the **author of the XML script** — just
+gtk3dialog runs the interface described by the **author of the XML script**, just
 as a shell script runs what its author writes. The `<action>`/`<input>` tags can
 launch commands: **this is intended and documented**. The trust boundary is
 therefore the **local** author of the script, not a remote third party. The
@@ -84,7 +84,7 @@ XML coming from a less trustworthy source, set `HAPLO_NO_SHELL_FALLBACK=1`.
 | 2026-08-11 | gtk3dialog | Memory-safety pass: `g_strlcpy` (variable names), widget copy bounded to `MAXWIDGETS`, NUL-terminated spawn `argv`, child environment filtering | Medium |
 | 2026-05-29 | gtk3dialog | FORTIFY_SOURCE upgrade 2→3, stack-clash added, noexecstack | Medium |
 | 2026-05-22 | gtk3dialog | Binaries renamed, gtkdialog symlink fixed | Low |
-| 2026-05-01 | gtk3dialog | Initial port — safe_exec, PIE, RELRO | High |
+| 2026-05-01 | gtk3dialog | Initial port, safe_exec, PIE, RELRO | High |
 
 ---
 
@@ -102,4 +102,4 @@ cat /proc/sys/kernel/randomize_va_space   # must be 2
 ---
 
 *haplo-dialog is a fork of gtkdialog (László Pere, GPL-2.0-or-later).*
-*haplo-dialog — devel@haplo-dialog.fr — 2026*
+*haplo-dialog, devel@haplo-dialog.fr, 2026*

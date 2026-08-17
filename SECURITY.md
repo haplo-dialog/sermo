@@ -1,6 +1,6 @@
-# Politique de Sécurité — haplo-dialog
+# Politique de Sécurité - haplo-dialog
 
-**Mainteneur :** haplo-dialog — devel@haplo-dialog.fr
+**Mainteneur :** haplo-dialog, devel@haplo-dialog.fr
 **Date :** 2026-05-29
 
 ---
@@ -40,7 +40,7 @@ Envoyez un email à **devel@haplo-dialog.fr** avec :
 | Stack canary | `-fstack-protector-strong` | Détection de stack smashing |
 | Stack clash | `-fstack-clash-protection` | Protection contre stack clash attacks |
 | Control Flow | `-fcf-protection=full` | CFI hardware (x86 CET) |
-| PIE | `-fPIE -pie` | ASLR — adresses aléatoires |
+| PIE | `-fPIE -pie` | ASLR, adresses aléatoires |
 | Full RELRO | `-Wl,-z,relro -Wl,-z,now` | GOT en lecture seule |
 | NX Stack | `-Wl,-z,noexecstack` | Pile non exécutable |
 | Format security | `-Wformat=2 -Werror=format-security` | Blocage format strings dangereux |
@@ -59,12 +59,12 @@ Envoyez un email à **devel@haplo-dialog.fr** avec :
 
 ### Modèle de confiance
 
-gtk3dialog exécute l'interface décrite par l'**auteur du script XML** — comme un
+gtk3dialog exécute l'interface décrite par l'**auteur du script XML**, comme un
 script shell exécute ce que son auteur écrit. Les balises `<action>`/`<input>`
 peuvent lancer des commandes : **c'est voulu et documenté**. La frontière de
 confiance est donc l'auteur **local** du script, pas un tiers distant. Le
 durcissement ci-dessus protège contre l'**entrée malformée** et les **bugs de
-sûreté mémoire** — pas contre un auteur de script hostile, qui peut de toute
+sûreté mémoire**, pas contre un auteur de script hostile, qui peut de toute
 façon lancer des commandes. Pour interpréter du XML issu d'une source moins
 fiable, positionnez `HAPLO_NO_SHELL_FALLBACK=1`.
 
@@ -85,7 +85,7 @@ fiable, positionnez `HAPLO_NO_SHELL_FALLBACK=1`.
 | 2026-08-11 | gtk3dialog | Passe sûreté mémoire : `g_strlcpy` (noms de variables), copie de widgets bornée à `MAXWIDGETS`, `argv` de spawn NUL-terminé, filtrage de l'environnement enfant | Moyen |
 | 2026-05-29 | gtk3dialog | Upgrade FORTIFY_SOURCE 2→3, ajout stack-clash, noexecstack | Moyen |
 | 2026-05-22 | gtk3dialog | Renommage binaires, correction symlink gtkdialog | Faible |
-| 2026-05-01 | gtk3dialog | Port initial — safe_exec, PIE, RELRO | Élevé |
+| 2026-05-01 | gtk3dialog | Port initial, safe_exec, PIE, RELRO | Élevé |
 
 ---
 
@@ -103,4 +103,4 @@ cat /proc/sys/kernel/randomize_va_space   # doit être 2
 ---
 
 *haplo-dialog est un fork de gtkdialog (László Pere, GPL-2.0-or-later).*
-*haplo-dialog — devel@haplo-dialog.fr — 2026*
+*haplo-dialog, devel@haplo-dialog.fr, 2026*

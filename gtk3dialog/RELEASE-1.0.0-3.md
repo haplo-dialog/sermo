@@ -16,7 +16,7 @@ métadonnées du paquet changent :
 | | |
 |---|---|
 | `lintian` | aucun signalement |
-| Intégration continue | verte — 52 tests XML + tests unitaires, sur Debian testing |
+| Intégration continue | verte, 52 tests XML + tests unitaires, sur Debian testing |
 | Durcissement | PIE, RELRO, stack-protector, FORTIFY vérifiés |
 
 ### Installation
@@ -25,7 +25,7 @@ métadonnées du paquet changent :
 sudo apt install ./gtk3dialog_1.0.0-3_amd64.deb
 ```
 
-Sur une autre distribution, on construit depuis les sources — les recettes sont fournies
+Sur une autre distribution, on construit depuis les sources, les recettes sont fournies
 (autotools, ainsi que des variantes rpm, Arch et Slackware).
 
 ### Vérifier le téléchargement

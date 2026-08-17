@@ -96,17 +96,17 @@ Gentoo, Slackware). Voir [PACKAGING.md](PACKAGING.md).
 Durci par défaut : exécution via **`safe_exec`** (pas de `system()`),
 **`_FORTIFY_SOURCE=3`**, **PIE**, **Full RELRO**, `stack-protector-strong`,
 `-fcf-protection`. Le parser **rejette proprement** l'XML malformé (message +
-code de sortie non nul, jamais d'`abort`) — validé par **fuzzing** (`tests/fuzz/`).
+code de sortie non nul, jamais d'`abort`), validé par **fuzzing** (`tests/fuzz/`).
 Signalement de vulnérabilité : voir [SECURITY.md](SECURITY.md).
 
 ---
 
 ## Tests & qualité
 
-- **Régression XML** : `./tests/xml/run_tests.sh all` — **52/52** (parse headless `--print-ir`).
-- **Comportement** : `./tests/run_unit_tests.sh all` — `safe_exec`, **9/9** (sans serveur X).
+- **Régression XML** : `./tests/xml/run_tests.sh all`, **52/52** (parse headless `--print-ir`).
+- **Comportement** : `./tests/run_unit_tests.sh all`, `safe_exec`, **9/9** (sans serveur X).
 - **Fuzzing** du parser : `./tests/fuzz/run_fuzz.sh 60` (afl++ ou repli intégré).
-- **CI** : build + tests — `.gitlab-ci.yml` et `.gitea/workflows/`.
+- **CI** : build + tests, `.gitlab-ci.yml` et `.gitea/workflows/`.
 
 ---
 
@@ -121,17 +121,17 @@ Signalement de vulnérabilité : voir [SECURITY.md](SECURITY.md).
 
 ## Contribuer & licence
 
-Contributions bienvenues — voir [CONTRIBUTING.md](CONTRIBUTING.md) et
+Contributions bienvenues, voir [CONTRIBUTING.md](CONTRIBUTING.md) et
 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
-**GPL-2.0-or-later** — voir [LICENSE](LICENSE). Les exemples (`examples/`) sont en CC0.
+**GPL-2.0-or-later**, voir [LICENSE](LICENSE). Les exemples (`examples/`) sont en CC0.
 
 ---
 
-## Développement assisté par IA — dit franchement
+## Développement assisté par IA - dit franchement
 
 gtk3dialog a été écrit avec l'aide d'une IA (Claude, d'Anthropic) —
-conception, code, tests, documentation — sous ma relecture et ma responsabilité.
+conception, code, tests, documentation, sous ma relecture et ma responsabilité.
 Je le dis ouvertement : l'honnêteté ne se négocie pas. Je crois qu'un outil bien
 employé, sans rien masquer, sert la qualité au lieu de lui nuire. Le code est à
 moi ; les erreurs aussi.

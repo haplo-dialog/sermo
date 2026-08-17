@@ -1,4 +1,4 @@
-# Versioning & conventions Git — haplo-dialog
+# Versioning & conventions Git - haplo-dialog
 
 Ce document fixe la manière dont le projet est **versionné**, **changé** et
 **publié**. Il décrit les conventions *réellement pratiquées* dans le dépôt et
@@ -6,7 +6,7 @@ les formalise pour la suite.
 
 ---
 
-## 1. Schéma de version — SemVer 2.0.0
+## 1. Schéma de version - SemVer 2.0.0
 
 Depuis la **1.0.0**, le projet suit [Semantic Versioning 2.0.0](https://semver.org/lang/fr/) :
 
@@ -48,7 +48,7 @@ c'est le **port de référence** (43 widgets), qui fournit l'alias rétro-compat
 
 ### Emplacements à mettre à jour (check-list de release)
 
-Une montée de version doit toucher les fichiers suivants — c'est la check-list
+Une montée de version doit toucher les fichiers suivants, c'est la check-list
 de release :
 
 | Emplacement | Fichier(s) | Champ |
@@ -72,19 +72,19 @@ en tête) ; le **plus lourd** est Gentoo (renommage de fichier) et le dossier so
 
 ---
 
-## 3. Journal des modifications — Keep a Changelog
+## 3. Journal des modifications - Keep a Changelog
 
 `CHANGELOG.md` suit [Keep a Changelog](https://keepachangelog.com/fr/1.0.0/).
 
 - Les changements en cours s'accumulent sous **`## [Unreleased]`** (avec la cible,
   ex. *« v1.1.0 (en cours) »*).
-- Au moment de publier, `[Unreleased]` devient `## [X.Y.Z] — AAAA-MM-JJ`.
+- Au moment de publier, `[Unreleased]` devient `## [X.Y.Z], AAAA-MM-JJ`.
 - Sous-sections autorisées (en français) :
   **Ajouté · Modifié · Corrigé · Supprimé · Déprécié · Sécurité**.
 - Les entrées décrivent le **pourquoi/le quoi pour l'utilisateur**, pas le diff.
 
 Les anciennes entrées (`0.9.0-haplo1`, `gtkdialog-0.8.3`) sont **préservées
-telles quelles** — elles documentent la lignée et ne sont jamais réécrites.
+telles quelles**, elles documentent la lignée et ne sont jamais réécrites.
 
 ---
 
@@ -147,7 +147,7 @@ vertes (build OK). `main` ne doit jamais être cassée.
 
 ```sh
 # Poser la release courante :
-git tag -a v1.0.0 -m "haplo-dialog 1.0.0 — première version publique stable"
+git tag -a v1.0.0 -m "haplo-dialog 1.0.0, première version publique stable"
 git push origin v1.0.0
 ```
 
@@ -162,7 +162,7 @@ Pour publier `X.Y.Z` :
 2. **Bumper la version** dans tous les emplacements de la §2 :
    `configure.ac`, `CMakeLists.txt`, dossier `gtk3dialog_X.Y.Z/`, `PKGBUILD` + `.SRCINFO`,
    `*.spec` (`%global version`), ebuild renommé `gtk3dialog-X.Y.Z.ebuild`.
-3. **Clore le CHANGELOG** : `## [Unreleased]` → `## [X.Y.Z] — AAAA-MM-JJ`, et
+3. **Clore le CHANGELOG** : `## [Unreleased]` → `## [X.Y.Z], AAAA-MM-JJ`, et
    recréer une section `[Unreleased]` vide pour la suite.
 4. **Mettre à jour** `SECURITY.md` (tableau des versions supportées), `NEWS`,
    badges `site-web/`.
@@ -170,7 +170,7 @@ Pour publier `X.Y.Z` :
 6. **Tag annoté** : `git tag -a vX.Y.Z -m "haplo-dialog X.Y.Z"`.
 7. **Publier** : pousser commit + tag, construire les paquets distro.
 
-Un script `ci/bump-version.sh` (à écrire) pourra automatiser l'étape 2 — le
+Un script `ci/bump-version.sh` (à écrire) pourra automatiser l'étape 2, le
 périmètre exact des fichiers est fixé par la table de la §2.
 
 ---

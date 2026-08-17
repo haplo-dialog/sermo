@@ -96,17 +96,17 @@ Gentoo, Slackware). See [PACKAGING.md](PACKAGING.md).
 Hardened by default: execution through **`safe_exec`** (no `system()`),
 **`_FORTIFY_SOURCE=3`**, **PIE**, **Full RELRO**, `stack-protector-strong`,
 `-fcf-protection`. The parser **cleanly rejects** malformed XML (message +
-non-zero exit code, never an `abort`) — validated by **fuzzing** (`tests/fuzz/`).
+non-zero exit code, never an `abort`), validated by **fuzzing** (`tests/fuzz/`).
 Vulnerability report: see [SECURITY.md](SECURITY.en.md).
 
 ---
 
 ## Tests & quality
 
-- **XML regression**: `./tests/xml/run_tests.sh all` — **52/52** (headless parse `--print-ir`).
-- **Behaviour**: `./tests/run_unit_tests.sh all` — `safe_exec`, **9/9** (without an X server).
+- **XML regression**: `./tests/xml/run_tests.sh all`, **52/52** (headless parse `--print-ir`).
+- **Behaviour**: `./tests/run_unit_tests.sh all`, `safe_exec`, **9/9** (without an X server).
 - **Fuzzing** of the parser: `./tests/fuzz/run_fuzz.sh 60` (afl++ or built-in fallback).
-- **CI**: build + tests — `.gitlab-ci.yml` and `.gitea/workflows/`.
+- **CI**: build + tests, `.gitlab-ci.yml` and `.gitea/workflows/`.
 
 ---
 
@@ -121,17 +121,17 @@ Vulnerability report: see [SECURITY.md](SECURITY.en.md).
 
 ## Contributing & licence
 
-Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.en.md) and
+Contributions are welcome, see [CONTRIBUTING.md](CONTRIBUTING.en.md) and
 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
-**GPL-2.0-or-later** — see [LICENSE](LICENSE). The examples (`examples/`) are under CC0.
+**GPL-2.0-or-later**, see [LICENSE](LICENSE). The examples (`examples/`) are under CC0.
 
 ---
 
-## AI-assisted development — stated plainly
+## AI-assisted development - stated plainly
 
 gtk3dialog was written with the help of an AI (Claude, by Anthropic) —
-design, code, tests, documentation — under my review and my responsibility.
+design, code, tests, documentation, under my review and my responsibility.
 I say so openly: honesty is not negotiable. I believe that a tool used well,
 with nothing concealed, serves quality instead of harming it. The code is
 mine; so are the mistakes.

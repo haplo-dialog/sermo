@@ -1,4 +1,4 @@
-# Licences — haplo-dialog
+# Licences - haplo-dialog
 
 ## Summary
 
@@ -7,7 +7,7 @@
 | Core and widgets | `src/*.c`, `src/*.h`, `src/safe_exec.c`, `src/variables.c`, `src/stringman.c`, `src/stack.c` | **GPL-2.0-or-later** | Direct gtkdialog heritage (László Pere), strong copyleft |
 | XML parser | `src/gtkdialog_lexer.l`, `src/gtkdialog_parser.y` | **GPL-2.0-or-later** | Direct heritage from the original gtkdialog |
 | Documentation | `doc/*.texi`, `doc/*.info`, `man/`, `*-site/*.html` | **CC-BY-SA 4.0** | Standard free documentation |
-| Examples | `examples/`, `tests/xml/*.xml` | **CC0-1.0** | Public domain — usable without restriction |
+| Examples | `examples/`, `tests/xml/*.xml` | **CC0-1.0** | Public domain, usable without restriction |
 | Packaging | `packaging/` | **GPL-2.0-or-later** | Build scripts tied to the project |
 
 > **Status verified against the source.** The source files carry the

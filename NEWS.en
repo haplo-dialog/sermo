@@ -1,11 +1,11 @@
-haplo-dialog — Announcements for users
+haplo-dialog, Announcements for users
 ======================================
 
 This file summarises the important changes from the user's point of view.
 For the complete technical history, see CHANGELOG.md.
 
 ──────────────────────────────────────────────────
-Version 1.0.0 (2026-05-29) — First public release
+Version 1.0.0 (2026-05-29), First public release
 ──────────────────────────────────────────────────
 
 haplo-dialog 1.0.0 is the first stable public release.
@@ -19,7 +19,7 @@ fixed, hardened, maintained.
   43 widgets and is driven entirely in XML from the shell.
 
 * gtkdialog backwards compatibility: installing gtk3dialog creates a
-  "gtkdialog" alias — your legacy gtkdialog 0.8.x scripts run as is
+  "gtkdialog" alias, your legacy gtkdialog 0.8.x scripts run as is
   (XML, options and environment variables).
 
 * Strengthened security: all commands go through safe_exec.

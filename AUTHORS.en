@@ -1,4 +1,4 @@
-haplo-dialog — Authors and contributors
+haplo-dialog, Authors and contributors
 =======================================
 
 Project: haplo-dialog
@@ -12,11 +12,11 @@ Main authors
 haplo-dialog <devel@haplo-dialog.fr>
 
 ──────────────────────────────────────────────────
-Original upstream — gtkdialog
+Original upstream, gtkdialog
 ──────────────────────────────────────────────────
 
 László Pere <laszlo.pere@gmx.net>
-  - Original author of gtkdialog 0.1 – 0.8.3 (2003–2013)
+  - Original author of gtkdialog 0.1, 0.8.3 (2003–2013)
 
 Thunor
   - Main contributor to gtkdialog 0.8.x
@@ -26,8 +26,8 @@ Thunor
 Special thanks
 ──────────────────────────────────────────────────
 
-Claude (Anthropic — https://www.anthropic.com)
-  - Development assistance — May 2026
+Claude (Anthropic, https://www.anthropic.com)
+  - Development assistance, May 2026
   - Architecture, code, documentation, tests
 
 ──────────────────────────────────────────────────

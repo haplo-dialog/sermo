@@ -1,4 +1,4 @@
-# Politique d'empaquetage — haplo-dialog
+# Politique d'empaquetage - haplo-dialog
 
 > Comment haplo-dialog est distribué : la source est le livrable principal, un
 > `.deb` accompagne chaque release, et des recettes prêtes à l'emploi couvrent
@@ -7,7 +7,7 @@
 ## Principe : la source est le livrable principal
 
 haplo-dialog fournit un **port unique**, `gtk3dialog` (backend GTK 3), le port de
-référence. Le projet maintient **un** paquet binaire — le `.deb` de `gtk3dialog` —
+référence. Le projet maintient **un** paquet binaire, le `.deb` de `gtk3dialog` —
 et fournit, dans l'arbre, des **recettes** pour les autres familles de
 distributions. Héberger un binaire pour chaque cible serait ingérable : le modèle
 amont/aval du logiciel libre veut que l'**amont fournisse la source + des
@@ -17,7 +17,7 @@ adapté à sa cible.
 ### Trois niveaux
 
 1. **Source (tous publics).** `git clone` + build autotools. Le port embarque ses
-   recettes d'empaquetage prêtes à l'emploi — voir la matrice.
+   recettes d'empaquetage prêtes à l'emploi, voir la matrice.
 2. **Un binaire fourni par le projet : le `.deb` de `gtk3dialog`.** Il est attaché
    à chaque version publiée (release du projet).
 3. **Les autres cibles : recettes fournies, build à la demande.** Le projet
@@ -72,14 +72,14 @@ scripts gtkdialog d'époque fonctionnent sans portage.
 ## Build depuis les sources (sans paquet)
 
 ```sh
-# autotools — gtk3dialog
+# autotools - gtk3dialog
 cd gtk3dialog/gtk3dialog_1.0.0 && autoreconf -fi && ./configure && make -j"$(nproc)" && sudo make install
 ```
 
 ## Domaine du projet
 
-- **haplo-dialog.fr** — site, documentation et source du projet.
+- **haplo-dialog.fr** : site, documentation et source du projet.
 
 ---
 
-*haplo-dialog — GPL-2.0-or-later*
+*haplo-dialog, GPL-2.0-or-later*

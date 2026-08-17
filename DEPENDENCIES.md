@@ -1,8 +1,8 @@
-# Dépendances & prérequis — haplo-dialog
+# Dépendances & prérequis - haplo-dialog
 
 Ce document liste les dépendances **réelles** de haplo-dialog (port unique
 **gtk3dialog**, backend GTK 3), dérivées directement des fichiers de build et de
-packaging du dépôt — et non d'une description rédigée à la main.
+packaging du dépôt, et non d'une description rédigée à la main.
 
 ## Méthodologie
 
@@ -43,7 +43,7 @@ requis).
 
 | Statut GLib | Détail (source) |
 |-------------|-----------------|
-| **requis** (`glib-2.0 ≥ 2.56`) | `AC_MSG_ERROR` si absent — mais tiré par GTK 3 |
+| **requis** (`glib-2.0 ≥ 2.56`) | `AC_MSG_ERROR` si absent, mais tiré par GTK 3 |
 
 ---
 
@@ -71,7 +71,7 @@ Les noms de paquets ci-dessous sont **ceux déclarés dans le packaging du
 dépôt**. La colonne « build » regroupe développement + outils ; la colonne
 « exécution » correspond aux `Depends` runtime / `Requires`.
 
-### gtk3dialog — GTK+ 3 ≥ 3.22.0, VTE 2.91 (optionnel)
+### gtk3dialog - GTK+ 3 ≥ 3.22.0, VTE 2.91 (optionnel)
 
 | Distro | Build | Exécution |
 |--------|-------|-----------|
@@ -117,4 +117,4 @@ Voir aussi `ci/build.sh` (`./ci/build.sh`, ou `./ci/build.sh gtk3dialog --test`)
 
 ---
 
-*Document dérivé des fichiers de build/packaging du dépôt — build gtk3dialog vérifié + 52/52 tests XML de régression (haplo-dialog v1.0.0).*
+*Document dérivé des fichiers de build/packaging du dépôt, build gtk3dialog vérifié + 52/52 tests XML de régression (haplo-dialog v1.0.0).*

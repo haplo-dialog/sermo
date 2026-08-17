@@ -1,4 +1,4 @@
-# Contribution guide — haplo-dialog
+# Contribution guide - haplo-dialog
 
 Thank you for your interest in haplo-dialog. This document explains how to contribute effectively to the project.
 
@@ -23,11 +23,11 @@ Thank you for your interest in haplo-dialog. This document explains how to contr
 
 - Read [SECURITY.md](SECURITY.en.md) **in full** before any change to the core
 - Follow the [Code of Conduct](CODE_OF_CONDUCT.md)
-- For security bugs: write to `devel@haplo-dialog.fr` — **do not open a public ticket**
+- For security bugs: write to `devel@haplo-dialog.fr`, **do not open a public ticket**
 - For functional bugs: open a ticket with a minimal reproducible XML script
 
 **Reference port:**  
-haplo-dialog provides a single port, `gtk3dialog` (GTK 3 backend), which provides the backwards-compatible alias `gtkdialog`. It is the maintained successor to gtkdialog (a fork of Laszlo Pere's gtkdialog 0.8.3): where gtkdialog is abandoned, haplo-dialog brings it back to life — fixed, hardened, maintained.
+haplo-dialog provides a single port, `gtk3dialog` (GTK 3 backend), which provides the backwards-compatible alias `gtkdialog`. It is the maintained successor to gtkdialog (a fork of Laszlo Pere's gtkdialog 0.8.3): where gtkdialog is abandoned, haplo-dialog brings it back to life, fixed, hardened, maintained.
 
 ---
 
@@ -95,7 +95,7 @@ clang-format --dry-run --Werror src/widget_button.c
 ```
 1. Fork / clone the repository
 2. Create a branch: git checkout -b fix/widget-entry-null-crash
-3. Modify the code — one subject per branch
+3. Modify the code, one subject per branch
 4. Test: make check
 5. Check the format: clang-format -i src/*.c
 6. Commit: git commit -m "fix(widget_entry): handle NULL label gracefully"
@@ -123,10 +123,10 @@ Valid scopes: `core`, `widget_button`, `gtk3dialog`, `packaging`, `doc`
 ### C (core and GTK 3 widgets)
 
 - Standard: **C11** (`-std=c11`)
-- Formatting: `.clang-format` provided at the root — **mandatory**
-- No direct `system()`, `popen()`, `strcpy()`, `sprintf()` — use `safe_system()`, `safe_popen()`, `g_strlcpy()`, `snprintf()`
+- Formatting: `.clang-format` provided at the root, **mandatory**
+- No direct `system()`, `popen()`, `strcpy()`, `sprintf()`, use `safe_system()`, `safe_popen()`, `g_strlcpy()`, `snprintf()`
 - Any `FILE*` returned by `safe_popen()` → `fclose()`, **never `pclose()`**
-- Check the return of `malloc()` / `calloc()` — `NULL` = fatal log + return
+- Check the return of `malloc()` / `calloc()`, `NULL` = fatal log + return
 - No unbounded dynamic allocation in the widgets
 
 ```c
@@ -151,7 +151,7 @@ char *p = malloc(strlen(user_input) + 1); /* unbounded */
 
 A widget is wired in at **several points**: the implementation, the grammar
 (lexer + parser) and the dispatch points (`automaton.c`, `widgets.c`). Take an
-existing widget as a model — here `<switch>` (`src/widget_switch.c/.h`).
+existing widget as a model, here `<switch>` (`src/widget_switch.c/.h`).
 
 **1. Implement `src/widget_monwidget.c` + `src/widget_monwidget.h`**
 
@@ -204,13 +204,13 @@ Following the `<switch>` model, return the opening / with-attributes / closing t
 %token MONWIDGET PART_MONWIDGET EMONWIDGET
 ```
 
-then add the productions that push the type — as for `SWITCH`, which
+then add the productions that push the type, as for `SWITCH`, which
 calls `token_store(PUSH | WIDGET_SWITCH)` (and `token_store_attr(...)` for the
 form with attributes).
 
 **5. Instantiate it in `src/automaton.c`**
 
-This is where — and not in `widgets.c` — the widget is created (see the
+This is where, and not in `widgets.c`, the widget is created (see the
 `case WIDGET_SWITCH`):
 
 ```c
@@ -261,7 +261,7 @@ cd gtk3dialog/gtk3dialog_1.0.0
 autoreconf -fi && ./configure && make check
 ```
 
-The unit tests must **not** depend on GTK 3 — only on the pure C core (`safe_exec`, `variables`, `stringman`).
+The unit tests must **not** depend on GTK 3, only on the pure C core (`safe_exec`, `variables`, `stringman`).
 
 ### XML regression tests
 
@@ -309,22 +309,22 @@ PATH="$PWD/inst/bin:$PATH" sh ../../tests/xml/run_tests.sh gtk3dialog
 
 ## 8. Documentation
 
-- Manpages are in **roff** format (`src/gtk3dialog.1`) — kept up to date with each new widget
-- The XML reference is in `haplo-dialog-xml(5)` — `man/haplo-dialog-xml.5`
+- Manpages are in **roff** format (`src/gtk3dialog.1`), kept up to date with each new widget
+- The XML reference is in `haplo-dialog-xml(5)`, `man/haplo-dialog-xml.5`
 - The Texinfo documentation is in `doc/`
-- The examples (`examples/`) are **CC0** — use them without restriction
+- The examples (`examples/`) are **CC0**, use them without restriction
 
 ---
 
 ## 9. Security
 
-**Absolute rules — any patch that violates them will be rejected:**
+**Absolute rules, any patch that violates them will be rejected:**
 
-1. Never direct `system()` / `popen()` — always `safe_system()` / `safe_popen()`
+1. Never direct `system()` / `popen()`, always `safe_system()` / `safe_popen()`
 2. `<action>`/`<input>` commands go through `safe_exec`: direct execution without a shell when possible; **logged** `/bin/sh -c` fallback, which can be disabled (`HAPLO_NO_SHELL_FALLBACK`)
-3. Systematic bounds on buffers — `g_strlcpy`/`g_strlcat`, never `strcpy`/`strcat`/`sprintf`
+3. Systematic bounds on buffers, `g_strlcpy`/`g_strlcat`, never `strcpy`/`strcat`/`sprintf`
 4. No `eval`: values come back through the environment/the output, never evaluated by the tool
-5. `fclose()` on any `FILE*` — never `pclose()`
+5. `fclose()` on any `FILE*`, never `pclose()`
 
 To report a vulnerability: `devel@haplo-dialog.fr` (GPG encryption available).
 
@@ -333,16 +333,16 @@ To report a vulnerability: `devel@haplo-dialog.fr` (GPG encryption available).
 ## 10. Code review
 
 Review checks, in order:
-1. **Security** — the 5 absolute rules above
-2. **Compilation** — gcc and clang warning-free with `-Wall -Wextra`
-3. **Formatting** — `clang-format` with no diff
-4. **Tests** — `make check` passes
-5. **Documentation** — manpage(s) and examples updated if a new widget
-6. **Style** — clarity, naming consistent with the existing code
+1. **Security**, the 5 absolute rules above
+2. **Compilation**, gcc and clang warning-free with `-Wall -Wextra`
+3. **Formatting**, `clang-format` with no diff
+4. **Tests**, `make check` passes
+5. **Documentation**, manpage(s) and examples updated if a new widget
+6. **Style**, clarity, naming consistent with the existing code
 
 ---
 
-*Thank you for contributing to haplo-dialog — every shell script that displays a real interface is better than an `echo "Enter a choice: "` in a terminal.*
+*Thank you for contributing to haplo-dialog, every shell script that displays a real interface is better than an `echo "Enter a choice: "` in a terminal.*
 
 ---
 
