@@ -1,13 +1,14 @@
 # Politique d'empaquetage - haplo-dialog
 
 > Comment haplo-dialog est distribué : la source est le livrable principal, un
-> `.deb` accompagne chaque release, et des recettes prêtes à l'emploi couvrent
-> les autres familles de distributions. Dernière mise à jour : 2026-07-23.
+> `.deb` construit et vérifié accompagne chaque release, et des recettes non
+> construites par nos soins sont fournies pour les autres familles de
+> distributions. Dernière mise à jour : 2026-08-17.
 
 ## Principe : la source est le livrable principal
 
 haplo-dialog fournit un **port unique**, `gtk3dialog` (backend GTK 3), le port de
-référence. Le projet maintient **un** paquet binaire, le `.deb` de `gtk3dialog` —
+référence. Le projet maintient **un** paquet binaire, le `.deb` de `gtk3dialog`,
 et fournit, dans l'arbre, des **recettes** pour les autres familles de
 distributions. Héberger un binaire pour chaque cible serait ingérable : le modèle
 amont/aval du logiciel libre veut que l'**amont fournisse la source + des
@@ -17,7 +18,8 @@ adapté à sa cible.
 ### Trois niveaux
 
 1. **Source (tous publics).** `git clone` + build autotools. Le port embarque ses
-   recettes d'empaquetage prêtes à l'emploi, voir la matrice.
+   recettes d'empaquetage ; ce qu'elles valent est dit dans la matrice, colonne
+   par colonne.
 2. **Un binaire fourni par le projet : le `.deb` de `gtk3dialog`.** Il est attaché
    à chaque version publiée (release du projet).
 3. **Les autres cibles : recettes fournies, build à la demande.** Le projet
@@ -31,13 +33,24 @@ adapté à sa cible.
 | `.deb` gtk3dialog | ✅ | attaché à chaque release |
 | Paquets pour les autres distributions | ❌ | recettes dans l'arbre ; build par l'aval |
 
-## Recettes disponibles (matrice)
+## Recettes disponibles, et ce qu'elles valent
+
+Une recette fournie n'est pas un paquet testé. Le tableau dit lequel des deux,
+pour éviter la lecture optimiste d'une colonne de coches identiques.
 
 `gtk3dialog` fournit, dans `gtk3dialog/gtk3dialog_1.0.0/packaging/` :
 
-| Port | Debian | RPM | Arch | Gentoo | Slackware |
-|------|:--:|:--:|:--:|:--:|:--:|
-| gtk3dialog | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Cible | Recette fournie | Construite et vérifiée par le projet |
+|---|:--:|---|
+| Debian et dérivées | ✅ | ✅ à chaque version : `dpkg-buildpackage`, lintian sans erreur ni avertissement, `.deb` joint à la release |
+| Fedora, openSUSE (RPM) | ✅ | ❌ jamais construite par nos soins |
+| Arch (PKGBUILD) | ✅ | ❌ jamais construite par nos soins |
+| Gentoo (ebuild) | ✅ | ❌ jamais construite par nos soins |
+| Slackware (SlackBuild) | ✅ | ❌ jamais construite par nos soins |
+
+Les quatre dernières sont un **point de départ pour un empaqueteur**, pas une
+garantie. Si vous en faites tourner une, dites-le nous : elle passera dans la
+colonne de droite, avec la version et la distribution où elle a marché.
 
 ```
 gtk3dialog/gtk3dialog_1.0.0/packaging/
