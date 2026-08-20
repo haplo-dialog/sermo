@@ -1,0 +1,28 @@
+<!-- DESC: Etiquettes vides et espacements, valeurs par defaut vides -->
+<window title="Test 53" width-request="250" height-request="200">
+  <vbox>
+    <text><label>Au-dessus de l'espaceur</label></text>
+
+    <!-- Etiquette vide : espaceur entre deux widgets -->
+    <text><label></label></text>
+
+    <!-- Etiquette faite uniquement d'espaces : equivalente a la precedente,
+         le lexer laisse tomber les blancs avant la regle de chaine -->
+    <text><label>   </label></text>
+
+    <text><label>Sous l'espaceur</label></text>
+
+    <!-- Valeur par defaut vide : le champ demarre a blanc -->
+    <entry>
+      <variable>CHAMP</variable>
+      <default></default>
+    </entry>
+
+    <!-- Element item vide, avec et sans attribut de balise -->
+    <combobox>
+      <variable>CHOIX</variable>
+      <item></item>
+      <item>Premier</item>
+    </combobox>
+  </vbox>
+</window>

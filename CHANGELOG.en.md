@@ -11,7 +11,7 @@ Versioning: [Semantic Versioning](https://semver.org/) starting from 1.0.0.
 ### Added
 - **gtkdialog backwards compatibility (2026-06-06)** : `make install` installs a **`gtkdialog` → `gtk3dialog` symlink** (and `gtkdialog.1` → `gtk3dialog.1`) through the autotools hook; a legacy gtkdialog script (`export MAIN_DIALOG='<window …>'; gtkdialog --program=MAIN_DIALOG`) parses, runs and returns its output in the historical format (`VAR="value"`). The consistency of the symlink is carried through into every packaging recipe (Debian `.links`, RPM `%files`, etc.).
 - `detect_terminal()` / `detect_editor()`, auto-detection of the graphical environment (xfce4-terminal, konsole, gnome-terminal, mousepad, kate, gedit…)
-- XML suite extended to **52 test cases** (searchentry, levelbar, drawingarea, colorbutton, fontbutton, aspectframe, tree, table, menubar, statusbar, togglebutton, timer, edit, list, separators, infobar types, 3-page notebook, REFRESH/ENABLE/DISABLE/SHOW/HIDE/CLEAR actions, complex form)
+- XML suite extended to **53 test cases** (empty labels and default values, searchentry, levelbar, drawingarea, colorbutton, fontbutton, aspectframe, tree, table, menubar, statusbar, togglebutton, timer, edit, list, separators, infobar types, 3-page notebook, REFRESH/ENABLE/DISABLE/SHOW/HIDE/CLEAR actions, complex form)
 - `AUTHORS` and `NEWS` at the root (GNU standard)
 
 ### Changed
@@ -20,6 +20,7 @@ Versioning: [Semantic Versioning](https://semver.org/) starting from 1.0.0.
 - Licence **standardised to GPL-2.0-or-later** across the whole repository (source headers, packaging, `LICENCES.md`, `CONTRIBUTING.md`), the GPL-3.0+ attempt has been reverted, in accordance with the "either version 2 … any later version" clause of the sources and with upstream gtkdialog
 
 ### Fixed
+- **Empty text-content element (2026-08-20)**: `<label></label>`, or a label made only of whitespace, broke parsing with a "syntax error" pointing at the closing tag, even though writing `<text><label>   </label></text>` is the natural way to place a spacer. `<label>` and `<default>` now accept an empty body and evaluate to `""` (as `<item>` already did); `<sensitive>`, `<width>`, `<height>`, `<input>`, `<output>`, `<variable>` and `<action>` remain an error, but with a message naming the cause: "the <variable> element is empty; it requires a name."
 - **Truncation of auto-generated widget names (2026-06-06)**: `g_snprintf(name, sizeof(name), …)` where `name` is a `char*`, `sizeof` therefore evaluated to 8 bytes, truncating the names, fixed by passing 64 as the buffer size; restores the original gtkdialog behaviour
 - **Read of an uninitialised variable (2026-06-06)**: `instruction inst;` whose `inst.ival` was being read → `instruction inst = {0};`
 - **Clean build (2026-06-06)**: 0 errors; the residual warnings stem from upstream gtkdialog idioms and from 2 untouchable bison shift/reduce conflicts

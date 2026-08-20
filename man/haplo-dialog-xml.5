@@ -63,7 +63,9 @@ Infobulle affichée au survol.
 
 .TP
 .B <label>texte</label>
-Texte affiché ou étiquette du widget.
+Texte affiché ou étiquette du widget. L'élément peut être vide
+(\fB<label></label>\fR, ou ne contenir que des espaces) : le widget porte
+alors une étiquette blanche, ce qui sert d'espaceur entre deux widgets.
 .TP
 .B <variable>NOM</variable>
 Nom de la variable d'environnement exportée à la fermeture.
@@ -77,7 +79,8 @@ lors d'un événement (clic, changement...).
 Commande shell dont la sortie alimente le widget.
 .TP
 .B <default>valeur</default>
-Valeur initiale du widget.
+Valeur initiale du widget. L'élément peut être vide
+(\fB<default></default>\fR) : le widget démarre alors à blanc.
 
 .SH WIDGETS — RÉFÉRENCE COMPLÈTE
 
