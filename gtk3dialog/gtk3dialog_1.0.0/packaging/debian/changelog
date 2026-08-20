@@ -1,3 +1,25 @@
+gtk3dialog (1.0.0-7) unstable; urgency=medium
+
+  * New attribute headerbar="yes|no" on <window>: client-side decorations.
+    "yes" makes the program draw its own title bar, a GtkHeaderBar carrying
+    the window title and a close button, instead of the one the window
+    manager would draw. There are now three cases, and they say so: nothing
+    means the window manager draws the bar, headerbar="yes" means the program
+    draws it, decorated="false" means nobody does.
+  * It is off by default on purpose. Haplo ships XFCE, where a client-drawn
+    bar stops following the xfwm4 theme and its buttons stop matching every
+    other window on the desktop. A script that wants that look asks for it.
+  * The attribute is not called "titlebar" for a measured reason: GtkWindow in
+    GTK4 has a "titlebar" property of type GtkWidget, and tag_attributes.c
+    applies any attribute matching a GObject property, so that name would be
+    captured and handed a string where a widget is expected. "headerbar" is
+    free on GtkWindow in both GTK3 and GTK4.
+  * An unrecognised value is reported and treated as "no". Documented in
+    gtk3dialog(1) and haplo-dialog-xml(5), with a 55th XML regression case,
+    and checked on screen under xfwm4.
+
+ -- haplo-dialog <devel@haplo-dialog.fr>  Thu, 20 Aug 2026 20:42:37 +0200
+
 gtk3dialog (1.0.0-6) unstable; urgency=medium
 
   * Attribution. The Wayland anchoring added in 1.0.0-4 is derived from the
