@@ -28,6 +28,7 @@ Slackware ne gère pas les dépendances automatiquement.
 Vérifier que les bibliothèques suivantes sont présentes :
 - gtk3
 - vte291
+- gtk-layer-shell (facultatif, ancrage Wayland)
 
 ---
 

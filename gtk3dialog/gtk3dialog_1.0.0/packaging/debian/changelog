@@ -1,3 +1,35 @@
+gtk3dialog (1.0.0-4) unstable; urgency=medium
+
+  * Wayland anchoring. <window> now accepts three attributes, layer=, edge=
+    and dist=, which turn the dialog into a wlr-layer-shell surface: a bar, a
+    dock, a desktop widget. Ported from the BunsenLabs gtk3dialog fork
+    (GPL-2+) with two corrections to the original code:
+    - the dist= margin was parsed into an unsigned type and then checked with
+      "< 0", a test that can never fire, so an out-of-range value wrapped
+      around silently instead of falling back to the default; it is now
+      parsed with strtol(), rejects trailing garbage and is clamped to
+      [0, 200];
+    - the Wayland check read the GDK_BACKEND environment variable and
+      proceeded whenever it was unset, which is the normal case under X11;
+      the library is now asked directly (gtk_layer_is_supported()), so an
+      X11 session or a Wayland compositor without the protocol falls back to
+      an ordinary window with a single diagnostic instead of a burst of
+      CRITICAL warnings from gtk-layer-shell.
+  * Build. New optional dependency gtk-layer-shell >= 0.8.0, wired into
+    autotools and CMake; ./configure --without-layer-shell builds without it,
+    and the three attributes are then ignored at runtime.
+  * Documentation. haplo-dialog-xml(5) documents layer=, edge= and dist=;
+    examples/layer-shell shows a bar, a dock and a wallpaper strip.
+  * Unlike 1.0.0-2 and 1.0.0-3, this revision does change the binary.
+  * Verified. The anchoring is exercised under sway 1.12 (wlroots 0.20) on a
+    headless 1280x720 output and measured to the pixel: a topstride bar flush
+    across the full width, a bottom dock exactly dist= pixels off the edge, a
+    background strip entirely covered by an ordinary window, and dist=0 against
+    dist=60 separated by exactly 60 px. Not covered: multi-output, real
+    hardware, and compositors outside wlroots such as Hyprland.
+
+ -- haplo-dialog <devel@haplo-dialog.fr>  Thu, 20 Aug 2026 11:43:05 +0200
+
 gtk3dialog (1.0.0-3) unstable; urgency=medium
 
   * Public identity. The Maintainer field and the changelog signatures now use

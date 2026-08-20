@@ -53,8 +53,14 @@ requis).
 |------|-------|--------------------|----------|-----|
 | **gtk3dialog** | autotools | GTK+ 3 ≥ 3.22.0 | VTE 2.91 *(opt.)* | non |
 
+| Port | Ancrage Wayland |
+|------|-----------------|
+| **gtk3dialog** | gtk-layer-shell ≥ 0.8.0 *(opt.)* |
+
 *« opt. » = le widget terminal se désactive proprement (stub) si la lib est
-absente ; le reste du port fonctionne.*
+absente ; le reste du port fonctionne. De même pour gtk-layer-shell : sans
+lui, les attributs `layer`/`edge`/`dist` de `<window>` sont ignorés et la
+fenêtre s'ouvre normalement.*
 
 > **Build vérifié.** Dans l'environnement de vérification (GTK 3 3.24.52), le jeu
 > de dépendances ci-dessus a été exercé par une compilation + édition de liens
@@ -71,17 +77,17 @@ Les noms de paquets ci-dessous sont **ceux déclarés dans le packaging du
 dépôt**. La colonne « build » regroupe développement + outils ; la colonne
 « exécution » correspond aux `Depends` runtime / `Requires`.
 
-### gtk3dialog - GTK+ 3 ≥ 3.22.0, VTE 2.91 (optionnel)
+### gtk3dialog - GTK+ 3 ≥ 3.22.0, VTE 2.91 et gtk-layer-shell (optionnels)
 
 | Distro | Build | Exécution |
 |--------|-------|-----------|
-| Debian/Ubuntu | `libgtk-3-dev (≥ 3.22.0)`, `libvte-2.91-dev`, `flex`, `bison`, `autoconf (≥ 2.69)`, `automake (≥ 1.14)`, `pkg-config` | `libgtk-3-0 (≥ 3.22)`, `libvte-2.91-0` |
-| Arch | `gtk3`, `vte3`, `flex`, `bison`, `autoconf`, `automake`, `pkgconfig` | `gtk3`, `vte3` |
-| Fedora/RPM | `gtk3-devel`, `vte291-devel`, `flex`, `bison`, `autoconf`, `automake`, `pkgconfig` | `gtk3`, `vte291` |
-| Gentoo | `x11-libs/gtk+:3`, `x11-libs/vte:2.91` | idem |
+| Debian/Ubuntu | `libgtk-3-dev (≥ 3.22.0)`, `libvte-2.91-dev`, `libgtk-layer-shell-dev (≥ 0.8.0)`, `flex`, `bison`, `autoconf (≥ 2.69)`, `automake (≥ 1.14)`, `pkg-config` | `libgtk-3-0 (≥ 3.22)`, `libvte-2.91-0`, `libgtk-layer-shell0 (≥ 0.8.0)` |
+| Arch | `gtk3`, `vte3`, `gtk-layer-shell`, `flex`, `bison`, `autoconf`, `automake`, `pkgconfig` | `gtk3`, `vte3`, `gtk-layer-shell` |
+| Fedora/RPM | `gtk3-devel`, `vte291-devel`, `gtk-layer-shell-devel`, `flex`, `bison`, `autoconf`, `automake`, `pkgconfig` | `gtk3`, `vte291`, `gtk-layer-shell` |
+| Gentoo | `x11-libs/gtk+:3`, `x11-libs/vte:2.91`, `gui-libs/gtk-layer-shell` | idem |
 
-Option de configuration : `./configure --without-vte` désactive le widget
-`<terminal>`.
+Options de configuration : `./configure --without-vte` désactive le widget
+`<terminal>` ; `./configure --without-layer-shell` désactive l'ancrage Wayland.
 
 ---
 
@@ -90,15 +96,15 @@ Option de configuration : `./configure --without-vte` désactive le widget
 ```sh
 # ── Debian / Ubuntu ──────────────────────────────────────────────────────────
 sudo apt-get install build-essential flex bison pkg-config autoconf automake
-sudo apt-get install libgtk-3-dev libvte-2.91-dev                 # gtk3dialog
+sudo apt-get install libgtk-3-dev libvte-2.91-dev libgtk-layer-shell-dev   # gtk3dialog
 
 # ── Arch ─────────────────────────────────────────────────────────────────────
 sudo pacman -S base-devel flex bison pkgconf
-sudo pacman -S gtk3 vte3                                          # gtk3dialog
+sudo pacman -S gtk3 vte3 gtk-layer-shell                          # gtk3dialog
 
 # ── Fedora ───────────────────────────────────────────────────────────────────
 sudo dnf install gcc flex bison pkgconf-pkg-config autoconf automake
-sudo dnf install gtk3-devel vte291-devel                         # gtk3dialog
+sudo dnf install gtk3-devel vte291-devel gtk-layer-shell-devel   # gtk3dialog
 ```
 
 Build effectif :

@@ -12,6 +12,7 @@ cmake_minimum_required(VERSION 3.16)
 project(gtk3dialog VERSION 1.0.0 LANGUAGES C)
 
 option(WITH_VTE "Activer le widget terminal (VTE 2.91)" ON)
+option(WITH_LAYER_SHELL "Activer l'ancrage Wayland (gtk-layer-shell)" ON)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -32,6 +33,25 @@ if(WITH_VTE)
     set(HAVE_VTE 1)
   else()
     message(WARNING "VTE 2.91 introuvable — widget terminal désactivé")
+  endif()
+endif()
+
+set(HAVE_LAYER_SHELL 0)
+set(HAVE_LAYER_SHELL_IS_SUPPORTED 0)
+if(WITH_LAYER_SHELL)
+  pkg_check_modules(LAYER_SHELL IMPORTED_TARGET gtk-layer-shell-0>=0.8.0)
+  if(LAYER_SHELL_FOUND)
+    set(HAVE_LAYER_SHELL 1)
+    # gtk_layer_is_supported() n'existe qu'à partir de 0.9 ; en deçà on
+    # retombe sur une simple détection d'affichage Wayland.
+    pkg_check_modules(LAYER_SHELL_09 QUIET gtk-layer-shell-0>=0.9.0)
+    if(LAYER_SHELL_09_FOUND)
+      set(HAVE_LAYER_SHELL_IS_SUPPORTED 1)
+    else()
+      message(WARNING "gtk-layer-shell < 0.9, sonde d'affichage Wayland utilisée")
+    endif()
+  else()
+    message(WARNING "gtk-layer-shell introuvable, attributs layer/edge/dist désactivés")
   endif()
 endif()
 
@@ -65,7 +85,9 @@ target_include_directories(gtk3dialog PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/src
   ${CMAKE_CURRENT_BINARY_DIR})           # config.h + parser/lexer générés
 
-target_compile_definitions(gtk3dialog PRIVATE HAVE_CONFIG_H HAVE_VTE=${HAVE_VTE})
+target_compile_definitions(gtk3dialog PRIVATE HAVE_CONFIG_H HAVE_VTE=${HAVE_VTE}
+  HAVE_LAYER_SHELL=${HAVE_LAYER_SHELL}
+  HAVE_LAYER_SHELL_IS_SUPPORTED=${HAVE_LAYER_SHELL_IS_SUPPORTED})
 
 # ── Durcissement (aligné sur la CI) ─────────────────────────────────────────
 target_compile_options(gtk3dialog PRIVATE
@@ -83,6 +105,9 @@ if(GTHREAD_FOUND)
 endif()
 if(HAVE_VTE)
   target_link_libraries(gtk3dialog PRIVATE PkgConfig::VTE)
+endif()
+if(HAVE_LAYER_SHELL)
+  target_link_libraries(gtk3dialog PRIVATE PkgConfig::LAYER_SHELL)
 endif()
 
 install(TARGETS gtk3dialog RUNTIME DESTINATION bin)

@@ -161,6 +161,46 @@ Each widget exports its current value as a shell environment variable
 (via
 .BR eval )
 when the dialog exits or an action requests a refresh.
+.SS Wayland anchoring
+Under a Wayland compositor that implements the
+.I wlr\-layer\-shell
+protocol (sway, Hyprland, river, labwc, wayfire), the
+.B window
+tag accepts three extra attributes that turn the dialog into a layer\-shell
+surface, so that a shell script can draw a bar, a dock or a desktop widget.
+.TP
+.B layer
+Stacking layer:
+.BR background ", " bottom ", " top ", " overlay .
+.TP
+.B edge
+Anchored screen edge:
+.BR top ", " bottom ", " left ", " right ,
+the four corners
+.RB ( topleft ", " topright ", " bottomleft ", " bottomright ),
+or one of the six two\-edge forms that stretch the surface across the output
+.RB ( hstride ", " vstride ", " topstride ", " bottomstride ", " leftstride ", " rightstride ).
+.TP
+.B dist
+Margin from the anchored edges, an integer from 0 to 200 (default 20).
+.PP
+A 40\-pixel bar flush against the top of the screen:
+.PP
+.nf
+.RS 4
+<window layer="top" edge="topstride" dist="0" height\-request="40">
+.RE
+.fi
+.PP
+Under X11, or under a Wayland compositor without the protocol (GNOME), the
+three attributes are ignored, a diagnostic is printed on standard error and an
+ordinary window is shown; the script itself is unaffected. The support is
+compiled in only when gtk\-layer\-shell was available at build time
+.RB ( ./configure " " \-\-without\-layer\-shell " disables it)."
+.PP
+See
+.B examples/layer\-shell
+in the documentation directory.
 .SH EXIT STATUS
 gtk3dialog exits with status
 .B 0

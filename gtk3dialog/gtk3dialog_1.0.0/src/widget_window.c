@@ -26,6 +26,15 @@
 #endif
 #include <gtk/gtk.h>
 #include "config.h"
+#if HAVE_LAYER_SHELL
+# include <errno.h>
+# include <stdlib.h>
+# include <string.h>
+# include <gtk-layer-shell.h>
+# ifdef GDK_WINDOWING_WAYLAND
+#  include <gdk/gdkwayland.h>
+# endif
+#endif
 #include "gtk3d.h"
 #include "attributes.h"
 #include "automaton.h"
@@ -127,6 +136,229 @@ void widget_window_clear(variable *var)
 /***********************************************************************
  * Create                                                              *
  ***********************************************************************/
+#if HAVE_LAYER_SHELL
+
+/* ---------------------------------------------------------------------------
+ * wlr-layer-shell support (Wayland only)
+ *
+ * Three <window> tag attributes are recognised:
+ *
+ *   layer="background|bottom|top|overlay"
+ *       Which layer of the compositor's stack the surface lives on.
+ *
+ *   edge="top|bottom|left|right|topleft|topright|bottomleft|bottomright|
+ *         hstride|vstride|topstride|bottomstride|leftstride|rightstride"
+ *       Which screen edge(s) the surface is anchored to.  The "stride"
+ *       variants anchor two opposite edges so the surface stretches across
+ *       the output, which is how one builds a bar or a dock.
+ *
+ *   dist="0..200"
+ *       Margin in pixels between the surface and the edges it is anchored
+ *       to.  Defaults to LAYER_SHELL_MARGIN_DEFAULT.
+ *
+ * On X11, or on a Wayland compositor that does not implement
+ * wlr-layer-shell, the attributes are ignored and the window is created as
+ * an ordinary toplevel.
+ *
+ * Ported from the BunsenLabs gtk3dialog fork
+ * (https://github.com/BunsenLabs/gtk3dialog, src/widget_window.c, GPL-2+)
+ * with two corrections to the original:
+ *
+ *   1. Upstream parsed dist= into a gushort and then range-checked it with
+ *      "mar < 0" — a comparison that is always false for an unsigned type.
+ *      An out-of-range dist= therefore wrapped around silently instead of
+ *      falling back to the default.  We parse with strtol() into a signed
+ *      long, reject trailing garbage, and clamp to [0, 200].
+ *
+ *   2. Upstream decided whether it was running under Wayland by reading the
+ *      GDK_BACKEND environment variable, and proceeded whenever that
+ *      variable was unset — which is the normal case under X11.
+ *      gtk_layer_init_for_window() aborts the process when the display does
+ *      not speak wlr-layer-shell, so an X11 session (or a GNOME/Mutter
+ *      Wayland session, which does not implement the protocol either) could
+ *      be killed outright by a dialog that merely carried a layer=
+ *      attribute.  We ask the library instead, and skip the whole block when
+ *      the answer is no.
+ * ------------------------------------------------------------------------ */
+
+#define LAYER_SHELL_MARGIN_DEFAULT   20
+#define LAYER_SHELL_MARGIN_MAX      200
+
+/* Sentinel meaning "the user did not ask for this". */
+#define LAYER_SHELL_NO_LAYER  GTK_LAYER_SHELL_LAYER_ENTRY_NUMBER
+#define LAYER_SHELL_NO_EDGE   GTK_LAYER_SHELL_EDGE_ENTRY_NUMBER
+
+static const struct {
+	const gchar        *name;
+	GtkLayerShellLayer  layer;
+} layer_shell_layers[] = {
+	{ "background", GTK_LAYER_SHELL_LAYER_BACKGROUND },
+	{ "bottom",     GTK_LAYER_SHELL_LAYER_BOTTOM     },
+	{ "top",        GTK_LAYER_SHELL_LAYER_TOP        },
+	{ "overlay",    GTK_LAYER_SHELL_LAYER_OVERLAY    },
+};
+
+/* Each entry anchors up to three edges: the primary one, plus a corner and
+ * an opposite corner for the diagonal and "stride" forms. */
+static const struct {
+	const gchar       *name;
+	GtkLayerShellEdge  edge;
+	GtkLayerShellEdge  corner;
+	GtkLayerShellEdge  oppcorner;
+} layer_shell_edges[] = {
+	{ "top",          GTK_LAYER_SHELL_EDGE_TOP,    LAYER_SHELL_NO_EDGE,          LAYER_SHELL_NO_EDGE          },
+	{ "bottom",       GTK_LAYER_SHELL_EDGE_BOTTOM, LAYER_SHELL_NO_EDGE,          LAYER_SHELL_NO_EDGE          },
+	{ "left",         GTK_LAYER_SHELL_EDGE_LEFT,   LAYER_SHELL_NO_EDGE,          LAYER_SHELL_NO_EDGE          },
+	{ "right",        GTK_LAYER_SHELL_EDGE_RIGHT,  LAYER_SHELL_NO_EDGE,          LAYER_SHELL_NO_EDGE          },
+	{ "topleft",      GTK_LAYER_SHELL_EDGE_LEFT,   GTK_LAYER_SHELL_EDGE_TOP,     LAYER_SHELL_NO_EDGE          },
+	{ "bottomleft",   GTK_LAYER_SHELL_EDGE_LEFT,   GTK_LAYER_SHELL_EDGE_BOTTOM,  LAYER_SHELL_NO_EDGE          },
+	{ "topright",     GTK_LAYER_SHELL_EDGE_RIGHT,  GTK_LAYER_SHELL_EDGE_TOP,     LAYER_SHELL_NO_EDGE          },
+	{ "bottomright",  GTK_LAYER_SHELL_EDGE_RIGHT,  GTK_LAYER_SHELL_EDGE_BOTTOM,  LAYER_SHELL_NO_EDGE          },
+	{ "hstride",      GTK_LAYER_SHELL_EDGE_RIGHT,  GTK_LAYER_SHELL_EDGE_LEFT,    LAYER_SHELL_NO_EDGE          },
+	{ "vstride",      GTK_LAYER_SHELL_EDGE_TOP,    GTK_LAYER_SHELL_EDGE_BOTTOM,  LAYER_SHELL_NO_EDGE          },
+	{ "topstride",    GTK_LAYER_SHELL_EDGE_TOP,    GTK_LAYER_SHELL_EDGE_LEFT,    GTK_LAYER_SHELL_EDGE_RIGHT   },
+	{ "bottomstride", GTK_LAYER_SHELL_EDGE_BOTTOM, GTK_LAYER_SHELL_EDGE_LEFT,    GTK_LAYER_SHELL_EDGE_RIGHT   },
+	{ "leftstride",   GTK_LAYER_SHELL_EDGE_LEFT,   GTK_LAYER_SHELL_EDGE_TOP,     GTK_LAYER_SHELL_EDGE_BOTTOM  },
+	{ "rightstride",  GTK_LAYER_SHELL_EDGE_RIGHT,  GTK_LAYER_SHELL_EDGE_TOP,     GTK_LAYER_SHELL_EDGE_BOTTOM  },
+};
+
+/*
+ * _layer_shell_supported:
+ * TRUE when the current display actually speaks wlr-layer-shell.  Calling
+ * gtk_layer_init_for_window() when this returns FALSE is fatal, so every
+ * caller must check first.
+ */
+static gboolean _layer_shell_supported(void)
+{
+#if HAVE_LAYER_SHELL_IS_SUPPORTED
+	/* gtk-layer-shell >= 0.9: the library answers for itself, and it
+	 * accounts for Wayland compositors that lack the protocol. */
+	return gtk_layer_is_supported();
+#elif defined(GDK_WINDOWING_WAYLAND)
+	{
+		GdkDisplay *display = gdk_display_get_default();
+		return display != NULL && GDK_IS_WAYLAND_DISPLAY(display);
+	}
+#else
+	return FALSE;
+#endif
+}
+
+/*
+ * _layer_shell_parse_margin:
+ * Parse the dist= attribute.  Returns the margin in pixels, or
+ * LAYER_SHELL_MARGIN_DEFAULT when the value is missing, malformed or out of
+ * range (a warning is emitted in the latter two cases).
+ */
+static gint _layer_shell_parse_margin(const gchar *value)
+{
+	gchar *end = NULL;
+	long   margin;
+
+	if (value == NULL || *value == '\0')
+		return LAYER_SHELL_MARGIN_DEFAULT;
+
+	errno = 0;
+	margin = strtol(value, &end, 10);
+
+	if (errno != 0 || end == value || *end != '\0') {
+		g_warning("%s(): Malformed margin '%s'. Using default.",
+			__func__, value);
+		return LAYER_SHELL_MARGIN_DEFAULT;
+	}
+
+	if (margin < 0 || margin > LAYER_SHELL_MARGIN_MAX) {
+		g_warning("%s(): Margin out of range '%s' (0-%d). Using default.",
+			__func__, value, LAYER_SHELL_MARGIN_MAX);
+		return LAYER_SHELL_MARGIN_DEFAULT;
+	}
+
+	return (gint)margin;
+}
+
+/*
+ * _layer_shell_apply:
+ * Read layer=, edge= and dist= off the <window> tag and, when at least one
+ * of layer= or edge= was given, turn the window into a layer-shell surface.
+ * A no-op on a display without wlr-layer-shell.
+ */
+static void _layer_shell_apply(GtkWidget *widget, tag_attr *attr)
+{
+	GtkLayerShellLayer  layer     = LAYER_SHELL_NO_LAYER;
+	GtkLayerShellEdge   edge      = LAYER_SHELL_NO_EDGE;
+	GtkLayerShellEdge   corner    = LAYER_SHELL_NO_EDGE;
+	GtkLayerShellEdge   oppcorner = LAYER_SHELL_NO_EDGE;
+	gint                margin    = LAYER_SHELL_MARGIN_DEFAULT;
+	gchar              *value;
+	gsize               i;
+
+	if (attr == NULL)
+		return;
+
+	value = get_tag_attribute(attr, "layer");
+	if (value) {
+		for (i = 0; i < G_N_ELEMENTS(layer_shell_layers); i++) {
+			if (strcmp(value, layer_shell_layers[i].name) == 0) {
+				layer = layer_shell_layers[i].layer;
+				break;
+			}
+		}
+		if (layer == LAYER_SHELL_NO_LAYER)
+			g_warning("%s(): Unknown layer '%s'.", __func__, value);
+	}
+
+	value = get_tag_attribute(attr, "edge");
+	if (value) {
+		for (i = 0; i < G_N_ELEMENTS(layer_shell_edges); i++) {
+			if (strcmp(value, layer_shell_edges[i].name) == 0) {
+				edge      = layer_shell_edges[i].edge;
+				corner    = layer_shell_edges[i].corner;
+				oppcorner = layer_shell_edges[i].oppcorner;
+				break;
+			}
+		}
+		if (edge == LAYER_SHELL_NO_EDGE)
+			g_warning("%s(): Unknown edge '%s'.", __func__, value);
+	}
+
+	/* Nothing was asked for: leave the window as a plain toplevel. */
+	if (layer == LAYER_SHELL_NO_LAYER && edge == LAYER_SHELL_NO_EDGE)
+		return;
+
+	/* Validate dist= even when the display cannot honour the request, so
+	 * that a typo is reported while developing under X11. */
+	margin = _layer_shell_parse_margin(get_tag_attribute(attr, "dist"));
+
+	/* Asked for, but the display cannot honour it.  Say so once and carry
+	 * on as an ordinary window. */
+	if (!_layer_shell_supported()) {
+		g_message("%s(): layer-shell requested but this display does not "
+			"support it; falling back to a normal window.", __func__);
+		return;
+	}
+
+	gtk_layer_init_for_window(GTK_WINDOW(widget));
+	gtk_layer_set_namespace(GTK_WINDOW(widget), PACKAGE);
+
+	if (layer != LAYER_SHELL_NO_LAYER)
+		gtk_layer_set_layer(GTK_WINDOW(widget), layer);
+
+	if (edge != LAYER_SHELL_NO_EDGE) {
+		gtk_layer_set_exclusive_zone(GTK_WINDOW(widget), 0);
+		gtk_layer_set_margin(GTK_WINDOW(widget), GTK_LAYER_SHELL_EDGE_LEFT,   margin);
+		gtk_layer_set_margin(GTK_WINDOW(widget), GTK_LAYER_SHELL_EDGE_RIGHT,  margin);
+		gtk_layer_set_margin(GTK_WINDOW(widget), GTK_LAYER_SHELL_EDGE_TOP,    margin);
+		gtk_layer_set_margin(GTK_WINDOW(widget), GTK_LAYER_SHELL_EDGE_BOTTOM, margin);
+		gtk_layer_set_anchor(GTK_WINDOW(widget), edge, TRUE);
+		if (corner != LAYER_SHELL_NO_EDGE)
+			gtk_layer_set_anchor(GTK_WINDOW(widget), corner, TRUE);
+		if (oppcorner != LAYER_SHELL_NO_EDGE)
+			gtk_layer_set_anchor(GTK_WINDOW(widget), oppcorner, TRUE);
+	}
+}
+
+#endif	/* HAVE_LAYER_SHELL */
+
 GtkWidget *widget_window_create(
 	AttributeSet *Attr, tag_attr *attr, gint Type)
 {
@@ -144,6 +376,12 @@ GtkWidget *widget_window_create(
 
 	/* Create the window widget */
 	widget = gtk_window_new(GTK_WINDOW_TOPLEVEL);  
+
+#if HAVE_LAYER_SHELL
+	/* Wayland: honour layer=/edge=/dist= by turning the window into a
+	 * wlr-layer-shell surface.  No-op elsewhere. */
+	_layer_shell_apply(widget, attr);
+#endif
 
 	/* Set a default window title */
 	attributeset_set_if_unset(Attr, ATTR_LABEL, PACKAGE);

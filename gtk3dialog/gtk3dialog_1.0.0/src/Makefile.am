@@ -100,6 +100,8 @@ gtk3dialog_CFLAGS = \
 	$(GTK_CFLAGS) \
 	$(GTHREAD_CFLAGS) \
 	$(VTE_CFLAGS) -DHAVE_VTE=$(HAVE_VTE) \
+	$(LAYER_SHELL_CFLAGS) -DHAVE_LAYER_SHELL=$(HAVE_LAYER_SHELL) \
+	-DHAVE_LAYER_SHELL_IS_SUPPORTED=$(HAVE_LAYER_SHELL_IS_SUPPORTED) \
 	$(GLADE_LIB_CFLAGS) \
 	-Wall -Wextra -Wno-unused-parameter \
 	-Wno-deprecated-declarations \
@@ -122,6 +124,7 @@ gtk3dialog_LDADD = \
 	$(GTK_LIBS) \
 	$(GTHREAD_LIBS) \
 	$(VTE_LIBS) \
+	$(LAYER_SHELL_LIBS) \
 	@LIBS@
 
 # Per-target linker flags.

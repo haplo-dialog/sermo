@@ -91,6 +91,74 @@ Fenêtre principale du dialogue.
 .br
 Attributs : \fBtitle\fR, \fBwidth-request\fR, \fBheight-request\fR,
 \fBresizable\fR, \fBicon-name\fR, \fBdecorated\fR.
+.br
+Attributs Wayland (ancrage layer-shell) : \fBlayer\fR, \fBedge\fR, \fBdist\fR.
+
+.SS Ancrage Wayland de la fenêtre (layer-shell)
+Sous Wayland, une fenêtre peut se comporter en surface \fIlayer-shell\fR :
+barre, dock, fond d'écran, panneau flottant. Trois attributs de
+.B <window>
+la placent. Ils n'ont d'effet que si le compositeur Wayland implémente le
+protocole \fIwlr-layer-shell\fR (sway, Hyprland, river, labwc, wayfire\&...) et
+si gtk3dialog a été compilé avec gtk-layer-shell.
+.br
+Ailleurs (X11, ou un compositeur Wayland sans ce protocole, comme GNOME),
+les trois attributs sont ignorés et la fenêtre s'ouvre normalement : un
+message le signale sur la sortie d'erreur, le script continue.
+.TP
+.B layer="\fIvaleur\fR"
+Étage d'empilement de la surface :
+.BR background ,
+.BR bottom ,
+.BR top ,
+.BR overlay .
+De l'arrière-plan (sous les fenêtres) au premier plan (au-dessus de tout,
+plein écran compris).
+.TP
+.B edge="\fIvaleur\fR"
+Bord(s) d'écran auxquels la surface est arrimée.
+.br
+Un seul bord :
+.BR top ,
+.BR bottom ,
+.BR left ,
+.BR right .
+.br
+Un coin :
+.BR topleft ,
+.BR topright ,
+.BR bottomleft ,
+.BR bottomright .
+.br
+Deux bords opposés, ce qui étire la surface sur toute la largeur ou toute
+la hauteur de l'écran (la forme utile pour une barre ou un dock) :
+.BR hstride
+(gauche+droite),
+.BR vstride
+(haut+bas),
+.BR topstride ,
+.BR bottomstride ,
+.BR leftstride ,
+.BR rightstride .
+.TP
+.B dist="\fIn\fR"
+Marge en pixels entre la surface et les bords auxquels elle est arrimée.
+Entier de 0 à 200 ; 20 par défaut. Une valeur hors bornes ou mal formée est
+signalée par un avertissement, et la valeur par défaut s'applique.
+.PP
+Exemple : une barre de 40 pixels collée en haut de l'écran, au-dessus des
+fenêtres, sans marge.
+.PP
+.nf
+.RS 4
+<window layer="top" edge="topstride" dist="0" height\-request="40">
+  <hbox>
+    <text><label>Haplo</label></text>
+    <button><label>Menu</label></button>
+  </hbox>
+</window>
+.RE
+.fi
 
 .SS Conteneurs
 .TP
@@ -449,4 +517,5 @@ Site : https://haplo-dialog.fr
 Documentation sous licence CC-BY-SA 4.0.
 .br
 Logiciel sous licence GPL-2.0-or-later.
+.\" 2026-08-20 : ajout des attributs Wayland layer/edge/dist de <window> (portage layer-shell, d'après src/widget_window.c).
 .\" 2026-08-11 : page réalignée sur le code source (widgets d'après src/, <pixmap> via <input file>, calendrier AAAA-MM-JJ, SÉCURITÉ d'après safe_exec.c) — GTK 3 uniquement.

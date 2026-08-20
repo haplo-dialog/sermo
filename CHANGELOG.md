@@ -9,6 +9,7 @@ Versionning : [Semantic Versioning](https://semver.org/lang/fr/) à partir de 1.
 ## [Unreleased] - v1.1.0 (en cours)
 
 ### Ajouté
+- **Ancrage Wayland de `<window>` (2026-08-20)** : trois attributs, `layer` (`background`/`bottom`/`top`/`overlay`), `edge` (les 4 bords, les 4 coins, et 6 formes « bande » qui arriment deux bords opposés) et `dist` (marge 0-200 px, 20 par défaut), transforment le dialogue en surface *wlr-layer-shell* : barre, dock, widget de bureau. Portage du fork gtk3dialog de BunsenLabs (GPL-2.0+), avec deux corrections par rapport à l'original : la marge, lue dans un type non signé puis contrôlée par un `< 0` qui ne peut jamais se déclencher, est désormais analysée par `strtol()`, refuse une fin de chaîne parasite et est bornée à [0, 200] ; et la détection de Wayland, qui lisait la variable d'environnement `GDK_BACKEND` et continuait quand elle n'était pas définie (le cas normal sous X11), interroge maintenant la bibliothèque elle-même (`gtk_layer_is_supported()`). Hors Wayland, ou sur un compositeur sans le protocole (GNOME), les trois attributs sont ignorés et une fenêtre ordinaire s'ouvre. Dépendance optionnelle `gtk-layer-shell ≥ 0.8.0` ; `./configure --without-layer-shell` s'en passe. Documenté dans `haplo-dialog-xml(5)`, exemple dans `examples/layer-shell`. **Ancrage éprouvé sous sway 1.12 (wlroots 0.20) et mesuré au pixel** : barre `topstride` collée en haut sur toute la largeur, dock `bottom` `dist="24"` à exactement 24 px du bord, bande `background` intégralement recouverte par une fenêtre ordinaire, `dist="0"` et `dist="60"` séparés de 60 px exactement. Non couvert : le multi-écran, le matériel réel, et les compositeurs hors wlroots comme Hyprland.
 - **Compatibilité ascendante gtkdialog (2026-06-06)** : `make install` pose un **symlink `gtkdialog` → `gtk3dialog`** (et `gtkdialog.1` → `gtk3dialog.1`) via le hook autotools ; un dialogue d'époque (`export MAIN_DIALOG='<window …>'; gtkdialog --program=MAIN_DIALOG`) parse, s'exécute et rend sa sortie au format historique (`VAR="valeur"`). La cohérence du symlink est répercutée dans chaque recette de paquet (Debian `.links`, RPM `%files`, etc.).
 - `detect_terminal()` / `detect_editor()`, auto-détection de l'environnement graphique (xfce4-terminal, konsole, gnome-terminal, mousepad, kate, gedit…)
 - Suite XML étendue à **53 cas de test** (étiquettes et valeurs par défaut vides, searchentry, levelbar, drawingarea, colorbutton, fontbutton, aspectframe, tree, table, menubar, statusbar, togglebutton, timer, edit, list, separators, infobar types, notebook 3 pages, actions REFRESH/ENABLE/DISABLE/SHOW/HIDE/CLEAR, formulaire complexe)
@@ -29,8 +30,18 @@ Versionning : [Semantic Versioning](https://semver.org/lang/fr/) à partir de 1.
 
 ## Révisions d'empaquetage de la 1.0.0
 
-Le **logiciel** reste en version 1.0.0 : ces révisions ne changent que le paquet
-Debian. Le binaire livré est identique d'une révision à l'autre.
+Le **logiciel** reste en version 1.0.0. Les révisions -2 et -3 ne changent que le
+paquet Debian et livrent un binaire identique ; la -4 fait exception et embarque
+l'ancrage Wayland décrit plus haut.
+
+### [1.0.0-4] - 2026-08-20
+- Premier paquet embarquant l'**ancrage Wayland** (`layer`/`edge`/`dist` sur
+  `<window>`, voir la section 1.1.0 ci-dessus). Contrairement aux deux révisions
+  précédentes, le binaire n'est **pas** identique au précédent.
+- Nouvelle dépendance optionnelle `libgtk-layer-shell0` (build :
+  `libgtk-layer-shell-dev ≥ 0.8.0`).
+- Ancrage éprouvé sous sway 1.12 (wlroots 0.20) et mesuré au pixel : barre, dock,
+  couche `background` et marge `dist` conformes.
 
 ### [1.0.0-3] - 2026-08-16
 - Identité du mainteneur du paquet : le champ `Maintainer` portait un nom

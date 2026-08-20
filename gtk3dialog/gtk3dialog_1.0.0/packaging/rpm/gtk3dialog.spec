@@ -12,6 +12,7 @@ URL:            https://haplo-dialog.fr
 Source0:        %{name}-%{version}.tar.gz
 Requires: gtk3-devel
 BuildRequires: vte291-devel
+BuildRequires: gtk-layer-shell-devel
 BuildRequires: flex
 BuildRequires: bison
 BuildRequires: autoconf
@@ -20,6 +21,7 @@ BuildRequires: pkgconfig
 
 Requires: gtk3
 Requires: vte291
+Requires: gtk-layer-shell
 
 %description
 gtk3dialog builds GTK3 dialog windows from an XML-like description language, allowing shell scripts to display interactive GUI windows without knowledge of any graphical toolkit. This is the haplo-dialog fork (1.0.0) with security hardening (safe_exec, FORTIFY_SOURCE=3, PIE, Full RELRO, stack-protector-strong).

@@ -20,11 +20,13 @@ BDEPEND="
 DEPEND="
 	x11-libs/gtk+:3
 	x11-libs/vte:2.91
+	gui-libs/gtk-layer-shell
 "
 
 RDEPEND="
 	x11-libs/gtk+:3
 	x11-libs/vte:2.91
+	gui-libs/gtk-layer-shell
 "
 
 src_prepare() {

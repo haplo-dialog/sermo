@@ -9,6 +9,7 @@ Versioning: [Semantic Versioning](https://semver.org/) starting from 1.0.0.
 ## [Unreleased] - v1.1.0 (in progress)
 
 ### Added
+- **Wayland anchoring for `<window>` (2026-08-20)**: three attributes, `layer` (`background`/`bottom`/`top`/`overlay`), `edge` (the 4 edges, the 4 corners, and 6 "stride" forms anchoring two opposite edges) and `dist` (margin 0-200 px, 20 by default), turn the dialog into a *wlr-layer-shell* surface: a bar, a dock, a desktop widget. Ported from the BunsenLabs gtk3dialog fork (GPL-2.0+), with two corrections to the original: the margin, parsed into an unsigned type and then checked with a `< 0` test that can never fire, is now parsed with `strtol()`, rejects trailing garbage and is clamped to [0, 200]; and the Wayland detection, which read the `GDK_BACKEND` environment variable and proceeded whenever it was unset (the normal case under X11), now asks the library itself (`gtk_layer_is_supported()`). Off Wayland, or on a compositor without the protocol (GNOME), the three attributes are ignored and an ordinary window opens. Optional dependency `gtk-layer-shell >= 0.8.0`; `./configure --without-layer-shell` builds without it. Documented in `haplo-dialog-xml(5)`, example in `examples/layer-shell`. **The anchoring is exercised under sway 1.12 (wlroots 0.20) and measured to the pixel**: a `topstride` bar flush across the full width, a `bottom` `dist="24"` dock exactly 24 px off the edge, a `background` strip entirely covered by an ordinary window, and `dist="0"` versus `dist="60"` separated by exactly 60 px. Not covered: multi-output, real hardware, and compositors outside wlroots such as Hyprland.
 - **gtkdialog backwards compatibility (2026-06-06)** : `make install` installs a **`gtkdialog` → `gtk3dialog` symlink** (and `gtkdialog.1` → `gtk3dialog.1`) through the autotools hook; a legacy gtkdialog script (`export MAIN_DIALOG='<window …>'; gtkdialog --program=MAIN_DIALOG`) parses, runs and returns its output in the historical format (`VAR="value"`). The consistency of the symlink is carried through into every packaging recipe (Debian `.links`, RPM `%files`, etc.).
 - `detect_terminal()` / `detect_editor()`, auto-detection of the graphical environment (xfce4-terminal, konsole, gnome-terminal, mousepad, kate, gedit…)
 - XML suite extended to **53 test cases** (empty labels and default values, searchentry, levelbar, drawingarea, colorbutton, fontbutton, aspectframe, tree, table, menubar, statusbar, togglebutton, timer, edit, list, separators, infobar types, 3-page notebook, REFRESH/ENABLE/DISABLE/SHOW/HIDE/CLEAR actions, complex form)
@@ -29,8 +30,17 @@ Versioning: [Semantic Versioning](https://semver.org/) starting from 1.0.0.
 
 ## Packaging revisions of 1.0.0
 
-The **software** stays at version 1.0.0: these revisions change only the Debian
-package. The binary shipped is identical from one revision to the next.
+The **software** stays at version 1.0.0. Revisions -2 and -3 change only the
+Debian package and ship an identical binary; -4 is the exception and carries the
+Wayland anchoring described above.
+
+### [1.0.0-4] - 2026-08-20
+- First package carrying the **Wayland anchoring** (`layer`/`edge`/`dist` on
+  `<window>`, see the 1.1.0 section above). Unlike the two previous revisions,
+  the binary is **not** identical to its predecessor.
+- New optional dependency `libgtk-layer-shell0` (build:
+  `libgtk-layer-shell-dev >= 0.8.0`).
+- The anchoring is not yet exercised on a real Wayland compositor.
 
 ### [1.0.0-3] - 2026-08-16
 - Package maintainer identity: the `Maintainer` field carried a personal name

@@ -87,6 +87,38 @@ AC_SUBST(VTE_CFLAGS)
 AC_SUBST(VTE_LIBS)
 
 # ---------------------------------------------------------------------------
+# gtk-layer-shell - Wayland wlr-layer-shell surfaces (layer=/edge=/dist=)
+#   Use --without-layer-shell to build without it.  Without the library the
+#   three attributes are simply ignored at runtime.
+#   >= 0.9 additionally provides gtk_layer_is_supported(), which is the only
+#   safe way to detect a Wayland compositor that lacks the protocol.
+# ---------------------------------------------------------------------------
+AC_ARG_WITH([layer-shell],
+  AS_HELP_STRING([--without-layer-shell],
+    [Disable Wayland layer-shell window anchoring]),
+  [with_layer_shell=$withval],
+  [with_layer_shell=yes])
+
+AC_SUBST(HAVE_LAYER_SHELL_IS_SUPPORTED, 0)
+if test "x$with_layer_shell" = "xyes"; then
+    PKG_CHECK_MODULES([LAYER_SHELL], [gtk-layer-shell-0 >= 0.8.0],
+        [AC_SUBST(HAVE_LAYER_SHELL, 1)
+         AC_MSG_NOTICE([Wayland layer-shell: enabled])
+         PKG_CHECK_EXISTS([gtk-layer-shell-0 >= 0.9.0],
+            [AC_SUBST(HAVE_LAYER_SHELL_IS_SUPPORTED, 1)],
+            [AC_MSG_WARN([gtk-layer-shell < 0.9, falling back to a Wayland-display probe])])],
+        [AC_SUBST(HAVE_LAYER_SHELL, 0)
+         AC_MSG_WARN([gtk-layer-shell not found, layer/edge/dist attributes disabled])])
+else
+    AC_SUBST(HAVE_LAYER_SHELL, 0)
+    AC_SUBST(LAYER_SHELL_CFLAGS, "")
+    AC_SUBST(LAYER_SHELL_LIBS, "")
+    AC_MSG_NOTICE([Wayland layer-shell: disabled by --without-layer-shell])
+fi
+AC_SUBST(LAYER_SHELL_CFLAGS)
+AC_SUBST(LAYER_SHELL_LIBS)
+
+# ---------------------------------------------------------------------------
 # Tests unitaires C — libcheck
 #   --enable-unit-tests  Compile test_safe_exec + test_stringman
 #   (test_safe_exec est toujours compilé si check est disponible)
