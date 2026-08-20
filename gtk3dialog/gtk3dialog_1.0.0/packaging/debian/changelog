@@ -1,3 +1,30 @@
+gtk3dialog (1.0.0-5) unstable; urgency=medium
+
+  * Parser. An empty element body is now accepted where emptiness is a value:
+    <label></label>, <default></default>, and the attributed form of <item>.
+    Writing <text><label>   </label></text> as a spacer used to fail with
+    "syntax error" pointing at the closing tag: the lexer drops whitespace, so
+    an all-blank body produces no STRING token, and the grammar had only a
+    LABEL STRING ELABEL production. Where an empty body has no meaning the
+    error now names its cause instead of the closing tag; <sensitive>,
+    <width>, <height>, <input>, <input file>, <output>, <variable> and
+    <action> answer "the <variable> element is empty; it requires a name."
+  * Wayland anchoring, now verified. The layer-shell anchoring shipped in
+    1.0.0-4 has since been exercised under sway 1.12 (wlroots 0.20) on a
+    headless 1280x720 output and measured to the pixel: a topstride bar flush
+    across the full width, a bottom dock exactly dist= pixels off the edge, a
+    background strip entirely covered by an ordinary window, and dist=0
+    against dist=60 separated by exactly 60 px. The 1.0.0-4 package predates
+    that check. Not covered: multi-output, real hardware, and compositors
+    outside wlroots such as Hyprland.
+  * Note that a bar does not reserve screen space: the exclusive zone is left
+    at zero, so an anchored surface floats over ordinary windows rather than
+    pushing them aside.
+  * Like 1.0.0-4, and unlike 1.0.0-2 and 1.0.0-3, this revision changes the
+    binary.
+
+ -- haplo-dialog <devel@haplo-dialog.fr>  Thu, 20 Aug 2026 13:11:53 +0200
+
 gtk3dialog (1.0.0-4) unstable; urgency=medium
 
   * Wayland anchoring. <window> now accepts three attributes, layer=, edge=
@@ -21,12 +48,8 @@ gtk3dialog (1.0.0-4) unstable; urgency=medium
   * Documentation. haplo-dialog-xml(5) documents layer=, edge= and dist=;
     examples/layer-shell shows a bar, a dock and a wallpaper strip.
   * Unlike 1.0.0-2 and 1.0.0-3, this revision does change the binary.
-  * Verified. The anchoring is exercised under sway 1.12 (wlroots 0.20) on a
-    headless 1280x720 output and measured to the pixel: a topstride bar flush
-    across the full width, a bottom dock exactly dist= pixels off the edge, a
-    background strip entirely covered by an ordinary window, and dist=0 against
-    dist=60 separated by exactly 60 px. Not covered: multi-output, real
-    hardware, and compositors outside wlroots such as Hyprland.
+  * The anchoring itself has NOT yet been exercised on a real Wayland
+    compositor; only the X11 fallback path is verified.
 
  -- haplo-dialog <devel@haplo-dialog.fr>  Thu, 20 Aug 2026 11:43:05 +0200
 

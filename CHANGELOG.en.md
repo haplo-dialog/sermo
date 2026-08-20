@@ -31,8 +31,25 @@ Versioning: [Semantic Versioning](https://semver.org/) starting from 1.0.0.
 ## Packaging revisions of 1.0.0
 
 The **software** stays at version 1.0.0. Revisions -2 and -3 change only the
-Debian package and ship an identical binary; -4 is the exception and carries the
-Wayland anchoring described above.
+Debian package and ship an identical binary; -4 and -5 are the exceptions and do
+change the binary.
+
+### [1.0.0-5] - 2026-08-20
+- **Parser**: an empty body is accepted where emptiness is a value (`<label>`,
+  `<default>`, and the attributed form of `<item>`); elsewhere the error finally
+  names its cause instead of pointing at the closing tag. See the 1.1.0 section
+  above.
+- **Wayland anchoring verified** under sway 1.12 (wlroots 0.20) on a headless
+  1280x720 output and measured to the pixel: a `topstride` bar flush across the
+  full width, a `bottom` dock exactly `dist` px off the edge, a `background`
+  strip entirely covered by an ordinary window, and `dist="0"` against
+  `dist="60"` separated by 60 px. The -4 package predates that check. Not
+  covered: multi-output, real hardware, and compositors outside wlroots such as
+  Hyprland.
+- A bar does **not** reserve screen space: the exclusive zone is left at zero,
+  so an anchored surface floats over ordinary windows rather than pushing them
+  aside.
+- Like -4, this revision changes the binary.
 
 ### [1.0.0-4] - 2026-08-20
 - First package carrying the **Wayland anchoring** (`layer`/`edge`/`dist` on
@@ -40,7 +57,8 @@ Wayland anchoring described above.
   the binary is **not** identical to its predecessor.
 - New optional dependency `libgtk-layer-shell0` (build:
   `libgtk-layer-shell-dev >= 0.8.0`).
-- The anchoring is not yet exercised on a real Wayland compositor.
+- Built before the anchoring was exercised on a real compositor; -5 is the
+  revision that brings that verification.
 
 ### [1.0.0-3] - 2026-08-16
 - Package maintainer identity: the `Maintainer` field carried a personal name

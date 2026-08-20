@@ -31,8 +31,24 @@ Versionning : [Semantic Versioning](https://semver.org/lang/fr/) à partir de 1.
 ## Révisions d'empaquetage de la 1.0.0
 
 Le **logiciel** reste en version 1.0.0. Les révisions -2 et -3 ne changent que le
-paquet Debian et livrent un binaire identique ; la -4 fait exception et embarque
-l'ancrage Wayland décrit plus haut.
+paquet Debian et livrent un binaire identique ; les -4 et -5 font exception et
+changent le binaire.
+
+### [1.0.0-5] - 2026-08-20
+- **Analyseur** : une étiquette vide est acceptée là où le vide est une valeur
+  (`<label>`, `<default>`, `<item>` sous sa forme attribuée) ; ailleurs, l'erreur
+  nomme enfin sa cause au lieu de désigner la balise fermante. Voir la section
+  1.1.0 ci-dessus.
+- **Ancrage Wayland éprouvé** sous sway 1.12 (wlroots 0.20), sortie headless
+  1280x720, mesuré au pixel : barre `topstride` pleine largeur, dock `bottom` à
+  exactement `dist` px du bord, bande `background` intégralement recouverte par
+  une fenêtre ordinaire, `dist="0"` et `dist="60"` séparés de 60 px. Le paquet
+  -4 est antérieur à cette vérification. Non couvert : le multi-écran, le
+  matériel réel, et les compositeurs hors wlroots comme Hyprland.
+- Une barre ne réserve **pas** d'espace : la zone exclusive reste à zéro, donc
+  une surface ancrée flotte au-dessus des fenêtres ordinaires au lieu de les
+  repousser.
+- Comme la -4, cette révision change le binaire.
 
 ### [1.0.0-4] - 2026-08-20
 - Premier paquet embarquant l'**ancrage Wayland** (`layer`/`edge`/`dist` sur
@@ -40,8 +56,8 @@ l'ancrage Wayland décrit plus haut.
   précédentes, le binaire n'est **pas** identique au précédent.
 - Nouvelle dépendance optionnelle `libgtk-layer-shell0` (build :
   `libgtk-layer-shell-dev ≥ 0.8.0`).
-- Ancrage éprouvé sous sway 1.12 (wlroots 0.20) et mesuré au pixel : barre, dock,
-  couche `background` et marge `dist` conformes.
+- Construit avant que l'ancrage soit éprouvé sur un compositeur réel ; c'est la
+  -5 qui apporte cette vérification.
 
 ### [1.0.0-3] - 2026-08-16
 - Identité du mainteneur du paquet : le champ `Maintainer` portait un nom
