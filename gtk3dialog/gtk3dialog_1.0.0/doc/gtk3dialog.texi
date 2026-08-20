@@ -11,7 +11,14 @@
 @c   makeinfo --pdf  gtk3dialog.texi
 @c   makeinfo        gtk3dialog.texi  (→ gtk3dialog.info)
 @c ============================================================
-@include version.texi
+@c version.texi est produit par automake quand info_TEXINFOS est actif.
+@c Il ne l'est pas ici (voir Makefile.am), donc les valeurs sont posees
+@c directement : « makeinfo gtk3dialog.texi » fonctionne sur un clone neuf.
+@set VERSION 1.0.0
+@set UPDATED 20 August 2026
+@set UPDATED-MONTH August 2026
+@set EDITION 1.0.0
+@set TOOLKIT GTK 3
 @c %**start of header
 @setfilename gtk3dialog.info
 @settitle gtk3dialog @value{VERSION} User Manual
