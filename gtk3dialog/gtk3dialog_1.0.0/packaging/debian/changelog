@@ -1,3 +1,32 @@
+haplo-dialog (1.0.0-8) unstable; urgency=medium
+
+  * Renamed the binary package from gtk3dialog to haplo-dialog. The name
+    gtk3dialog is not free: BunsenLabs has shipped a package by that exact
+    name since July 2025, gtk3dialog 0.1.2-3, in a live APT archive at
+    pkg.bunsenlabs.org, maintained by Mick Amadio. Their fork and this one
+    both descend from Laszlo Pere's gtkdialog, and they renamed first, in
+    November 2024.
+  * Why this mattered rather than being a matter of etiquette. Two packages
+    carrying the SAME name are not rivals to apt, they are one package in two
+    versions, and 1.0.0-7 sorts above 0.1.2-3. Provides/Conflicts/Replaces on
+    gtkdialog protected nothing here. A BunsenLabs user who added this archive
+    for any other Haplo package would have had their gtk3dialog silently
+    replaced by a different program on the next upgrade. That is fixed: the
+    names now differ, so Conflicts applies, and apt refuses and explains
+    instead of substituting in silence.
+  * The command does not move. /usr/bin/gtk3dialog and its /usr/bin/gtkdialog
+    compatibility symlink are installed exactly as before, so every existing
+    script keeps working; only the package that carries them is renamed.
+    Provides: gtk3dialog keeps any dependency on the old name satisfied.
+  * The new name is the one the project already used everywhere else: the
+    domain is haplo-dialog.fr, the manual page is haplo-dialog-xml(5), the
+    README and SECURITY.md say haplo-dialog. The package was named after one
+    of its ports rather than after the product, which no longer fits now that
+    a GTK4 port exists alongside the GTK3 one.
+  * Note: /usr/share/doc/gtk3dialog moves to /usr/share/doc/haplo-dialog.
+
+ -- haplo-dialog <devel@haplo-dialog.fr>  Thu, 20 Aug 2026 20:49:05 +0200
+
 gtk3dialog (1.0.0-7) unstable; urgency=medium
 
   * New attribute headerbar="yes|no" on <window>: client-side decorations.

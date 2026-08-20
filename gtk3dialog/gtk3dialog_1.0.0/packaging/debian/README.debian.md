@@ -17,7 +17,7 @@ sudo apt-get install build-essential debhelper devscripts \
 ```bash
 cd gtk3dialog_1.0.0/
 dpkg-buildpackage -b -us -uc
-# Résultat : ../gtk3dialog_1.0.0-1_amd64.deb
+# Résultat : ../haplo-dialog_1.0.0-8_amd64.deb
 ```
 
 Pour un build signé et complet (source + binaire) :
@@ -29,7 +29,7 @@ dpkg-buildpackage -us -uc
 ## Installation
 
 ```bash
-sudo dpkg -i ../gtk3dialog_1.0.0-1_amd64.deb
+sudo dpkg -i ../haplo-dialog_1.0.0-8_amd64.deb
 sudo apt-get -f install   # résout les dépendances runtime si besoin
 ```
 

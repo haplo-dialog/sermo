@@ -76,8 +76,16 @@ A C core (flex/bison grammar + state machine + `safe_exec`) and a GTK 3 backend.
 # The .deb is attached to every release of the repository, with its checksums.
 # Download both, then:
 sha256sum -c SHA256SUMS
-sudo apt install ./gtk3dialog_1.0.0-3_amd64.deb
+sudo apt install ./haplo-dialog_1.0.0-8_amd64.deb
 ```
+
+> **The package is named `haplo-dialog`; the command is still `gtk3dialog`.**
+> The package name `gtk3dialog` is not free: BunsenLabs has shipped one under
+> that exact name since July 2025, in its APT archive. Two packages carrying
+> the same name are not rivals to apt, they are two versions of one package,
+> and the higher one silently replaces the other. Distinct names make apt
+> refuse and explain instead of substituting. Your scripts do not change:
+> `/usr/bin/gtk3dialog` and its `gtkdialog` alias are installed as before.
 
 ### From source
 

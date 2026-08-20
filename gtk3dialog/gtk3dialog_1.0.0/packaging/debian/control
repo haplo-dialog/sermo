@@ -1,4 +1,4 @@
-Source: gtk3dialog
+Source: haplo-dialog
 Section: utils
 Priority: optional
 Maintainer: haplo-dialog <devel@haplo-dialog.fr>
@@ -8,12 +8,12 @@ Homepage: https://haplo-dialog.fr
 Vcs-Browser: https://gitlab.com/haplo-dialog/gtk3dialog
 Vcs-Git: https://gitlab.com/haplo-dialog/gtk3dialog.git
 
-Package: gtk3dialog
+Package: haplo-dialog
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, libgtk-3-0 (>= 3.22), libvte-2.91-0, libgtk-layer-shell0 (>= 0.8.0)
-Conflicts: gtkdialog (<< 1.0.0)
-Provides: gtkdialog
-Replaces: gtkdialog
+Conflicts: gtkdialog (<< 1.0.0), gtk3dialog
+Provides: gtkdialog, gtk3dialog
+Replaces: gtkdialog, gtk3dialog
 Description: GTK3 dialog window creator for shell scripts
  gtk3dialog builds GTK3 dialog windows from an XML-like description
  language, allowing shell scripts to display interactive GUI windows without

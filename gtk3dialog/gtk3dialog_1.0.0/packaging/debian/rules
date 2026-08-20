@@ -1,5 +1,5 @@
 #!/usr/bin/make -f
-# debian/rules — gtk3dialog 1.0.0 (haplo-dialog)
+# debian/rules — haplo-dialog 1.0.0 (binaire gtk3dialog)
 
 export DH_VERBOSE = 1
 export DEB_BUILD_MAINT_OPTIONS = hardening=+all
@@ -22,9 +22,9 @@ override_dh_auto_configure:
 
 override_dh_auto_install:
 	dh_auto_install
-	rm -f $(CURDIR)/debian/gtk3dialog/usr/share/icons/hicolor/icon-theme.cache
-	install -d $(CURDIR)/debian/gtk3dialog/usr/share/doc/gtk3dialog/examples
-	cp -r examples/* $(CURDIR)/debian/gtk3dialog/usr/share/doc/gtk3dialog/examples/ 2>/dev/null || true
+	rm -f $(CURDIR)/debian/haplo-dialog/usr/share/icons/hicolor/icon-theme.cache
+	install -d $(CURDIR)/debian/haplo-dialog/usr/share/doc/haplo-dialog/examples
+	cp -r examples/* $(CURDIR)/debian/haplo-dialog/usr/share/doc/haplo-dialog/examples/ 2>/dev/null || true
 
 override_dh_strip:
 	dh_strip --dbgsym-migration='gtk3dialog-dbg (<< 1.0.0-1~)'

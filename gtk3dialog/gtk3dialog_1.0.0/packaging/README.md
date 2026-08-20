@@ -30,7 +30,7 @@ a marché.
 ```bash
 cd gtk3dialog_1.0.0/
 dpkg-buildpackage -b -us -uc
-# Résultat : ../gtk3dialog_1.0.0-1_amd64.deb
+# Résultat : ../haplo-dialog_1.0.0-8_amd64.deb
 ```
 
 ### Fedora / RHEL
