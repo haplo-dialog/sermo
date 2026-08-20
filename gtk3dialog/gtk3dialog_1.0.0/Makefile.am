@@ -24,7 +24,6 @@ EXTRA_DIST = \
 	packaging/debian/postinst \
 	packaging/debian/prerm \
 	packaging/debian/README.debian.md \
-	doc/reference/* \
 	examples/button/* \
 	examples/checkbox/* \
 	examples/colorbutton/* \
