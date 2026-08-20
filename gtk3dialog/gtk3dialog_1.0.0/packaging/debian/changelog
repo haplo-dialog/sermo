@@ -1,3 +1,29 @@
+gtk3dialog (1.0.0-6) unstable; urgency=medium
+
+  * Attribution. The Wayland anchoring added in 1.0.0-4 is derived from the
+    BunsenLabs gtk3dialog fork, which is GPL-2.0-or-later, but only the source
+    file said so and it named the project rather than the people. The authors
+    are now credited where credit legally travels: debian/copyright gains a
+    stanza for src/widget_window.c naming Dima Krasner, who introduced
+    layer-shell support there in 2021 (commit 025cc69), and Mick Amadio, who
+    extended it with edge anchoring, the exclusive zone and opposite-edge
+    anchoring between 2021 and 2024. AUTHORS, AUTHORS.en, LICENCES.md and
+    LICENCES.en.md carry the same credit.
+  * Attribution, correction. debian/copyright listed only Laszlo Pere for
+    Files: *, although Thunor is named in every source header and in AUTHORS.
+    Thunor is now listed there too.
+  * Attribution, correction. AUTHORS filed https://github.com/01micko/gtkdialog
+    under Thunor. That repository is Mick Amadio's, not Thunor's. The link has
+    been removed from Thunor's entry and Amadio has his own.
+  * New attribute reserve="yes|no" on <window>. By default an anchored surface
+    floats over ordinary windows; reserve="yes" enables the layer-shell
+    auto exclusive zone, so the compositor keeps the surface's space free.
+    That is what a bar wants and what a dock usually does not. It has no
+    effect without edge=, and says so. Documented in gtk3dialog(1) and
+    haplo-dialog-xml(5), with a 54th XML regression case.
+
+ -- haplo-dialog <devel@haplo-dialog.fr>  Thu, 20 Aug 2026 19:50:48 +0200
+
 gtk3dialog (1.0.0-5) unstable; urgency=medium
 
   * Parser. An empty element body is now accepted where emptiness is a value:

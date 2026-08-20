@@ -30,6 +30,14 @@ continuity with upstream).
 
 Original upstream: https://github.com/01micko/gtkdialog
 
+### Wayland anchoring
+
+The `layer`, `edge`, `dist` and `reserve` attributes of `<window>` derive from
+the **BunsenLabs gtk3dialog** fork (https://github.com/BunsenLabs/gtk3dialog),
+also GPL-2.0-or-later: layer-shell support introduced by **Dima Krasner**
+(2021), extended by **Mick Amadio** (edge anchoring, exclusive zone, opposite
+edges, 2021-2024).
+
 ## SPDX identification in the sources
 
 Every source file carries an SPDX identifier in its header:

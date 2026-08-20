@@ -30,6 +30,14 @@ directe avec l'amont).
 
 Upstream original : https://github.com/01micko/gtkdialog
 
+### Ancrage Wayland
+
+Les attributs `layer`, `edge`, `dist` et `reserve` de `<window>` dérivent du
+fork **BunsenLabs gtk3dialog** (https://github.com/BunsenLabs/gtk3dialog),
+lui aussi sous GPL-2.0-or-later : support layer-shell introduit par
+**Dima Krasner** (2021), étendu par **Mick Amadio** (ancrage aux bords, zone
+exclusive, bords opposés, 2021-2024).
+
 ## Identification SPDX dans les sources
 
 Chaque fichier source contient un identifiant SPDX en en-tête :

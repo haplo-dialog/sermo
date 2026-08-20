@@ -5,8 +5,23 @@ Source: https://haplo-dialog.fr
 
 Files: *
 Copyright: 2003-2013 László Pere <pipas@linux.pte.hu>
+           2011-2012 Thunor <thunorsif@hotmail.com>
            2026 haplo-dialog <devel@haplo-dialog.fr>
 License: GPL-2.0-or-later
+
+Files: gtk3dialog/gtk3dialog_1.0.0/src/widget_window.c
+Copyright: 2003-2013 László Pere <pipas@linux.pte.hu>
+           2011-2012 Thunor <thunorsif@hotmail.com>
+           2021 Dima Krasner <dima@dimakrasner.com>
+           2021-2024 Mick Amadio <01micko@gmail.com>
+           2026 haplo-dialog <devel@haplo-dialog.fr>
+License: GPL-2.0-or-later
+Comment: The Wayland layer-shell support (the layer=, edge=, dist= and
+ reserve= tag attributes) is derived from the BunsenLabs gtk3dialog fork,
+ https://github.com/BunsenLabs/gtk3dialog, which is licensed GPL-2.0-or-later.
+ Dima Krasner introduced layer-shell support there (commit 025cc69,
+ 2021-11-09); Mick Amadio extended it with edge anchoring (cf4e621), the
+ exclusive zone (def62a6) and opposite-edge anchoring (21056f0).
 
 License: GPL-2.0-or-later
  This program is free software; you can redistribute it and/or modify

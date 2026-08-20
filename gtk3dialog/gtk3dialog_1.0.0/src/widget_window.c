@@ -166,7 +166,9 @@ void widget_window_clear(variable *var)
  * wlr-layer-shell, the attributes are ignored and the window is created as
  * an ordinary toplevel.
  *
- * Ported from the BunsenLabs gtk3dialog fork
+ * Ported from the BunsenLabs gtk3dialog fork -- layer-shell support there
+ * was written by Dima Krasner <dima@dimakrasner.com> (2021) and extended by
+ * Mick Amadio <01micko@gmail.com> (2021-2024)
  * (https://github.com/BunsenLabs/gtk3dialog, src/widget_window.c, GPL-2+)
  * with two corrections to the original:
  *

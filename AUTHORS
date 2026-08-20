@@ -20,7 +20,21 @@ László Pere <laszlo.pere@gmx.net>
 
 Thunor
   - Contributeur principal gtkdialog 0.8.x
-  - https://github.com/01micko/gtkdialog
+
+──────────────────────────────────────────────────
+Portage GTK3 tiers, BunsenLabs
+──────────────────────────────────────────────────
+
+Dima Krasner <dima@dimakrasner.com>
+  - Support Wayland layer-shell dans le fork BunsenLabs (2021)
+
+Mick Amadio <01micko@gmail.com>
+  - Mainteneur du fork BunsenLabs gtk3dialog
+  - Ancrage aux bords, zone exclusive, bords opposés (2021–2024)
+  - https://github.com/BunsenLabs/gtk3dialog
+
+  L'ancrage Wayland de haplo-dialog (layer, edge, dist, reserve) dérive de
+  leur travail, sous GPL-2.0-or-later.
 
 ──────────────────────────────────────────────────
 Remerciements spéciaux
