@@ -10,7 +10,9 @@ Version 1.0.0 (2026-05-29), Première version publique
 
 haplo-dialog 1.0.0 est la première version publique stable.
 
-haplo-dialog est le successeur moderne, durci et maintenu de gtkdialog.
+haplo-dialog est un descendant moderne, durci et maintenu de gtkdialog.
+Ce n'est pas le seul : le fork BunsenLabs de Mick Amadio porte lui aussi
+gtkdialog sur GTK 3, et l'amont poursuit son travail chez woof-CE.
 Décrivez une interface en XML, lancez-la depuis le shell, récupérez les
 valeurs saisies. Là où gtkdialog est abandonné, haplo-dialog le fait revivre :
 corrigé, durci, maintenu.
@@ -38,9 +40,11 @@ corrigé, durci, maintenu.
 Pour installer :
 
   # Debian / Ubuntu : telecharger le .deb joint a la release, puis
-  sudo apt install ./gtk3dialog_1.0.0-3_amd64.deb
-  # (il n'y a PAS de depot APT a ajouter : « apt install gtk3dialog » seul
-  #  ne trouvera rien)
+  sudo apt install ./haplo-dialog_<version>_amd64.deb
+  # (il n'y a PAS de depot APT a ajouter. Attention : le paquet s'appelle
+  #  haplo-dialog. Un « apt install gtk3dialog » ne donne rien sur Debian ni
+  #  Ubuntu, mais installe un AUTRE programme sur BunsenLabs, qui publie un
+  #  paquet de ce nom.)
 
   # Arch Linux (recette fournie, jamais construite par nos soins)
   cd gtk3dialog/gtk3dialog_1.0.0/packaging/arch && makepkg -si

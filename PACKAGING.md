@@ -8,7 +8,7 @@
 ## Principe : la source est le livrable principal
 
 haplo-dialog fournit un **port unique**, `gtk3dialog` (backend GTK 3), le port de
-référence. Le projet maintient **un** paquet binaire, le `.deb` de `gtk3dialog`,
+référence. Le projet maintient **un** paquet binaire, le `.deb` de `haplo-dialog`,
 et fournit, dans l'arbre, des **recettes** pour les autres familles de
 distributions. Héberger un binaire pour chaque cible serait ingérable : le modèle
 amont/aval du logiciel libre veut que l'**amont fournisse la source + des
@@ -20,7 +20,7 @@ adapté à sa cible.
 1. **Source (tous publics).** `git clone` + build autotools. Le port embarque ses
    recettes d'empaquetage ; ce qu'elles valent est dit dans la matrice, colonne
    par colonne.
-2. **Un binaire fourni par le projet : le `.deb` de `gtk3dialog`.** Il est attaché
+2. **Un binaire fourni par le projet : le `.deb` de `haplo-dialog`.** Il est attaché
    à chaque version publiée (release du projet).
 3. **Les autres cibles : recettes fournies, build à la demande.** Le projet
    n'héberge pas ces binaires ; on les construit si un besoin réel émerge.
@@ -30,7 +30,7 @@ adapté à sa cible.
 | Cible | Fourni ? | Où |
 |-------|:--:|-----|
 | Source (gtk3dialog) | ✅ | dépôt Git + releases du projet |
-| `.deb` gtk3dialog | ✅ | attaché à chaque release |
+| `.deb` haplo-dialog | ✅ | attaché à chaque release |
 | Paquets pour les autres distributions | ❌ | recettes dans l'arbre ; build par l'aval |
 
 ## Recettes disponibles, et ce qu'elles valent

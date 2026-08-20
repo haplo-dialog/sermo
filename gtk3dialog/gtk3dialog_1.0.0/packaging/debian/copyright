@@ -1,5 +1,5 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: gtk3dialog
+Upstream-Name: haplo-dialog
 Upstream-Contact: devel@haplo-dialog.fr
 Source: https://haplo-dialog.fr
 
@@ -9,7 +9,7 @@ Copyright: 2003-2013 László Pere <pipas@linux.pte.hu>
            2026 haplo-dialog <devel@haplo-dialog.fr>
 License: GPL-2.0-or-later
 
-Files: gtk3dialog/gtk3dialog_1.0.0/src/widget_window.c
+Files: src/widget_window.c
 Copyright: 2003-2013 László Pere <pipas@linux.pte.hu>
            2011-2012 Thunor <thunorsif@hotmail.com>
            2021 Dima Krasner <dima@dimakrasner.com>

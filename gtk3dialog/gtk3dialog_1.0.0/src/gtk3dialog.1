@@ -319,7 +319,7 @@ cat my_form.xml | gtk3dialog --stdin
 .I /usr/bin/gtk3dialog
 The gtk3dialog executable.
 .TP
-.I /usr/share/doc/gtk3dialog/examples/
+.I /usr/share/doc/haplo-dialog/examples/
 Shell script examples for each supported widget type.
 .SH COMPATIBILITY
 .B gtk3dialog
@@ -338,8 +338,33 @@ manual-page alias, so legacy dialogs (XML, command-line options, and the
 environment-variable invocation) continue to work unchanged and print their
 output in the historical
 .IR NAME =\(dq value \(dq
-form. Only gtk3dialog provides this alias, so there is no conflict between
-packages.
+form.
+.PP
+The Debian binary package is named
+.BR haplo\-dialog .
+It declares
+.I Provides
+and
+.I Replaces
+on
+.B gtkdialog
+and
+.BR gtk3dialog ,
+and
+.I Conflicts
+on
+.B gtk3dialog
+and on
+.B gtkdialog
+before version 1.0.0, because other projects ship packages under those names
+that own the same file paths. That is the case of the BunsenLabs fork,
+maintained by Mick Amadio, whose
+.B gtk3dialog
+package installs
+.IR /usr/bin/gtk3dialog .
+Installing
+.B haplo\-dialog
+replaces such a package rather than coexisting with it.
 .SH SEE ALSO
 .BR gtkdialog (1),
 .BR bash (1),

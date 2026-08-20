@@ -1,6 +1,6 @@
 # haplo-dialog
 
-**Le successeur moderne, durci et maintenu de gtkdialog (GTK 3).**
+**Un descendant moderne, durci et maintenu de gtkdialog (GTK 3).**
 
 [![Licence](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.0.0-informational.svg)](CHANGELOG.md)

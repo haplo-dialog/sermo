@@ -625,7 +625,7 @@ NOCONFIGURE=1 ./autogen.sh   # seulement autoreconf (pour debian/rules)
 # Méthode rapide (depuis le répertoire racine du projet)
 make deb
 # → dpkg-buildpackage -us -uc -b -j$(nproc)
-# → ../gtk3dialog_1.0.0-1_amd64.deb
+# → ../haplo-dialog_1.0.0-8_amd64.deb
 
 # Nettoyage
 make deb-clean

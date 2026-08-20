@@ -14,12 +14,16 @@ EXTRA_DIST = \
 	tests/Makefile.am \
 	tests/README.tests \
 	autogen.sh \
-	debian/source/format \
-	debian/control \
-	debian/rules \
-	debian/changelog \
-	debian/copyright \
-	debian/gtk3dialog.install \
+	packaging/debian/source/format \
+	packaging/debian/control \
+	packaging/debian/rules \
+	packaging/debian/changelog \
+	packaging/debian/copyright \
+	packaging/debian/haplo-dialog.links \
+	packaging/debian/haplo-dialog.lintian-overrides \
+	packaging/debian/postinst \
+	packaging/debian/prerm \
+	packaging/debian/README.debian.md \
 	doc/reference/* \
 	examples/button/* \
 	examples/checkbox/* \
@@ -82,7 +86,7 @@ deb:
 	dpkg-buildpackage -us -uc -b -j$$(nproc 2>/dev/null || echo 1)
 	@echo ""
 	@echo "Package written to the parent directory:"
-	@ls -lh ../gtk3dialog_*.deb 2>/dev/null || true
+	@ls -lh ../haplo-dialog_*.deb ../haplo-dialog-dbgsym_*.deb 2>/dev/null || true
 
 deb-src:
 	@echo "==> Building source package (no signing) ..."
@@ -90,9 +94,9 @@ deb-src:
 
 deb-clean:
 	debian/rules clean
-	@rm -f ../gtk3dialog_*.deb ../gtk3dialog_*.changes \
-	       ../gtk3dialog_*.buildinfo ../gtk3dialog_*.dsc \
-	       ../gtk3dialog_*.tar.*
+	@rm -f ../haplo-dialog_*.deb ../haplo-dialog-dbgsym_*.deb \
+	       ../haplo-dialog_*.changes ../haplo-dialog_*.buildinfo \
+	       ../haplo-dialog_*.dsc ../haplo-dialog_*.tar.*
 
 # Validation lors de 'make distcheck'
 distcheck-hook:

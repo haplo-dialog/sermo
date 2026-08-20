@@ -1,7 +1,11 @@
-# Packaging Debian — gtk3dialog
+# Packaging Debian — haplo-dialog
 
 **Toolkit :** GTK3
-**Paquet source :** `gtk3dialog` · **Paquet binaire :** `gtk3dialog`
+**Paquet source :** `haplo-dialog` · **Paquet binaire :** `haplo-dialog`
+
+Le paquet s'appelle `haplo-dialog`, la commande reste `gtk3dialog`. Le nom de
+paquet `gtk3dialog` n'est pas libre : le fork BunsenLabs en publie un sous ce
+nom exact.
 **Version :** 1.0.0
 **Cibles :** Debian, Ubuntu, Linux Mint
 
@@ -37,7 +41,7 @@ Dépendances runtime tirées automatiquement : `libgtk-3-0, libvte-2.91-0`.
 
 ## Contenu du paquet
 
-Les fichiers installés sont listés dans `debian/gtk3dialog.install` (binaire `/usr/bin/gtk3dialog`,
+Les fichiers installés sont posés par `debian/rules` et `debian/haplo-dialog.links` (binaire `/usr/bin/gtk3dialog`,
 exemples et documentation).
 
 ## Fichiers debian/
@@ -48,13 +52,14 @@ exemples et documentation).
 | `changelog` | Historique des versions (format Debian) |
 | `rules` | Recette de build (debhelper) |
 | `copyright` | Licence GPL-2.0-or-later + héritage gtkdialog |
-| `gtk3dialog.install` | Liste des fichiers installés |
+| `haplo-dialog.links` | Alias `gtkdialog` et sa page de manuel |
+| `haplo-dialog.lintian-overrides` | Exceptions lintian assumées |
 | `compat` / `source/` | Niveau debhelper et format source |
 
 ## Désinstallation
 
 ```bash
-sudo apt-get remove gtk3dialog
+sudo apt-get remove haplo-dialog
 ```
 
 ---

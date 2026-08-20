@@ -27,7 +27,7 @@ override_dh_auto_install:
 	cp -r examples/* $(CURDIR)/debian/haplo-dialog/usr/share/doc/haplo-dialog/examples/ 2>/dev/null || true
 
 override_dh_strip:
-	dh_strip --dbgsym-migration='gtk3dialog-dbg (<< 1.0.0-1~)'
+	dh_strip --dbgsym-migration='gtk3dialog-dbgsym (<< 1.0.0-8~)'
 
 override_dh_auto_test:
 	# Suite de tests (Check) désactivée à l'empaquetage — dépendance facultative.

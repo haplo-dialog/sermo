@@ -27,7 +27,7 @@ Thank you for your interest in haplo-dialog. This document explains how to contr
 - For functional bugs: open a ticket with a minimal reproducible XML script
 
 **Reference port:**  
-haplo-dialog provides a single port, `gtk3dialog` (GTK 3 backend), which provides the backwards-compatible alias `gtkdialog`. It is the maintained successor to gtkdialog (a fork of Laszlo Pere's gtkdialog 0.8.3): where gtkdialog is abandoned, haplo-dialog brings it back to life, fixed, hardened, maintained.
+haplo-dialog provides a single port, `gtk3dialog` (GTK 3 backend), which provides the backwards-compatible alias `gtkdialog`. It is a maintained descendant of gtkdialog (a fork of Laszlo Pere's gtkdialog 0.8.3), fixed and hardened. Other descendants exist, notably Mick Amadio's BunsenLabs fork, which also ports gtkdialog to GTK 3.
 
 ---
 

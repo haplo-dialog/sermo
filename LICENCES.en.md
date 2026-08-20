@@ -28,7 +28,11 @@ haplo-dialog is a fork of **gtkdialog 0.8.3** by László Pere and Thunor,
 distributed under GPL-2.0+. haplo-dialog keeps **GPL-2.0-or-later** (direct
 continuity with upstream).
 
-Original upstream: https://github.com/01micko/gtkdialog
+Original upstream: gtkdialog by László Pere (2003-2013), continued at
+https://github.com/puppylinux-woof-CE/gtkdialog
+
+Other descendants of the same code: https://github.com/01micko/gtkdialog and
+https://github.com/BunsenLabs/gtk3dialog, both by Mick Amadio.
 
 ### Wayland anchoring
 

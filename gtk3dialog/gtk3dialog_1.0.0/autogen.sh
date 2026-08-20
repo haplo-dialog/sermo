@@ -26,6 +26,16 @@ set -e
 # Resolve the real absolute path of the source tree (follows symlinks).
 srcdir=$(cd "$(dirname "$0")" && pwd)
 
+# dpkg-buildpackage exige un repertoire debian/ a la racine du paquet source,
+# et EXTRA_DIST y renvoie. C'est un lien vers packaging/debian, ou vivent les
+# vraies recettes ; git ne suit pas les liens de ce genre, donc un clone neuf
+# ne l'a pas, et « dpkg-buildpackage » comme « make dist » echouent. On le
+# (re)pose ici, dans le repertoire SOURCE et avant autoreconf.
+if [ ! -e "$srcdir/debian" ] && [ -d "$srcdir/packaging/debian" ]; then
+    ln -s packaging/debian "$srcdir/debian"
+    echo "==> Lien debian -> packaging/debian cree."
+fi
+
 echo "==> Running autoreconf -fiv ..."
 (cd "$srcdir" && autoreconf -fiv)
 

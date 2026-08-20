@@ -136,15 +136,15 @@ make deb        # appelle dpkg-buildpackage -us -uc -b
 Le paquet `.deb` est créé dans le répertoire parent (`../`) :
 
 ```
-../gtk3dialog_1.0.0-1_amd64.deb
+../haplo-dialog_1.0.0-8_amd64.deb
 ```
 
 ### Installation du paquet
 
 ```bash
-sudo dpkg -i ../gtk3dialog_1.0.0-1_amd64.deb
+sudo dpkg -i ../haplo-dialog_1.0.0-8_amd64.deb
 # ou avec gestion automatique des dépendances manquantes :
-sudo apt-get install -f ../gtk3dialog_1.0.0-1_amd64.deb
+sudo apt-get install -f ../haplo-dialog_1.0.0-8_amd64.deb
 ```
 
 ### Méthode complète (dpkg-buildpackage)
