@@ -3,7 +3,10 @@ inherit autotools
 
 DESCRIPTION="GTK3 dialog window creator for shell scripts"
 HOMEPAGE="https://haplo-dialog.fr"
-SRC_URI="https://haplo-dialog.fr/pub/gtk3dialog/${P}.tar.gz"
+# Le nom du paquet est haplo-dialog ; l'archive amont garde le nom du port.
+MY_P="gtk3dialog-${PV}"
+SRC_URI="https://haplo-dialog.fr/pub/gtk3dialog/${MY_P}.tar.gz"
+S="${WORKDIR}/${MY_P}"
 
 LICENSE="GPL-2.0-or-later"
 SLOT="0"
@@ -24,6 +27,7 @@ DEPEND="
 "
 
 RDEPEND="
+	!!x11-misc/gtk3dialog
 	x11-libs/gtk+:3
 	x11-libs/vte:2.91
 	gui-libs/gtk-layer-shell

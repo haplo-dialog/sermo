@@ -1,11 +1,11 @@
-gtk3dialog: gtk3dialog (GTK3 dialog window creator for shell scripts)
-gtk3dialog:
-gtk3dialog: gtk3dialog builds GTK3 dialog windows from an XML-like description
-gtk3dialog: language, allowing shell scripts to display interactive GUI windows
-gtk3dialog: without knowledge of any graphical toolkit. This is the haplo-dialog
-gtk3dialog: fork (1.0.0) with security hardening (safe_exec,
-gtk3dialog: FORTIFY_SOURCE=3, PIE, Full RELRO, stack-protector-strong).
-gtk3dialog: Toolkit: GTK3
-gtk3dialog: Security: safe_exec, PIE, RELRO, FORTIFY_SOURCE=3
-gtk3dialog: haplo-dialog <devel@haplo-dialog.fr> — https://haplo-dialog.fr
-gtk3dialog:
+haplo-dialog: haplo-dialog (GTK3 dialog window creator for shell scripts)
+haplo-dialog:
+haplo-dialog: haplo-dialog builds GTK3 dialog windows from an XML-like
+haplo-dialog: description language, letting shell scripts show interactive GUI
+haplo-dialog: windows without knowing any graphical toolkit. Fork of gtkdialog,
+haplo-dialog: hardened: safe_exec (no system()), FORTIFY_SOURCE=3, PIE, Full
+haplo-dialog: RELRO, stack-protector-strong. The command is gtk3dialog, with a
+haplo-dialog: gtkdialog compatibility symlink.
+haplo-dialog:
+haplo-dialog: haplo-dialog <devel@haplo-dialog.fr> - https://haplo-dialog.fr
+haplo-dialog:

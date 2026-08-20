@@ -1,7 +1,8 @@
 # Maintainer: haplo-dialog <devel@haplo-dialog.fr>
 # Port: GTK3 — haplo-dialog family
 
-pkgname=gtk3dialog
+pkgname=haplo-dialog
+_srcname=gtk3dialog   # nom de l'archive amont, inchange
 pkgver=1.0.0
 pkgrel=1
 epoch=
@@ -14,25 +15,25 @@ depends=('gtk3' 'vte3' 'gtk-layer-shell')
 makedepends=('gtk3' 'vte3' 'gtk-layer-shell' 'flex' 'bison' 'autoconf' 'automake' 'pkgconfig')
 checkdepends=()
 optdepends=()
-provides=('gtk3dialog')
-conflicts=()
-replaces=()
+provides=('gtk3dialog' 'gtkdialog')
+conflicts=('gtk3dialog')
+replaces=('gtk3dialog')
 backup=()
 options=()
 install=
 changelog=
-source=("$pkgname-$pkgver.tar.gz::https://haplo-dialog.fr/pub/gtk3dialog/$pkgname-$pkgver.tar.gz")
+source=("$_srcname-$pkgver.tar.gz::https://haplo-dialog.fr/pub/gtk3dialog/$_srcname-$pkgver.tar.gz")
 noextract=()
 sha256sums=('SKIP')
 
 prepare() {
-  cd "$pkgname-$pkgver"
+  cd "$_srcname-$pkgver"
   # Patch de compatibilité si besoin
   :
 }
 
 build() {
-  cd "$pkgname-$pkgver"
+  cd "$_srcname-$pkgver"
   NOCONFIGURE=1 ./autogen.sh
   ./configure --prefix=/usr \
               --mandir=/usr/share/man \
@@ -41,13 +42,13 @@ build() {
 }
 
 check() {
-  cd "$pkgname-$pkgver"
+  cd "$_srcname-$pkgver"
   # make check 2>/dev/null || true
   :
 }
 
 package() {
-  cd "$pkgname-$pkgver"
+  cd "$_srcname-$pkgver"
   make DESTDIR="$pkgdir" install
   install -Dm644 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
   install -d "$pkgdir/usr/share/doc/$pkgname/examples"

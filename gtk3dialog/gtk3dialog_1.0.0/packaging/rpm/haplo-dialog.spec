@@ -1,15 +1,18 @@
-%global name gtk3dialog
+%global srcname gtk3dialog   # nom de l'archive amont, inchange
 %global version 1.0.0
 %global release 1
 
-Name:           gtk3dialog
+Name:           haplo-dialog
+Provides:       gtk3dialog = %{version}-%{release}
+Provides:       gtkdialog = %{version}-%{release}
+Obsoletes:      gtk3dialog < %{version}-%{release}
 Version:        %{version}
 Release:        %{release}%{?dist}
 Summary:        GTK3 dialog window creator for shell scripts
 
 License:        GPL-2.0-or-later
 URL:            https://haplo-dialog.fr
-Source0:        %{name}-%{version}.tar.gz
+Source0:        %{srcname}-%{version}.tar.gz
 Requires: gtk3-devel
 BuildRequires: vte291-devel
 BuildRequires: gtk-layer-shell-devel

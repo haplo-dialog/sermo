@@ -36,7 +36,7 @@ dpkg-buildpackage -b -us -uc
 ### Fedora / RHEL
 
 ```bash
-cp packaging/rpm/gtk3dialog.spec ~/rpmbuild/SPECS/
+cp packaging/rpm/haplo-dialog.spec ~/rpmbuild/SPECS/
 rpmbuild -ba ~/rpmbuild/SPECS/gtk3dialog.spec
 ```
 

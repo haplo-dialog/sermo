@@ -3,19 +3,22 @@
 # Copyright (c) 2003 Pere Laszlo pipas@linux.pte.hu
 # Copyright (c) 2026 haplo-dialog <devel@haplo-dialog.fr>
 #
-%define name gtk3dialog
+%define name haplo-dialog
+%define srcname gtk3dialog
 %define version 1.0.0
 %define release 1
 %define manifest %{_builddir}/%{name}-%{version}-%{release}.manifest
 
 Name: %{name}
+Provides: %{srcname} = %{version}-%{release}
+Obsoletes: %{srcname} < %{version}-%{release}
 Version: %{version}
 Release: %{release}
 License: GPL GNU
 Group: Application/Misc
 Packager: Pere Laszlo pipas@linux.pte.hu
-Source: %{name}-%{version}.tar.gz
-URL: https://haplo-dialog.fr/pub/gtk3dialog/%{name}-%{version}.tar.gz
+Source: %{srcname}-%{version}.tar.gz
+URL: https://haplo-dialog.fr/pub/gtk3dialog/%{srcname}-%{version}.tar.gz
 BuildRoot: /var/tmp/%{name}-%{version}
 
 Summary: GTK3 GUI creation tool for shells and arbitrary interpreters. 
@@ -26,7 +29,7 @@ language to produce dialog boxes. The program can be used with shells
 and arbitrary interpreters. Example programs included for BASH and AWK.
 
 %prep
-%setup -q
+%setup -q -n %{srcname}-%{version}
 
 %build
 %configure
