@@ -407,6 +407,91 @@ static void _layer_shell_apply(GtkWidget *widget, tag_attr *attr)
 
 #endif	/* HAVE_LAYER_SHELL */
 
+/* ---------------------------------------------------------------------------
+ * Client-side decorations (CSD)
+ *
+ *   headerbar="yes|no"
+ *       "yes" makes the window draw its own title bar, a GtkHeaderBar, in
+ *       place of the one the window manager would draw.  Default "no": the
+ *       window manager keeps drawing it.
+ *
+ * This is deliberately opt-in and off by default.  Haplo ships XFCE, where a
+ * client-drawn title bar stops matching the window-manager theme and the
+ * window buttons stop matching every other window on the desktop.  A script
+ * that wants the modern GNOME look asks for it; nothing gets it by surprise.
+ *
+ * Note the neighbouring attribute: decorated="false" removes the title bar
+ * altogether.  The three cases are therefore
+ *   (nothing)            window manager draws the title bar
+ *   headerbar="yes"      the program draws it
+ *   decorated="false"    nobody draws it
+ *
+ * The attribute name is not "titlebar" on purpose: GtkWindow in GTK4 has a
+ * "titlebar" property of type GtkWidget, and tag_attributes.c applies any
+ * attribute that matches a GObject property, so that name would be captured
+ * and fed a string where a widget is expected.  "headerbar" is free in both
+ * GTK3 and GTK4 (measured).
+ * ------------------------------------------------------------------------ */
+
+/*
+ * _parse_yes_no:
+ * Shared yes/no attribute parsing.  Unrecognised values are reported and
+ * treated as the default given by def.
+ */
+static gboolean _parse_yes_no(const gchar *value, gboolean def, const gchar *what)
+{
+	if (value == NULL || *value == '\0')
+		return def;
+
+	if (g_ascii_strcasecmp(value, "yes")  == 0 ||
+	    g_ascii_strcasecmp(value, "true") == 0 ||
+	    g_ascii_strcasecmp(value, "1")    == 0)
+		return TRUE;
+
+	if (g_ascii_strcasecmp(value, "no")    == 0 ||
+	    g_ascii_strcasecmp(value, "false") == 0 ||
+	    g_ascii_strcasecmp(value, "0")     == 0)
+		return FALSE;
+
+	g_warning("%s(): Unknown %s '%s'. Using '%s'.", __func__, what, value,
+		def ? "yes" : "no");
+	return def;
+}
+
+/*
+ * _apply_headerbar:
+ * Replace the window-manager title bar by a GtkHeaderBar carrying the same
+ * title and a close button.  Call it after gtk_window_set_title(), so the
+ * header bar can pick the title up.
+ */
+static void _apply_headerbar(GtkWidget *window, tag_attr *attr)
+{
+	GtkWidget   *bar;
+	const gchar *title;
+	gchar       *value;
+
+	if (attr == NULL)
+		return;
+
+	value = get_tag_attribute(attr, "headerbar");
+	if (value == NULL)
+		return;
+
+	if (!_parse_yes_no(value, FALSE, "headerbar"))
+		return;
+
+	bar = gtk_header_bar_new();
+	gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(bar), TRUE);
+
+	/* The header bar does not inherit the window title, it has its own. */
+	title = gtk_window_get_title(GTK_WINDOW(window));
+	if (title != NULL)
+		gtk_header_bar_set_title(GTK_HEADER_BAR(bar), title);
+
+	gtk_window_set_titlebar(GTK_WINDOW(window), bar);
+	gtk_widget_show_all(bar);
+}
+
 GtkWidget *widget_window_create(
 	AttributeSet *Attr, tag_attr *attr, gint Type)
 {
@@ -435,6 +520,10 @@ GtkWidget *widget_window_create(
 	attributeset_set_if_unset(Attr, ATTR_LABEL, PACKAGE);
 	gtk_window_set_title(GTK_WINDOW(widget), 
 		attributeset_get_first(&element, Attr, ATTR_LABEL));
+
+	/* Client-side decorations, opt-in via headerbar="yes".  After the title
+	 * is set, so the header bar can carry it. */
+	_apply_headerbar(widget, attr);
 
 	/* Set a default title bar theme icon */
 	gtk_window_set_icon_name(GTK_WINDOW(widget), PACKAGE);

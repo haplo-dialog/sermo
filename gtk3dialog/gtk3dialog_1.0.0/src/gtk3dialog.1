@@ -161,6 +161,23 @@ Each widget exports its current value as a shell environment variable
 (via
 .BR eval )
 when the dialog exits or an action requests a refresh.
+.SS Title bar
+The
+.B window
+tag accepts
+.BR headerbar = "\(dqyes\(dq" ,
+which makes the program draw its own title bar, a GtkHeaderBar carrying the
+window title and a close button, instead of the one the window manager would
+draw. This is what is usually called client\-side decorations, or CSD.
+.PP
+It is off by default on purpose: under a window manager that themes its own
+title bars, such as XFCE's xfwm4, a client\-drawn bar stops matching the rest
+of the desktop. A script asks for it; none gets it by surprise.
+.PP
+The neighbouring attribute
+.BR decorated = "\(dqfalse\(dq"
+removes the title bar altogether. So: nothing means the window manager draws
+it, headerbar means the program draws it, decorated=false means nobody does.
 .SS Wayland anchoring
 Under a Wayland compositor that implements the
 .I wlr\-layer\-shell

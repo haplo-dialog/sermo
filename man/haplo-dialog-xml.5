@@ -90,10 +90,33 @@ Valeur initiale du widget. L'élément peut être vide
 Fenêtre principale du dialogue.
 .br
 Attributs : \fBtitle\fR, \fBwidth-request\fR, \fBheight-request\fR,
-\fBresizable\fR, \fBicon-name\fR, \fBdecorated\fR.
+\fBresizable\fR, \fBicon-name\fR, \fBdecorated\fR, \fBheaderbar\fR.
 .br
 Attributs Wayland (ancrage layer-shell) : \fBlayer\fR, \fBedge\fR, \fBdist\fR,
 \fBreserve\fR.
+
+.SS Qui dessine la barre de titre
+Trois cas, selon ce que la fenêtre demande.
+.TP
+.B (rien)
+Le gestionnaire de fenêtres dessine la barre de titre. C'est le défaut, et
+c'est ce qui fait qu'une fenêtre ressemble à toutes les autres du bureau.
+.TP
+.B headerbar="yes"
+Le programme dessine lui\-même sa barre de titre, un \fIGtkHeaderBar\fR, avec
+le titre de la fenêtre et un bouton de fermeture. C'est ce qu'on appelle les
+décorations côté client, ou CSD. Utile pour une fenêtre qui veut l'allure
+GNOME moderne.
+.br
+Volontairement désactivé par défaut : sous XFCE, une barre dessinée par
+l'application cesse de suivre le thème du gestionnaire de fenêtres, et ses
+boutons cessent de ressembler à ceux de toutes les autres fenêtres. Un script
+qui veut ce rendu le demande ; aucun ne l'obtient par surprise.
+.br
+Une valeur non reconnue est signalée et vaut \fBno\fR.
+.TP
+.B decorated="false"
+Personne ne dessine de barre de titre. La fenêtre est nue.
 
 .SS Ancrage Wayland de la fenêtre (layer-shell)
 Sous Wayland, une fenêtre peut se comporter en surface \fIlayer-shell\fR :
