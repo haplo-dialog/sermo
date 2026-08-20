@@ -92,18 +92,19 @@ Fenêtre principale du dialogue.
 Attributs : \fBtitle\fR, \fBwidth-request\fR, \fBheight-request\fR,
 \fBresizable\fR, \fBicon-name\fR, \fBdecorated\fR.
 .br
-Attributs Wayland (ancrage layer-shell) : \fBlayer\fR, \fBedge\fR, \fBdist\fR.
+Attributs Wayland (ancrage layer-shell) : \fBlayer\fR, \fBedge\fR, \fBdist\fR,
+\fBreserve\fR.
 
 .SS Ancrage Wayland de la fenêtre (layer-shell)
 Sous Wayland, une fenêtre peut se comporter en surface \fIlayer-shell\fR :
-barre, dock, fond d'écran, panneau flottant. Trois attributs de
+barre, dock, fond d'écran, panneau flottant. Quatre attributs de
 .B <window>
 la placent. Ils n'ont d'effet que si le compositeur Wayland implémente le
 protocole \fIwlr-layer-shell\fR (sway, Hyprland, river, labwc, wayfire\&...) et
 si gtk3dialog a été compilé avec gtk-layer-shell.
 .br
 Ailleurs (X11, ou un compositeur Wayland sans ce protocole, comme GNOME),
-les trois attributs sont ignorés et la fenêtre s'ouvre normalement : un
+les quatre attributs sont ignorés et la fenêtre s'ouvre normalement : un
 message le signale sur la sortie d'erreur, le script continue.
 .TP
 .B layer="\fIvaleur\fR"
@@ -145,13 +146,26 @@ la hauteur de l'écran (la forme utile pour une barre ou un dock) :
 Marge en pixels entre la surface et les bords auxquels elle est arrimée.
 Entier de 0 à 200 ; 20 par défaut. Une valeur hors bornes ou mal formée est
 signalée par un avertissement, et la valeur par défaut s'applique.
+.TP
+.B reserve="yes|no"
+Indique si le compositeur garde libre l'espace occupé par la surface. Par
+défaut BnoR : la surface flotte au-dessus des fenêtres ordinaires, qui
+occupent tout l'écran et passent dessous. Avec ByesR, le compositeur
+réserve la place et dispose les autres fenêtres à côté, ce qu'on attend d'une
+barre et rarement d'un dock ou d'un widget de bureau. L'attribut n'a d'effet
+qu'avec BedgeR ; sans lui, un avertissement le signale. Une valeur autre
+que ByesR, BtrueR, B1R, BnoR, BfalseR ou B0R est
+signalée et vaut BnoR.
+.br
+La marge compte des deux côtés : mesuré sous sway, une barre de 48 pixels
+garde 48 pixels libres avec Bdist="0"R, et 88 avec Bdist="20"R.
 .PP
-Exemple : une barre de 40 pixels collée en haut de l'écran, au-dessus des
-fenêtres, sans marge.
+Exemple : une barre de 40 pixels collée en haut de l'écran, sans marge, qui
+réserve sa place au lieu de recouvrir les fenêtres.
 .PP
 .nf
 .RS 4
-<window layer="top" edge="topstride" dist="0" height\-request="40">
+<window layer="top" edge="topstride" dist="0" reserve="yes" height\-request="40">
   <hbox>
     <text><label>Haplo</label></text>
     <button><label>Menu</label></button>

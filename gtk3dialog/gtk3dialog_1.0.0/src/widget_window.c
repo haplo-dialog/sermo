@@ -141,7 +141,7 @@ void widget_window_clear(variable *var)
 /* ---------------------------------------------------------------------------
  * wlr-layer-shell support (Wayland only)
  *
- * Three <window> tag attributes are recognised:
+ * Four <window> tag attributes are recognised:
  *
  *   layer="background|bottom|top|overlay"
  *       Which layer of the compositor's stack the surface lives on.
@@ -155,6 +155,12 @@ void widget_window_clear(variable *var)
  *   dist="0..200"
  *       Margin in pixels between the surface and the edges it is anchored
  *       to.  Defaults to LAYER_SHELL_MARGIN_DEFAULT.
+ *
+ *   reserve="yes|no"
+ *       Whether the compositor keeps the surface's space free.  The default,
+ *       "no", lets the surface float over ordinary windows; "yes" reserves
+ *       the size of the window plus its margin on the anchored edge, which
+ *       is what a bar wants and what a dock usually does not.
  *
  * On X11, or on a Wayland compositor that does not implement
  * wlr-layer-shell, the attributes are ignored and the window is created as
@@ -277,6 +283,32 @@ static gint _layer_shell_parse_margin(const gchar *value)
 }
 
 /*
+ * _layer_shell_parse_reserve:
+ * Parse the reserve= attribute.  Absent, empty or "no" means the surface
+ * floats over ordinary windows, which is the historical behaviour; "yes" asks
+ * the compositor to keep its space free.  An unrecognised value is reported
+ * and treated as "no".
+ */
+static gboolean _layer_shell_parse_reserve(const gchar *value)
+{
+	if (value == NULL || *value == '\0')
+		return FALSE;
+
+	if (g_ascii_strcasecmp(value, "yes")  == 0 ||
+	    g_ascii_strcasecmp(value, "true") == 0 ||
+	    g_ascii_strcasecmp(value, "1")    == 0)
+		return TRUE;
+
+	if (g_ascii_strcasecmp(value, "no")    == 0 ||
+	    g_ascii_strcasecmp(value, "false") == 0 ||
+	    g_ascii_strcasecmp(value, "0")     == 0)
+		return FALSE;
+
+	g_warning("%s(): Unknown reserve '%s'. Using 'no'.", __func__, value);
+	return FALSE;
+}
+
+/*
  * _layer_shell_apply:
  * Read layer=, edge= and dist= off the <window> tag and, when at least one
  * of layer= or edge= was given, turn the window into a layer-shell surface.
@@ -289,6 +321,7 @@ static void _layer_shell_apply(GtkWidget *widget, tag_attr *attr)
 	GtkLayerShellEdge   corner    = LAYER_SHELL_NO_EDGE;
 	GtkLayerShellEdge   oppcorner = LAYER_SHELL_NO_EDGE;
 	gint                margin    = LAYER_SHELL_MARGIN_DEFAULT;
+	gboolean            reserve   = FALSE;
 	gchar              *value;
 	gsize               i;
 
@@ -328,6 +361,10 @@ static void _layer_shell_apply(GtkWidget *widget, tag_attr *attr)
 	/* Validate dist= even when the display cannot honour the request, so
 	 * that a typo is reported while developing under X11. */
 	margin = _layer_shell_parse_margin(get_tag_attribute(attr, "dist"));
+	reserve = _layer_shell_parse_reserve(get_tag_attribute(attr, "reserve"));
+
+	if (reserve && edge == LAYER_SHELL_NO_EDGE)
+		g_warning("%s(): reserve= has no effect without edge=.", __func__);
 
 	/* Asked for, but the display cannot honour it.  Say so once and carry
 	 * on as an ordinary window. */
@@ -354,6 +391,15 @@ static void _layer_shell_apply(GtkWidget *widget, tag_attr *attr)
 			gtk_layer_set_anchor(GTK_WINDOW(widget), corner, TRUE);
 		if (oppcorner != LAYER_SHELL_NO_EDGE)
 			gtk_layer_set_anchor(GTK_WINDOW(widget), oppcorner, TRUE);
+
+		/* The exclusive zone was set to 0 above, so by default the
+		 * surface floats over ordinary windows.  reserve="yes" asks
+		 * for the opposite: the compositor keeps the window's size
+		 * plus its margin on the anchored edge free, and lays other
+		 * windows out beside it.  Enabled last, once the anchors it
+		 * derives the zone from are in place. */
+		if (reserve)
+			gtk_layer_auto_exclusive_zone_enable(GTK_WINDOW(widget));
 	}
 }
 

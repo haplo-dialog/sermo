@@ -1,0 +1,8 @@
+<!-- DESC: window avec les quatre attributs Wayland layer edge dist reserve -->
+<window title="Test ancrage Wayland" layer="top" edge="topstride" dist="0"
+        reserve="yes" height-request="48">
+  <hbox>
+    <text><label>Barre ancrée en haut, qui réserve sa place</label></text>
+    <button ok></button>
+  </hbox>
+</window>

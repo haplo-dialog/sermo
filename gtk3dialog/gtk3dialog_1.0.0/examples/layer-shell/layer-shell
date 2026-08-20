@@ -18,6 +18,12 @@
 #   dist="0..200"
 #       Margin in pixels from the anchored edges (default 20).
 #
+#   reserve="yes|no"
+#       Whether the compositor keeps the surface's space free (default no).
+#       With "no" the surface floats over ordinary windows; with "yes" the
+#       compositor lays other windows out beside it.  A bar wants "yes"; a
+#       dock or a desktop widget usually does not.
+#
 # This needs a compositor that implements wlr-layer-shell: sway, Hyprland,
 # river, labwc, wayfire...  Under X11, or under a Wayland compositor without
 # the protocol (GNOME/Mutter), the attributes are ignored, a message is
@@ -25,7 +31,7 @@
 # therefore safe to run anywhere.
 #
 # Usage:
-#   ./layer-shell            — top bar (default)
+#   ./layer-shell            — top bar (default), reserving its space
 #   ./layer-shell dock       — floating dock, bottom edge
 #   ./layer-shell wallpaper  — full-width strip on the background layer
 #   ./layer-shell --dump     — print the XML definition
@@ -44,15 +50,18 @@ done
 
 case $MODE in
 	dock)
-		LAYER=overlay ; EDGE=bottom      ; DIST=24 ; WHAT="dock (overlay, bottom, 24px)" ;;
+		LAYER=overlay ; EDGE=bottom     ; DIST=24 ; RESERVE=no
+		WHAT="dock (overlay, bottom, 24px)" ;;
 	wallpaper)
-		LAYER=background ; EDGE=hstride  ; DIST=0  ; WHAT="wallpaper strip (background, hstride)" ;;
+		LAYER=background ; EDGE=hstride ; DIST=0  ; RESERVE=no
+		WHAT="wallpaper strip (background, hstride)" ;;
 	*)
-		LAYER=top ; EDGE=topstride       ; DIST=0  ; WHAT="top bar (top, topstride, flush)" ;;
+		LAYER=top ; EDGE=topstride      ; DIST=0  ; RESERVE=yes
+		WHAT="top bar (top, topstride, flush, reserve)" ;;
 esac
 
 MAIN_DIALOG='
-<window title="layer-shell example" layer="'$LAYER'" edge="'$EDGE'" dist="'$DIST'" height-request="48">
+<window title="layer-shell example" layer="'$LAYER'" edge="'$EDGE'" dist="'$DIST'" reserve="'$RESERVE'" height-request="48">
 	<hbox>
 		<text><label>haplo-dialog — '"$WHAT"'</label></text>
 		<!-- Empty label, expanded: takes up the slack so that the buttons
