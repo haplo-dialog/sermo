@@ -2,6 +2,20 @@
 
 **A modern, hardened and maintained descendant of gtkdialog (GTK 3).**
 
+> ## ⚠️ Renaming in progress
+>
+> This project shipped its package under the name **`gtk3dialog`**. That name is
+> already used by a package distributed by **BunsenLabs**, which we had not noticed.
+> Two packages sharing a name cannot coexist: one silently replaces the other.
+>
+> The GTK family is therefore being renamed to **`gtksermo`** (gtkdialog
+> compatibility), **`gtk3sermo`** and **`gtk4sermo`**, under the **haplo-dialog**
+> suite — which goes back to being what it always was: the name of the **product**,
+> not of a single port.
+>
+> **In the meantime, do not install the package from release v1.0.0-3 if you are on
+> BunsenLabs**: it would overwrite your `gtk3dialog`. A corrected release will follow.
+
 [![Licence](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.0.0-informational.svg)](CHANGELOG.en.md)
 [![Toolkit](https://img.shields.io/badge/toolkit-GTK%203-success.svg)](#the-gtk3dialog-port)
