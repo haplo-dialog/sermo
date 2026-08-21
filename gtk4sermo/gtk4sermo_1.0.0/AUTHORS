@@ -1,0 +1,26 @@
+gtkdialog — Programme original
+==============================
+Program:       Pere László <pipas@linux.pte.hu>
+Documentation: Kiss Gábor <gabor@gamma.ttk.pte.hu>
+Maintenu par:  Thunor <thunorsif@hotmail.com> (2011-2012)
+
+Patches d'origine:
+  Moose On The Loose <kensmith1313666@gmail.com>  — PRG_STDIN, 2011-04-04
+  Patriot                                          — closewindow, 2009-10-27
+  Fabio Tranchitella <kobold@debian.org>           — Debian 03_stdin
+  Luca Falavigna <dktrkranz@ubuntu.com>            — Debian 01_bashism / 02_documentation_paths
+  Szabo Viktor <wyck@freemail.hu>
+  Csaszar-Csutoras Peter <spy@c2.hu>
+
+gtkdialog-1.0.0 — Fork Haplo-Linux
+====================================
+Distributeur : Haplo-Linux (https://haplo-dialog.fr)
+Distribution : Haplo-Linux — basée sur Debian Testing
+
+Mainteneur   : <devel@haplo-dialog.fr>
+Développeurs : haplo-dialog
+
+Migration GTK3, correctifs sécurité, modernisation : Mai 2026
+Port GTK4 complet + compilation sans erreur : Juin 2026
+
+Document horodaté — dernière mise à jour : 2026-06-07 (audit #4 — compilation complète gtk4sermo).

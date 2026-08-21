@@ -1,0 +1,109 @@
+2026-06-06
+* 1.0.0-gtk4 — Réparation de la grammaire : tests XML 0/52 → 52/52
+* Jusqu'ici le port GTK4 compilait mais échouait à TOUS les tests XML (0/52),
+  faute d'une grammaire complète. Causes corrigées cette session :
+  - Lexer : gestion des commentaires <!-- --> (état ST_COMMENT) — le ">" de
+    "-->" ne fuite plus comme token au parser Bison.
+  - Lexer : espaces / tabulations / sauts de ligne entre attributs d'un même
+    tag ignorés (état ST_TAG_ATTR).
+  - --print-ir : gtk_init_check() en mode --print-ir — l'analyse ne requiert
+    plus de serveur X (exécution headless).
+  - Câblage de 8 widgets qui avaient un widget_*.c mais aucune grammaire :
+    switch, password, calendar, infobar, spinner, searchentry, levelbar,
+    drawingarea. Ils sont désormais reconnus par la grammaire (utilisables).
+* Résultat : build make → rc=0, 0 erreur ; tests XML tests/xml/ 52/52 PASS
+  (--print-ir, headless) ; warnings 128 → 77 (idiomes amont, non bloquants).
+* Aucun nouveau fichier widget créé — le compteur de 50 widgets est inchangé.
+* Bugs communs à la famille corrigés : troncature des noms de widgets
+  auto-générés (g_snprintf sur char* limité à 8 octets → 64) et instruction
+  lue non initialisée (instruction inst = {0}).
+
+2026-06-01
+* 1.0.0-gtk4 — Compilation complète : le port GTK4 compile et lie
+  sans erreur (0 erreur, binaire gtk4sermo ~1,45 Mo produit)
+* Port GTK4 COMPLET : toutes les API GTK2/3 supprimées en GTK4 sont
+  désormais portées via src/gtk4-compat.h (boutons radio → GtkCheckButton
+  groupés, GtkMenu/IS_MENU/IS_TOOL_BUTTON, gtk_init, gtk_scrolled_window_new,
+  GtkIconSize, gtk_image_*_from_icon_name, gtk_label_set_wrap,
+  gtk_editable_set_width_chars, gtk_calendar_select_*, GTK_WIN_POS_*,
+  GTK_FILE_CHOOSER_ACTION_*, vte_terminal_get_padding, etc.)
+* Réduction des warnings de compilation : 1549 → 128 (~92 %)
+  - Dépréciations GTK 4.22 non pertinentes filtrées (-Wno-deprecated-declarations)
+  - Correctifs return-type manquants (variables.c, gtkdialog.c)
+  - Définitions multiples résolues (extern en .h + définition unique en .c)
+  - _GNU_SOURCE harmonisé (plus de redéfinition)
+  - widget_tree.c : spécificateurs de format gint64/guint64/GType corrigés
+  - automaton.c : -Waddress et format-extra-args corrigés
+  - gdk_rgba_parse : ordre des arguments corrigé (colorbutton, terminal)
+  - combobox/comboboxtext : portés sur GtkComboBoxText (gtk_combo GTK2 retiré)
+  - glade_support.c : GSList, GtkBuilder GTK4, populate-popup retiré
+  - safe_exec : attribut nonnull retiré (vérif. runtime conservée)
+  - variables *string initialisées (suppression des -Wuninitialized)
+* Les 128 warnings résiduels sont des idiomes hérités de l'amont
+  (assignation-en-condition, casts GINT_TO_POINTER) — non bloquants
+
+2026-05-27
+* 1.0.0-gtk4 — Session 4 : ajout de 20 nouveaux widgets
+* Port GTK4 : 11 widgets GTK3 portés (switch, calendar, filechooser, image,
+  infobar, linkbutton, password, pulse, searchentry, spinner, aspectframe)
+* Port GTK4 : 9 widgets GTK4-natifs créés (vscale, vseparator, togglebutton,
+  levelbar, revealer, stack, flowbox, overlay, drawingarea)
+* Shims gtk4-compat.h : GtkCalendar get_date, GtkInfoBar, GtkAspectFrame,
+  GtkVScale/HScale — compatibilité transparente GTK3 → GTK4
+* automaton.h : 17 nouvelles constantes WIDGET_* (0x00B30000 → 0x00C30000)
+* widgets.c : dispatch complet pour les 50 widgets, fix WIDGET_TOGGLEBUTTON,
+  suppression des #endif orphelins
+* Makefile.am : 21 nouvelles paires .c/.h ajoutées à gtkdialog4_SOURCES
+* doc/reference/ : 17 nouvelles pages HTML de référence (switch, calendar,
+  filechooser, image, infobar, linkbutton, password, pulse, searchentry,
+  spinner, aspectframe, levelbar, revealer, stack, flowbox, overlay, drawingarea)
+* examples/ : 17 nouveaux scripts d'exemple (un par nouveau widget)
+* Navigation doc mise à jour sur tous les 36 fichiers HTML existants
+* Score BILAN_SANTE : 84 → 98/100
+
+2026-05-21
+* 1.0.0-gtk4 — Port GTK4 initial
+* Création de gtk4-compat.h (55+ shims GTK3 → GTK4) force-inclus par Makefile
+* Binaire renommé gtkdialog4 pour coexistence avec gtkdialog GTK3
+* configure.in : gtk4 >= 4.6.0, vte-2.91-gtk4, projet gtkdialog4
+* Stubs GTK4_NO_MENU, GTK4_NO_CLIST, GTK4_NO_SOCKET (label d'avertissement)
+* Fix HAVE_GLADE_LIB : AC_SUBST → AC_DEFINE (bug silencieux critique)
+* GTK_WINDOW_TOPLEVEL/POPUP définis dans gtk4-compat.h
+* Shims GtkColorButton alpha API (GTK4.10+)
+* -Wformat -Werror=format-security ajouté dans AM_CFLAGS
+* pclose() → fclose() sur tous les FILE* fdopen (20+ sites)
+* Création GTK4_MIGRATION.md, BILAN_SANTE.md
+
+2026-05-20
+* 1.0.0 — Modernisation GTK2 → GTK3
+* Migration complète GTK2 → GTK3 (45 fichiers source)
+* safe_exec.c/.h : remplacement de system()/popen() par g_spawn_*
+* Correctifs sécurité : strcpy→g_strlcpy, sprintf→g_snprintf, malloc→g_malloc
+* VTE : fork_command → spawn_sync (vte-2.91)
+* libglade → GtkBuilder (HAVE_GLADE_LIB)
+* Flags hardening : -D_FORTIFY_SOURCE=3, -fstack-protector-strong, -fPIE,
+  -Wl,-z,relro -Wl,-z,now
+* Documentation complète : CAHIER_DES_CHARGES.md, MANUEL_UTILISATEUR.md,
+  MANUEL_DEVELOPPEUR.md, COMPILE.md
+
+2013-01-06
+* 0.8.3 released (Thunor)
+* Solved the hidden widgets leaving artifacts at start-up problem.
+* Added support for conditional actions with <action condition="type">.
+* Added support for <variable export="false">VARNAME</variable>.
+
+2012-09-21
+* 0.8.2 released
+* Added eventbox, expander and fontbutton widgets.
+* Added a terminal widget -- requires libvte but is not mandatory.
+
+2011-09-26
+* 0.8.0 released
+* Applied several patches from various distributions
+* Added support for all selection modes to the tree widget
+
+2010-07-18
+* 0.7.21 released
+* Added togglebutton widget.
+
+Document horodaté — dernière mise à jour : 2026-06-07 (audit #5 — grammaire réparée, tests XML 0/52 → 52/52).

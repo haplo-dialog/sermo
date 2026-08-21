@@ -3,7 +3,7 @@
   <vbox>
     <table>
       <variable>TABLE_SEL</variable>
-      <item>gtk3dialog</item>
+      <item>gtk3sermo</item>
       <item>option</item>
       <item>option</item>
     </table>

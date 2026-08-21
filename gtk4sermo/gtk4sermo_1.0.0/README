@@ -1,0 +1,100 @@
+gtk4sermo — 1.0.0-gtk4
+================================
+
+Port GTK4 de gtk3d : utilitaire C pour créer des interfaces GTK4
+depuis des scripts shell ou tout autre langage interprété, via une
+syntaxe XML simple.
+
+Installable et utilisable SIMULTANÉMENT avec gtk3d (GTK3).
+
+  Distributeur : Haplo-Linux
+  Distribution : Haplo-Linux (Debian Testing)
+  Noyau cible  : Linux 7.0.4+deb14-amd64
+  GTK          : GTK4 >= 4.6.0
+  VTE          : vte-2.91-gtk4
+  Binaire      : gtk4sermo  (≠ gtk3d pour GTK3)
+  Contact      : devel@haplo-dialog.fr
+  Dépôt        : https://haplo-dialog.fr
+  Développeurs : haplo-dialog
+
+Différences par rapport à gtk3d (GTK3)
+-------------------------------------------
+  - Bibliothèque : gtk4 >= 4.6.0 (au lieu de gtk+-3.0 >= 3.22)
+  - VTE          : vte-2.91-gtk4 (au lieu de vte-2.91)
+  - Binaire      : /usr/bin/gtk4sermo
+  - Shims GTK3→GTK4 via src/gtk4-compat.h (force-included)
+  - <menubar>/<menuitem> réimplémentés en GTK4 (GMenuModel + GtkPopoverMenu)
+    et <table> en GtkColumnView + GListStore (voir BILAN_SANTE.md)
+  - Seul <gvim> reste stubé (GtkSocket X11, absent de GTK4)
+  - Compatibilité ~85 % avec les scripts gtk3d existants
+
+État de vérification (2026-06-06)
+-------------------------------------------
+  - Compile et lie sans erreur : make → rc=0, binaire gtk4sermo (~1,45 Mo)
+  - Warnings réduits de 1549 à 77 — résidus non bloquants
+    (idiomes hérités de l'amont gtkdialog 0.8.3)
+  - Tests XML tests/xml/ : 52/52 PASS (--print-ir, headless).
+    AVANT cette session : 0/52, faute d'une grammaire incomplète. Réparée :
+    commentaires <!-- -->, espaces entre attributs, et câblage de 8 widgets
+    qui avaient un widget_*.c mais aucune grammaire (switch, password, calendar,
+    infobar, spinner, searchentry, levelbar, drawingarea) — désormais reconnus
+    par la grammaire et utilisables.
+
+Changements par rapport à gtk3d 0.8.3 (base)
+--------------------------------------------------
+  - Port GTK4 complet via gtk4-compat.h (~25 shims API)
+  - Migration GTK2 → GTK3 → GTK4 en une passe
+  - Suppression de libglade → GtkBuilder natif
+  - Correctifs de sécurité : safe_system(), safe_popen() (fdopen/fclose)
+  - Remplacement de strcpy/strcat/sprintf par équivalents GLib bornés
+  - Flags de compilation sécurisés : FORTIFY_SOURCE, stack-protector, PIE/RELRO
+  - pclose() → fclose() sur tous les sites widget_opencommand (17 sites)
+
+Compilation
+-----------
+  sudo apt-get install libgtk-4-dev libvte-2.91-gtk4-dev flex bison autoconf automake
+  autoreconf -fiv && ./configure --prefix=/usr && make -j$(nproc)
+  sudo make install          # installe /usr/bin/gtk4sermo
+
+Coexistence
+-----------
+  /usr/bin/gtk3d   ← GTK3 (paquet gtk3d)
+  /usr/bin/gtk4sermo  ← GTK4 (ce paquet)
+
+Documentation
+-------------
+  GTK4_MIGRATION.md      — Détail du port GTK4, shims, TODO
+  COMPILE.md             — Instructions de compilation GTK4
+  CAHIER_DES_CHARGES.md  — Spécifications et exigences
+  MANUEL_UTILISATEUR.md  — Guide d'utilisation
+  MANUEL_DEVELOPPEUR.md  — Architecture et contribution
+  doc/reference/         — Référence HTML par widget
+  examples/              — Exemples par widget
+
+Licence
+-------
+  GPL-2.0-or-later — voir COPYING
+
+Auteurs originaux
+-----------------
+  László Pere <pipas@linux.pte.hu>
+  Thunor <thunorsif@hotmail.com>
+
+---
+
+## Remerciements — Assistance IA
+
+Ce travail a été réalisé avec l'assistance de **Claude**,
+le modèle de langage d'[Anthropic](https://www.anthropic.com),
+dans le cadre du développement de la famille **haplo-dialog** sur Haplo-Linux.
+
+L'IA a contribué à : la conception de l'architecture, l'implémentation des widgets,
+la rédaction de la documentation, la création des tests unitaires (CTest),
+l'intégration de QTermWidget6, la sous-classe Fl_Table hiérarchique (FLTK),
+l'amélioration de l'export d'état SDL3/ImGui, et la mise à jour de tous les
+fichiers de packaging et de documentation.
+
+> *"Ce projet a bénéficié de l'assistance de Claude (Anthropic) —
+> mai 2026."*
+
+Document horodaté — dernière mise à jour : 2026-06-07 (audit #5 — grammaire réparée, tests XML 0/52 → 52/52).

@@ -9,9 +9,9 @@
 
 | Port | Version | Security support |
 |------|---------|-----------------|
-| gtk3dialog | 1.0.0 | ✅ Active |
+| gtk3sermo | 1.0.0 | ✅ Active |
 
-gtk3dialog is the single, reference port (GTK 3 backend, 43 widgets); it provides
+gtk3sermo is the single, reference port (GTK 3 backend, 43 widgets); it provides
 the backwards-compatible `gtkdialog` alias.
 
 ---
@@ -59,7 +59,7 @@ Send an email to **devel@haplo-dialog.fr** with:
 
 ### Trust model
 
-gtk3dialog runs the interface described by the **author of the XML script**, just
+gtk3sermo runs the interface described by the **author of the XML script**, just
 as a shell script runs what its author writes. The `<action>`/`<input>` tags can
 launch commands: **this is intended and documented**. The trust boundary is
 therefore the **local** author of the script, not a remote third party. The
@@ -81,10 +81,10 @@ XML coming from a less trustworthy source, set `HAPLO_NO_SHELL_FALLBACK=1`.
 
 | Date | Port | Description | Severity |
 |------|------|-------------|----------|
-| 2026-08-11 | gtk3dialog | Memory-safety pass: `g_strlcpy` (variable names), widget copy bounded to `MAXWIDGETS`, NUL-terminated spawn `argv`, child environment filtering | Medium |
-| 2026-05-29 | gtk3dialog | FORTIFY_SOURCE upgrade 2→3, stack-clash added, noexecstack | Medium |
-| 2026-05-22 | gtk3dialog | Binaries renamed, gtkdialog symlink fixed | Low |
-| 2026-05-01 | gtk3dialog | Initial port, safe_exec, PIE, RELRO | High |
+| 2026-08-11 | gtk3sermo | Memory-safety pass: `g_strlcpy` (variable names), widget copy bounded to `MAXWIDGETS`, NUL-terminated spawn `argv`, child environment filtering | Medium |
+| 2026-05-29 | gtk3sermo | FORTIFY_SOURCE upgrade 2→3, stack-clash added, noexecstack | Medium |
+| 2026-05-22 | gtk3sermo | Binaries renamed, gtkdialog symlink fixed | Low |
+| 2026-05-01 | gtk3sermo | Initial port, safe_exec, PIE, RELRO | High |
 
 ---
 
@@ -92,8 +92,8 @@ XML coming from a less trustworthy source, set `HAPLO_NO_SHELL_FALLBACK=1`.
 
 ```bash
 # Check the protections of the installed binary:
-hardening-check /usr/bin/gtk3dialog
-checksec --file=/usr/bin/gtk3dialog
+hardening-check /usr/bin/gtk3sermo
+checksec --file=/usr/bin/gtk3sermo
 
 # Check that ASLR is active on the system:
 cat /proc/sys/kernel/randomize_va_space   # must be 2

@@ -1,0 +1,140 @@
+.\" gtk4sermo.1 — man page for gtk4sermo 1.0.0
+.\" Haplo-Linux Development Team <devel@haplo-dialog.fr>
+.\" This file is installed as /usr/share/man/man1/gtk4sermo.1
+.\"
+.TH GTK4DIALOG 1 "June 2026" "gtk4sermo 1.0.0" "Haplo-Linux User Commands"
+.SH NAME
+gtk4sermo \- GTK4 dialog box creator for shell scripts
+.SH SYNOPSIS
+.B gtk4sermo
+[\fIOPTION\fR]...
+.br
+.B gtk4sermo
+\fB\-\-program\fR=\fIVARIABLE\fR
+.br
+.B gtk4sermo
+\fB\-\-file\fR=\fIFILE\fR
+.br
+.B gtk4sermo
+\fB\-\-stdin\fR
+.br
+.IR VARIABLE =\(aq<window>...</window>\(aq
+.B gtk4sermo
+\fB\-\-program\fR=\fIVARIABLE\fR
+.SH DESCRIPTION
+.B gtk4sermo
+reads a GTK4 GUI description written in an XML dialect and displays
+the resulting dialog window.
+It is designed to be called from shell scripts to present interactive forms,
+progress bars, list views, and other widgets without requiring knowledge of
+GTK4 programming.
+.PP
+The GUI description can be supplied from an environment variable
+.RB ( \-\-program ),
+a file
+.RB ( \-\-file ),
+or standard input
+.RB ( \-\-stdin ).
+.PP
+When a button action triggers EXIT or REFRESH,
+.B gtk4sermo
+writes the current value of each named widget to standard output in the form:
+.PP
+.RS 4
+.nf
+WIDGET_NAME=current_value
+.fi
+.RE
+.SH OPTIONS
+.TP
+.BI \-\-program= VARIABLE
+Read the XML dialog description from the environment variable
+.IR VARIABLE .
+.TP
+.BI \-\-file= FILE
+Read the XML dialog description from
+.IR FILE .
+.TP
+.B \-\-stdin
+Read the XML dialog description from standard input.
+.TP
+.BI \-\-do= VARIABLE
+After the dialog exits, execute the shell command stored in
+.IR VARIABLE .
+.TP
+.B \-\-version
+Print version and exit.
+.TP
+.B \-\-help
+Print usage summary and exit.
+.SH ENVIRONMENT
+Widget values are exported as environment variables before executing
+.B \-\-do
+commands.
+.SH FILES
+.TP
+.I /usr/share/doc/gtk4sermo/
+Documentation, examples, and reference pages.
+.TP
+.I /usr/share/man/man1/gtk4sermo.1.gz
+This manual page.
+.SH EXAMPLES
+.SS Simple yes/no dialog
+.nf
+export DIALOG='
+<window title="Confirm">
+  <vbox>
+    <text><label>Proceed?</label></text>
+    <hbox>
+      <button ok></button>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>'
+gtk4sermo --program=DIALOG
+.fi
+.SS Read entry value
+.nf
+export DIALOG='
+<window>
+  <vbox>
+    <entry><variable>NAME</variable></entry>
+    <button ok></button>
+  </vbox>
+</window>'
+gtk4sermo --program=DIALOG --do='echo "Name: $NAME"'
+.fi
+.SH SEE ALSO
+.BR haplo-dialog-xml (5),
+.BR gtk3d (1),
+.BR gtk4sermo (1),
+.BR fltk1d (1),
+.BR efl1d (1),
+.BR qt6d (1),
+.BR sdl3d (1),
+.BR gtkdialog (1)
+.SH BUGS
+Report bugs at <https://haplo-dialog.fr> or <devel@haplo-dialog.fr>.
+.SH AUTHORS
+László Pere (original gtkdialog, 2003\(en2013).
+.br
+Thunor (gtkdialog maintenance, 2011\(en2014).
+.br
+Haplo-Linux Development Team <devel@haplo-dialog.fr> (gtk4sermo port, 2026).
+.SH LICENSE
+GNU General Public License version 2 or later.
+See
+.I /usr/share/doc/gtk4sermo/COPYING
+or <https://www.gnu.org/licenses/gpl-2.0.html>.
+.SH REMERCIEMENTS
+Ce logiciel a été développé avec l'assistance de
+.B Claude
+(Anthropic, https://www.anthropic.com) dans le cadre du projet
+.B haplo-dialog
+sur Haplo-Linux.
+.PP
+L'IA a contribué à la conception de l'architecture, l'implémentation
+des widgets, la rédaction de la documentation et la création des tests unitaires.
+.PP
+.I "Ce projet a bénéficié de l'assistance de Claude (Anthropic) — mai 2026."
+.\" Document horodaté — dernière mise à jour : 2026-06-07 (audit #5 — grammaire réparée, tests XML 0/52 → 52/52).

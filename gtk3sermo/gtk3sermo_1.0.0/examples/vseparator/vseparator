@@ -1,0 +1,53 @@
+#!/bin/sh
+# vseparator — example for the <vseparator> widget (GtkSeparator vertical)
+# gtkdialog-1.0.0 — haplo-dialog 2026
+#
+# <vseparator> draws a vertical line that separates widgets in an <hbox>.
+# It is the vertical counterpart of <hseparator>.
+# Neither widget exports an environment variable (empty string).
+#
+# Usage:
+#   ./vseparator            — launch the dialog
+#   ./vseparator --dump     — print the XML definition
+
+GTKDIALOG=gtk3sermo
+
+MAIN_DIALOG='
+<window title="vseparator example" resizable="false">
+  <vbox spacing="8">
+    <frame GtkSeparator vertical — layout example>
+      <hbox spacing="4">
+        <vbox>
+          <text><label>Left panel</label></text>
+          <text><label>Item A</label></text>
+          <text><label>Item B</label></text>
+          <text><label>Item C</label></text>
+        </vbox>
+
+        <vseparator></vseparator>
+
+        <vbox>
+          <text><label>Right panel</label></text>
+          <text><label>Item 1</label></text>
+          <text><label>Item 2</label></text>
+          <text><label>Item 3</label></text>
+        </vbox>
+      </hbox>
+    </frame>
+
+    <hseparator></hseparator>
+
+    <hbox>
+      <text><label>hseparator above, vseparator in middle — both from GtkSeparator</label></text>
+    </hbox>
+
+    <button ok></button>
+  </vbox>
+</window>
+'
+export MAIN_DIALOG
+
+case $1 in
+  -d | --dump) echo "$MAIN_DIALOG" ;;
+  *) $GTKDIALOG --program=MAIN_DIALOG ;;
+esac

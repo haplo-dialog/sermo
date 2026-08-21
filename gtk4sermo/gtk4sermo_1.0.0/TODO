@@ -1,0 +1,85 @@
+gtk4sermo — TODO / Feuille de route des travaux restants
+==========================================================
+Haplo-Linux <devel@haplo-dialog.fr> — mis à jour 2026-06-01
+
+BLOQUANTS — RÉSOLUS (la compilation aboutit désormais)
+----------------------------------------------------
+(B1) ✅ FAIT — Intégration parser : tokens XML présents dans
+     gtkdialog_lexer.l / gtkdialog_parser.y
+
+(B2) ✅ FAIT — automaton.c : cases create_widget() routés pour les
+     WIDGET_* (moteur d'exécution complet)
+
+(B3) ✅ FAIT — Compilation complète sans erreur (0 erreur, binaire
+     gtk4sermo ~1,45 Mo ; warnings 1549 → 128, ~92 % de réduction)
+
+(B4) Test des 50 widgets fonctionnels (script de test automatique)
+     — reste à exécuter sur Haplo-Linux
+
+WARNINGS RÉSIDUELS (128, non bloquants — idiomes amont)
+--------------------------------------------------------
+(W1) -Wparentheses (40) : assignation en condition `if (x = f())`
+(W2) -Wpointer-to-int-cast / int-to-pointer-cast (33) : stockage
+     d'entiers dans des pointeurs (style GINT_TO_POINTER sans macro)
+(W3) -Wunused-but-set-variable (17), -Wsign-compare (6), divers (32)
+     Ces avertissements proviennent du code amont gtkdialog 0.8.3 et
+     ne bloquent ni la compilation ni l'édition de liens.
+
+NON-BLOQUANTS — améliorations GTK4
+------------------------------------
+(N1) gtk_dialog_run() : réécrire en mode asynchrone (gtk_window_present +
+     callback ::response) — actuellement stub → GTK_RESPONSE_ACCEPT
+
+(N2) CSS theming : remplacer tous les gtk_widget_override_*/modify_* restants
+     par gtk_widget_add_css_class() / GtkCssProvider
+
+(N3) GtkComboBoxText (GTK4.10+) : migrer vers GtkDropDown + GtkStringList
+
+(N4) GtkTreeView (GTK4.10+) : migrer vers GtkColumnView + GListModel
+
+(N5) GtkFileChooserDialog (GTK4.10+) : migrer vers GtkFileDialog (async)
+
+(N6) GtkDrawingArea draw-command : IPC Cairo (fd ou socket) pour permettre
+     un rendu externe via script shell
+
+(N7) GtkRevealer : connecter show/hide aux signaux gtkdialog pour
+     contrôle depuis actions XML
+
+STUBS GTK4_TODO (non disponibles, nécessitent refonte majeure)
+---------------------------------------------------------------
+(S1) <menubar>/<menu>/<menuitem> : GtkMenu supprimé GTK4 → GMenuModel +
+     GtkPopoverMenu + GAction (effort élevé)
+
+(S2) <table> : GtkCList supprimé GTK2→3 → GtkColumnView + GListModel
+     (effort très élevé)
+
+(S3) <gvim> : GtkSocket X11 uniquement, supprimé GTK4 → Wayland subsurface
+     ou fenêtre séparée (non viable court terme)
+
+PACKAGING
+---------
+(P1) Créer paquet .deb gtkdialog4_1.0.0_amd64.deb
+(P2) Tester coexistence gtkdialog (GTK3) + gtkdialog4 (GTK4) sur Haplo-Linux
+(P3) Soumettre au dépôt https://haplo-dialog.fr
+
+DOCUMENTATION
+-------------
+(D1) Intégrer les 17 nouvelles pages doc/reference/*.html dans gtkdialog.texi
+(D2) Mettre à jour gtkdialog.info (regenerer depuis .texi)
+(D3) CAHIER_DES_CHARGES.md : mettre à jour périmètre pour GTK4
+
+TESTS
+-----
+(T1) Script de test automatique pour les 50 widgets
+(T2) valgrind --leak-check=full sur fenêtre simple
+(T3) checksec --file=src/gtkdialog4 → RELRO=Full, PIE=Enabled
+(T4) Test des 17 nouveaux exemples examples/*/
+
+THUNOR (anciens, partiellement résolus)
+---------------------------------------
+(9)  Ouverture de plusieurs fenêtres avec le même nom mène à la confusion.
+(11) Lors de la création des widgets, l'initialisation devrait être triée
+     selon les dépendances.
+(13) Un guillemet non appairé est affiché sur stdout, ce qui est problématique.
+
+Document horodaté — dernière mise à jour : 2026-06-07 (audit #4 — compilation complète gtk4sermo).

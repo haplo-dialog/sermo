@@ -1,21 +1,21 @@
-.\" haplo-dialog-xml.5 — Référence de la syntaxe XML de gtk3dialog
+.\" haplo-dialog-xml.5 — Référence de la syntaxe XML de gtk3sermo
 .\" haplo-dialog 1.0.0 — haplo-dialog <devel@haplo-dialog.fr>
 .\" Licence : CC-BY-SA 4.0
 .\"
 .TH HAPLO-DIALOG-XML 5 "06 June 2026" "haplo-dialog 1.0.0" "haplo-dialog File Formats"
 .SH NOM
-haplo-dialog-xml \- syntaxe XML des dialogues gtk3dialog
+haplo-dialog-xml \- syntaxe XML des dialogues gtk3sermo
 .SH DESCRIPTION
-gtk3dialog lit une description d'interface graphique écrite dans un dialecte
+gtk3sermo lit une description d'interface graphique écrite dans un dialecte
 XML et affiche la fenêtre correspondante. Cette page documente cette syntaxe
 XML, telle qu'interprétée par
-.BR gtk3dialog (1).
+.BR gtk3sermo (1).
 .PP
 La syntaxe est héritée de
 .BR gtkdialog (1)
 (László Pere, 2003\-2013). Là où gtkdialog est aujourd'hui abandonné,
 haplo-dialog le fait revivre : corrigé, durci et maintenu. Pour les scripts
-existants, gtk3dialog fournit un alias rétro-compatible nommé \fBgtkdialog\fR.
+existants, gtk3sermo fournit un alias rétro-compatible nommé \fBgtkdialog\fR.
 
 .SH STRUCTURE GÉNÉRALE
 
@@ -124,7 +124,7 @@ barre, dock, fond d'écran, panneau flottant. Quatre attributs de
 .B <window>
 la placent. Ils n'ont d'effet que si le compositeur Wayland implémente le
 protocole \fIwlr-layer-shell\fR (sway, Hyprland, river, labwc, wayfire\&...) et
-si gtk3dialog a été compilé avec gtk-layer-shell.
+si gtk3sermo a été compilé avec gtk-layer-shell.
 .br
 Ailleurs (X11, ou un compositeur Wayland sans ce protocole, comme GNOME),
 les quatre attributs sont ignorés et la fenêtre s'ouvre normalement : un
@@ -422,7 +422,7 @@ Sous-éléments : \fB<action>\fR exécutée à chaque tick.
 
 .SH VARIABLES D'ENVIRONNEMENT
 
-À la fermeture du dialogue (bouton \fBOK\fR ou \fBEXIT\fR), gtk3dialog
+À la fermeture du dialogue (bouton \fBOK\fR ou \fBEXIT\fR), gtk3sermo
 exporte chaque widget ayant une \fB<variable>\fR dans l'environnement shell :
 
 .RS 4
@@ -437,7 +437,7 @@ Le script appelant récupère ces valeurs directement :
 
 .RS 4
 .nf
-gtk3dialog --program DIALOG_VAR
+gtk3sermo --program DIALOG_VAR
 echo "Nom saisi : $NOM"
 .fi
 .RE
@@ -473,7 +473,7 @@ Vide le contenu du widget identifié par \fIvariable\fR.
 Les commandes des balises \fB<action>\fR et \fB<input>\fR ne passent jamais
 par
 .BR system (3) :
-gtk3dialog les exécute au moyen des primitives GLib
+gtk3sermo les exécute au moyen des primitives GLib
 .RB ( g_spawn ).
 Une commande sans métacaractère shell est lancée directement par
 .BR exec ()
@@ -487,7 +487,7 @@ refuse cette retombée et fait échouer la commande en sécurité
 .PP
 Ne jamais passer de données non validées dans une \fB<action>\fR ou un
 \fB<input>\fR. Voir \fBSECURITY.md\fR et
-.BR gtk3dialog (1)
+.BR gtk3sermo (1)
 pour la politique de sécurité complète.
 
 .SH EXEMPLE COMPLET
@@ -521,7 +521,7 @@ export FORMULAIRE='
   </vbox>
 </window>'
 
-gtk3dialog --program FORMULAIRE
+gtk3sermo --program FORMULAIRE
 
 if [ "$CGU" = "true" ] && [ -n "$NOM" ]; then
     echo "Inscription de $NOM — CGU acceptées"
@@ -532,7 +532,7 @@ fi
 .RE
 
 .SH VOIR AUSSI
-.BR gtk3dialog (1),
+.BR gtk3sermo (1),
 .BR gtkdialog (1),
 .BR zenity (1),
 .BR yad (1)

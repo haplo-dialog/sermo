@@ -9,7 +9,7 @@ sans construire de widget ni ouvrir de fenêtre).
 
 ```sh
 # Fuzzer de repli (sans dépendance, runnable partout / CI)
-./tests/fuzz/run_fuzz.sh gtk3dialog 60        # 60 s sur le binaire gtk3dialog
+./tests/fuzz/run_fuzz.sh gtk3sermo 60        # 60 s sur le binaire gtk3sermo
 ./tests/fuzz/run_fuzz.sh ./chemin/vers/binaire 120
 ```
 

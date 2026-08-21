@@ -7,9 +7,9 @@ on:
     branches: [ main, master ]
 
 jobs:
-  # ── gtk3dialog — port de référence (autotools) ────────────────────────────────
-  gtk3dialog:
-    name: gtk3dialog (GTK3 — référence)
+  # ── gtk3sermo — port de référence (autotools) ────────────────────────────────
+  gtk3sermo:
+    name: gtk3sermo (GTK3 — référence)
     runs-on: ubuntu-latest
     container: debian:testing
     steps:
@@ -24,7 +24,7 @@ jobs:
             autoconf automake libtool
 
       - name: Configurer
-        working-directory: gtk3dialog/gtk3dialog_1.0.0
+        working-directory: gtk3sermo/gtk3sermo_1.0.0
         run: |
           autoreconf -fi
           ./configure --prefix=/usr/local \
@@ -32,15 +32,15 @@ jobs:
             LDFLAGS="-Wl,-z,relro,-z,now"
 
       - name: Compiler
-        working-directory: gtk3dialog/gtk3dialog_1.0.0
+        working-directory: gtk3sermo/gtk3sermo_1.0.0
         run: make -j$(nproc)
 
       - name: Tests unitaires
-        working-directory: gtk3dialog/gtk3dialog_1.0.0
-        run: make check   # gtk3dialog est le port de référence vérifié : les tests doivent passer
+        working-directory: gtk3sermo/gtk3sermo_1.0.0
+        run: make check   # gtk3sermo est le port de référence vérifié : les tests doivent passer
 
       - name: cppcheck (analyse statique)
-        working-directory: gtk3dialog/gtk3dialog_1.0.0
+        working-directory: gtk3sermo/gtk3sermo_1.0.0
         run: |
           apt-get install -y --no-install-recommends cppcheck
           cppcheck --enable=warning,style --suppress=missingInclude \
@@ -53,23 +53,23 @@ jobs:
     name: Tests XML de régression
     runs-on: ubuntu-latest
     container: debian:testing
-    needs: gtk3dialog
+    needs: gtk3sermo
     steps:
       - uses: actions/checkout@v4
 
-      - name: Installer gtk3dialog
+      - name: Installer gtk3sermo
         run: |
           apt-get update -qq
           apt-get install -y --no-install-recommends \
             build-essential flex bison pkg-config libgtk-3-dev libglib2.0-dev \
             autoconf automake libtool
-          cd gtk3dialog/gtk3dialog_1.0.0
+          cd gtk3sermo/gtk3sermo_1.0.0
           autoreconf -fi && ./configure --prefix=/usr/local && make -j$(nproc) && make install
 
       - name: Lancer la suite XML
         run: |
           cd tests/xml
-          ./run_tests.sh gtk3dialog
+          ./run_tests.sh gtk3sermo
 
   # ── Vérification du formatage ─────────────────────────────────────────────
   format-check:
@@ -81,9 +81,9 @@ jobs:
       - name: Installer clang-format
         run: sudo apt-get install -y clang-format-15
 
-      - name: Vérifier le format (gtk3dialog core)
+      - name: Vérifier le format (gtk3sermo core)
         run: |
-          find gtk3dialog/gtk3dialog_1.0.0/src -name "*.c" -o -name "*.h" | \
+          find gtk3sermo/gtk3sermo_1.0.0/src -name "*.c" -o -name "*.h" | \
             xargs clang-format-15 --dry-run --Werror 2>&1 | head -30
         continue-on-error: true
 

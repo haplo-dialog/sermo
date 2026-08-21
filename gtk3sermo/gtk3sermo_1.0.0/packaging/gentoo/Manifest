@@ -1,0 +1,4 @@
+# Gentoo Manifest — gtk3sermo-1.0.0
+# Générer avec: ebuild gtk3sermo-1.0.0.ebuild manifest
+# (après avoir placé l'archive source dans /usr/portage/distfiles/)
+DIST gtk3sermo-1.0.0.tar.gz 0 BLAKE2B SKIP SHA512 SKIP

@@ -3,7 +3,7 @@
   <vbox>
     <frame label="Choisir un port">
       <vbox>
-        <radiobutton><label>gtk3dialog</label><variable>PORT_CHOICE</variable><default>true</default></radiobutton>
+        <radiobutton><label>gtk3sermo</label><variable>PORT_CHOICE</variable><default>true</default></radiobutton>
         <radiobutton><label>option</label><variable>PORT_CHOICE</variable></radiobutton>
         <radiobutton><label>option</label><variable>PORT_CHOICE</variable></radiobutton>
       </vbox>

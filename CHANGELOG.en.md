@@ -9,8 +9,8 @@ Versioning: [Semantic Versioning](https://semver.org/) starting from 1.0.0.
 ## [Unreleased] - v1.1.0 (in progress)
 
 ### Added
-- **Wayland anchoring for `<window>` (2026-08-20)**: four attributes, `layer` (`background`/`bottom`/`top`/`overlay`), `edge` (the 4 edges, the 4 corners, and 6 "stride" forms anchoring two opposite edges), `dist` (margin 0-200 px, 20 by default) and `reserve` (`yes`/`no`, `no` by default: the surface floats over ordinary windows, or the compositor reserves its space and lays the others out beside it), turn the dialog into a *wlr-layer-shell* surface: a bar, a dock, a desktop widget. Ported from the BunsenLabs gtk3dialog fork (GPL-2.0+), with two corrections to the original: the margin, parsed into an unsigned type and then checked with a `< 0` test that can never fire, is now parsed with `strtol()`, rejects trailing garbage and is clamped to [0, 200]; and the Wayland detection, which read the `GDK_BACKEND` environment variable and proceeded whenever it was unset (the normal case under X11), now asks the library itself (`gtk_layer_is_supported()`). Off Wayland, or on a compositor without the protocol (GNOME), the four attributes are ignored and an ordinary window opens. Optional dependency `gtk-layer-shell >= 0.8.0`; `./configure --without-layer-shell` builds without it. Documented in `haplo-dialog-xml(5)`, example in `examples/layer-shell`. **The anchoring is exercised under sway 1.12 (wlroots 0.20) and measured to the pixel**: a `topstride` bar flush across the full width, a `bottom` `dist="24"` dock exactly 24 px off the edge, a `background` strip entirely covered by an ordinary window, and `dist="0"` versus `dist="60"` separated by exactly 60 px. `reserve="yes"` measured through `swaymsg`: a 48 px bar pushes the ordinary window down to `y=48` with `dist="0"`, and to `y=88` with `dist="20"`, the margin counting on both sides; `reserve="no"` and an absent attribute leave the window filling the whole output. Not covered: multi-output, real hardware, and compositors outside wlroots such as Hyprland.
-- **gtkdialog backwards compatibility (2026-06-06)** : `make install` installs a **`gtkdialog` → `gtk3dialog` symlink** (and `gtkdialog.1` → `gtk3dialog.1`) through the autotools hook; a legacy gtkdialog script (`export MAIN_DIALOG='<window …>'; gtkdialog --program=MAIN_DIALOG`) parses, runs and returns its output in the historical format (`VAR="value"`). The consistency of the symlink is carried through into every packaging recipe (Debian `.links`, RPM `%files`, etc.).
+- **Wayland anchoring for `<window>` (2026-08-20)**: four attributes, `layer` (`background`/`bottom`/`top`/`overlay`), `edge` (the 4 edges, the 4 corners, and 6 "stride" forms anchoring two opposite edges), `dist` (margin 0-200 px, 20 by default) and `reserve` (`yes`/`no`, `no` by default: the surface floats over ordinary windows, or the compositor reserves its space and lays the others out beside it), turn the dialog into a *wlr-layer-shell* surface: a bar, a dock, a desktop widget. Ported from the BunsenLabs gtk3sermo fork (GPL-2.0+), with two corrections to the original: the margin, parsed into an unsigned type and then checked with a `< 0` test that can never fire, is now parsed with `strtol()`, rejects trailing garbage and is clamped to [0, 200]; and the Wayland detection, which read the `GDK_BACKEND` environment variable and proceeded whenever it was unset (the normal case under X11), now asks the library itself (`gtk_layer_is_supported()`). Off Wayland, or on a compositor without the protocol (GNOME), the four attributes are ignored and an ordinary window opens. Optional dependency `gtk-layer-shell >= 0.8.0`; `./configure --without-layer-shell` builds without it. Documented in `haplo-dialog-xml(5)`, example in `examples/layer-shell`. **The anchoring is exercised under sway 1.12 (wlroots 0.20) and measured to the pixel**: a `topstride` bar flush across the full width, a `bottom` `dist="24"` dock exactly 24 px off the edge, a `background` strip entirely covered by an ordinary window, and `dist="0"` versus `dist="60"` separated by exactly 60 px. `reserve="yes"` measured through `swaymsg`: a 48 px bar pushes the ordinary window down to `y=48` with `dist="0"`, and to `y=88` with `dist="20"`, the margin counting on both sides; `reserve="no"` and an absent attribute leave the window filling the whole output. Not covered: multi-output, real hardware, and compositors outside wlroots such as Hyprland.
+- **gtkdialog backwards compatibility (2026-06-06)** : `make install` installs a **`gtkdialog` → `gtk3sermo` symlink** (and `gtkdialog.1` → `gtk3sermo.1`) through the autotools hook; a legacy gtkdialog script (`export MAIN_DIALOG='<window …>'; gtkdialog --program=MAIN_DIALOG`) parses, runs and returns its output in the historical format (`VAR="value"`). The consistency of the symlink is carried through into every packaging recipe (Debian `.links`, RPM `%files`, etc.).
 - `detect_terminal()` / `detect_editor()`, auto-detection of the graphical environment (xfce4-terminal, konsole, gnome-terminal, mousepad, kate, gedit…)
 - XML suite extended to **54 test cases** (Wayland anchoring, empty labels and default values, searchentry, levelbar, drawingarea, colorbutton, fontbutton, aspectframe, tree, table, menubar, statusbar, togglebutton, timer, edit, list, separators, infobar types, 3-page notebook, REFRESH/ENABLE/DISABLE/SHOW/HIDE/CLEAR actions, complex form)
 - `AUTHORS` and `NEWS` at the root (GNU standard)
@@ -62,7 +62,7 @@ change the binary.
 
 ### [1.0.0-3] - 2026-08-16
 - Package maintainer identity: the `Maintainer` field carried a personal name
-  and a private domain, visible to every user through `apt show gtk3dialog`. It
+  and a private domain, visible to every user through `apt show gtk3sermo`. It
   now carries the project's identity.
 - `Vcs-Git` and `Vcs-Browser` point to the real repository; they previously
   designated a forge that never existed.
@@ -80,12 +80,12 @@ change the binary.
 First stable public version, complete rework of gtkdialog 0.8.3.
 
 ### Added
-- **gtk3dialog** : reference port (GTK 3 backend), providing the backwards-compatible `gtkdialog` alias
+- **gtk3sermo** : reference port (GTK 3 backend), providing the backwards-compatible `gtkdialog` alias
 - **43 widgets** implemented
 - New widgets: `<switch>`, `<password>`, `<searchentry>`, `<calendar>`, `<infobar>`, `<levelbar>`, `<spinner>`, `<aspectframe>`, `<drawingarea>`
 - `safe_system()` / `safe_popen()`, secure replacement for `system()` / `popen()`
 - Hardening: `FORTIFY_SOURCE=3`, PIE, Full RELRO, NX stack, stack canary (`-fstack-protector-strong`), CFI (`-fcf-protection`)
-- roff manpage `gtk3dialog(1)`
+- roff manpage `gtk3sermo(1)`
 - `haplo-dialog-xml(5)`, reference manpage for the XML syntax
 - Texinfo documentation (`.texi` → `.info`)
 - Documentation website (static HTML)
@@ -96,7 +96,7 @@ First stable public version, complete rework of gtkdialog 0.8.3.
 - `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `ROADMAP.md`
 
 ### Changed
-- Binary renamed: `gtkdialog` → `gtk3dialog`
+- Binary renamed: `gtkdialog` → `gtk3sermo`
 - `gtkdialog_parser.y` / `gtkdialog_lexer.l`, preserved
 - Elevation through `pkexec` (PolicyKit), GUI `sudo` removed
 - `fclose()` on any `FILE*` returned by `safe_popen()`, `pclose()` banned
@@ -118,7 +118,7 @@ First stable public version, complete rework of gtkdialog 0.8.3.
 Initial working version, port from gtkdialog 0.8.3.
 
 ### Added
-- Initial structure of the gtk3dialog port
+- Initial structure of the gtk3sermo port
 - Migration of the core (XML parser, variables, actions, signals, stack)
 - Initial implementation of the widgets
 - Build system: autotools

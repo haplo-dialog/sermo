@@ -3,9 +3,9 @@
 # haplo-dialog 1.0.0 — haplo-dialog — GPL-2.0-or-later
 #
 # Usage :
-#   ./run_tests.sh gtk3dialog          # tester avec gtk3dialog
+#   ./run_tests.sh gtk3sermo          # tester avec gtk3sermo
 #   ./run_tests.sh all            # tester avec tous les binaires disponibles
-#   TIMEOUT=5 ./run_tests.sh gtk3dialog
+#   TIMEOUT=5 ./run_tests.sh gtk3sermo
 #
 # Principe : chaque fichier XML est analysé avec --print-ir, qui parse le XML,
 # imprime la représentation interne, puis sort (exit 0) SANS construire de
@@ -15,7 +15,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-BINARY="${1:-gtk3dialog}"
+BINARY="${1:-gtk3sermo}"
 TIMEOUT="${TIMEOUT:-3}"
 PASS=0
 FAIL=0
@@ -32,7 +32,7 @@ info() { printf "${BLUE}────${NC}  %s\n" "$*"; }
 
 # ── Vérifier le binaire ──────────────────────────────────────────────────────
 if [ "$BINARY" = "all" ]; then
-    for bin in gtk3dialog; do
+    for bin in gtk3sermo; do
         command -v "$bin" > /dev/null 2>&1 && "$0" "$bin"
     done
     exit 0

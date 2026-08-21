@@ -1,0 +1,206 @@
+2026-06-06
+* gtk3sermo-1.0.0 — vérification finale (audit #5)
+* Build vérifié de bout en bout : make → rc=0, 0 erreur ; binaire gtk3sermo
+  (1,4 Mo) exécutable. Warnings : 34 (idiomes amont gtkdialog, non bloquants).
+* Tests XML tests/xml/ : 52/52 PASS (--print-ir, headless).
+* Compatibilité ascendante gtkdialog confirmée : make install pose le symlink
+  gtkdialog→gtk3sermo (binaire) et gtkdialog.1→gtk3sermo.1 (man) ; un dialogue
+  d'époque (export MAIN_DIALOG=…; gtkdialog --program=MAIN_DIALOG) parse, s'exécute
+  et émet la sortie au format historique VAR="valeur". Seul gtk3sermo fournit
+  l'alias gtkdialog (pas de conflit entre paquets).
+* Bugs communs à la famille corrigés : troncature des noms de widgets
+  auto-générés (g_snprintf sur char* limité à 8 octets → 64) et instruction
+  lue non initialisée (instruction inst = {0}).
+
+2026-05-24
+* gtk3sermo-1.0.0 patch 22 — nettoyage source + rebuild propre + .deb -6
+* Cleanup complet : 38 *.o, binaire, flex/bison générés, autom4te.cache,
+  Makefiles générés, .deb -2/-3/-4 supprimés.
+* Rebuild propre (autogen.sh --prefix=/usr + make -j$(nproc)) → 0 erreur.
+  Symbols T22/T23 (condexpr_bare, variables_pulse, variables_spinner_*)
+  confirmés dans le binaire final via nm.
+* Paquet gtk3sermo_1.0.0-6_amd64.deb (395 KB) produit.
+* Documentation mise à jour : BILAN_SANTE.md (session 20), ChangeLog, NEWS,
+  ROADMAP.md.
+
+2026-05-24
+* gtk3sermo-1.0.0 patch 21 — actions pulse:/start:/stop: + condition bare
+* T22 : actions.c/stringman — pulse:, start:, stop: désormais dispatchées
+  nativement (CommandPulse/Start/Stop). Plus de "spawn failed" sur ces actions.
+* T23 : signals.c — condition="active_is_true" sans parenthèses supporté.
+  Fin des warnings "Unknown expression 'active_is_true'" des timers.
+
+2026-05-24
+* gtk3sermo-1.0.0 patch 20 — correctifs parser/lexer
+* T20 : gtkdialog_lexer.l — espaces et tabulations entre attributs de tag
+  (`ratio="1.0" xalign="0.5"`) ignorés en ST_TAG_ATTR (règle manquante).
+* T21 : gtkdialog_parser.y — widgets Lot 1 (spinner, image, pulse, password,
+  aspectframe) non utilisables en séquence dans une vbox/hbox. Cause : règles
+  `wlist IMAGE ...` placées dans les règles séparées plutôt que dans `wlist`
+  directement, créant 1310 conflits réduction/réduction. Correction : même
+  pattern que les widgets Lot 0 (switch, filechooser…) — toutes les règles
+  `WIDGET attr EWIDGET` et `wlist WIDGET attr EWIDGET` déplacées dans `wlist`,
+  règles non-terminales séparées simplifiées (sans wlist), retirés de `widget`.
+* 12/12 tests XML parser passent.
+
+2026-05-24
+* gtk3sermo-1.0.0 patch 19 — Lot 1 widgets
+* 7 nouveaux widgets natifs GTK3 (Lot 1) :
+  <vseparator>   — GtkSeparator vertical (délégation widget_hseparator)
+  <vscale>       — GtkScale vertical (délégation widget_hscale)
+  <spinner>      — GtkSpinner, actions enable:/disable:, variable 0/1
+  <image>        — GtkImage natif (icon-name, file, width, height)
+  <pulse>        — GtkProgressBar mode pulse, compatible <timer>
+  <password>     — GtkEntry masqué, icône œil toggle, placeholder, max-length
+  <aspectframe>  — GtkAspectFrame, ratio/xalign/yalign/obey-child/label
+* Documentation : gtk3sermo.texi mis à jour (43 widgets), NEWS, ChangeLog,
+  gtk3sermo.info régénéré, BILAN_SANTE.md session 17 patch 19.
+
+2026-05-23
+* gtk3sermo-1.0.0 — paquet Debian gtk3sermo_1.0.0-2_amd64.deb
+* Contenu du paquet : binaire gtk3sermo (strippé, PIE/RELRO), symlink
+  gtkdialog→gtk3sermo, man pages gtk3sermo.1.gz + gtkdialog.1.gz (symlink),
+  icône 32x32 hicolor. postinst/postrm mettent à jour le cache d'icônes.
+  Depends: libgtk-3-0 (>= 3.24), libglib2.0-0t64 (>= 2.72), libvte-2.91-0
+  (>= 0.76), libgdk-pixbuf-2.0-0 (>= 2.42), libpango-1.0-0 (>= 1.50).
+* Fix data/icons/hicolor/Makefile.am : gtk-update-icon-cache utilise
+  maintenant $(DESTDIR)$(datadir) (correction du packaging DESTDIR).
+
+2026-05-23
+* gtk3sermo-1.0.0 patch 18 — runtime fixes
+* XML comments <!-- ... --> are now silently ignored by the parser
+  (previously the ">" in "-->" was leaked as a stray token).
+* <frame label="text"> now works correctly — label attribute is
+  properly extracted via the PART_FRAME / ST_TAG_ATTR mechanism.
+* <window> tag accepts new attributes: default-width, default-height
+  (initial size hint), width-request, height-request (minimum size),
+  resizable (true/false). Windows auto-size to content and are
+  clamped to 95% of the primary monitor work area on realize.
+* <edit> with <input> command now works: widget_edit_input_by_command
+  implemented, text area is pre-filled with command output.
+* Build: AC_PROG_LN_S added to configure.ac (symlink gtkdialog→
+  gtk3sermo now created at install). autogen.sh VPATH fix prevents
+  stale compiled objects from confusing out-of-tree builds.
+
+2026-05-21
+* gtkdialog-1.0.0 patch 9
+* Added 6 new GTK3-native widgets: GtkSwitch (<switch>),
+  GtkFileChooserButton (<filechooser>), GtkCalendar (<calendar>),
+  GtkLinkButton (<linkbutton>), GtkSearchEntry (<searchentry>),
+  GtkInfoBar (<infobar>). Each widget is fully integrated into the
+  gtkdialog parser/lexer/automaton pipeline and exports an environment
+  variable like all other gtkdialog widgets.
+* 6 new HTML reference pages added to doc/reference/. Navigation
+  updated across all 43 pages.
+
+2026-05-21
+* gtkdialog-1.0.0 patch 3
+* Fixed undefined behaviour: pclose() replaced by fclose() in 21 source files.
+  safe_popen() returns FILE* via fdopen(); calling pclose() on such a pointer
+  is undefined behaviour. All callers of widget_opencommand() now correctly
+  use fclose().
+* Fixed misleading comments in safe_exec.c documenting fclose() as required.
+* Updated all documentation (BILAN_SANTE, CAHIER_DES_CHARGES, ChangeLog,
+  NEWS, README, MANUEL_DEVELOPPEUR).
+
+2026-05-20
+* gtkdialog-1.0.0 released by Haplo-Linux.
+* Full GTK2 → GTK3 migration (45 source files).
+* Security: replaced system()/popen() with safe_system()/safe_popen().
+* Replaced strcpy/strcat/sprintf with bounded GLib equivalents.
+* Updated VTE dependency to vte-2.91.
+* Replaced libglade with GtkBuilder (GTK3 native).
+* Hardened build flags: FORTIFY_SOURCE, stack-protector, PIE, full RELRO.
+* Complete documentation in French.
+
+2013-01-06
+* 0.8.3 released
+* Solved the hidden widgets leaving artifacts at start-up problem.
+* Added support for conditional actions with <action condition="type">.
+* Added support for <variable export="false">VARNAME</variable>.
+* Added button-press/release-event signals to comboboxentry's entry.
+* Added support for break i.e. don't process any more actions.
+* Connected-up the realize signal so that it can be used within actions.
+* Refreshing markup in a text widget now works as expected.
+* Added three new examples including the Pfeme emulator front-end.
+* Fixed bashisms within examples where possible and made them portable.
+* Fixed three examples.
+
+2012-09-21
+* 0.8.2 released
+* Added eventbox, expander and fontbutton widgets.
+* Added a terminal widget -- requires libvte but is not mandatory.
+* Added activate, grabfocus, hide, show, and presentwindow functions.
+* Added widget signal emission on input file change (file-monitor).
+* Added widget auto-refreshing on input file change (auto-refresh).
+* Greatly improved the table and tree widgets including natural sorting.
+* Greatly enhanced the performance of the table, tree and comboboxes.
+* Greatly expanded the feature set of several incomplete widgets.
+* Added many useful exported variables on button and key press events.
+* Added the envvar GTKDIALOG_PIXMAP_PATH to help locate pixmaps.
+* Re-engineered the launch and closewindow system to be more robust.
+* Fixed the longstanding not exiting via the window manager bug.
+* Fixed and improved the button horizontal image with label alignment.
+* Fixed the Raspberry Pi's (ARM) incorrectly ordered widgets problem.
+* Added build and extra library details to the --version argument.
+* Added more than a dozen new examples.
+* Added a default application icon.
+* Fixed several bugs.
+
+2011-09-26
+* 0.8.0 released
+* Applied several patches from various distributions
+* Added support for all selection modes to the tree widget
+* Added hbox and vbox widget scrolling capability
+* Added hseparator widget
+* Added vseparator widget
+* Added comboboxtext widget
+* Added image positioning support to the button widget
+* Added comboboxentry widget
+* Added hscale widget
+* Added vscale widget
+* Added menuitemseparator widget
+* Added "block-function-signals" custom tag attribute to block signal
+  emissions from action functions
+* Overhauled the entry widget
+* Added "accel-key" and "accel-mods" custom tag attributes to support
+  menuitem keyboard accelerators
+* Re-engineered the menu widget
+* Added submenu support to the menu widget
+* Added checkbox menuitem widget
+* Added radiobutton menuitem widget
+* Added image-from-file support to the menuitem widget
+* Added theme icon support to the pixmap widget
+* Added support for using the width or height directives to override the
+  default theme icon size to the button, menuitem and pixmap widgets
+* Fixed a bug that resulted in all guint GTK+ properties being bugged
+* Added spinbutton widget
+* Added timer widget
+* Added sensitive directive
+* Fixed the hardcoded "gtkdialog" binary name in main
+* Re-engineered a few functions that needed to be reentrant but weren't
+* Overhauled the notebook widget
+* Added "tab-prefix", "tab-suffix" and "tab-base-index" custom tag
+  attributes to the notebook widget to control automated page labelling
+* Added "use-underline" support to buttons with a label directive
+* Added togglebutton widget
+* Overhauled the fileselect action function which includes file filters
+* Added statusbar widget
+* Fixed the tree widget's input file directive
+* Fixed a bug that prevented the table widget items from refreshing
+* Fixed a bug that was making the list widget hang
+* Fixed the tree widget's problematic pixmap rendering when including
+  rows from multiple sources with different icon settings
+* Fixed (or completed) the tree widget's default icon feature
+* Added clear, fileselect and envvar support to the text widget
+* Added colorbutton widget
+* Added --space-expand and --space-fill command line options
+* Added "space-expand" and "space-fill" custom tag attributes to all
+  widgets to control widget packing expand and fill states
+* Increased MAXWIDGETS from 256 to 529
+* Refactored many widgets using a new efficient consistent template
+* Updated and fixed the existing examples and added 37 more
+* Added an html widget reference converted from the project's wiki
+
+
+Document horodaté — dernière mise à jour : 2026-06-07 (audit #5 — vérification finale : build rc=0, tests XML 52/52).

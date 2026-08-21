@@ -7,7 +7,7 @@
 #
 # Usage :
 #   ./run_fuzz.sh <port|chemin-binaire> [secondes]
-#     ex. ./run_fuzz.sh gtk3dialog 60
+#     ex. ./run_fuzz.sh gtk3sermo 60
 #
 # - Si afl++ est présent : campagne afl-fuzz (instrumentation recommandée :
 #   recompiler le port avec CC=afl-gcc/CXX=afl-g++).

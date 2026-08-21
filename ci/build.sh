@@ -3,11 +3,11 @@
 # haplo-dialog 1.0.0 — GPL-2.0-or-later
 #
 # Usage :
-#   ./ci/build.sh                    # build gtk3dialog (seul port distribué)
-#   ./ci/build.sh all                # alias de gtk3dialog
-#   ./ci/build.sh gtk3dialog              # build un seul port
-#   ./ci/build.sh gtk3dialog --test       # build + tests
-#   ./ci/build.sh gtk3dialog --clean      # nettoyage
+#   ./ci/build.sh                    # build gtk3sermo (seul port distribué)
+#   ./ci/build.sh all                # alias de gtk3sermo
+#   ./ci/build.sh gtk3sermo              # build un seul port
+#   ./ci/build.sh gtk3sermo --test       # build + tests
+#   ./ci/build.sh gtk3sermo --clean      # nettoyage
 
 set -e
 
@@ -37,25 +37,25 @@ for arg in "$@"; do
     case "$arg" in
         --test)  RUN_TESTS=1 ;;
         --clean) CLEAN=1 ;;
-        all)     PORTS="gtk3dialog" ;;
-        gtk3dialog) PORTS="$PORTS $arg" ;;
+        all)     PORTS="gtk3sermo" ;;
+        gtk3sermo) PORTS="$PORTS $arg" ;;
         *) warn "Argument inconnu : $arg" ;;
     esac
 done
 
-# Par défaut : gtk3dialog
-[ -z "$PORTS" ] && PORTS="gtk3dialog"
+# Par défaut : gtk3sermo
+[ -z "$PORTS" ] && PORTS="gtk3sermo"
 
 # ── Répertoires source ────────────────────────────────────────────────────────
 src_dir() {
     case "$1" in
-        gtk3dialog)  echo "${ROOT_DIR}/gtk3dialog/gtk3dialog_1.0.0" ;;
+        gtk3sermo)  echo "${ROOT_DIR}/gtk3sermo/gtk3sermo_1.0.0" ;;
     esac
 }
 
 build_system() {
     case "$1" in
-        gtk3dialog) echo "autotools" ;;
+        gtk3sermo) echo "autotools" ;;
     esac
 }
 

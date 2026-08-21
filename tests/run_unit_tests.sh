@@ -7,7 +7,7 @@
 # le source de chaque port. « main() pur » : pas de libcheck, pas de X.
 #
 # Usage :
-#   ./run_unit_tests.sh <port>        # un port (ex. gtk3dialog)
+#   ./run_unit_tests.sh <port>        # un port (ex. gtk3sermo)
 #   ./run_unit_tests.sh all           # tous les binaires disponibles
 #
 # Prérequis : gcc, pkg-config, glib-2.0 dev.
@@ -40,7 +40,7 @@ run_port() {
 PORT="${1:-all}"
 if [ "$PORT" = all ]; then
     fail=0
-    for p in gtk3dialog; do
+    for p in gtk3sermo; do
         run_port "$p" || fail=1
     done
     [ "$fail" -eq 0 ] && printf "${GREEN}=== Tous les ports : tests de comportement OK ===${NC}\n"

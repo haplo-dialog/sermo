@@ -7,7 +7,7 @@
 
 ## Current version: 1.0.0 (May 2026) ✅
 
-First stable public version. gtk3dialog port (GTK 3 backend), 43 widgets, hardened security.
+First stable public version. gtk3sermo port (GTK 3 backend), 43 widgets, hardened security.
 
 ---
 
@@ -15,12 +15,12 @@ First stable public version. gtk3dialog port (GTK 3 backend), 43 widgets, harden
 
 Priority: make the project **automatically verifiable**.
 
-- [x] **gtk3dialog build**, the reference port compiles and links a working binary (autoreconf -fi && ./configure && make) ✅
+- [x] **gtk3sermo build**, the reference port compiles and links a working binary (autoreconf -fi && ./configure && make) ✅
 - [x] **XML tests green**, 52/52 (headless, `--print-ir`) ✅
-- [x] **gtkdialog backward compatibility**, `gtkdialog` → `gtk3dialog` symlink at install time; legacy XML, CLI and environment variables verified ✅
-- [ ] **Working CI**, gtk3dialog compiles on Gitea/Forgejo on every push
+- [x] **gtkdialog backward compatibility**, `gtkdialog` → `gtk3sermo` symlink at install time; legacy XML, CLI and environment variables verified ✅
+- [ ] **Working CI**, gtk3sermo compiles on Gitea/Forgejo on every push
 - [x] **Complete XML suite**, 52 test cases ✅ (tests/xml/: 52 files covering all widgets and actions)
-- [ ] **Clean Valgrind**, zero leaks on the 52 reference XML files with gtk3dialog
+- [ ] **Clean Valgrind**, zero leaks on the 52 reference XML files with gtk3sermo
 - [ ] **cppcheck CI**, automatic static analysis, zero errors
 - [x] **haplo-dialog-xml(5) in the packages**, manpage installed by default ✅
 - [ ] **Official signed `.deb`**, signed binary release package
@@ -33,7 +33,7 @@ Priority: make the project **automatically verifiable**.
 Priority: enrich without breaking compatibility.
 
 - [ ] **`--validate` mode**, parses the XML and returns errors without displaying
-- [ ] **External CSS theme** for gtk3dialog, `--style=file.css`
+- [ ] **External CSS theme** for gtk3sermo, `--style=file.css`
 - [ ] **`<filewatcher>`**, haplo-dialog-specific widget, watches a file and refreshes
 - [ ] **Internationalisation**, `gettext` support for fixed labels
 
@@ -45,9 +45,9 @@ Priority: make the project maintainable in the long term.
 
 - [ ] **Shared library** `libhaplodialog.so`, C API for integration into other tools
 - [ ] **Lua `<script>`**, scriptable actions in Lua (alternative to shell)
-- [ ] **Accessibility (AT-SPI)**, screen reader support for gtk3dialog
+- [ ] **Accessibility (AT-SPI)**, screen reader support for gtk3sermo
 - [ ] **PDF documentation**, `makeinfo --pdf` generated and distributed
-- [ ] **Snap / Flatpak**, universal packaging format for gtk3dialog
+- [ ] **Snap / Flatpak**, universal packaging format for gtk3sermo
 
 ---
 
@@ -55,9 +55,9 @@ Priority: make the project maintainable in the long term.
 
 | Port | Guarantee | Maintainer | CI |
 |------|----------|-----------|-----|
-| `gtk3dialog` | ✅ Production | haplo-dialog | Yes (v1.1) |
+| `gtk3sermo` | ✅ Production | haplo-dialog | Yes (v1.1) |
 
-`gtk3dialog` is the reference port of haplo-dialog (GTK 3 backend, 43 widgets). It provides the backward-compatible `gtkdialog` alias.
+`gtk3sermo` is the reference port of haplo-dialog (GTK 3 backend, 43 widgets). It provides the backward-compatible `gtkdialog` alias.
 
 ---
 

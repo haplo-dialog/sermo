@@ -1,0 +1,11 @@
+gtk3sermo: gtk3sermo (GTK3 dialog window creator for shell scripts)
+gtk3sermo:
+gtk3sermo: gtk3sermo builds GTK3 dialog windows from an XML-like description
+gtk3sermo: language, allowing shell scripts to display interactive GUI windows
+gtk3sermo: without knowledge of any graphical toolkit. This is the haplo-dialog
+gtk3sermo: fork (1.0.0) with security hardening (safe_exec,
+gtk3sermo: FORTIFY_SOURCE=3, PIE, Full RELRO, stack-protector-strong).
+gtk3sermo: Toolkit: GTK3
+gtk3sermo: Security: safe_exec, PIE, RELRO, FORTIFY_SOURCE=3
+gtk3sermo: haplo-dialog <devel@haplo-dialog.fr> — https://haplo-dialog.fr
+gtk3sermo:

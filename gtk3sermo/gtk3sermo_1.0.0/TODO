@@ -1,0 +1,176 @@
+Thunor: I've fixed these or found them to have already been fixed:
+------------------------------------------------------------------
+(1)  05.02-combo_input: the input is not working in comboboxes.
+(2)  There is no gtk_combo_box support, we have only gtk_combo.
+(3)  The edit is not producing value on the output.
+(4)  06.01-editor_attributes: The edit does not handle the <default> attribute.
+(5)  06.01-editor_attributes: Custom type properties, such as 
+      "wrap-mode"            GtkWrapMode           : Read / Write
+     are not supported. (Thunor: it already works as a tag attribute).
+(6)  10.01-vbox_and_hbox_attributes: we always packing with the defaults.
+(7)  Segfault if no name given for the frame.
+(8)  All the action handling functions (button_pressed) should get a type
+     parameter showing what kind of command has to be executed.
+(10) The tree widget is virtually unhandled.
+(12) Segmentation fault when the table has no variable name.
+
+Thunor: These still remain: [ALL FIXED by Haplo-Linux patches 14-16]
+----------------------------------------------------------------------
+(9)  FIXED patch 14 — Opening multiple window with the same name leads to confusion.
+(11) FIXED patch 15 — At the creation of the widgets the initialization should be sorted
+     as the dependencies are dictating.
+(13) FIXED patch 16 — Unpaired " is printed to the standard output, which is very problematic.
+
+Haplo-Linux — 1.0.0 — fixed (2026-05-20/21):
+-----------------------------------------------------
+(H1) FIXED 2026-05-20: All GTK2 APIs migrated to GTK3 (45 files).
+(H2) FIXED 2026-05-20: Replaced system()/popen() with safe_system()/safe_popen().
+(H3) FIXED 2026-05-20: Replaced strcpy/strcat/sprintf with GLib bounded equivalents.
+(H4) FIXED 2026-05-20: GtkList → GtkListBox migration (widget_list.c, variables.c,
+     signals.c, glade_support.c).
+(H5) FIXED 2026-05-20: vte_terminal_spawn_sync() — GCancellable* + GError** added.
+(H6) FIXED 2026-05-20: GtkBuilderConnectFunc signature in glade_support.c.
+(H7) FIXED 2026-05-20: g_object_get_data() missing parentheses and key in
+     widget_list.c and variables.c.
+(H8) FIXED 2026-05-21: pclose() → fclose() in 21 source files — calling pclose()
+     on a FILE* returned by fdopen() (safe_popen) is undefined behaviour.
+     Affected: signals.c + 20 widget_*.c files.
+
+Haplo-Linux — 1.0.0 — fixed (2026-05-21, patch 4):
+-----------------------------------------------------------
+(H9)  FIXED 2026-05-21: safe_exec.c rewritten — metacharacter detection
+      (|&;<>(){}$`\"'~*?) with automatic /bin/sh -c fallback logged via g_debug().
+      Resolves silent failures on all <input> commands using pipes or redirects.
+(H10) FIXED 2026-05-21: safe_popen() zombie reaping — g_child_watch_add() +
+      G_SPAWN_DO_NOT_REAP_CHILD added. No more zombie accumulation on polling widgets.
+(H11) FIXED 2026-05-21: Dead GtkFileSelection code removed from actions.c and
+      automaton.h (orphaned #else/#endif, two dead functions, actioncommand struct).
+(H12) FIXED 2026-05-21: putenv() memory leak → g_setenv() in variables.c.
+      Broken #if 0 block restructured (case labels were outside any switch after cpp).
+(H13) FIXED 2026-05-21: free(program_src) → g_free() in gtkdialog.c
+      (program_src was allocated by GLib — mixing allocators is UB).
+(H14) FIXED 2026-05-21: strlen() signed/unsigned comparison in 23 files.
+      count = strlen(line) - 1 with gint count → cast (gint)strlen(line) - 1.
+(H15) FIXED 2026-05-21: widget_table.c — GtkCList fully replaced by
+      GtkTreeView + GtkListStore. GtkCList was removed from GTK3. Full migration:
+      natural sort (GtkTreeIterCompareFunc), MULTIPLE selection with GtkTreeRowReference,
+      all XML attributes preserved (sort-function, auto-sort, column-header-active, …).
+
+Haplo-Linux — 1.0.0 — fixed (2026-05-21, patch 5):
+-----------------------------------------------------------
+(H16) FIXED 2026-05-21: (gint)g_object_get_data() — UB on 64-bit LP64 platforms.
+      35 occurrences replaced by GPOINTER_TO_INT(g_object_get_data(...)) across
+      variables.c and all widget_*.c files (correct GLib macro for pointer→int).
+(H17) FIXED 2026-05-21: gtk_file_chooser_get_filename() deprecated in GTK4.
+      Replaced by gtk_file_chooser_get_file() + g_file_get_path() in actions.c
+      and widgets.c. GFile* properly unref'd after use.
+
+Haplo-Linux — 1.0.0 — fixed (2026-05-21, patch 6):
+-----------------------------------------------------------
+(H18) FIXED 2026-05-21: 7 FIXME markers replaced with accurate comments.
+      automaton.c (×1), gtkdialog.c (×3), gtkdialog_lexer.c (×1),
+      variables.c (×2) — all explained, none deleted silently.
+(H19) FIXED 2026-05-21: 306 unconditional fprintf(stderr) → g_warning()/g_debug().
+      807 calls already inside #ifdef DEBUG_* blocks left intact.
+      Remaining ~202 edge cases (multiline format strings) not transformed.
+      Rule: error keywords → g_warning(); debug traces → g_debug().
+      36 files: actions.c, attributes.c, automaton.c, signals.c, stack.c,
+      variables.c + 30 widget_*.c files.
+
+Haplo-Linux — 1.0.0 — fixed (2026-05-21, patch 7):
+-----------------------------------------------------------
+(H20) FIXED 2026-05-21: Build system modernised.
+      configure.in: AC_PREREQ(2.69), AC_PROG_INSTALL, PKG_PROG_PKG_CONFIG,
+      --enable-debug (-g -O0 -DDEBUG_TRANSITS -DDEBUG_CONTENT), --without-vte.
+      src/Makefile.am: LIBS→gtk3sermo_LDADD, AM_LDFLAGS→gtk3sermo_LDFLAGS,
+      AM_CFLAGS→gtk3sermo_CFLAGS + @DEBUG_CFLAGS@, dist_man_MANS = gtk3sermo.1.
+      Makefile.am: make deb / deb-src / deb-clean targets added.
+      autogen.sh: rewritten — autoreconf -fiv replaces 2003 GNOME2 legacy code.
+(H21) FIXED 2026-05-21: Debian packaging (debian/) created.
+      debian/source/format (3.0 native), debian/control (debhelper-compat 13,
+      Build-Depends), debian/rules (dh + overrides), debian/changelog,
+      debian/copyright (DEP-5), debian/gtk3sermo.install.
+      Build: make deb → dpkg-buildpackage -us -uc -b → ../gtk3sermo_*.deb
+(H22) FIXED 2026-05-21: Man page src/gtk3sermo.1 created.
+      All 14 CLI options documented: --version, --debug, --program, --file,
+      --stdin, --include, --event-driven, --no-warning, --geometry, --center,
+      --print-ir, --space-expand, --space-fill, --glade-xml.
+      Sections: NAME, SYNOPSIS, DESCRIPTION, OPTIONS, EXIT STATUS,
+      ENVIRONMENT, EXAMPLES, FILES, SEE ALSO, AUTHORS, COPYRIGHT.
+(H23) FIXED 2026-05-21: doc/reference/*.html updated for GTK3/Haplo-Linux.
+      All 37 widget reference pages updated:
+      - GTK2 API links (developer.gnome.org/gtk2/2.24/) →
+        GTK3 links (developer-old.gnome.org/gtk3/stable/)
+      - GtkHBox/GtkVBox → GtkBox in URLs and link text
+      - GtkCList → GtkTreeView in table.html (with GtkListStore note)
+      - Signal select-row → cursor-changed in table.html
+      - GtkList → GtkListBox signal in list.html (selection-changed → row-selected)
+      - Footer: 2012 Thunor → 2026 Haplo-Linux, google code → haplo-dialog.fr
+      - GTK3 warning banner added to each page
+      - Stock icon deprecation note added to button.html
+
+Haplo-Linux — 1.0.0 — fixed (2026-05-21, patch 9):
+-----------------------------------------------------------
+(H24) FIXED 2026-05-21: 6 nouveaux widgets GTK3 natifs ajoutés.
+      widget_switch.c/.h (GtkSwitch), widget_filechooser.c/.h (GtkFileChooserButton),
+      widget_calendar.c/.h (GtkCalendar), widget_linkbutton.c/.h (GtkLinkButton),
+      widget_searchentry.c/.h (GtkSearchEntry), widget_infobar.c/.h (GtkInfoBar).
+      Intégration complète : automaton.h/c, lexer.l, parser.y, widgets.c,
+      variables.c, signals.c, glade_support.c, src/Makefile.am.
+(H25) FIXED 2026-05-21: 6 pages HTML de référence créées dans doc/reference/.
+      switch.html, filechooser.html, calendar.html, linkbutton.html,
+      searchentry.html, infobar.html — même format que les pages existantes.
+      Navigation mise à jour dans les 43 pages (37 existantes + 6 nouvelles).
+
+Haplo-Linux — 1.0.0 — fixed (2026-05-21, patch 10):
+------------------------------------------------------------
+(H26) FIXED 2026-05-21: 15 orphaned #endif/#else preprocessor directives removed.
+      Migration GTK2→GTK3 had removed #if GTK_CHECK_VERSION() guards but left
+      matching #else/#endif. Code failed gcc -E. Fixed in: widget_tree.h (×1),
+      signals.h (×1), automaton.c (×5), variables.c (×6), widgets.c (×3).
+(H27) FIXED 2026-05-21: gtk_widget_set_extension_events() removed from create_gvim()
+      in automaton.c — function was removed in GTK3.
+(H28) FIXED 2026-05-21: 8 unguarded fprintf(stderr) → g_warning() in signals.c (×2),
+      widget_eventbox.c (×3), widget_terminal.c (×3).
+(H29) FIXED 2026-05-21: .gitignore created — generated files, Debian packaging,
+      editor backups, doc artefacts.
+
+Haplo-Linux — 1.0.0 — remaining:
+-----------------------------------------
+(R5) gtk_box_pack_start/end() used in 9 places — deprecated GTK4 only.
+     NOTE: gtk_box_append/prepend() are GTK4-only APIs — do NOT replace in
+     gtk3sermo_1.0.0. These belong in the GTK4 port (gtkd4_1.0.0).
+(R6) gtk_container_get_children() used in 2 places (widget_list.c) — deprecated GTK4 only.
+     Same note as R5 — gtk_widget_get_first_child() is GTK4-only.
+(R7) gtkdialog.texi (remplacé par gtk3sermo.texi — patch 13) (Texinfo) not yet updated for GTK3/Haplo — low priority.
+(R8) examples/ for 6 new widgets missing (switch, filechooser, calendar,
+     linkbutton, searchentry, infobar).
+(R9) create_gvim() experimental, untested — keep for GtkSocket support.
+(R10) strlen(name)-1 without name[0]!='\0' guard in tag_attributes.c — parser
+      guarantees non-empty, low risk.
+
+Haplo-Linux — 1.0.0 — fixed (2026-05-23, patch 18):
+------------------------------------------------------------
+(H30) FIXED 2026-05-23: XML comments <!-- ... --> caused parser crash.
+      The ">" in "-->" was returned as a stray '>' token to Bison.
+      Fix: new exclusive state ST_COMMENT in gtkdialog_lexer.l.
+(H31) FIXED 2026-05-23: <frame label="text"> displayed literal string
+      label="text" as GTK frame title. The old [^\>]+ regex passed the
+      raw attribute string as ATTR_LABEL.
+      Fix: PART_FRAME + ST_TAG_ATTR mechanism (gtkdialog_lexer.l,
+      gtkdialog_parser.y, widget_frame.c).
+(H32) FIXED 2026-05-23: <window> tag attributes default-width,
+      default-height, width-request, height-request, resizable were
+      parsed but never applied.
+      Fix: widget_window.c reads all five via get_tag_attribute().
+      Bonus: realize callback clamps window to 95% of monitor work area.
+(H33) FIXED 2026-05-23: <edit> widget <input> command ignored with
+      warning "not implemented".
+      Fix: widget_edit_input_by_command() fully implemented.
+(H34) FIXED 2026-05-23: AC_PROG_LN_S missing from configure.ac —
+      $(LN_S) was empty, symlink gtkdialog→gtk3sermo not created.
+(H35) FIXED 2026-05-23: autogen.sh VPATH trap — stale *.o and binary
+      gtk3sermo in source tree caused make to skip recompilation.
+      Fix: autogen.sh cleanup extended to remove compiled objects.
+
+Document horodaté — dernière mise à jour : 2026-06-07 (audit #3 — haplo-dialog v1.0.0).

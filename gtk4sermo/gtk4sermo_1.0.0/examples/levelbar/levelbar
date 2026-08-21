@@ -1,0 +1,31 @@
+#!/bin/sh
+# gtkdialog4 example: levelbar widget (GTK4-natif)
+GTKDIALOG=gtkdialog4
+
+MAIN_DIALOG='
+<window title="Jauge de niveau" border-width="12">
+  <vbox spacing="10">
+    <text><label>GtkLevelBar — niveau batterie :</label></text>
+    <levelbar min-value="0" max-value="100" value="75">
+      <variable>LB_BATTERY</variable>
+    </levelbar>
+    <hbox>
+      <text><label>Niveau :</label></text>
+      <spinbutton range-min="0" range-max="100" range-step="5">
+        <variable>SB_LEVEL</variable>
+        <default>75</default>
+        <action>refresh:LB_BATTERY</action>
+      </spinbutton>
+    </hbox>
+    <hseparator></hseparator>
+    <hbox homogeneous="true">
+      <button ok></button>
+    </hbox>
+  </vbox>
+</window>
+'
+export MAIN_DIALOG
+case $1 in
+  -d | --dump) echo "$MAIN_DIALOG" ;;
+  *) $GTKDIALOG --program=MAIN_DIALOG ;;
+esac

@@ -17,7 +17,7 @@
 
 [![Licence](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.0.0-informational.svg)](CHANGELOG.md)
-[![Toolkit](https://img.shields.io/badge/toolkit-GTK%203-success.svg)](#le-port-gtk3dialog)
+[![Toolkit](https://img.shields.io/badge/toolkit-GTK%203-success.svg)](#le-port-gtk3sermo)
 [![Tests](https://img.shields.io/badge/tests-52%2F52%20XML%20·%209%2F9%20comportement-brightgreen.svg)](#tests--qualité)
 
 Décrivez une interface en XML, exportez-la dans une variable, lancez le binaire —
@@ -42,7 +42,7 @@ export MAIN_DIALOG='
   </vbox>
 </window>'
 
-gtk3dialog --program=MAIN_DIALOG     # → une fenêtre GTK 3 native s'ouvre
+gtk3sermo --program=MAIN_DIALOG     # → une fenêtre GTK 3 native s'ouvre
 ```
 
 À la validation, la sortie revient au shell, prête à `eval` :
@@ -68,13 +68,13 @@ EXIT="OK"
 
 ---
 
-## Le port gtk3dialog
+## Le port gtk3sermo
 
 Un cœur C (grammaire flex/bison + automate + `safe_exec`) et un backend GTK 3.
 
 | Port | Binaire | Toolkit | Widgets | Particularité |
 |------|---------|---------|:------:|---------------|
-| **gtk3dialog** | `gtk3dialog` | GTK 3 | 43 | **Référence** · alias rétro-compatible `gtkdialog` |
+| **gtk3sermo** | `gtk3sermo` | GTK 3 | 43 | **Référence** · alias rétro-compatible `gtkdialog` |
 
 > **43 widgets** décrits par une seule grammaire. Le binaire fournit l'alias
 > `gtkdialog` : les scripts écrits pour gtkdialog tournent sans modification.
@@ -92,20 +92,20 @@ sha256sum -c SHA256SUMS
 sudo apt install ./haplo-dialog_1.0.0-8_amd64.deb
 ```
 
-> **Le paquet s'appelle `haplo-dialog`, la commande reste `gtk3dialog`.**
-> Le nom de paquet `gtk3dialog` n'est pas libre : BunsenLabs en distribue un
+> **Le paquet s'appelle `haplo-dialog`, la commande reste `gtk3sermo`.**
+> Le nom de paquet `gtk3sermo` n'est pas libre : BunsenLabs en distribue un
 > sous ce nom depuis juillet 2025, dans son archive APT. Deux paquets qui
 > portent le même nom ne sont pas des rivaux pour apt, ce sont deux versions
 > d'un même paquet, et la plus haute écrase l'autre en silence. Les noms
 > distincts font qu'apt refuse et explique, au lieu de substituer. Vos scripts
-> ne changent pas : `/usr/bin/gtk3dialog` et son alias `gtkdialog` sont
+> ne changent pas : `/usr/bin/gtk3sermo` et son alias `gtkdialog` sont
 > installés comme avant.
 
 ### Depuis les sources
 
 ```sh
 # autotools
-cd gtk3dialog/gtk3dialog_1.0.0 && autoreconf -fi && ./configure && make -j"$(nproc)" && sudo make install
+cd gtk3sermo/gtk3sermo_1.0.0 && autoreconf -fi && ./configure && make -j"$(nproc)" && sudo make install
 ```
 
 Les recettes d'empaquetage sont fournies (`packaging/` : Debian, RPM, Arch,
@@ -134,9 +134,9 @@ Signalement de vulnérabilité : voir [SECURITY.md](SECURITY.md).
 
 ## Documentation
 
-- Manuels utilisateur/développeur (`gtk3dialog/gtk3dialog_1.0.0/MANUEL_*.md`).
-- Pages de manuel `gtk3dialog(1)` et référence XML `haplo-dialog-xml(5)`.
-- Manuels Texinfo (`gtk3dialog/gtk3dialog_1.0.0/doc/`).
+- Manuels utilisateur/développeur (`gtk3sermo/gtk3sermo_1.0.0/MANUEL_*.md`).
+- Pages de manuel `gtk3sermo(1)` et référence XML `haplo-dialog-xml(5)`.
+- Manuels Texinfo (`gtk3sermo/gtk3sermo_1.0.0/doc/`).
 - Site : <https://haplo-dialog.fr>.
 
 ---
@@ -152,7 +152,7 @@ Contributions bienvenues, voir [CONTRIBUTING.md](CONTRIBUTING.md) et
 
 ## Développement assisté par IA - dit franchement
 
-gtk3dialog a été écrit avec l'aide d'une IA (Claude, d'Anthropic) —
+gtk3sermo a été écrit avec l'aide d'une IA (Claude, d'Anthropic) —
 conception, code, tests, documentation, sous ma relecture et ma responsabilité.
 Je le dis ouvertement : l'honnêteté ne se négocie pas. Je crois qu'un outil bien
 employé, sans rien masquer, sert la qualité au lieu de lui nuire. Le code est à

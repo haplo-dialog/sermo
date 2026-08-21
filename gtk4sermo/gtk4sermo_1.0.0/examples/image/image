@@ -1,0 +1,25 @@
+#!/bin/sh
+# gtkdialog4 example: image widget
+GTKDIALOG=gtkdialog4
+
+MAIN_DIALOG='
+<window title="Image" border-width="12">
+  <vbox spacing="10">
+    <image>
+      <variable>IMG_MAIN</variable>
+      <input file>/usr/share/pixmaps/debian-logo.png</input>
+      <width>200</width>
+      <height>200</height>
+    </image>
+    <text><label>Image depuis un fichier PNG</label></text>
+    <hbox homogeneous="true">
+      <button ok></button>
+    </hbox>
+  </vbox>
+</window>
+'
+export MAIN_DIALOG
+case $1 in
+  -d | --dump) echo "$MAIN_DIALOG" ;;
+  *) $GTKDIALOG --program=MAIN_DIALOG ;;
+esac

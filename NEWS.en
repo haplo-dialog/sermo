@@ -17,10 +17,10 @@ Describe an interface in XML, run it from the shell, retrieve the values
 entered. Where gtkdialog is abandoned, haplo-dialog brings it back to life:
 fixed, hardened, maintained.
 
-* A single port: gtk3dialog, the reference GTK 3 backend. It implements
+* A single port: gtk3sermo, the reference GTK 3 backend. It implements
   43 widgets and is driven entirely in XML from the shell.
 
-* gtkdialog backwards compatibility: installing gtk3dialog creates a
+* gtkdialog backwards compatibility: installing gtk3sermo creates a
   "gtkdialog" alias, your legacy gtkdialog 0.8.x scripts run as is
   (XML, options and environment variables).
 
@@ -40,14 +40,14 @@ To install:
 
   # Debian / Ubuntu: download the .deb attached to the release, then
   sudo apt install ./haplo-dialog_<version>_amd64.deb
-  # (there is NO APT repository to add: plain « apt install gtk3dialog »
+  # (there is NO APT repository to add: plain « apt install gtk3sermo »
   #  will find nothing)
 
   # Arch Linux (recipe provided, never built by us)
-  cd gtk3dialog/gtk3dialog_1.0.0/packaging/arch && makepkg -si
+  cd gtk3sermo/gtk3sermo_1.0.0/packaging/arch && makepkg -si
 
   # From source (autotools)
-  cd gtk3dialog/gtk3dialog_1.0.0 && autoreconf -fi && ./configure && make && sudo make install
+  cd gtk3sermo/gtk3sermo_1.0.0 && autoreconf -fi && ./configure && make && sudo make install
 
 Documentation: https://haplo-dialog.fr
 Bug reports: devel@haplo-dialog.fr

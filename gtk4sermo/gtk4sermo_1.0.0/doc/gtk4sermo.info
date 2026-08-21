@@ -1,0 +1,16 @@
+This is gtk4sermo.info, produced by makeinfo from gtk4sermo.texi.
+
+gtk4sermo 1.0.0 — GTK4 dialog box creator for shell scripts.
+Haplo-Linux Development Team <devel@haplo-dialog.fr>, 2026.
+
+For the full manual, run: info gtk4sermo
+Or visit: https://haplo-dialog.fr/doc/gtk4sermo/
+
+Binary: gtk4sermo
+Port:   gtk4sermo
+
+Remerciements
+=============
+
+Ce travail a été réalisé avec l'assistance de Claude
+(Anthropic, https://www.anthropic.com) — mai 2026.

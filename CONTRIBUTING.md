@@ -27,7 +27,7 @@ Merci de votre intérêt pour haplo-dialog. Ce document explique comment contrib
 - Pour les bugs fonctionnels : ouvrir un ticket avec un script XML reproductible minimal
 
 **Port de référence :**  
-haplo-dialog fournit un seul port, `gtk3dialog` (backend GTK 3), qui fournit l'alias rétro-compatible `gtkdialog`. C'est un descendant maintenu de gtkdialog (fork de gtkdialog 0.8.3 de Laszlo Pere), corrigé et durci. D'autres descendants existent, notamment le fork BunsenLabs de Mick Amadio, qui porte lui aussi gtkdialog sur GTK 3.
+haplo-dialog fournit un seul port, `gtk3sermo` (backend GTK 3), qui fournit l'alias rétro-compatible `gtkdialog`. C'est un descendant maintenu de gtkdialog (fork de gtkdialog 0.8.3 de Laszlo Pere), corrigé et durci. D'autres descendants existent, notamment le fork BunsenLabs de Mick Amadio, qui porte lui aussi gtkdialog sur GTK 3.
 
 ---
 
@@ -35,10 +35,10 @@ haplo-dialog fournit un seul port, `gtk3dialog` (backend GTK 3), qui fournit l'a
 
 ```
 haplo-dialog/
-├── gtk3dialog/
-│   └── gtk3dialog_1.0.0/
+├── gtk3sermo/
+│   └── gtk3sermo_1.0.0/
 │       ├── src/
-│       │   ├── gtk3dialog.c      ← point d'entrée principal
+│       │   ├── gtk3sermo.c      ← point d'entrée principal
 │       │   ├── safe_exec.c       ← GPL-2.0-or-later
 │       │   ├── variables.c       ← GPL-2.0-or-later
 │       │   ├── stringman.c       ← GPL-2.0-or-later
@@ -73,7 +73,7 @@ sudo dnf install gcc flex bison gtk3-devel
 ### Build de développement
 
 ```sh
-cd gtk3dialog/gtk3dialog_1.0.0
+cd gtk3sermo/gtk3sermo_1.0.0
 autoreconf -fi
 ./configure --prefix=/usr/local CFLAGS="-g -O0 -fsanitize=address"
 make -j$(nproc)
@@ -114,7 +114,7 @@ Référence : Fixes #123
 
 Types valides : `fix`, `feat`, `docs`, `test`, `refactor`, `security`, `build`, `ci`
 
-Scopes valides : `core`, `widget_button`, `gtk3dialog`, `packaging`, `doc`
+Scopes valides : `core`, `widget_button`, `gtk3sermo`, `packaging`, `doc`
 
 ---
 
@@ -257,7 +257,7 @@ case WIDGET_MONWIDGET:
 ### Tests unitaires (sans toolkit)
 
 ```sh
-cd gtk3dialog/gtk3dialog_1.0.0
+cd gtk3sermo/gtk3sermo_1.0.0
 autoreconf -fi && ./configure && make check
 ```
 
@@ -267,7 +267,7 @@ Les tests unitaires ne doivent **pas** dépendre de GTK 3, uniquement du core C 
 
 ```sh
 cd tests/xml
-./run_tests.sh gtk3dialog    # teste les 52 XML de référence (mode --print-ir, headless)
+./run_tests.sh gtk3sermo    # teste les 52 XML de référence (mode --print-ir, headless)
 ```
 
 ### Tests de comportement (unitaires)
@@ -277,14 +277,14 @@ Au-delà du parse, on **exécute** réellement la logique cœur (sécurité
 serveur X requis, donc runnable en CI. 9 tests de comportement.
 
 ```sh
-./tests/run_unit_tests.sh gtk3dialog
+./tests/run_unit_tests.sh gtk3sermo
 ```
 
 ### Valgrind (mémoire)
 
 ```sh
 valgrind --leak-check=full --error-exitcode=1 \
-  gtk3dialog --file tests/xml/01_button.xml --do EXIT:exit
+  gtk3sermo --file tests/xml/01_button.xml --do EXIT:exit
 ```
 
 ### Intégration continue (CI)
@@ -300,16 +300,16 @@ Un build cassé ou un seul test en échec fait échouer le pipeline. Avant de po
 on peut reproduire le job en local :
 
 ```sh
-cd gtk3dialog/gtk3dialog_1.0.0
+cd gtk3sermo/gtk3sermo_1.0.0
 autoreconf -fi && ./configure --prefix="$PWD/inst" && make -j"$(nproc)" && make install
-PATH="$PWD/inst/bin:$PATH" sh ../../tests/xml/run_tests.sh gtk3dialog
+PATH="$PWD/inst/bin:$PATH" sh ../../tests/xml/run_tests.sh gtk3sermo
 ```
 
 ---
 
 ## 8. Documentation
 
-- Les manpages sont en format **roff** (`src/gtk3dialog.1`), à jour avec chaque nouveau widget
+- Les manpages sont en format **roff** (`src/gtk3sermo.1`), à jour avec chaque nouveau widget
 - La référence XML est dans `haplo-dialog-xml(5)`, `man/haplo-dialog-xml.5`
 - La documentation Texinfo est dans `doc/`
 - Les exemples (`examples/`) sont en **CC0**, les utiliser sans restriction

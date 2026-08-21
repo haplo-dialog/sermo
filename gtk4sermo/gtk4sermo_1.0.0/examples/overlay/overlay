@@ -1,0 +1,32 @@
+#!/bin/sh
+# gtkdialog4 example: overlay widget (GTK4-natif)
+GTKDIALOG=gtkdialog4
+
+MAIN_DIALOG='
+<window title="Overlay HUD" border-width="0">
+  <overlay>
+    <variable>OV_MAIN</variable>
+    <!-- Enfant principal -->
+    <drawingarea width="400" height="250" background-color="#1a1a2e">
+    </drawingarea>
+    <!-- Overlays flottants -->
+    <label halign="start" valign="start" margin-top="8" margin-start="8">
+      <label>● REC 00:01:23</label>
+    </label>
+    <label halign="end" valign="start" margin-top="8" margin-end="8">
+      <label>HD 1080p</label>
+    </label>
+    <hbox halign="center" valign="end" margin-bottom="12">
+      <button><label>⏮</label></button>
+      <button><label>⏯</label></button>
+      <button><label>⏭</label></button>
+      <button><label>⏹</label></button>
+    </hbox>
+  </overlay>
+</window>
+'
+export MAIN_DIALOG
+case $1 in
+  -d | --dump) echo "$MAIN_DIALOG" ;;
+  *) $GTKDIALOG --program=MAIN_DIALOG ;;
+esac

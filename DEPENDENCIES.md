@@ -1,7 +1,7 @@
 # Dépendances & prérequis - haplo-dialog
 
 Ce document liste les dépendances **réelles** de haplo-dialog (port unique
-**gtk3dialog**, backend GTK 3), dérivées directement des fichiers de build et de
+**gtk3sermo**, backend GTK 3), dérivées directement des fichiers de build et de
 packaging du dépôt, et non d'une description rédigée à la main.
 
 ## Méthodologie
@@ -10,11 +10,11 @@ Chaque ligne ci-dessous est tirée d'un fichier vérifiable dans l'arbre :
 
 | Source | Ce qu'on en extrait |
 |--------|---------------------|
-| `gtk3dialog/gtk3dialog_1.0.0/configure.ac` | `PKG_CHECK_MODULES`, `AC_PATH_PROG`, planchers de version |
-| `gtk3dialog/gtk3dialog_1.0.0/packaging/debian/control` | `Build-Depends`, `Depends`, `Recommends`, `Suggests` |
-| `gtk3dialog/gtk3dialog_1.0.0/packaging/arch/PKGBUILD` | `depends`, `makedepends`, `optdepends` |
-| `gtk3dialog/gtk3dialog_1.0.0/packaging/rpm/*.spec` | `BuildRequires`, `Requires`, `Recommends` |
-| `gtk3dialog/gtk3dialog_1.0.0/packaging/gentoo/*.ebuild` | `BDEPEND`, `DEPEND`, `RDEPEND` |
+| `gtk3sermo/gtk3sermo_1.0.0/configure.ac` | `PKG_CHECK_MODULES`, `AC_PATH_PROG`, planchers de version |
+| `gtk3sermo/gtk3sermo_1.0.0/packaging/debian/control` | `Build-Depends`, `Depends`, `Recommends`, `Suggests` |
+| `gtk3sermo/gtk3sermo_1.0.0/packaging/arch/PKGBUILD` | `depends`, `makedepends`, `optdepends` |
+| `gtk3sermo/gtk3sermo_1.0.0/packaging/rpm/*.spec` | `BuildRequires`, `Requires`, `Recommends` |
+| `gtk3sermo/gtk3sermo_1.0.0/packaging/gentoo/*.ebuild` | `BDEPEND`, `DEPEND`, `RDEPEND` |
 
 En cas de divergence entre ce que le build exige réellement et ce que le
 packaging déclare, c'est le **système de build** (le compilateur et l'éditeur de
@@ -36,7 +36,7 @@ Le cœur C (parser XML, variables, actions, signaux, pile) et le parseur
 | **autoconf** | — | ≥ 2.69 |
 | **automake** | — | ≥ 1.14 |
 
-Le build est piloté par **autotools** ; gtk3dialog est un port **C** (pas de C++
+Le build est piloté par **autotools** ; gtk3sermo est un port **C** (pas de C++
 requis).
 
 ### GLib
@@ -51,11 +51,11 @@ requis).
 
 | Port | Build | Toolkit (plancher) | Terminal | C++ |
 |------|-------|--------------------|----------|-----|
-| **gtk3dialog** | autotools | GTK+ 3 ≥ 3.22.0 | VTE 2.91 *(opt.)* | non |
+| **gtk3sermo** | autotools | GTK+ 3 ≥ 3.22.0 | VTE 2.91 *(opt.)* | non |
 
 | Port | Ancrage Wayland |
 |------|-----------------|
-| **gtk3dialog** | gtk-layer-shell ≥ 0.8.0 *(opt.)* |
+| **gtk3sermo** | gtk-layer-shell ≥ 0.8.0 *(opt.)* |
 
 *« opt. » = le widget terminal se désactive proprement (stub) si la lib est
 absente ; le reste du port fonctionne. De même pour gtk-layer-shell : sans
@@ -64,7 +64,7 @@ fenêtre s'ouvre normalement.*
 
 > **Build vérifié.** Dans l'environnement de vérification (GTK 3 3.24.52), le jeu
 > de dépendances ci-dessus a été exercé par une compilation + édition de liens
-> réussie (rc=0, 0 erreur) : gtk3dialog produit un binaire fonctionnel (~1,4 Mo)
+> réussie (rc=0, 0 erreur) : gtk3sermo produit un binaire fonctionnel (~1,4 Mo)
 > qui passe **52/52** tests XML de régression headless (`--print-ir`), en plus des
 > **9** tests de comportement `safe_exec`. Le prérequis de build (installer le
 > toolkit et les outils) est le seul vrai obstacle.
@@ -77,7 +77,7 @@ Les noms de paquets ci-dessous sont **ceux déclarés dans le packaging du
 dépôt**. La colonne « build » regroupe développement + outils ; la colonne
 « exécution » correspond aux `Depends` runtime / `Requires`.
 
-### gtk3dialog - GTK+ 3 ≥ 3.22.0, VTE 2.91 et gtk-layer-shell (optionnels)
+### gtk3sermo - GTK+ 3 ≥ 3.22.0, VTE 2.91 et gtk-layer-shell (optionnels)
 
 | Distro | Build | Exécution |
 |--------|-------|-----------|
@@ -96,25 +96,25 @@ Options de configuration : `./configure --without-vte` désactive le widget
 ```sh
 # ── Debian / Ubuntu ──────────────────────────────────────────────────────────
 sudo apt-get install build-essential flex bison pkg-config autoconf automake
-sudo apt-get install libgtk-3-dev libvte-2.91-dev libgtk-layer-shell-dev   # gtk3dialog
+sudo apt-get install libgtk-3-dev libvte-2.91-dev libgtk-layer-shell-dev   # gtk3sermo
 
 # ── Arch ─────────────────────────────────────────────────────────────────────
 sudo pacman -S base-devel flex bison pkgconf
-sudo pacman -S gtk3 vte3 gtk-layer-shell                          # gtk3dialog
+sudo pacman -S gtk3 vte3 gtk-layer-shell                          # gtk3sermo
 
 # ── Fedora ───────────────────────────────────────────────────────────────────
 sudo dnf install gcc flex bison pkgconf-pkg-config autoconf automake
-sudo dnf install gtk3-devel vte291-devel gtk-layer-shell-devel   # gtk3dialog
+sudo dnf install gtk3-devel vte291-devel gtk-layer-shell-devel   # gtk3sermo
 ```
 
 Build effectif :
 
 ```sh
-cd gtk3dialog/gtk3dialog_1.0.0
+cd gtk3sermo/gtk3sermo_1.0.0
 autoreconf -fi && ./configure && make
 ```
 
-Voir aussi `ci/build.sh` (`./ci/build.sh`, ou `./ci/build.sh gtk3dialog --test`).
+Voir aussi `ci/build.sh` (`./ci/build.sh`, ou `./ci/build.sh gtk3sermo --test`).
 
 ---
 
@@ -123,4 +123,4 @@ Voir aussi `ci/build.sh` (`./ci/build.sh`, ou `./ci/build.sh gtk3dialog --test`)
 
 ---
 
-*Document dérivé des fichiers de build/packaging du dépôt, build gtk3dialog vérifié + 52/52 tests XML de régression (haplo-dialog v1.0.0).*
+*Document dérivé des fichiers de build/packaging du dépôt, build gtk3sermo vérifié + 52/52 tests XML de régression (haplo-dialog v1.0.0).*

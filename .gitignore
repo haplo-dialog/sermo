@@ -35,7 +35,7 @@ stamp-h1
 **/src/gtk3d
 # Noms complets uniformisés v1.0.0
 **/src/gtkdialog
-**/src/gtk3dialog
+**/src/gtk3sermo
 
 # CMake
 build/
@@ -108,8 +108,8 @@ build_out.log
 **/imgui.ini
 
 # Symlink debian -> packaging/debian, aide au build (dpkg-buildpackage attend debian/ à la racine du source). Recréé au build, non versionné.
-/gtk3dialog/gtk3dialog_1.0.0/debian
+/gtk3sermo/gtk3sermo_1.0.0/debian
 
 # artefacts de construction (2026-08-15)
-/gtk3dialog/SHA256SUMS
-/gtk3dialog/gtk3dialog_1.0.0/gtk3dialog.spec
+/gtk3sermo/SHA256SUMS
+/gtk3sermo/gtk3sermo_1.0.0/gtk3sermo.spec

@@ -1,0 +1,140 @@
+# Dockerfile.build — Environnement de build reproductible pour gtk3sermo 1.0.0
+#
+# Image basée sur Debian 12 « Bookworm ».
+# Compile le binaire, lance make check, et produit un paquet .deb.
+#
+# Utilisation :
+#   docker build -f Dockerfile.build -t gtkdialog-build .
+#   docker run --rm -v "$PWD/../dist":/dist gtkdialog-build
+#
+#   Le .deb sera copié dans le répertoire ../dist/ de l'hôte.
+#
+# Build avec options :
+#   docker build --build-arg ENABLE_DEBUG=yes -f Dockerfile.build -t gtkdialog-build-dbg .
+#
+# haplo-dialog — 2026 — GPL-2.0-or-later
+
+# ---------------------------------------------------------------------------
+# Stage 1 : dépendances de build
+# ---------------------------------------------------------------------------
+FROM debian:12-slim AS builder
+
+LABEL maintainer="devel@haplo-dialog.fr"
+LABEL description="Build environment for gtk3sermo 1.0.0"
+
+ARG ENABLE_DEBUG=no
+ARG ENABLE_VTE=yes
+
+# Évite les questions interactives de debconf
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Dépendances de compilation
+RUN apt-get update -qq && apt-get install -y --no-install-recommends \
+    # Outils de build
+    build-essential \
+    autoconf \
+    automake \
+    pkg-config \
+    flex \
+    bison \
+    # GTK3
+    libgtk-3-dev \
+    # GLib
+    libglib2.0-dev \
+    # VTE (terminal widget)
+    libvte-2.91-dev \
+    # Tests unitaires
+    check \
+    libcheck-dev \
+    # Packaging Debian
+    devscripts \
+    debhelper \
+    dpkg-dev \
+    lintian \
+    # Sécurité / vérification du binaire
+    binutils \
+    file \
+    # Utilitaires
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# ---------------------------------------------------------------------------
+# Stage 2 : compilation
+# ---------------------------------------------------------------------------
+WORKDIR /build/gtkdialog
+
+# Copie des sources (on s'attend à être lancé depuis gtk3sermo_1.0.0/)
+COPY . .
+
+# Génération des fichiers autotools (si pas déjà faite)
+RUN if [ ! -f configure ]; then \
+        bash autogen.sh; \
+    fi
+
+# Configuration
+RUN VTE_FLAG="--with-vte"; \
+    [ "$ENABLE_VTE" = "no" ] && VTE_FLAG="--without-vte"; \
+    DEBUG_FLAG=""; \
+    [ "$ENABLE_DEBUG" = "yes" ] && DEBUG_FLAG="--enable-debug"; \
+    ./configure \
+        --prefix=/usr \
+        --enable-unit-tests \
+        $VTE_FLAG \
+        $DEBUG_FLAG
+
+# Compilation
+RUN make -j"$(nproc)"
+
+# ---------------------------------------------------------------------------
+# Stage 3 : tests
+# ---------------------------------------------------------------------------
+FROM builder AS tester
+
+WORKDIR /build/gtkdialog
+
+# Tests unitaires C (test_safe_exec) — pas de display requis
+RUN make check -C tests/ 2>&1 | tee /tmp/make_check.log; \
+    if grep -q "^FAIL:" /tmp/make_check.log; then \
+        echo "=== TESTS ÉCHOUÉS ===" && cat /tmp/make_check.log && exit 1; \
+    fi
+
+# Tests statiques shell (run_tests.sh — sections sans display)
+RUN bash tests/run_tests.sh src/gtkdialog 2>&1 | tee /tmp/run_tests.log; \
+    echo "run_tests.sh exit: $?"
+
+# Vérification du binaire compilé
+RUN file src/gtkdialog && \
+    echo "--- Hardening flags ---" && \
+    (command -v hardening-check >/dev/null 2>&1 && \
+     hardening-check src/gtkdialog || \
+     objdump -f src/gtkdialog | grep -E "DYNAMIC|PIE" || true)
+
+# ---------------------------------------------------------------------------
+# Stage 4 : packaging .deb
+# ---------------------------------------------------------------------------
+FROM tester AS packager
+
+WORKDIR /build/gtkdialog
+
+# Construction du paquet .deb
+RUN dpkg-buildpackage -us -uc -b -j"$(nproc)" 2>&1 | tail -20
+
+# Vérification lintian (non bloquante)
+RUN lintian ../gtkdialog_*.deb 2>&1 | grep -v "^N:" || true
+
+# ---------------------------------------------------------------------------
+# Stage 5 : image finale minimaliste (export du .deb uniquement)
+# ---------------------------------------------------------------------------
+FROM debian:12-slim AS exporter
+
+WORKDIR /artifacts
+
+COPY --from=packager /build/gtkdialog_*.deb ./
+COPY --from=tester   /tmp/make_check.log    ./
+COPY --from=tester   /tmp/run_tests.log     ./
+
+# Commande d'export : copie les artefacts dans /dist (monté par l'hôte)
+CMD ["sh", "-c", \
+    "cp /artifacts/* /dist/ 2>/dev/null && \
+     echo 'Artefacts copiés dans /dist/' && \
+     ls -lh /dist/*.deb"]

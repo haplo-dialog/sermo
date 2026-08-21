@@ -7,7 +7,7 @@
 
 ## Principe : la source est le livrable principal
 
-haplo-dialog fournit un **port unique**, `gtk3dialog` (backend GTK 3), le port de
+haplo-dialog fournit un **port unique**, `gtk3sermo` (backend GTK 3), le port de
 référence. Le projet maintient **un** paquet binaire, le `.deb` de `haplo-dialog`,
 et fournit, dans l'arbre, des **recettes** pour les autres familles de
 distributions. Héberger un binaire pour chaque cible serait ingérable : le modèle
@@ -29,7 +29,7 @@ adapté à sa cible.
 
 | Cible | Fourni ? | Où |
 |-------|:--:|-----|
-| Source (gtk3dialog) | ✅ | dépôt Git + releases du projet |
+| Source (gtk3sermo) | ✅ | dépôt Git + releases du projet |
 | `.deb` haplo-dialog | ✅ | attaché à chaque release |
 | Paquets pour les autres distributions | ❌ | recettes dans l'arbre ; build par l'aval |
 
@@ -38,7 +38,7 @@ adapté à sa cible.
 Une recette fournie n'est pas un paquet testé. Le tableau dit lequel des deux,
 pour éviter la lecture optimiste d'une colonne de coches identiques.
 
-`gtk3dialog` fournit, dans `gtk3dialog/gtk3dialog_1.0.0/packaging/` :
+`gtk3sermo` fournit, dans `gtk3sermo/gtk3sermo_1.0.0/packaging/` :
 
 | Cible | Recette fournie | Construite et vérifiée par le projet |
 |---|:--:|---|
@@ -53,7 +53,7 @@ garantie. Si vous en faites tourner une, dites-le nous : elle passera dans la
 colonne de droite, avec la version et la distribution où elle a marché.
 
 ```
-gtk3dialog/gtk3dialog_1.0.0/packaging/
+gtk3sermo/gtk3sermo_1.0.0/packaging/
 ├── debian/      # debian/ (control, rules, *.install, *.links…) → dpkg-buildpackage
 ├── rpm/         # *.spec                                        → rpmbuild
 ├── arch/        # PKGBUILD (+ .SRCINFO)                         → makepkg
@@ -64,29 +64,29 @@ gtk3dialog/gtk3dialog_1.0.0/packaging/
 ## Construire un paquet pour votre distribution
 
 ```sh
-# Debian/Ubuntu (depuis gtk3dialog/gtk3dialog_1.0.0/)
+# Debian/Ubuntu (depuis gtk3sermo/gtk3sermo_1.0.0/)
 dpkg-buildpackage -us -uc -b        # utilise packaging/debian/
 
 # Fedora/openSUSE
-rpmbuild -bb packaging/rpm/gtk3dialog.spec
+rpmbuild -bb packaging/rpm/gtk3sermo.spec
 
 # Arch
 ( cd packaging/arch && makepkg -si )
 
 # Gentoo  : copier packaging/gentoo/*.ebuild dans un overlay, puis `ebuild … merge`
-# Slackware : sh packaging/slackware/gtk3dialog.SlackBuild
+# Slackware : sh packaging/slackware/gtk3sermo.SlackBuild
 ```
 
 ## Compatibilité ascendante
 
-`gtk3dialog` installe un alias **`gtkdialog`** (binaire + page de manuel) : les
+`gtk3sermo` installe un alias **`gtkdialog`** (binaire + page de manuel) : les
 scripts gtkdialog d'époque fonctionnent sans portage.
 
 ## Build depuis les sources (sans paquet)
 
 ```sh
-# autotools - gtk3dialog
-cd gtk3dialog/gtk3dialog_1.0.0 && autoreconf -fi && ./configure && make -j"$(nproc)" && sudo make install
+# autotools - gtk3sermo
+cd gtk3sermo/gtk3sermo_1.0.0 && autoreconf -fi && ./configure && make -j"$(nproc)" && sudo make install
 ```
 
 ## Domaine du projet

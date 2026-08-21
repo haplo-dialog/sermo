@@ -22,7 +22,7 @@ MAJEUR . MINEUR . CORRECTIF        (ex. 1.2.0)
 
 La **« surface publique »** qui définit la compatibilité est :
 
-1. la **syntaxe XML** (`haplo-dialog-xml(5)`) interprétée par `gtk3dialog` ;
+1. la **syntaxe XML** (`haplo-dialog-xml(5)`) interprétée par `gtk3sermo` ;
 2. le **comportement en ligne de commande** du binaire (`--program`, `--file`, variables d'environnement exportées…).
 
 Les détails d'implémentation internes (organisation interne du code C)
@@ -42,7 +42,7 @@ Avant 1.0.0, aucune garantie de compatibilité n'était offerte (phase `0.y`).
 
 ## 2. Où vit le numéro de version (sources de vérité)
 
-haplo-dialog ne distribue qu'un **seul port**, **`gtk3dialog`** (backend GTK 3) :
+haplo-dialog ne distribue qu'un **seul port**, **`gtk3sermo`** (backend GTK 3) :
 c'est le **port de référence** (43 widgets), qui fournit l'alias rétro-compatible
 **`gtkdialog`**. Il n'y a donc **qu'un seul numéro de version** à faire évoluer.
 
@@ -53,17 +53,17 @@ de release :
 
 | Emplacement | Fichier(s) | Champ |
 |-------------|-----------|-------|
-| Build autotools | `gtk3dialog/…/configure.ac` | `AC_INIT([gtk3dialog], [X.Y.Z], …)` |
-| Build CMake | `gtk3dialog/…/CMakeLists.txt` | `project(gtk3dialog VERSION X.Y.Z …)` |
-| **Nom du dossier** | `gtk3dialog/gtk3dialog_X.Y.Z/` | la version est **dans le chemin** |
+| Build autotools | `gtk3sermo/…/configure.ac` | `AC_INIT([gtk3sermo], [X.Y.Z], …)` |
+| Build CMake | `gtk3sermo/…/CMakeLists.txt` | `project(gtk3sermo VERSION X.Y.Z …)` |
+| **Nom du dossier** | `gtk3sermo/gtk3sermo_X.Y.Z/` | la version est **dans le chemin** |
 | Arch | `packaging/arch/PKGBUILD` + `.SRCINFO` | `pkgver=X.Y.Z` |
-| RPM | `packaging/rpm/gtk3dialog.spec` | `%global version X.Y.Z` |
-| Gentoo | `packaging/gentoo/gtk3dialog-X.Y.Z.ebuild` | version **dans le nom de fichier** |
+| RPM | `packaging/rpm/gtk3sermo.spec` | `%global version X.Y.Z` |
+| Gentoo | `packaging/gentoo/gtk3sermo-X.Y.Z.ebuild` | version **dans le nom de fichier** |
 | Doc | `CHANGELOG.md`, `SECURITY.md`, `NEWS`, badges `site-web/` | tableaux & en-têtes |
 
 > ⚠️ **Particularité** : la version est encodée dans le **nom du dossier**
-> (`gtk3dialog_1.0.0/`) et dans le **nom de l'ebuild**
-> (`gtk3dialog-1.0.0.ebuild`). Une montée de version implique donc un `git mv`
+> (`gtk3sermo_1.0.0/`) et dans le **nom de l'ebuild**
+> (`gtk3sermo-1.0.0.ebuild`). Une montée de version implique donc un `git mv`
 > de ces chemins. *(Piste future : découpler la version du nom de dossier pour
 > alléger les bumps.)*
 
@@ -94,9 +94,9 @@ Le style pratiqué est **`portée: résumé impératif`** (français), pas Conve
 Commits strict. Exemples du style pratiqué :
 
 ```
-gtk3dialog: uniformise vers v1.0.0 (gtk3d → gtk3dialog)
+gtk3sermo: uniformise vers v1.0.0 (gtk3d → gtk3sermo)
 site-web: uniformise noms canoniques + v1.0.0
-ci: applique le contenu canonique de Dockerfile.gtk3dialog
+ci: applique le contenu canonique de Dockerfile.gtk3sermo
 docs: ajoute DEPENDENCIES.md (dépendances réelles)
 tests: ajoute les tests de comportement safe_exec
 ```
@@ -104,7 +104,7 @@ tests: ajoute les tests de comportement safe_exec
 ### Règles
 
 1. **Portée** = le périmètre touché. Valeurs usuelles :
-   - le port : `gtk3dialog`
+   - le port : `gtk3sermo`
    - transversal : `docs`, `site-web`, `ci`, `packaging`, `tests`, `core`, `build`, `release`
 2. **Résumé** à l'impératif présent, en minuscule, sans point final, ≤ ~70 caractères.
 3. **Corps** (optionnel) séparé par une ligne vide : explique le *pourquoi*,
@@ -158,10 +158,10 @@ git push origin v1.0.0
 Pour publier `X.Y.Z` :
 
 1. **Geler** : s'assurer que `main` compile et que les tests passent
-   (`./ci/build.sh gtk3dialog --test`).
+   (`./ci/build.sh gtk3sermo --test`).
 2. **Bumper la version** dans tous les emplacements de la §2 :
-   `configure.ac`, `CMakeLists.txt`, dossier `gtk3dialog_X.Y.Z/`, `PKGBUILD` + `.SRCINFO`,
-   `*.spec` (`%global version`), ebuild renommé `gtk3dialog-X.Y.Z.ebuild`.
+   `configure.ac`, `CMakeLists.txt`, dossier `gtk3sermo_X.Y.Z/`, `PKGBUILD` + `.SRCINFO`,
+   `*.spec` (`%global version`), ebuild renommé `gtk3sermo-X.Y.Z.ebuild`.
 3. **Clore le CHANGELOG** : `## [Unreleased]` → `## [X.Y.Z], AAAA-MM-JJ`, et
    recréer une section `[Unreleased]` vide pour la suite.
 4. **Mettre à jour** `SECURITY.md` (tableau des versions supportées), `NEWS`,
