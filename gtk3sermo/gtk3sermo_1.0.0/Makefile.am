@@ -20,7 +20,6 @@ EXTRA_DIST = \
 	debian/changelog \
 	debian/copyright \
 	debian/gtk3sermo.install \
-	doc/reference/* \
 	examples/button/* \
 	examples/checkbox/* \
 	examples/colorbutton/* \

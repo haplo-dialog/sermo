@@ -1,0 +1,97 @@
+gtk3sermo (1.0.0-10) unstable; urgency=medium
+
+  * Menus GTK 4 : <menuitem> rendait un GtkPopoverMenu autonome, empilé dans
+    une boîte comme un widget ordinaire ; GTK le réalisait en surface popup
+    sans parent et le programme mourait sur un SIGSEGV. <menu> et <menubar>
+    consomment désormais leurs enfants et construisent un GMenuModel.
+  * Nombres décimaux : atof() suit la locale — sous fr_FR, atof("0.1") vaut 0.
+    range-step="0.1" devenait donc nul et tuait GTK sur une assertion.
+    47 appels passent à g_ascii_strtod(), indépendant de la locale.
+  * Signal row-selected : GtkListBox passe (box, row, data), un argument de
+    plus que le callback n'en attendait ; il recevait la ligne à la place du
+    jeu d'attributs et le déréférençait. Adaptateur de signature posé.
+  * <frame Étiquette nue> : la forme historique de gtkdialog, qu'utilisent 53
+    des 55 fichiers d'exemples, était refusée par le lexer.
+  * Interfaces Glade : chargement rétabli en GTK 4 par un GtkBuilderScope qui
+    accepte les commandes shell de gtkdialog comme gestionnaires de signaux,
+    et les trois interfaces de 2006 redessinées pour les widgets GTK 4.
+  * <edit> alimenté par <input> : implémenté (c'était un stub silencieux).
+  * Signaux de bouton enter/leave/pressed/released : rétablis par contrôleurs,
+    GTK 4 les ayant retirés de GtkButton — 172 avertissements en moins.
+  * Mise en page : « expand » ne joue plus que sur l'axe de la boîte et
+    « fill » règle le placement ; les images reprennent leur taille.
+  * 17 widgets implémentés mais injoignables sont branchés côté GTK 4.
+  * Banc de tests : gtk3sermo passe 54 exemples sur 54, gtk4sermo 58 sur 58.
+
+ -- haplo-dialog <devel@haplo-dialog.fr>  Sat, 22 Aug 2026 15:20:48 +0200
+
+gtk3sermo (1.0.0-9) unstable; urgency=medium
+
+  * Renommage : le paquet s'appelait gtk3dialog, puis haplo-dialog. Le premier
+    nom est deja utilise par un paquet distribue par BunsenLabs, et le second
+    est le nom du PRODUIT, pas celui d'un port. Le paquet du port GTK3
+    s'appelle desormais gtk3sermo, sous la suite haplo-dialog. Le binaire suit
+    : /usr/bin/gtk3sermo.
+  * Le lien de compatibilite /usr/bin/gtkdialog sort de ce paquet et vit dans
+    le paquet gtksermo, a installer separement. Consequence : gtk3sermo
+    n'entre plus en conflit avec RIEN et s'installe a cote de n'importe quelle
+    autre implementation, BunsenLabs et Puppy Linux comprises. Qui veut la
+    commande gtkdialog installe gtksermo et accepte le conflit en connaissance
+    de cause.
+  * L'analyseur accepte une etiquette vide la ou elle est une valeur (<label>,
+    <default>, <item> attribue) et la refuse la ou elle n'a pas de sens, avec
+    un message qui nomme sa cause. Corrige un echec du corpus de tests
+    (53_label_vide).
+  * Version portee a 1.0.0-9 pour continuer la lignee publiee (haplo-dialog
+    1.0.0-8) et rendre effective la clause Breaks/Replaces sur cet ancien nom.
+
+ -- haplo-dialog <devel@haplo-dialog.fr>  Fri, 21 Aug 2026 21:05:45 +0200
+
+gtk3sermo (1.0.0-3) unstable; urgency=medium
+
+  * Public identity. The Maintainer field and the changelog signatures now use
+    the project identity, haplo-dialog <devel@haplo-dialog.fr>, instead of a
+    personal name and a company domain that shipped to every installation and
+    showed up in "apt show gtk3sermo".
+  * Packaging metadata. Vcs-Git and Vcs-Browser point at the real repository,
+    https://gitlab.com/haplo-dialog/gtk3sermo; they previously referenced a
+    forge that never existed.
+  * No functional change: the built binary is identical to 1.0.0-2.
+
+ -- haplo-dialog <devel@haplo-dialog.fr>  Sat, 15 Aug 2026 20:52:43 +0200
+
+gtk3sermo (1.0.0-2) unstable; urgency=high
+
+  * Security hardening pass (pre-publication audit, 2026-08-11):
+    - automaton.c: bound _sum() to MAXWIDGETS to prevent a stack buffer
+      overflow when a container holds more than 256 direct child widgets
+      (CWE-787).
+    - variables.c: replace an unterminated strncpy() into variable->Name
+      with g_strlcpy() (CWE-125/CWE-170).
+    - widget_terminal.c: size argv[]/envv[] with a guaranteed NULL terminator
+      so the vte spawn never reads past the array (CWE-170).
+    - safe_exec.c: wire the previously-dead _build_child_env() into both spawn
+      paths so spawned children no longer inherit the multi-KiB DIALOG blob
+      (avoids spurious E2BIG); free the built environment on all paths.
+    - actions.c: fix the append action's first-operand copy offset (functional
+      bug on indented XML).
+    - automaton.c: drop two per-instruction memory leaks (a redundant g_malloc
+      before strdup, and leaked strdup()s passed to new_tag_attributeset()).
+    - widgets.c: correct a misleading comment about shell-injection safety.
+    - gtk3sermo.1: document HAPLO_NO_SHELL_FALLBACK in the ENVIRONMENT section.
+  * Packaging: move the source-stanza build dependencies from the invalid
+    "Depends" field to "Build-Depends" (silences dpkg-gencontrol's
+    "unknown information field Depends" warning); drop the now-redundant
+    debian/compat file (compat level set via debhelper-compat in Build-Depends).
+
+ -- haplo-dialog <devel@haplo-dialog.fr>  Tue, 11 Aug 2026 11:05:32 +0200
+
+gtk3sermo (1.0.0-1) unstable; urgency=medium
+
+  * Initial Debian packaging for gtk3sermo — haplo-dialog fork.
+  * GTK3 dialog window creator for shell scripts.
+  * Toolkit: GTK3.
+  * Security hardening: safe_exec, FORTIFY_SOURCE=3, PIE, Full RELRO,
+    stack-protector-strong.
+
+ -- haplo-dialog <devel@haplo-dialog.fr>  Fri, 29 May 2026 12:00:00 +0200

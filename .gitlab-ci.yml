@@ -1,13 +1,24 @@
 # .gitlab-ci.yml — Intégration continue haplo-dialog
-# Compile gtk3sermo (seul port distribué), puis valide le binaire contre la suite de
-# régression XML (tests/xml/run_tests.sh, 52 cas en mode --print-ir : parse
-# seul, sans serveur X — 100 % headless, OK en CI).
+# Deux étages, et le second existe parce que le premier ne suffit pas.
+#
+#   build-test : compile chaque port, puis le valide contre la suite de régression
+#                XML (tests/xml/run_tests.sh, en mode --print-ir : parse seul, sans
+#                serveur X). Rapide, mais ne fait qu'analyser du XML.
+#   run-test   : lance RÉELLEMENT les exemples livrés, sous Xvfb et en locale
+#                fr_FR.UTF-8.
+#
+# Pourquoi ce second étage : le 2026-08-22, les deux ports plantaient à l'ouverture
+# d'une <list> (segfault) et sur tout nombre à virgule en locale française (abandon).
+# Le pipeline était VERT pendant ce temps — parce qu'il n'ouvrait aucune fenêtre et
+# tournait en locale C. Un port qui compile et analyse du XML n'est pas un port qui
+# marche.
 #
 # Image debian:testing = cible : Debian testing.
 # Un job par port ; ils tournent en parallèle.
 
 stages:
   - build-test
+  - run-test
 
 # N'ouvrir qu'un pipeline (pas de doublon branche + merge request).
 workflow:
@@ -53,3 +64,39 @@ gtk3sermo:
   variables:
     PORT: gtk3sermo
     DEPS: "automake autoconf libtool libgtk-3-dev libvte-2.91-dev"
+
+gtk4sermo:
+  extends: .autotools
+  variables:
+    PORT: gtk4sermo
+    DEPS: "automake autoconf libtool libgtk-4-dev libvte-2.91-gtk4-dev"
+
+# ─────────────────── exécution réelle des exemples ───────────────────
+# Ouvre vraiment les fenêtres, en français. Le banc sort en erreur dès qu'un
+# exemple plante, refuse de s'analyser, ou n'affiche aucune fenêtre.
+.examples:
+  stage: run-test
+  variables:
+    DEPS: "$TOOLKIT_DEPS xvfb xdotool locales"
+  script:
+    - sed -i 's/^# *fr_FR.UTF-8/fr_FR.UTF-8/' /etc/locale.gen
+    - locale-gen
+    - cd "$PORT/${PORT}_1.0.0"
+    - autoreconf -fi
+    - ./configure
+    - make -j"$(nproc)"
+    - LC_ALL=fr_FR.UTF-8 LANG=fr_FR.UTF-8 bash tests/run_examples.sh "src/$PORT"
+
+exemples:gtk3sermo:
+  extends: .examples
+  needs: ["gtk3sermo"]
+  variables:
+    PORT: gtk3sermo
+    TOOLKIT_DEPS: "automake autoconf libtool libgtk-3-dev libvte-2.91-dev"
+
+exemples:gtk4sermo:
+  extends: .examples
+  needs: ["gtk4sermo"]
+  variables:
+    PORT: gtk4sermo
+    TOOLKIT_DEPS: "automake autoconf libtool libgtk-4-dev libvte-2.91-gtk4-dev"

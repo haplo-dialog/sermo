@@ -11,5 +11,5 @@
 #   pdf_TEXINFOS = gtk3sermo.texi
 #   info_TEXINFOS = gtk3sermo.texi
 
-EXTRA_DIST = gtk3sermo.texi version.texi gtk3sermo.info stamp-vti
+EXTRA_DIST = gtk3sermo.texi version.texi
 

@@ -18,7 +18,7 @@ BUILT_SOURCES = \
 bin_PROGRAMS = gtk3sermo
 
 gtk3sermo_SOURCES = \
-	gtkdialog.c gtkdialog.h \
+	gtkdialog.c gtk3d.h \
 	safe_exec.c safe_exec.h \
 	macros.h \
 	printing.c printing.h \

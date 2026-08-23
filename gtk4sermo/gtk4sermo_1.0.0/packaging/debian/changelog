@@ -1,0 +1,73 @@
+gtk4sermo (1.0.0-11) unstable; urgency=medium
+
+  * Page de manuel : la section SEE ALSO renvoyait vers fltk1d, efl1d, qt6d et
+    sdl3d. Ces ports ne relèvent pas de la suite sermo — c'est onis qui les
+    porte — et leurs pages de manuel n'existent pas ici. Elle ne renvoie plus
+    que vers gtk3sermo et gtkdialog.
+  * Documentation : le tableau « les 6 ports » listait la famille entière avec
+    des noms de binaires qui n'ont jamais existé (gtk3d, qt6d, sdl3d). Il ne
+    décrit plus que gtk3sermo, gtk4sermo et gtksermo, sous leurs vrais noms.
+  * ROADMAP : le sélecteur HAPLO_DIALOG_TOOLKIT retiré ; le multi-backend est
+    le domaine d'onis.
+
+ -- haplo-dialog <devel@haplo-dialog.fr>  Sat, 22 Aug 2026 16:30:41 +0200
+
+gtk4sermo (1.0.0-10) unstable; urgency=medium
+
+  * Menus GTK 4 : <menuitem> rendait un GtkPopoverMenu autonome, empilé dans
+    une boîte comme un widget ordinaire ; GTK le réalisait en surface popup
+    sans parent et le programme mourait sur un SIGSEGV. <menu> et <menubar>
+    consomment désormais leurs enfants et construisent un GMenuModel.
+  * Nombres décimaux : atof() suit la locale — sous fr_FR, atof("0.1") vaut 0.
+    range-step="0.1" devenait donc nul et tuait GTK sur une assertion.
+    47 appels passent à g_ascii_strtod(), indépendant de la locale.
+  * Signal row-selected : GtkListBox passe (box, row, data), un argument de
+    plus que le callback n'en attendait ; il recevait la ligne à la place du
+    jeu d'attributs et le déréférençait. Adaptateur de signature posé.
+  * <frame Étiquette nue> : la forme historique de gtkdialog, qu'utilisent 53
+    des 55 fichiers d'exemples, était refusée par le lexer.
+  * Interfaces Glade : chargement rétabli en GTK 4 par un GtkBuilderScope qui
+    accepte les commandes shell de gtkdialog comme gestionnaires de signaux,
+    et les trois interfaces de 2006 redessinées pour les widgets GTK 4.
+  * <edit> alimenté par <input> : implémenté (c'était un stub silencieux).
+  * Signaux de bouton enter/leave/pressed/released : rétablis par contrôleurs,
+    GTK 4 les ayant retirés de GtkButton — 172 avertissements en moins.
+  * Mise en page : « expand » ne joue plus que sur l'axe de la boîte et
+    « fill » règle le placement ; les images reprennent leur taille.
+  * 17 widgets implémentés mais injoignables sont branchés côté GTK 4.
+  * Banc de tests : gtk3sermo passe 54 exemples sur 54, gtk4sermo 58 sur 58.
+
+ -- haplo-dialog <devel@haplo-dialog.fr>  Sat, 22 Aug 2026 15:20:48 +0200
+
+gtk4sermo (1.0.0-9) unstable; urgency=medium
+
+  * Renommage : gtk4dialog devient gtk4sermo, pour la meme raison que le port GTK3
+    et pour donner a la suite une convention unique. Le binaire suit :
+    /usr/bin/gtk4sermo.
+  * Ce paquet ne porte AUCUN lien de compatibilite : il n'entre en conflit avec rien
+    et s'installe a cote de gtk3sermo. C'est la condition d'existence d'une suite
+    multi-port.
+  * L'analyseur recoit le correctif de l'etiquette vide, applique cote GTK3 le
+    20 aout et jamais descendu ici. Corpus de tests : 55 cas passes sur 55.
+  * Version alignee sur 1.0.0-9, commune a toute la suite.
+
+ -- haplo-dialog <devel@haplo-dialog.fr>  Fri, 21 Aug 2026 21:05:45 +0200
+
+gtk4sermo (1.0.0-2) unstable; urgency=medium
+
+  * Packaging: move the source-stanza build dependencies from the invalid
+    "Depends" field to "Build-Depends" (silences dpkg-gencontrol's
+    "unknown information field Depends" warning); drop the now-redundant
+    debian/compat file (compat level set via debhelper-compat in Build-Depends).
+
+ -- Haplo-Linux Development Team <devel@haplo-dialog.fr>  Sat, 11 Jul 2026 15:47:19 +0200
+
+gtk4sermo (1.0.0-1) unstable; urgency=medium
+
+  * Initial Debian packaging for gtk4sermo — Haplo-Linux fork.
+  * GTK4 dialog window creator for shell scripts.
+  * Toolkit: GTK4.
+  * Security hardening: safe_exec, FORTIFY_SOURCE=2, PIE, Full RELRO,
+    stack-protector-strong.
+
+ -- Haplo-Linux Development Team <devel@haplo-dialog.fr>  Fri, 29 May 2026 12:00:00 +0200

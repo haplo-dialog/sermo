@@ -108,7 +108,6 @@ build_out.log
 **/imgui.ini
 
 # Symlink debian -> packaging/debian, aide au build (dpkg-buildpackage attend debian/ à la racine du source). Recréé au build, non versionné.
-/gtk3sermo/gtk3sermo_1.0.0/debian
 
 # artefacts de construction (2026-08-15)
 /gtk3sermo/SHA256SUMS

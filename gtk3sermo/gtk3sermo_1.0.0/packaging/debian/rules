@@ -1,0 +1,43 @@
+#!/usr/bin/make -f
+# debian/rules — gtk3sermo 1.0.0 (haplo-dialog)
+
+export DH_VERBOSE = 1
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+%:
+	dh $@
+
+override_dh_autoreconf:
+	NOCONFIGURE=1 ./autogen.sh
+
+override_dh_auto_configure:
+	./configure \
+		--prefix=/usr \
+		--mandir=/usr/share/man \
+		--sysconfdir=/etc \
+		--localstatedir=/var \
+		--disable-maintainer-mode \
+		
+		$(NULL)
+
+override_dh_auto_install:
+	dh_auto_install
+	# Le cache d'icônes est régénéré chez l'utilisateur par le déclencheur
+	# gtk-update-icon-cache : l'embarquer est une faute (lintian
+	# package-contains-icon-cache-in-generic-dir). On le retirait de
+	# debian/gtk3sermo/, mais dh_install n'y a encore rien copié à ce
+	# moment-là — il faut le retirer de la zone d'assemblage debian/tmp/,
+	# d'où la copie part.
+	rm -f $(CURDIR)/debian/tmp/usr/share/icons/hicolor/icon-theme.cache
+	install -d $(CURDIR)/debian/gtk3sermo/usr/share/doc/gtk3sermo/examples
+	cp -r examples/* $(CURDIR)/debian/gtk3sermo/usr/share/doc/gtk3sermo/examples/ 2>/dev/null || true
+
+execute_after_dh_install:
+	# Filet : si le cache réapparaissait par un autre chemin.
+	rm -f $(CURDIR)/debian/gtk3sermo/usr/share/icons/hicolor/icon-theme.cache
+
+override_dh_strip:
+	dh_strip --dbgsym-migration='gtk3sermo-dbg (<< 1.0.0-1~)'
+
+override_dh_auto_test:
+	# Suite de tests (Check) désactivée à l'empaquetage — dépendance facultative.

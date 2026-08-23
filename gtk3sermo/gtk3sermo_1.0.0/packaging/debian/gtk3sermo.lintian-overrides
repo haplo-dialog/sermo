@@ -1,0 +1,3 @@
+# Paquet tiers, hors archive Debian officielle :
+# il n'existe pas de bogue ITP à clôturer pour le premier envoi.
+gtk3sermo: initial-upload-closes-no-bugs

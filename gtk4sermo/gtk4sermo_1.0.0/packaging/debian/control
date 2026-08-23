@@ -1,0 +1,36 @@
+Source: gtk4sermo
+Section: utils
+Priority: optional
+Maintainer: haplo-dialog <devel@haplo-dialog.fr>
+Build-Depends: debhelper-compat (= 13), libgtk-4-dev (>= 4.6.0), libvte-2.91-gtk4-dev, flex, bison, autoconf (>= 2.69), automake (>= 1.14), pkg-config
+Standards-Version: 4.6.2
+Homepage: https://haplo-dialog.fr
+Vcs-Browser: https://gitlab.com/haplo-dialog/sermo
+Vcs-Git: https://gitlab.com/haplo-dialog/sermo.git
+
+Package: gtk4sermo
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libgtk-4-1 (>= 4.6), libvte-2.91-gtk4-0
+Conflicts: gtk4dialog
+Replaces: gtk4dialog
+Description: GTK 4 dialog boxes for shell scripts (gtkdialog successor)
+ gtk4sermo builds native GTK 4 windows from an XML description, so a shell
+ script can show a real graphical interface without any toolkit knowledge.
+ .
+ It is a maintained, hardened fork of gtkdialog (Laszlo Pere, Thunor) and reads
+ the same XML as the GTK 3 port: existing gtkdialog scripts run unchanged.
+ 50 widgets, including GTK 4 natives — stack, revealer, flowbox, overlay,
+ drawingarea — and client-side decorations.
+ .
+ Hardening: safe_exec (no system()), FORTIFY_SOURCE=3, PIE, Full RELRO,
+ stack-protector-strong.
+ .
+ Part of the haplo-dialog suite, alongside gtk3sermo (GTK 3). Both install
+ side by side: neither owns the gtkdialog command, which lives in the separate
+ gtksermo package.
+ .
+ Drop-in replacement for gtkdialog: same XML language, same command-line
+ interface — verified against a 55-case test corpus.
+ .
+ Not to be confused with the gtk3dialog package distributed by BunsenLabs,
+ which is a different fork of the same ancestor.

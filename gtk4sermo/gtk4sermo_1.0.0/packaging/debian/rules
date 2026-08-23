@@ -1,0 +1,36 @@
+#!/usr/bin/make -f
+# debian/rules — gtk4sermo 1.0.0 (Haplo-Linux)
+
+export DH_VERBOSE = 1
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+%:
+	dh $@
+
+override_dh_autoreconf:
+	NOCONFIGURE=1 ./autogen.sh
+
+override_dh_auto_configure:
+	./configure \
+		--prefix=/usr \
+		--mandir=/usr/share/man \
+		--sysconfdir=/etc \
+		--localstatedir=/var \
+		--disable-maintainer-mode \
+		
+		$(NULL)
+
+override_dh_auto_install:
+	dh_auto_install
+	install -d $(CURDIR)/debian/gtk4sermo/usr/share/doc/gtk4sermo/examples
+	cp -r examples/* $(CURDIR)/debian/gtk4sermo/usr/share/doc/gtk4sermo/examples/ 2>/dev/null || true
+
+override_dh_strip:
+	dh_strip --dbgsym-migration='gtk4sermo-dbg (<< 1.0.0-1~)'
+
+override_dh_auto_test:
+	# Suite de tests (Check) désactivée à l'empaquetage — dépendance facultative.
+
+override_dh_icons:
+	rm -f $(CURDIR)/debian/gtk4sermo/usr/share/icons/hicolor/icon-theme.cache
+	dh_icons
