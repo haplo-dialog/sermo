@@ -1,23 +1,27 @@
 # haplo-dialog
 
-**Un descendant moderne, durci et maintenu de gtkdialog (GTK 3).**
+**Un descendant moderne, durci et maintenu de gtkdialog — ports GTK 3 et GTK 4.**
 
-> ## ⚠️ Renommage en cours
+> ## ⚠️ Renommage : ce qui a changé, et ce qu'il faut savoir
 >
 > Ce projet a distribué son paquet sous le nom **`gtk3dialog`**. Ce nom est déjà
 > utilisé par un paquet distribué par **BunsenLabs**, ce que nous n'avions pas vu.
 > Deux paquets de même nom ne cohabitent pas : l'un remplace l'autre en silence.
 >
-> La famille GTK est donc renommée en **`gtksermo`** (compatibilité gtkdialog),
-> **`gtk3sermo`** et **`gtk4sermo`**, sous la suite **haplo-dialog** — qui redevient
-> ce qu'elle a toujours été : le nom du **produit**, pas celui d'un port.
+> La famille GTK s'appelle donc désormais **`gtk3sermo`**, **`gtk4sermo`** et
+> **`gtksermo`** (compatibilité gtkdialog), sous la suite **haplo-dialog** — qui
+> redevient ce qu'elle a toujours été : le nom du **produit**, pas celui d'un port.
 >
-> **En attendant, n'installez pas le paquet de la release v1.0.0-3 si vous êtes sous
-> BunsenLabs** : il écraserait votre `gtk3dialog`. Une release corrigée suivra.
+> **Les anciens paquets `gtk3dialog` sont retirés** : ils ne sont plus
+> téléchargeables nulle part. Si vous en aviez installé un sous BunsenLabs, il a pu
+> écraser votre `gtk3dialog` — réinstallez celui de votre distribution.
+>
+> **Aucun paquet n'est publié pour l'instant.** On construit depuis les sources :
+> voir [Installation](#installation).
 
 [![Licence](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.0.0-informational.svg)](CHANGELOG.md)
-[![Toolkit](https://img.shields.io/badge/toolkit-GTK%203-success.svg)](#le-port-gtk3sermo)
+[![Toolkit](https://img.shields.io/badge/toolkit-GTK%203%20%2B%20GTK%204-success.svg)](#les-deux-ports)
 [![Tests](https://img.shields.io/badge/tests-52%2F52%20XML%20·%209%2F9%20comportement-brightgreen.svg)](#tests--qualité)
 
 Décrivez une interface en XML, exportez-la dans une variable, lancez le binaire —
@@ -68,48 +72,68 @@ EXIT="OK"
 
 ---
 
-## Le port gtk3sermo
+## Les deux ports
 
-Un cœur C (grammaire flex/bison + automate + `safe_exec`) et un backend GTK 3.
+Un cœur C commun (grammaire flex/bison + automate + `safe_exec`), deux backends.
 
-| Port | Binaire | Toolkit | Widgets | Particularité |
+| Port | Binaire | Toolkit | Balises de widget | Particularité |
 |------|---------|---------|:------:|---------------|
-| **gtk3sermo** | `gtk3sermo` | GTK 3 | 43 | **Référence** · alias rétro-compatible `gtkdialog` |
+| **gtk3sermo** | `gtk3sermo` | GTK 3 | 52 | **Référence** · le plus éprouvé |
+| **gtk4sermo** | `gtk4sermo` | GTK 4 | 56 | les 52 mêmes, plus `flowbox`, `overlay`, `revealer`, `stack` |
 
-> **43 widgets** décrits par une seule grammaire. Le binaire fournit l'alias
-> `gtkdialog` : les scripts écrits pour gtkdialog tournent sans modification.
+> Une seule grammaire pour les deux ports. Le compte est celui des **balises de
+> widget acceptées par la grammaire** (`src/gtkdialog_lexer.l`), alias compris —
+> il ne compte pas les balises de structure comme `<action>` ou `<variable>`.
+>
+> La commande `gtkdialog` elle-même n'est PAS dans ces paquets : elle est fournie
+> par un paquet séparé, **`gtksermo`**. Voir [Installation](#installation).
 
 ---
 
 ## Installation
 
-### Paquet Debian (.deb)
+### Aucun paquet publié pour l'instant
+
+Le dépôt ne publie **aucune release** et **aucun `.deb`** téléchargeable : les
+anciens paquets ont été retirés au renommage. En attendant, on construit.
+
+### Construire le paquet Debian
 
 ```sh
-# Le .deb est joint à chaque release du dépôt, avec ses sommes de contrôle.
-# Téléchargez les deux, puis :
-sha256sum -c SHA256SUMS
-sudo apt install ./haplo-dialog_1.0.0-8_amd64.deb
+git clone https://gitlab.com/haplo-dialog/sermo.git
+cd sermo/gtk3sermo/gtk3sermo_1.0.0        # ou gtk4sermo/gtk4sermo_1.0.0
+dpkg-buildpackage -us -uc -b
 ```
 
-> **Le paquet s'appelle `haplo-dialog`, la commande reste `gtk3sermo`.**
-> Le nom de paquet `gtk3sermo` n'est pas libre : BunsenLabs en distribue un
-> sous ce nom depuis juillet 2025, dans son archive APT. Deux paquets qui
-> portent le même nom ne sont pas des rivaux pour apt, ce sont deux versions
-> d'un même paquet, et la plus haute écrase l'autre en silence. Les noms
-> distincts font qu'apt refuse et explique, au lieu de substituer. Vos scripts
-> ne changent pas : `/usr/bin/gtk3sermo` et son alias `gtkdialog` sont
-> installés comme avant.
+Les paquets obtenus, et le découpage est volontaire :
 
-### Depuis les sources
+| Paquet | Vient de | Installe | À savoir |
+|---|---|---|---|
+| `gtk3sermo` | port GTK 3 | `/usr/bin/gtk3sermo` | aucun conflit |
+| `gtksermo` | port GTK 3 | `/usr/bin/gtkdialog` | **en conflit** avec `gtkdialog` et `gtk3dialog` |
+| `gtk4sermo` | port GTK 4 | `/usr/bin/gtk4sermo` | aucun conflit |
+
+> **La commande `gtkdialog` est dans `gtksermo`, pas dans `gtk3sermo`.**
+> C'est voulu. Le paquet `gtk3dialog` de BunsenLabs portait le même nom que
+> celui que nous distribuions : deux paquets de même nom ne sont pas des rivaux
+> pour apt, le plus haut écrase l'autre en silence. Avec des noms distincts, apt
+> refuse et explique. N'installez `gtksermo` que si vous voulez la commande
+> `gtkdialog` — sinon vos scripts marchent en appelant directement `gtk3sermo`
+> ou `gtk4sermo`.
+
+### Depuis les sources, sans paquet
 
 ```sh
-# autotools
 cd gtk3sermo/gtk3sermo_1.0.0 && autoreconf -fi && ./configure && make -j"$(nproc)" && sudo make install
 ```
 
-Les recettes d'empaquetage sont fournies (`packaging/` : Debian, RPM, Arch,
-Gentoo, Slackware). Voir [PACKAGING.md](PACKAGING.md).
+⚠️ Ici `make install` pose aussi le lien `gtkdialog`, sans le garde-fou des
+conflits de paquets : à éviter si vous avez déjà un `gtkdialog` ou un
+`gtk3dialog` installé par votre distribution.
+
+Des recettes RPM, Arch, Gentoo et Slackware existent dans `packaging/`, mais
+**aucune n'a jamais été construite par nous** et leur URL de source ne répond pas
+encore. Voir [PACKAGING.md](PACKAGING.md).
 
 ---
 

@@ -1,24 +1,28 @@
 # haplo-dialog
 
-**A modern, hardened and maintained descendant of gtkdialog (GTK 3).**
+**A modern, hardened and maintained descendant of gtkdialog — GTK 3 and GTK 4 ports.**
 
-> ## ⚠️ Renaming in progress
+> ## ⚠️ Renaming: what changed, and what you need to know
 >
 > This project shipped its package under the name **`gtk3dialog`**. That name is
 > already used by a package distributed by **BunsenLabs**, which we had not noticed.
 > Two packages sharing a name cannot coexist: one silently replaces the other.
 >
-> The GTK family is therefore being renamed to **`gtksermo`** (gtkdialog
-> compatibility), **`gtk3sermo`** and **`gtk4sermo`**, under the **haplo-dialog**
-> suite — which goes back to being what it always was: the name of the **product**,
-> not of a single port.
+> The GTK family is therefore now called **`gtk3sermo`**, **`gtk4sermo`** and
+> **`gtksermo`** (gtkdialog compatibility), under the **haplo-dialog** suite —
+> which goes back to being what it always was: the name of the **product**, not of
+> a single port.
 >
-> **In the meantime, do not install the package from release v1.0.0-3 if you are on
-> BunsenLabs**: it would overwrite your `gtk3dialog`. A corrected release will follow.
+> **The old `gtk3dialog` packages have been withdrawn**: they are no longer
+> downloadable anywhere. If you had installed one on BunsenLabs, it may have
+> overwritten your `gtk3dialog` — reinstall your distribution's own.
+>
+> **No package is published at this time.** You build from source: see
+> [Installation](#installation).
 
 [![Licence](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.0.0-informational.svg)](CHANGELOG.en.md)
-[![Toolkit](https://img.shields.io/badge/toolkit-GTK%203-success.svg)](#the-gtk3sermo-port)
+[![Toolkit](https://img.shields.io/badge/toolkit-GTK%203%20%2B%20GTK%204-success.svg)](#the-two-ports)
 [![Tests](https://img.shields.io/badge/tests-52%2F52%20XML%20·%209%2F9%20behaviour-brightgreen.svg)](#tests--quality)
 
 Describe an interface in XML, export it into a variable, run the binary —
@@ -69,47 +73,67 @@ EXIT="OK"
 
 ---
 
-## The gtk3sermo port
+## The two ports
 
-A C core (flex/bison grammar + state machine + `safe_exec`) and a GTK 3 backend.
+One shared C core (flex/bison grammar + state machine + `safe_exec`), two backends.
 
-| Port | Binary | Toolkit | Widgets | Notes |
+| Port | Binary | Toolkit | Widget tags | Notes |
 |------|---------|---------|:------:|---------------|
-| **gtk3sermo** | `gtk3sermo` | GTK 3 | 43 | **Reference** · backward-compatible `gtkdialog` alias |
+| **gtk3sermo** | `gtk3sermo` | GTK 3 | 52 | **Reference** · the most battle-tested |
+| **gtk4sermo** | `gtk4sermo` | GTK 4 | 56 | the same 52, plus `flowbox`, `overlay`, `revealer`, `stack` |
 
-> **43 widgets** described by a single grammar. The binary provides the
-> `gtkdialog` alias: scripts written for gtkdialog run without modification.
+> One grammar for both ports. The count is the number of **widget tags accepted by
+> the grammar** (`src/gtkdialog_lexer.l`), aliases included — it does not count
+> structural tags such as `<action>` or `<variable>`.
+>
+> The `gtkdialog` command itself is NOT in these packages: it ships in a separate
+> package, **`gtksermo`**. See [Installation](#installation).
 
 ---
 
 ## Installation
 
-### Debian package (.deb)
+### No package published at this time
+
+The repository publishes **no release** and **no downloadable `.deb`**: the old
+packages were withdrawn during the rename. For now, you build.
+
+### Building the Debian package
 
 ```sh
-# The .deb is attached to every release of the repository, with its checksums.
-# Download both, then:
-sha256sum -c SHA256SUMS
-sudo apt install ./haplo-dialog_1.0.0-8_amd64.deb
+git clone https://gitlab.com/haplo-dialog/sermo.git
+cd sermo/gtk3sermo/gtk3sermo_1.0.0        # or gtk4sermo/gtk4sermo_1.0.0
+dpkg-buildpackage -us -uc -b
 ```
 
-> **The package is named `haplo-dialog`; the command is still `gtk3sermo`.**
-> The package name `gtk3sermo` is not free: BunsenLabs has shipped one under
-> that exact name since July 2025, in its APT archive. Two packages carrying
-> the same name are not rivals to apt, they are two versions of one package,
-> and the higher one silently replaces the other. Distinct names make apt
-> refuse and explain instead of substituting. Your scripts do not change:
-> `/usr/bin/gtk3sermo` and its `gtkdialog` alias are installed as before.
+The resulting packages — and the split is deliberate:
 
-### From source
+| Package | From | Installs | Note |
+|---|---|---|---|
+| `gtk3sermo` | GTK 3 port | `/usr/bin/gtk3sermo` | no conflict |
+| `gtksermo` | GTK 3 port | `/usr/bin/gtkdialog` | **conflicts** with `gtkdialog` and `gtk3dialog` |
+| `gtk4sermo` | GTK 4 port | `/usr/bin/gtk4sermo` | no conflict |
+
+> **The `gtkdialog` command lives in `gtksermo`, not in `gtk3sermo`.**
+> That is on purpose. BunsenLabs' `gtk3dialog` package carried the same name as
+> the one we used to ship: two packages sharing a name are not rivals to apt, the
+> higher one silently replaces the other. With distinct names, apt refuses and
+> explains. Install `gtksermo` only if you want the `gtkdialog` command —
+> otherwise your scripts work by calling `gtk3sermo` or `gtk4sermo` directly.
+
+### From source, without packaging
 
 ```sh
-# autotools
 cd gtk3sermo/gtk3sermo_1.0.0 && autoreconf -fi && ./configure && make -j"$(nproc)" && sudo make install
 ```
 
-Packaging recipes are provided (`packaging/`: Debian, RPM, Arch,
-Gentoo, Slackware). See [PACKAGING.md](PACKAGING.md).
+⚠️ Here `make install` also drops the `gtkdialog` symlink, without the safety net
+of package conflicts: avoid it if you already have a `gtkdialog` or a
+`gtk3dialog` installed by your distribution.
+
+RPM, Arch, Gentoo and Slackware recipes exist under `packaging/`, but **none has
+ever been built by us** and their source URL does not resolve yet. See
+[PACKAGING.md](PACKAGING.md).
 
 ---
 

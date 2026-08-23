@@ -32,12 +32,12 @@ Amont d'origine : gtkdialog de László Pere (2003-2013), poursuivi par
 https://github.com/puppylinux-woof-CE/gtkdialog
 
 Autres descendants du même code : https://github.com/01micko/gtkdialog et
-https://github.com/BunsenLabs/gtk3sermo, tous deux de Mick Amadio.
+https://github.com/BunsenLabs/gtk3dialog, tous deux de Mick Amadio.
 
 ### Ancrage Wayland
 
 Les attributs `layer`, `edge`, `dist` et `reserve` de `<window>` dérivent du
-fork **BunsenLabs gtk3sermo** (https://github.com/BunsenLabs/gtk3sermo),
+fork **BunsenLabs gtk3dialog** (https://github.com/BunsenLabs/gtk3dialog),
 lui aussi sous GPL-2.0-or-later : support layer-shell introduit par
 **Dima Krasner** (2021), étendu par **Mick Amadio** (ancrage aux bords, zone
 exclusive, bords opposés, 2021-2024).

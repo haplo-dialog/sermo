@@ -37,19 +37,19 @@
 
 ### 1.1 Origine du projet
 
-`gtk4sermo` est le port GTK4 de `gtk3d` (gtk3sermo), lui-même issu de la modernisation
+`gtk4sermo` est le port GTK4 de `gtk3sermo` (gtk3sermo), lui-même issu de la modernisation
 de `gtkdialog` (László Pere, 2003–2007 ; Thunor, 2011–2012), abandonné à la version
-0.8.3. `gtk3d` a porté ce code de GTK2 vers GTK3, corrigé ses vulnérabilités et
+0.8.3. `gtk3sermo` a porté ce code de GTK2 vers GTK3, corrigé ses vulnérabilités et
 remplacé `libglade` par `GtkBuilder`. `gtk4sermo` poursuit cette modernisation en migrant
 la base GTK3 vers **GTK4** (>= 4.6), tout en conservant la même syntaxe XML.
 
-L'objectif est de proposer un binaire `gtk4sermo` natif GTK4, coexistant avec `gtk3d`,
+L'objectif est de proposer un binaire `gtk4sermo` natif GTK4, coexistant avec `gtk3sermo`,
 prêt pour les environnements GNOME modernes où GTK3 est en voie de retrait.
 
 ### 1.2 Problème
 
 GTK4 (2020+) est **volontairement incompatible** avec GTK3 : de nombreuses APIs
-utilisées par `gtk3d` ont été supprimées ou remplacées. Un simple recompilage est
+utilisées par `gtk3sermo` ont été supprimées ou remplacées. Un simple recompilage est
 impossible :
 
 - **`gtk_container_add()`**, `gtk_box_pack_start()` et l'essentiel de l'API de
@@ -63,7 +63,7 @@ impossible :
 ### 1.3 Opportunité
 
 `gtk4sermo` reste conceptuellement unique : aucun outil équivalent en C n'offre la même
-simplicité pour créer des GUI GTK4 depuis un script. Porter `gtk3d` vers GTK4 plutôt
+simplicité pour créer des GUI GTK4 depuis un script. Porter `gtk3sermo` vers GTK4 plutôt
 que d'attendre permet d'anticiper le retrait de GTK3 des environnements GNOME.
 
 ---
@@ -79,7 +79,7 @@ que d'attendre permet d'anticiper le retrait de GTK3 des environnements GNOME.
 - Mise à jour du **système de build** (Autotools) et de la dépendance **VTE** vers `vte-2.91-gtk4`
 - Adaptation des **dialogues asynchrones** GTK4 (couleur, police, fichier)
 - Rédaction de la **documentation** (cahier des charges, manuel utilisateur, manuel développeur)
-- Conservation de **100% de la compatibilité descendante** de la syntaxe XML `gtk3d`
+- Conservation de **100% de la compatibilité descendante** de la syntaxe XML `gtk3sermo`
 
 ### 2.2 Hors périmètre (version 0.9.x)
 
@@ -88,10 +88,10 @@ que d'attendre permet d'anticiper le retrait de GTK3 des environnements GNOME.
 - Support Windows/macOS
 - Portage natif des widgets restés en stub (`menubar`, `menu`, `menuitem`, `table`) — planifié v1.2
 
-### 2.3 Coexistence avec gtk3d
+### 2.3 Coexistence avec gtk3sermo
 
-- Binaire `gtk4sermo` installable **simultanément** avec `gtk3d` (GTK3) et les autres ports
-- Même syntaxe XML : un script `gtk3d` fonctionne sans modification avec `gtk4sermo`
+- Binaire `gtk4sermo` installable **simultanément** avec `gtk3sermo` (GTK3) et les autres ports
+- Même syntaxe XML : un script `gtk3sermo` fonctionne sans modification avec `gtk4sermo`
 - Documentation et exemples propres à GTK4
 
 ---
@@ -100,7 +100,7 @@ que d'attendre permet d'anticiper le retrait de GTK3 des environnements GNOME.
 
 ### 3.1 Objectif principal
 
-Produire un binaire `gtk4sermo` fonctionnel sur tout système Linux moderne doté de GTK 4 (>= 4.6), compilable sans erreur, sécurisé, et compatible avec tous les scripts écrits pour `gtk3d`.
+Produire un binaire `gtk4sermo` fonctionnel sur tout système Linux moderne doté de GTK 4 (>= 4.6), compilable sans erreur, sécurisé, et compatible avec tous les scripts écrits pour `gtk3sermo`.
 
 ### 3.2 Objectifs secondaires
 
@@ -108,7 +108,7 @@ Produire un binaire `gtk4sermo` fonctionnel sur tout système Linux moderne dot�
 |----|----------|----------|
 | O1 | Zéro vulnérabilité critique (injection shell, buffer overflow) | HAUTE |
 | O2 | Compilation sans erreur sur Debian 12, Ubuntu 22.04, Fedora 38 | HAUTE |
-| O3 | Compatibilité 100% des scripts `gtk3d` existants (même syntaxe XML) | HAUTE |
+| O3 | Compatibilité 100% des scripts `gtk3sermo` existants (même syntaxe XML) | HAUTE |
 | O4 | Documentation complète en français | MOYENNE |
 | O5 | Réduire les avertissements de compilation (-Wall -Wextra) | MOYENNE |
 | O6 | Couche de compatibilité `gtk4-compat.h` complète | ✅ RÉALISÉ |
@@ -124,7 +124,7 @@ Produire un binaire `gtk4sermo` fonctionnel sur tout système Linux moderne dot�
 par widget dans `src/`), dont 4 encore au stade de **stub** (présents mais sans rendu
 fonctionnel GTK4 complet) :
 
-**Widgets hérités de gtk3d (30) :** `button`, `togglebutton`, `checkbox`, `radiobutton`, `switch`, `entry`, `edit`, `text`, `password`, `searchentry`, `spinbutton`, `hscale`, `vscale`, `progressbar`, `combobox`, `comboboxtext`, `list`, `tree`, `pixmap`, `image`, `colorbutton`, `fontbutton`, `notebook`, `frame`, `expander`, `hbox`, `vbox`, `statusbar`, `timer`, `window`
+**Widgets hérités de gtk3sermo (30) :** `button`, `togglebutton`, `checkbox`, `radiobutton`, `switch`, `entry`, `edit`, `text`, `password`, `searchentry`, `spinbutton`, `hscale`, `vscale`, `progressbar`, `combobox`, `comboboxtext`, `list`, `tree`, `pixmap`, `image`, `colorbutton`, `fontbutton`, `notebook`, `frame`, `expander`, `hbox`, `vbox`, `statusbar`, `timer`, `window`
 
 **Widgets GTK3 portés en GTK4 (12) :** `calendar`, `filechooser`, `infobar`, `linkbutton`, `pulse`, `spinner`, `aspectframe`, `eventbox`, `hseparator`, `vseparator`, `terminal`, `levelbar`
 
@@ -147,7 +147,7 @@ Le moteur d'actions doit traiter : `EXIT`, `CLOSE`, `LAUNCH`, `REFRESH`, `SAVE`,
 
 ### 4.4 Sortie du programme
 
-À la fermeture, le programme doit exporter sur stdout les paires `NOM_VARIABLE=valeur` pour tous les widgets nommés, conformément au comportement de `gtk3d`.
+À la fermeture, le programme doit exporter sur stdout les paires `NOM_VARIABLE=valeur` pour tous les widgets nommés, conformément au comportement de `gtk3sermo`.
 
 ### 4.5 Gestion des commandes externes
 
@@ -189,7 +189,7 @@ Tous les attributs `<input>`, `<action>` et commandes shell associés aux widget
 
 ### 5.5 Compatibilité descendante
 
-Tous les scripts shell utilisant `gtk3d` doivent fonctionner sans modification avec `gtk4sermo` 1.0.0 — la syntaxe XML est strictement identique.
+Tous les scripts shell utilisant `gtk3sermo` doivent fonctionner sans modification avec `gtk4sermo` 1.0.0 — la syntaxe XML est strictement identique.
 
 ---
 
@@ -207,7 +207,7 @@ Tous les scripts shell utilisant `gtk3d` doivent fonctionner sans modification a
 | Flex | 2.6+ | Génération du lexer |
 | Bison | 3.0+ | Génération du parser |
 
-### 6.2 Dépendances supprimées (par rapport à gtk3d / GTK3)
+### 6.2 Dépendances supprimées (par rapport à gtk3sermo / GTK3)
 
 | Bibliothèque | Raison de suppression | Remplacement |
 |---|---|---|
@@ -231,7 +231,7 @@ gtk4sermo/gtk4sermo_1.0.0/
 │   ├── gtk4sermo.c/.h              # Point d'entrée, parsing des arguments
 │   ├── safe_exec.c/.h          # Wrappers sécurisés system/popen
 │   ├── automaton.c/.h          # Moteur d'exécution (AST → widgets GTK4)
-│   ├── gtkdialog_parser.y      # Parser Bison (syntaxe XML héritée de gtk3d)
+│   ├── gtkdialog_parser.y      # Parser Bison (syntaxe XML héritée de gtk3sermo)
 │   ├── gtkdialog_lexer.l       # Lexer Flex
 │   ├── variables.c/.h          # Gestion des variables et de l'état
 │   ├── signals.c/.h            # Système de signaux GTK4
@@ -303,7 +303,7 @@ variables.c — export des valeurs sur stdout
 
 | Jalon | Description | État |
 |-------|-------------|------|
-| J1 | Reprise de la base gtk3d (GTK3) | ✅ Terminé |
+| J1 | Reprise de la base gtk3sermo (GTK3) | ✅ Terminé |
 | J2 | Conception de la couche `gtk4-compat.h` (shims GTK3→GTK4) | ✅ Terminé |
 | J3 | Migration GTK3 → GTK4 (conteneurs, boucle, dialogues async) | ✅ Terminé |
 | J4 | Mise à jour du build system (GTK4, vte-2.91-gtk4) | ✅ Terminé |
@@ -348,8 +348,8 @@ Le projet sera considéré comme **terminé** (version 1.0.0 stable) lorsque :
 
 | Terme | Définition |
 |-------|-----------|
-| **gtk4sermo** | Nom du binaire — port GTK4 de gtk3d, crée des GUI GTK4 via XML |
-| **gtk3d** | Port GTK3 (référence) dont gtk4sermo est dérivé |
+| **gtk4sermo** | Nom du binaire — port GTK4 de gtk3sermo, crée des GUI GTK4 via XML |
+| **gtk3sermo** | Port GTK3 (référence) dont gtk4sermo est dérivé |
 | **GTK3** | Bibliothèque graphique GNOME, version 3.x (active, en voie de retrait) |
 | **GTK4** | Successeur de GTK3 (2020+), incompatible avec GTK3 |
 | **gtk4-compat.h** | Couche de compatibilité (65+ shims) émulant les APIs GTK3 retirées en GTK4 |

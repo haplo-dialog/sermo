@@ -26,7 +26,7 @@ Changements par rapport à 0.8.3
   - Mise à jour VTE → vte-2.91
   - 6 nouveaux widgets GTK3 natifs (patch 9) :
     <switch>, <filechooser>, <calendar>, <linkbutton>, <searchentry>, <infobar>
-  - Compatibilité 100% avec les scripts gtk3sermo 0.8.3
+  - Compatibilité 100% avec les scripts gtkdialog 0.8.3
   - Compatibilité ascendante gtkdialog : make install pose le symlink
     gtkdialog→gtk3sermo (binaire) et l'alias man gtkdialog.1 ; les dialogues
     d'époque (XML / CLI / --program via variable d'environnement) parsent et

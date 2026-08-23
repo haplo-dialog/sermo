@@ -38,10 +38,14 @@ fixed, hardened, maintained.
 
 To install:
 
-  # Debian / Ubuntu: download the .deb attached to the release, then
-  sudo apt install ./haplo-dialog_<version>_amd64.deb
-  # (there is NO APT repository to add: plain « apt install gtk3sermo »
-  #  will find nothing)
+  # No package is published at this time: no release, no APT repository.
+  # You build the .deb yourself, from a clone:
+  git clone https://gitlab.com/haplo-dialog/sermo.git
+  cd sermo/gtk3sermo/gtk3sermo_1.0.0    # or gtk4sermo/gtk4sermo_1.0.0
+  dpkg-buildpackage -us -uc -b
+  # (The resulting packages are gtk3sermo, gtksermo and gtk4sermo.
+  #  The « gtkdialog » command lives in gtksermo, a separate package,
+  #  deliberately in conflict with BunsenLabs' gtk3dialog.)
 
   # Arch Linux (recipe provided, never built by us)
   cd gtk3sermo/gtk3sermo_1.0.0/packaging/arch && makepkg -si

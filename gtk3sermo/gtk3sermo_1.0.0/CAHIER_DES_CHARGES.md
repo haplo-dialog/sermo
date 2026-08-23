@@ -91,7 +91,7 @@ Produire un binaire `gtk3sermo` fonctionnel sur tout système Linux moderne avec
 |----|----------|----------|
 | O1 | Zéro vulnérabilité critique (injection shell, buffer overflow) | HAUTE |
 | O2 | Compilation sans erreur sur Debian 12, Ubuntu 22.04, Fedora 38 | HAUTE |
-| O3 | Compatibilité 100% des scripts gtk3sermo 0.8.3 existants | HAUTE |
+| O3 | Compatibilité 100% des scripts gtkdialog 0.8.3 existants | HAUTE |
 | O4 | Documentation complète en français | MOYENNE |
 | O5 | Réduire les avertissements de compilation (-Wall -Wextra) | MOYENNE |
 | O6 | Préparation de la base pour migration GTK4 future | BASSE |

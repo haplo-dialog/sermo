@@ -39,7 +39,7 @@ for example:
 Requirements
 ============
 
-Gtk3dialog >= 1.0.0 (fork of gtk3sermo 0.8.2 - https://haplo-dialog.fr)
+gtk3sermo >= 1.0.0 (fork of gtkdialog 0.8.2 - https://haplo-dialog.fr)
 fc-query - part of fontconfig - http://fontconfig.org/
 
 Execution

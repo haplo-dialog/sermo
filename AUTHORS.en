@@ -29,9 +29,9 @@ Dima Krasner <dima@dimakrasner.com>
   - Wayland layer-shell support in the BunsenLabs fork (2021)
 
 Mick Amadio <01micko@gmail.com>
-  - Maintainer of the BunsenLabs gtk3sermo fork
+  - Maintainer of the BunsenLabs gtk3dialog fork
   - Edge anchoring, exclusive zone, opposite edges (2021-2024)
-  - https://github.com/BunsenLabs/gtk3sermo
+  - https://github.com/BunsenLabs/gtk3dialog
 
   The Wayland anchoring in haplo-dialog (layer, edge, dist, reserve) derives
   from their work, under GPL-2.0-or-later.

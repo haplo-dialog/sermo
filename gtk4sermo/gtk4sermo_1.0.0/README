@@ -40,7 +40,7 @@ Différences par rapport à gtk3d (GTK3)
     infobar, spinner, searchentry, levelbar, drawingarea) — désormais reconnus
     par la grammaire et utilisables.
 
-Changements par rapport à gtk3d 0.8.3 (base)
+Changements par rapport à gtkdialog 0.8.3 (base)
 --------------------------------------------------
   - Port GTK4 complet via gtk4-compat.h (~25 shims API)
   - Migration GTK2 → GTK3 → GTK4 en une passe
