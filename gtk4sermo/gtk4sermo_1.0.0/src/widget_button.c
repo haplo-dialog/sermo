@@ -33,6 +33,50 @@
 #include "signals.h"
 #include "tag_attributes.h"
 
+/* ---------------------------------------------------------------------------
+ * GTK4 : GtkButton n'émet plus « enter », « leave », « pressed » ni
+ * « released ». S'y connecter ne déclenche rien et pose un GLib-CRITICAL par
+ * bouton et par signal — 172 messages sur une fenêtre de 43 boutons, mesurés
+ * sur System-Tools. Les mêmes moments existent, mais sous forme de
+ * contrôleurs : GtkEventControllerMotion pour le survol, GtkGestureClick pour
+ * l'appui. On leur rebranche les callbacks d'origine, pour que
+ * <action signal="enter"> et ses trois voisins continuent de fonctionner.
+ *
+ * Le chemin générique de gtk4-events.c ne remplace pas celui-ci : il émet les
+ * noms GTK3 « enter-notify-event » et « button-press-event », que le bouton
+ * n'écoute pas.
+ * ------------------------------------------------------------------------- */
+
+static void hp_button_motion_enter(GtkEventControllerMotion *ctrl,
+	gdouble x, gdouble y, gpointer data)
+{
+	(void)x; (void)y;
+	button_entered_attr(gtk_event_controller_get_widget(
+		GTK_EVENT_CONTROLLER(ctrl)), (AttributeSet *)data);
+}
+
+static void hp_button_motion_leave(GtkEventControllerMotion *ctrl, gpointer data)
+{
+	button_leaved_attr(gtk_event_controller_get_widget(
+		GTK_EVENT_CONTROLLER(ctrl)), (AttributeSet *)data);
+}
+
+static void hp_button_gesture_pressed(GtkGestureClick *gesture, gint n_press,
+	gdouble x, gdouble y, gpointer data)
+{
+	(void)n_press; (void)x; (void)y;
+	button_pressed_attr(gtk_event_controller_get_widget(
+		GTK_EVENT_CONTROLLER(gesture)), (AttributeSet *)data);
+}
+
+static void hp_button_gesture_released(GtkGestureClick *gesture, gint n_press,
+	gdouble x, gdouble y, gpointer data)
+{
+	(void)n_press; (void)x; (void)y;
+	button_released_attr(gtk_event_controller_get_widget(
+		GTK_EVENT_CONTROLLER(gesture)), (AttributeSet *)data);
+}
+
 /* Defines */
 //#define DEBUG_CONTENT
 //#define DEBUG_TRANSITS
@@ -190,19 +234,17 @@ GtkWidget *widget_button_create(
 						if (attr &&
 							(value = get_tag_attribute(attr, "theme-icon-size")))
 							theme_icon_size = atoi(value);
-						pixbuf = gtk_icon_theme_load_icon(icon_theme,
-							icon_name, theme_icon_size, 0, &error);
-						if (pixbuf) {
-							icon = gtk_image_new_from_pixbuf(pixbuf);	
-							/* pixbuf is no longer required and should be unreferenced */
-							g_object_unref(pixbuf);
+						/* GTK4 : gtk_icon_theme_load_icon a disparu avec le chemin
+						 * GdkPixbuf. On construit l'image directement depuis le nom
+						 * d'icone du theme et on fixe la taille en pixels. Le shim
+						 * renvoyait NULL, ce qui affichait une image cassee. */
+						if (gtk_icon_theme_has_icon(icon_theme, icon_name)) {
+							icon = gtk_image_new_from_icon_name(icon_name);
+							gtk_image_set_pixel_size(GTK_IMAGE(icon),
+								theme_icon_size);
 						} else {
-#ifdef DEBUG_CONTENT
-							fprintf(stderr, "%s(): error='%s'\n", __func__,
-								error->message);
-#endif
-							/* pixbuf is null (file not found) so by using this
-							 * function gtk will substitute a broken image icon */
+							/* icone absente du theme : gtk substitue une image
+							 * cassee, comme le faisait la branche GTK3 */
 							icon = gtk_image_new_from_file("");
 						}
 					} else {
@@ -526,14 +568,32 @@ void widget_button_refresh(variable *var)
 			 * function which is executed elsewhere for every single widget */
 			g_signal_connect(G_OBJECT(var->Widget), "clicked", 
 				G_CALLBACK(button_clicked_attr),(gpointer)var->Attributes);
-			g_signal_connect(G_OBJECT(var->Widget), "enter",	/* Deprecated by "enter-notify-event" */
-				G_CALLBACK(button_entered_attr),(gpointer)var->Attributes);
-			g_signal_connect(G_OBJECT(var->Widget), "leave",	/* Deprecated by "leave-notify-event" */
-				G_CALLBACK(button_leaved_attr),(gpointer)var->Attributes);
-			g_signal_connect(G_OBJECT(var->Widget), "pressed",	/* Deprecated by "button-press-event" */
-				G_CALLBACK(button_pressed_attr),(gpointer)var->Attributes);
-			g_signal_connect(G_OBJECT(var->Widget), "released",	/* Deprecated by "button-release-event" */
-				G_CALLBACK(button_released_attr),(gpointer)var->Attributes);
+			/* GTK4 : ces quatre moments passent par des contrôleurs (voir
+			 * les adaptateurs en haut de ce fichier). */
+			{
+				GtkEventController *motion = gtk_event_controller_motion_new();
+				GtkGesture         *click  = gtk_gesture_click_new();
+
+				g_signal_connect(motion, "enter",
+					G_CALLBACK(hp_button_motion_enter), (gpointer)var->Attributes);
+				g_signal_connect(motion, "leave",
+					G_CALLBACK(hp_button_motion_leave), (gpointer)var->Attributes);
+				gtk_widget_add_controller(var->Widget, motion);
+
+				gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(click), 0);
+				/* CAPTURE, pas BUBBLE : le bouton s'approprie la séquence de clic
+				 * pour émettre son « clicked », et un geste en phase bulle reçoit
+				 * alors une annulation au lieu du relâchement. Mesuré : avec
+				 * BUBBLE, « pressed » se déclenchait mais jamais « released ». */
+				gtk_event_controller_set_propagation_phase(
+					GTK_EVENT_CONTROLLER(click), GTK_PHASE_CAPTURE);
+				g_signal_connect(click, "pressed",
+					G_CALLBACK(hp_button_gesture_pressed), (gpointer)var->Attributes);
+				g_signal_connect(click, "released",
+					G_CALLBACK(hp_button_gesture_released), (gpointer)var->Attributes);
+				gtk_widget_add_controller(var->Widget,
+					GTK_EVENT_CONTROLLER(click));
+			}
 		}
 	}
 

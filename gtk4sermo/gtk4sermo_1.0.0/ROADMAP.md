@@ -1,4 +1,4 @@
-<div align="right"><sub><code>maj :     2026-08-20 20:34:10 · par claude</code></sub></div>
+<div align="right"><sub><code>maj :     2026-08-22 16:30:41 · par claude</code></sub></div>
 <div align="right"><sub><code>réindex : —</code></sub></div>
 
 # ROADMAP — gtk4sermo (port GTK4)
@@ -66,7 +66,6 @@
 
 Intégration dans le meta-projet haplo-dialog :
 
-- [ ] Sélection du toolkit via variable `HAPLO_DIALOG_TOOLKIT=gtk4|qt6|fltk|efl|sdl3`
 - [ ] API shell commune entre les 5 ports
 - [ ] Outil de conversion automatique scripts GTK3 → GTK4
 

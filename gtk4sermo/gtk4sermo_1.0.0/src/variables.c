@@ -27,29 +27,46 @@
 #include "gtkdialog.h"
 #include "variables.h"
 #include "widgets.h"
+#include "widget_aspectframe.h"
 #include "widget_button.h"
+#include "widget_calendar.h"
 #include "widget_checkbox.h"
 #include "widget_colorbutton.h"
 #include "widget_combobox.h"
 #include "widget_comboboxtext.h"
+#include "widget_drawingarea.h"
 #include "widget_edit.h"
 #include "widget_entry.h"
 #include "widget_eventbox.h"
 #include "widget_expander.h"
+#include "widget_filechooser.h"
+#include "widget_flowbox.h"
 #include "widget_fontbutton.h"
 #include "widget_frame.h"
 #include "widget_hbox.h"
 #include "widget_hscale.h"
 #include "widget_hseparator.h"
+#include "widget_image.h"
+#include "widget_infobar.h"
+#include "widget_levelbar.h"
+#include "widget_linkbutton.h"
 #include "widget_list.h"
 #include "widget_menubar.h"
 #include "widget_menuitem.h"
 #include "widget_notebook.h"
+#include "widget_overlay.h"
+#include "widget_password.h"
 #include "widget_pixmap.h"
 #include "widget_progressbar.h"
+#include "widget_pulse.h"
 #include "widget_radiobutton.h"
+#include "widget_revealer.h"
+#include "widget_searchentry.h"
 #include "widget_spinbutton.h"
+#include "widget_spinner.h"
+#include "widget_stack.h"
 #include "widget_statusbar.h"
+#include "widget_switch.h"
 #include "widget_table.h"
 #include "widget_terminal.h"
 #include "widget_text.h"
@@ -397,6 +414,57 @@ variable *variables_set_value(const char *name, const char *value)
 		case WIDGET_ENTRY:
 			widget_entry_fileselect(toset, name, value);
 			break;
+		case WIDGET_FLOWBOX:
+			widget_flowbox_fileselect(toset, name, value);
+			break;
+		case WIDGET_OVERLAY:
+			widget_overlay_fileselect(toset, name, value);
+			break;
+		case WIDGET_REVEALER:
+			widget_revealer_fileselect(toset, name, value);
+			break;
+		case WIDGET_STACK:
+			widget_stack_fileselect(toset, name, value);
+			break;
+		case WIDGET_CALENDAR:
+			widget_calendar_fileselect(toset, name, value);
+			break;
+		case WIDGET_DRAWINGAREA:
+			widget_drawingarea_fileselect(toset, name, value);
+			break;
+		case WIDGET_INFOBAR:
+			widget_infobar_fileselect(toset, name, value);
+			break;
+		case WIDGET_LEVELBAR:
+			widget_levelbar_fileselect(toset, name, value);
+			break;
+		case WIDGET_SEARCHENTRY:
+			widget_searchentry_fileselect(toset, name, value);
+			break;
+		case WIDGET_SPINNER:
+			widget_spinner_fileselect(toset, name, value);
+			break;
+		case WIDGET_SWITCH:
+			widget_switch_fileselect(toset, name, value);
+			break;
+		case WIDGET_PASSWORD:
+			widget_password_fileselect(toset, name, value);
+			break;
+		case WIDGET_IMAGE:
+			widget_image_fileselect(toset, name, value);
+			break;
+		case WIDGET_LINKBUTTON:
+			widget_linkbutton_fileselect(toset, name, value);
+			break;
+		case WIDGET_FILECHOOSER:
+			widget_filechooser_fileselect(toset, name, value);
+			break;
+		case WIDGET_ASPECTFRAME:
+			widget_aspectframe_fileselect(toset, name, value);
+			break;
+		case WIDGET_PULSE:
+			widget_pulse_fileselect(toset, name, value);
+			break;
 		case WIDGET_EVENTBOX:
 			widget_eventbox_fileselect(toset, name, value);
 			break;
@@ -521,6 +589,57 @@ variable *variables_save(const char *name)
 			break;
 		case WIDGET_ENTRY:
 			widget_entry_save(var);
+			break;
+		case WIDGET_FLOWBOX:
+			widget_flowbox_save(var);
+			break;
+		case WIDGET_OVERLAY:
+			widget_overlay_save(var);
+			break;
+		case WIDGET_REVEALER:
+			widget_revealer_save(var);
+			break;
+		case WIDGET_STACK:
+			widget_stack_save(var);
+			break;
+		case WIDGET_CALENDAR:
+			widget_calendar_save(var);
+			break;
+		case WIDGET_DRAWINGAREA:
+			widget_drawingarea_save(var);
+			break;
+		case WIDGET_INFOBAR:
+			widget_infobar_save(var);
+			break;
+		case WIDGET_LEVELBAR:
+			widget_levelbar_save(var);
+			break;
+		case WIDGET_SEARCHENTRY:
+			widget_searchentry_save(var);
+			break;
+		case WIDGET_SPINNER:
+			widget_spinner_save(var);
+			break;
+		case WIDGET_SWITCH:
+			widget_switch_save(var);
+			break;
+		case WIDGET_PASSWORD:
+			widget_password_save(var);
+			break;
+		case WIDGET_IMAGE:
+			widget_image_save(var);
+			break;
+		case WIDGET_LINKBUTTON:
+			widget_linkbutton_save(var);
+			break;
+		case WIDGET_FILECHOOSER:
+			widget_filechooser_save(var);
+			break;
+		case WIDGET_ASPECTFRAME:
+			widget_aspectframe_save(var);
+			break;
+		case WIDGET_PULSE:
+			widget_pulse_save(var);
 			break;
 		case WIDGET_EVENTBOX:
 			widget_eventbox_save(var);
@@ -666,6 +785,57 @@ variable *variables_refresh(const char *name)
 			break;
 		case WIDGET_ENTRY:
 			widget_entry_refresh(var);
+			break;
+		case WIDGET_FLOWBOX:
+			widget_flowbox_refresh(var);
+			break;
+		case WIDGET_OVERLAY:
+			widget_overlay_refresh(var);
+			break;
+		case WIDGET_REVEALER:
+			widget_revealer_refresh(var);
+			break;
+		case WIDGET_STACK:
+			widget_stack_refresh(var);
+			break;
+		case WIDGET_CALENDAR:
+			widget_calendar_refresh(var);
+			break;
+		case WIDGET_DRAWINGAREA:
+			widget_drawingarea_refresh(var);
+			break;
+		case WIDGET_INFOBAR:
+			widget_infobar_refresh(var);
+			break;
+		case WIDGET_LEVELBAR:
+			widget_levelbar_refresh(var);
+			break;
+		case WIDGET_SEARCHENTRY:
+			widget_searchentry_refresh(var);
+			break;
+		case WIDGET_SPINNER:
+			widget_spinner_refresh(var);
+			break;
+		case WIDGET_SWITCH:
+			widget_switch_refresh(var);
+			break;
+		case WIDGET_PASSWORD:
+			widget_password_refresh(var);
+			break;
+		case WIDGET_IMAGE:
+			widget_image_refresh(var);
+			break;
+		case WIDGET_LINKBUTTON:
+			widget_linkbutton_refresh(var);
+			break;
+		case WIDGET_FILECHOOSER:
+			widget_filechooser_refresh(var);
+			break;
+		case WIDGET_ASPECTFRAME:
+			widget_aspectframe_refresh(var);
+			break;
+		case WIDGET_PULSE:
+			widget_pulse_refresh(var);
 			break;
 		case WIDGET_EVENTBOX:
 			widget_eventbox_refresh(var);
@@ -1782,6 +1952,57 @@ variable *variables_clear(const char *name)
 		case WIDGET_ENTRY:
 			widget_entry_clear(toclear);
 			break;
+		case WIDGET_FLOWBOX:
+			widget_flowbox_clear(toclear);
+			break;
+		case WIDGET_OVERLAY:
+			widget_overlay_clear(toclear);
+			break;
+		case WIDGET_REVEALER:
+			widget_revealer_clear(toclear);
+			break;
+		case WIDGET_STACK:
+			widget_stack_clear(toclear);
+			break;
+		case WIDGET_CALENDAR:
+			widget_calendar_clear(toclear);
+			break;
+		case WIDGET_DRAWINGAREA:
+			widget_drawingarea_clear(toclear);
+			break;
+		case WIDGET_INFOBAR:
+			widget_infobar_clear(toclear);
+			break;
+		case WIDGET_LEVELBAR:
+			widget_levelbar_clear(toclear);
+			break;
+		case WIDGET_SEARCHENTRY:
+			widget_searchentry_clear(toclear);
+			break;
+		case WIDGET_SPINNER:
+			widget_spinner_clear(toclear);
+			break;
+		case WIDGET_SWITCH:
+			widget_switch_clear(toclear);
+			break;
+		case WIDGET_PASSWORD:
+			widget_password_clear(toclear);
+			break;
+		case WIDGET_IMAGE:
+			widget_image_clear(toclear);
+			break;
+		case WIDGET_LINKBUTTON:
+			widget_linkbutton_clear(toclear);
+			break;
+		case WIDGET_FILECHOOSER:
+			widget_filechooser_clear(toclear);
+			break;
+		case WIDGET_ASPECTFRAME:
+			widget_aspectframe_clear(toclear);
+			break;
+		case WIDGET_PULSE:
+			widget_pulse_clear(toclear);
+			break;
 		case WIDGET_EVENTBOX:
 			widget_eventbox_clear(toclear);
 			break;
@@ -1926,6 +2147,57 @@ int remove_selected_variable(const char *name)
 			break;
 		case WIDGET_ENTRY:
 			widget_entry_removeselected(toclear);
+			break;
+		case WIDGET_FLOWBOX:
+			widget_flowbox_removeselected(toclear);
+			break;
+		case WIDGET_OVERLAY:
+			widget_overlay_removeselected(toclear);
+			break;
+		case WIDGET_REVEALER:
+			widget_revealer_removeselected(toclear);
+			break;
+		case WIDGET_STACK:
+			widget_stack_removeselected(toclear);
+			break;
+		case WIDGET_CALENDAR:
+			widget_calendar_removeselected(toclear);
+			break;
+		case WIDGET_DRAWINGAREA:
+			widget_drawingarea_removeselected(toclear);
+			break;
+		case WIDGET_INFOBAR:
+			widget_infobar_removeselected(toclear);
+			break;
+		case WIDGET_LEVELBAR:
+			widget_levelbar_removeselected(toclear);
+			break;
+		case WIDGET_SEARCHENTRY:
+			widget_searchentry_removeselected(toclear);
+			break;
+		case WIDGET_SPINNER:
+			widget_spinner_removeselected(toclear);
+			break;
+		case WIDGET_SWITCH:
+			widget_switch_removeselected(toclear);
+			break;
+		case WIDGET_PASSWORD:
+			widget_password_removeselected(toclear);
+			break;
+		case WIDGET_IMAGE:
+			widget_image_removeselected(toclear);
+			break;
+		case WIDGET_LINKBUTTON:
+			widget_linkbutton_removeselected(toclear);
+			break;
+		case WIDGET_FILECHOOSER:
+			widget_filechooser_removeselected(toclear);
+			break;
+		case WIDGET_ASPECTFRAME:
+			widget_aspectframe_removeselected(toclear);
+			break;
+		case WIDGET_PULSE:
+			widget_pulse_removeselected(toclear);
 			break;
 		case WIDGET_EVENTBOX:
 			widget_eventbox_removeselected(toclear);

@@ -1,4 +1,4 @@
-<div align="right"><sub><code>maj :     2026-08-20 20:34:10 · par claude</code></sub></div>
+<div align="right"><sub><code>maj :     2026-08-22 16:30:41 · par claude</code></sub></div>
 <div align="right"><sub><code>réindex : —</code></sub></div>
 
 # Packaging — gtk4sermo
@@ -58,16 +58,16 @@ sudo sh gtk4sermo.SlackBuild
 
 ## Coexistence des binaires
 
-Les 6 ports dialog s'installent **simultanément sans conflit** :
+Les deux ports s'installent **simultanément sans conflit** : chacun porte son
+propre nom de binaire. Le nom historique `gtkdialog` n'est pris que par le
+paquet `gtksermo`, qui est volontaire — c'est ce qui permet d'installer
+`gtk3sermo` à côté de n'importe quelle autre implémentation de gtkdialog.
 
-| Binaire | Port | Toolkit |
-|---------|------|---------|
-| `/usr/bin/gtk3d` (+ symlink `gtk3d`) | gtk3d | GTK3 |
-| `/usr/bin/gtk4sermo` | gtk4sermo | GTK4 |
-| `/usr/bin/fltk1d` | fltk1dialog | FLTK |
-| `/usr/bin/efl1d` | efl1dialog | EFL |
-| `/usr/bin/qt6d` | qt6d | Qt6 |
-| `/usr/bin/sdl3d` | sdl3d | SDL3 |
+| Binaire | Paquet | Toolkit |
+|---------|--------|---------|
+| `/usr/bin/gtk3sermo` | gtk3sermo | GTK 3 |
+| `/usr/bin/gtk4sermo` | gtk4sermo | GTK 4 |
+| `/usr/bin/gtkdialog` (lien vers `gtk3sermo`) | gtksermo | compatibilité |
 
 ---
 

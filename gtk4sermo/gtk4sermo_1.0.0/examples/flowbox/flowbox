@@ -8,7 +8,6 @@ MAIN_DIALOG='
     <text><label>GtkFlowBox — grille adaptive :</label></text>
     <flowbox min-children-per-line="2" max-children-per-line="5"
              column-spacing="6" row-spacing="6" selection-mode="single">
-      <variable>FB_MAIN</variable>
       <button><label>Alpha</label></button>
       <button><label>Bravo</label></button>
       <button><label>Charlie</label></button>
@@ -17,6 +16,7 @@ MAIN_DIALOG='
       <button><label>Foxtrot</label></button>
       <button><label>Golf</label></button>
       <button><label>Hotel</label></button>
+      <variable>FB_MAIN</variable>
     </flowbox>
     <text>
       <variable>LBL_SEL</variable>

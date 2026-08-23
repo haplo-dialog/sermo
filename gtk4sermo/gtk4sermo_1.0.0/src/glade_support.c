@@ -745,6 +745,85 @@ gint widget_get_type_from_pointer(GtkWidget *widget)
  *                                                                       *
  *                                                                       *
  *************************************************************************/
+
+/* ─── Scope GtkBuilder pour GTK 4 ────────────────────────────────────────────
+ * En GTK 3, gtk_builder_connect_signals_full() laissait le programme décider
+ * quoi faire de chaque gestionnaire de signal. GTK 4 l'a supprimé : le
+ * GtkBuilder résout les noms lui-même, à travers un GtkBuilderScope qui, par
+ * défaut, cherche un symbole C dans le binaire.
+ *
+ * Or gtkdialog ne met pas des noms de fonctions dans ses fichiers Glade : il y
+ * met des commandes shell — « gnome-terminal& », « exit:Normal », « whoami ».
+ * Le chargement échouait donc dès le premier signal rencontré, sur un
+ * « No function named `gnome-terminal&` », et aucune interface Glade ne
+ * s'ouvrait. Ce port avait renoncé et laissé son répartiteur inutilisé.
+ *
+ * Ce scope accepte n'importe quel nom de gestionnaire et rend une fermeture
+ * qui exécute la commande. Le marshalleur est écrit à la main pour être
+ * indifférent à la signature : gtkdialog attache la même action à « clicked »
+ * comme à « realize » ou « toggled », qui n'ont pas les mêmes paramètres.
+ * ────────────────────────────────────────────────────────────────────────── */
+
+static void hp_glade_marshal(GClosure *closure, GValue *retour, guint n_param,
+	const GValue *params, gpointer hint, gpointer data)
+{
+	const gchar *complete = (const gchar *)closure->data;
+	GtkWidget   *emetteur = NULL;
+	gchar       *prefixe, *commande;
+
+	(void)retour; (void)hint; (void)data;
+
+	/* Le premier paramètre d'un signal est toujours l'objet émetteur. */
+	if (n_param > 0 && G_VALUE_HOLDS_OBJECT(&params[0])) {
+		GObject *o = g_value_get_object(&params[0]);
+		if (o && GTK_IS_WIDGET(o)) emetteur = GTK_WIDGET(o);
+	}
+	if (!complete || !*complete) return;
+
+	command_get_prefix((gchar *)complete, &prefixe, &commande);
+	execute_action(emetteur, commande, prefixe);
+	g_free(commande);
+	g_free(prefixe);
+}
+
+static void hp_glade_closure_free(gpointer data, GClosure *closure)
+{
+	(void)closure;
+	g_free(data);
+}
+
+#define HP_TYPE_BUILDER_SCOPE (hp_builder_scope_get_type())
+G_DECLARE_FINAL_TYPE(HpBuilderScope, hp_builder_scope, HP, BUILDER_SCOPE, GObject)
+
+struct _HpBuilderScope { GObject parent_instance; };
+
+static GClosure *hp_scope_create_closure(GtkBuilderScope *self,
+	GtkBuilder *builder, const char *function_name,
+	GtkBuilderClosureFlags flags, GObject *object, GError **error)
+{
+	gchar    *commande;
+	GClosure *fermeture;
+
+	(void)self; (void)builder; (void)flags; (void)object; (void)error;
+
+	commande  = g_strdup(function_name ? function_name : "");
+	fermeture = g_closure_new_simple(sizeof(GClosure), commande);
+	g_closure_add_finalize_notifier(fermeture, commande, hp_glade_closure_free);
+	g_closure_set_marshal(fermeture, hp_glade_marshal);
+	return fermeture;
+}
+
+static void hp_builder_scope_iface_init(GtkBuilderScopeInterface *iface)
+{
+	iface->create_closure = hp_scope_create_closure;
+}
+
+G_DEFINE_TYPE_WITH_CODE(HpBuilderScope, hp_builder_scope, G_TYPE_OBJECT,
+	G_IMPLEMENT_INTERFACE(GTK_TYPE_BUILDER_SCOPE, hp_builder_scope_iface_init))
+
+static void hp_builder_scope_init(HpBuilderScope *s)           { (void)s; }
+static void hp_builder_scope_class_init(HpBuilderScopeClass *k) { (void)k; }
+
 void
 run_program_by_glade(
 		const gchar *filename,
@@ -752,9 +831,15 @@ run_program_by_glade(
 {
 	GtkBuilder  *glade_xml;
 	GtkWidget *main_window;
+	GError     *erreur = NULL;
 
-	/* glade_init() removed — GtkBuilder is built into GTK3, no init needed */
-	glade_xml = gtk_builder_new_from_file(filename);
+	glade_xml = gtk_builder_new();
+	gtk_builder_set_scope(glade_xml,
+		GTK_BUILDER_SCOPE(g_object_new(HP_TYPE_BUILDER_SCOPE, NULL)));
+	if (!gtk_builder_add_from_file(glade_xml, filename, &erreur)) {
+		g_error("Can not load file '%s': %s", filename,
+			erreur ? erreur->message : "unknown error");
+	}
 	if (window_name != NULL)
 		main_window = GTK_WIDGET(gtk_builder_get_object(glade_xml, window_name));
 	else

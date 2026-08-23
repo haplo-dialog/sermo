@@ -275,11 +275,20 @@ gchar *Token;
 	return(FRAME); 	
 }
 
-\<frame\ [^\>]+\> {
+\<frame[ ]+[^=>]*\> {
 	Token="<frame>";
-	gtkdialog_lval.cval=strdup(&yytext[7]);  
-	gtkdialog_lval.cval[strlen(gtkdialog_lval.cval)-1] = 0;
-	return FRAME; 
+	/* Etiquette nue : <frame Mon cadre>. La classe [^=>] exclut le '=',
+	 * donc des qu'un attribut apparait on retombe sur PART_FRAME. */
+	gtkdialog_lval.cval = g_strdup(&yytext[7]);
+	gtkdialog_lval.cval[strlen(gtkdialog_lval.cval) - 1] = '\0';	/* le '>' */
+	g_strstrip(gtkdialog_lval.cval);
+	return(FRAME);
+}
+
+\<frame[ ]+ {
+	Token="<frame>";
+	BEGIN(ST_TAG_ATTR);
+	return(PART_FRAME);
 }
 
 \<\/frame\> { 
@@ -345,6 +354,42 @@ gchar *Token;
 \<password\> { Token="<password>"; return(PASSWORD); }
 \<\/password\> { Token="</password>"; return(EPASSWORD); }
 \<password[ ]+ { Token="<password>"; BEGIN(ST_TAG_ATTR); return(PART_PASSWORD); }
+
+\<flowbox\> { Token="<flowbox>"; return(FLOWBOX); }
+\<\/flowbox\> { Token="</flowbox>"; return(EFLOWBOX); }
+\<flowbox[ ]+ { Token="<flowbox>"; BEGIN(ST_TAG_ATTR); return(PART_FLOWBOX); }
+
+\<overlay\> { Token="<overlay>"; return(OVERLAY); }
+\<\/overlay\> { Token="</overlay>"; return(EOVERLAY); }
+\<overlay[ ]+ { Token="<overlay>"; BEGIN(ST_TAG_ATTR); return(PART_OVERLAY); }
+
+\<revealer\> { Token="<revealer>"; return(REVEALER); }
+\<\/revealer\> { Token="</revealer>"; return(EREVEALER); }
+\<revealer[ ]+ { Token="<revealer>"; BEGIN(ST_TAG_ATTR); return(PART_REVEALER); }
+
+\<stack\> { Token="<stack>"; return(STACK); }
+\<\/stack\> { Token="</stack>"; return(ESTACK); }
+\<stack[ ]+ { Token="<stack>"; BEGIN(ST_TAG_ATTR); return(PART_STACK); }
+
+\<image\> { Token="<image>"; return(IMAGE); }
+\<\/image\> { Token="</image>"; return(EIMAGE); }
+\<image[ ]+ { Token="<image>"; BEGIN(ST_TAG_ATTR); return(PART_IMAGE); }
+
+\<linkbutton\> { Token="<linkbutton>"; return(LINKBUTTON); }
+\<\/linkbutton\> { Token="</linkbutton>"; return(ELINKBUTTON); }
+\<linkbutton[ ]+ { Token="<linkbutton>"; BEGIN(ST_TAG_ATTR); return(PART_LINKBUTTON); }
+
+\<filechooser\> { Token="<filechooser>"; return(FILECHOOSER); }
+\<\/filechooser\> { Token="</filechooser>"; return(EFILECHOOSER); }
+\<filechooser[ ]+ { Token="<filechooser>"; BEGIN(ST_TAG_ATTR); return(PART_FILECHOOSER); }
+
+\<aspectframe\> { Token="<aspectframe>"; return(ASPECTFRAME); }
+\<\/aspectframe\> { Token="</aspectframe>"; return(EASPECTFRAME); }
+\<aspectframe[ ]+ { Token="<aspectframe>"; BEGIN(ST_TAG_ATTR); return(PART_ASPECTFRAME); }
+
+\<pulse\> { Token="<pulse>"; return(PULSE); }
+\<\/pulse\> { Token="</pulse>"; return(EPULSE); }
+\<pulse[ ]+ { Token="<pulse>"; BEGIN(ST_TAG_ATTR); return(PART_PULSE); }
 
 \<calendar\> { Token="<calendar>"; return(CALENDAR); }
 \<\/calendar\> { Token="</calendar>"; return(ECALENDAR); }

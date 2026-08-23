@@ -7,11 +7,11 @@ MAIN_DIALOG='
   <vbox spacing="10">
     <text><label>GtkAspectFrame — ratio 16:9 :</label></text>
     <aspectframe ratio="1.777" xalign="0.5" yalign="0.5">
-      <variable>AF_MAIN</variable>
       <vbox>
         <text><label>Contenu en 16:9</label></text>
         <button><label>Bouton centré</label></button>
       </vbox>
+      <variable>AF_MAIN</variable>
     </aspectframe>
     <hbox homogeneous="true">
       <button ok></button>

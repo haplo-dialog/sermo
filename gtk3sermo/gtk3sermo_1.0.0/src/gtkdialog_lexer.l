@@ -270,6 +270,14 @@ gchar *Token;
 	return(FRAME);
 }
 
+\<frame[ ]+[^=>]*\> {
+	Token="<frame>";
+	gtkdialog_lval.cval = g_strdup(&yytext[7]);
+	gtkdialog_lval.cval[strlen(gtkdialog_lval.cval) - 1] = '\0';	/* le '>' */
+	g_strstrip(gtkdialog_lval.cval);
+	return(FRAME);
+}
+
 \<frame[ ]+ {
 	Token="<frame>";
 	BEGIN(ST_TAG_ATTR);

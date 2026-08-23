@@ -43,9 +43,9 @@ GtkWidget *widget_levelbar_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     gchar     *v;
 
     if (attr) {
-        if ((v = get_tag_attribute(attr, "min")))   min   = atof(v);
-        if ((v = get_tag_attribute(attr, "max")))   max   = atof(v);
-        if ((v = get_tag_attribute(attr, "value"))) value = atof(v);
+        if ((v = get_tag_attribute(attr, "min")))   min   = g_ascii_strtod(v, NULL);
+        if ((v = get_tag_attribute(attr, "max")))   max   = g_ascii_strtod(v, NULL);
+        if ((v = get_tag_attribute(attr, "value"))) value = g_ascii_strtod(v, NULL);
         if ((v = get_tag_attribute(attr, "inverted")) &&
             (strcasecmp(v, "true") == 0 || strcmp(v, "1") == 0))
             inverted = TRUE;
@@ -104,7 +104,7 @@ void widget_levelbar_refresh(variable *var)
     if (!initialised) {
         if (attributeset_is_avail(var->Attributes, ATTR_DEFAULT)) {
             act = attributeset_get_first(&element, var->Attributes, ATTR_DEFAULT);
-            if (act) gtk_level_bar_set_value(GTK_LEVEL_BAR(var->Widget), atof(act));
+            if (act) gtk_level_bar_set_value(GTK_LEVEL_BAR(var->Widget), g_ascii_strtod(act, NULL));
         }
         if ((attributeset_cmp_left(var->Attributes, ATTR_SENSITIVE, "false")) ||
             (attributeset_cmp_left(var->Attributes, ATTR_SENSITIVE, "disabled")) ||
@@ -142,7 +142,7 @@ static void widget_levelbar_input_by_command(variable *var, char *command)
     gchar line[256];
     if ((infile = widget_opencommand(command))) {
         if (fgets(line, sizeof(line), infile))
-            gtk_level_bar_set_value(GTK_LEVEL_BAR(var->Widget), atof(line));
+            gtk_level_bar_set_value(GTK_LEVEL_BAR(var->Widget), g_ascii_strtod(line, NULL));
         fclose(infile);
     }
 }
@@ -153,7 +153,7 @@ static void widget_levelbar_input_by_file(variable *var, char *filename)
     gchar line[256];
     if ((infile = fopen(filename, "r"))) {
         if (fgets(line, sizeof(line), infile))
-            gtk_level_bar_set_value(GTK_LEVEL_BAR(var->Widget), atof(line));
+            gtk_level_bar_set_value(GTK_LEVEL_BAR(var->Widget), g_ascii_strtod(line, NULL));
         fclose(infile);
     }
 }

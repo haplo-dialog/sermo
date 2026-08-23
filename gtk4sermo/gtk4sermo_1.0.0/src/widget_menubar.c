@@ -30,6 +30,7 @@
 #include "signals.h"
 #include "safe_exec.h"
 #include "tag_attributes.h"
+#include "stack.h"
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -42,115 +43,64 @@ typedef struct {
     int                 n_items;      /* Nombre d'actions enregistrées */
 } MenuBarData;
 
-/* ─── Sanitise un label en nom d'action GLib valide ──────────────────────── */
-/* Les noms d'actions GLib ne peuvent contenir que [a-z0-9._-] */
-static gchar *_action_name(const gchar *label, int index)
-{
-    if (!label || !*label)
-        return g_strdup_printf("action_%d", index);
-    gchar *name = g_strdup(label);
-    for (gchar *p = name; *p; p++) {
-        if (!isalnum((unsigned char)*p) && *p != '_' && *p != '-')
-            *p = '_';
-        else
-            *p = tolower((unsigned char)*p);
-    }
-    return name;
-}
-
-/* ─── Callback GSimpleAction → safe_system ───────────────────────────────── */
-typedef struct { char *cmd; } ActionData;
-
-static void _action_cb(GSimpleAction *action, GVariant *param, gpointer data)
-{
-    (void)action; (void)param;
-    ActionData *ad = (ActionData *)data;
-    if (ad && ad->cmd && *ad->cmd)
-        safe_system(ad->cmd);
-}
-
 /* ─── Construit la barre à partir des attributs XML ─────────────────────── */
 GtkWidget *widget_menubar_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
-    MenuBarData *md = g_new0(MenuBarData, 1);
+    /* La grammaire garantit qu'une <menubar> contient au moins un <menu> ;
+     * ceux-ci ont été empilés avant elle, chacun portant son GMenuModel et son
+     * groupe d'actions. L'ancienne version ignorait ses enfants et lisait ses
+     * propres attributs, une forme XML que gtkdialog n'a jamais eue : la barre
+     * sortait vide, et les <menuitem> empilés en popovers faisaient planter le
+     * programme. */
+    stackelement        s;
+    MenuBarData        *md   = g_new0(MenuBarData, 1);
+    GtkWidget          *bar;
+    gint                n;
+
+    (void)attr; (void)Type; (void)Attr;
+
     md->root_menu = g_menu_new();
     md->actions   = g_simple_action_group_new();
     md->n_items   = 0;
 
-    /* ── Parser les entrées de menu depuis les attributs ─────────────── */
-    if (Attr) {
-        /* Format XML attendu :
-         *   <menubar>
-         *     <menuitem>
-         *       <label>Fichier</label>
-         *       <item>Ouvrir | cmd_ouvrir</item>
-         *       <item>Quitter | gtk-main-quit</item>
-         *     </menuitem>
-         *   </menubar>
-         *
-         * Chaque top-level label = un sous-menu dans la menubar.
-         * Chaque ATTR_ITEM = "Label | commande" ou juste "Label".
-         */
-        GList *el = NULL;
-        gchar *menu_label = attributeset_get_first(&el, Attr, ATTR_LABEL);
-        if (!menu_label || !*menu_label)
-            menu_label = "Menu";
+    s = pop();
 
-        /* Créer un sous-menu pour ce label */
-        GMenu *submenu = g_menu_new();
+    /* La pile est déjà dans l'ordre du document pour les menus. */
+    for (n = 0; n < s.nwidgets; n++) {
+        GtkWidget          *enfant = s.widgets[n];
+        GMenu              *sm;
+        const gchar        *sl;
+        GSimpleActionGroup *sa;
 
-        GList *il = NULL;
-        gchar *item = attributeset_get_first(&il, Attr, ATTR_ITEM);
-        while (item) {
-            if (*item) {
-                /* Séparer "Label | commande" */
-                gchar *sep = strchr(item, '|');
-                gchar *item_label = item;
-                gchar *item_cmd   = NULL;
-                if (sep) {
-                    *sep = '\0';
-                    item_cmd = sep + 1;
-                    while (*item_cmd == ' ') item_cmd++;
-                }
-                /* Trim trailing spaces */
-                size_t len = strlen(item_label);
-                while (len > 0 && item_label[len-1] == ' ') item_label[--len] = '\0';
+        if (!enfant || !G_IS_OBJECT(enfant)) continue;
 
-                /* Créer l'action */
-                gchar *action_name = _action_name(item_label, md->n_items);
-                gchar *full_action = g_strdup_printf("menubar.%s", action_name);
+        sm = g_object_get_data(G_OBJECT(enfant), "_menu_model");
+        sl = g_object_get_data(G_OBJECT(enfant), "_menu_label");
+        sa = g_object_get_data(G_OBJECT(enfant), "_menu_actions");
+        if (!sm) continue;
 
-                ActionData *ad = g_new0(ActionData, 1);
-                ad->cmd = item_cmd ? g_strdup(item_cmd) : g_strdup("");
+        g_menu_append_submenu(md->root_menu, (sl && *sl) ? sl : "Menu",
+                              G_MENU_MODEL(sm));
+        md->n_items++;
 
-                GSimpleAction *action = g_simple_action_new(action_name, NULL);
-                g_signal_connect_data(action, "activate",
-                                      G_CALLBACK(_action_cb), ad,
-                                      (GClosureNotify)NULL, 0);
-                g_action_map_add_action(G_ACTION_MAP(md->actions),
-                                        G_ACTION(action));
-                g_object_unref(action);
-
-                /* Ajouter au sous-menu */
-                g_menu_append(submenu, item_label, full_action);
-                g_free(action_name);
-                g_free(full_action);
-                md->n_items++;
+        /* Les actions de chaque menu rejoignent le groupe unique de la barre :
+         * les GMenuItem les désignent toutes par le préfixe « menu. ». */
+        if (sa) {
+            gchar **noms = g_action_group_list_actions(G_ACTION_GROUP(sa));
+            for (gchar **q = noms; q && *q; q++) {
+                GAction *act = g_action_map_lookup_action(G_ACTION_MAP(sa), *q);
+                if (act) g_action_map_add_action(G_ACTION_MAP(md->actions), act);
             }
-            item = attributeset_get_next(&il, Attr, ATTR_ITEM);
+            g_strfreev(noms);
         }
-
-        g_menu_append_submenu(md->root_menu, menu_label,
-                              G_MENU_MODEL(submenu));
-        g_object_unref(submenu);
     }
 
-    /* ── Créer la GtkPopoverMenuBar ──────────────────────────────────── */
-    GtkWidget *bar = gtk_popover_menu_bar_new_from_model(
-        G_MENU_MODEL(md->root_menu));
+    bar = gtk_popover_menu_bar_new_from_model(G_MENU_MODEL(md->root_menu));
 
-    /* Attacher le groupe d'actions à la fenêtre racine.
-     * Si la fenêtre n'est pas encore disponible, on le fait via realize. */
+    /* Le groupe est installé sur la barre elle-même : GTK remonte l'arbre pour
+     * résoudre « menu.xxx », donc tous ses éléments le trouvent. */
+    gtk_widget_insert_action_group(bar, "menu", G_ACTION_GROUP(md->actions));
+
     g_object_set_data_full(G_OBJECT(bar), "menubar_data", md,
                            (GDestroyNotify)g_free);
     g_object_set_data(G_OBJECT(bar), "action_group", md->actions);

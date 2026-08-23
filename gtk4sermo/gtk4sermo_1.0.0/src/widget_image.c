@@ -103,6 +103,13 @@ static void image_set_from_path(GtkWidget *widget, const gchar *path,
 	}
 
 	gtk_image_set_from_pixbuf(GTK_IMAGE(widget), pb);
+	/* GTK4 : GtkImage est un afficheur d'icônes. Il rend à sa « pixel size »
+	 * (16 px par défaut) et ignore les dimensions du pixbuf, là où GTK3
+	 * prenait la taille de l'image. Sans ceci, un logo de 48 px chargé par
+	 * <image file="..." width="48" height="48"> s'affichait en timbre-poste
+	 * (constaté sur System-Tools). On rétablit la taille demandée. */
+	gtk_image_set_pixel_size(GTK_IMAGE(widget),
+		MAX(gdk_pixbuf_get_width(pb), gdk_pixbuf_get_height(pb)));
 	g_object_unref(pb);
 }
 

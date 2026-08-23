@@ -387,7 +387,10 @@ if [ ! `command -v $GTKDIALOG` ]; then
 	exit 1
 fi
 funcAppVersionGet "$GTKDIALOG -v" 2
-if [ $minor_version -ge 8 -a $micro_version -ge 3 ]; then
+## Le contrôle datait de la série 0.8.x : « minor >= 8 » ne peut plus être
+## vrai pour 1.0.0, et l'application refusait de démarrer sur son propre
+## moteur. Un numéro majeur non nul suffit désormais.
+if [ "$major_version" -gt 0 ] || { [ "$minor_version" -ge 8 ] && [ "$micro_version" -ge 3 ]; }; then
 	true
 else
 	echo "Couldn't find $GTKDIALOG >= 0.8.3"

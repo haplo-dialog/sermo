@@ -84,8 +84,11 @@ GtkWidget *widget_frame_create(
 	fprintf(stderr, "%s(): Entering.\n", __func__);
 #endif
 
-	/* Set a default label */
-	attributeset_set_if_unset(Attr, ATTR_LABEL, "");
+	/* Tag attribute "label" takes priority over the old positional label */
+	if (attr && (value = get_tag_attribute(attr, "label")))
+		attributeset_set_if_unset(Attr, ATTR_LABEL, value);
+	else
+		attributeset_set_if_unset(Attr, ATTR_LABEL, "");
 
 	/* Create the frame widget */
 	widget = gtk_frame_new(attributeset_get_first(&element, 

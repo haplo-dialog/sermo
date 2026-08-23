@@ -33,6 +33,19 @@
 #include "signals.h"
 #include "tag_attributes.h"
 
+/* GtkListBox::row-selected passe UN PARAMÈTRE DE PLUS que les signaux sans
+ * argument : (box, row, data). Le brancher directement sur
+ * on_any_widget_selection_changed_event(widget, Attr) faisait recevoir la ligne
+ * sélectionnée à la place du jeu d'attributs, qui était ensuite déréférencé —
+ * segfault à la première sélection, sur les deux ports. */
+static void hp_list_row_selected(GtkListBox *box, GtkListBoxRow *row,
+	gpointer data)
+{
+	(void)row;
+	on_any_widget_selection_changed_event(GTK_WIDGET(box),
+		(AttributeSet *)data);
+}
+
 /* Defines */
 //#define DEBUG_CONTENT
 //#define DEBUG_TRANSITS
@@ -242,7 +255,7 @@ void widget_list_refresh(variable *var)
 
 		/* Connect signals — GTK3: GtkListBox uses "row-selected" not "selection-changed" */
 		g_signal_connect(G_OBJECT(var->Widget), "row-selected",
-			G_CALLBACK(on_any_widget_selection_changed_event),
+			G_CALLBACK(hp_list_row_selected),
 			(gpointer)var->Attributes);
 
 	}

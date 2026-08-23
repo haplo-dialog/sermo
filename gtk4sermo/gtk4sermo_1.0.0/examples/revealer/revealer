@@ -11,12 +11,12 @@ MAIN_DIALOG='
       <action>if false hide:RV_PANEL</action>
     </button>
     <revealer transition="slide-down" duration="300">
-      <variable>RV_PANEL</variable>
       <vbox>
         <hseparator></hseparator>
         <text><label>Panneau caché maintenant révélé !</label></text>
         <entry><variable>ENT_SECRET</variable></entry>
       </vbox>
+      <variable>RV_PANEL</variable>
     </revealer>
     <hseparator></hseparator>
     <hbox homogeneous="true">

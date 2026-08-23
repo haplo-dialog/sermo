@@ -8,24 +8,24 @@ MAIN_DIALOG='
 <window>
 	<vbox>
 		<hbox>
-			<frame Pixmap from stock icon_size="1">
+			<frame label="Pixmap from stock, icon_size 1">
 				<pixmap icon_size="1">
 					<input file stock="gtk-save"></input>
 				</pixmap>
 			</frame>
-			<frame Pixmap from stock icon_size="3">
+			<frame label="Pixmap from stock, icon_size 3">
 				<pixmap icon_size="3">
 					<input file stock="gtk-save"></input>
 				</pixmap>
 			</frame>
 		</hbox>
 		<hbox>
-			<frame Pixmap from stock icon_size="5">
+			<frame label="Pixmap from stock, icon_size 5">
 				<pixmap icon_size="5">
 					<input file stock="gtk-save"></input>
 				</pixmap>
 			</frame>
-			<frame Pixmap from stock icon_size="6">
+			<frame label="Pixmap from stock, icon_size 6">
 				<pixmap icon_size="6">
 					<input file stock="gtk-save"></input>
 				</pixmap>

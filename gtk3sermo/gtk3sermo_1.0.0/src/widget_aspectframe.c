@@ -98,9 +98,9 @@ GtkWidget *widget_aspectframe_create(
 		label_text = attributeset_get_first(&element, Attr, ATTR_LABEL);
 	}
 
-	if (sratio)  ratio      = (gfloat)atof(sratio);
-	if (sxalign) xalign     = (gfloat)atof(sxalign);
-	if (syalign) yalign     = (gfloat)atof(syalign);
+	if (sratio)  ratio      = (gfloat)g_ascii_strtod(sratio, NULL);
+	if (sxalign) xalign     = (gfloat)g_ascii_strtod(sxalign, NULL);
+	if (syalign) yalign     = (gfloat)g_ascii_strtod(syalign, NULL);
 	if (sobey)   obey_child = (g_ascii_strcasecmp(sobey, "true") == 0 ||
 	                           g_ascii_strcasecmp(sobey, "yes")  == 0 ||
 	                           strcmp(sobey, "1") == 0);

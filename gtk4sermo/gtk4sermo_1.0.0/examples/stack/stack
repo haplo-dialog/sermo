@@ -22,7 +22,6 @@ MAIN_DIALOG='
     </hbox>
     <hseparator></hseparator>
     <stack transition="slide-left-right">
-      <variable>STK_MAIN</variable>
       <vbox name="page0">
         <text><label>Contenu de la Page 1</label></text>
         <entry><variable>ENT_P1</variable><default>Donnée page 1</default></entry>
@@ -35,6 +34,7 @@ MAIN_DIALOG='
         <text><label>Contenu de la Page 3</label></text>
         <spinbutton range-min="0" range-max="100"><variable>SB_P3</variable></spinbutton>
       </vbox>
+      <variable>STK_MAIN</variable>
     </stack>
     <hseparator></hseparator>
     <hbox homogeneous="true">

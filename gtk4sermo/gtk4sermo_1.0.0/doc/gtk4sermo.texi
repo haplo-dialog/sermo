@@ -78,20 +78,17 @@ piloté par une description XML. Il permet aux scripts shell de créer des
 interfaces graphiques natives sans aucune connaissance de la programmation
 @value{TOOLKIT}.
 
-@command{gtk4sermo} fait partie de la famille @strong{haplo-dialog},
-6 ports du logiciel gtkdialog original (László Pere, 2003--2013),
-modernisés et sécurisés par Haplo-Linux en 2026.
+@command{gtk4sermo} fait partie de la suite @strong{haplo-dialog}, qui porte
+le langage XML du gtkdialog original (László Pere, 2003--2013) sur GTK 3 et
+GTK 4, modernisé et sécurisé par Haplo-Linux en 2026.
 
-@section La famille haplo-dialog
+@section La suite haplo-dialog
 
 @multitable @columnfractions .25 .25 .15 .35
-@headitem Port @tab Binaire @tab Toolkit @tab Description
-@item gtk3sermo @tab @command{gtk3d} @tab GTK3 @tab Port de référence (production)
-@item gtk4sermo @tab @command{gtk4sermo} @tab GTK4 @tab 50 widgets, GtkColumnView
-@item fltk1dialog @tab @command{fltk1d} @tab FLTK 1.4 @tab Léger, sans GLib
-@item efl1dialog @tab @command{efl1d} @tab EFL/Elementary @tab Natif Enlightenment
-@item qt6dialog @tab @command{qt6d} @tab Qt6 @tab Terminal live optionnel
-@item sdl3dialog @tab @command{sdl3d} @tab SDL3+ImGui @tab Immediate mode, multi-OS
+@headitem Paquet @tab Binaire @tab Toolkit @tab Description
+@item gtk3sermo @tab @command{gtk3sermo} @tab GTK 3 @tab Port de référence (production)
+@item gtk4sermo @tab @command{gtk4sermo} @tab GTK 4 @tab Même langage XML, rendu par GTK 4
+@item gtksermo @tab @command{gtkdialog} @tab -- @tab Lien de compatibilité vers gtk3sermo
 @end multitable
 
 @node Installation

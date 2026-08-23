@@ -57,7 +57,7 @@ MAIN_DIALOG='
 
         <vseparator></vseparator>
 
-        <!-- Simulation d'une tâche longue -->
+        <!-- Simulation de tache longue -->
         <vbox>
           <text><label>Simulation tâche</label></text>
           <spinner>

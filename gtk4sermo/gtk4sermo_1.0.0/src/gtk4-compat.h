@@ -176,19 +176,47 @@ _compat_container_get_children(GtkWidget *parent)
 
 /* ================================================================
  * gtk_box_pack_start / gtk_box_pack_end  — removed in GTK4
- *   → gtk_box_append (both: GTK4 has no pack-end in the same sense)
+ *   pack_start → gtk_box_append   (les enfants s'ajoutent de gauche a droite)
+ *   pack_end   → gtk_box_prepend  (GTK3 remplit depuis le bord oppose, donc
+ *                                  des appels successifs s'empilent vers
+ *                                  l'interieur : prepend reproduit cet ordre.
+ *                                  Les mapper tous deux sur append inversait
+ *                                  l'ordre de tous les enfants de hbox.)
  *   expand/fill/padding mapped to hexpand + margins
  * ================================================================ */
 
 static inline void
 _compat_box_pack(GtkBox *box, GtkWidget *child,
-                 gboolean expand, gboolean fill, guint padding)
+                 gboolean expand, gboolean fill, guint padding,
+                 gboolean at_end)
 {
-    (void)fill; /* no direct GTK4 equivalent */
-    gtk_box_append(box, child);
+    GtkOrientation axe = gtk_orientable_get_orientation(GTK_ORIENTABLE(box));
+
+    if (at_end)
+        gtk_box_prepend(box, child);
+    else
+        gtk_box_append(box, child);
+
+    /* GTK3 : « expand » = recevoir l'espace en trop, sur l'axe de la boîte
+     * seulement. Poser hexpand ET vexpand faisait aussi grossir l'enfant sur
+     * l'axe transverse : dans System-Tools, la colonne de boutons prenait la
+     * moitié de la fenêtre au lieu de sa largeur naturelle. */
     if (expand) {
-        gtk_widget_set_hexpand(child, TRUE);
-        gtk_widget_set_vexpand(child, TRUE);
+        if (axe == GTK_ORIENTATION_HORIZONTAL)
+            gtk_widget_set_hexpand(child, TRUE);
+        else
+            gtk_widget_set_vexpand(child, TRUE);
+    }
+
+    /* GTK3 : « fill » = occuper l'allocation reçue ; sans lui l'enfant garde sa
+     * taille naturelle et se centre. GTK4 aligne en FILL par défaut, d'où des
+     * boutons étirés sur toute la largeur de leur colonne. Sur l'axe
+     * transverse, GTK3 remplissait toujours : on n'y touche pas. */
+    if (!fill) {
+        if (axe == GTK_ORIENTATION_HORIZONTAL)
+            gtk_widget_set_halign(child, GTK_ALIGN_CENTER);
+        else
+            gtk_widget_set_valign(child, GTK_ALIGN_CENTER);
     }
     if (padding > 0) {
         gtk_widget_set_margin_start (child, (int)padding);
@@ -199,10 +227,10 @@ _compat_box_pack(GtkBox *box, GtkWidget *child,
 }
 
 #define gtk_box_pack_start(box, child, expand, fill, padding) \
-    _compat_box_pack(GTK_BOX(box), GTK_WIDGET(child), (expand), (fill), (padding))
+    _compat_box_pack(GTK_BOX(box), GTK_WIDGET(child), (expand), (fill), (padding), FALSE)
 
 #define gtk_box_pack_end(box, child, expand, fill, padding) \
-    _compat_box_pack(GTK_BOX(box), GTK_WIDGET(child), (expand), (fill), (padding))
+    _compat_box_pack(GTK_BOX(box), GTK_WIDGET(child), (expand), (fill), (padding), TRUE)
 
 /* ================================================================
  * gtk_widget_show_all  — removed in GTK4

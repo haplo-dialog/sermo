@@ -44,19 +44,19 @@ GtkWidget *widget_vscale_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     if (attr) {
         if (!(value = get_tag_attribute(attr, "range-min")))
              value = get_tag_attribute(attr, "scale-min");
-        if (value) range_min = atof(value);
+        if (value) range_min = g_ascii_strtod(value, NULL);
 
         if (!(value = get_tag_attribute(attr, "range-max")))
              value = get_tag_attribute(attr, "scale-max");
-        if (value) range_max = atof(value);
+        if (value) range_max = g_ascii_strtod(value, NULL);
 
         if (!(value = get_tag_attribute(attr, "range-step")))
              value = get_tag_attribute(attr, "scale-step");
-        if (value) range_step = atof(value);
+        if (value) range_step = g_ascii_strtod(value, NULL);
 
         if (!(value = get_tag_attribute(attr, "range-value")))
              value = get_tag_attribute(attr, "scale-value");
-        if (value) range_value = atof(value);
+        if (value) range_value = g_ascii_strtod(value, NULL);
     }
 
     widget = gtk_scale_new_with_range(GTK_ORIENTATION_VERTICAL,
@@ -112,7 +112,7 @@ void widget_vscale_refresh(variable *var)
     if (!initialised) {
         if (attributeset_is_avail(var->Attributes, ATTR_DEFAULT)) {
             act = attributeset_get_first(&element, var->Attributes, ATTR_DEFAULT);
-            if (act) gtk_range_set_value(GTK_RANGE(var->Widget), atof(act));
+            if (act) gtk_range_set_value(GTK_RANGE(var->Widget), g_ascii_strtod(act, NULL));
         }
         if ((attributeset_cmp_left(var->Attributes, ATTR_SENSITIVE, "false")) ||
             (attributeset_cmp_left(var->Attributes, ATTR_SENSITIVE, "disabled")) ||
@@ -155,7 +155,7 @@ static void widget_vscale_input_by_command(variable *var, char *command)
     gchar  line[512];
     if ((infile = widget_opencommand(command))) {
         if (fgets(line, sizeof(line), infile))
-            gtk_range_set_value(GTK_RANGE(var->Widget), atof(line));
+            gtk_range_set_value(GTK_RANGE(var->Widget), g_ascii_strtod(line, NULL));
         fclose(infile);
     }
 }
@@ -166,7 +166,7 @@ static void widget_vscale_input_by_file(variable *var, char *filename)
     gchar  line[512];
     if ((infile = fopen(filename, "r"))) {
         if (fgets(line, sizeof(line), infile))
-            gtk_range_set_value(GTK_RANGE(var->Widget), atof(line));
+            gtk_range_set_value(GTK_RANGE(var->Widget), g_ascii_strtod(line, NULL));
         fclose(infile);
     }
 }

@@ -312,14 +312,33 @@ void widget_edit_save(variable *var)
 
 static void widget_edit_input_by_command(variable *var, char *command)
 {
-	gchar            *var1;
-	gint              var2;
+	FILE             *infile;
+	GtkTextBuffer    *buffer;
+	GString          *text;
+	gchar             line[512];
 
 #ifdef DEBUG_TRANSITS
 	fprintf(stderr, "%s(): Entering.\n", __func__);
 #endif
 
-	fprintf(stderr, "%s(): <input> not implemented for this widget.\n", __func__);
+#ifdef DEBUG_CONTENT
+	fprintf(stderr, "%s(): command: '%s'\n", __func__, command);
+#endif
+
+	if ((infile = widget_opencommand(command))) {
+		text = g_string_sized_new(4096);
+		while (fgets(line, sizeof(line), infile)) {
+			g_string_append(text, line);
+		}
+		fclose(infile);
+
+		buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(var->Widget));
+		gtk_text_buffer_set_text(buffer, text->str, (gint)text->len);
+		g_string_free(text, TRUE);
+	} else {
+		g_warning("%s(): Couldn't open command '%s' for reading.",
+			__func__, command);
+	}
 
 #ifdef DEBUG_TRANSITS
 	fprintf(stderr, "%s(): Exiting.\n", __func__);

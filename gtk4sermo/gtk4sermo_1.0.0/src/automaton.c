@@ -44,29 +44,46 @@
 #include "stringman.h"
 #include "attributes.h"
 #include "widgets.h"
+#include "widget_aspectframe.h"
 #include "widget_button.h"
+#include "widget_calendar.h"
 #include "widget_checkbox.h"
 #include "widget_colorbutton.h"
 #include "widget_combobox.h"
 #include "widget_comboboxtext.h"
+#include "widget_drawingarea.h"
 #include "widget_edit.h"
 #include "widget_entry.h"
 #include "widget_eventbox.h"
 #include "widget_expander.h"
+#include "widget_filechooser.h"
+#include "widget_flowbox.h"
 #include "widget_fontbutton.h"
 #include "widget_frame.h"
 #include "widget_hbox.h"
 #include "widget_hscale.h"
 #include "widget_hseparator.h"
+#include "widget_image.h"
+#include "widget_infobar.h"
+#include "widget_levelbar.h"
+#include "widget_linkbutton.h"
 #include "widget_list.h"
 #include "widget_menubar.h"
 #include "widget_menuitem.h"
 #include "widget_notebook.h"
+#include "widget_overlay.h"
+#include "widget_password.h"
 #include "widget_pixmap.h"
 #include "widget_progressbar.h"
+#include "widget_pulse.h"
 #include "widget_radiobutton.h"
+#include "widget_revealer.h"
+#include "widget_searchentry.h"
 #include "widget_spinbutton.h"
+#include "widget_spinner.h"
+#include "widget_stack.h"
 #include "widget_statusbar.h"
+#include "widget_switch.h"
 #include "widget_table.h"
 #include "widget_terminal.h"
 #include "widget_text.h"
@@ -162,6 +179,57 @@ void print_command(instruction command)
 			break;
 		case WIDGET_ENTRY:
 			printf("(new entry())");
+			break;
+		case WIDGET_FLOWBOX:
+			printf("(new flowbox())");
+			break;
+		case WIDGET_OVERLAY:
+			printf("(new overlay())");
+			break;
+		case WIDGET_REVEALER:
+			printf("(new revealer())");
+			break;
+		case WIDGET_STACK:
+			printf("(new stack())");
+			break;
+		case WIDGET_CALENDAR:
+			printf("(new calendar())");
+			break;
+		case WIDGET_DRAWINGAREA:
+			printf("(new drawingarea())");
+			break;
+		case WIDGET_INFOBAR:
+			printf("(new infobar())");
+			break;
+		case WIDGET_LEVELBAR:
+			printf("(new levelbar())");
+			break;
+		case WIDGET_SEARCHENTRY:
+			printf("(new searchentry())");
+			break;
+		case WIDGET_SPINNER:
+			printf("(new spinner())");
+			break;
+		case WIDGET_SWITCH:
+			printf("(new switch())");
+			break;
+		case WIDGET_PASSWORD:
+			printf("(new password())");
+			break;
+		case WIDGET_IMAGE:
+			printf("(new image())");
+			break;
+		case WIDGET_LINKBUTTON:
+			printf("(new linkbutton())");
+			break;
+		case WIDGET_FILECHOOSER:
+			printf("(new filechooser())");
+			break;
+		case WIDGET_ASPECTFRAME:
+			printf("(new aspectframe())");
+			break;
+		case WIDGET_PULSE:
+			printf("(new pulse())");
 			break;
 		case WIDGET_EVENTBOX:
 			printf("(new eventbox())");
@@ -467,6 +535,57 @@ void print_token(token Token)
 			break;
 		case WIDGET_ENTRY:
 			printf("(ENTRY)");
+			break;
+		case WIDGET_FLOWBOX:
+			printf("(FLOWBOX)");
+			break;
+		case WIDGET_OVERLAY:
+			printf("(OVERLAY)");
+			break;
+		case WIDGET_REVEALER:
+			printf("(REVEALER)");
+			break;
+		case WIDGET_STACK:
+			printf("(STACK)");
+			break;
+		case WIDGET_CALENDAR:
+			printf("(CALENDAR)");
+			break;
+		case WIDGET_DRAWINGAREA:
+			printf("(DRAWINGAREA)");
+			break;
+		case WIDGET_INFOBAR:
+			printf("(INFOBAR)");
+			break;
+		case WIDGET_LEVELBAR:
+			printf("(LEVELBAR)");
+			break;
+		case WIDGET_SEARCHENTRY:
+			printf("(SEARCHENTRY)");
+			break;
+		case WIDGET_SPINNER:
+			printf("(SPINNER)");
+			break;
+		case WIDGET_SWITCH:
+			printf("(SWITCH)");
+			break;
+		case WIDGET_PASSWORD:
+			printf("(PASSWORD)");
+			break;
+		case WIDGET_IMAGE:
+			printf("(IMAGE)");
+			break;
+		case WIDGET_LINKBUTTON:
+			printf("(LINKBUTTON)");
+			break;
+		case WIDGET_FILECHOOSER:
+			printf("(FILECHOOSER)");
+			break;
+		case WIDGET_ASPECTFRAME:
+			printf("(ASPECTFRAME)");
+			break;
+		case WIDGET_PULSE:
+			printf("(PULSE)");
 			break;
 		case WIDGET_EVENTBOX:
 			printf("(EVENTBOX)");
@@ -1065,6 +1184,74 @@ instruction_execute_push(
 			break;
 		case WIDGET_ENTRY:
 			Widget = widget_entry_create(Attr, tag_attributes, Widget_Type);
+			push_widget(Widget, Widget_Type);
+			break;
+		case WIDGET_FLOWBOX:
+			Widget = widget_flowbox_create(Attr, tag_attributes, Widget_Type);
+			push_widget(Widget, Widget_Type);
+			break;
+		case WIDGET_OVERLAY:
+			Widget = widget_overlay_create(Attr, tag_attributes, Widget_Type);
+			push_widget(Widget, Widget_Type);
+			break;
+		case WIDGET_REVEALER:
+			Widget = widget_revealer_create(Attr, tag_attributes, Widget_Type);
+			push_widget(Widget, Widget_Type);
+			break;
+		case WIDGET_STACK:
+			Widget = widget_stack_create(Attr, tag_attributes, Widget_Type);
+			push_widget(Widget, Widget_Type);
+			break;
+		case WIDGET_CALENDAR:
+			Widget = widget_calendar_create(Attr, tag_attributes, Widget_Type);
+			push_widget(Widget, Widget_Type);
+			break;
+		case WIDGET_DRAWINGAREA:
+			Widget = widget_drawingarea_create(Attr, tag_attributes, Widget_Type);
+			push_widget(Widget, Widget_Type);
+			break;
+		case WIDGET_INFOBAR:
+			Widget = widget_infobar_create(Attr, tag_attributes, Widget_Type);
+			push_widget(Widget, Widget_Type);
+			break;
+		case WIDGET_LEVELBAR:
+			Widget = widget_levelbar_create(Attr, tag_attributes, Widget_Type);
+			push_widget(Widget, Widget_Type);
+			break;
+		case WIDGET_SEARCHENTRY:
+			Widget = widget_searchentry_create(Attr, tag_attributes, Widget_Type);
+			push_widget(Widget, Widget_Type);
+			break;
+		case WIDGET_SPINNER:
+			Widget = widget_spinner_create(Attr, tag_attributes, Widget_Type);
+			push_widget(Widget, Widget_Type);
+			break;
+		case WIDGET_SWITCH:
+			Widget = widget_switch_create(Attr, tag_attributes, Widget_Type);
+			push_widget(Widget, Widget_Type);
+			break;
+		case WIDGET_PASSWORD:
+			Widget = widget_password_create(Attr, tag_attributes, Widget_Type);
+			push_widget(Widget, Widget_Type);
+			break;
+		case WIDGET_IMAGE:
+			Widget = widget_image_create(Attr, tag_attributes, Widget_Type);
+			push_widget(Widget, Widget_Type);
+			break;
+		case WIDGET_LINKBUTTON:
+			Widget = widget_linkbutton_create(Attr, tag_attributes, Widget_Type);
+			push_widget(Widget, Widget_Type);
+			break;
+		case WIDGET_FILECHOOSER:
+			Widget = widget_filechooser_create(Attr, tag_attributes, Widget_Type);
+			push_widget(Widget, Widget_Type);
+			break;
+		case WIDGET_ASPECTFRAME:
+			Widget = widget_aspectframe_create(Attr, tag_attributes, Widget_Type);
+			push_widget(Widget, Widget_Type);
+			break;
+		case WIDGET_PULSE:
+			Widget = widget_pulse_create(Attr, tag_attributes, Widget_Type);
 			push_widget(Widget, Widget_Type);
 			break;
 		case WIDGET_EVENTBOX:

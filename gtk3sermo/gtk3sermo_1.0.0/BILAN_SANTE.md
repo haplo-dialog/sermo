@@ -1,4 +1,4 @@
-<div align="right"><sub><code>maj :     2026-06-07 09:19:43</code></sub></div>
+<div align="right"><sub><code>maj :     2026-08-22 16:30:41 · par claude</code></sub></div>
 <div align="right"><sub><code>réindex : —</code></sub></div>
 
 # Bilan de santé — gtk3sermo 1.0.0
@@ -36,7 +36,7 @@
 └──────────────────────────────────────────────────────────────┘
 ```
 
-> **Référence :** gtk3sermo=100 · gtk4d=98 · qt6d=94 · fltk1d=89 · efl1d=88 · sdl3d=80
+> **Référence :** gtk3sermo=100 · gtk4sermo=98
 
 ---
 
@@ -666,9 +666,7 @@ dans le cadre du développement de la famille **haplo-dialog** sur Haplo-Linux.
 
 L'IA a contribué à : la conception de l'architecture, l'implémentation des widgets,
 la rédaction de la documentation, la création des tests unitaires (CTest),
-l'intégration de QTermWidget6, la sous-classe Fl_Table hiérarchique (FLTK),
-l'amélioration de l'export d'état SDL3/ImGui, et la mise à jour de tous les
-fichiers de packaging et de documentation.
+et la mise à jour de tous les fichiers de packaging et de documentation.
 
 > *"Ce projet a bénéficié de l'assistance de Claude (Anthropic) —
 > mai 2026."*
@@ -681,14 +679,14 @@ fichiers de packaging et de documentation.
 
 ## Audit #4 — Harmonisation et alignement des ports (2026-06-01)
 
-Session transversale appliquant à ce port les correctifs éprouvés sur gtk4d,
+Session transversale appliquant à ce port les correctifs éprouvés sur gtk4sermo,
 dans le cadre de l'uniformisation de toute la famille haplo-dialog.
 
 | Domaine | Action |
 |---------|--------|
 | Sécurité | Attribut `__attribute__((nonnull(1)))` retiré de `safe_system`/`safe_popen` dans `src/safe_exec.h` (vérification runtime `if (!command …)` conservée) — supprime `-Wnonnull-compare`. |
 | Préprocesseur | `#define _GNU_SOURCE` protégé par `#ifndef` dans tous les fichiers concernés. |
-| Flags d'avertissement | `src/Makefile.am` aligné sur gtk4d : ajout de `-Wno-deprecated-declarations`, `-Wno-unused-variable`, et `-Wmissing-prototypes` → `-Wno-missing-prototypes`. |
+| Flags d'avertissement | `src/Makefile.am` aligné sur gtk4sermo : ajout de `-Wno-deprecated-declarations`, `-Wno-unused-variable`, et `-Wmissing-prototypes` → `-Wno-missing-prototypes`. |
 | Licence | Mention résiduelle « GPL-3.0+ » de l'audit #3 corrigée en **GPL-2.0-or-later** (cohérente avec l'en-tête source et le packaging). |
 
 **Recompilation de vérification (réelle, ce jour) :** `make -C src` après `make clean`

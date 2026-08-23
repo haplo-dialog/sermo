@@ -86,19 +86,19 @@ GtkWidget *widget_hscale_create(
 	if (attr) {
 		if (!(value = get_tag_attribute(attr, "range-min")))
 			value = get_tag_attribute(attr, "scale-min");
-		if (value) range_min = atof(value);
+		if (value) range_min = g_ascii_strtod(value, NULL);
 
 		if (!(value = get_tag_attribute(attr, "range-max")))
 			value = get_tag_attribute(attr, "scale-max");
-		if (value) range_max = atof(value);
+		if (value) range_max = g_ascii_strtod(value, NULL);
 
 		if (!(value = get_tag_attribute(attr, "range-step")))
 			value = get_tag_attribute(attr, "scale-step");
-		if (value) range_step = atof(value);
+		if (value) range_step = g_ascii_strtod(value, NULL);
 
 		if (!(value = get_tag_attribute(attr, "range-value")))
 			value = get_tag_attribute(attr, "scale-value");
-		if (value) range_value = atof(value);
+		if (value) range_value = g_ascii_strtod(value, NULL);
 	}
 
 	if (Type == WIDGET_HSCALE) {
@@ -292,7 +292,7 @@ void widget_hscale_refresh(variable *var)
 				__func__);
 		if (attributeset_is_avail(var->Attributes, ATTR_DEFAULT)) {
 			gtk_range_set_value(GTK_RANGE(var->Widget),
-				atof(attributeset_get_first(&element, var->Attributes, ATTR_DEFAULT)));
+				g_ascii_strtod(attributeset_get_first(&element, var->Attributes, ATTR_DEFAULT), NULL));
 		}
 		if (attributeset_is_avail(var->Attributes, ATTR_HEIGHT))
 			fprintf(stderr, "%s(): <height> not implemented for this widget.\n",
@@ -472,7 +472,7 @@ static void widget_hscale_input_by_command(variable *var, char *command)
 			for (count = strlen(line) - 1; count >= 0; count--)
 				if (line[count] == 13 || line[count] == 10) line[count] = 0;
 
-			gtk_range_set_value(GTK_RANGE(var->Widget), atof(line));
+			gtk_range_set_value(GTK_RANGE(var->Widget), g_ascii_strtod(line, NULL));
 
 		}
 		/* Close the file */
@@ -510,7 +510,7 @@ static void widget_hscale_input_by_file(variable *var, char *filename)
 			for (count = strlen(line) - 1; count >= 0; count--)
 				if (line[count] == 13 || line[count] == 10) line[count] = 0;
 
-			gtk_range_set_value(GTK_RANGE(var->Widget), atof(line));
+			gtk_range_set_value(GTK_RANGE(var->Widget), g_ascii_strtod(line, NULL));
 
 		}
 		/* Close the file */

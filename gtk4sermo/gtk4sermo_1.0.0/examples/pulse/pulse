@@ -6,11 +6,10 @@ MAIN_DIALOG='
 <window title="Progression indéterminée" border-width="12">
   <vbox spacing="10">
     <text><label>Traitement en cours…</label></text>
-    <pulse>
+    <pulse active="true">
       <variable>PB_MAIN</variable>
       <label>Chargement</label>
-      <active>true</active>
-    </pulse>
+          </pulse>
     <hseparator></hseparator>
     <hbox homogeneous="true">
       <button cancel></button>

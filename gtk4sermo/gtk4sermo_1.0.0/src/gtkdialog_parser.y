@@ -92,6 +92,11 @@ start_up(void)
 %token <cval>  FRAME
 %token <cval>  TAG_ATTR_NAME
 %type  <nvval> tagattr
+%token         PART_FRAME
+%token         FLOWBOX PART_FLOWBOX EFLOWBOX
+%token         OVERLAY PART_OVERLAY EOVERLAY
+%token         REVEALER PART_REVEALER EREVEALER
+%token         STACK PART_STACK ESTACK
 %token         EFRAME
 %token         ENTRY EENTRY PART_ENTRY
 %token         MENUBAR PART_MENUBAR EMENUBAR
@@ -158,6 +163,11 @@ start_up(void)
 %token         FONTBUTTON PART_FONTBUTTON EFONTBUTTON
 %token         SWITCH PART_SWITCH ESWITCH
 %token         PASSWORD PART_PASSWORD EPASSWORD
+%token         IMAGE PART_IMAGE EIMAGE
+%token         LINKBUTTON PART_LINKBUTTON ELINKBUTTON
+%token         FILECHOOSER PART_FILECHOOSER EFILECHOOSER
+%token         ASPECTFRAME PART_ASPECTFRAME EASPECTFRAME
+%token         PULSE PART_PULSE EPULSE
 %token         CALENDAR PART_CALENDAR ECALENDAR
 %token         INFOBAR PART_INFOBAR EINFOBAR
 %token         SPINNER PART_SPINNER ESPINNER
@@ -272,6 +282,83 @@ wlist
 		token_store(PUSH | WIDGET_FRAME); 
 		token_store(SUM);      
 	}
+  | FLOWBOX wlist attr EFLOWBOX {
+		token_store(PUSH | WIDGET_FLOWBOX);
+	}
+  | wlist FLOWBOX wlist attr EFLOWBOX {
+		token_store(PUSH | WIDGET_FLOWBOX);
+		token_store(SUM);
+	}
+  | PART_FLOWBOX tagattr '>' wlist attr EFLOWBOX {
+		token_store_attr(PUSH | WIDGET_FLOWBOX, $2);
+	}
+  | wlist PART_FLOWBOX tagattr '>' wlist attr EFLOWBOX {
+		token_store_attr(PUSH | WIDGET_FLOWBOX, $3);
+		token_store(SUM);
+	}
+  | OVERLAY wlist attr EOVERLAY {
+		token_store(PUSH | WIDGET_OVERLAY);
+	}
+  | wlist OVERLAY wlist attr EOVERLAY {
+		token_store(PUSH | WIDGET_OVERLAY);
+		token_store(SUM);
+	}
+  | PART_OVERLAY tagattr '>' wlist attr EOVERLAY {
+		token_store_attr(PUSH | WIDGET_OVERLAY, $2);
+	}
+  | wlist PART_OVERLAY tagattr '>' wlist attr EOVERLAY {
+		token_store_attr(PUSH | WIDGET_OVERLAY, $3);
+		token_store(SUM);
+	}
+  | REVEALER wlist attr EREVEALER {
+		token_store(PUSH | WIDGET_REVEALER);
+	}
+  | wlist REVEALER wlist attr EREVEALER {
+		token_store(PUSH | WIDGET_REVEALER);
+		token_store(SUM);
+	}
+  | PART_REVEALER tagattr '>' wlist attr EREVEALER {
+		token_store_attr(PUSH | WIDGET_REVEALER, $2);
+	}
+  | wlist PART_REVEALER tagattr '>' wlist attr EREVEALER {
+		token_store_attr(PUSH | WIDGET_REVEALER, $3);
+		token_store(SUM);
+	}
+  | STACK wlist attr ESTACK {
+		token_store(PUSH | WIDGET_STACK);
+	}
+  | wlist STACK wlist attr ESTACK {
+		token_store(PUSH | WIDGET_STACK);
+		token_store(SUM);
+	}
+  | PART_STACK tagattr '>' wlist attr ESTACK {
+		token_store_attr(PUSH | WIDGET_STACK, $2);
+	}
+  | wlist PART_STACK tagattr '>' wlist attr ESTACK {
+		token_store_attr(PUSH | WIDGET_STACK, $3);
+		token_store(SUM);
+	}
+  | PART_FRAME tagattr '>' wlist attr EFRAME {
+		token_store_attr(PUSH | WIDGET_FRAME, $2);
+	}
+  | wlist PART_FRAME tagattr '>' wlist attr EFRAME {
+		token_store_attr(PUSH | WIDGET_FRAME, $3);
+		token_store(SUM);
+	}
+  | ASPECTFRAME wlist attr EASPECTFRAME {
+		token_store(PUSH | WIDGET_ASPECTFRAME);
+	}
+  | wlist ASPECTFRAME wlist attr EASPECTFRAME {
+		token_store(PUSH | WIDGET_ASPECTFRAME);
+		token_store(SUM);
+	}
+  | PART_ASPECTFRAME tagattr '>' wlist attr EASPECTFRAME {
+		token_store_attr(PUSH | WIDGET_ASPECTFRAME, $2);
+	}
+  | wlist PART_ASPECTFRAME tagattr '>' wlist attr EASPECTFRAME {
+		token_store_attr(PUSH | WIDGET_ASPECTFRAME, $3);
+		token_store(SUM);
+	}
   ;
 
 widget
@@ -305,6 +392,10 @@ widget
   | terminal
   | switchw
   | password
+  | image
+  | linkbutton
+  | filechooser
+  | pulse
   | calendar
   | infobar
   | spinner
@@ -328,6 +419,42 @@ password
 	}
   | PART_PASSWORD tagattr '>' attr EPASSWORD {
     		token_store_attr(PUSH | WIDGET_PASSWORD, $2);
+	}
+  ;
+
+image
+  : IMAGE attr EIMAGE {
+    		token_store(PUSH | WIDGET_IMAGE);
+	}
+  | PART_IMAGE tagattr '>' attr EIMAGE {
+    		token_store_attr(PUSH | WIDGET_IMAGE, $2);
+	}
+  ;
+
+linkbutton
+  : LINKBUTTON attr ELINKBUTTON {
+    		token_store(PUSH | WIDGET_LINKBUTTON);
+	}
+  | PART_LINKBUTTON tagattr '>' attr ELINKBUTTON {
+    		token_store_attr(PUSH | WIDGET_LINKBUTTON, $2);
+	}
+  ;
+
+filechooser
+  : FILECHOOSER attr EFILECHOOSER {
+    		token_store(PUSH | WIDGET_FILECHOOSER);
+	}
+  | PART_FILECHOOSER tagattr '>' attr EFILECHOOSER {
+    		token_store_attr(PUSH | WIDGET_FILECHOOSER, $2);
+	}
+  ;
+
+pulse
+  : PULSE attr EPULSE {
+    		token_store(PUSH | WIDGET_PULSE);
+	}
+  | PART_PULSE tagattr '>' attr EPULSE {
+    		token_store_attr(PUSH | WIDGET_PULSE, $2);
 	}
   ;
 

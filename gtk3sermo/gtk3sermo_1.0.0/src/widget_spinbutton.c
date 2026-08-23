@@ -84,13 +84,13 @@ GtkWidget *widget_spinbutton_create(
 	/* These "range-*" names are consistent with the h/vscale widgets */
 	if (attr) {
 		if ((value = get_tag_attribute(attr, "range-min")))
-			range_min = atof(value);
+			range_min = g_ascii_strtod(value, NULL);
 		if ((value = get_tag_attribute(attr, "range-max")))
-			range_max = atof(value);
+			range_max = g_ascii_strtod(value, NULL);
 		if ((value = get_tag_attribute(attr, "range-step")))
-			range_step = atof(value);
+			range_step = g_ascii_strtod(value, NULL);
 		if ((value = get_tag_attribute(attr, "range-value")))
-			range_value = atof(value);
+			range_value = g_ascii_strtod(value, NULL);
 	}
 
 	widget = gtk_spin_button_new_with_range(range_min, range_max, range_step);
@@ -275,7 +275,7 @@ void widget_spinbutton_refresh(variable *var)
 				__func__);
 		if (attributeset_is_avail(var->Attributes, ATTR_DEFAULT))
 			gtk_spin_button_set_value(GTK_SPIN_BUTTON(var->Widget),
-				atof(attributeset_get_first(&element, var->Attributes, ATTR_DEFAULT)));
+				g_ascii_strtod(attributeset_get_first(&element, var->Attributes, ATTR_DEFAULT), NULL));
 		if (attributeset_is_avail(var->Attributes, ATTR_HEIGHT))
 			g_warning( "%s(): <height> not implemented for this widget.",
 				__func__);
@@ -463,7 +463,7 @@ static void widget_spinbutton_input_by_command(variable *var, char *command)
 			/* Remove the trailing [CR]LFs */
 			for (count = (gint)strlen(line) - 1; count >= 0; count--)
 				if (line[count] == 13 || line[count] == 10) line[count] = 0;
-			gtk_spin_button_set_value(GTK_SPIN_BUTTON(var->Widget), atof(line));
+			gtk_spin_button_set_value(GTK_SPIN_BUTTON(var->Widget), g_ascii_strtod(line, NULL));
 		}
 		/* Close the file */
 		fclose(infile);
@@ -499,7 +499,7 @@ static void widget_spinbutton_input_by_file(variable *var, char *filename)
 			/* Remove the trailing [CR]LFs */
 			for (count = (gint)strlen(line) - 1; count >= 0; count--)
 				if (line[count] == 13 || line[count] == 10) line[count] = 0;
-			gtk_spin_button_set_value(GTK_SPIN_BUTTON(var->Widget), atof(line));
+			gtk_spin_button_set_value(GTK_SPIN_BUTTON(var->Widget), g_ascii_strtod(line, NULL));
 		}
 		/* Close the file */
 		fclose(infile);

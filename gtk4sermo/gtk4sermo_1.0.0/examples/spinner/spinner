@@ -6,10 +6,9 @@ MAIN_DIALOG='
 <window title="Spinner" border-width="12">
   <vbox spacing="10">
     <text><label>Spinner actif (chargement) :</label></text>
-    <spinner>
+    <spinner active="true">
       <variable>SP_MAIN</variable>
-      <active>true</active>
-    </spinner>
+          </spinner>
     <hseparator></hseparator>
     <hbox homogeneous="true">
       <button>
