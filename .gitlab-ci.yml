@@ -46,6 +46,11 @@ default:
     - test -x "$CI_PROJECT_DIR/inst/bin/$PORT"   # le build a bien produit le binaire
     - PATH="$CI_PROJECT_DIR/inst/bin:$PATH" sh "$CI_PROJECT_DIR/tests/xml/run_tests.sh" "$PORT"
     - sh "$CI_PROJECT_DIR/tests/run_unit_tests.sh" "$PORT"   # tests de comportement (cœur)
+    # Garde-fou : le thread de la barre de progression ne doit toucher ni GTK
+    # ni GDK. Statique, parce que la faute qu'il empêche est une course qui ne
+    # se déclenche qu'une fois sur dix — un test comportemental serait vert la
+    # plupart du temps, donc ne prouverait rien.
+    - sh "$CI_PROJECT_DIR/tests/garde_progressbar_thread.sh" "$CI_PROJECT_DIR/$PORT/${PORT}_1.0.0/src/widget_progressbar.c"
 
 .cmake:
   stage: build-test

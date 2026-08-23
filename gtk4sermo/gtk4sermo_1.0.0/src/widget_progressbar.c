@@ -379,6 +379,50 @@ next_command:
  ***********************************************************************/
 /* Thunor: This is all original code moved across when refactoring */
 
+/* Haplo-Linux 2026 : la mise a jour repart vers la boucle principale.
+ *
+ * Le code d'origine touchait GTK depuis ce thread de lecture, et y faisait
+ * meme tourner la boucle principale (gtk_main_iteration_do). GTK n'est pas
+ * reentrant : deux boucles concurrentes allouent et dispatchent en meme
+ * temps, et le processus meurt au hasard. gdk_threads_enter/leave, qui
+ * etait cense proteger cette region, ne fait plus rien depuis GTK 3.6.
+ *
+ * Le thread se contente desormais de lire le tuyau ; tout ce qui touche a
+ * GTK est confie a la boucle principale par g_idle_add(). */
+typedef struct {
+	progr_descr *descr;
+	gdouble      fraction;
+	gchar       *text;        /* non NULL si la ligne n'est pas un nombre */
+	gboolean     run_actions;
+} progr_update;
+
+static gboolean widget_progressbar_apply(gpointer data)
+{
+	progr_update *upd = (progr_update *)data;
+	gboolean      alive;
+
+	G_LOCK(any_progress_bar);
+	alive = (upd->descr->widget != NULL);
+	if (alive) {
+		if (upd->text == NULL)
+			gtk_progress_bar_set_fraction(
+				GTK_PROGRESS_BAR(upd->descr->widget),
+				upd->fraction);
+		else
+			gtk_progress_bar_set_text(
+				GTK_PROGRESS_BAR(upd->descr->widget),
+				upd->text);
+	}
+	G_UNLOCK(any_progress_bar);
+
+	if (alive && upd->run_actions)
+		widget_progressbar_perform_actions(upd->descr);
+
+	g_free(upd->text);
+	g_free(upd);
+	return G_SOURCE_REMOVE;
+}
+
 static gpointer widget_progressbar_thread_entry(progr_descr *descr)
 {
 	char      oneline[512];
@@ -386,9 +430,12 @@ static gpointer widget_progressbar_thread_entry(progr_descr *descr)
 	long int  ival;
 	char     *end;
 	gint length;
-	
+	gboolean  gone;
+
 	while (fgets(oneline, 512, descr->pipe) != NULL) {
-		length = strlen(oneline) - 1;
+		progr_update *upd;
+
+		length = (gint)strlen(oneline) - 1;
 		if (oneline[length] == '\n')
 			oneline[length] = '\0';
 
@@ -396,56 +443,28 @@ static gpointer widget_progressbar_thread_entry(progr_descr *descr)
 		descr->fraction =  ival / 100.0;
 		if (descr->fraction > 1.0)
 			descr->fraction = 1.0;
-		/*
-		 * Entering critical region.
-		 */
-		gdk_threads_enter();
-		/*
-		 * Updating the screen, for this we need a progress bar.
-		 */
-		G_LOCK(any_progress_bar);
-		if (descr->widget != NULL) {
-			if (end != oneline)
-				gtk_progress_bar_set_fraction(
-					GTK_PROGRESS_BAR(descr->widget), 
-					descr->fraction);
-			else
-				gtk_progress_bar_set_text(
-					GTK_PROGRESS_BAR(descr->widget), 
-					oneline);
-		}
-		G_UNLOCK(any_progress_bar);
-		/*
-		 * Processing pending events.
-		 */
-		while (gtk_events_pending()) 
-			gtk_main_iteration_do(FALSE);
-		/*
-		 * Performing actions if needed.
-		 */
+
 		if (ival != 100)
 			actions_performed = FALSE;
+
+		upd = g_new0(progr_update, 1);
+		upd->descr    = descr;
+		upd->fraction = descr->fraction;
+		upd->text     = (end == oneline) ? g_strdup(oneline) : NULL;
 		if (ival == 100 && !actions_performed) {
-			widget_progressbar_perform_actions(descr);
+			upd->run_actions = TRUE;
 			actions_performed = TRUE;
 		}
-		
-		/*
-		 * Processing pending events.
-		 */
-		while (gtk_events_pending()) 
-			gtk_main_iteration_do(FALSE);
-		/*
-		 * Leaving critical region.
-		 */
-		gdk_threads_leave();
+		g_idle_add(widget_progressbar_apply, upd);
 
-		if (descr->widget == NULL)
+		G_LOCK(any_progress_bar);
+		gone = (descr->widget == NULL);
+		G_UNLOCK(any_progress_bar);
+		if (gone)
 			break;
-
 	}
 
-	fclose(descr->pipe);  /* safe_popen/fdopen → fclose */
+	fclose(descr->pipe);
 	return NULL;
 }
 
