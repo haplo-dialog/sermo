@@ -9,18 +9,26 @@ Versionning : [Semantic Versioning](https://semver.org/lang/fr/) à partir de 1.
 ## [Unreleased] - v1.1.0 (en cours)
 
 ### Ajouté
+- **`--do=CMD` (2026-08-24)** : l'option existait dans les pages de manuel installées et dans le manuel info depuis toujours, sans exister dans aucun binaire — qui recopiait l'exemple officiel obtenait un abandon. Elle exécute la commande après la fermeture de la fenêtre, valeurs des widgets exportées dans l'environnement, via `safe_system()` : `exec()` direct hors métacaractères, repli `/bin/sh -c` journalisé sinon, refus net sous `HAPLO_NO_SHELL_FALLBACK=1`. Branchée par `atexit()`, parce que deux sorties directes ne repassent pas par la fin de `main()`.
+- **`HAPLO_ALLOWED_CMDS` (2026-08-24)** : borne facultative des commandes lançables (`HAPLO_ALLOWED_CMDS=ls,cat,date`). **Éteinte par défaut**, à dessein : le langage sert à lancer des commandes et 14 des exemples livrés appellent `bash` ou `sh`. Elle vise celui qui *déploie* un dialogue dans un contexte moins fiable. Le nom comparé est le nom de base, et tant qu'elle est posée le repli shell est refusé — sinon `sh -c` la contournerait.
+- **Bancs de non-régression (2026-08-22 → 24)** : `tests/run_examples.sh` lance réellement les exemples sous Xvfb au lieu de vérifier qu'ils existent ; `garde_progressbar_thread.sh`, `garde_maxwidgets.sh`, `garde_option_do.sh`, `garde_allowed_cmds.sh` et `garde_spdx.sh` tiennent chacun une promesse du dépôt. Tous branchés dans la CI, sur les deux ports.
+- **Port `gtk4sermo` publié (2026-08-21)** : second backend, même grammaire, quatre balises de plus (`flowbox`, `overlay`, `revealer`, `stack`). La CI le construit et l'éprouve désormais comme l'autre.
 - **Ancrage Wayland de `<window>` (2026-08-20)** : quatre attributs, `layer` (`background`/`bottom`/`top`/`overlay`), `edge` (les 4 bords, les 4 coins, et 6 formes « bande » qui arriment deux bords opposés), `dist` (marge 0-200 px, 20 par défaut) et `reserve` (`yes`/`no`, `no` par défaut : la surface flotte au-dessus des fenêtres ordinaires, ou bien le compositeur lui réserve sa place et dispose les autres à côté), transforment le dialogue en surface *wlr-layer-shell* : barre, dock, widget de bureau. Portage du fork gtk3sermo de BunsenLabs (GPL-2.0+), avec deux corrections par rapport à l'original : la marge, lue dans un type non signé puis contrôlée par un `< 0` qui ne peut jamais se déclencher, est désormais analysée par `strtol()`, refuse une fin de chaîne parasite et est bornée à [0, 200] ; et la détection de Wayland, qui lisait la variable d'environnement `GDK_BACKEND` et continuait quand elle n'était pas définie (le cas normal sous X11), interroge maintenant la bibliothèque elle-même (`gtk_layer_is_supported()`). Hors Wayland, ou sur un compositeur sans le protocole (GNOME), les quatre attributs sont ignorés et une fenêtre ordinaire s'ouvre. Dépendance optionnelle `gtk-layer-shell ≥ 0.8.0` ; `./configure --without-layer-shell` s'en passe. Documenté dans `haplo-dialog-xml(5)`, exemple dans `examples/layer-shell`. **Ancrage éprouvé sous sway 1.12 (wlroots 0.20) et mesuré au pixel** : barre `topstride` collée en haut sur toute la largeur, dock `bottom` `dist="24"` à exactement 24 px du bord, bande `background` intégralement recouverte par une fenêtre ordinaire, `dist="0"` et `dist="60"` séparés de 60 px exactement. `reserve="yes"` mesuré par `swaymsg` : une barre de 48 px repousse la fenêtre ordinaire à `y=48` avec `dist="0"`, et à `y=88` avec `dist="20"`, la marge comptant des deux côtés ; `reserve="no"` et l'absence d'attribut laissent la fenêtre occuper toute la sortie. Non couvert : le multi-écran, le matériel réel, et les compositeurs hors wlroots comme Hyprland.
 - **Compatibilité ascendante gtkdialog (2026-06-06)** : `make install` pose un **symlink `gtkdialog` → `gtk3sermo`** (et `gtkdialog.1` → `gtk3sermo.1`) via le hook autotools ; un dialogue d'époque (`export MAIN_DIALOG='<window …>'; gtkdialog --program=MAIN_DIALOG`) parse, s'exécute et rend sa sortie au format historique (`VAR="valeur"`). La cohérence du symlink est répercutée dans chaque recette de paquet (Debian `.links`, RPM `%files`, etc.).
-- `detect_terminal()` / `detect_editor()`, auto-détection de l'environnement graphique (xfce4-terminal, konsole, gnome-terminal, mousepad, kate, gedit…)
+- **`detect_terminal()` / `detect_editor()` (2026-08-24)**, dans `examples/system-tools` : auto-détection du terminal et de l'éditeur graphiques installés (`x-terminal-emulator` en premier, puis xfce4-terminal, gnome-terminal, konsole, mate-terminal, lxterminal, xterm ; mousepad, gedit, kate, pluma, gnome-text-editor, xed, leafpad). La détection existait déjà en boucle en ligne ; cette entrée la nommait par des fonctions qui n'existaient pas — elles existent maintenant, et rendent le premier outil trouvé.
 - Suite XML étendue à **54 cas de test** (ancrage Wayland, étiquettes et valeurs par défaut vides, searchentry, levelbar, drawingarea, colorbutton, fontbutton, aspectframe, tree, table, menubar, statusbar, togglebutton, timer, edit, list, separators, infobar types, notebook 3 pages, actions REFRESH/ENABLE/DISABLE/SHOW/HIDE/CLEAR, formulaire complexe)
 - `AUTHORS` et `NEWS` à la racine (standard GNU)
 
 ### Modifié
 - `LOGO_TMP` utilise un nom fixe par UID (`/tmp/haplo-logo-UID.png`), évite la fuite en cas de `SIGKILL`
-- ALLOWED_CMDS élargi : pacman, dnf, zypper, emerge, slackpkg, xbps-install, xbps-query, apk
+- **`ALLOWED_CMDS` élargi (2026-08-24)**, dans `examples/system-tools` : `dnf`, `zypper`, `pacman`, `emerge`, `slackpkg`, `xbps-install`, `xbps-query`, `apk` s'ajoutent à la famille `apt`, pour que l'aide en ligne de l'exemple réponde ailleurs que sur Debian. La liste continue de refuser tout le reste (`rm` reste refusé, vérifié).
 - Licence **uniformisée à GPL-2.0-or-later** sur tout le dépôt (en-têtes source, packaging, `LICENCES.md`, `CONTRIBUTING.md`), l'essai GPL-3.0+ a été annulé, conformément à la clause « either version 2 … any later version » des sources et à l'amont gtkdialog
 
 ### Corrigé
+- **Les deux ports plantaient dès qu'on s'en servait (2026-08-22)** : une fenêtre contenant une `<list>` mourait à l'ouverture (segfault) — le rappel de `row-selected` n'attendait que deux paramètres sur les trois que GTK passe ; et tout nombre à virgule tuait le programme en locale française (abandon) — `atof()` lit `0.5` comme `0` sous `fr_FR`. Il ne reste aucun appel à `atof()` : 52 remplacés par `g_ascii_strtod`. Mesuré en locale `fr_FR` : les exemples passent de 26/54 à 55/55 pour gtk3sermo, et 58/58 pour gtk4sermo.
+- **La barre de progression faisait tourner GTK depuis son thread de lecture (2026-08-23)** : `gtk_main_iteration_do()` appelé hors du thread principal, sous un `gdk_threads_enter()` qui ne protège plus rien depuis GTK 3.6. Segfault ou abandon environ une fois sur dix. Le thread ne fait plus que lire son tuyau ; tout ce qui touche GTK repart vers la boucle principale par `g_idle_add()`.
+- **Sûreté mémoire du port GTK 4 (2026-08-24)** : `strncpy` dans un tampon non mis à zéro (un nom de variable de 512 caractères ou plus n'était pas terminé), recopie des widgets d'un conteneur sans borne `MAXWIDGETS` (300 enfants directs étaient acceptés en silence), et `action_append()` qui recopiait son premier paramètre depuis le début de la chaîne. Le port GTK 3 avait déjà les trois garde-fous ; les deux ports sont alignés.
+- **Filtrage de l'environnement enfant, port GTK 4 (2026-08-24)** : `_build_child_env()` manquait entièrement — 60 lignes d'écart avec le port GTK 3 — alors que `SECURITY.md` annonçait le filtrage pour le produit.
 - **Élément à contenu textuel vide (2026-08-20)** : `<label></label>`, ou une étiquette faite uniquement d'espaces, cassait l'analyse avec un « syntax error » pointant la balise fermante, alors que poser un espaceur en écrivant `<text><label>   </label></text>` est le réflexe naturel. `<label>` et `<default>` acceptent désormais le vide et valent `""` (comme `<item>` le faisait déjà) ; `<sensitive>`, `<width>`, `<height>`, `<input>`, `<output>`, `<variable>` et `<action>` restent une erreur, mais avec un message qui nomme la cause : « the <variable> element is empty; it requires a name. »
 - **Troncature des noms de widgets auto-générés (2026-06-06)** : `g_snprintf(name, sizeof(name), …)` où `name` est un `char*`, `sizeof` valait donc 8 octets, tronquant les noms, corrigé en passant la taille du tampon à 64 ; restaure le comportement gtkdialog d'origine
 - **Lecture de variable non initialisée (2026-06-06)** : `instruction inst;` dont `inst.ival` était lu → `instruction inst = {0};`
@@ -31,8 +39,28 @@ Versionning : [Semantic Versioning](https://semver.org/lang/fr/) à partir de 1.
 ## Révisions d'empaquetage de la 1.0.0
 
 Le **logiciel** reste en version 1.0.0. Les révisions -2 et -3 ne changent que le
-paquet Debian et livrent un binaire identique ; les -4 et -5 font exception et
-changent le binaire.
+paquet Debian et livrent un binaire identique ; à partir de la -4 elles changent
+aussi le binaire.
+
+Les deux ports ont chacun son `debian/changelog`, qui fait foi pour lui, et leurs
+révisions peuvent diverger : un correctif ne touche pas toujours les deux. État au
+2026-08-24 : **gtk3sermo 1.0.0-10**, **gtk4sermo 1.0.0-11**.
+
+### [1.0.0-11] - 2026-08-22 — gtk4sermo seulement
+- Page de manuel : la section SEE ALSO renvoyait vers `fltk1d`, `efl1d`, `qt6d` et
+  d'autres ports jamais publiés.
+
+### [1.0.0-10] - 2026-08-22 — les deux ports
+- Menus GTK 4 : `<menuitem>` rendait un `GtkPopoverMenu` autonome, empilé dans la
+  fenêtre au lieu d'être attaché à sa barre.
+
+### [1.0.0-9] - 2026-08-21 — les deux ports
+- **Renommage.** Le paquet s'appelait `gtk3dialog`, nom déjà porté par un paquet de
+  BunsenLabs, puis `haplo-dialog` — qui est le nom du produit, pas celui d'un port.
+  Les ports s'appellent désormais `gtk3sermo` et `gtk4sermo`, et le lien de
+  compatibilité `gtkdialog` vit dans un paquet séparé, `gtksermo`, en conflit
+  assumé. Les deux ports s'installent donc à côté de n'importe quelle autre
+  implémentation.
 
 ### [1.0.0-5] - 2026-08-20
 - **Analyseur** : une étiquette vide est acceptée là où le vide est une valeur

@@ -57,18 +57,40 @@ fi
 # ── Terminal et éditeur : on prend ce qui est installé ──────────────────────
 # L'ancienne version exigeait xfce4-terminal et mousepad : sur une Debian avec
 # un autre bureau, la moitié des boutons ne faisaient rien. On détecte.
-TERMINAL=""
-for _t in x-terminal-emulator xfce4-terminal gnome-terminal konsole mate-terminal \
-          lxterminal xterm; do
-    command -v "$_t" >/dev/null 2>&1 && { TERMINAL="$_t"; break; }
-done
-unset _t
+#
+# Rendu en fonctions nommées parce que le CHANGELOG les citait par leur nom
+# (detect_terminal / detect_editor) alors que seule la boucle existait : une
+# entrée de journal qui nomme du code inexistant se lit comme une invention.
 
-EDITEUR=""
-for _e in mousepad gedit kate pluma gnome-text-editor xed leafpad; do
-    command -v "$_e" >/dev/null 2>&1 && { EDITEUR="$_e"; break; }
-done
-unset _e
+# Rend le premier terminal graphique installé, ou rien.
+# x-terminal-emulator d'abord : c'est l'alternative Debian, qui pointe déjà
+# sur le choix de l'utilisateur.
+detect_terminal() {
+    local t
+    for t in x-terminal-emulator xfce4-terminal gnome-terminal konsole \
+             mate-terminal lxterminal xterm; do
+        if command -v "$t" >/dev/null 2>&1; then
+            printf '%s\n' "$t"
+            return 0
+        fi
+    done
+    return 1
+}
+
+# Rend le premier éditeur de texte graphique installé, ou rien.
+detect_editor() {
+    local e
+    for e in mousepad gedit kate pluma gnome-text-editor xed leafpad; do
+        if command -v "$e" >/dev/null 2>&1; then
+            printf '%s\n' "$e"
+            return 0
+        fi
+    done
+    return 1
+}
+
+TERMINAL="$(detect_terminal || true)"
+EDITEUR="$(detect_editor || true)"
 export TERMINAL EDITEUR
 
 # Affiche un fichier texte : éditeur graphique si présent, sinon terminal.
@@ -96,6 +118,7 @@ export XAUTHORITY="${XAUTHORITY:-$HOME/.Xauthority}"
 
 readonly ALLOWED_CMDS=(
     apt apt-get apt-cache aptitude
+    dnf zypper pacman emerge slackpkg xbps-install xbps-query apk
     cat cp df du dmesg find free grep
     htop id ifconfig ip journalctl
     last less lsb_release lsblk lsmod lspci lsusb lshw
