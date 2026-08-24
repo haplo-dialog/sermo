@@ -58,9 +58,23 @@ Read the XML dialog description from
 .B \-\-stdin
 Read the XML dialog description from standard input.
 .TP
-.BI \-\-do= VARIABLE
-After the dialog exits, execute the shell command stored in
-.IR VARIABLE .
+.BI \-\-do= CMD
+After the dialog has closed, run the shell command
+.IR CMD .
+The widget values are exported as environment variables first, so
+.I CMD
+can read them directly. The command goes through the same path as every other
+command the program runs: a direct
+.BR exec ()
+without a shell when
+.I CMD
+carries no shell metacharacter, a logged
+.B /bin/sh \-c
+fallback otherwise, and a clean refusal when
+.B HAPLO_NO_SHELL_FALLBACK=1
+is set. The exit status of the dialog is not replaced by that of
+.IR CMD ;
+a non-zero status is reported as a warning.
 .TP
 .B \-\-version
 Print version and exit.

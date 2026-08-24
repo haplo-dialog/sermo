@@ -69,6 +69,24 @@ Read the GUI description from
 .BR \-s ", " \-\-stdin
 Read the GUI description from standard input.
 .TP
+.BI \-\-do= CMD
+After the dialog has closed, run the shell command
+.IR CMD .
+The widget values are exported as environment variables first, so
+.I CMD
+can read them directly. The command goes through the same path as every other
+command the program runs: a direct
+.BR exec ()
+without a shell when
+.I CMD
+carries no shell metacharacter, a logged
+.B /bin/sh \-c
+fallback otherwise, and a clean refusal when
+.B HAPLO_NO_SHELL_FALLBACK=1
+is set. The exit status of the dialog is not replaced by that of
+.IR CMD ;
+a non-zero status is reported as a warning.
+.TP
 .BI \-i " FILE" "\fR,\fP \-\-include=" FILE
 Include and execute
 .I FILE

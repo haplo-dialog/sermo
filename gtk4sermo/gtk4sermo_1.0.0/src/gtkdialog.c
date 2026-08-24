@@ -71,6 +71,7 @@ gchar *option_space_fill = NULL;
 gboolean option_input_stdin = FALSE;
 gboolean option_no_warning = FALSE;
 gboolean option_print_ir = FALSE;
+gchar *option_do_command = NULL;
 gboolean option_centering = FALSE;
 
 static gint source = PRG_UNKNOWN;    // Where the program is coming from?
@@ -201,6 +202,11 @@ gtkdialog_init(
 		"stdin", 's', 
 		0, G_OPTION_ARG_NONE, &option_input_stdin, 
 		"Get the GUI description from standard input.", NULL
+	},
+	{ 
+		"do", 0, 
+		0, G_OPTION_ARG_STRING, &option_do_command, 
+		"Execute this shell command after the dialog closes.", "command"
 	},
 	{ 
 		"no-warning", 'w', 
@@ -496,6 +502,45 @@ set_program_source(gchar *name)
 	set_program_name(name);
 } */
 
+/* --do : la commande que la page de manuel et le manuel info annoncent depuis
+ * toujours, sans qu'elle ait jamais existe dans le binaire.
+ *
+ * Elle passe par atexit() et non par la fin de main(), parce que le programme
+ * a PLUSIEURS sorties directes qui n'y repassent jamais : l'action exit: d'un
+ * widget (actions.c, action_exitprogram) et la fermeture de la derniere
+ * fenetre. Un branchement en fin de main ne se serait declenche sur aucune des
+ * deux — mesure avant de choisir.
+ *
+ * Elle s'execute APRES la fermeture, avec les valeurs des widgets deja
+ * exportees dans l'environnement : c'est ce que la doc promet. Et elle passe
+ * par safe_system(), donc par le meme chemin que tout le reste : exec() direct
+ * sans shell si la commande ne porte aucun metacaractere, repli /bin/sh -c
+ * journalise sinon, et refus net si HAPLO_NO_SHELL_FALLBACK=1. Aucune surface
+ * nouvelle : la commande vient de la ligne de commande de l'appelant, qui a
+ * deja un shell.
+ *
+ * Le code de sortie du dialogue n'est pas remplace par celui de la commande —
+ * les sorties par exit() ont deja fixe le leur. Un echec est signale. */
+static void
+run_do_command_at_exit(void)
+{
+	gint rc;
+
+	if (option_do_command == NULL)
+		return;
+
+	variables_export_all();
+	/* Vider les tampons AVANT de lancer la commande : les lignes NOM="..." et
+	 * EXIT="..." sont ecrites par printf et restent en tampon jusqu'a la fin du
+	 * processus, alors que la sortie de la commande part directement. Sans ce
+	 * fflush, un script qui fait eval "$(gtk3sermo ... --do=...)" recoit les
+	 * lignes dans le desordre. */
+	fflush(NULL);
+	rc = safe_system(option_do_command);
+	if (rc != 0)
+		g_warning("--do: la commande s'est terminee avec le code %d", rc);
+}
+
 int 
 main(int argc, char *argv[])
 {
@@ -516,6 +561,9 @@ main(int argc, char *argv[])
 	 * Processing command line arguments.
 	 */
 	gtkdialog_init(argc, argv);
+
+	if (option_do_command != NULL)
+		atexit(run_do_command_at_exit);
 	
 	if (option_version)
 		print_version_exit(EXIT_SUCCESS);
