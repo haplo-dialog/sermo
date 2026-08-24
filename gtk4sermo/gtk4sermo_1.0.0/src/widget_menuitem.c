@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * widget_menuitem.c — Éléments de menu GTK4 via GMenuItem + GSimpleAction
  * gtk4sermo 1.0.0 — Haplo-Linux <devel@haplo-dialog.fr>

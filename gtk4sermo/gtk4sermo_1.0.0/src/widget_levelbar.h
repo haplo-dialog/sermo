@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * widget_levelbar.h — GTK4-native widget (levelbar)
  * gtk4sermo 1.0.0 — Haplo-Linux <devel@haplo-dialog.fr>

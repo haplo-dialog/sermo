@@ -51,6 +51,9 @@ default:
     # se déclenche qu'une fois sur dix — un test comportemental serait vert la
     # plupart du temps, donc ne prouverait rien.
     - sh "$CI_PROJECT_DIR/tests/garde_progressbar_thread.sh" "$CI_PROJECT_DIR/$PORT/${PORT}_1.0.0/src/widget_progressbar.c"
+    # LICENCES.md affirme que chaque fichier de src/ porte un SPDX : ce banc
+    # rend l'affirmation tenable au lieu de la laisser vieillir.
+    - bash "$CI_PROJECT_DIR/tests/garde_spdx.sh" "$CI_PROJECT_DIR/$PORT/${PORT}_1.0.0/src"
 
 .cmake:
   stage: build-test

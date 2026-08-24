@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 #include "safe_exec.h"
 /*
  * gtk3sermo.c: Starting up the program.

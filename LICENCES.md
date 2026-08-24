@@ -44,7 +44,15 @@ exclusive, bords opposés, 2021-2024).
 
 ## Identification SPDX dans les sources
 
-Chaque fichier source contient un identifiant SPDX en en-tête :
+Chaque fichier de `src/`, dans les deux ports, porte un identifiant SPDX en
+première ligne — 115 fichiers pour gtk3sermo, 131 pour gtk4sermo, sans exception.
+Le banc `tests/garde_spdx.sh` le vérifie à chaque passage de la CI, pour que
+cette phrase reste vraie.
+
+Les répertoires `examples/` et `tests/xml/` relèvent d'une autre licence : voir
+plus haut.
+
+Forme employée :
 
 ```c
 /* SPDX-License-Identifier: GPL-2.0-or-later */  // cœur, widgets, compat

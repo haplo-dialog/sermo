@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * widget_table.c — Tableau GTK4 via GtkColumnView + GListStore
  * gtk4sermo 1.0.0 — Haplo-Linux <devel@haplo-dialog.fr>

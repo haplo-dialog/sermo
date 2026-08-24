@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * gtk4-compat.c — GTK3→GTK4 compatibility backing store
  *

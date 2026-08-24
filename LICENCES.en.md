@@ -44,7 +44,15 @@ edges, 2021-2024).
 
 ## SPDX identification in the sources
 
-Every source file carries an SPDX identifier in its header:
+Every file under `src/`, in both ports, carries an SPDX identifier on its first
+line — 115 files for gtk3sermo, 131 for gtk4sermo, without exception. The
+`tests/garde_spdx.sh` bench checks it on every CI run, so that this sentence
+stays true.
+
+The `examples/` and `tests/xml/` directories fall under a different licence: see
+above.
+
+Form used:
 
 ```c
 /* SPDX-License-Identifier: GPL-2.0-or-later */  // core, widgets, compat

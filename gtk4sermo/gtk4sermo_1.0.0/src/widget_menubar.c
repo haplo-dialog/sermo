@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * widget_menubar.c — Barre de menus GTK4 via GtkPopoverMenuBar + GMenuModel
  * gtk4sermo 1.0.0 — Haplo-Linux <devel@haplo-dialog.fr>

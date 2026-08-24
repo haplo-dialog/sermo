@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * attributes.c: Handles the attributes of widgets.
  * Gtkdialog - A small utility for fast and easy GUI building.

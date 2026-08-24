@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * widget_linkbutton.c:
  * Gtkdialog - A small utility for fast and easy GUI building.
