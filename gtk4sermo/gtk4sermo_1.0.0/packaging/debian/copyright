@@ -4,8 +4,9 @@ Upstream-Contact: devel@haplo-dialog.fr
 Source: https://haplo-dialog.fr
 
 Files: *
-Copyright: 2003-2013 László Pere <pipas@linux.pte.hu>
-           2026 Haplo-Linux <devel@haplo-dialog.fr>
+Copyright: 2003-2007 László Pere <pipas@linux.pte.hu>
+           2011-2012 Thunor <thunorsif@hotmail.com>
+           2026 haplo-dialog <devel@haplo-dialog.fr>
 License: GPL-2.0-or-later
 
 License: GPL-2.0-or-later

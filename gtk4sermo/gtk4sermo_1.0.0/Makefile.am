@@ -3,6 +3,24 @@ SUBDIRS=src doc data
 EXTRA_DIST = \
 	autogen.sh \
 	examples/button/* \
+	examples/aspectframe/* \
+	examples/calendar/* \
+	examples/c_embedded/* \
+	examples/drawingarea/* \
+	examples/filechooser/* \
+	examples/flowbox/* \
+	examples/image/* \
+	examples/infobar/* \
+	examples/levelbar/* \
+	examples/linkbutton/* \
+	examples/overlay/* \
+	examples/password/* \
+	examples/pulse/* \
+	examples/revealer/* \
+	examples/searchentry/* \
+	examples/spinner/* \
+	examples/stack/* \
+	examples/switch/* \
 	examples/checkbox/* \
 	examples/colorbutton/* \
 	examples/combobox/* \

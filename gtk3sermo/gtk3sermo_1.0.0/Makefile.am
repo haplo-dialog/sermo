@@ -21,6 +21,19 @@ EXTRA_DIST = \
 	debian/copyright \
 	debian/gtk3sermo.install \
 	examples/button/* \
+	examples/aspectframe/* \
+	examples/calendar/* \
+	examples/c_embedded/* \
+	examples/filechooser/* \
+	examples/image/* \
+	examples/infobar/* \
+	examples/layer-shell/* \
+	examples/linkbutton/* \
+	examples/password/* \
+	examples/pulse/* \
+	examples/searchentry/* \
+	examples/spinner/* \
+	examples/switch/* \
 	examples/checkbox/* \
 	examples/colorbutton/* \
 	examples/combobox/* \

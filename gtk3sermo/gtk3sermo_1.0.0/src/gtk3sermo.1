@@ -2,7 +2,7 @@
 .\" haplo-dialog <devel@haplo-dialog.fr>
 .\" This file is installed as /usr/share/man/man1/gtk3sermo.1
 .\"
-.TH GTK3DIALOG 1 "June 2026" "gtk3sermo 1.0.0" "haplo-dialog User Commands"
+.TH GTK3SERMO 1 "June 2026" "gtk3sermo 1.0.0" "haplo-dialog User Commands"
 .SH NAME
 gtk3sermo \- GTK3 dialog box creator for shell scripts
 .SH SYNOPSIS
@@ -161,6 +161,62 @@ Each widget exports its current value as a shell environment variable
 (via
 .BR eval )
 when the dialog exits or an action requests a refresh.
+.SS Wayland anchoring
+Under a Wayland compositor that implements the
+.I wlr\-layer\-shell
+protocol (sway, Hyprland, river, labwc, wayfire), the
+.B window
+tag accepts three extra attributes that turn the dialog into a layer\-shell
+surface, so that a shell script can draw a bar, a dock or a desktop widget.
+.TP
+.B layer
+Stacking layer:
+.BR background ", " bottom ", " top ", " overlay .
+.TP
+.B edge
+Anchored screen edge:
+.BR top ", " bottom ", " left ", " right ,
+the four corners
+.RB ( topleft ", " topright ", " bottomleft ", " bottomright ),
+or one of the six two\-edge forms that stretch the surface across the output
+.RB ( hstride ", " vstride ", " topstride ", " bottomstride ", " leftstride ", " rightstride ).
+.TP
+.B dist
+Margin from the anchored edges, an integer from 0 to 200 (default 20).
+.TP
+.B reserve
+Whether the compositor keeps the surface's space free:
+.BR yes " or " no " (default " no ")."
+By default the surface floats over ordinary windows, which fill the output and
+pass underneath; with
+.BR yes ,
+the compositor reserves the space and lays other windows out beside it, which
+is what a bar wants and a dock usually does not. Only meaningful together with
+.BR edge ;
+without it a warning is printed. The margin counts on both sides: measured
+under sway, a 48\-pixel bar keeps 48 pixels free with
+.BR dist="0" ,
+and 88 with
+.BR dist="20" .
+.PP
+A 40\-pixel bar flush against the top of the screen, reserving its space
+instead of covering the windows:
+.PP
+.nf
+.RS 4
+<window layer="top" edge="topstride" dist="0" reserve="yes" height\-request="40">
+.RE
+.fi
+.PP
+Under X11, or under a Wayland compositor without the protocol (GNOME), the
+four attributes are ignored, a diagnostic is printed on standard error and an
+ordinary window is shown; the script itself is unaffected. The support is
+compiled in only when gtk\-layer\-shell was available at build time
+.RB ( ./configure " " \-\-without\-layer\-shell " disables it)."
+.PP
+See
+.B examples/layer\-shell
+in the documentation directory.
 .SH EXIT STATUS
 gtk3sermo exits with status
 .B 0

@@ -4,8 +4,20 @@ Upstream-Contact: devel@haplo-dialog.fr
 Source: https://haplo-dialog.fr
 
 Files: *
-Copyright: 2003-2013 László Pere <pipas@linux.pte.hu>
+Copyright: 2003-2007 László Pere <pipas@linux.pte.hu>
+           2011-2012 Thunor <thunorsif@hotmail.com>
            2026 haplo-dialog <devel@haplo-dialog.fr>
+License: GPL-2.0-or-later
+
+Files: src/widget_window.c
+Copyright: 2003-2007 László Pere <pipas@linux.pte.hu>
+           2011-2012 Thunor <thunorsif@hotmail.com>
+           2021 Dima Krasner <dima@dimakrasner.com>
+           2021-2024 Mick Amadio <01micko@gmail.com>
+           2026 haplo-dialog <devel@haplo-dialog.fr>
+Comment: L'ancrage Wayland (layer-shell) reprend le travail de Dima Krasner,
+ étendu par Mick Amadio, dans le fork BunsenLabs gtk3dialog
+ (https://github.com/BunsenLabs/gtk3dialog), sous GPL-2.0-or-later.
 License: GPL-2.0-or-later
 
 License: GPL-2.0-or-later

@@ -1,0 +1,87 @@
+#!/bin/sh
+# layer-shell — example for the Wayland anchoring attributes of <window>
+# gtkdialog-1.0.0 — haplo-dialog 2026
+#
+# Under Wayland, a <window> can be turned into a wlr-layer-shell surface —
+# a bar, a dock, a desktop widget — with three tag attributes:
+#
+#   layer="background|bottom|top|overlay"
+#       Which layer of the compositor stack the surface lives on.
+#
+#   edge="top|bottom|left|right
+#         |topleft|topright|bottomleft|bottomright
+#         |hstride|vstride|topstride|bottomstride|leftstride|rightstride"
+#       Which screen edge(s) it is anchored to.  The "stride" forms anchor
+#       two opposite edges, so the surface stretches across the output —
+#       that is how you build a bar.
+#
+#   dist="0..200"
+#       Margin in pixels from the anchored edges (default 20).
+#
+#   reserve="yes|no"
+#       Whether the compositor keeps the surface's space free (default no).
+#       With "no" the surface floats over ordinary windows; with "yes" the
+#       compositor lays other windows out beside it.  A bar wants "yes"; a
+#       dock or a desktop widget usually does not.
+#
+# This needs a compositor that implements wlr-layer-shell: sway, Hyprland,
+# river, labwc, wayfire...  Under X11, or under a Wayland compositor without
+# the protocol (GNOME/Mutter), the attributes are ignored, a message is
+# printed on stderr and an ordinary window opens instead.  The example is
+# therefore safe to run anywhere.
+#
+# Usage:
+#   ./layer-shell            — top bar (default), reserving its space
+#   ./layer-shell dock       — floating dock, bottom edge
+#   ./layer-shell wallpaper  — full-width strip on the background layer
+#   ./layer-shell --dump     — print the XML definition
+
+GTKDIALOG=gtkdialog
+
+MODE=bar
+DUMP=no
+for a in "$@"; do
+	case $a in
+		-d | --dump) DUMP=yes ;;
+		bar | dock | wallpaper) MODE=$a ;;
+		*) echo "usage: $0 [bar|dock|wallpaper] [--dump]" >&2 ; exit 2 ;;
+	esac
+done
+
+case $MODE in
+	dock)
+		LAYER=overlay ; EDGE=bottom     ; DIST=24 ; RESERVE=no
+		WHAT="dock (overlay, bottom, 24px)" ;;
+	wallpaper)
+		LAYER=background ; EDGE=hstride ; DIST=0  ; RESERVE=no
+		WHAT="wallpaper strip (background, hstride)" ;;
+	*)
+		LAYER=top ; EDGE=topstride      ; DIST=0  ; RESERVE=yes
+		WHAT="top bar (top, topstride, flush, reserve)" ;;
+esac
+
+MAIN_DIALOG='
+<window title="layer-shell example" layer="'$LAYER'" edge="'$EDGE'" dist="'$DIST'" reserve="'$RESERVE'" height-request="48">
+	<hbox>
+		<text><label>haplo-dialog — '"$WHAT"'</label></text>
+		<!-- Empty label, expanded: takes up the slack so that the buttons
+		     sit at the right end of the bar. -->
+		<text space-expand="true" space-fill="true"><label></label></text>
+		<button>
+			<label>Heure</label>
+			<action>echo "il est $(date +%H:%M:%S)"</action>
+		</button>
+		<button>
+			<label>Fermer</label>
+			<action>exit:OK</action>
+		</button>
+	</hbox>
+</window>
+'
+export MAIN_DIALOG
+
+if [ "$DUMP" = yes ]; then
+	echo "$MAIN_DIALOG"
+else
+	$GTKDIALOG --program=MAIN_DIALOG
+fi
