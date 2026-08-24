@@ -99,6 +99,9 @@ gtk4sermo:
     # annoncee, qu'elle tourne, que sa sortie est ordonnee, et qu'elle reste
     # soumise au refus fail-closed du modele de securite.
     - bash "$CI_PROJECT_DIR/tests/garde_option_do.sh" "src/$PORT"
+    # HAPLO_ALLOWED_CMDS : eteinte par defaut, mordante une fois posee, et
+    # increvable par sh -c ou par un chemin absolu.
+    - bash "$CI_PROJECT_DIR/tests/garde_allowed_cmds.sh" "src/$PORT"
 
 exemples:gtk3sermo:
   extends: .examples

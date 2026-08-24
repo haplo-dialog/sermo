@@ -233,12 +233,25 @@ gtk3sermo --program=DIALOG --do='echo "Bonjour $NOM"'
 @chapter Sécurité
 
 @itemize
-@item Élévation de privilèges via @command{pkexec} (PolicyKit), jamais @command{sudo} en mode GUI.
-@item Liste blanche de commandes pour @code{CMD_INPUT}.
-@item Validation des chemins avant accès fichier.
-@item @code{safe_system()} / @code{safe_popen()} utilisés partout — jamais @code{system()} direct.
+@item @code{safe_system()} / @code{safe_popen()} partout — jamais @code{system()} direct.
+Une commande sans métacaractère shell est lancée par @code{exec()} direct, sans shell ;
+avec métacaractère, un repli @code{/bin/sh -c} est journalisé.
+@item @code{HAPLO_NO_SHELL_FALLBACK=1} refuse ce repli et échoue au lieu d'exécuter.
+@item @code{HAPLO_ALLOWED_CMDS=ls,cat,date} borne les commandes lançables à une liste
+de noms. Éteinte par défaut. Quand elle est posée, le repli shell est refusé aussi —
+sinon @command{sh -c} la contournerait en s'appelant @command{sh}.
 @item @code{fclose()} sur tout @code{FILE*} issu de @code{safe_popen()} — jamais @code{pclose()}.
+@item Environnement des processus lancés filtré : le bloc XML (plusieurs Kio) n'est pas hérité.
 @item Drapeaux de durcissement : @code{FORTIFY_SOURCE=3}, @code{fstack-protector-strong}, PIE, Full RELRO.
+@end itemize
+
+@noindent
+Ce que le programme ne fait @strong{pas}, et qu'il ne faut pas lui prêter :
+
+@itemize
+@item Aucune élévation de privilèges. Ni @command{pkexec}, ni @command{sudo} : un
+dialogue qui a besoin de droits doit être lancé avec ces droits.
+@item Aucune validation des chemins de fichiers passés dans le XML.
 @end itemize
 
 @node Index

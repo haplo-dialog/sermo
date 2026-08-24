@@ -64,6 +64,76 @@ static gboolean _has_shell_metacharacters(const gchar *command)
  */
 #define MAX_INHERITED_VALUE 8192
 
+/*
+ * _allowlist_permits:
+ * HAPLO_ALLOWED_CMDS, quand elle est definie, restreint les commandes que le
+ * programme accepte de lancer a une liste de noms separes par des virgules :
+ *
+ *     HAPLO_ALLOWED_CMDS=ls,cat,date
+ *
+ * ETEINTE PAR DEFAUT, et c'est un choix mesure. Le langage XML de sermo sert
+ * precisement a lancer des commandes : les exemples livres en invoquent une
+ * vingtaine par <input> et une soixantaine par <action>, et 14 d'entre eux
+ * appellent bash ou sh directement. Une liste active par defaut casserait le
+ * produit sans proteger personne — la commande vient du script que l'appelant
+ * a ecrit lui-meme, et qui a deja un shell.
+ *
+ * Elle vise l'AUTRE cas, le seul reel : celui qui DEPLOIE un dialogue dans un
+ * contexte moins fiable — une borne, une session invitee — et veut borner ce
+ * qu'il peut lancer. Meme famille que HAPLO_NO_SHELL_FALLBACK : une variable
+ * d'environnement que pose l'exploitant, pas l'auteur du script.
+ *
+ * La comparaison porte sur le NOM DE BASE du programme, pas sur le chemin :
+ * « /bin/ls » et « ls » sont le meme nom, sinon la liste se contournerait en
+ * ecrivant le chemin absolu.
+ *
+ * Renvoie TRUE si la liste est absente (aucune restriction) ou si le nom y est.
+ */
+static gboolean _allowlist_permits(const gchar *argv0)
+{
+    const gchar  *list;
+    gchar       **allowed;
+    gchar        *base;
+    gboolean      ok = FALSE;
+    gint          i;
+
+    list = g_getenv("HAPLO_ALLOWED_CMDS");
+    if (list == NULL || *list == '\0')
+        return TRUE;                 /* liste absente : aucune restriction */
+
+    if (argv0 == NULL || *argv0 == '\0')
+        return FALSE;
+
+    base    = g_path_get_basename(argv0);
+    allowed = g_strsplit(list, ",", -1);
+    for (i = 0; allowed[i] != NULL; i++) {
+        gchar *entry = g_strstrip(g_strdup(allowed[i]));
+        if (*entry != '\0' && g_strcmp0(entry, base) == 0)
+            ok = TRUE;
+        g_free(entry);
+        if (ok)
+            break;
+    }
+    g_strfreev(allowed);
+
+    if (!ok)
+        g_critical("commande '%s' refusee : absente de HAPLO_ALLOWED_CMDS", base);
+    g_free(base);
+    return ok;
+}
+
+/*
+ * _allowlist_is_active:
+ * Vraie des que HAPLO_ALLOWED_CMDS est posee. Quand elle l'est, le repli
+ * /bin/sh -c doit etre refuse : sinon « sh -c 'rm -rf /' » traverserait la
+ * liste en s'appelant « sh », et la liste ne servirait a rien.
+ */
+static gboolean _allowlist_is_active(void)
+{
+    const gchar *list = g_getenv("HAPLO_ALLOWED_CMDS");
+    return (list != NULL && *list != '\0');
+}
+
 static gchar **_build_child_env(void)
 {
     gchar **src = g_get_environ();
@@ -135,6 +205,10 @@ gint safe_system(const gchar *command)
             g_critical("safe_system: shell fallback refused (HAPLO_NO_SHELL_FALLBACK set)");
             return -1;
         }
+        if (_allowlist_is_active()) {
+            g_critical("safe_system: repli shell refuse tant que HAPLO_ALLOWED_CMDS est posee");
+            return -1;
+        }
         argv = g_new(gchar *, 4);
         argv[0] = g_strdup("/bin/sh");
         argv[1] = g_strdup("-c");
@@ -147,6 +221,11 @@ gint safe_system(const gchar *command)
             g_error_free(error);
             return -1;
         }
+    }
+
+    if (!_allowlist_permits(argv[0])) {
+        g_strfreev(argv);
+        return -1;
     }
 
     envp = _build_child_env();
@@ -206,6 +285,10 @@ FILE *safe_popen(const gchar *command)
             g_critical("safe_popen: shell fallback refused (HAPLO_NO_SHELL_FALLBACK set)");
             return NULL;
         }
+        if (_allowlist_is_active()) {
+            g_critical("safe_popen: repli shell refuse tant que HAPLO_ALLOWED_CMDS est posee");
+            return NULL;
+        }
         argv = g_new(gchar *, 4);
         argv[0] = g_strdup("/bin/sh");
         argv[1] = g_strdup("-c");
@@ -218,6 +301,11 @@ FILE *safe_popen(const gchar *command)
             g_error_free(error);
             return NULL;
         }
+    }
+
+    if (!_allowlist_permits(argv[0])) {
+        g_strfreev(argv);
+        return NULL;
     }
 
     envp = _build_child_env();

@@ -85,6 +85,64 @@ Print usage summary and exit.
 Widget values are exported as environment variables before executing
 .B \-\-do
 commands.
+.TP
+.B HAPLO_NO_SHELL_FALLBACK
+When set (to any value), refuse the
+.B /bin/sh \-c
+fallback used for
+.RB < input >/< action >
+commands that contain shell metacharacters, and fail closed instead. Commands
+without shell metacharacters still run via direct
+.BR exec ()
+(no shell). Use this to harden gtk4sermo when rendering XML whose command
+strings may come from a less-trusted source than the local script author (see
+.B safe_exec.c
+design note 1).
+.TP
+.B HAPLO_ALLOWED_CMDS
+A comma-separated list of command names that the program is allowed to run, for
+example
+.BR HAPLO_ALLOWED_CMDS=ls,cat,date .
+Unset by default, and deliberately so: the XML language exists to run commands,
+and the shipped examples invoke around twenty of them — fourteen call
+.B bash
+or
+.B sh
+directly. A list that were on by default would break the product without
+protecting anyone, since the command comes from the very script the caller
+wrote. It is meant for the other case: someone DEPLOYING a dialog into a
+less-trusted context (a kiosk, a guest session) who wants to bound what it can
+launch.
+.IP
+The comparison is on the program's base name, so
+.B /bin/ls
+and
+.B ls
+are the same name. While the list is set, the
+.B /bin/sh \-c
+fallback is refused as well \(em otherwise
+.B sh \-c \(aq...\(aq
+would walk straight through the list by calling itself
+.BR sh .
+.TP
+.B GTKDIALOG_PIXMAP_PATH
+Colon\-separated list of directories in which gtk4sermo searches for image
+files that are not found at the path given in the XML. It is consulted when
+loading
+.BR <pixmap> ,
+window and button icons, and menu\-item images.
+.TP
+.B MAIN_DIALOG
+Fallback source variable. When none of
+.BR \-\-program ,
+.BR \-\-file ,
+.BR \-\-stdin ,
+.B \-\-event\-driven
+or
+.B \-\-glade\-xml
+is given, gtk4sermo reads the GUI description from the environment variable
+named
+.BR MAIN_DIALOG .
 .SH FILES
 .TP
 .I /usr/share/doc/gtk4sermo/

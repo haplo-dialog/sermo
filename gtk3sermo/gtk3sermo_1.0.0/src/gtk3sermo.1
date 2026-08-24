@@ -271,6 +271,32 @@ strings may come from a less-trusted source than the local script author (see
 .B safe_exec.c
 design note 1).
 .TP
+.B HAPLO_ALLOWED_CMDS
+A comma-separated list of command names that the program is allowed to run, for
+example
+.BR HAPLO_ALLOWED_CMDS=ls,cat,date .
+Unset by default, and deliberately so: the XML language exists to run commands,
+and the shipped examples invoke around twenty of them — fourteen call
+.B bash
+or
+.B sh
+directly. A list that were on by default would break the product without
+protecting anyone, since the command comes from the very script the caller
+wrote. It is meant for the other case: someone DEPLOYING a dialog into a
+less-trusted context (a kiosk, a guest session) who wants to bound what it can
+launch.
+.IP
+The comparison is on the program's base name, so
+.B /bin/ls
+and
+.B ls
+are the same name. While the list is set, the
+.B /bin/sh \-c
+fallback is refused as well \(em otherwise
+.B sh \-c \(aq...\(aq
+would walk straight through the list by calling itself
+.BR sh .
+.TP
 .B GTKDIALOG_PIXMAP_PATH
 Colon\-separated list of directories in which gtk3sermo searches for image
 files that are not found at the path given in the XML. It is consulted when

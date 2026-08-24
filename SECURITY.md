@@ -60,6 +60,7 @@ Envoyez un email à **devel@haplo-dialog.fr** avec :
 |-----------|---------------|
 | `safe_exec()` / `safe_popen()` | Ni `system()` ni `popen()`. Commande **sans** métacaractère shell → `exec()` direct (argv, sans shell). Commande **avec** métacaractère → repli `/bin/sh -c`, **journalisé**. |
 | Refus « fail-closed » | `HAPLO_NO_SHELL_FALLBACK=1` refuse tout repli `/bin/sh -c` (échoue au lieu d'exécuter). |
+| Liste de commandes, facultative | `HAPLO_ALLOWED_CMDS=ls,cat,date` borne les commandes lançables. **Éteinte par défaut** : le langage sert à lancer des commandes, et 14 des exemples livrés appellent `bash` ou `sh` — une liste active par défaut casserait le produit sans protéger personne, la commande venant du script que l'appelant a écrit. Elle vise celui qui **déploie** un dialogue dans un contexte moins fiable. Le nom comparé est le nom de base (`/bin/ls` = `ls`), et tant qu'elle est posée le repli `/bin/sh -c` est refusé — sinon `sh -c` la contournerait. |
 | Longueur de commande | Bornée dans `safe_exec()`/`safe_popen()`. |
 | Environnement enfant | Filtré : le bloc `DIALOG` (plusieurs Kio de XML) n'est pas hérité par les processus lancés. |
 | Sûreté mémoire | `g_strlcpy` (noms de variables), copie de widgets bornée, `argv` de spawn toujours NUL-terminé ; aucune fonction interdite (`strcpy`/`strcat`/`sprintf`/`system`/`popen`). |

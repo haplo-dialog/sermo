@@ -233,7 +233,8 @@ sont maintenant compilés sans conditions.
 
 | Mécanisme | Statut |
 |-----------|--------|
-| `safe_exec()` + liste blanche | ✅ |
+| `safe_exec()` (exec direct hors métacaractères, repli shell journalisé) | ✅ |
+| Liste de commandes `HAPLO_ALLOWED_CMDS` — **facultative, éteinte par défaut** | ✅ |
 | `FORTIFY_SOURCE=3` | ✅ |
 | PIE + Full RELRO | ✅ |
 | Stack canary + clash | ✅ |
