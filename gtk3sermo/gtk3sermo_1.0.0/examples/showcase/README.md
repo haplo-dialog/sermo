@@ -27,5 +27,6 @@ l'installation.
 
 ## Licence
 
-Domaine public (**CC0-1.0**), comme le reste de `examples/`. Copiez, modifiez,
+Domaine public (**CC0-1.0**) : ces cinq scripts sont écrits par le projet. Le
+reste d'`examples/` vient de gtkdialog et suit la GPL. Copiez, modifiez,
 republiez sans condition et sans mention.

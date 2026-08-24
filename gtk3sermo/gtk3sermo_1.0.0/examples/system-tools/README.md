@@ -68,5 +68,6 @@ explique pourquoi le cadre est vide au lieu de le laisser vide.
 
 ## Licence
 
-Domaine public (**CC0-1.0**), comme le reste de `examples/`. Copiez, découpez,
+Domaine public (**CC0-1.0**) : ce script est écrit par le projet. Le reste
+d'`examples/` vient de gtkdialog et suit la GPL. Copiez, découpez,
 republiez sans condition et sans mention.

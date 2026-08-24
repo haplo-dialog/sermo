@@ -20,6 +20,27 @@ Comment: L'ancrage Wayland (layer-shell) reprend le travail de Dima Krasner,
  (https://github.com/BunsenLabs/gtk3dialog), sous GPL-2.0-or-later.
 License: GPL-2.0-or-later
 
+Files: examples/button/*.svg
+       examples/togglebutton/*.svg
+       examples/pfeme/*.png
+Copyright: elementary Project, fast-forward and nuvola icon authors
+Comment: Jeux d'icônes de tiers, repris tels quels par les exemples de l'amont
+ gtkdialog. Chacun garde son texte de licence à côté des images :
+ examples/button/COPYING-elementary-icons,
+ examples/togglebutton/COPYING-elementary-icons,
+ examples/pfeme/COPYING-elementary-icons,
+ examples/pfeme/COPYING-fast-forward-icons,
+ examples/pfeme/COPYING-nuvola-icons.
+ Le projet ne détient pas ces images et ne peut donc pas les relicencier.
+License: GPL-2
+
+Files: examples/showcase/*
+       examples/system-tools/*
+Copyright: 2026 haplo-dialog <devel@haplo-dialog.fr>
+Comment: Exemples écrits par le projet, versés au domaine public. Le reste de
+ examples/ vient de l'amont gtkdialog et relève de Files: * ci-dessus.
+License: CC0-1.0
+
 License: GPL-2.0-or-later
  This program is free software; you can redistribute it and/or modify
  it under the terms of the GNU General Public License as published by
@@ -28,3 +49,20 @@ License: GPL-2.0-or-later
  .
  On Debian systems, the complete text of the GNU General Public
  License version 2 can be found in /usr/share/common-licenses/GPL-2.
+
+License: GPL-2
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; version 2 of the License.
+ .
+ On Debian systems, the complete text of the GNU General Public
+ License version 2 can be found in /usr/share/common-licenses/GPL-2.
+
+License: CC0-1.0
+ Dans la mesure permise par la loi, l'auteur a renoncé à tous ses droits
+ d'auteur et droits voisins sur cette œuvre.
+ .
+ Texte complet : https://creativecommons.org/publicdomain/zero/1.0/legalcode
+ .
+ Sur les systèmes Debian, le texte se trouve aussi dans
+ /usr/share/common-licenses/CC0-1.0 lorsque le paquet le fournit.

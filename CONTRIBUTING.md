@@ -44,7 +44,7 @@ haplo-dialog/
 │       │   ├── stringman.c       ← GPL-2.0-or-later
 │       │   └── widget_*.c        ← un fichier par widget (GPL-2.0-or-later)
 │       ├── tests/
-│       ├── examples/             ← scripts #!/bin/sh par widget (CC0)
+│       ├── examples/             ← scripts #!/bin/sh par widget (GPL ; showcase/ et system-tools/ en CC0)
 │       ├── doc/
 │       └── packaging/
 └── tests/
@@ -312,7 +312,7 @@ PATH="$PWD/inst/bin:$PATH" sh ../../tests/xml/run_tests.sh gtk3sermo
 - Les manpages sont en format **roff** (`src/gtk3sermo.1`), à jour avec chaque nouveau widget
 - La référence XML est dans `haplo-dialog-xml(5)`, `man/haplo-dialog-xml.5`
 - La documentation Texinfo est dans `doc/`
-- Les exemples (`examples/`) sont en **CC0**, les utiliser sans restriction
+- `examples/showcase/` et `examples/system-tools/` sont en **CC0** : les utiliser sans restriction. Le reste d'`examples/` vient de gtkdialog et reste en **GPL-2.0-or-later**
 
 ---
 

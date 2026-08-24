@@ -170,7 +170,10 @@ Signalement de vulnérabilité : voir [SECURITY.md](SECURITY.md).
 Contributions bienvenues, voir [CONTRIBUTING.md](CONTRIBUTING.md) et
 [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
-**GPL-2.0-or-later**, voir [LICENSE](LICENSE). Les exemples (`examples/`) sont en CC0.
+**GPL-2.0-or-later**, voir [LICENSE](LICENSE). Les exemples que le projet a écrits
+(`examples/showcase/`, `examples/system-tools/`) sont en CC0 ; le reste d'`examples/`
+vient de gtkdialog et suit la GPL, et trois jeux d'icônes de tiers portent leur
+propre `COPYING`. Détail dans [LICENCES.md](LICENCES.md).
 
 ---
 
