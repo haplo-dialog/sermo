@@ -4,8 +4,11 @@
 > `.deb` se construit depuis l'arbre, et des recettes non construites par nos
 > soins sont fournies pour les autres familles de distributions.
 >
-> ⚠️ **Aucun binaire n'est publié pour l'instant** : le projet n'a ni release,
-> ni dépôt APT. Les anciens paquets `gtk3dialog` ont été retirés au renommage.
+> **Les binaires sont publiés** depuis le 2026-08-24, joints à la release
+> [v1.0.0](https://gitlab.com/haplo-dialog/sermo/-/releases/v1.0.0) avec leurs sommes de contrôle : `gtk3sermo`, `gtk4sermo`,
+> `gtksermo` et les deux paquets de symboles. Il n'y a **pas de dépôt APT** :
+> on télécharge, on vérifie, on installe. Les anciens paquets `gtk3dialog` ont
+> été retirés au renommage.
 > Dernière mise à jour : 2026-08-23.
 
 ## Principe : la source est le livrable principal

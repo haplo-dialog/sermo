@@ -92,10 +92,27 @@ Un cœur C commun (grammaire flex/bison + automate + `safe_exec`), deux backends
 
 ## Installation
 
-### Aucun paquet publié pour l'instant
+### Télécharger la release
 
-Le dépôt ne publie **aucune release** et **aucun `.deb`** téléchargeable : les
-anciens paquets ont été retirés au renommage. En attendant, on construit.
+Les paquets sont joints à la release [**v1.0.0**](https://gitlab.com/haplo-dialog/sermo/-/releases/v1.0.0), avec leurs sommes de
+contrôle. Il n'y a **pas de dépôt APT** : on télécharge, on vérifie, on installe.
+
+```sh
+sha256sum -c SHA256SUMS
+sudo apt install ./gtk3sermo_1.0.0-10_amd64.deb
+```
+
+| Paquet | Commande installée | Conflits |
+|---|---|---|
+| `gtk3sermo` 1.0.0-10 | `/usr/bin/gtk3sermo` | aucun |
+| `gtk4sermo` 1.0.0-11 | `/usr/bin/gtk4sermo` | aucun |
+| `gtksermo` 1.0.0-10 | `/usr/bin/gtkdialog` | **avec `gtkdialog` et `gtk3dialog`** |
+
+Les deux premiers s'installent sans conflit, y compris à côté du `gtk3dialog` de
+BunsenLabs. Le troisième fournit la commande `gtkdialog`, donc il entre en
+conflit avec lui : ne l'installez que si vous voulez cette commande.
+
+Les paquets `-dbgsym` ne servent qu'à lire une trace d'exécution.
 
 ### Construire le paquet Debian
 

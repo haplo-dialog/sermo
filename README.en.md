@@ -93,10 +93,27 @@ One shared C core (flex/bison grammar + state machine + `safe_exec`), two backen
 
 ## Installation
 
-### No package published at this time
+### Download the release
 
-The repository publishes **no release** and **no downloadable `.deb`**: the old
-packages were withdrawn during the rename. For now, you build.
+The packages are attached to the [**v1.0.0**](https://gitlab.com/haplo-dialog/sermo/-/releases/v1.0.0) release, with their checksums.
+There is **no APT repository**: you download, you verify, you install.
+
+```sh
+sha256sum -c SHA256SUMS
+sudo apt install ./gtk3sermo_1.0.0-10_amd64.deb
+```
+
+| Package | Command installed | Conflicts |
+|---|---|---|
+| `gtk3sermo` 1.0.0-10 | `/usr/bin/gtk3sermo` | none |
+| `gtk4sermo` 1.0.0-11 | `/usr/bin/gtk4sermo` | none |
+| `gtksermo` 1.0.0-10 | `/usr/bin/gtkdialog` | **with `gtkdialog` and `gtk3dialog`** |
+
+The first two install without conflict, including alongside BunsenLabs'
+`gtk3dialog`. The third provides the `gtkdialog` command, so it conflicts with
+it: install it only if you want that command.
+
+The `-dbgsym` packages are only useful for reading a stack trace.
 
 ### Building the Debian package
 

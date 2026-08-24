@@ -40,11 +40,12 @@ corrigé, durci, maintenu.
 
 Pour installer :
 
-  # Aucun paquet n'est publie pour l'instant : ni release, ni depot APT.
-  # On construit le .deb soi-meme, depuis un clone :
-  git clone https://gitlab.com/haplo-dialog/sermo.git
-  cd sermo/gtk3sermo/gtk3sermo_1.0.0    # ou gtk4sermo/gtk4sermo_1.0.0
-  dpkg-buildpackage -us -uc -b
+  # Les paquets sont joints a la release v1.0.0, avec leurs sommes.
+  # Il n'y a PAS de depot APT : on telecharge, on verifie, on installe.
+  sha256sum -c SHA256SUMS
+  sudo apt install ./gtk3sermo_1.0.0-10_amd64.deb
+  # Pour construire soi-meme depuis un clone :
+  #   cd sermo/gtk3sermo/gtk3sermo_1.0.0 && dpkg-buildpackage -us -uc -b
   # (Les paquets obtenus s'appellent gtk3sermo, gtksermo et gtk4sermo.
   #  La commande « gtkdialog » est dans gtksermo, un paquet separe, en
   #  conflit assume avec le gtk3dialog de BunsenLabs.)
