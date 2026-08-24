@@ -27,7 +27,7 @@ Thank you for your interest in haplo-dialog. This document explains how to contr
 - For functional bugs: open a ticket with a minimal reproducible XML script
 
 **Reference port:**  
-haplo-dialog provides a single port, `gtk3sermo` (GTK 3 backend), which provides the backwards-compatible alias `gtkdialog`. It is a maintained descendant of gtkdialog (a fork of Laszlo Pere's gtkdialog 0.8.3), fixed and hardened. Other descendants exist, notably Mick Amadio's BunsenLabs fork, which also ports gtkdialog to GTK 3.
+haplo-dialog provides two ports, `gtk3sermo` (GTK 3 backend) and `gtk4sermo` (GTK 4 backend). The backwards-compatible `gtkdialog` alias ships in a separate package, `gtksermo`. It is a maintained descendant of gtkdialog (a fork of Laszlo Pere's gtkdialog 0.8.3), fixed and hardened. Other descendants exist, notably Mick Amadio's BunsenLabs fork, which also ports gtkdialog to GTK 3.
 
 ---
 

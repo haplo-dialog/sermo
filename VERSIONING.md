@@ -42,9 +42,15 @@ Avant 1.0.0, aucune garantie de compatibilité n'était offerte (phase `0.y`).
 
 ## 2. Où vit le numéro de version (sources de vérité)
 
-haplo-dialog ne distribue qu'un **seul port**, **`gtk3sermo`** (backend GTK 3) :
-c'est le **port de référence** (43 widgets), qui fournit l'alias rétro-compatible
-**`gtkdialog`**. Il n'y a donc **qu'un seul numéro de version** à faire évoluer.
+haplo-dialog distribue **deux ports** : **`gtk3sermo`** (backend GTK 3), le port
+de référence, et **`gtk4sermo`** (backend GTK 4). L'alias rétro-compatible
+**`gtkdialog`** est fourni par un troisième paquet, **`gtksermo`**.
+
+La version amont (`1.0.0`) est **commune aux deux ports** : c'est le même cœur, la
+même grammaire. En revanche la **révision d'empaquetage** avance port par port,
+puisqu'un correctif ne touche pas toujours les deux. Les deux numéros peuvent donc
+diverger — `gtk3sermo 1.0.0-10` et `gtk4sermo 1.0.0-11` par exemple — et c'est
+normal. Chaque port a son `debian/changelog`, qui fait foi pour lui.
 
 ### Emplacements à mettre à jour (check-list de release)
 

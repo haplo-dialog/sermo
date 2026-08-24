@@ -17,7 +17,8 @@ Décrivez une interface en XML, lancez-la depuis le shell, récupérez les
 valeurs saisies. Là où gtkdialog est abandonné, haplo-dialog le fait revivre :
 corrigé, durci, maintenu.
 
-* Un port unique : gtk3sermo, le backend GTK 3 de référence. Il implémente
+* Deux ports : gtk3sermo (backend GTK 3, la référence) et gtk4sermo
+  (backend GTK 4). Le port de référence implémente
   43 widgets et se pilote entièrement en XML depuis le shell.
 
 * Compatibilité ascendante gtkdialog : l'installation de gtk3sermo crée un
