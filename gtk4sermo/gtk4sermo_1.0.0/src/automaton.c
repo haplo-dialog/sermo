@@ -1470,6 +1470,12 @@ stackelement _sum(stackelement a, stackelement b)
 #endif
 {
 	int n;
+	/* Guard: widgets[]/widgettypes[] are fixed-size (MAXWIDGETS). Refuse to
+	 * write past them when a single container holds too many direct children,
+	 * which would otherwise corrupt the by-value stackelement (CWE-787). */
+	if (a.nwidgets + b.nwidgets > MAXWIDGETS)
+		g_error("%s(): too many sibling widgets in one container (max %d)",
+			__func__, MAXWIDGETS);
 	/* Let's copy the widgets from b to a */
 	for (n = 0; n < b.nwidgets; ++n) {
 		a.widgets[a.nwidgets + n] = b.widgets[n];

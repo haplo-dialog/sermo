@@ -529,7 +529,7 @@ int action_append(GtkWidget *widget, char *string)
 	length_to = matched[2].rm_eo - matched[2].rm_so;
 	to = g_malloc(length_to + 1);
 
-	strncpy(from, string, length_from);
+	strncpy(from, string + matched[1].rm_so, length_from);
 	from[length_from] = '\0';
 
 	strncpy(to, string + matched[2].rm_so, length_to);

@@ -91,6 +91,9 @@ gtk4sermo:
     - ./configure
     - make -j"$(nproc)"
     - LC_ALL=fr_FR.UTF-8 LANG=fr_FR.UTF-8 bash tests/run_examples.sh "src/$PORT"
+    # Garde-fou de _sum() : au-dela de MAXWIDGETS enfants directs, le refus doit
+    # etre net et nomme, pas une ecriture silencieuse hors des tableaux fixes.
+    - bash "$CI_PROJECT_DIR/tests/garde_maxwidgets.sh" "src/$PORT"
 
 exemples:gtk3sermo:
   extends: .examples

@@ -10,9 +10,17 @@
 | Port | Version | Support sécurité |
 |------|---------|-----------------|
 | gtk3sermo | 1.0.0 | ✅ Actif |
+| gtk4sermo | 1.0.0 | ✅ Actif |
 
-gtk3sermo est le port unique et de référence (backend GTK 3, 43 widgets) ; il fournit
-l'alias rétro-compatible `gtkdialog`.
+Les deux ports partagent le même cœur C et la même grammaire. Depuis le
+2026-08-24 ils ont la **même posture mémoire** : `g_strlcpy` pour les copies de
+noms, borne explicite sur la recopie des widgets d'un conteneur, et aucune
+fonction de la famille `strcpy`/`strcat`/`sprintf`/`gets`. L'alias
+rétro-compatible `gtkdialog` est fourni par un paquet séparé, `gtksermo`.
+
+⚠️ Le port GTK 4 est le plus jeune : il a reçu la même passe, mais il a moins
+d'usage réel derrière lui. Ce qui reste ouvert est listé, port par port, dans
+les fichiers `TODO-SECURITY.md`.
 
 ---
 
@@ -82,6 +90,7 @@ fiable, positionnez `HAPLO_NO_SHELL_FALLBACK=1`.
 
 | Date | Port | Description | Sévérité |
 |------|------|-------------|----------|
+| 2026-08-24 | gtk4sermo | Passe sûreté mémoire : `g_strlcpy` pour le nom de variable (un nom de 512 caractères ou plus n'était pas terminé — CWE-170 puis CWE-125), borne `MAXWIDGETS` sur la recopie des widgets (CWE-787 : 300 enfants directs étaient acceptés en silence), et `action_append()` qui recopiait son premier paramètre depuis le début de la chaîne. Test de non-régression : `tests/garde_maxwidgets.sh` | Moyen |
 | 2026-08-11 | gtk3sermo | Passe sûreté mémoire : `g_strlcpy` (noms de variables), copie de widgets bornée à `MAXWIDGETS`, `argv` de spawn NUL-terminé, filtrage de l'environnement enfant | Moyen |
 | 2026-05-29 | gtk3sermo | Upgrade FORTIFY_SOURCE 2→3, ajout stack-clash, noexecstack | Moyen |
 | 2026-05-22 | gtk3sermo | Renommage binaires, correction symlink gtkdialog | Faible |

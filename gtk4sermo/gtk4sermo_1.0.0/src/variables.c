@@ -138,7 +138,9 @@ variable *variables_new(const char *name)
 		return (variables_get_by_name(name));
 
 	new = g_malloc(sizeof(variable));
-	strncpy(new->Name, name, NAMELEN);
+	/* g_strlcpy always NUL-terminates and truncates cleanly, unlike strncpy
+	 * on an over-long name into a non-zeroed buffer (CWE-125/CWE-170). */
+	g_strlcpy(new->Name, name, sizeof(new->Name));
 	/* 
 	 ** Setting the defaults for this variable.
 	 */

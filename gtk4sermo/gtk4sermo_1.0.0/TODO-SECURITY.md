@@ -22,7 +22,21 @@
 
 ## Points restants à traiter ⏳
 
-- [ ] Remplacer `strcat()`/`strcpy()` par `g_strlcat()`/`g_strlcpy()` dans variables.c
+- [x] Sûreté mémoire de variables.c — **fait le 2026-08-24**. Il n'y avait ni
+      `strcat()` ni `strcpy()` (l'item était périmé) mais un
+      `strncpy(new->Name, name, NAMELEN)` dans un tampon `g_malloc` non mis à
+      zéro : un nom de 512 caractères ou plus n'était pas terminé
+      (CWE-170, puis CWE-125 à la première lecture). Remplacé par
+      `g_strlcpy(new->Name, name, sizeof(new->Name))`, comme le port GTK 3.
+- [x] Borne de `_sum()` — **fait le 2026-08-24**. La recopie des widgets d'un
+      conteneur écrivait dans `widgets[]`/`widgettypes[]`, tableaux fixes de
+      MAXWIDGETS, sans vérifier la place (CWE-787). Mesuré avant correctif :
+      300 enfants directs étaient acceptés en silence. Désormais refus net,
+      même message que le port GTK 3. Test : `tests/garde_maxwidgets.sh`.
+- [x] `actions.c` — **fait le 2026-08-24** : `action_append()` recopiait le
+      premier paramètre depuis le DÉBUT de la chaîne au lieu de la position
+      de la correspondance (`string` au lieu de `string + matched[1].rm_so`).
+      Le port GTK 3 n'avait pas ce défaut.
 - [ ] Auditer `tag_attributes.c` — snprintf systématique (pas sprintf)
 - [ ] Valider les chemins de fichiers passés via XML (traversal path)
 - [ ] Ajouter fuzzing (AFL++ ou libFuzzer) sur le parser XML
