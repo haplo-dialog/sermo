@@ -47,6 +47,23 @@
 #include "widgets.h"
 #include "signals.h"
 
+/* GObject::notify passe UN PARAMETRE DE PLUS que les signaux sans argument :
+ * (objet, pspec, data). Brancher directement on_any_widget_changed_event(widget,
+ * Attr) faisait recevoir le GParamSpec a la place du jeu d'attributs, qui etait
+ * ensuite dereference : segfault au PREMIER clic sur l'interrupteur, sur les
+ * deux ports, 6 fois sur 6. Meme faute que GtkListBox::row-selected, corrigee le
+ * 2026-08-22 (voir widget_list.c) : un signal dont l'arite ne correspond pas au
+ * rappel branche.
+ *
+ * Le banc des exemples ne l'attrapait pas : il verifie qu'une fenetre s'ouvre,
+ * il ne clique pas. */
+static void hp_switch_notify_active(GObject *objet, GParamSpec *pspec,
+	gpointer data)
+{
+	(void)pspec;
+	on_any_widget_changed_event(GTK_WIDGET(objet), (AttributeSet *)data);
+}
+
 /* Defines */
 //#define DEBUG_CONTENT
 //#define DEBUG_TRANSITS
@@ -239,7 +256,7 @@ void widget_switch_refresh(variable *var)
 
 		/* Connect signals */
 		g_signal_connect(G_OBJECT(var->Widget), "notify::active",
-			G_CALLBACK(on_any_widget_changed_event), (gpointer)var->Attributes);
+			G_CALLBACK(hp_switch_notify_active), (gpointer)var->Attributes);
 	}
 
 #ifdef DEBUG_TRANSITS

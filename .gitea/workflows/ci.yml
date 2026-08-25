@@ -154,3 +154,9 @@ jobs:
       - name: Garde — échappement de la sortie
         working-directory: ${{ matrix.port }}/${{ matrix.port }}_1.0.0
         run: bash "$GITHUB_WORKSPACE/tests/garde_echappement_sortie.sh" "src/${{ matrix.port }}"
+
+      # run_examples.sh ouvre les fenêtres mais ne clique jamais. Ouvrir ne
+      # suffit pas : un <switch> cliqué tuait les deux ports par SIGSEGV.
+      - name: Garde — les widgets survivent au clic
+        working-directory: ${{ matrix.port }}/${{ matrix.port }}_1.0.0
+        run: bash "$GITHUB_WORKSPACE/tests/garde_clic_widgets.sh" "src/${{ matrix.port }}"

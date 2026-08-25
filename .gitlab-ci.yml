@@ -130,6 +130,11 @@ gtk4sermo:
     # Ce banc ouvre une vraie fenetre, clique, et passe la ligne produite a eval
     # sous surveillance d'un fichier temoin.
     - bash "$CI_PROJECT_DIR/tests/garde_echappement_sortie.sh" "src/$PORT"
+    # Les widgets interactifs doivent survivre a un CLIC. run_examples.sh ouvre
+    # les fenetres mais ne clique jamais : le 2026-08-25, cliquer un <switch>
+    # tuait les deux ports par SIGSEGV pendant que les 55 et 58 exemples etaient
+    # comptes OK et que le pipeline restait vert. Ouvrir ne suffit pas.
+    - bash "$CI_PROJECT_DIR/tests/garde_clic_widgets.sh" "src/$PORT"
 
 exemples:gtk3sermo:
   extends: .examples

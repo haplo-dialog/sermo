@@ -16,6 +16,20 @@ gtk3sermo (1.0.0-11) unstable; urgency=medium
     la chaîne d'origine, elle en fait des copies » — c'est faux deux fois :
     elle écrit des '\0' dedans, et line[0] EST la chaîne d'origine, que
     list_t_free() libère ensuite. Le contrat d'appartenance est écrit.
+  * Cliquer un <switch> tuait le programme, dans les DEUX ports. Mesuré 6 fois
+    sur 6 : SIGSEGV au premier clic. La pile désigne notre code —
+    attributeset_get_first() appelé depuis widget_signal_executor() sur le
+    signal « changed ». Cause : GObject::notify passe TROIS arguments
+    (objet, pspec, data), et on_any_widget_changed_event() n'en attend que deux
+    (widget, Attr) ; le GParamSpec arrivait donc à la place du jeu d'attributs
+    et était déréférencé. Exactement la faute de GtkListBox::row-selected
+    corrigée le 2026-08-22 — un signal dont l'arité ne correspond pas au rappel.
+    Adaptateur de signature posé, comme pour row-selected.
+    Le banc des exemples ne pouvait pas le voir : il vérifie qu'une fenêtre
+    s'ouvre, il ne clique pas. D'où tests/garde_clic_widgets.sh, qui ouvre un
+    dialogue par widget interactif, clique deux fois, et exige que le processus
+    survive : 17 widgets, les deux ports, branché dans les trois pipelines.
+    Balayage complet des 17 : <switch> était le seul à tomber.
   * SÉCURITÉ — la sortie rendue au shell pouvait être exécutée par eval.
     Le programme écrit des lignes NOM="valeur" et EXIT="valeur", et toute la
     documentation invitait à les passer à eval. Or, entre guillemets doubles,
