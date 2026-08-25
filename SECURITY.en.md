@@ -66,6 +66,7 @@ Send an email to **devel@haplo-dialog.fr** with:
 | Child environment | Filtered: the `DIALOG` block (several KiB of XML) is not inherited by spawned processes. |
 | Memory safety | `g_strlcpy` (variable names), container widget copy bounded to `MAXWIDGETS` with a named refusal, spawn `argv` always NUL-terminated; no forbidden function (`strcpy`/`strcat`/`sprintf`/`gets`/`system`/`popen`) called in `src/` — **checked on every push** by `tests/garde_fonctions_interdites.sh`, which skips comments and requires a word boundary on the left (`safe_system` does not count as `system`). |
 | Thread safety | No `gtk_*`/`gdk_*` call outside the main thread: the progress-bar thread hands off through `g_idle_add`. `gdk_threads_enter()` has locked nothing since GTK 3.6 — inherited code that looks protected is not. Checked by `tests/garde_progressbar_thread.sh`. |
+| Output handed to the shell | The `NAME="value"` and `EXIT="value"` lines escape all **four** characters the shell expands inside double quotes: `\`, `"`, `$` and the backtick. Without that, a value **typed by whoever uses the dialog** — not necessarily whoever wrote the script — becomes code as soon as the caller runs `eval`. Measured on 2026-08-25 before the fix: typing `$(touch /tmp/proof)` into a field and evaluating the line created the file. Checked on every push by `tests/garde_echappement_sortie.sh`, which opens a real window, clicks, and watches a witness file. |
 | XML parser | Clean rejection of malformed XML (message + non-zero exit code, never an `abort`); parser subjected to **fuzzing** (`tests/fuzz/`). |
 
 ### Trust model
@@ -77,6 +78,22 @@ therefore the **local** author of the script, not a remote third party. The
 hardening above protects against **malformed input** and **memory-safety bugs** —
 not against a hostile script author, who can launch commands anyway. To interpret
 XML coming from a less trustworthy source, set `HAPLO_NO_SHELL_FALLBACK=1`.
+
+### One more boundary: whoever USES the dialog
+
+The script's author and the person in front of the screen are not always the
+same. A script that shows a window to someone else and then runs `eval` on the
+output hands them command execution if that output is not escaped. That was the
+case until 2026-08-25.
+
+Two pieces of advice, in order:
+
+1. **Prefer `--do`.** Values arrive through the environment and are never read
+   back as code. It is the only route that does not depend on the quality of an
+   escaping routine.
+2. If you insist on `eval`, know that the line is now escaped for a
+   double-quoted context — but `eval` is still `eval`: do not use it on output
+   you did not produce yourself.
 
 ### Compiler warnings
 

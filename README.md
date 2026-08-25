@@ -52,12 +52,28 @@ export MAIN_DIALOG='
 gtk3sermo --program=MAIN_DIALOG     # → une fenêtre GTK 3 native s'ouvre
 ```
 
-À la validation, la sortie revient au shell, prête à `eval` :
+À la validation, la sortie revient au shell :
 
 ```sh
 NOM="Ada"
 EXIT="OK"
 ```
+
+Le plus simple, et le plus sûr, est de laisser `--do` faire le travail : les
+valeurs arrivent comme variables d'environnement, sans jamais repasser par le
+shell.
+
+```sh
+gtk3sermo --program=MAIN_DIALOG --do='echo "Bonjour $NOM"'
+```
+
+> **Ne passez pas cette sortie à `eval` sans y réfléchir.** La valeur d'un champ
+> est tapée par la personne qui se sert du dialogue, et ce n'est pas forcément
+> celle qui a écrit le script. Depuis le 2026-08-25 le programme échappe les
+> quatre caractères que le shell développe entre guillemets doubles (`\`, `"`,
+> `$` et l'accent grave), donc `eval` ne les exécute plus — un banc le vérifie à
+> chaque poussée. Avant cette date, il n'en échappait que deux, et `eval`
+> exécutait ce qu'on avait tapé.
 
 **~10 lignes de shell → une fenêtre native.**
 

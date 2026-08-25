@@ -38,8 +38,21 @@ or standard input
 When a button action produces output (EXIT, REFRESH, etc.), gtkdialog
 prints the current value of each named widget to standard output in the
 form
-\fINAME\fR=\(dq\fIvalue\fR\(dq, which the calling shell can then
-.BR eval .
+\fINAME\fR=\(dq\fIvalue\fR\(dq.
+.PP
+Those lines escape the four characters the shell expands inside double quotes
+.RB ( \e ,
+.BR \(dq ,
+.B $
+and the backtick), so the calling shell may
+.B eval
+them. Bear in mind that a field's value is typed by whoever
+.I uses
+the dialog, who is not necessarily whoever wrote the script: if that matters,
+prefer
+.B \-\-do
+instead, which passes the values through the environment and never reads them
+back as code.
 .SH OPTIONS
 .TP
 .BR \-v ", " \-\-version

@@ -257,7 +257,13 @@ void action_exitprogram(GtkWidget *widget, char *string)
 		/* Thunor: An interesting undocumented feature temp temp */
 		printf("EXIT%s", string);
 	else
-		printf("EXIT=\"%s\"\n", string);
+		/* Meme raison que dans variables.c : la valeur peut venir de la
+		 * personne qui se sert du dialogue, pas de l'auteur du script. */
+		{
+			gchar *escaped = shell_escape_value(string);
+			printf("EXIT=\"%s\"\n", escaped);
+			g_free(escaped);
+		}
 
 #ifdef DEBUG
 	fprintf(stderr, "%s(): Calling exit(EXIT_SUCCESS)\n", __func__);

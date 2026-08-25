@@ -1,5 +1,31 @@
 gtk4sermo (1.0.0-12) unstable; urgency=medium
 
+  * SÉCURITÉ — la sortie rendue au shell pouvait être exécutée par eval.
+    Le programme écrit des lignes NOM="valeur" et EXIT="valeur", et toute la
+    documentation invitait à les passer à eval. Or, entre guillemets doubles,
+    le shell développe QUATRE caractères — \ " $ et l'accent grave — et
+    shell_escape_value() n'en échappait que deux, tout en affirmant en
+    commentaire que sa sortie était « safely eval'd ». gtk4sermo n'avait même
+    pas la fonction.
+    Ce qui compte est d'où vient la valeur : pas de l'auteur du script, qui a
+    déjà le droit de lancer des commandes, mais de la personne qui SE SERT du
+    dialogue. Mesuré avant correctif : taper $(touch /tmp/preuve) dans une
+    <entry>, puis évaluer la ligne rendue, créait le fichier. Les deux ports.
+    Les quatre caractères sont désormais échappés, aux deux points d'émission
+    (variables.c et actions.c) et dans les deux ports. La valeur reste intacte :
+    « Ada Lovelace » traverse sans changement. Banc dédié
+    tests/garde_echappement_sortie.sh, qui ouvre une vraie fenêtre, clique, et
+    passe la ligne produite à eval sous surveillance d'un fichier témoin — plus
+    un témoin de sensibilité qui vérifie qu'une ligne NON échappée déclenche
+    bien la détection. Branché dans les trois pipelines.
+    La voie sûre reste --do : les valeurs arrivent par l'environnement et ne
+    sont jamais relues comme du code. Vérifié : la même charge utile n'y est
+    pas exécutée. README, SECURITY.md et les pages de manuel le disent enfin.
+  * L'action CLOSE:, documentée dans les deux MANUEL_UTILISATEUR.md — dans un
+    tableau de référence ET dans un exemple complet — n'existe pas. Le préfixe
+    réel est closewindow:. Un préfixe inconnu n'est pas signalé : il part au
+    shell comme une commande ordinaire, donc le bouton ne fermait rien et
+    personne ne voyait d'erreur.
   * La marque « Haplo-Linux » est retirée du dépôt public : 310 occurrences
     dans 262 fichiers. Là où elle nommait l'auteur ou le détenteur du
     copyright, elle devient « haplo-dialog ». Là où elle nommait un système

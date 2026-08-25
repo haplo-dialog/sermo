@@ -32,6 +32,7 @@ Le principe est simple : vous décrivez votre interface en XML, et gtk3d l'affic
 
 **Exemple minimal :**
 
+
 ```bash
 export DIALOG='
 <window title="Bienvenue">
@@ -134,12 +135,12 @@ export DIALOG='
   </vbox>
 </window>'
 
-# Évaluer la sortie pour créer les variables shell
-eval $(gtk4sermo --program=DIALOG)
-
-if [ "$EXIT" = "valide" ]; then
-    echo "Bonjour $PRENOM $NOM_FAM !"
-fi
+# --do : les valeurs arrivent comme variables d'environnement, sans
+# jamais repasser par le shell. C'est la voie recommandée.
+gtk4sermo --program=DIALOG --do='
+    if [ "$EXIT" = "valide" ]; then
+        echo "Bonjour $PRENOM $NOM_FAM !"
+    fi'
 ```
 
 ---
@@ -513,7 +514,7 @@ Déclenche une action toutes les N millisecondes.
 | Action | Syntaxe | Description |
 |--------|---------|-------------|
 | `EXIT` | `EXIT:valeur` | Ferme la fenêtre, exporte EXIT=valeur |
-| `CLOSE` | `CLOSE:NOM_FENETRE` | Ferme une fenêtre par nom |
+| `CLOSEWINDOW` | `CLOSEWINDOW:NOM_WIDGET` | Ferme la fenêtre qui contient le widget nommé. Le nom du préfixe est bien `closewindow`, pas `close` : un préfixe inconnu n'est pas signalé, il part au shell comme une commande ordinaire, et la fenêtre ne se ferme pas. |
 | `LAUNCH` | `LAUNCH:NOM_FENETRE` | Ouvre une nouvelle fenêtre |
 | `REFRESH` | `REFRESH:NOM_WIDGET` | Relance l'`<input>` d'un widget |
 | `SAVE` | `SAVE:NOM_WIDGET` | Sauvegarde l'état d'un widget |
@@ -605,6 +606,21 @@ Permet d'utiliser des fonctions shell définies dans `fonctions.sh` dans les att
 ## 8. Exemples pratiques
 
 ### 8.1 Boîte de confirmation
+
+> ⚠️ **`eval` et les valeurs saisies.** Les exemples qui suivent passent la
+> sortie du programme à `eval`. C'est l'usage historique de gtkdialog et il
+> marche — mais la valeur d'un champ est **tapée par la personne qui se sert du
+> dialogue**, qui n'est pas forcément celle qui a écrit le script.
+>
+> Depuis le 2026-08-25, le programme échappe les quatre caractères que le shell
+> développe entre guillemets doubles (`\`, `"`, `$` et l'accent grave) : `eval`
+> ne les exécute plus, et `tests/garde_echappement_sortie.sh` le vérifie à chaque
+> poussée. Avant cette date il n'en échappait que deux, et saisir `$(commande)`
+> dans un champ suffisait à la faire exécuter.
+>
+> Si le dialogue peut être utilisé par quelqu'un d'autre que vous, préférez
+> `--do` : les valeurs arrivent par l'environnement et ne sont jamais relues
+> comme du code.
 
 ```bash
 #!/bin/bash
@@ -804,7 +820,7 @@ export FENETRE_PRINCIPALE='
 <window title="Paramètres" name="PARAMETRES" visible="false">
   <vbox>
     <text><label>Fenêtre de paramètres</label></text>
-    <button><label>Fermer</label><action>CLOSE:PARAMETRES</action></button>
+    <button><label>Fermer</label><action>closewindow:PARAMETRES</action></button>
   </vbox>
 </window>'
 

@@ -42,9 +42,23 @@ writes the current value of each named widget to standard output in the form:
 .PP
 .RS 4
 .nf
-WIDGET_NAME=current_value
+WIDGET_NAME=\(dqcurrent_value\(dq
 .fi
 .RE
+.PP
+Those lines escape the four characters the shell expands inside double quotes
+.RB ( \e ,
+.BR \(dq ,
+.B $
+and the backtick), so the calling shell may
+.B eval
+them. Bear in mind that a field's value is typed by whoever
+.I uses
+the dialog, who is not necessarily whoever wrote the script: if that matters,
+prefer
+.B \-\-do
+instead, which passes the values through the environment and never reads them
+back as code.
 .SH OPTIONS
 .TP
 .BI \-\-program= VARIABLE

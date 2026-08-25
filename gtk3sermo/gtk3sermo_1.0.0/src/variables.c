@@ -101,15 +101,36 @@ void variables_print_debug(variable *actual);
 variable *root = NULL;
 
 /***********************************************************************
- * T13 fix: shell_escape_value()                                       *
- * Escape backslashes and double-quotes in a widget value so that the  *
- * shell output line  VARNAME="<value>"  can be safely eval'd.         *
- * Caller must g_free() the returned string.                           *
+ * shell_escape_value()                                                *
+ *                                                                     *
+ * Echappe une valeur de widget pour qu'elle puisse figurer entre       *
+ * GUILLEMETS DOUBLES dans la ligne  NOM="<valeur>"  rendue sur la      *
+ * sortie standard.                                                    *
+ *                                                                     *
+ * Dans un contexte entre guillemets doubles, le shell POSIX developpe  *
+ * QUATRE caracteres, pas deux : le contre-oblique, le guillemet        *
+ * double, le dollar et l'accent grave. La premiere version de cette    *
+ * fonction n'echappait que les deux premiers, tout en affirmant en     *
+ * commentaire que sa sortie etait « safely eval'd ». Elle ne l'etait   *
+ * pas : mesure le 2026-08-25, une valeur SAISIE PAR L'UTILISATEUR      *
+ * valant  $(touch /tmp/preuve)  ressortait telle quelle, et l'eval     *
+ * recommande par la documentation executait la commande.              *
+ *                                                                     *
+ * Ce n'est pas l'auteur du script qui fournit cette valeur — lui a     *
+ * deja le droit de lancer des commandes — mais la personne qui SE      *
+ * SERT du dialogue, qui n'est pas forcement la meme.                   *
+ *                                                                     *
+ * L'appelant doit liberer la chaine rendue par g_free().               *
+ *                                                                     *
+ * ATTENTION : ceci rend la ligne sure entre guillemets doubles. Cela   *
+ * ne rend pas `eval` sur, en general. La voie recommandee reste --do,  *
+ * qui passe les valeurs par l'environnement sans jamais les relire     *
+ * comme du code.                                                      *
  ***********************************************************************/
 gchar *
 shell_escape_value(const gchar *value)
 {
-	GString *out;
+	GString     *out;
 	const gchar *p;
 
 	if (value == NULL)
@@ -117,7 +138,7 @@ shell_escape_value(const gchar *value)
 
 	out = g_string_sized_new(strlen(value) + 8);
 	for (p = value; *p; p++) {
-		if (*p == '\\' || *p == '"')
+		if (*p == '\\' || *p == '"' || *p == '$' || *p == '`')
 			g_string_append_c(out, '\\');
 		g_string_append_c(out, *p);
 	}

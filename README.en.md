@@ -53,12 +53,26 @@ export MAIN_DIALOG='
 gtk3sermo --program=MAIN_DIALOG     # → a native GTK 3 window opens
 ```
 
-On confirmation, the output comes back to the shell, ready to `eval`:
+On confirmation, the output comes back to the shell:
 
 ```sh
 NAME="Ada"
 EXIT="OK"
 ```
+
+The simplest and safest route is to let `--do` do the work: the values arrive as
+environment variables and never go back through the shell.
+
+```sh
+gtk3sermo --program=MAIN_DIALOG --do='echo "Hello $NAME"'
+```
+
+> **Do not pipe this output into `eval` without thinking.** A field's value is
+> typed by whoever uses the dialog, and that is not necessarily whoever wrote the
+> script. Since 2026-08-25 the program escapes the four characters the shell
+> expands inside double quotes (`\`, `"`, `$` and the backtick), so `eval` no
+> longer executes them — a bench checks it on every push. Before that date it
+> escaped only two, and `eval` executed whatever had been typed.
 
 **~10 lines of shell → a native window.**
 

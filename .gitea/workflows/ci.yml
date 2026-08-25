@@ -147,3 +147,10 @@ jobs:
       - name: Garde — HAPLO_ALLOWED_CMDS
         working-directory: ${{ matrix.port }}/${{ matrix.port }}_1.0.0
         run: bash "$GITHUB_WORKSPACE/tests/garde_allowed_cmds.sh" "src/${{ matrix.port }}"
+
+      # La ligne rendue au shell doit rester des données : le banc ouvre une
+      # vraie fenêtre, clique, et passe la ligne produite à eval sous
+      # surveillance d'un fichier témoin.
+      - name: Garde — échappement de la sortie
+        working-directory: ${{ matrix.port }}/${{ matrix.port }}_1.0.0
+        run: bash "$GITHUB_WORKSPACE/tests/garde_echappement_sortie.sh" "src/${{ matrix.port }}"

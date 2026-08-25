@@ -66,6 +66,7 @@ Envoyez un email à **devel@haplo-dialog.fr** avec :
 | Environnement enfant | Filtré : le bloc `DIALOG` (plusieurs Kio de XML) n'est pas hérité par les processus lancés. |
 | Sûreté mémoire | `g_strlcpy` (noms de variables), copie de widgets bornée à `MAXWIDGETS` avec refus nommé, `argv` de spawn toujours NUL-terminé ; aucune fonction interdite (`strcpy`/`strcat`/`sprintf`/`gets`/`system`/`popen`) appelée dans `src/` — **vérifié à chaque poussée** par `tests/garde_fonctions_interdites.sh`, qui ignore les commentaires et exige une frontière de mot à gauche (`safe_system` ne compte pas pour `system`). |
 | Sûreté des threads | Aucun appel `gtk_*`/`gdk_*` hors du thread principal : le thread de la barre de progression délègue par `g_idle_add`. `gdk_threads_enter()` ne verrouille plus rien depuis GTK 3.6 — du code hérité qui paraît protégé ne l'est pas. Vérifié par `tests/garde_progressbar_thread.sh`. |
+| Sortie rendue au shell | Les lignes `NOM="valeur"` et `EXIT="valeur"` échappent les **quatre** caractères que le shell développe entre guillemets doubles : `\`, `"`, `$` et l'accent grave. Sans cela, une valeur **tapée par l'utilisateur du dialogue** — qui n'est pas forcément l'auteur du script — devient du code dès que l'appelant fait `eval`. Mesuré le 2026-08-25 avant correctif : saisir `$(touch /tmp/preuve)` dans un champ, puis évaluer la ligne, créait le fichier. Vérifié à chaque poussée par `tests/garde_echappement_sortie.sh`, qui ouvre une vraie fenêtre, clique, et surveille un fichier témoin. |
 | Parser XML | Rejet propre de l'XML malformé (message + code de sortie non nul, jamais d'`abort`) ; parser soumis au **fuzzing** (`tests/fuzz/`). |
 
 ### Modèle de confiance
@@ -78,6 +79,22 @@ durcissement ci-dessus protège contre l'**entrée malformée** et les **bugs de
 sûreté mémoire**, pas contre un auteur de script hostile, qui peut de toute
 façon lancer des commandes. Pour interpréter du XML issu d'une source moins
 fiable, positionnez `HAPLO_NO_SHELL_FALLBACK=1`.
+
+### Une frontière de plus : celui qui SE SERT du dialogue
+
+L'auteur du script et la personne devant l'écran ne sont pas toujours la même.
+Un script qui affiche une fenêtre à quelqu'un d'autre, puis fait `eval` de la
+sortie, lui donne l'exécution de commandes si la sortie n'est pas échappée.
+C'était le cas jusqu'au 2026-08-25.
+
+Deux conseils, dans l'ordre :
+
+1. **Préférez `--do`.** Les valeurs arrivent par l'environnement et ne sont
+   jamais relues comme du code. C'est la seule voie qui ne dépend pas de la
+   qualité d'un échappement.
+2. Si vous tenez à `eval`, sachez que la ligne est désormais échappée pour un
+   contexte entre guillemets doubles — mais `eval` reste `eval` : ne l'employez
+   pas sur une sortie que vous n'avez pas produite vous-même.
 
 ### Avertissements du compilateur
 

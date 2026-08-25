@@ -50,6 +50,7 @@ typedef struct _variable {
 /* Function prototypes */
 variable *variables_new_with_widget(AttributeSet *Attr,
 	tag_attr *widget_tag_attr, GtkWidget *widget, int type);
+gchar *shell_escape_value(const gchar *value);
 variable *variables_set_attributes(const char *name, AttributeSet *a);
 variable *variables_set_row_column(const char *name, int row, int column);
 variable *variables_set_value(const char *name, const char *value);
