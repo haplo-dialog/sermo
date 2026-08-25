@@ -59,6 +59,37 @@ prefer
 .B \-\-do
 instead, which passes the values through the environment and never reads them
 back as code.
+.SS Self\-executable dialog file
+A dialog description read from a file may carry a shebang line, so the file
+itself becomes executable:
+.PP
+.RS 4
+.nf
+#!/usr/bin/gtk4sermo \-f
+<window title="Hello">
+  <vbox><text><label>Hi</label></text><button ok></button></vbox>
+</window>
+.fi
+.RE
+.PP
+.RB "Then " "chmod +x" " the file and run it directly."
+Only the
+.B first
+line is dropped, and only when the description is read from a file
+.RB ( \-f " / " \-\-file ).
+It is not a comment syntax: a second line starting with
+.B #
+is a syntax error, and with
+.B \-\-stdin
+the line is not dropped at all.
+.PP
+The interpreter path must be one a package actually installs \(em
+.BR /usr/bin/gtk4sermo .
+The name
+.B gtkdialog
+exists only if the separate
+.B gtksermo
+package is installed as well, so do not rely on it in a shebang.
 .SH OPTIONS
 .TP
 .BI \-\-program= VARIABLE
@@ -101,9 +132,20 @@ Echo every character read from the dialog description as it is fed to the lexer.
 Useful for diagnosing parser issues.
 .TP
 .BI \-i " FILE" "\fR,\fP \-\-include=" FILE
-Include
+Make the shell functions and variables of
 .I FILE
-when executing.
+available to every action. The file is not run once at start\-up: each shell
+command launched by an action is turned into
+.RB \(dq ". \fIFILE\fP; \fIcommand\fP" \(dq,
+so the file is sourced afresh in every action's sub\-shell. Nothing is shared
+between two actions except what
+.I FILE
+itself defines.
+.IP
+.B \-\-do
+is the exception: the command it runs is
+.B not
+prefixed, so it does not see the included file.
 .TP
 .BI \-e " FILE" "\fR,\fP \-\-event\-driven=" FILE
 Execute

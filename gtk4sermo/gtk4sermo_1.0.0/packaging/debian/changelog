@@ -1,5 +1,45 @@
 gtk4sermo (1.0.0-12) unstable; urgency=medium
 
+  * Extraction du manuel amont orphelin : dix faits que le programme fait
+    depuis toujours et que rien ne documentait. Chacun éprouvé dans le code ET
+    rejoué, puis passé à un vérificateur chargé de le démolir — trois de mes
+    formulations sur dix ont été corrigées à ce stade.
+    - La table complète des actions : le programme en reconnaît 22, la page de
+      manuel en documentait 7. Les 15 autres — activate:, grabfocus:,
+      presentwindow:, save:, fileselect:, removeselected:, break:, insert:,
+      append:, pulse:, start:, stop:, command:, launch:, closewindow: — sont
+      décrites. Avec le point qui explique tout : un préfixe inconnu n'est
+      jamais signalé, la chaîne entière part au shell.
+    - Portée réelle de closewindow: — n'importe quel widget nommé, pas
+      seulement les fenêtres de launch: — et ce qu'il imprime sur la dernière
+      fenêtre : la seule ligne EXIT="closewindow", sans les valeurs.
+    - Où écrit save: (la directive <output file>), et le piège de locale : sous
+      fr_FR les valeurs numériques sortent avec une virgule.
+    - Les préfixes conditionnels « if true » et « if false », utilisés par 11
+      exemples livrés et documentés nulle part. L'espace après est obligatoire.
+    - L'action par défaut d'un bouton : sans <action>, il sort en imprimant
+      EXIT="<son étiquette>". Sans étiquette, « OK » lui est imposé. C'est ce
+      qui fait marcher tous les exemples du dépôt, et rien ne le disait.
+    - <visible> est un synonyme de <sensitive> : il GRISE, il ne cache pas.
+      Sur une <entry>, la valeur « password » masque la saisie — mais le
+      masquage est PUREMENT VISUEL, la valeur ressort en clair.
+    - Le mode fichier auto-exécutable (#!/usr/bin/gtk3sermo -f), avec ses deux
+      limites mesurées : une seule ligne jetée, et seulement en lecture de
+      fichier — pas avec --stdin.
+    - Dans un <menu>, le <label> se déclare APRÈS les <menuitem>. En tête, c'est
+      une erreur de syntaxe. La page de manuel affirmait l'ordre inverse.
+  * La page de manuel XML affirmait que « chaque dialogue doit avoir un unique
+    élément racine <window> ». C'est faux : la grammaire enveloppe d'office une
+    description sans racine, et une fenêtre s'ouvre — c'est même le motif de la
+    plupart des dialogues gtkdialog d'époque. Corrigé, en disant à quoi sert
+    quand même un <window> explicite.
+  * --include était décrit à l'envers dans les trois pages de manuel : il
+    n'exécute pas le fichier « avant de lancer l'interface », il préfixe CHAQUE
+    commande d'action par « . FICHIER ; ». Avec l'exception mesurée : --do n'est
+    pas préfixé et ne voit donc pas le fichier inclus.
+  * L'exemple livré examples/miscellaneous/standalone_file portait encore le
+    shebang d'amont #! /usr/local/bin/gtkdialog, chemin qu'aucun paquet ne pose.
+    Lancé tel quel, il échouait sur « mauvais interpréteur ».
   * Cliquer un <switch> tuait le programme, dans les DEUX ports. Mesuré 6 fois
     sur 6 : SIGSEGV au premier clic. La pile désigne notre code —
     attributeset_get_first() appelé depuis widget_signal_executor() sur le

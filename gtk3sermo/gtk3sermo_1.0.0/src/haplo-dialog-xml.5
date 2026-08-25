@@ -31,8 +31,32 @@ existants, gtk3sermo fournit un alias rétro-compatible nommé \fBgtkdialog\fR.
 .fi
 .RE
 
-Chaque dialogue doit avoir un unique élément racine
-.BR <window> .
+La balise
+.B <window>
+est
+.B facultative :
+une description qui commence directement par un conteneur, ou même par un widget
+nu, est acceptée telle quelle et une fenêtre s'ouvre — la grammaire l'enveloppe
+d'office. La description interne produite est identique à celle qu'on obtient
+avec un
+.B <window>
+explicite. C'est le motif de la plupart des dialogues écrits pour l'ancêtre
+gtkdialog, et il fonctionne toujours.
+
+Sans
+.BR <window> ,
+la fenêtre prend pour titre le nom du programme. L'écrire explicitement sert
+donc à choisir le titre, mais pas seulement : c'est la seule façon d'atteindre
+les réglages de la fenêtre elle\-même — taille par défaut, taille minimale,
+redimensionnement, barre d'en\-tête, décorations, icône, et l'ancrage Wayland.
+
+.B Une fenêtre ne porte qu'un seul enfant.
+Plusieurs widgets au premier niveau sont acceptés sans erreur, mais seul le
+premier s'affiche — avec ou sans racine explicite. Deux
+.B <window>
+frères : seul le premier existe, le second est perdu sans avertissement.
+Mettez donc un conteneur.
+
 Les widgets sont imbriqués dans des conteneurs
 .RB ( <hbox> ,
 .BR <vbox> ,
@@ -81,6 +105,26 @@ Commande shell dont la sortie alimente le widget.
 .B <default>valeur</default>
 Valeur initiale du widget. L'élément peut être vide
 (\fB<default></default>\fR) : le widget démarre alors à blanc.
+
+.TP
+.B <visible>valeur</visible>
+.B Synonyme de \fB<sensitive>\fB, et non l'inverse de « caché ».
+Ce sous\-élément \fBgrise\fR le widget, il ne le fait pas disparaître ; c'est
+l'attribut de balise \fBvisible="false"\fR — chose différente — qui le retire de
+l'affichage. Valeurs désactivantes : \fBfalse\fR, \fBno\fR, \fB0\fR, et
+\fBdisabled\fR qui est marqué déprécié dans le code au profit de \fBfalse\fR.
+La valeur \fBenabled\fR n'est comparée nulle part : c'est simplement l'absence
+de désactivation.
+.br
+Sur une \fB<entry>\fR seulement, la valeur \fBpassword\fR masque la saisie par
+des puces, sans passer par le widget \fB<password>\fR. C'est l'orthographe
+historique de gtkdialog, et elle explique pourquoi de vieux scripts masquent leur
+champ. \fBAttention : le masquage est purement visuel.\fR La valeur ressort
+\fBen clair\fR sur la sortie standard — ce n'est pas une protection, c'est un
+affichage.
+.br
+Ce sous\-élément ne s'écrit qu'en forme nue : \fB<visible foo="bar">\fR est une
+erreur de syntaxe.
 
 .SH WIDGETS — RÉFÉRENCE COMPLÈTE
 
@@ -236,8 +280,23 @@ Conteneur invisible captant les événements (souris, clavier) pour son enfant.
 Bouton cliquable.
 .br
 Formes courtes : \fB<button ok>\fR \fB<button cancel>\fR \fB<button help>\fR
+\fB<button yes>\fR \fB<button no>\fR
 .br
 Attributs : \fBstock\fR (icône GTK).
+.br
+.B Action par défaut.
+Un bouton sans aucune \fB<action>\fR reçoit d'office une action de sortie dont
+la valeur est sa \fBpremière\fR directive \fB<label>\fR : à l'appui, le
+programme imprime \fBEXIT="\fIétiquette\fB"\fR et se termine. C'est ce
+mécanisme, jamais explicité jusqu'ici, qui fait fonctionner tous les exemples du
+type « \fB<button ok>\fR puis test sur \fB$EXIT\fR ». Un
+\fB<button></button>\fR sans étiquette se voit imposer « OK », qu'il affiche et
+qu'il renvoie. Dès qu'une seule \fB<action>\fR est déclarée, cette sortie
+automatique n'est pas créée : le bouton exécute l'action et la fenêtre reste
+ouverte.
+.br
+\fB<togglebutton>\fR fait exception : il reçoit bien l'étiquette « OK » par
+défaut, mais aucune action de sortie.
 .TP
 .B <checkbox>
 Case à cocher. Exporte \fBtrue\fR ou \fBfalse\fR.
@@ -391,7 +450,12 @@ Bouton de sélection de fichier ou de dossier. Exporte le chemin choisi.
 .B <menubar>
 Barre de menus principale.
 .br
-Sous-éléments : \fB<menu>\fR puis \fB<menuitem>\fR.
+Sous\-éléments, dans cet ordre \fBimpératif\fR : les \fB<menuitem>\fR
+d'abord, et le \fB<label>\fR du menu \fBen dernier\fR. Placé en tête ou entre
+deux entrées, il produit une erreur de syntaxe. La forme attribut
+\fB<menu label="Fichier">\fR se met, elle, en tête de la balise ouvrante et
+fonctionne — mais n'écrivez pas les deux : les ports ne choisissent pas le même.
+Un \fB<menu>\fR sans libellé affiche un texte de repli.
 .TP
 .B <menuitem>
 Entrée de menu.
@@ -444,29 +508,148 @@ echo "Nom saisi : $NOM"
 
 .SH ACTIONS SPÉCIALES
 
-Les \fB<action>\fR reconnaissent les mots-clés suivants :
+Une
+.B <action>
+dont le texte commence par un préfixe connu suivi de « : » est traitée par le
+programme lui\-même. Tout le reste est lancé comme une commande shell.
+
+.B La comparaison ignore la casse
+mais pas l'orthographe :
+.B closewindow:
+et
+.B CLOSEWINDOW:
+sont équivalents, tandis qu'un préfixe inconnu — une faute de frappe, par
+exemple — n'est
+.B jamais signalé :
+la chaîne entière part au shell comme une commande ordinaire. Écrire
+\fBCLOSE:MAFENETRE\fR ne ferme donc rien, et n'affiche aucune erreur. C'est le
+piège le plus courant de ce langage.
+
+Le programme reconnaît
+.B vingt\-deux
+préfixes :
 
 .TP
-.B EXIT:valeur
-Ferme le dialogue et retourne \fIvaleur\fR comme code de sortie.
+.B command:\fIcommande\fR
+Lance explicitement une commande shell. C'est aussi ce qui se passe par défaut
+quand aucun préfixe connu n'est reconnu.
 .TP
-.B REFRESH:variable
-Rafraîchit le widget identifié par \fIvariable\fR via sa balise \fB<input>\fR.
+.B exit:\fIvaleur\fR
+Imprime la valeur de chaque widget nommé, puis \fBEXIT="\fIvaleur\fB"\fR, et
+termine le programme.
 .TP
-.B ENABLE:variable
-Active le widget identifié par \fIvariable\fR.
+.B closewindow:\fINOM\fR
+Ferme la fenêtre qui
+.I contient
+le widget nommé — pas seulement les fenêtres ouvertes par \fBlaunch:\fR. On peut
+donc fermer une fenêtre en nommant un simple champ qui s'y trouve. S'il reste au
+moins une autre fenêtre, le programme continue en silence ; sinon il imprime la
+seule ligne \fBEXIT="closewindow"\fR — \fBsans\fR les valeurs des widgets,
+contrairement à \fBexit:\fR — et se termine avec le code 0. Un nom inexistant ne
+provoque rien du tout.
 .TP
-.B DISABLE:variable
-Désactive le widget identifié par \fIvariable\fR.
+.B launch:\fINOM\fR
+Ouvre une nouvelle fenêtre dont la description est dans la variable
+d'environnement \fINOM\fR.
 .TP
-.B SHOW:variable
-Rend visible le widget identifié par \fIvariable\fR.
+.B enable:\fINOM\fR
+Rend le widget sensible aux actions de l'utilisateur.
 .TP
-.B HIDE:variable
-Cache le widget identifié par \fIvariable\fR.
+.B disable:\fINOM\fR
+Rend le widget insensible. Son apparence indique qu'il est indisponible.
 .TP
-.B CLEAR:variable
-Vide le contenu du widget identifié par \fIvariable\fR.
+.B show:\fINOM\fR
+Affiche le widget.
+.TP
+.B hide:\fINOM\fR
+Masque le widget.
+.TP
+.B activate:\fINOM\fR
+Déclenche le widget comme si l'utilisateur l'avait actionné.
+.TP
+.B grabfocus:\fINOM\fR
+Donne le focus clavier au widget.
+.TP
+.B presentwindow:\fINOM\fR
+Ramène au premier plan la fenêtre qui contient le widget.
+.TP
+.B refresh:\fINOM\fR
+Réexécute la balise \fB<input>\fR du widget et le remplit avec le résultat.
+.TP
+.B save:\fINOM\fR
+Écrit le contenu du widget dans le fichier désigné par sa directive
+\fB<output file>\fR. Voir la note ci\-dessous.
+.TP
+.B fileselect:\fINOM\fR
+Ouvre un sélecteur de fichier et place le chemin choisi dans le widget.
+.TP
+.B clear:\fINOM\fR
+Vide le contenu du widget.
+.TP
+.B removeselected:\fINOM\fR
+Retire du widget l'élément sélectionné.
+.TP
+.B insert:\fINOM\fR
+Insère un élément dans le widget.
+.TP
+.B append:\fINOM\fR
+Ajoute un élément à la fin du widget.
+.TP
+.B break:
+Interrompt la liste d'actions du widget : les actions suivantes ne sont pas
+exécutées.
+.TP
+.B pulse:\fINOM\fR
+Fait avancer d'un cran une barre de progression en mode indéterminé.
+.TP
+.B start:\fINOM\fR
+Démarre le widget — un \fB<timer>\fR, par exemple.
+.TP
+.B stop:\fINOM\fR
+Arrête le widget.
+
+.SS Où écrit save:
+
+Le chemin vient de la première directive \fB<output file>\fR du widget. Sans
+elle, rien n'est écrit et un message part sur la sortie d'erreur
+(« No <output file> directive found. »). L'échec est
+.B par widget :
+dans un même déclenchement, un widget peut échouer pendant qu'un autre écrit.
+
+Tous les widgets ne savent pas se sauvegarder : ceux de saisie et de liste
+écrivent réellement un fichier, tandis que les conteneurs et les widgets
+purement décoratifs répondent « Save not implemented for this widget ».
+
+.B Piège de locale.
+Les valeurs numériques sont écrites avec les fonctions de formatage du C, qui
+suivent la locale. Sous \fBfr_FR\fR, une \fB<levelbar>\fR à 0.4 produit
+littéralement \fB0,4\fR, avec une virgule. Un script qui relit ce fichier pour
+calculer doit poser \fBLC_NUMERIC=C\fR autour du dialogue.
+
+.SS Préfixes conditionnels
+
+Devant l'action d'un widget à bascule — \fB<checkbox>\fR, \fB<radiobutton>\fR,
+\fB<togglebutton>\fR, \fB<expander>\fR —, on peut écrire \fBif true \fR ou
+\fBif false \fR : l'action n'est exécutée que si l'état correspond.
+
+.RS 4
+.nf
+<checkbox>
+  <label>Activer</label>
+  <variable>CB</variable>
+  <action>if true  echo "coché"</action>
+  <action>if false echo "décoché"</action>
+</checkbox>
+.fi
+.RE
+
+L'espace après \fBtrue\fR et \fBfalse\fR est
+.B obligatoire
+et il en faut exactement un : une tabulation ou un espace en trop ne sont pas
+reconnus, et l'action part alors au shell avec son préfixe, où elle échoue.
+
+Cette forme est distincte de l'attribut \fBcondition=\fR, qui, lui, prend le
+dessus quand les deux sont présents.
 
 .SH SÉCURITÉ
 

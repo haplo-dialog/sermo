@@ -1,4 +1,4 @@
-#! /usr/local/bin/gtkdialog -f 
+#!/usr/bin/gtk4sermo -f 
 
 <window>
 	<vbox>
