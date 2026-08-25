@@ -87,33 +87,54 @@ make check
 
 ## Lancer les tests
 
-### Tests fonctionnels shell (sans display requis)
+> ⚠️ **Deux scripts portent le nom `run_tests.sh`**, et ils ne font pas la même
+> chose. Celui de ce dossier (`tests/run_tests.sh`) contient les tests
+> fonctionnels shell ; celui de la racine du dépôt (`tests/xml/run_tests.sh`)
+> rejoue la suite XML. Les commandes ci-dessous disent chaque fois lequel.
+
+### Tests fonctionnels shell (sans affichage requis)
 
 ```bash
-bash tests/run_tests.sh                    # gtk3sermo du PATH
-bash tests/run_tests.sh src/gtk3sermo      # binaire compilé
+bash tests/run_tests.sh                    # gtk3sermo trouvé dans le PATH
+bash tests/run_tests.sh src/gtk3sermo      # binaire tout juste compilé
 ```
 
-Résultat attendu : `44 passés | 0 échoués`.
+Résultat mesuré le 2026-08-25 : **49 passés | 0 échoués | 0 ignorés**.
 
-### Tests XML communs (`tests/xml/`, sans display requis)
+### Suite XML commune aux deux ports (sans affichage requis)
 
-Suite XML de gtk3sermo (55 cas, parsés via `--print-ir`, headless) :
+Le script vit à la **racine du dépôt**, pas dans ce dossier — la suite est
+partagée entre `gtk3sermo` et `gtk4sermo` :
 
 ```bash
-bash tests/run_tests.sh gtk3sermo
+bash <racine>/tests/xml/run_tests.sh gtk3sermo   # ou gtk4sermo, ou « all »
 ```
 
-Résultat vérifié (2026-06-06) : **55/55 PASS**.
+55 cas, analysés via `--print-ir`, sans serveur X. Résultat mesuré le
+2026-08-25, en locale `fr_FR.UTF-8` : **55/55 PASS pour chacun des deux ports**.
 
-### Tests unitaires C (libcheck + make check)
+### Tests unitaires C (libcheck + `make check`)
 
 ```bash
 ./configure --enable-unit-tests
 make -j$(nproc)
 make check
-# Résultats dans tests/*.log
+# Journaux détaillés dans tests/*.log
 ```
+
+Résultat mesuré le 2026-08-25 : **3 PASS, 0 FAIL** — `test_safe_exec`,
+`test_stringman` et le wrapper shell.
+
+> Cette option a longtemps été cassée. `test_stringman.c` était écrit contre une
+> vingtaine de fonctions `command_is_*()` / `command_get_*()` qui n'existent
+> dans aucun binaire : leurs définitions sont dans un bloc commenté de
+> `stringman.c`, hérité de l'amont. `make check` échouait donc à l'édition de
+> liens, avec une trentaine de « undefined reference ». Le test porte désormais
+> sur l'API qui a remplacé ces fonctions — la table de préfixes lue par
+> `command_get_prefix()` et `command_prefix_get_type()` — et sur `strnatcmp`,
+> `linecutter`, `str_default_name`. Éprouvé par deux sabotages : désaligner la
+> table de préfixes et l'énumération, et tronquer une commande shell qui
+> contient un deux-points ; les deux sont attrapés et nommés.
 
 ---
 

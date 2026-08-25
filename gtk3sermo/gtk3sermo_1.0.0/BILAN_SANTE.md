@@ -375,11 +375,11 @@ intégrés directement dans la règle `wlist` (patron Lot 0). Résultat : 6 sr (
 
 | Fichier | Description |
 |---------|-------------|
-| `tests/run_tests.sh` | 44 tests fonctionnels shell (exemples, statique, présence fichiers) |
+| `tests/run_tests.sh` | **49** tests fonctionnels shell (exemples, statique, présence fichiers) — mesuré le 2026-08-25, 49 passés / 0 échoué |
 | `tests/test_safe_exec.c` | 13 tests unitaires Check pour `safe_system()` et `safe_popen()` |
 | `tests/test_stringman.c` | 14 tests unitaires Check pour `command_is_*()` et `strnatcmp()` |
 | `tests/Makefile.am` | Intégration Autotools — cible `make check` |
-| `configure.in` | Détection libcheck, `--enable-unit-tests`, `AM_CONDITIONAL` |
+| `configure.ac` | Détection libcheck, `--enable-unit-tests`, `AM_CONDITIONAL` |
 | `Makefile.am` | `SUBDIRS += tests` |
 
 ### Build reproductible

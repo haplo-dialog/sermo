@@ -38,9 +38,11 @@ jobs:
       matrix:
         include:
           - port: gtk3sermo
-            deps: "libgtk-3-dev libvte-2.91-dev libgtk-layer-shell-dev"
+            deps: "libgtk-3-dev libvte-2.91-dev libgtk-layer-shell-dev check"
+            extra_configure: "--enable-unit-tests"
           - port: gtk4sermo
             deps: "libgtk-4-dev libvte-2.91-gtk4-dev"
+            extra_configure: ""
     steps:
       - uses: actions/checkout@v4
 
@@ -51,12 +53,16 @@ jobs:
             build-essential flex bison pkg-config ca-certificates \
             automake autoconf libtool binutils ${{ matrix.deps }}
 
-      - name: Compiler et installer
+      # extra_configure porte --enable-unit-tests là où l'option existe
+      # (gtk3sermo). Elle était documentée mais jamais rejouée : c'est pour ça
+      # que `make check` est resté cassé quatre mois sans que personne le voie.
+      - name: Compiler, tester unitairement, installer
         working-directory: ${{ matrix.port }}/${{ matrix.port }}_1.0.0
         run: |
           autoreconf -fi
-          ./configure --prefix="$GITHUB_WORKSPACE/inst"
+          ./configure --prefix="$GITHUB_WORKSPACE/inst" ${{ matrix.extra_configure }}
           make -j"$(nproc)"
+          make check
           make install
           test -x "$GITHUB_WORKSPACE/inst/bin/${{ matrix.port }}"
 

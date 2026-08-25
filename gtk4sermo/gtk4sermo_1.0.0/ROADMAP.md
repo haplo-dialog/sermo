@@ -1,10 +1,15 @@
-# ROADMAP — gtk4sermo (port GTK4)
+# Feuille de route — gtk4sermo (port GTK 4)
 
-**Haplo-Linux** | **devel@haplo-dialog.fr** | Mis à jour : 2026-06-07
+**haplo-dialog** | **devel@haplo-dialog.fr** | Mis à jour : 2026-08-25
 
 ---
 
-## Version actuelle : 1.0.0-gtk4 (dev)
+## Version actuelle : 1.0.0-12 — **publiée**
+
+Ce n'est plus un port de développement. Le paquet est téléchargeable dans la
+release [v1.0.0](https://gitlab.com/haplo-dialog/sermo/-/releases/v1.0.0), la CI
+le construit et l'éprouve à chaque poussée comme le port GTK 3, et il a reçu la
+même passe de sûreté mémoire (voir `TODO-SECURITY.md`).
 
 | Composant | État |
 |-----------|------|
@@ -19,6 +24,11 @@
 | **Compilation complète (0 erreur)** | ✅ **gtk4sermo ~1,45 Mo** |
 | Warnings de compilation | ✅ 1549 → 77 |
 | **Tests XML `tests/xml/` (55 cas, `--print-ir`)** | ✅ **55/55** (était 0/52 avant grammaire réparée) |
+| **Exemples réellement ouverts** (Xvfb, `fr_FR.UTF-8`) | ✅ **58/58** — 0 plantage, 0 erreur de syntaxe, 0 sans fenêtre |
+| **Tests de comportement `safe_exec`** | ✅ 0 échec |
+| **Durcissement mesuré au `readelf`** | ✅ PIE, Full RELRO, BIND_NOW, NX, canari, FORTIFY, CET (IBT + SHSTK) |
+| **Passe de sûreté mémoire** | ✅ alignée sur le port GTK 3 (2026-08-24) |
+| **Paquet publié** | ✅ `.deb` + dbgsym dans la release v1.0.0 |
 
 ---
 
@@ -33,38 +43,35 @@
 - [x] Ajouter les 20 `create_widget()` dans `automaton.c`
 - [x] Compilation sans erreur sur Debian Testing / Haplo-Linux (0 erreur ; warnings 1549 → 77)
 - [x] Grammaire réparée (commentaires `<!-- -->`, espaces entre attributs, 8 widgets câblés) — **tests XML `tests/xml/` 55/55** (était 0/52)
-- [ ] Test des 50 widgets (scripts `examples/*/`)
-- [ ] `checksec` → Full RELRO, PIE, Stack Canary
+- [x] Test des widgets par les exemples livrés — **58/58 ouvrent leur fenêtre**, sous Xvfb, en locale française, à chaque poussée (`tests/run_examples.sh`)
+- [x] Durcissement vérifié — mieux que `checksec` : `tests/garde_durcissement.sh` lit le **binaire produit** au `readelf` et exige aussi CET (IBT + SHSTK), que `checksec` ne regarde pas. C'est ce banc qui a révélé que `-fcf-protection=full` ne survivait pas à l'édition de liens sans `-Wl,-z,ibt -Wl,-z,shstk`.
 
 ### 🟢 v1.0.0-gtk4 stable — « Release Haplo » (cible : 2026-Q4)
 
 **Objectif :** paquet `.deb` stable dans le dépôt Haplo.
 
-- [ ] Zéro régression vs gtk3d GTK3 (scripts 0.8.3 compatibles)
-- [ ] `valgrind` : zéro leak sur fenêtre simple
-- [ ] Paquet `gtk4sermo_1.0.0_amd64.deb` créé
-- [ ] Coexistence `gtk3d` (GTK3) + `gtk4sermo` (GTK4) validée
-- [ ] Documentation complète (texi regeneré, manuel à jour)
-- [ ] Soumission dépôt https://haplo-dialog.fr
+- [x] Zéro régression vs le port GTK 3 sur la suite XML — **55/55 des deux côtés**, même corpus
+- [x] Paquet `gtk4sermo` construit **et publié** (`.deb` + dbgsym, release v1.0.0)
+- [x] Coexistence `gtk3sermo` + `gtk4sermo` : binaires et pages de manuel distincts, aucun conflit déclaré ; seul `gtksermo` fournit l'alias `gtkdialog`
+- [ ] `valgrind` : zéro fuite sur fenêtre simple
+- [ ] Dépôt APT signé (aujourd'hui : téléchargement direct + sommes SHA256, qui attestent l'intégrité, pas l'origine)
 
-### 🟡 v1.0.0-gtk4 — « GTK4 complet » (cible : 2027)
+### 🟡 « GTK 4 complet » (cible : 2027)
 
-**Objectif :** supprimer les stubs restants, migration GTK4 complète.
+**Objectif :** retirer ce qui reste d'emprunté à GTK 3.
 
-- [ ] `<menubar>/<menu>/<menuitem>` : migration GMenuModel + GtkPopoverMenu
-- [ ] `<table>` : migration GtkColumnView + GListModel
-- [ ] `gtk_dialog_run` : réécriture asynchrone
-- [ ] CSS theming : suppression de tous les `override_*` restants
-- [ ] GtkDropDown : remplacer GtkComboBoxText (déprécié GTK4.10)
-- [ ] GtkColumnView : remplacer GtkTreeView (déprécié GTK4.10)
-- [ ] GtkFileDialog : remplacer GtkFileChooserDialog (déprécié GTK4.10)
+- [x] `<menubar>`/`<menu>`/`<menuitem>` : **fait** — `GMenuModel` + `GtkPopoverMenu`. Avant ça, `<menuitem>` produisait un `GtkPopoverMenu` autonome empilé comme un widget ordinaire ; GTK le réalisait en surface popup sans parent et le programme mourait sur un SIGSEGV.
+- [x] `<table>` : **fait** — `GtkColumnView`.
+- [x] CSS : **fait** — plus aucun `override_color`/`override_background`/`override_font` dans `src/`.
+- [ ] `gtk_dialog_run` : deux appels restants (`actions.c`, `printing.c`). Ce n'est pas un bouchon vide — `gtk4-compat.h` en donne une émulation synchrone réelle par `GMainLoop` local et le signal `response`, qui ne gèle pas la boucle principale. Reste à passer aux API asynchrones que GTK 4 encourage.
+- [ ] `GtkDropDown` : remplacer `GtkComboBoxText` (déprécié depuis GTK 4.10)
+- [ ] `GtkColumnView` : remplacer les derniers `GtkTreeView` (déprécié depuis GTK 4.10)
+- [ ] `GtkFileDialog` : remplacer `GtkFileChooserDialog` (déprécié depuis GTK 4.10)
+- [ ] `<gvim>` : bouchon assumé — l'embarquement par socket X11 n'a pas d'équivalent Wayland
 
-### 🔮 v1.1.0 — « Multi-toolkit » (long terme)
+### 🔮 Long terme
 
-Intégration dans le meta-projet haplo-dialog :
-
-- [ ] API shell commune entre les 5 ports
-- [ ] Outil de conversion automatique scripts GTK3 → GTK4
+- [ ] Outil de conversion automatique de scripts GTK 3 → GTK 4
 
 ---
 
@@ -90,9 +97,9 @@ Intégration dans le meta-projet haplo-dialog :
 | flowbox | — | ✅ GTK4 | ✅ |
 | overlay | — | ✅ GTK4 | ✅ |
 | drawingarea | — | ✅ GTK4 | ✅ |
-| menubar/menu/menuitem | ✅ | ⛔ stub | ✅ GMenuModel |
-| table (CList) | ✅ | ⛔ stub | ✅ ColumnView |
-| gvim (socket) | ✅ | ⛔ stub | ❓ Wayland |
+| menubar/menu/menuitem | ✅ | ✅ GMenuModel | ✅ |
+| table (CList) | ✅ | ✅ GtkColumnView | ✅ |
+| gvim (socket) | ✅ | ⛔ bouchon | ❓ sans équivalent Wayland |
 
 **Légende :** ✅ Fonctionnel | ⚠️ Shim partiel | ⛔ Stub | — Non applicable | ❓ Incertain
 
@@ -101,11 +108,12 @@ Intégration dans le meta-projet haplo-dialog :
 ## Contacts et ressources
 
 - **Mainteneur :** haplo-dialog — devel@haplo-dialog.fr
-- **Dépôt :** https://haplo-dialog.fr
-- **GTK4 API :** https://docs.gtk.org/gtk4/
-- **Projet original :** https://code.google.com/archive/p/gtk3d/
+- **Dépôt :** https://gitlab.com/haplo-dialog/sermo
+- **Site :** https://haplo-dialog.fr
+- **API GTK 4 :** https://docs.gtk.org/gtk4/
+- **Projet d'origine :** gtkdialog (László Pere, 2003-2007 ; Thunor, 2011-2012)
 - **Licence :** GPL-2.0-or-later
 
 ---
 
-*Document horodaté — dernière mise à jour : 2026-06-07 (audit #5 — grammaire réparée, tests XML 0/52 → 55/55).*
+*Document horodaté — dernière mise à jour : 2026-08-25 (port publié, exemples 58/58, menus et `<table>` sortis du bouchon).*

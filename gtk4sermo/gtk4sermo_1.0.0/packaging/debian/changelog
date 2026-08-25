@@ -1,5 +1,11 @@
 gtk4sermo (1.0.0-12) unstable; urgency=medium
 
+  * linecutter() : les champs après le premier étaient alloués par strdup() et
+    libérés par g_free(), deux allocateurs différents. Passés à g_strdup().
+    Le commentaire d'origine affirmait aussi que la fonction « ne détruit pas
+    la chaîne d'origine, elle en fait des copies » — c'est faux deux fois :
+    elle écrit des '\0' dedans, et line[0] EST la chaîne d'origine, que
+    list_t_free() libère ensuite. Le contrat d'appartenance est écrit.
   * Nombres décimaux, la suite : la passe du 2026-08-22 avait remplacé les 52
     appels à atof(), mais laissé trois strtod() qui souffrent exactement du
     même mal — la locale décide où est la virgule. Mesuré sous fr_FR.UTF-8 :

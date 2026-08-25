@@ -91,9 +91,21 @@ FROM builder AS tester
 
 WORKDIR /build/gtk3sermo
 
-# Tests unitaires C (test_safe_exec, test_stringman) — aucun affichage requis
-RUN make check 2>&1 | tee /tmp/make_check.log; \
-    if grep -qE "^(FAIL|ERROR):" /tmp/make_check.log; then \
+# Tests unitaires C (test_safe_exec, test_stringman) — aucun affichage requis.
+#
+# set -o pipefail est indispensable : sans lui, « make check | tee » rend le code
+# de sortie de tee, c'est-à-dire 0, quoi qu'ait fait make. C'est exactement ce
+# qui est arrivé le 2026-08-25 — make check échouait à l'édition de liens de
+# test_stringman et l'image se construisait quand même, verte.
+#
+# Le grep sur FAIL:/ERROR: est gardé en second filet : il attrape un test qui
+# échoue sans faire échouer make, mais il n'aurait jamais vu une erreur d'édition
+# de liens, qui n'écrit ni l'un ni l'autre.
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+RUN make check 2>&1 | tee /tmp/make_check.log
+
+RUN if grep -qE "^(FAIL|ERROR):" /tmp/make_check.log; then \
         echo "=== TESTS ÉCHOUÉS ===" && cat /tmp/make_check.log && exit 1; \
     fi
 

@@ -450,12 +450,20 @@ char *find_pixmap(char *filename)
 }
 
 
-/* Thunor: This function does not destroy the original string, rather it
- * makes duplicates of it stored within the list_t struct which possibly
- * requires freeing with list_t_free depending on who is going to own
- * the individual strings.
- * 
- * Cutting the line to substrings with the given field separator.
+/* Decoupe str sur le separateur fs.
+ *
+ * ATTENTION, contrat d'appartenance contre-intuitif. Le commentaire d'origine
+ * affirmait « does not destroy the original string, rather it makes duplicates
+ * of it » : c'est faux sur les deux points.
+ *
+ *   1. str est MODIFIE SUR PLACE : chaque separateur devient un '\0'.
+ *   2. line[0] N'EST PAS une copie, c'est str lui-meme. Seuls line[1] et
+ *      les suivants sont dupliques.
+ *
+ * Comme list_t_free() libere line[0] avec g_free(), l'appelant CEDE la
+ * propriete de str : il doit passer une chaine allouee par GLib, jamais un
+ * litteral ni un tampon de pile. Tous les appels du projet passent donc un
+ * g_strdup().
  */
 list_t *linecutter(char *str, int fs)
 {
@@ -480,7 +488,9 @@ list_t *linecutter(char *str, int fs)
 	
 	for(n = 0; n <= strlen(str); ++n){
 		if (str[n] == fs){
-			parts->line[parts->n_lines] = strdup(str + n + 1);
+			/* g_strdup et non strdup : list_t_free libere par g_free,
+			 * et melanger les deux allocateurs est indefini. */
+			parts->line[parts->n_lines] = g_strdup(str + n + 1);
 			++parts->n_lines;
 		}
 	}

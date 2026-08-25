@@ -40,8 +40,13 @@ default:
   script:
     - cd "$PORT/${PORT}_1.0.0"
     - autoreconf -fi
-    - ./configure --prefix="$CI_PROJECT_DIR/inst"
+    # $EXTRA_CONFIGURE porte --enable-unit-tests la ou l'option existe (gtk3sermo).
+    # Elle etait documentee mais jamais rejouee par la CI : c'est pour ca que
+    # make check est reste casse quatre mois sans que personne le voie —
+    # test_stringman.c etait ecrit contre des fonctions absentes du binaire.
+    - ./configure --prefix="$CI_PROJECT_DIR/inst" $EXTRA_CONFIGURE
     - make -j"$(nproc)"
+    - make check
     - make install
     - test -x "$CI_PROJECT_DIR/inst/bin/$PORT"   # le build a bien produit le binaire
     - PATH="$CI_PROJECT_DIR/inst/bin:$PATH" sh "$CI_PROJECT_DIR/tests/xml/run_tests.sh" "$PORT"
@@ -81,12 +86,15 @@ gtk3sermo:
   extends: .autotools
   variables:
     PORT: gtk3sermo
-    DEPS: "automake autoconf libtool libgtk-3-dev libvte-2.91-dev libgtk-layer-shell-dev"
+    EXTRA_CONFIGURE: "--enable-unit-tests"
+    DEPS: "automake autoconf libtool libgtk-3-dev libvte-2.91-dev libgtk-layer-shell-dev check"
 
 gtk4sermo:
   extends: .autotools
   variables:
     PORT: gtk4sermo
+    # gtk4sermo n'a pas d'--enable-unit-tests : pas de tests C de son cote.
+    EXTRA_CONFIGURE: ""
     DEPS: "automake autoconf libtool libgtk-4-dev libvte-2.91-gtk4-dev"
 
 # ─────────────────── exécution réelle des exemples ───────────────────

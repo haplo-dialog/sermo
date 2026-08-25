@@ -1,5 +1,21 @@
 gtk3sermo (1.0.0-11) unstable; urgency=medium
 
+  * make check était cassé depuis toujours sous --enable-unit-tests, une option
+    pourtant documentée : test_stringman.c appelait une vingtaine de fonctions
+    command_is_*() / command_get_*() absentes du binaire — leurs définitions
+    sont dans un bloc « Redundant: Not being used » de stringman.c, hérité de
+    l'amont, ouvert ligne 76 et refermé ligne 303. Le test porte désormais sur
+    l'API qui les a remplacées (table de préfixes, command_get_prefix,
+    command_prefix_get_type) plus strnatcmp, linecutter et str_default_name :
+    15 vérifications, éprouvées par deux sabotages. La CI rejoue maintenant
+    make check à chaque poussée — son absence est ce qui a laissé la casse
+    passer inaperçue.
+  * linecutter() : les champs après le premier étaient alloués par strdup() et
+    libérés par g_free(), deux allocateurs différents. Passés à g_strdup().
+    Le commentaire d'origine affirmait aussi que la fonction « ne détruit pas
+    la chaîne d'origine, elle en fait des copies » — c'est faux deux fois :
+    elle écrit des '\0' dedans, et line[0] EST la chaîne d'origine, que
+    list_t_free() libère ensuite. Le contrat d'appartenance est écrit.
   * Nombres décimaux, la suite : la passe du 2026-08-22 avait remplacé les 52
     appels à atof(), mais laissé trois strtod() qui souffrent exactement du
     même mal — la locale décide où est la virgule. Mesuré sous fr_FR.UTF-8 :
