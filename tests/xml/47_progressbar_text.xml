@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC0-1.0 -->
 <!-- DESC: progressbar avec text overlay -->
 <window title="Test progressbar texte" width-request="350" height-request="150">
   <vbox>

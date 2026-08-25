@@ -109,4 +109,4 @@ AM_LDFLAGS = -pie -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack \
 	-Wl,-z,ibt -Wl,-z,shstk
 
 # Man page — installed to $(mandir)/man1/
-dist_man_MANS = gtk4sermo.1
+dist_man_MANS = gtk4sermo.1 haplo-dialog-xml.5

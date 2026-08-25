@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC0-1.0 -->
 <!-- DESC: combobox avec items et sélection par défaut -->
 <window title="Test combobox" width-request="300" height-request="150">
   <vbox>

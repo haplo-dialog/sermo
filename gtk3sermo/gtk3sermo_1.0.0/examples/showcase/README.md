@@ -1,6 +1,3 @@
-<div align="right"><sub><code>maj :     2026-08-18 12:40:07 · par claude</code></sub></div>
-<div align="right"><sub><code>réindex : —</code></sub></div>
-
 # Banc de repères visuels
 
 Cinq scripts shell, cinq fenêtres. Ensemble, ils passent en revue l'essentiel

@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC0-1.0 -->
 <!-- DESC: action REFRESH sur un widget texte avec input -->
 <window title="Test REFRESH action" width-request="350" height-request="200">
   <vbox>

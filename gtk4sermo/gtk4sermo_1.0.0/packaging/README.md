@@ -1,6 +1,3 @@
-<div align="right"><sub><code>maj :     2026-08-22 16:30:41 · par claude</code></sub></div>
-<div align="right"><sub><code>réindex : —</code></sub></div>
-
 # Packaging — gtk4sermo
 
 **Toolkit :** GTK4

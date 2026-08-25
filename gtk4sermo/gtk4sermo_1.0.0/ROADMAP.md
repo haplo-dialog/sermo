@@ -1,6 +1,3 @@
-<div align="right"><sub><code>maj :     2026-08-22 16:30:41 · par claude</code></sub></div>
-<div align="right"><sub><code>réindex : —</code></sub></div>
-
 # ROADMAP — gtk4sermo (port GTK4)
 
 **Haplo-Linux** | **devel@haplo-dialog.fr** | Mis à jour : 2026-06-07

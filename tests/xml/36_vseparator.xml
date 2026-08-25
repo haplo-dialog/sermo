@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC0-1.0 -->
 <!-- DESC: vseparator et hseparator dans hbox -->
 <window title="Test separators" width-request="400" height-request="200">
   <vbox>

@@ -306,7 +306,7 @@ gtkdialog_init(
 	context = g_option_context_new(
 "\n"
 "Create dialog boxes and windows according to the given dialog description.\n"
-"For more information try 'info gtk3sermo'."
+"See the gtk3sermo(1) manual page for more information."
 );
 
 	g_option_context_add_main_entries(context, entries, PACKAGE);

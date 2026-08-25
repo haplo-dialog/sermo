@@ -1,6 +1,3 @@
-<div align="right"><sub><code>maj :     2026-08-20 20:34:10 · par claude</code></sub></div>
-<div align="right"><sub><code>réindex : —</code></sub></div>
-
 # Bilan de Santé — gtk4sermo (gtk4sermo)
 
 ## État vérifié — 2026-06-07 — Score : **91/100**

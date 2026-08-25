@@ -1,6 +1,3 @@
-<div align="right"><sub><code>maj :     2026-08-18 12:40:07 · par claude</code></sub></div>
-<div align="right"><sub><code>réindex : —</code></sub></div>
-
 # Compiler gtk3sermo 1.0.0 (GTK3, haplo-dialog)
 
 ## Dépendances requises

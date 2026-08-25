@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC0-1.0 -->
 <!-- DESC: statusbar en bas de fenêtre -->
 <window title="Test statusbar" width-request="400" height-request="200">
   <vbox>

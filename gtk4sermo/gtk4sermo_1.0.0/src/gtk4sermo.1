@@ -2,7 +2,7 @@
 .\" Haplo-Linux Development Team <devel@haplo-dialog.fr>
 .\" This file is installed as /usr/share/man/man1/gtk4sermo.1
 .\"
-.TH GTK4DIALOG 1 "June 2026" "gtk4sermo 1.0.0" "Haplo-Linux User Commands"
+.TH GTK4SERMO 1 "August 2026" "gtk4sermo 1.0.0" "haplo-dialog User Commands"
 .SH NAME
 gtk4sermo \- GTK4 dialog box creator for shell scripts
 .SH SYNOPSIS
@@ -81,6 +81,48 @@ Print version and exit.
 .TP
 .B \-\-help
 Print usage summary and exit.
+.TP
+.BR \-d ", " \-\-debug
+Echo every character read from the dialog description as it is fed to the lexer.
+Useful for diagnosing parser issues.
+.TP
+.BI \-i " FILE" "\fR,\fP \-\-include=" FILE
+Include
+.I FILE
+when executing.
+.TP
+.BI \-e " FILE" "\fR,\fP \-\-event\-driven=" FILE
+Execute
+.I FILE
+as an event-driven program.
+.TP
+.BI \-g " FILE" "\fR,\fP \-\-glade\-xml=" FILE
+Read the interface from a Glade file instead of the XML language.
+.TP
+.BR \-c ", " \-\-center
+Place the window at the centre of the screen.
+.TP
+.BI \-G " GEOMETRY" "\fR,\fP \-\-geometry=" GEOMETRY
+Placement and size of the window, as
+.BR [XxY][+W+H] .
+.TP
+.B \-\-print\-ir
+Parse the description, print the intermediate representation, and exit without
+opening any window. Needs no X or Wayland display: this is what the regression
+suite uses.
+.TP
+.BI \-\-space\-expand= BOOL
+Default value of the
+.B space-expand
+attribute for every widget.
+.TP
+.BI \-\-space\-fill= BOOL
+Default value of the
+.B space-fill
+attribute for every widget.
+.TP
+.BR \-w ", " \-\-no\-warning
+Suppress warning messages.
 .SH ENVIRONMENT
 Widget values are exported as environment variables before executing
 .B \-\-do

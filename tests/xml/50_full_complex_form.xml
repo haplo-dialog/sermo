@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC0-1.0 -->
 <!-- DESC: formulaire complexe complet — test d integration global -->
 <window title="Formulaire complexe — haplo-dialog 1.0" width-request="600" height-request="500">
   <vbox>

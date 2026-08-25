@@ -1,6 +1,3 @@
-<div align="right"><sub><code>maj :     2026-08-18 12:40:07 · par claude</code></sub></div>
-<div align="right"><sub><code>réindex : —</code></sub></div>
-
 # Packaging Debian — gtk3sermo
 
 **Toolkit :** GTK3

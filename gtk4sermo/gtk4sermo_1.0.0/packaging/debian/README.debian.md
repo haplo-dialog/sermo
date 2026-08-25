@@ -1,6 +1,3 @@
-<div align="right"><sub><code>maj :     2026-08-20 20:34:10 · par claude</code></sub></div>
-<div align="right"><sub><code>réindex : —</code></sub></div>
-
 # Packaging Debian — gtk4sermo
 
 **Toolkit :** GTK4
@@ -40,7 +37,7 @@ Dépendances runtime tirées automatiquement : `libgtk-4-1, libvte-2.91-gtk4-0`.
 
 ## Contenu du paquet
 
-Les fichiers installés sont listés dans `debian/gtk4sermo.install` (binaire `/usr/bin/gtk4sermo`,
+Les fichiers installés sont listés dans `debian/rules (le paquet prend ce que `make install` pose ; il n'y a pas de fichier .install)` (binaire `/usr/bin/gtk4sermo`,
 exemples et documentation).
 
 ## Fichiers debian/

@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC0-1.0 -->
 <!-- DESC: edit zone multi-lignes editable -->
 <window title="Test edit" width-request="400" height-request="300">
   <vbox>

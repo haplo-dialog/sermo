@@ -1,6 +1,3 @@
-<div align="right"><sub><code>maj :     2026-08-20 20:34:10 · par claude</code></sub></div>
-<div align="right"><sub><code>réindex : —</code></sub></div>
-
 # Packaging Arch Linux — gtk4sermo
 
 ## Installation depuis AUR (future soumission)

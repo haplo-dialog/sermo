@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC0-1.0 -->
 <!-- DESC: vscale vertical avec min max step -->
 <window title="Test vscale" width-request="200" height-request="300">
   <hbox>

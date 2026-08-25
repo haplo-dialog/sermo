@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC0-1.0 -->
 <!-- DESC: window avec decorations cote client (headerbar) -->
 <window title="Test decorations client" headerbar="yes" width-request="320">
   <vbox>

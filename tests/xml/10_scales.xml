@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC0-1.0 -->
 <!-- DESC: Glissieres horizontale et verticale -->
 <window title="Test 10" width-request="300" height-request="200">
   <hbox>

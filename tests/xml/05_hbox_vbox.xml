@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC0-1.0 -->
 <!-- DESC: Conteneurs hbox/vbox imbriqués -->
 <window title="Test 05">
   <vbox>

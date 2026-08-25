@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC0-1.0 -->
 <!-- DESC: actions SHOW et HIDE sur un widget -->
 <window title="Test SHOW/HIDE" width-request="350" height-request="200">
   <vbox>

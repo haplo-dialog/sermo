@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC0-1.0 -->
 <!-- DESC: table multi-colonnes -->
 <window title="Test table" width-request="400" height-request="250">
   <vbox>

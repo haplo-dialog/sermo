@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC0-1.0 -->
 <!-- DESC: togglebutton état enfoncé/relâché -->
 <window title="Test togglebutton" width-request="300" height-request="150">
   <vbox>

@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC0-1.0 -->
 <!-- DESC: window avec resizable icon-name decorated -->
 <window title="Test attributs window" width-request="400" height-request="200"
         resizable="true" icon-name="dialog-information" decorated="true">

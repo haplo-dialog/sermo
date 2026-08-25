@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC0-1.0 -->
 <!-- DESC: groupe de radiobuttons avec variable commune -->
 <window title="Test radiobutton group" width-request="300" height-request="200">
   <vbox>

@@ -1,4 +1,5 @@
 #!/bin/bash
+# SPDX-License-Identifier: CC0-1.0
 # ============================================================================
 # Outils Système, exemple complet pour gtk3sermo
 #

@@ -1,6 +1,3 @@
-<div align="right"><sub><code>maj :     2026-08-18 12:40:07 · par claude</code></sub></div>
-<div align="right"><sub><code>réindex : —</code></sub></div>
-
 # Manuel Utilisateur — gtk3sermo
 
 **Version :** 1.0.0  
@@ -229,13 +226,17 @@ Attributs : `homogeneous` (même taille), `spacing` (espace en pixels), `space-e
 </notebook>
 ```
 
-#### `<scrolledwindow>` — Zone défilante
+#### Zone défilante — l'attribut `scrollable`
+
+Il n'existe **pas** de balise `<scrolledwindow>`. Le défilement est un
+**attribut** posé sur le widget lui-même :
 
 ```xml
-<scrolledwindow>
-  <tree>...</tree>
-</scrolledwindow>
+<tree scrollable="true">...</tree>
 ```
+
+L'attribut est reconnu par l'automate (`src/automaton.c`, `get_tag_attribute`)
+et enveloppe le widget dans une zone défilante à sa création.
 
 ---
 

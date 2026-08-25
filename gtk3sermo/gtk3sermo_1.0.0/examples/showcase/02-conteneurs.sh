@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: CC0-1.0
 # ───────────────────────────────────────────────────────────────────────────
 # Repère visuel 2 : CONTENEURS & MISE EN PAGE
 #

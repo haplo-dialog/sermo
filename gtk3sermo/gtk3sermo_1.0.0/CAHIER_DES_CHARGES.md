@@ -1,6 +1,3 @@
-<div align="right"><sub><code>maj :     2026-08-22 16:30:41 · par claude</code></sub></div>
-<div align="right"><sub><code>réindex : —</code></sub></div>
-
 # Cahier des Charges — gtk3sermo
 
 **Distributeur :** Haplo-Linux | **Distribution :** Haplo-Linux (Debian Testing)  

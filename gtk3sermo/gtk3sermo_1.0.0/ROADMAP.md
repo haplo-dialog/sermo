@@ -1,6 +1,3 @@
-<div align="right"><sub><code>maj :     2026-07-14 20:37:39</code></sub></div>
-<div align="right"><sub><code>réindex : —</code></sub></div>
-
 # Roadmap — gtk3sermo-haplo1
 
 **Mainteneur :** haplo-dialog <devel@haplo-dialog.fr>  

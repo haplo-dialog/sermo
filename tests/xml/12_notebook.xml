@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC0-1.0 -->
 <!-- DESC: Conteneur a onglets -->
 <window title="Test 12" width-request="350" height-request="200">
   <notebook labels="Onglet 1|Onglet 2">

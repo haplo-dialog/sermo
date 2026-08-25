@@ -1,3 +1,4 @@
+<!-- SPDX-License-Identifier: CC0-1.0 -->
 <!-- DESC: list avec sélection simple et items -->
 <window title="Test list" width-request="300" height-request="250">
   <vbox>

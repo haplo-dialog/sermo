@@ -81,7 +81,7 @@ gtk3sermo_SOURCES = \
 
 # Man page — installed to $(mandir)/man1/
 # gtk3sermo.1 est le nom principal ; gtkdialog.1 est un alias de compatibilité
-dist_man_MANS = gtk3sermo.1
+dist_man_MANS = gtk3sermo.1 haplo-dialog-xml.5
 
 # Lien symbolique de compatibilité ascendante : gtkdialog → gtk3sermo
 install-exec-hook:
