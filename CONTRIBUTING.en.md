@@ -48,7 +48,7 @@ haplo-dialog/
 │       ├── doc/
 │       └── packaging/
 └── tests/
-    ├── xml/                      ← XML regression (52 cases)
+    ├── xml/                      ← XML regression (55 cases)
     ├── unit/test_safe_exec.c     ← behaviour tests (safe_exec)
     └── fuzz/                     ← fuzzing corpus
 ```
@@ -84,8 +84,9 @@ make check        # run the tests
 
 ```sh
 sudo apt install clang-format cppcheck valgrind
-# Check the formatting before committing:
-clang-format --dry-run --Werror src/widget_button.c
+# On a NEW file only — inherited files are not conformant, and --Werror would
+# always fail on them (see §5):
+clang-format --dry-run src/my_new_file.c
 ```
 
 ---
@@ -94,37 +95,72 @@ clang-format --dry-run --Werror src/widget_button.c
 
 ```
 1. Fork / clone the repository
-2. Create a branch: git checkout -b fix/widget-entry-null-crash
+2. Create a branch: git checkout -b list-crashes-on-empty-item
 3. Modify the code, one subject per branch
-4. Test: make check
-5. Check the format: clang-format -i src/*.c
-6. Commit: git commit -m "fix(widget_entry): handle NULL label gracefully"
-7. Submit a patch by email to devel@haplo-dialog.fr
-   or open a Merge Request if a public Git repository is available
+4. Test the port you touched: make check, then
+   sh tests/xml/run_tests.sh <port> and sh tests/run_unit_tests.sh <port>
+5. If the fix touches BOTH ports, carry it into both: they share the core,
+   and a silent divergence appears fast
+6. Commit (see below)
+7. Open a Merge Request on gitlab.com/haplo-dialog/sermo,
+   or send the patch to devel@haplo-dialog.fr
 ```
 
 ### Commit message format
 
-```
-type(scope): short description in English (< 72 chars)
+This repository does **not** use conventional commits (`fix(scope): …`). Its
+convention, visible in `git log`, is a **French sentence** stating what changed
+in behaviour — not which file moved:
 
-Optional body: explanation of the why, not the how.
+```
+La barre de progression faisait tourner GTK depuis son thread de lecture
+
+Body: the why, the before/after measurement, the test that prevents a relapse.
 Reference: Fixes #123
 ```
 
-Valid types: `fix`, `feat`, `docs`, `test`, `refactor`, `security`, `build`, `ci`
+Three rules, and that is all:
 
-Valid scopes: `core`, `widget_button`, `gtk3sermo`, `packaging`, `doc`
+- **Subject in French**, under 72 characters, no trailing period.
+- It describes **the defect or the effect**, from the point of view of whoever
+  uses it — "the repo told its readers to install a file that does not exist"
+  rather than "fix README".
+- The body carries **the why and the measurement**. A security or crash fix
+  quotes the before/after figure and the bench that locks it down.
+
+`git log --oneline -20` conveys the tone better than this list.
+
+*Yes, the subject line is French while this document is in English: the project
+is written in French and its history is one continuous French thread. Splitting
+it by language would make `git log` unreadable.*
 
 ---
 
 ## 5. Code standards
 
-### C (core and GTK 3 widgets)
+### C (core and widgets, both ports)
 
 - Standard: **C11** (`-std=c11`)
-- Formatting: `.clang-format` provided at the root, **mandatory**
-- No direct `system()`, `popen()`, `strcpy()`, `sprintf()`, use `safe_system()`, `safe_popen()`, `g_strlcpy()`, `snprintf()`
+- Formatting: do **not** run `clang-format -i` on existing files. The
+  `.clang-format` at the root describes the target style for **new** code; it
+  does not describe the code inherited from gtkdialog. Measured on 2026-08-25
+  over `gtkdialog.c`, `actions.c` and `variables.c` (3,766 lines): the current
+  settings would reformat **2,460** of them, and the best settings tried still
+  **1,321**. So `clang-format -i src/*.c` would produce an unreadable diff in
+  which the actual fix could not be found. For new code:
+  `clang-format --dry-run <your-file.c>`. For a touch-up inside an existing
+  file: match the neighbouring lines (tabs, K&R braces).
+- No direct `system()`, `popen()`, `strcpy()`, `strcat()`, `sprintf()`, `gets()`:
+  use `safe_system()`, `safe_popen()`, `g_strlcpy()`, `g_strlcat()`,
+  `g_snprintf()`. **This is not merely advice**:
+  `tests/garde_fonctions_interdites.sh` replays it on both `src/` trees at every
+  push, and CI turns red.
+- No `gtk_*`/`gdk_*` call outside the main thread — a worker thread computes,
+  then hands the result to the main loop through `g_idle_add()`.
+  `gdk_threads_enter()` has locked nothing since GTK 3.6: inherited code that
+  looks protected is not. Checked by `tests/garde_progressbar_thread.sh`.
+- No `atof()` or `strtod()`: under a French locale they silently read `0.5` as
+  `0`. Use `g_ascii_strtod()`.
 - Any `FILE*` returned by `safe_popen()` → `fclose()`, **never `pclose()`**
 - Check the return of `malloc()` / `calloc()`, `NULL` = fatal log + return
 - No unbounded dynamic allocation in the widgets
@@ -267,7 +303,7 @@ The unit tests must **not** depend on GTK 3, only on the pure C core (`safe_exec
 
 ```sh
 cd tests/xml
-./run_tests.sh gtk3sermo    # tests the 52 reference XML files (--print-ir mode, headless)
+./run_tests.sh gtk3sermo    # tests the 55 reference XML files (--print-ir mode, headless)
 ```
 
 ### Behaviour tests (unit)
@@ -293,7 +329,7 @@ The repository provides `.gitlab-ci.yml` (GitLab CI, `debian:testing` image, tar
 
 1. installs the build dependencies;
 2. compiles (autotools);
-3. validates the binary against the 52 XML cases (`tests/xml/run_tests.sh`, `--print-ir`,
+3. validates the binary against the 55 XML cases (`tests/xml/run_tests.sh`, `--print-ir`,
    without an X server).
 
 A broken build or a single failing test fails the pipeline. Before pushing,

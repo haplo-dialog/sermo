@@ -32,7 +32,7 @@ info() { printf "${BLUE}────${NC}  %s\n" "$*"; }
 
 # ── Vérifier le binaire ──────────────────────────────────────────────────────
 if [ "$BINARY" = "all" ]; then
-    for bin in gtk3sermo; do
+    for bin in gtk3sermo gtk4sermo; do
         command -v "$bin" > /dev/null 2>&1 && "$0" "$bin"
     done
     exit 0

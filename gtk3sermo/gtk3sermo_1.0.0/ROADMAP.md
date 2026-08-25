@@ -12,7 +12,7 @@ Migration GTK2→GTK3 complète, sécurité renforcée, 13 nouveaux widgets nati
 Voir `BILAN_SANTE.md` pour le détail des corrections (score 100/100 patch 22).
 
 **Vérification finale (2026-06-06) :** build `make` → rc=0, 0 erreur ; tests XML
-`tests/xml/` 52/52 ; compatibilité ascendante gtkdialog confirmée (symlink
+`tests/xml/` 55/55 ; compatibilité ascendante gtkdialog confirmée (symlink
 `gtkdialog`→`gtk3sermo`, alias man `gtkdialog.1`, dialogues d'époque XML/CLI/--program).
 
 ---
@@ -135,4 +135,4 @@ Licence : GPL-2.0-or-later — voir `COPYING`
 
 ---
 
-*Document horodaté — dernière mise à jour : 2026-06-07 (audit #5 — vérification finale : build rc=0, tests XML 52/52).*
+*Document horodaté — dernière mise à jour : 2026-06-07 (audit #5 — vérification finale : build rc=0, tests XML 55/55).*

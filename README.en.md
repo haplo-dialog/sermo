@@ -23,7 +23,7 @@
 [![Licence](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.0.0-informational.svg)](CHANGELOG.en.md)
 [![Toolkit](https://img.shields.io/badge/toolkit-GTK%203%20%2B%20GTK%204-success.svg)](#the-two-ports)
-[![Tests](https://img.shields.io/badge/tests-52%2F52%20XML%20·%209%2F9%20behaviour-brightgreen.svg)](#tests--quality)
+[![Tests](https://img.shields.io/badge/tests-55%2F55%20XML%20·%209%2F9%20behaviour-brightgreen.svg)](#tests--quality)
 
 Describe an interface in XML, export it into a variable, run the binary —
 a real **native GTK 3** window opens, and the values you enter come back
@@ -166,9 +166,9 @@ Vulnerability report: see [SECURITY.md](SECURITY.en.md).
 
 ## Tests & quality
 
-- **XML regression**: `./tests/xml/run_tests.sh all`, **52/52** (headless parse `--print-ir`).
+- **XML regression**: `./tests/xml/run_tests.sh all`, **55/55** (headless parse `--print-ir`).
 - **Behaviour**: `./tests/run_unit_tests.sh all`, `safe_exec`, **9/9** (without an X server).
-- **Fuzzing** of the parser: `./tests/fuzz/run_fuzz.sh 60` (afl++ or built-in fallback).
+- **Fuzzing** of the parser: `./tests/fuzz/run_fuzz.sh gtk3sermo 60` (afl++ or built-in fallback).
 - **CI**: build + tests, `.gitlab-ci.yml` and `.gitea/workflows/`.
 
 ---

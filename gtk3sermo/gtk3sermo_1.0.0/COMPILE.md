@@ -98,13 +98,13 @@ Résultat attendu : `44 passés | 0 échoués`.
 
 ### Tests XML communs (`tests/xml/`, sans display requis)
 
-Suite XML de gtk3sermo (52 cas, parsés via `--print-ir`, headless) :
+Suite XML de gtk3sermo (55 cas, parsés via `--print-ir`, headless) :
 
 ```bash
 bash tests/run_tests.sh gtk3sermo
 ```
 
-Résultat vérifié (2026-06-06) : **52/52 PASS**.
+Résultat vérifié (2026-06-06) : **55/55 PASS**.
 
 ### Tests unitaires C (libcheck + make check)
 

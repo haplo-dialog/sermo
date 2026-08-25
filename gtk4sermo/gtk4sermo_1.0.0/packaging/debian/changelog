@@ -1,3 +1,35 @@
+gtk4sermo (1.0.0-12) unstable; urgency=medium
+
+  * Nombres décimaux, la suite : la passe du 2026-08-22 avait remplacé les 52
+    appels à atof(), mais laissé trois strtod() qui souffrent exactement du
+    même mal — la locale décide où est la virgule. Mesuré sous fr_FR.UTF-8 :
+    strtod("0.9") rend 0,000, tandis que g_ascii_strtod("0.9") rend 0,900.
+    Les trois passent à g_ascii_strtod() : un attribut XML flottant
+    (tag_attributes.c, par exemple xalign="0.9") et deux colonnes numériques
+    de <tree> (widget_tree.c). Un attribut écrit avec un point valait donc
+    zéro en silence sur toute machine française.
+  * Durcissement : -Wl,-z,ibt et -Wl,-z,shstk sont posés à l'édition de liens.
+    Sans eux, -fcf-protection=full ne survit pas au link et le binaire livré
+    ne porte pas CET, quoi qu'annonce le Makefile. Mesuré sur le binaire par
+    tests/garde_durcissement.sh, désormais rejoué à chaque poussée.
+  * --do=CMD : l'option était décrite par les pages de manuel installées sans
+    exister dans aucun binaire. Elle existe, exécute la commande après la
+    fermeture de la fenêtre avec les valeurs des widgets exportées, et reste
+    soumise au refus fail-closed de HAPLO_NO_SHELL_FALLBACK.
+  * HAPLO_ALLOWED_CMDS : borne facultative des commandes lançables, éteinte
+    par défaut. Tant qu'elle est posée, le repli /bin/sh -c est refusé, sinon
+    sh -c la contournerait.
+  * Les quatre recettes non-Debian (Arch, RPM, Gentoo, Slackware) pointaient
+    une URL de source qui n'existe pas ; elles téléchargent maintenant
+    l'archive publiée.
+  * Bancs de non-régression branchés dans la CI : fonctions interdites
+    (strcpy/strcat/sprintf/gets/system/popen/atof/strtod), en-têtes SPDX,
+    durcissement lu sur le binaire, thread de la barre de progression,
+    borne MAXWIDGETS, --do, HAPLO_ALLOWED_CMDS, et exécution réelle des
+    exemples sous Xvfb en locale française.
+
+ -- haplo-dialog <devel@haplo-dialog.fr>  Tue, 25 Aug 2026 12:04:03 +0200
+
 gtk4sermo (1.0.0-11) unstable; urgency=medium
 
   * Page de manuel : la section SEE ALSO renvoyait vers fltk1d, efl1d, qt6d et

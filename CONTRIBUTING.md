@@ -48,7 +48,7 @@ haplo-dialog/
 │       ├── doc/
 │       └── packaging/
 └── tests/
-    ├── xml/                      ← régression XML (52 cas)
+    ├── xml/                      ← régression XML (55 cas)
     ├── unit/test_safe_exec.c     ← tests de comportement (safe_exec)
     └── fuzz/                     ← corpus de fuzzing
 ```
@@ -84,8 +84,9 @@ make check        # lance les tests
 
 ```sh
 sudo apt install clang-format cppcheck valgrind
-# Vérifier le formatage avant commit :
-clang-format --dry-run --Werror src/widget_button.c
+# Sur un fichier NEUF seulement — les fichiers hérités ne sont pas conformes,
+# et --Werror y échouerait toujours (voir §5) :
+clang-format --dry-run src/mon_nouveau_fichier.c
 ```
 
 ---
@@ -94,37 +95,69 @@ clang-format --dry-run --Werror src/widget_button.c
 
 ```
 1. Fork / clone du dépôt
-2. Créer une branche : git checkout -b fix/widget-entry-null-crash
+2. Créer une branche : git checkout -b liste-plante-sur-item-vide
 3. Modifier le code, un seul sujet par branche
-4. Tester : make check
-5. Vérifier le format : clang-format -i src/*.c
-6. Commit : git commit -m "fix(widget_entry): handle NULL label gracefully"
-7. Soumettre un patch par email à devel@haplo-dialog.fr
-   ou ouvrir une Merge Request si un dépôt Git public est disponible
+4. Tester le port touché : make check, puis
+   sh tests/xml/run_tests.sh <port> et sh tests/run_unit_tests.sh <port>
+5. Si le correctif touche les DEUX ports, le porter dans les deux :
+   ils partagent le cœur, et une divergence silencieuse est vite là
+6. Commit (voir ci-dessous)
+7. Ouvrir une Merge Request sur gitlab.com/haplo-dialog/sermo,
+   ou envoyer le patch à devel@haplo-dialog.fr
 ```
 
 ### Format des messages de commit
 
-```
-type(scope): description courte en anglais (< 72 chars)
+Ce dépôt n'utilise **pas** les *conventional commits* (`fix(scope): …`). Sa
+convention, lisible dans `git log`, est une **phrase française** qui dit ce qui
+changeait de comportement — pas quel fichier a bougé :
 
-Corps optionnel : explication du pourquoi, pas du comment.
+```
+La barre de progression faisait tourner GTK depuis son thread de lecture
+
+Corps : le pourquoi, la mesure avant/après, le test qui l'empêche de revenir.
 Référence : Fixes #123
 ```
 
-Types valides : `fix`, `feat`, `docs`, `test`, `refactor`, `security`, `build`, `ci`
+Trois règles, et c'est tout :
 
-Scopes valides : `core`, `widget_button`, `gtk3sermo`, `packaging`, `doc`
+- **Sujet en français**, moins de 72 caractères, pas de point final.
+- Il décrit **le défaut ou l'effet**, du point de vue de qui s'en sert. « Le
+  dépôt disait à ses lecteurs d'installer un fichier qui n'existe pas » plutôt
+  que « corrige README ».
+- Le corps porte **le pourquoi et la mesure**. Un correctif de sécurité ou de
+  plantage cite le chiffre avant/après et le banc qui le verrouille.
+
+`git log --oneline -20` donne le ton mieux que cette liste.
 
 ---
 
 ## 5. Standards de code
 
-### C (core et widgets GTK 3)
+### C (cœur et widgets, les deux ports)
 
 - Standard : **C11** (`-std=c11`)
-- Formatage : `.clang-format` fourni à la racine, **obligatoire**
-- Pas de `system()`, `popen()`, `strcpy()`, `sprintf()` directs, utiliser `safe_system()`, `safe_popen()`, `g_strlcpy()`, `snprintf()`
+- Formatage : **ne pas** lancer `clang-format -i` sur les fichiers existants.
+  Le `.clang-format` fourni à la racine décrit le style visé pour du code
+  **neuf** ; il ne décrit pas le code hérité de gtkdialog. Mesuré le 2026-08-25
+  sur `gtkdialog.c`, `actions.c` et `variables.c` (3 766 lignes) : le réglage
+  actuel voudrait en reformater **2 460**, et le meilleur réglage essayé encore
+  **1 321**. Un `clang-format -i src/*.c` produirait donc un diff illisible où
+  le vrai correctif serait introuvable. Pour du code neuf :
+  `clang-format --dry-run <votre-fichier.c>`. Pour une retouche dans un fichier
+  existant : imiter les lignes voisines (tabulations, accolades K&R).
+- Pas de `system()`, `popen()`, `strcpy()`, `strcat()`, `sprintf()`, `gets()`
+  directs : utiliser `safe_system()`, `safe_popen()`, `g_strlcpy()`,
+  `g_strlcat()`, `g_snprintf()`. **Ce n'est pas qu'une consigne** :
+  `tests/garde_fonctions_interdites.sh` la rejoue à chaque poussée sur les deux
+  `src/`, et la CI passe au rouge.
+- Aucun appel `gtk_*`/`gdk_*` hors du thread principal — un thread de travail
+  calcule, puis confie le résultat à la boucle principale par `g_idle_add()`.
+  `gdk_threads_enter()` ne verrouille plus rien depuis GTK 3.6 : du code hérité
+  qui paraît protégé ne l'est pas. Vérifié par
+  `tests/garde_progressbar_thread.sh`.
+- Pas d'`atof()` ni de `strtod()` : sous une locale française ils lisent `0.5`
+  comme `0`, en silence. Utiliser `g_ascii_strtod()`.
 - Tout `FILE*` issu de `safe_popen()` → `fclose()`, **jamais `pclose()`**
 - Vérifier le retour de `malloc()` / `calloc()`, `NULL` = fatal log + return
 - Pas d'allocation dynamique non bornée dans les widgets
@@ -267,7 +300,7 @@ Les tests unitaires ne doivent **pas** dépendre de GTK 3, uniquement du core C 
 
 ```sh
 cd tests/xml
-./run_tests.sh gtk3sermo    # teste les 52 XML de référence (mode --print-ir, headless)
+./run_tests.sh gtk3sermo    # teste les 55 XML de référence (mode --print-ir, headless)
 ```
 
 ### Tests de comportement (unitaires)
@@ -293,7 +326,7 @@ Le dépôt fournit `.gitlab-ci.yml` (GitLab CI, image `debian:testing`, cible : 
 
 1. installe les dépendances de build ;
 2. compile (autotools) ;
-3. valide le binaire contre les 52 cas XML (`tests/xml/run_tests.sh`, `--print-ir`,
+3. valide le binaire contre les 55 cas XML (`tests/xml/run_tests.sh`, `--print-ir`,
    sans serveur X).
 
 Un build cassé ou un seul test en échec fait échouer le pipeline. Avant de pousser,
@@ -335,7 +368,8 @@ Pour signaler une vulnérabilité : `devel@haplo-dialog.fr` (chiffrement GPG dis
 La revue vérifie dans l'ordre :
 1. **Sécurité**, les 5 règles absolues ci-dessus
 2. **Compilation**, gcc et clang sans warning avec `-Wall -Wextra`
-3. **Format**, `clang-format` sans diff
+3. **Format**, cohérent avec les lignes voisines ; `clang-format` sans diff pour
+   un fichier neuf seulement
 4. **Tests**, `make check` passe
 5. **Documentation**, manpage(s) et exemples mis à jour si nouveau widget
 6. **Style**, clarté, nommage cohérent avec le code existant

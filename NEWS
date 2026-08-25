@@ -32,7 +32,7 @@ corrigé, durci, maintenu.
 * Hardening binaires : _FORTIFY_SOURCE=3, PIE, Full RELRO,
   stack-protector-strong, -fcf-protection (selon le compilateur).
 
-* Suite de tests : 52 cas XML de régression et 9 tests de comportement
+* Suite de tests : 55 cas XML de régression et 9 tests de comportement
   (safe_exec).
 
 * Paquet .deb construit et verifie a chaque version. Recettes fournies,

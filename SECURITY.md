@@ -1,4 +1,4 @@
-# Politique de Sécurité - haplo-dialog
+# Politique de sécurité — sermo
 
 **Mainteneur :** haplo-dialog, devel@haplo-dialog.fr
 **Date :** 2026-05-29
@@ -15,7 +15,8 @@
 Les deux ports partagent le même cœur C et la même grammaire. Depuis le
 2026-08-24 ils ont la **même posture mémoire** : `g_strlcpy` pour les copies de
 noms, borne explicite sur la recopie des widgets d'un conteneur, et aucune
-fonction de la famille `strcpy`/`strcat`/`sprintf`/`gets`. L'alias
+fonction de la famille `strcpy`/`strcat`/`sprintf`/`gets`, ce qu'un banc
+rejoue à chaque poussée sur les deux `src/`. L'alias
 rétro-compatible `gtkdialog` est fourni par un paquet séparé, `gtksermo`.
 
 ⚠️ Le port GTK 4 est le plus jeune : il a reçu la même passe, mais il a moins
@@ -63,13 +64,14 @@ Envoyez un email à **devel@haplo-dialog.fr** avec :
 | Liste de commandes, facultative | `HAPLO_ALLOWED_CMDS=ls,cat,date` borne les commandes lançables. **Éteinte par défaut** : le langage sert à lancer des commandes, et 14 des exemples livrés appellent `bash` ou `sh` — une liste active par défaut casserait le produit sans protéger personne, la commande venant du script que l'appelant a écrit. Elle vise celui qui **déploie** un dialogue dans un contexte moins fiable. Le nom comparé est le nom de base (`/bin/ls` = `ls`), et tant qu'elle est posée le repli `/bin/sh -c` est refusé — sinon `sh -c` la contournerait. |
 | Longueur de commande | Bornée dans `safe_exec()`/`safe_popen()`. |
 | Environnement enfant | Filtré : le bloc `DIALOG` (plusieurs Kio de XML) n'est pas hérité par les processus lancés. |
-| Sûreté mémoire | `g_strlcpy` (noms de variables), copie de widgets bornée, `argv` de spawn toujours NUL-terminé ; aucune fonction interdite (`strcpy`/`strcat`/`sprintf`/`system`/`popen`). |
+| Sûreté mémoire | `g_strlcpy` (noms de variables), copie de widgets bornée à `MAXWIDGETS` avec refus nommé, `argv` de spawn toujours NUL-terminé ; aucune fonction interdite (`strcpy`/`strcat`/`sprintf`/`gets`/`system`/`popen`) appelée dans `src/` — **vérifié à chaque poussée** par `tests/garde_fonctions_interdites.sh`, qui ignore les commentaires et exige une frontière de mot à gauche (`safe_system` ne compte pas pour `system`). |
+| Sûreté des threads | Aucun appel `gtk_*`/`gdk_*` hors du thread principal : le thread de la barre de progression délègue par `g_idle_add`. `gdk_threads_enter()` ne verrouille plus rien depuis GTK 3.6 — du code hérité qui paraît protégé ne l'est pas. Vérifié par `tests/garde_progressbar_thread.sh`. |
 | Parser XML | Rejet propre de l'XML malformé (message + code de sortie non nul, jamais d'`abort`) ; parser soumis au **fuzzing** (`tests/fuzz/`). |
 
 ### Modèle de confiance
 
-gtk3sermo exécute l'interface décrite par l'**auteur du script XML**, comme un
-script shell exécute ce que son auteur écrit. Les balises `<action>`/`<input>`
+Les deux ports exécutent l'interface décrite par l'**auteur du script XML**,
+comme un script shell exécute ce que son auteur écrit. Les balises `<action>`/`<input>`
 peuvent lancer des commandes : **c'est voulu et documenté**. La frontière de
 confiance est donc l'auteur **local** du script, pas un tiers distant. Le
 durcissement ci-dessus protège contre l'**entrée malformée** et les **bugs de

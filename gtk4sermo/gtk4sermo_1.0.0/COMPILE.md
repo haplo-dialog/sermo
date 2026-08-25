@@ -89,13 +89,13 @@ gtk4sermo --program='
 
 ## Tests XML communs (`tests/xml/`, sans display requis)
 
-Suite XML partagée par les six ports (52 cas, parsés via `--print-ir`, headless) :
+Suite XML partagée par les six ports (55 cas, parsés via `--print-ir`, headless) :
 
 ```bash
 bash tests/run_tests.sh gtk4sermo
 ```
 
-Résultat vérifié (2026-06-06) : **52/52 PASS**.
+Résultat vérifié (2026-06-06) : **55/55 PASS**.
 
 > **Note :** avant la réparation de la grammaire (commentaires `<!-- -->`,
 > espaces entre attributs, câblage de 8 widgets : switch, password, calendar,
@@ -162,4 +162,4 @@ GTK4 plus anciens, sont volontairement filtrées via les flags de
 
 ---
 
-*Document horodaté — dernière mise à jour : 2026-06-07 (audit #5 — grammaire réparée, tests XML 0/52 → 52/52).*
+*Document horodaté — dernière mise à jour : 2026-06-07 (audit #5 — grammaire réparée, tests XML 0/52 → 55/55).*

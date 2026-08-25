@@ -2,7 +2,7 @@
 * gtk3sermo-1.0.0 — vérification finale (audit #5)
 * Build vérifié de bout en bout : make → rc=0, 0 erreur ; binaire gtk3sermo
   (1,4 Mo) exécutable. Warnings : 34 (idiomes amont gtkdialog, non bloquants).
-* Tests XML tests/xml/ : 52/52 PASS (--print-ir, headless).
+* Tests XML tests/xml/ : 55/55 PASS (--print-ir, headless).
 * Compatibilité ascendante gtkdialog confirmée : make install pose le symlink
   gtkdialog→gtk3sermo (binaire) et gtkdialog.1→gtk3sermo.1 (man) ; un dialogue
   d'époque (export MAIN_DIALOG=…; gtkdialog --program=MAIN_DIALOG) parse, s'exécute
@@ -203,4 +203,4 @@
 * Added an html widget reference converted from the project's wiki
 
 
-Document horodaté — dernière mise à jour : 2026-06-07 (audit #5 — vérification finale : build rc=0, tests XML 52/52).
+Document horodaté — dernière mise à jour : 2026-06-07 (audit #5 — vérification finale : build rc=0, tests XML 55/55).

@@ -40,7 +40,7 @@ run_port() {
 PORT="${1:-all}"
 if [ "$PORT" = all ]; then
     fail=0
-    for p in gtk3sermo; do
+    for p in gtk3sermo gtk4sermo; do
         run_port "$p" || fail=1
     done
     [ "$fail" -eq 0 ] && printf "${GREEN}=== Tous les ports : tests de comportement OK ===${NC}\n"

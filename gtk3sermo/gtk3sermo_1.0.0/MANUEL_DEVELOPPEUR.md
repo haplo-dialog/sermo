@@ -1117,7 +1117,7 @@ git push origin v0.9.1
 - [x] Correctifs de sécurité (safe_exec, strcpy, malloc)
 - [x] Mise à jour du build system (autotools)
 - [x] Correction UB `pclose()` → `fclose()` (2026-05-21)
-- [x] 43 widgets GTK3, validés par 52 tests XML de régression + 9 tests de comportement `safe_exec`
+- [x] 43 widgets GTK3, validés par 55 tests XML de régression + 9 tests de comportement `safe_exec`
 - [x] Paquet `.deb` construit
 
 ### Pistes techniques ultérieures

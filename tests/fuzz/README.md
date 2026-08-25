@@ -16,7 +16,7 @@ sans construire de widget ni ouvrir de fenêtre).
 - **Avec afl++** (recommandé pour une vraie campagne) : `run_fuzz.sh` bascule
   automatiquement sur `afl-fuzz -i tests/xml -o findings -- <bin> --file @@ --print-ir`.
   Pour l'instrumentation, recompiler le port avec `CC=afl-gcc CXX=afl-g++`.
-- **Sans afl** : `fuzz.py` mute les 52 graines de `tests/xml/` (flips de bits,
+- **Sans afl** : `fuzz.py` mute les 55 graines de `tests/xml/` (flips de bits,
   insertions, suppressions, injection de métacaractères/tokens) et détecte les
   **crashs** (signal) et **hangs** (timeout 5 s).
 

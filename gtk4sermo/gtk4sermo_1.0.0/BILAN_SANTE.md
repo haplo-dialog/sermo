@@ -25,7 +25,7 @@
 | Critère | État |
 |---|:--:|
 | Build + install | ✅ rc=0 |
-| Tests XML (52 cas) | ✅ 52/52 |
+| Tests XML (55 cas) | ✅ 55/55 |
 | Tests de comportement (`run_unit_tests.sh`) | ✅ 9/9 |
 | Warnings dangereux (casts/uninit) | ✅ 0 |
 | Paquet `.deb` (lintian) | ✅ 0 tag |
@@ -101,7 +101,7 @@ Les 128 warnings résiduels sont des idiomes hérités de l'amont
 | Métrique | Valeur |
 |----------|--------|
 | Build (`make`) | rc=0, 0 erreur ✅ |
-| Tests XML `tests/xml/` (52 cas, `--print-ir`) | 52/52 ✅ (était 0/52 avant l'audit #5) |
+| Tests XML `tests/xml/` (55 cas, `--print-ir`) | 55/55 ✅ (était 0/52 avant l'audit #5) |
 | Warnings | 77 (idiomes amont, non bloquants) |
 | Widgets implémentés | 50/50 ✅ |
 | GTK4_TODO résiduels (bloquants) | 0 ✅ |
@@ -271,11 +271,11 @@ sont maintenant compilés sans conditions.
 | 2026-05-29 | **97/100** | v2 : CSS réel, dialog_run async, menubar GMenuModel, table ColumnView |
 | 2026-05-30 | **98/100** | audit #3 : identité doc corrigée, packaging (VTE gtk4, licence) |
 | 2026-06-01 | **99/100** | audit #4 : compilation complète (0 erreur), warnings 1549 → 128, port API GTK2/3 finalisé |
-| 2026-06-06 | **99/100** | audit #5 : grammaire réparée → tests XML **0/52 → 52/52** ; build rc=0 ; warnings 128 → 77 |
+| 2026-06-06 | **99/100** | audit #5 : grammaire réparée → tests XML **0/52 → 55/55** ; build rc=0 ; warnings 128 → 77 |
 
 ---
 
-## ✅ Audit #5 (2026-06-06) — Réparation de la grammaire : tests XML 0/52 → 52/52
+## ✅ Audit #5 (2026-06-06) — Réparation de la grammaire : tests XML 0/52 → 55/55
 
 Jusqu'à cette session, le port GTK4 **compilait** (audit #4) mais **échouait à
 TOUS les tests XML** : **0/52**. Cause racine — une grammaire incomplète :
@@ -297,7 +297,7 @@ Correctifs appliqués cette session :
 | Métrique | Avant (audit #4) | Après (audit #5) |
 |----------|-----------------:|-----------------:|
 | Build (`make`) | rc=0 | **rc=0, 0 erreur** ✅ |
-| Tests XML `tests/xml/` (52 cas, `--print-ir`, headless) | **0/52** ❌ | **52/52 PASS** ✅ |
+| Tests XML `tests/xml/` (55 cas, `--print-ir`, headless) | **0/52** ❌ | **55/55 PASS** ✅ |
 | Warnings | 128 | **77** (idiomes amont, non bloquants) |
 
 Les 8 widgets concernés (switch, password, calendar, infobar, spinner, searchentry,
@@ -344,4 +344,4 @@ Revue documentaire et packaging (aucun changement de code source).
 
 ---
 
-*Document horodaté — dernière mise à jour : 2026-06-07 (audit #5 — grammaire réparée, tests XML 0/52 → 52/52).*
+*Document horodaté — dernière mise à jour : 2026-06-07 (audit #5 — grammaire réparée, tests XML 0/52 → 55/55).*

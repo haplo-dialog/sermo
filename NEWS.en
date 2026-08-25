@@ -32,7 +32,7 @@ fixed, hardened, maintained.
 * Binary hardening: _FORTIFY_SOURCE=3, PIE, Full RELRO,
   stack-protector-strong, -fcf-protection (depending on the compiler).
 
-* Test suite: 52 XML regression cases and 9 behaviour tests (safe_exec).
+* Test suite: 55 XML regression cases and 9 behaviour tests (safe_exec).
 
 * .deb package built and checked for every version. Recipes provided, not
   built by us, for RPM, Arch, Gentoo and Slackware.

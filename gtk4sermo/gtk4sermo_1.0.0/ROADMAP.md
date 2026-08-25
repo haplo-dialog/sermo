@@ -18,7 +18,7 @@
 | automaton.c — routing nouveaux widgets | ✅ Intégré |
 | **Compilation complète (0 erreur)** | ✅ **gtk4sermo ~1,45 Mo** |
 | Warnings de compilation | ✅ 1549 → 77 |
-| **Tests XML `tests/xml/` (52 cas, `--print-ir`)** | ✅ **52/52** (était 0/52 avant grammaire réparée) |
+| **Tests XML `tests/xml/` (55 cas, `--print-ir`)** | ✅ **55/55** (était 0/52 avant grammaire réparée) |
 
 ---
 
@@ -32,7 +32,7 @@
 - [x] Intégrer les 20 nouvelles règles dans `gtkdialog_parser.y`
 - [x] Ajouter les 20 `create_widget()` dans `automaton.c`
 - [x] Compilation sans erreur sur Debian Testing / Haplo-Linux (0 erreur ; warnings 1549 → 77)
-- [x] Grammaire réparée (commentaires `<!-- -->`, espaces entre attributs, 8 widgets câblés) — **tests XML `tests/xml/` 52/52** (était 0/52)
+- [x] Grammaire réparée (commentaires `<!-- -->`, espaces entre attributs, 8 widgets câblés) — **tests XML `tests/xml/` 55/55** (était 0/52)
 - [ ] Test des 50 widgets (scripts `examples/*/`)
 - [ ] `checksec` → Full RELRO, PIE, Stack Canary
 
@@ -108,4 +108,4 @@ Intégration dans le meta-projet haplo-dialog :
 
 ---
 
-*Document horodaté — dernière mise à jour : 2026-06-07 (audit #5 — grammaire réparée, tests XML 0/52 → 52/52).*
+*Document horodaté — dernière mise à jour : 2026-06-07 (audit #5 — grammaire réparée, tests XML 0/52 → 55/55).*

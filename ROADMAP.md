@@ -16,11 +16,11 @@ Première version publique stable. Port gtk3sermo (backend GTK 3), 43 widgets, s
 Priorité : rendre le projet **vérifiable automatiquement**.
 
 - [x] **Build gtk3sermo**, le port de référence compile et lie un binaire fonctionnel (autoreconf -fi && ./configure && make) ✅
-- [x] **Tests XML verts**, 52/52 (headless, `--print-ir`) ✅
+- [x] **Tests XML verts**, 55/55 (headless, `--print-ir`) ✅
 - [x] **Compatibilité ascendante gtkdialog**, symlink `gtkdialog` → `gtk3sermo` à l'installation ; XML/CLI/variables d'environnement d'époque vérifiés ✅
 - [ ] **CI fonctionnel**, gtk3sermo compile sur Gitea/Forgejo à chaque push
-- [x] **Suite XML complète**, 52 cas de test ✅ (tests/xml/ : 52 fichiers couvrant tous les widgets et actions)
-- [ ] **Valgrind propre**, zéro leak sur les 52 XML de référence avec gtk3sermo
+- [x] **Suite XML complète**, 55 cas de test ✅ (tests/xml/ : 55 fichiers couvrant tous les widgets et actions)
+- [ ] **Valgrind propre**, zéro leak sur les 55 XML de référence avec gtk3sermo
 - [ ] **cppcheck CI**, analyse statique automatique, zéro erreur
 - [x] **haplo-dialog-xml(5) dans les paquets**, manpage installée par défaut ✅
 - [ ] **`.deb` officiel signé**, paquet binaire de release signé

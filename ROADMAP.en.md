@@ -16,11 +16,11 @@ First stable public version. gtk3sermo port (GTK 3 backend), 43 widgets, hardene
 Priority: make the project **automatically verifiable**.
 
 - [x] **gtk3sermo build**, the reference port compiles and links a working binary (autoreconf -fi && ./configure && make) ✅
-- [x] **XML tests green**, 52/52 (headless, `--print-ir`) ✅
+- [x] **XML tests green**, 55/55 (headless, `--print-ir`) ✅
 - [x] **gtkdialog backward compatibility**, `gtkdialog` → `gtk3sermo` symlink at install time; legacy XML, CLI and environment variables verified ✅
 - [ ] **Working CI**, gtk3sermo compiles on Gitea/Forgejo on every push
-- [x] **Complete XML suite**, 52 test cases ✅ (tests/xml/: 52 files covering all widgets and actions)
-- [ ] **Clean Valgrind**, zero leaks on the 52 reference XML files with gtk3sermo
+- [x] **Complete XML suite**, 55 test cases ✅ (tests/xml/: 55 files covering all widgets and actions)
+- [ ] **Clean Valgrind**, zero leaks on the 55 reference XML files with gtk3sermo
 - [ ] **cppcheck CI**, automatic static analysis, zero errors
 - [x] **haplo-dialog-xml(5) in the packages**, manpage installed by default ✅
 - [ ] **Official signed `.deb`**, signed binary release package

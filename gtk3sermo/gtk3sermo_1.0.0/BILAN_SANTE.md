@@ -25,7 +25,7 @@
 | Critère | État |
 |---|:--:|
 | Build + install | ✅ rc=0 |
-| Tests XML (52 cas) | ✅ 52/52 |
+| Tests XML (55 cas) | ✅ 55/55 |
 | Tests de comportement (`run_unit_tests.sh`) | ✅ 9/9 |
 | Warnings dangereux (casts/uninit) | ✅ 0 |
 | Paquet `.deb` (lintian) | ✅ 0 tag |
@@ -720,7 +720,7 @@ Vérification de bout en bout sur Debian (gcc 15.2, GTK3 3.24.52).
 |----------|-------:|
 | Build (`make`) | **rc=0, 0 erreur** ✅ |
 | Binaire `gtk3sermo` | 1,4 Mo, exécutable (`--version` rc=0) |
-| Tests XML `tests/xml/` (52 cas, `--print-ir`, headless) | **52/52 PASS** ✅ |
+| Tests XML `tests/xml/` (55 cas, `--print-ir`, headless) | **55/55 PASS** ✅ |
 | Warnings | **34** (idiomes amont gtkdialog : casts int↔pointeur, unused-but-set, sign-compare, dangling-else, format-extra-args debug-echo ; + conflits shift/reduce bison intouchables) |
 
 ### Compatibilité ascendante gtkdialog
@@ -744,4 +744,4 @@ Vérification de bout en bout sur Debian (gcc 15.2, GTK3 3.24.52).
 
 ---
 
-*Document horodaté — dernière mise à jour : 2026-06-07 (audit #5 — vérification finale : build rc=0, tests XML 52/52, alias gtkdialog).*
+*Document horodaté — dernière mise à jour : 2026-06-07 (audit #5 — vérification finale : build rc=0, tests XML 55/55, alias gtkdialog).*

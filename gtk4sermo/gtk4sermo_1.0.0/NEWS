@@ -1,5 +1,5 @@
 2026-06-06
-* 1.0.0-gtk4 — Réparation de la grammaire : tests XML 0/52 → 52/52
+* 1.0.0-gtk4 — Réparation de la grammaire : tests XML 0/52 → 55/55
 * Jusqu'ici le port GTK4 compilait mais échouait à TOUS les tests XML (0/52),
   faute d'une grammaire complète. Causes corrigées cette session :
   - Lexer : gestion des commentaires <!-- --> (état ST_COMMENT) — le ">" de
@@ -11,7 +11,7 @@
   - Câblage de 8 widgets qui avaient un widget_*.c mais aucune grammaire :
     switch, password, calendar, infobar, spinner, searchentry, levelbar,
     drawingarea. Ils sont désormais reconnus par la grammaire (utilisables).
-* Résultat : build make → rc=0, 0 erreur ; tests XML tests/xml/ 52/52 PASS
+* Résultat : build make → rc=0, 0 erreur ; tests XML tests/xml/ 55/55 PASS
   (--print-ir, headless) ; warnings 128 → 77 (idiomes amont, non bloquants).
 * Aucun nouveau fichier widget créé — le compteur de 50 widgets est inchangé.
 * Bugs communs à la famille corrigés : troncature des noms de widgets
@@ -106,4 +106,4 @@
 * 0.7.21 released
 * Added togglebutton widget.
 
-Document horodaté — dernière mise à jour : 2026-06-07 (audit #5 — grammaire réparée, tests XML 0/52 → 52/52).
+Document horodaté — dernière mise à jour : 2026-06-07 (audit #5 — grammaire réparée, tests XML 0/52 → 55/55).

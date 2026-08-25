@@ -1138,7 +1138,7 @@ static void widget_tree_input_by_command(variable *var, char *filename,
 						case G_TYPE_DOUBLE:
 							gtk_tree_store_set(GTK_TREE_STORE(model), &iter,
 								n + FirstDataColumn - hiddencolumns,
-								strtod(columns[n], NULL), -1);
+								g_ascii_strtod(columns[n], NULL), -1);
 							break;
 						default:
 							g_debug( "%s(): Unsupported column-type %lu",
@@ -1276,7 +1276,7 @@ static void widget_tree_input_by_items(variable *var)
 				case G_TYPE_DOUBLE:
 					gtk_tree_store_set(GTK_TREE_STORE(model), &iter,
 						n + FirstDataColumn,
-						strtod(columns[n], NULL), -1);
+						g_ascii_strtod(columns[n], NULL), -1);
 					break;
 				default:
 					g_debug( "%s(): Unsupported column-type %lu",
