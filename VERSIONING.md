@@ -1,4 +1,4 @@
-# Versioning & conventions Git - haplo-dialog
+# Versionnage & conventions Git — sermo
 
 Ce document fixe la manière dont le projet est **versionné**, **changé** et
 **publié**. Il décrit les conventions *réellement pratiquées* dans le dépôt et
@@ -57,15 +57,23 @@ normal. Chaque port a son `debian/changelog`, qui fait foi pour lui.
 Une montée de version doit toucher les fichiers suivants, c'est la check-list
 de release :
 
+`<port>` vaut `gtk3sermo` ou `gtk4sermo` : sauf mention contraire, chaque ligne
+est à faire **deux fois**.
+
 | Emplacement | Fichier(s) | Champ |
 |-------------|-----------|-------|
-| Build autotools | `gtk3sermo/…/configure.ac` | `AC_INIT([gtk3sermo], [X.Y.Z], …)` |
-| Build CMake | `gtk3sermo/…/CMakeLists.txt` | `project(gtk3sermo VERSION X.Y.Z …)` |
-| **Nom du dossier** | `gtk3sermo/gtk3sermo_X.Y.Z/` | la version est **dans le chemin** |
-| Arch | `packaging/arch/PKGBUILD` + `.SRCINFO` | `pkgver=X.Y.Z` |
-| RPM | `packaging/rpm/gtk3sermo.spec` | `%global version X.Y.Z` |
-| Gentoo | `packaging/gentoo/gtk3sermo-X.Y.Z.ebuild` | version **dans le nom de fichier** |
-| Doc | `CHANGELOG.md`, `SECURITY.md`, `NEWS`, badges `site-web/` | tableaux & en-têtes |
+| Build autotools | `<port>/…/configure.ac` | `AC_INIT([<port>], [X.Y.Z], …)` |
+| Build CMake — **gtk3sermo seulement** | `gtk3sermo/…/CMakeLists.txt` | `project(gtk3sermo VERSION X.Y.Z …)` |
+| **Nom du dossier** | `<port>/<port>_X.Y.Z/` | la version est **dans le chemin** |
+| Debian | `<port>/…/packaging/debian/changelog` | `<port> (X.Y.Z-N)` — voir ci-dessous |
+| Arch | `<port>/…/packaging/arch/PKGBUILD` + `.SRCINFO` | `pkgver=X.Y.Z` |
+| RPM | `<port>/…/packaging/rpm/<port>.spec` | `%global version X.Y.Z` |
+| Gentoo | `<port>/…/packaging/gentoo/<port>-X.Y.Z.ebuild` | version **dans le nom de fichier** |
+| Slackware | `<port>/…/packaging/slackware/<port>.SlackBuild` | `VERSION=${VERSION:-X.Y.Z}` |
+| Doc | `CHANGELOG.md`, `CHANGELOG.en.md`, `SECURITY.md`, `SECURITY.en.md`, `NEWS`, badges des `README` | tableaux & en-têtes |
+
+Le port GTK 4 n'a **pas** de `CMakeLists.txt` : il se construit par autotools
+seulement. Le modèle `.cmake` du `.gitlab-ci.yml` n'est donc étendu par aucun job.
 
 > ⚠️ **Particularité** : la version est encodée dans le **nom du dossier**
 > (`gtk3sermo_1.0.0/`) et dans le **nom de l'ebuild**
@@ -96,31 +104,27 @@ telles quelles**, elles documentent la lignée et ne sont jamais réécrites.
 
 ## 4. Conventions de commit
 
-Le style pratiqué est **`portée: résumé impératif`** (français), pas Conventional
-Commits strict. Exemples du style pratiqué :
+**La référence est `CONTRIBUTING.md`, §« Format des messages de commit ».** Ce
+document ne la redit pas, pour ne pas créer une deuxième version qui dérivera.
+
+En deux lignes : le sujet est une **phrase française** de moins de 72 caractères
+qui dit **ce qui changeait de comportement**, du point de vue de qui s'en sert —
+pas quel fichier a bougé, et pas de préfixe typé. Le corps porte le pourquoi et
+la mesure.
 
 ```
-gtk3sermo: uniformise vers v1.0.0 (gtk3d → gtk3sermo)
-site-web: uniformise noms canoniques + v1.0.0
-ci: applique le contenu canonique de Dockerfile.gtk3sermo
-docs: ajoute DEPENDENCIES.md (dépendances réelles)
-tests: ajoute les tests de comportement safe_exec
+La barre de progression faisait tourner GTK depuis son thread de lecture
+Les quatre recettes non-Debian téléchargeaient une source qui n'existe pas
+Le durcissement annoncé n'était pas tout entier dans le binaire
 ```
 
-### Règles
+`git log --oneline -20` donne le ton mieux qu'une règle écrite.
 
-1. **Portée** = le périmètre touché. Valeurs usuelles :
-   - le port : `gtk3sermo`
-   - transversal : `docs`, `site-web`, `ci`, `packaging`, `tests`, `core`, `build`, `release`
-2. **Résumé** à l'impératif présent, en minuscule, sans point final, ≤ ~70 caractères.
-3. **Corps** (optionnel) séparé par une ligne vide : explique le *pourquoi*,
-   liste les points notables, mentionne les invariants préservés.
-4. **Un commit = un changement cohérent.** On ne mélange pas un renommage et
-   l'ajout d'une fonctionnalité.
-
-> *Évolution possible :* adopter plus tard les préfixes typés Conventional
-> Commits (`feat:`, `fix:`, `docs:`…) pour automatiser la génération du
-> CHANGELOG. Non requis aujourd'hui.
+Ce document a longtemps prescrit un style `portée: résumé impératif`, et
+`CONTRIBUTING.md` un style *conventional commits* en anglais. Ni l'un ni l'autre
+n'a jamais été pratiqué : l'historique est fait de phrases françaises depuis le
+premier commit. Les deux documents disent maintenant la même chose, et c'est
+celle-là.
 
 ---
 
@@ -129,17 +133,17 @@ tests: ajoute les tests de comportement safe_exec
 État actuel : développement **trunk-based** sur **`main`** (branche unique,
 toujours compilable).
 
-Convention recommandée pour la suite :
+`main` est aujourd'hui la **seule** branche du dépôt : aucune branche de travail
+n'a jamais existé dans l'historique. Ce n'est pas un oubli, c'est le mode de
+développement.
 
-| Préfixe | Usage | Exemple |
-|---------|-------|---------|
-| `main` | tronc stable, taggable | — |
-| `feature/…` | nouveau widget / fonctionnalité | `feature/gtk3-colorpicker` |
-| `fix/…` | correction ciblée | `fix/deb-packaging` |
-| `release/X.Y` | stabilisation d'une release (si besoin) | `release/1.1` |
+Pour une contribution extérieure, le nom de branche est libre — qu'il décrive le
+sujet suffit (`liste-plante-sur-item-vide`). Il n'y a **pas** de préfixe imposé :
+en prescrire un que personne n'utilise ne ferait qu'ajouter une règle morte de
+plus.
 
 Les branches de travail sont **courtes** et fusionnées dans `main` une fois
-vertes (build OK). `main` ne doit jamais être cassée.
+vertes (le pipeline passe). `main` ne doit jamais être cassée.
 
 ---
 
@@ -149,12 +153,15 @@ vertes (build OK). `main` ne doit jamais être cassée.
   une clé est disponible.
 - Un tag pointe sur le commit où le CHANGELOG, les `configure.ac`/`CMakeLists.txt`
   et le packaging déclarent tous `X.Y.Z`.
-- État actuel : **aucun tag** dans le dépôt. Le premier à poser est `v1.0.0`.
+- État actuel : **trois étiquettes** posées — `v1.0.0`, `v1.0.0-2` et `v1.0.0-3`.
+  `v1.0.0` est celle qui correspond aux paquets publiés dans les *releases*
+  GitLab. Les deux autres sont des états intermédiaires ; le `README` dit
+  lui-même de ne pas les installer.
 
 ```sh
-# Poser la release courante :
-git tag -a v1.0.0 -m "haplo-dialog 1.0.0, première version publique stable"
-git push origin v1.0.0
+# Poser une release :
+git tag -a vX.Y.Z -m "sermo X.Y.Z"
+git push gitlab vX.Y.Z
 ```
 
 ---
@@ -163,17 +170,21 @@ git push origin v1.0.0
 
 Pour publier `X.Y.Z` :
 
-1. **Geler** : s'assurer que `main` compile et que les tests passent
-   (`./ci/build.sh gtk3sermo --test`).
-2. **Bumper la version** dans tous les emplacements de la §2 :
-   `configure.ac`, `CMakeLists.txt`, dossier `gtk3sermo_X.Y.Z/`, `PKGBUILD` + `.SRCINFO`,
-   `*.spec` (`%global version`), ebuild renommé `gtk3sermo-X.Y.Z.ebuild`.
+1. **Geler** : s'assurer que `main` compile et que les tests passent, **dans les
+   deux ports** — `./ci/build.sh gtk3sermo --test` puis
+   `./ci/build.sh gtk4sermo --test`, ou simplement attendre que le pipeline
+   GitLab soit vert : il rejoue les deux ports, les sept garde-fous et les
+   exemples réels sous Xvfb en locale française.
+2. **Bumper la version** dans tous les emplacements de la §2, **pour chaque
+   port** : `configure.ac`, `CMakeLists.txt` (gtk3sermo seulement), dossier
+   `<port>_X.Y.Z/`, `PKGBUILD` + `.SRCINFO`, `*.spec` (`%global version`),
+   ebuild renommé, `SlackBuild`, et une entrée dans chaque `debian/changelog`.
 3. **Clore le CHANGELOG** : `## [Unreleased]` → `## [X.Y.Z], AAAA-MM-JJ`, et
    recréer une section `[Unreleased]` vide pour la suite.
 4. **Mettre à jour** `SECURITY.md` (tableau des versions supportées), `NEWS`,
    badges `site-web/`.
-5. **Commit** : `release: vX.Y.Z`.
-6. **Tag annoté** : `git tag -a vX.Y.Z -m "haplo-dialog X.Y.Z"`.
+5. **Commit**, sujet en phrase française, comme le reste de l'historique.
+6. **Tag annoté** : `git tag -a vX.Y.Z -m "sermo X.Y.Z"`.
 7. **Publier** : pousser commit + tag, construire les paquets distro.
 
 Un script `ci/bump-version.sh` (à écrire) pourra automatiser l'étape 2, le

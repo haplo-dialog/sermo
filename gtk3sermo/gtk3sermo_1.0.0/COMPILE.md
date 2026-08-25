@@ -166,53 +166,44 @@ make deb-clean
 
 ## Build reproductible avec Docker
 
-Le fichier `Dockerfile.build` fournit un environnement de build 100% reproductible
-basé sur Debian 12, sans dépendance à l'environnement local.
+Le fichier `ci/Dockerfile.gtk3sermo` fournit un environnement de build isolé de
+la machine locale, basé sur `debian:testing`.
+
+⚠️ Le **contexte de build est la racine du dépôt**, pas ce dossier : le
+Dockerfile fait `COPY gtk3sermo/gtk3sermo_1.0.0 .`. Lancer la commande depuis
+`gtk3sermo_1.0.0/` échoue.
 
 ### Construction de l'image
 
 ```bash
-cd gtk3sermo_1.0.0/
-docker build -f Dockerfile.build -t gtk3sermo-build .
+cd <racine-du-depot>
+docker build -f ci/Dockerfile.gtk3sermo -t gtk3sermo .
 ```
 
-### Compilation + tests + packaging en une commande
+**Mesuré le 2026-08-25** : `rc=0`, image de 215 Mo,
+`docker run --rm gtk3sermo --version` répond `gtk3sermo version 1.0.0`.
+
+### Ce que l'image contient
+
+Deux étages, et deux seulement :
+
+| Étage | Base | Contenu |
+|-------|------|---------|
+| `builder` | `debian:testing` | outils de build + sources, `autoreconf && configure && make install` vers `/install` |
+| `runtime` | `debian:testing-slim` | le binaire et les pages de manuel recopiés depuis `builder`, rien d'autre |
+
+L'`ENTRYPOINT` est le binaire lui-même, avec `--help` par défaut :
 
 ```bash
-mkdir -p ../dist
-docker run --rm -v "$PWD/../dist":/dist gtk3sermo-build
-# Le .deb est copié dans ../dist/
-ls ../di../gtk3sermo_*.deb
+docker run --rm gtk3sermo                    # affiche l'aide
+docker run --rm gtk3sermo --version
+docker run --rm --entrypoint sh gtk3sermo -c 'gtk3sermo --help'
 ```
 
-### Options Docker
+### Ce que l'image ne fait PAS
 
-```bash
-# Build debug
-docker build --build-arg ENABLE_DEBUG=yes \
-    -f Dockerfile.build -t gtk3sermo-build-dbg .
-
-# Build sans VTE (terminal widget)
-docker build --build-arg ENABLE_VTE=no \
-    -f Dockerfile.build -t gtk3sermo-build-novte .
-```
-
-### Stages disponibles dans le Dockerfile multi-stage
-
-| Stage      | Contenu                                     |
-|------------|---------------------------------------------|
-| `builder`  | Compilation seule (sans tests)              |
-| `tester`   | Compilation + `make check` + `run_tests.sh` |
-| `packager` | Tester + `dpkg-buildpackage`                |
-| `exporter` | Image minimale — export du .deb uniquement  |
-
-Pour s'arrêter à un stage intermédiaire :
-
-```bash
-# Compiler et tester sans packager
-docker build --target tester -f Dockerfile.build -t gtk3sermo-test .
-docker run --rm gtk3sermo-test make check
-```
+- Pas d'image pour le port GTK 4 : `gtk4sermo` se construit par autotools
+  seulement.
 
 ---
 

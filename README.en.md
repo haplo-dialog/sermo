@@ -17,7 +17,10 @@
 > downloadable anywhere. If you had installed one on BunsenLabs, it may have
 > overwritten your `gtk3dialog` — reinstall your distribution's own.
 >
-> **No package is published at this time.** You build from source: see
+> **The `sermo` family packages are published**, attached to the
+> [v1.0.0](https://gitlab.com/haplo-dialog/sermo/-/releases/v1.0.0) release
+> along with their SHA256 sums: `gtk3sermo`, `gtk4sermo`, `gtksermo` and the
+> debug symbols. You can also build from source — see
 > [Installation](#installation).
 
 [![Licence](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](LICENSE)
@@ -85,6 +88,11 @@ One shared C core (flex/bison grammar + state machine + `safe_exec`), two backen
 > One grammar for both ports. The count is the number of **widget tags accepted by
 > the grammar** (`src/gtkdialog_lexer.l`), aliases included — it does not count
 > structural tags such as `<action>` or `<variable>`.
+>
+> The internal documents of each port quote a different figure — **43** and
+> **50** — because they count **implementation files** (`ls src/widget_*.c`).
+> Both are accurate: several tags share one file (aliases, `h`/`v` variants).
+> Wherever a figure appears, it says which of the two it is.
 >
 > The `gtkdialog` command itself is NOT in these packages: it ships in a separate
 > package, **`gtksermo`**. See [Installation](#installation).

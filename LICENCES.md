@@ -7,7 +7,7 @@
 | Cœur et widgets | `src/*.c`, `src/*.h`, `src/safe_exec.c`, `src/variables.c`, `src/stringman.c`, `src/stack.c` | **GPL-2.0-or-later** | Héritage direct gtkdialog (László Pere), copyleft fort |
 | Parser XML | `src/gtkdialog_lexer.l`, `src/gtkdialog_parser.y` | **GPL-2.0-or-later** | Héritage direct gtkdialog original |
 | Documentation | `doc/*.texi`, `doc/*.info`, `man/`, `*-site/*.html` | **CC-BY-SA 4.0** | Standard documentation libre |
-| Exemples écrits par le projet | `examples/showcase/`, `examples/system-tools/`, `tests/xml/*.xml` | **CC0-1.0** | Domaine public, utilisables sans restriction |
+| Exemples écrits par le projet | `gtk3sermo/…/examples/showcase/` (5 scripts), `gtk3sermo/…/examples/system-tools/` (1 script), `tests/xml/*.xml` (55 fichiers) | **CC0-1.0** | Domaine public, utilisables sans restriction. Vérifié le 2026-08-25 : les 61 portent l'en-tête. Le port GTK 4 n'a ni `showcase/` ni `system-tools/` — ses exemples sont hérités de l'amont gtkdialog et restent en GPL-2.0-or-later. |
 | Exemples hérités de gtkdialog | le reste de `examples/` | **GPL-2.0-or-later** | Comme le reste du dépôt |
 | Jeux d'icônes de tiers | `examples/button/`, `examples/togglebutton/`, `examples/pfeme/` | **GPL-2** | elementary, fast-forward, nuvola — chacun avec son `COPYING` sur place |
 | Packaging | `packaging/` | **GPL-2.0-or-later** | Scripts de build liés au projet |

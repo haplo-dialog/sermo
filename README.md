@@ -16,8 +16,11 @@
 > téléchargeables nulle part. Si vous en aviez installé un sous BunsenLabs, il a pu
 > écraser votre `gtk3dialog` — réinstallez celui de votre distribution.
 >
-> **Aucun paquet n'est publié pour l'instant.** On construit depuis les sources :
-> voir [Installation](#installation).
+> **Les paquets de la famille `sermo` sont publiés**, joints à la release
+> [v1.0.0](https://gitlab.com/haplo-dialog/sermo/-/releases/v1.0.0) avec leurs
+> sommes SHA256 : `gtk3sermo`, `gtk4sermo`, `gtksermo` et les symboles de
+> débogage. On peut aussi construire depuis les sources — voir
+> [Installation](#installation).
 
 [![Licence](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.0.0-informational.svg)](CHANGELOG.md)
@@ -25,8 +28,8 @@
 [![Tests](https://img.shields.io/badge/tests-55%2F55%20XML%20·%209%2F9%20comportement-brightgreen.svg)](#tests--qualité)
 
 Décrivez une interface en XML, exportez-la dans une variable, lancez le binaire —
-une vraie fenêtre **GTK 3 native** s'ouvre, et les valeurs saisies reviennent
-dans vos variables shell. Là où **gtkdialog** est abandonné, haplo-dialog le fait
+une vraie fenêtre **native** s'ouvre — GTK 3 ou GTK 4, au choix du port —, et
+les valeurs saisies reviennent dans vos variables shell. Là où **gtkdialog** est abandonné, haplo-dialog le fait
 revivre : corrigé, durci, maintenu. Du grec *haplóos*, « simple ».
 
 ---
@@ -84,6 +87,12 @@ Un cœur C commun (grammaire flex/bison + automate + `safe_exec`), deux backends
 > Une seule grammaire pour les deux ports. Le compte est celui des **balises de
 > widget acceptées par la grammaire** (`src/gtkdialog_lexer.l`), alias compris —
 > il ne compte pas les balises de structure comme `<action>` ou `<variable>`.
+>
+> Les documents internes de chaque port citent un autre chiffre — **43** et
+> **50** — parce qu'ils comptent les **fichiers d'implémentation**
+> (`ls src/widget_*.c`). Les deux sont exacts : plusieurs balises partagent un
+> même fichier (les alias, les variantes `h`/`v`). Quand un chiffre apparaît
+> quelque part, il dit lequel des deux il est.
 >
 > La commande `gtkdialog` elle-même n'est PAS dans ces paquets : elle est fournie
 > par un paquet séparé, **`gtksermo`**. Voir [Installation](#installation).

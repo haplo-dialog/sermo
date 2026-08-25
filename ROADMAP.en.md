@@ -1,13 +1,19 @@
-# Roadmap - haplo-dialog
+# Roadmap — sermo
 
 **haplo-dialog**, https://haplo-dialog.fr  
-*Last updated: 2026-06-07*
+*Last updated: 2026-08-25*
 
 ---
 
 ## Current version: 1.0.0 (May 2026) ✅
 
-First stable public version. gtk3sermo port (GTK 3 backend), 43 widgets, hardened security.
+First stable public version, **two ports**: `gtk3sermo` (GTK 3 backend,
+**52 widget tags**) and `gtk4sermo` (GTK 4 backend, **56** — the same 52, plus
+`flowbox`, `overlay`, `revealer`, `stack`). The backwards-compatible `gtkdialog`
+alias ships in a third package, `gtksermo`.
+
+The packages are downloadable from the GitLab releases. Packaging revisions
+advance port by port and may diverge; that is normal (see `VERSIONING.md` §2).
 
 ---
 
@@ -15,16 +21,17 @@ First stable public version. gtk3sermo port (GTK 3 backend), 43 widgets, hardene
 
 Priority: make the project **automatically verifiable**.
 
-- [x] **gtk3sermo build**, the reference port compiles and links a working binary (autoreconf -fi && ./configure && make) ✅
-- [x] **XML tests green**, 55/55 (headless, `--print-ir`) ✅
+- [x] **Both ports build**, each compiles and links a working binary (`autoreconf -fi && ./configure && make`) ✅
+- [x] **XML tests green**, **55/55 per port**, headless (`--print-ir`) ✅
 - [x] **gtkdialog backward compatibility**, `gtkdialog` → `gtk3sermo` symlink at install time; legacy XML, CLI and environment variables verified ✅
-- [ ] **Working CI**, gtk3sermo compiles on Gitea/Forgejo on every push
+- [x] **Working CI** ✅ — on **GitLab** (`.gitlab-ci.yml`), not on Gitea/Forgejo. It builds both ports, replays the XML suite, the behaviour tests and **seven benches**, then **actually runs the examples** under Xvfb in the `fr_FR.UTF-8` locale. That second stage exists because the first was not enough: on 2026-08-22 both ports crashed in use while the pipeline stayed green, because it never opened a single window.
 - [x] **Complete XML suite**, 55 test cases ✅ (tests/xml/: 55 files covering all widgets and actions)
-- [ ] **Clean Valgrind**, zero leaks on the 55 reference XML files with gtk3sermo
+- [x] **Examples run, not merely listed** ✅ — 55/55 for gtk3sermo and 58/58 for gtk4sermo really open their window, in French, on every push
+- [x] **Hardening measured on the binary** ✅ — `readelf`, not the advertised flags: that is how we found CET did not survive linking
+- [x] **Packages downloadable** ✅ — five `.deb` plus `SHA256SUMS` in the GitLab releases, re-downloaded anonymously to verify
+- [ ] **Signed `.deb`**, the APT repository signature does not exist yet (the published SHA256 sums attest integrity, not origin)
+- [ ] **Clean Valgrind**, zero leaks on the 55 reference XML files, in both ports
 - [ ] **cppcheck CI**, automatic static analysis, zero errors
-- [x] **haplo-dialog-xml(5) in the packages**, manpage installed by default ✅
-- [ ] **Official signed `.deb`**, signed binary release package
-- [x] **Examples**, `examples/` covers all widgets (53 directories, `#!/bin/sh` scripts)
 
 ---
 
@@ -55,9 +62,10 @@ Priority: make the project maintainable in the long term.
 
 | Port | Guarantee | Maintainer | CI |
 |------|----------|-----------|-----|
-| `gtk3sermo` | ✅ Production | haplo-dialog | Yes (v1.1) |
+| `gtk3sermo` | ✅ Production | haplo-dialog | yes — build, XML, behaviour, 7 benches, real examples |
+| `gtk4sermo` | ✅ Production | haplo-dialog | yes — same pipeline, same benches |
 
-`gtk3sermo` is the reference port of haplo-dialog (GTK 3 backend, 43 widgets). It provides the backward-compatible `gtkdialog` alias.
+`gtk3sermo` is the reference port of sermo (GTK 3 backend, 52 widget tags). It provides the backward-compatible `gtkdialog` alias.
 
 ---
 

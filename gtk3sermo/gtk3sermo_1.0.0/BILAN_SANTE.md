@@ -386,7 +386,7 @@ intégrés directement dans la règle `wlist` (patron Lot 0). Résultat : 6 sr (
 
 | Fichier | Description |
 |---------|-------------|
-| `Dockerfile.build` | Image multi-stage Debian 12 : builder → tester → packager → exporter |
+| `ci/Dockerfile.gtk3sermo` | Image à **deux** étages sur `debian:testing` : `builder` (compile et installe vers `/install`) puis `runtime` (`debian:testing-slim`, le binaire et les manpages, rien d'autre). Contexte de build = **racine du dépôt**. Mesuré le 2026-08-25 : `rc=0`, 215 Mo, `--version` répond. |
 | `COMPILE.md` | Mise à jour complète : Docker, tests, vérifications checksec |
 
 ---
@@ -611,7 +611,7 @@ Intégration complète dans automaton.h/c, lexer.l, parser.y, widgets.c, variabl
 | 9 | 2026-05-21 | Documentation complète, PDF + site HTML |
 | 10 | 2026-05-21 | Audit complet : 15 #endif/#else orphelins, gtk_widget_set_extension_events, 8 fprintf→g_warning, .gitignore |
 | 11 | 2026-05-22 | Bug critique priorité opérateurs, R9/R10, stringman guards, ROADMAP.md, 6 exemples |
-| 12 | 2026-05-22 | tests/ complet (44 tests shell + 27 C), Dockerfile.build multi-stage, COMPILE.md |
+| 12 | 2026-05-22 | tests/ complet (44 tests shell + 27 C), `Dockerfile.build` multi-stage, COMPILE.md |
 | 13 | 2026-05-22 | Renommage gtk3sermo, doc/gtk3sermo.texi GTK3 complet, 87+ fichiers HTML/MD mis à jour |
 | **14** | **2026-05-22** | **Bugs runtime corrigés — T13 (shell_escape_value), T9 (collision window_id → suffixe __W\<id\>), T11 (variables_seed_defaults + variables_export_all dans variables_refresh)** |
 | **15** | **2026-05-22** | **Build propre — 40+ erreurs de compilation GTK2→GTK3 corrigées : autotools (configure.ac, autogen.sh), API GTK3 (gtk_window_move, GSList, GtkComboBoxText, gdk_rgba_parse), VTE (vte_terminal_get_padding), 12 `#endif`/`#else` orphelins, globals extern dans gtk3d.h** |
