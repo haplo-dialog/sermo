@@ -2,7 +2,7 @@
  * gtk4-compat.h — GTK3→GTK4 compatibility shims for gtk4sermo
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
- * Copyright (C) 2026  Haplo-Linux <devel@haplo-dialog.fr>
+ * Copyright (C) 2026  haplo-dialog <devel@haplo-dialog.fr>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@
  *   ✅ gtk_image_set_from_stock (→ set_from_icon_name)
  *   ⚠️ GtkMenu / GtkMenuBar / GtkMenuItem  (removed — see widget_menu*.c stubs)
  *
- * Haplo-Linux <devel@haplo-dialog.fr> — 2026
+ * haplo-dialog <devel@haplo-dialog.fr> — 2026
  * License: GPL-2.0-or-later
  */
 

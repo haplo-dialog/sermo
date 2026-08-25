@@ -18,7 +18,6 @@ Distributeur : haplo-dialog (https://haplo-dialog.fr)
 Distribution : Debian Testing
 Noyau cible  : Linux 7.0.4+deb14-amd64
 Environnement: Xfce4 4.20 / Xfwm4 (X11)
-Thème GTK    : Haplo-Dark [GTK2/3/4] — safe-eyes
 Icônes       : Papirus-Dark
 
 Mainteneur   : <devel@haplo-dialog.fr>

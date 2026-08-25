@@ -4,12 +4,12 @@
 
 ```bash
 # Créer un overlay local
-mkdir -p /var/db/repos/haplo/app-misc/gtk4sermo
-cp packaging/gentoo/gtk4sermo-1.0.0.ebuild /var/db/repos/haplo/app-misc/gtk4sermo/
-cp packaging/gentoo/Manifest /var/db/repos/haplo/app-misc/gtk4sermo/
+mkdir -p /var/db/repos/local/app-misc/gtk4sermo
+cp packaging/gentoo/gtk4sermo-1.0.0.ebuild /var/db/repos/local/app-misc/gtk4sermo/
+cp packaging/gentoo/Manifest /var/db/repos/local/app-misc/gtk4sermo/
 
 # Générer le Manifest avec la vraie archive
-ebuild /var/db/repos/haplo/app-misc/gtk4sermo/gtk4sermo-1.0.0.ebuild manifest
+ebuild /var/db/repos/local/app-misc/gtk4sermo/gtk4sermo-1.0.0.ebuild manifest
 
 # Installer
 emerge -av app-misc/gtk4sermo

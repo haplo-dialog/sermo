@@ -2,7 +2,7 @@
 /*
  * widget_infobar.h:
  * Gtkdialog - A small utility for fast and easy GUI building.
- * Copyright (C) 2026  Haplo-Linux <devel@haplo-dialog.fr> (GTK3 new widget)
+ * Copyright (C) 2026  haplo-dialog <devel@haplo-dialog.fr> (GTK3 new widget)
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

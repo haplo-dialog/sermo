@@ -4,7 +4,7 @@
  * Gtkdialog - A small utility for fast and easy GUI building.
  * Copyright (C) 2003-2007  L�szl� Pere <pipas@linux.pte.hu>
  * Copyright (C) 2011-2012  Thunor <thunorsif@hotmail.com>
- * Copyright (C) 2026  Haplo-Linux <devel@haplo-dialog.fr> (GTK3 port, security)
+ * Copyright (C) 2026  haplo-dialog <devel@haplo-dialog.fr> (GTK3 port, security)
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -416,7 +416,7 @@ static void _layer_shell_apply(GtkWidget *widget, tag_attr *attr)
  *       place of the one the window manager would draw.  Default "no": the
  *       window manager keeps drawing it.
  *
- * This is deliberately opt-in and off by default.  Haplo ships XFCE, where a
+ * This is deliberately opt-in and off by default.  the reference desktop is XFCE, where a
  * client-drawn title bar stops matching the window-manager theme and the
  * window buttons stop matching every other window on the desktop.  A script
  * that wants the modern GNOME look asks for it; nothing gets it by surprise.

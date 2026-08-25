@@ -11,15 +11,15 @@ cd packaging/slackware/
 sudo sh gtk4sermo.SlackBuild
 
 # Résultat
-ls /tmp/gtk4sermo-1.0.0-x86_64-1_haplo.tgz
+ls /tmp/gtk4sermo-1.0.0-x86_64-1_sermo.tgz
 ```
 
 ## Installation
 
 ```bash
-sudo installpkg /tmp/gtk4sermo-1.0.0-x86_64-1_haplo.tgz
+sudo installpkg /tmp/gtk4sermo-1.0.0-x86_64-1_sermo.tgz
 # ou
-sudo upgradepkg --install-new /tmp/gtk4sermo-1.0.0-x86_64-1_haplo.tgz
+sudo upgradepkg --install-new /tmp/gtk4sermo-1.0.0-x86_64-1_sermo.tgz
 ```
 
 ## Dépendances (à installer manuellement)

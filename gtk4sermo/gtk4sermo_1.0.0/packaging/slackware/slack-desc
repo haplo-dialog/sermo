@@ -7,5 +7,5 @@ gtk4sermo: stack, revealer, flowbox, overlay, drawingarea. Security: safe_exec,
 gtk4sermo: FORTIFY_SOURCE=3, PIE, Full RELRO.
 gtk4sermo: Toolkit: GTK4
 gtk4sermo: Security: safe_exec, PIE, RELRO, FORTIFY_SOURCE=3
-gtk4sermo: Haplo-Linux <devel@haplo-dialog.fr> — https://haplo-dialog.fr
+gtk4sermo: haplo-dialog <devel@haplo-dialog.fr> — https://haplo-dialog.fr
 gtk4sermo:

@@ -1,8 +1,8 @@
-# Cahier des Charges — gtk4sermo (gtk4sermo)
+# Cahier des charges — gtk4sermo
 
-**Distributeur :** Haplo-Linux | **Distribution :** Haplo-Linux (Debian Testing)  
-**Noyau :** Linux 7.0.4+deb14-amd64 | **DE :** Xfce4 4.20 / Xfwm4 (X11)  
-**GTK :** GTK4 Haplo-Dark | **Dépôt :** https://haplo-dialog.fr  
+**Projet :** haplo-dialog | **Distribution cible :** Debian Testing  
+**GTK :** GTK 4 ≥ 4.6 | **VTE :** vte-2.91-gtk4 *(optionnel)*  
+**Dépôt :** https://gitlab.com/haplo-dialog/sermo  
 
 **Projet :** gtk4sermo-1.0.0  
 **Version :** 1.0.0  
@@ -365,7 +365,7 @@ Le projet sera considéré comme **terminé** (version 1.0.0 stable) lorsque :
 
 Ce travail a été réalisé avec l'assistance de **Claude**,
 le modèle de langage d'[Anthropic](https://www.anthropic.com),
-dans le cadre du développement de la famille **haplo-dialog** sur Haplo-Linux.
+dans le cadre du développement de la famille **haplo-dialog**.
 
 L'IA a contribué à : la conception de la couche `gtk4-compat.h`, le portage des
 widgets de GTK3 vers GTK4, l'ajout des widgets GTK4-natifs (`revealer`, `stack`,

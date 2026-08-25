@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * safe_exec.h: Secure command execution wrappers.
- * gtk4sermo-1.0.0 — Haplo-Linux (devel@haplo-dialog.fr), 2026 — License: GPL-2.0-or-later
+ * gtk4sermo-1.0.0 — haplo-dialog (devel@haplo-dialog.fr), 2026 — License: GPL-2.0-or-later
  */
 #ifndef SAFE_EXEC_H
 #define SAFE_EXEC_H

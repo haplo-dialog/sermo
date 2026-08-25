@@ -8,7 +8,7 @@ MAIN_DIALOG='
     <text><label>Cliquez pour ouvrir le site :</label></text>
     <linkbutton>
       <variable>LNK_HAPLO</variable>
-      <label>Haplo-Linux</label>
+      <label>haplo-dialog</label>
       <default>https://haplo-dialog.fr</default>
       <action>echo "URI cliqué : $LNK_HAPLO"</action>
     </linkbutton>

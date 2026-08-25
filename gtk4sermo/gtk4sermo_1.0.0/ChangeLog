@@ -39,7 +39,7 @@ gtk4sermo-1.0.0-gtk4 — 2026-06-01
   * Warnings résiduels (128) = idiomes amont non bloquants
 
 gtkdialog-1.0.0 — 2026-05-20
-  * Fork Haplo-Linux de gtkdialog 0.8.3
+  * Fork haplo-dialog de gtkdialog 0.8.3
   * Migration GTK2 → GTK3 (>= 3.22) sur 45 fichiers sources
   * Suppression de libglade-2.0 — remplacement par GtkBuilder (GTK3 natif)
   * Mise à jour VTE : vte >= 0.23.5 → vte-2.91

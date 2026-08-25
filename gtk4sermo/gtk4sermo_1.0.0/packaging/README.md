@@ -9,7 +9,7 @@
 
 | Format | OS cibles | Dossier |
 |--------|-----------|---------|
-| `.deb` | Debian, Ubuntu, Linux Mint, Haplo-Linux | `packaging/debian/` |
+| `.deb` | Debian, Ubuntu, Linux Mint | `packaging/debian/` |
 | `.rpm` (spec) | Fedora, RHEL, CentOS, openSUSE | `packaging/rpm/` |
 | `PKGBUILD` | Arch Linux, Manjaro, EndeavourOS | `packaging/arch/` |
 | `ebuild` | Gentoo, Calculate Linux | `packaging/gentoo/` |
@@ -17,12 +17,12 @@
 
 ## Construction rapide
 
-### Debian / Ubuntu / Haplo-Linux
+### Debian / Ubuntu
 
 ```bash
 cd gtk4sermo_1.0.0/
 dpkg-buildpackage -b -us -uc
-# Résultat : ../gtk4sermo_1.0.0-11_amd64.deb
+# Résultat : ../gtk4sermo_1.0.0-12_amd64.deb
 ```
 
 ### Fedora / RHEL
@@ -42,7 +42,7 @@ makepkg -si
 ### Gentoo
 
 ```bash
-cp -r packaging/gentoo/ /var/db/repos/haplo/app-misc/gtk4sermo/
+cp -r packaging/gentoo/ /var/db/repos/local/app-misc/gtk4sermo/
 emerge -av app-misc/gtk4sermo
 ```
 

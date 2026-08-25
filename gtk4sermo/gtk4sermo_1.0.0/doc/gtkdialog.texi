@@ -533,7 +533,7 @@ FIXME: This function is not working now, need to be fixed.
 
 Ce travail a été réalisé avec l'assistance de @strong{Claude},
 le modèle de langage d'Anthropic (@url{https://www.anthropic.com}),
-dans le cadre du développement de la famille @strong{haplo-dialog} sur Haplo-Linux.
+dans le cadre du développement de la famille @strong{haplo-dialog}.
 
 @quotation
 Ce projet a bénéficié de l'assistance de Claude (Anthropic) ---

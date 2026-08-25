@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * widget_flowbox.c — GtkFlowBox (GTK4-native)
- * gtk4sermo 1.0.0 — Haplo-Linux <devel@haplo-dialog.fr>
+ * gtk4sermo 1.0.0 — haplo-dialog <devel@haplo-dialog.fr>
  * Licence : GPL-2.0-or-later
  *
  * GtkFlowBox : grille flexible qui redistribue ses enfants selon

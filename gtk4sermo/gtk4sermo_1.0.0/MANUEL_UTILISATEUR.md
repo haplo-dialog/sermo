@@ -2,7 +2,7 @@
 
 **Version :** 1.0.0-gtk4  
 **Date :** Juin 2026 (mis à jour 2026-06-01)  
-**Licence :** GPL-2.0-or-later | **Distributeur :** Haplo-Linux (devel@haplo-dialog.fr)  
+**Licence :** GPL-2.0-or-later | **Projet :** haplo-dialog (devel@haplo-dialog.fr)  
 
 > **Note (2026-06-01) :** `gtk4sermo` compile désormais sans erreur et s'installe
 > via `make install` (`/usr/bin/gtk4sermo`). Voir la section Installation ci-dessous.

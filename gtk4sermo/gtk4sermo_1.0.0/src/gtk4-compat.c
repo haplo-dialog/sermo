@@ -9,7 +9,7 @@
  * This file must be compiled into the gtk4sermo binary.
  * It is listed in SOURCES in src/Makefile.am.
  *
- * Haplo-Linux <devel@haplo-dialog.fr> — 2026
+ * haplo-dialog <devel@haplo-dialog.fr> — 2026
  * License: GPL-2.0-or-later
  */
 

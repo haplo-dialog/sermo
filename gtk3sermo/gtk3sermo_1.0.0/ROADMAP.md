@@ -21,7 +21,7 @@ Voir `BILAN_SANTE.md` pour le détail des corrections (score 100/100 patch 22).
 
 | ID  | Action                                        | Priorité | Statut |
 |-----|-----------------------------------------------|----------|--------|
-| ~~A1~~ | ~~Compiler sur Debian 12 / Haplo-Linux~~ | ~~CRITIQUE~~ | ✅ **Résolu patch 17** |
+| ~~A1~~ | ~~Compiler sur Debian 12~~ | ~~CRITIQUE~~ | ✅ **Résolu patch 17** |
 | ~~A2~~ | ~~Corriger les erreurs de compilation résiduelles~~ | ~~CRITIQUE~~ | ✅ **Résolu patch 17** |
 | A3  | Valider `checksec` : RELRO=Full, PIE=Enabled, Canary=Found | HAUTE | En attente |
 | A4  | Valider `valgrind --leak-check=full` sur exemples de base | HAUTE | En attente |
@@ -80,7 +80,7 @@ gtk3sermo 0.9.x, sans dépendances GTK3.
 
 ### Pré-requis
 
-- GTK4 >= 4.12 disponible sur Haplo-Linux ou sa version suivante
+- GTK 4 >= 4.12 disponible dans Debian Testing
 - Base de code 0.9.x stable avec suite de tests automatisés
 
 ### API GTK3 à remplacer pour GTK4
@@ -131,7 +131,7 @@ Licence : GPL-2.0-or-later — voir `COPYING`
 
 ---
 
-*Haplo-Linux — 2026 — GPL-2.0-or-later*
+*haplo-dialog — 2026 — GPL-2.0-or-later*
 
 ---
 

@@ -1,12 +1,12 @@
 AC_PREREQ([2.69])
 # Process this file with autoconf to produce a configure script.
-# Port GTK4 — Haplo-Linux — 2026
+# Port GTK4 — haplo-dialog — 2026
 AC_INIT([gtk4sermo], [1.0.0], [devel@haplo-dialog.fr], [gtk4sermo])
 AM_INIT_AUTOMAKE([foreign subdir-objects -Wall -Werror])
 AC_CONFIG_HEADERS([config.h])
 
 # Build details
-AC_DEFINE_UNQUOTED(BUILD_DETAILS, ["1.0.0-gtk4 (Haplo-Linux)"], [Build details])
+AC_DEFINE_UNQUOTED(BUILD_DETAILS, ["1.0.0-gtk4 (haplo-dialog)"], [Build details])
 
 # Checks for programs.
 AC_PROG_CC

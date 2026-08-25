@@ -1,7 +1,7 @@
 # $Id: gtk3d.spec.in,v 1.2 2004/11/22 06:36:20 pipas Exp pipas $
 #
 # Copyright (c) 2003 Pere Laszlo pipas@linux.pte.hu
-# Copyright (c) 2026 Haplo-Linux <devel@haplo-dialog.fr>
+# Copyright (c) 2026 haplo-dialog <devel@haplo-dialog.fr>
 #
 %define name gtk3d
 %define version 1.0.0

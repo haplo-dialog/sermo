@@ -1,5 +1,5 @@
 #!/bin/sh
-# autogen.sh — gtk4sermo 1.0.0 (Haplo-Linux)
+# autogen.sh — gtk4sermo 1.0.0 (haplo-dialog)
 # Régénère le système de build autotools depuis configure.ac, puis lance
 # configure (sauf si NOCONFIGURE est défini, p. ex. à l'empaquetage Debian).
 # Dépendances : autoconf >= 2.69, automake >= 1.14, pkg-config, flex, bison.

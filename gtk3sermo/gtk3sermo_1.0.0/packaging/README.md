@@ -50,7 +50,7 @@ makepkg -si
 ### Gentoo
 
 ```bash
-cp -r packaging/gentoo/ /var/db/repos/haplo/app-misc/gtk3sermo/
+cp -r packaging/gentoo/ /var/db/repos/local/app-misc/gtk3sermo/
 emerge -av app-misc/gtk3sermo
 ```
 

@@ -1,6 +1,6 @@
 gtk4sermo — TODO / Feuille de route des travaux restants
 ==========================================================
-Haplo-Linux <devel@haplo-dialog.fr> — mis à jour 2026-06-01
+haplo-dialog <devel@haplo-dialog.fr> — mis à jour 2026-06-01
 
 BLOQUANTS — RÉSOLUS (la compilation aboutit désormais)
 ----------------------------------------------------
@@ -14,7 +14,7 @@ BLOQUANTS — RÉSOLUS (la compilation aboutit désormais)
      gtk4sermo ~1,45 Mo ; warnings 1549 → 128, ~92 % de réduction)
 
 (B4) Test des 50 widgets fonctionnels (script de test automatique)
-     — reste à exécuter sur Haplo-Linux
+     — reste à exécuter sur Debian Testing
 
 WARNINGS RÉSIDUELS (128, non bloquants — idiomes amont)
 --------------------------------------------------------
@@ -59,7 +59,7 @@ STUBS GTK4_TODO (non disponibles, nécessitent refonte majeure)
 PACKAGING
 ---------
 (P1) Créer paquet .deb gtkdialog4_1.0.0_amd64.deb
-(P2) Tester coexistence gtkdialog (GTK3) + gtkdialog4 (GTK4) sur Haplo-Linux
+(P2) Tester coexistence gtkdialog (GTK3) + gtkdialog4 (GTK4) sur Debian Testing
 (P3) Soumettre au dépôt https://haplo-dialog.fr
 
 DOCUMENTATION

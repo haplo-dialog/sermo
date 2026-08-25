@@ -12,10 +12,10 @@ Patches d'origine:
   Szabo Viktor <wyck@freemail.hu>
   Csaszar-Csutoras Peter <spy@c2.hu>
 
-gtkdialog-1.0.0 — Fork Haplo-Linux
+gtkdialog-1.0.0 — Fork haplo-dialog
 ====================================
-Distributeur : Haplo-Linux (https://haplo-dialog.fr)
-Distribution : Haplo-Linux — basée sur Debian Testing
+Projet       : haplo-dialog (https://haplo-dialog.fr)
+Distribution cible : Debian Testing
 
 Mainteneur   : <devel@haplo-dialog.fr>
 Développeurs : haplo-dialog

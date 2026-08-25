@@ -16,7 +16,7 @@ pkgbase = gtk4sermo
 	depends = gtk4
 	depends = vte4
 	provides = gtk4sermo
-	source = gtk4sermo-1.0.0.tar.gz::https://haplo-dialog.fr/pub/gtk4sermo/gtk4sermo-1.0.0.tar.gz
+	source = sermo-v1.0.0.tar.gz::https://gitlab.com/haplo-dialog/sermo/-/archive/v1.0.0/sermo-v1.0.0.tar.gz
 	sha256sums = SKIP
 
 pkgname = gtk4sermo

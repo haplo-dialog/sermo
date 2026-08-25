@@ -16,6 +16,24 @@ gtk3sermo (1.0.0-11) unstable; urgency=medium
     la chaîne d'origine, elle en fait des copies » — c'est faux deux fois :
     elle écrit des '\0' dedans, et line[0] EST la chaîne d'origine, que
     list_t_free() libère ensuite. Le contrat d'appartenance est écrit.
+  * La marque « Haplo-Linux » est retirée du dépôt public : 310 occurrences
+    dans 262 fichiers. Là où elle nommait l'auteur ou le détenteur du
+    copyright, elle devient « haplo-dialog ». Là où elle nommait un système
+    d'exploitation — « installé sur », « distribution cible », « disponible
+    sur » — elle devient « Debian Testing » ou disparaît : un programme n'est
+    pas une distribution, et une substitution aveugle aurait écrit des faussetés.
+  * Résidus de la même marque, que la chaîne exacte ne pouvait pas atteindre :
+    « Paquet de la distribution haplo-histrio » dans les lintian-overrides du
+    port GTK 4 (le port GTK 3 disait déjà « Paquet tiers »), « Haplo ships
+    XFCE » dans les deux widget_window.c, « Release Haplo » et « dépôt Haplo »
+    dans une feuille de route, le thème « Haplo-Dark », l'overlay Gentoo
+    /var/db/repos/haplo/ et l'étiquette Slackware _haplo.
+  * Les en-têtes des cahiers des charges publiaient la version du noyau et le
+    bureau de la machine de construction (Linux 7.0.4+deb14-amd64, Xfce4 4.20) :
+    remplacés par les prérequis réels du port.
+  * packaging/arch/.SRCINFO téléchargeait toujours une URL inexistante et
+    déclarait moins de dépendances que son PKGBUILD : les deux fichiers avaient
+    divergé. Régénérés depuis le PKGBUILD, URL vérifiée (HTTP 200).
   * Nombres décimaux, la suite : la passe du 2026-08-22 avait remplacé les 52
     appels à atof(), mais laissé trois strtod() qui souffrent exactement du
     même mal — la locale décide où est la virgule. Mesuré sous fr_FR.UTF-8 :

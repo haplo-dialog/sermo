@@ -3,7 +3,7 @@
 **Toolkit :** GTK4
 **Paquet source :** `gtk4sermo` · **Paquet binaire :** `gtk4sermo`
 **Version :** 1.0.0
-**Cibles :** Debian, Ubuntu, Linux Mint, Haplo-Linux
+**Cibles :** Debian, Ubuntu, Linux Mint
 
 ## Dépendances de construction
 

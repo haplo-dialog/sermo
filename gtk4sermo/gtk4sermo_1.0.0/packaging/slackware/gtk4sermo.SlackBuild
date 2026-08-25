@@ -1,12 +1,12 @@
 #!/bin/sh
 # gtk4sermo.SlackBuild — Slackware packaging for gtk4sermo
-# Haplo-Linux <devel@haplo-dialog.fr> — https://haplo-dialog.fr
+# haplo-dialog <devel@haplo-dialog.fr> — https://haplo-dialog.fr
 # Toolkit: GTK4
 
 PRGNAM=gtk4sermo
 VERSION=${VERSION:-1.0.0}
 BUILD=${BUILD:-1}
-TAG=${TAG:-_haplo}
+TAG=${TAG:-_sermo}
 PKGTYPE=${PKGTYPE:-tgz}
 
 if [ -z "$ARCH" ]; then

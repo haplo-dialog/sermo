@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * widget_levelbar.c — GtkLevelBar (GTK4-native)
- * gtk4sermo 1.0.0 — Haplo-Linux <devel@haplo-dialog.fr>
+ * gtk4sermo 1.0.0 — haplo-dialog <devel@haplo-dialog.fr>
  * Licence : GPL-2.0-or-later
  *
  * GtkLevelBar affiche un niveau de remplissage (0.0–1.0 par défaut).

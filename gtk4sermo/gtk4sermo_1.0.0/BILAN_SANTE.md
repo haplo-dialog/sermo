@@ -34,7 +34,7 @@
 
 *Le plus complet ; architecture modulaire (un widget par fichier) — ce bloc reflète l'état vérifié et fait foi ; les sections « patch … » ci-dessous sont l'historique antérieur (scores d'époque).*
 
-**gtk4sermo 1.0.0 — Haplo-Linux (Debian Testing)**
+**gtk4sermo 1.0.0 — Debian Testing**
 **Mainteneur :** haplo-dialog <devel@haplo-dialog.fr>
 **Date :** 2026-06-01 *(audit #4 — compilation complète)*
 **Toolkit :** GTK4 ≥ 4.6 (GNOME/Freedesktop)
@@ -329,7 +329,7 @@ aucun nouveau fichier widget n'a été créé (le compteur de 50 widgets est inc
 
 Revue documentaire et packaging (aucun changement de code source).
 
-- Identité corrigée : MANUEL_DEVELOPPEUR, HTML de référence (37) et site (titres `gtk4sermo:`, URLs Haplo-Linux).
+- Identité corrigée : MANUEL_DEVELOPPEUR, HTML de référence (37) et site (titres `gtk4sermo:`, URLs haplo-dialog).
 - Packaging : `debian/control` runtime VTE → `libvte-2.91-gtk4-0` ; `rpm` → `vte291-gtk4`.
 - `arch/.SRCINFO` régénéré (pkgbase aligné sur `gtk4sermo`), `provides=gtk4sermo`.
 - Licence : l'essai GPL-3.0+ de l'audit #3 a été **annulé** ; le port reste en **GPL-2.0-or-later**, cohérent avec l'en-tête source et l'amont gtkdialog.
@@ -340,7 +340,7 @@ Revue documentaire et packaging (aucun changement de code source).
 
 > *Ce travail a été réalisé avec l'assistance de **Claude**,
 >le modèle de langage d'[Anthropic](https://www.anthropic.com),
->dans le cadre du développement de la famille **haplo-dialog** pour Haplo-Linux.*
+>dans le cadre du développement de la famille **haplo-dialog**.*
 
 ---
 

@@ -1,5 +1,5 @@
 #!/usr/bin/make -f
-# debian/rules — gtk4sermo 1.0.0 (Haplo-Linux)
+# debian/rules — gtk4sermo 1.0.0 (haplo-dialog)
 
 export DH_VERBOSE = 1
 export DEB_BUILD_MAINT_OPTIONS = hardening=+all

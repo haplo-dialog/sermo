@@ -1,4 +1,4 @@
-# Maintainer: Haplo-Linux <devel@haplo-dialog.fr>
+# Maintainer: haplo-dialog <devel@haplo-dialog.fr>
 # Port: GTK4 — haplo-dialog family
 
 pkgname=gtk4sermo

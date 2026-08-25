@@ -1,5 +1,23 @@
 gtk4sermo (1.0.0-12) unstable; urgency=medium
 
+  * La marque « Haplo-Linux » est retirée du dépôt public : 310 occurrences
+    dans 262 fichiers. Là où elle nommait l'auteur ou le détenteur du
+    copyright, elle devient « haplo-dialog ». Là où elle nommait un système
+    d'exploitation — « installé sur », « distribution cible », « disponible
+    sur » — elle devient « Debian Testing » ou disparaît : un programme n'est
+    pas une distribution, et une substitution aveugle aurait écrit des faussetés.
+  * Résidus de la même marque, que la chaîne exacte ne pouvait pas atteindre :
+    « Paquet de la distribution haplo-histrio » dans les lintian-overrides du
+    port GTK 4 (le port GTK 3 disait déjà « Paquet tiers »), « Haplo ships
+    XFCE » dans les deux widget_window.c, « Release Haplo » et « dépôt Haplo »
+    dans une feuille de route, le thème « Haplo-Dark », l'overlay Gentoo
+    /var/db/repos/haplo/ et l'étiquette Slackware _haplo.
+  * Les en-têtes des cahiers des charges publiaient la version du noyau et le
+    bureau de la machine de construction (Linux 7.0.4+deb14-amd64, Xfce4 4.20) :
+    remplacés par les prérequis réels du port.
+  * packaging/arch/.SRCINFO téléchargeait toujours une URL inexistante et
+    déclarait moins de dépendances que son PKGBUILD : les deux fichiers avaient
+    divergé. Régénérés depuis le PKGBUILD, URL vérifiée (HTTP 200).
   * linecutter() : les champs après le premier étaient alloués par strdup() et
     libérés par g_free(), deux allocateurs différents. Passés à g_strdup().
     Le commentaire d'origine affirmait aussi que la fonction « ne détruit pas
@@ -98,14 +116,14 @@ gtk4sermo (1.0.0-2) unstable; urgency=medium
     "unknown information field Depends" warning); drop the now-redundant
     debian/compat file (compat level set via debhelper-compat in Build-Depends).
 
- -- Haplo-Linux Development Team <devel@haplo-dialog.fr>  Sat, 11 Jul 2026 15:47:19 +0200
+ -- haplo-dialog <devel@haplo-dialog.fr>  Sat, 11 Jul 2026 15:47:19 +0200
 
 gtk4sermo (1.0.0-1) unstable; urgency=medium
 
-  * Initial Debian packaging for gtk4sermo — Haplo-Linux fork.
+  * Initial Debian packaging for gtk4sermo — haplo-dialog fork.
   * GTK4 dialog window creator for shell scripts.
   * Toolkit: GTK4.
   * Security hardening: safe_exec, FORTIFY_SOURCE=2, PIE, Full RELRO,
     stack-protector-strong.
 
- -- Haplo-Linux Development Team <devel@haplo-dialog.fr>  Fri, 29 May 2026 12:00:00 +0200
+ -- haplo-dialog <devel@haplo-dialog.fr>  Fri, 29 May 2026 12:00:00 +0200

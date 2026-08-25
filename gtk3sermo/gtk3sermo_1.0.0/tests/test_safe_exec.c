@@ -7,7 +7,7 @@
  *       test_safe_exec.c ../src/safe_exec.c -o test_safe_exec
  * Ou via Autotools : make check
  *
- * Haplo-Linux — 2026 — GPL-2.0-or-later
+ * haplo-dialog — 2026 — GPL-2.0-or-later
  */
 
 #include <check.h>

@@ -2,7 +2,7 @@
 
 **Version :** 1.0.0-gtk4  
 **Date :** Juin 2026 (mis à jour 2026-06-01)  
-**Audience :** Développeurs C, mainteneurs Haplo-Linux  
+**Audience :** Développeurs C, mainteneurs haplo-dialog  
 **Mainteneur :** haplo-dialog <devel@haplo-dialog.fr> | **Dépôt :** https://haplo-dialog.fr
 
 > **État de compilation (2026-06-01) :** `gtk4sermo` compile et lie sans erreur

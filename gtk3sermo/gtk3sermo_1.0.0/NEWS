@@ -104,7 +104,7 @@
   NEWS, README, MANUEL_DEVELOPPEUR).
 
 2026-05-20
-* gtkdialog-1.0.0 released by Haplo-Linux.
+* gtkdialog-1.0.0 released by haplo-dialog.
 * Full GTK2 → GTK3 migration (45 source files).
 * Security: replaced system()/popen() with safe_system()/safe_popen().
 * Replaced strcpy/strcat/sprintf with bounded GLib equivalents.

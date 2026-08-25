@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * widget_revealer.c — GtkRevealer (GTK4-native)
- * gtk4sermo 1.0.0 — Haplo-Linux <devel@haplo-dialog.fr>
+ * gtk4sermo 1.0.0 — haplo-dialog <devel@haplo-dialog.fr>
  * Licence : GPL-2.0-or-later
  *
  * GtkRevealer affiche/cache son enfant avec une animation.

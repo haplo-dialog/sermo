@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * widget_menubar.c — Barre de menus GTK4 via GtkPopoverMenuBar + GMenuModel
- * gtk4sermo 1.0.0 — Haplo-Linux <devel@haplo-dialog.fr>
+ * gtk4sermo 1.0.0 — haplo-dialog <devel@haplo-dialog.fr>
  * Licence : GPL-2.0-or-later
  *
  * GtkMenuBar a été supprimé en GTK4. L'API officielle de remplacement est :

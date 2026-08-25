@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * widget_table.c — Tableau GTK4 via GtkColumnView + GListStore
- * gtk4sermo 1.0.0 — Haplo-Linux <devel@haplo-dialog.fr>
+ * gtk4sermo 1.0.0 — haplo-dialog <devel@haplo-dialog.fr>
  * Licence : GPL-2.0-or-later
  *
  * GtkCList n'a jamais existé en GTK3/4 (widget GTK2 uniquement).

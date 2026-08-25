@@ -566,7 +566,7 @@ Intégration complète dans automaton.h/c, lexer.l, parser.y, widgets.c, variabl
 
 | Document | État |
 |----------|------|
-| `doc/reference/` | 43 pages HTML (37 + 6 nouveaux), bandeau GTK3/Haplo |
+| `doc/reference/` | 43 pages HTML (37 + 6 nouveaux), bandeau GTK3 |
 | `src/gtk3sermo.1` | Page man complète, 14 options CLI |
 | `CAHIER_DES_CHARGES.md` | À jour |
 | `MANUEL_UTILISATEUR.md` | 6 nouveaux widgets avec exemples XML |
@@ -646,12 +646,12 @@ Intégration complète dans automaton.h/c, lexer.l, parser.y, widgets.c, variabl
 | GTK minimum | GTK3 >= 3.22 |
 | VTE | vte-2.91 |
 | Compatibilité scripts 0.8.3 | 100% |
-| Distribution cible | Haplo-Linux (Debian Testing) |
+| Distribution cible | Debian Testing |
 | Noyau testé | Linux 7.0.4+deb14-amd64 |
 
 ---
 
-*Haplo-Linux — 2026-05-24 — GPL-2.0-or-later*
+*haplo-dialog — 2026-05-24 — GPL-2.0-or-later*
 
 ---
 
@@ -679,7 +679,7 @@ Revue documentaire et packaging (aucun changement de code source).
 
 Ce travail a été réalisé avec l'assistance de **Claude**,
 le modèle de langage d'[Anthropic](https://www.anthropic.com),
-dans le cadre du développement de la famille **haplo-dialog** sur Haplo-Linux.
+dans le cadre du développement de la famille **haplo-dialog**.
 
 L'IA a contribué à : la conception de l'architecture, l'implémentation des widgets,
 la rédaction de la documentation, la création des tests unitaires (CTest),

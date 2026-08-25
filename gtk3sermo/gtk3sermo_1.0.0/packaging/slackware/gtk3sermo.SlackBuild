@@ -6,7 +6,7 @@
 PRGNAM=gtk3sermo
 VERSION=${VERSION:-1.0.0}
 BUILD=${BUILD:-1}
-TAG=${TAG:-_haplo}
+TAG=${TAG:-_sermo}
 PKGTYPE=${PKGTYPE:-tgz}
 
 if [ -z "$ARCH" ]; then

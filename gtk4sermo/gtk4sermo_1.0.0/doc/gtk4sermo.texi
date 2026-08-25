@@ -1,7 +1,7 @@
 \input texinfo   @c -*-texinfo-*-
 @c ============================================================
 @c gtk4sermo.texi — Documentation officielle gtk4sermo
-@c gtk4sermo 1.0.0 (Haplo-Linux, 2026)
+@c gtk4sermo 1.0.0 (haplo-dialog, 2026)
 @c
 @c Ce document couvre l'API XML complète, les 50 widgets
 @c supportés et les options CLI du binaire @command{gtk4sermo}.
@@ -26,7 +26,7 @@ Copyright @copyright{} 2003--2007 László Pere.
 @*
 Copyright @copyright{} 2011--2014 Thunor.
 @*
-Copyright @copyright{} 2026 Haplo-Linux Development Team @email{devel@@haplo-dialog.fr}.
+Copyright @copyright{} 2026 haplo-dialog @email{devel@@haplo-dialog.fr}.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
@@ -39,9 +39,9 @@ Invariant Sections, with no Front-Cover Texts, and no Back-Cover Texts.
 @titlepage
 @title gtk4sermo User Manual
 @subtitle Version @value{VERSION} — @value{TOOLKIT} Edition
-@subtitle Haplo-Linux — @value{UPDATED-MONTH}
+@subtitle haplo-dialog — @value{UPDATED-MONTH}
 @author László Pere (original), Thunor (2011--2014)
-@author Haplo-Linux Development Team (gtk4sermo port, 2026)
+@author haplo-dialog (gtk4sermo port, 2026)
 @page
 @vskip 0pt plus 1filll
 @insertcopying
@@ -80,7 +80,7 @@ interfaces graphiques natives sans aucune connaissance de la programmation
 
 @command{gtk4sermo} fait partie de la suite @strong{haplo-dialog}, qui porte
 le langage XML du gtkdialog original (László Pere, 2003--2013) sur GTK 3 et
-GTK 4, modernisé et sécurisé par Haplo-Linux en 2026.
+GTK 4, modernisé et sécurisé en 2026.
 
 @section La suite haplo-dialog
 
@@ -263,7 +263,7 @@ dialogue qui a besoin de droits doit être lancé avec ces droits.
 
 Ce travail a été réalisé avec l'assistance de @strong{Claude},
 le modèle de langage d'Anthropic (@url{https://www.anthropic.com}),
-dans le cadre du développement de la famille @strong{haplo-dialog} sur Haplo-Linux.
+dans le cadre du développement de la famille @strong{haplo-dialog}.
 
 @quotation
 Ce projet a bénéficié de l'assistance de Claude (Anthropic) ---

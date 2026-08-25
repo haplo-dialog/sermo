@@ -1,6 +1,6 @@
 # Compiler gtk4sermo (GTK4)
 
-**Haplo-Linux — 2026**
+**haplo-dialog — 2026**
 
 Ce document décrit la compilation du port GTK4 (`gtk4sermo`), installable
 en parallèle du binaire GTK3 `gtk3d`.
@@ -10,7 +10,7 @@ en parallèle du binaire GTK3 `gtk3d`.
 ## Dépendances requises
 
 ```bash
-# Debian Testing / Haplo-Linux
+# Debian Testing
 sudo apt-get install \
   libgtk-4-dev \
   libvte-2.91-gtk4-dev \
@@ -158,7 +158,7 @@ GTK4 plus anciens, sont volontairement filtrées via les flags de
 
 ---
 
-*Haplo-Linux — devel@haplo-dialog.fr — 2026*
+*haplo-dialog — devel@haplo-dialog.fr — 2026*
 
 ---
 

@@ -48,7 +48,7 @@ cp -r examples/* %{buildroot}%{_docdir}/%{name}/examples/ 2>/dev/null || true
 %dir %{_docdir}/%{name}/examples
 
 %changelog
-* Thu May 28 2026 Haplo-Linux <devel@haplo-dialog.fr> - 1.0.0-1
-- Initial RPM packaging for gtk4sermo (Haplo-Linux fork)
+* Thu May 28 2026 haplo-dialog <devel@haplo-dialog.fr> - 1.0.0-1
+- Initial RPM packaging for gtk4sermo (haplo-dialog fork)
 - GTK4 port — GTK4 dialog window creator for shell scripts
 - Security: safe_exec, FORTIFY_SOURCE=3, PIE, Full RELRO

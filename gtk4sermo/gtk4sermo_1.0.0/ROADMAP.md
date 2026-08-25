@@ -41,14 +41,14 @@ même passe de sûreté mémoire (voir `TODO-SECURITY.md`).
 - [x] Intégrer les 20 nouveaux tokens dans `gtkdialog_lexer.l`
 - [x] Intégrer les 20 nouvelles règles dans `gtkdialog_parser.y`
 - [x] Ajouter les 20 `create_widget()` dans `automaton.c`
-- [x] Compilation sans erreur sur Debian Testing / Haplo-Linux (0 erreur ; warnings 1549 → 77)
+- [x] Compilation sans erreur sur Debian Testing (0 erreur ; warnings 1549 → 77)
 - [x] Grammaire réparée (commentaires `<!-- -->`, espaces entre attributs, 8 widgets câblés) — **tests XML `tests/xml/` 55/55** (était 0/52)
 - [x] Test des widgets par les exemples livrés — **58/58 ouvrent leur fenêtre**, sous Xvfb, en locale française, à chaque poussée (`tests/run_examples.sh`)
 - [x] Durcissement vérifié — mieux que `checksec` : `tests/garde_durcissement.sh` lit le **binaire produit** au `readelf` et exige aussi CET (IBT + SHSTK), que `checksec` ne regarde pas. C'est ce banc qui a révélé que `-fcf-protection=full` ne survivait pas à l'édition de liens sans `-Wl,-z,ibt -Wl,-z,shstk`.
 
-### 🟢 v1.0.0-gtk4 stable — « Release Haplo » (cible : 2026-Q4)
+### 🟢 v1.0.0-gtk4 stable (cible : 2026-Q4)
 
-**Objectif :** paquet `.deb` stable dans le dépôt Haplo.
+**Objectif :** paquet `.deb` stable, publié et téléchargeable.
 
 - [x] Zéro régression vs le port GTK 3 sur la suite XML — **55/55 des deux côtés**, même corpus
 - [x] Paquet `gtk4sermo` construit **et publié** (`.deb` + dbgsym, release v1.0.0)

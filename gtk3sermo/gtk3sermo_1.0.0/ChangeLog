@@ -300,7 +300,7 @@ gtk3sermo-1.0.0 — 2026-05-21 (patch 8)
         signal selection-changed → row-selected
     - button.html : note de dépréciation des stock icons (GTK 3.10+)
     - Footer : "2012-12-16 Thunor / code.google.com / murga-linux" →
-      "2026-05-21 Haplo-Linux / haplo-dialog.fr / haplo-dialog.fr"
+      "2026-05-21 haplo-dialog / haplo-dialog.fr / haplo-dialog.fr"
     - Bandeau d'avertissement GTK3 / 1.0.0 ajouté sous chaque <h1>
     - Encodage converti UTF-8 pour tous les fichiers
 
@@ -429,7 +429,7 @@ gtk3sermo-1.0.0 — 2026-05-21 (patch 3)
     - ChangeLog, NEWS, README, MANUEL_DEVELOPPEUR.md mis à jour
 
 gtk3sermo-1.0.0 — 2026-05-20
-  * Fork Haplo-Linux de gtkdialog 0.8.3
+  * Fork haplo-dialog de gtkdialog 0.8.3
   * Migration GTK2 → GTK3 (>= 3.22) sur 45 fichiers sources
   * Suppression de libglade-2.0 — remplacement par GtkBuilder (GTK3 natif)
   * Mise à jour VTE : vte >= 0.23.5 → vte-2.91

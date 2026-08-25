@@ -14,14 +14,14 @@ Thunor: I've fixed these or found them to have already been fixed:
 (10) The tree widget is virtually unhandled.
 (12) Segmentation fault when the table has no variable name.
 
-Thunor: These still remain: [ALL FIXED by Haplo-Linux patches 14-16]
+Thunor: These still remain: [ALL FIXED by haplo-dialog patches 14-16]
 ----------------------------------------------------------------------
 (9)  FIXED patch 14 — Opening multiple window with the same name leads to confusion.
 (11) FIXED patch 15 — At the creation of the widgets the initialization should be sorted
      as the dependencies are dictating.
 (13) FIXED patch 16 — Unpaired " is printed to the standard output, which is very problematic.
 
-Haplo-Linux — 1.0.0 — fixed (2026-05-20/21):
+haplo-dialog — 1.0.0 — fixed (2026-05-20/21):
 -----------------------------------------------------
 (H1) FIXED 2026-05-20: All GTK2 APIs migrated to GTK3 (45 files).
 (H2) FIXED 2026-05-20: Replaced system()/popen() with safe_system()/safe_popen().
@@ -36,7 +36,7 @@ Haplo-Linux — 1.0.0 — fixed (2026-05-20/21):
      on a FILE* returned by fdopen() (safe_popen) is undefined behaviour.
      Affected: signals.c + 20 widget_*.c files.
 
-Haplo-Linux — 1.0.0 — fixed (2026-05-21, patch 4):
+haplo-dialog — 1.0.0 — fixed (2026-05-21, patch 4):
 -----------------------------------------------------------
 (H9)  FIXED 2026-05-21: safe_exec.c rewritten — metacharacter detection
       (|&;<>(){}$`\"'~*?) with automatic /bin/sh -c fallback logged via g_debug().
@@ -56,7 +56,7 @@ Haplo-Linux — 1.0.0 — fixed (2026-05-21, patch 4):
       natural sort (GtkTreeIterCompareFunc), MULTIPLE selection with GtkTreeRowReference,
       all XML attributes preserved (sort-function, auto-sort, column-header-active, …).
 
-Haplo-Linux — 1.0.0 — fixed (2026-05-21, patch 5):
+haplo-dialog — 1.0.0 — fixed (2026-05-21, patch 5):
 -----------------------------------------------------------
 (H16) FIXED 2026-05-21: (gint)g_object_get_data() — UB on 64-bit LP64 platforms.
       35 occurrences replaced by GPOINTER_TO_INT(g_object_get_data(...)) across
@@ -65,7 +65,7 @@ Haplo-Linux — 1.0.0 — fixed (2026-05-21, patch 5):
       Replaced by gtk_file_chooser_get_file() + g_file_get_path() in actions.c
       and widgets.c. GFile* properly unref'd after use.
 
-Haplo-Linux — 1.0.0 — fixed (2026-05-21, patch 6):
+haplo-dialog — 1.0.0 — fixed (2026-05-21, patch 6):
 -----------------------------------------------------------
 (H18) FIXED 2026-05-21: 7 FIXME markers replaced with accurate comments.
       automaton.c (×1), gtkdialog.c (×3), gtkdialog_lexer.c (×1),
@@ -77,7 +77,7 @@ Haplo-Linux — 1.0.0 — fixed (2026-05-21, patch 6):
       36 files: actions.c, attributes.c, automaton.c, signals.c, stack.c,
       variables.c + 30 widget_*.c files.
 
-Haplo-Linux — 1.0.0 — fixed (2026-05-21, patch 7):
+haplo-dialog — 1.0.0 — fixed (2026-05-21, patch 7):
 -----------------------------------------------------------
 (H20) FIXED 2026-05-21: Build system modernised.
       configure.in: AC_PREREQ(2.69), AC_PROG_INSTALL, PKG_PROG_PKG_CONFIG,
@@ -97,7 +97,7 @@ Haplo-Linux — 1.0.0 — fixed (2026-05-21, patch 7):
       --print-ir, --space-expand, --space-fill, --glade-xml.
       Sections: NAME, SYNOPSIS, DESCRIPTION, OPTIONS, EXIT STATUS,
       ENVIRONMENT, EXAMPLES, FILES, SEE ALSO, AUTHORS, COPYRIGHT.
-(H23) FIXED 2026-05-21: doc/reference/*.html updated for GTK3/Haplo-Linux.
+(H23) FIXED 2026-05-21: doc/reference/*.html updated for GTK3/haplo-dialog.
       All 37 widget reference pages updated:
       - GTK2 API links (developer.gnome.org/gtk2/2.24/) →
         GTK3 links (developer-old.gnome.org/gtk3/stable/)
@@ -105,11 +105,11 @@ Haplo-Linux — 1.0.0 — fixed (2026-05-21, patch 7):
       - GtkCList → GtkTreeView in table.html (with GtkListStore note)
       - Signal select-row → cursor-changed in table.html
       - GtkList → GtkListBox signal in list.html (selection-changed → row-selected)
-      - Footer: 2012 Thunor → 2026 Haplo-Linux, google code → haplo-dialog.fr
+      - Footer: 2012 Thunor → 2026 haplo-dialog, google code → haplo-dialog.fr
       - GTK3 warning banner added to each page
       - Stock icon deprecation note added to button.html
 
-Haplo-Linux — 1.0.0 — fixed (2026-05-21, patch 9):
+haplo-dialog — 1.0.0 — fixed (2026-05-21, patch 9):
 -----------------------------------------------------------
 (H24) FIXED 2026-05-21: 6 nouveaux widgets GTK3 natifs ajoutés.
       widget_switch.c/.h (GtkSwitch), widget_filechooser.c/.h (GtkFileChooserButton),
@@ -122,7 +122,7 @@ Haplo-Linux — 1.0.0 — fixed (2026-05-21, patch 9):
       searchentry.html, infobar.html — même format que les pages existantes.
       Navigation mise à jour dans les 43 pages (37 existantes + 6 nouvelles).
 
-Haplo-Linux — 1.0.0 — fixed (2026-05-21, patch 10):
+haplo-dialog — 1.0.0 — fixed (2026-05-21, patch 10):
 ------------------------------------------------------------
 (H26) FIXED 2026-05-21: 15 orphaned #endif/#else preprocessor directives removed.
       Migration GTK2→GTK3 had removed #if GTK_CHECK_VERSION() guards but left
@@ -135,21 +135,21 @@ Haplo-Linux — 1.0.0 — fixed (2026-05-21, patch 10):
 (H29) FIXED 2026-05-21: .gitignore created — generated files, Debian packaging,
       editor backups, doc artefacts.
 
-Haplo-Linux — 1.0.0 — remaining:
+haplo-dialog — 1.0.0 — remaining:
 -----------------------------------------
 (R5) gtk_box_pack_start/end() used in 9 places — deprecated GTK4 only.
      NOTE: gtk_box_append/prepend() are GTK4-only APIs — do NOT replace in
      gtk3sermo_1.0.0. These belong in the GTK4 port (gtkd4_1.0.0).
 (R6) gtk_container_get_children() used in 2 places (widget_list.c) — deprecated GTK4 only.
      Same note as R5 — gtk_widget_get_first_child() is GTK4-only.
-(R7) gtkdialog.texi (remplacé par gtk3sermo.texi — patch 13) (Texinfo) not yet updated for GTK3/Haplo — low priority.
+(R7) gtkdialog.texi (remplacé par gtk3sermo.texi — patch 13) (Texinfo) not yet updated for GTK3 — low priority.
 (R8) examples/ for 6 new widgets missing (switch, filechooser, calendar,
      linkbutton, searchentry, infobar).
 (R9) create_gvim() experimental, untested — keep for GtkSocket support.
 (R10) strlen(name)-1 without name[0]!='\0' guard in tag_attributes.c — parser
       guarantees non-empty, low risk.
 
-Haplo-Linux — 1.0.0 — fixed (2026-05-23, patch 18):
+haplo-dialog — 1.0.0 — fixed (2026-05-23, patch 18):
 ------------------------------------------------------------
 (H30) FIXED 2026-05-23: XML comments <!-- ... --> caused parser crash.
       The ">" in "-->" was returned as a stray '>' token to Bison.

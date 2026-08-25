@@ -2,7 +2,7 @@
  * gtk4-events.h — GTK3 event signals rebuilt on GTK4 event controllers
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
- * Copyright (C) 2026  Haplo-Linux <devel@haplo-dialog.fr>
+ * Copyright (C) 2026  haplo-dialog <devel@haplo-dialog.fr>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
