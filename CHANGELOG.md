@@ -30,6 +30,9 @@ Versionning : [Semantic Versioning](https://semver.org/lang/fr/) à partir de 1.
 - `AUTHORS` et `NEWS` à la racine (standard GNU)
 
 ### Modifié
+- **Toute la documentation passe en GPL-2.0-or-later (2026-08-25)** : il y avait **trois papiers pour les mêmes fichiers** — `LICENCES.md` annonçait CC-BY-SA 4.0, les deux manuels texinfo portaient une **GFDL** dans leur propre `@copying`, et `debian/copyright` disait GPL. Et le texte de la GFDL n'était nulle part dans le dépôt, alors qu'elle demande de l'y joindre. Un seul texte couvre maintenant l'ensemble, celui du programme.
+  La relicence est légitime, et c'est **mesuré** et non supposé : les manuels texinfo ont été écrits par le projet et ne partagent **aucune phrase** avec le manuel d'origine de László Pere, qui était sous GFDL. Zéro séquence de six mots en commun côté `gtk3sermo` ; côté `gtk4sermo`, les 31 séquences communes venaient **toutes** de la section « Remerciements — Assistance IA » que le projet avait lui-même ajoutée à ce manuel-là — le texte allait donc du projet vers lui, pas l'inverse.
+  L'attribution est corrigée du même coup : les manuels ne portent plus le copyright de Pere et Thunor, qui ont écrit le **programme** et non ces pages. Le programme, lui, reste GPL-2.0-or-later, en héritage direct de leur travail.
 - **La marque « Haplo-Linux » quitte le dépôt public (2026-08-25)** : 310 occurrences dans 262 fichiers. Le remplacement n'a pas été aveugle, parce qu'il ne pouvait pas l'être — le mot avait deux sens. Là où il nommait l'**auteur** ou le détenteur du copyright, il devient `haplo-dialog`. Là où il nommait un **système d'exploitation** (« installé sur », « distribution cible », « disponible sur », « Debian / Ubuntu / … »), il devient `Debian Testing` ou disparaît : écrire qu'un programme de dialogues est une distribution aurait produit des phrases fausses. L'opération s'est faite au niveau **octet** et non caractère, parce qu'une bonne partie des sources est en ISO-8859-1 : les décoder en UTF-8 les aurait cassées, et `grep` en mode texte les saute en les prenant pour du binaire — c'est ce piège qui avait fait sous-estimer le compte à 251.
 - **Résidus de la même marque, hors de portée d'un remplacement littéral (2026-08-25)** : « Paquet de la distribution *haplo-histrio* » dans les `lintian-overrides` du port GTK 4 — alors que le port GTK 3 disait déjà « Paquet tiers » ; « Haplo ships XFCE » dans les deux `widget_window.c` ; « Release Haplo » et « dépôt Haplo » dans une feuille de route ; le thème « Haplo-Dark » ; l'overlay Gentoo `/var/db/repos/haplo/` (devenu `local/`, l'overlay standard) ; l'étiquette Slackware `_haplo` (devenue `_sermo`).
 - **Les cahiers des charges publiaient une empreinte de la machine de construction (2026-08-25)** : version exacte du noyau (`Linux 7.0.4+deb14-amd64`) et bureau (`Xfce4 4.20 / Xfwm4`). Remplacés par les prérequis réels du port, qui est ce que le lecteur cherchait.
@@ -163,6 +166,8 @@ Première version publique stable, refonte complète de gtkdialog 0.8.3.
 - `fclose()` sur tout `FILE*` issu de `safe_popen()`, `pclose()` banni
 
 ### Supprimé
+- **Le manuel amont orphelin (2026-08-25)** : `doc/gtkdialog.texi`, sa forme engendrée `doc/gtkdialog.info`, et deux artefacts que le port GTK 3 n'avait pas — `gtk4sermo.info` et `stamp-vti`. Les dossiers `doc/` des deux ports ont désormais la même forme. Le port GTK 3 avait déjà déprécié ce fichier au patch 13 ; seul le port GTK 4 en avait gardé une copie. Les dix faits qui valaient d'être repris en avaient été extraits juste avant. `make dist` et le build passent, et l'archive produite ne le contient plus.
+
 - Dépendances GTK2 résiduelles
 - `system()` et `popen()` directs dans les widgets
 - Code mort et commentaires parasites

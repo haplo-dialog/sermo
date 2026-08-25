@@ -64,8 +64,11 @@ PACKAGING
 
 DOCUMENTATION
 -------------
-(D1) Intégrer les 17 nouvelles pages doc/reference/*.html dans gtkdialog.texi
-(D2) Mettre à jour gtkdialog.info (regenerer depuis .texi)
+(D1) [SANS OBJET 2026-08-25] doc/gtkdialog.texi et doc/gtkdialog.info ont été
+     supprimés : c'était le manuel amont de László Pere (2003-2007), orienté
+     GTK 2, sous GFDL, et périmé de son propre aveu. Le manuel du port est
+     doc/gtk4sermo.texi. Les dix faits qui valaient d'être repris en ont été
+     extraits le 2026-08-25 vers haplo-dialog-xml.5 et les pages de manuel.
 (D3) CAHIER_DES_CHARGES.md : mettre à jour périmètre pour GTK4
 
 TESTS

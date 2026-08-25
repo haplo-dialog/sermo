@@ -16,6 +16,24 @@ gtk3sermo (1.0.0-11) unstable; urgency=medium
     la chaîne d'origine, elle en fait des copies » — c'est faux deux fois :
     elle écrit des '\0' dedans, et line[0] EST la chaîne d'origine, que
     list_t_free() libère ensuite. Le contrat d'appartenance est écrit.
+  * Le manuel amont orphelin doc/gtkdialog.texi est supprimé, avec sa forme
+    engendrée doc/gtkdialog.info et deux autres artefacts que le port GTK 3
+    n'avait pas (gtk4sermo.info, stamp-vti). doc/ des deux ports a désormais la
+    même forme. Le port GTK 3 avait déjà déprécié ce fichier au patch 13 ;
+    c'est le port GTK 4 qui en avait gardé une copie.
+  * Toute la documentation passe en GPL-2.0-or-later. Il y avait trois papiers
+    pour les mêmes fichiers : LICENCES.md annonçait CC-BY-SA 4.0, les manuels
+    texinfo portaient une GFDL dans leur propre en-tête, et debian/copyright
+    disait GPL. Un seul texte couvre maintenant tout le dépôt.
+    La relicence est légitime, et c'est mesuré : les manuels texinfo ont été
+    écrits par le projet et ne partagent AUCUNE phrase avec le manuel d'origine
+    de László Pere, qui était sous GFDL — 0 séquence de six mots en commun côté
+    gtk3sermo ; côté gtk4sermo les 31 séquences communes venaient toutes d'une
+    section que le projet avait lui-même ajoutée à ce manuel-là, donc le texte
+    allait du projet vers lui, pas l'inverse.
+    L'attribution est corrigée du même coup : les manuels ne portent plus le
+    copyright de Pere et Thunor, qui ont écrit le PROGRAMME et pas ces pages.
+    Le programme, lui, reste GPL-2.0-or-later comme héritage direct.
   * Extraction du manuel amont orphelin : dix faits que le programme fait
     depuis toujours et que rien ne documentait. Chacun éprouvé dans le code ET
     rejoué, puis passé à un vérificateur chargé de le démolir — trois de mes

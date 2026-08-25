@@ -142,7 +142,9 @@ haplo-dialog — 1.0.0 — remaining:
      gtk3sermo_1.0.0. These belong in the GTK4 port (gtkd4_1.0.0).
 (R6) gtk_container_get_children() used in 2 places (widget_list.c) — deprecated GTK4 only.
      Same note as R5 — gtk_widget_get_first_child() is GTK4-only.
-(R7) gtkdialog.texi (remplacé par gtk3sermo.texi — patch 13) (Texinfo) not yet updated for GTK3 — low priority.
+(R7) [SANS OBJET 2026-08-25] gtkdialog.texi avait déjà été remplacé par
+     gtk3sermo.texi au patch 13 ; la copie que le port GTK 4 avait gardée a
+     été supprimée le 2026-08-25.
 (R8) examples/ for 6 new widgets missing (switch, filechooser, calendar,
      linkbutton, searchentry, infobar).
 (R9) create_gvim() experimental, untested — keep for GtkSocket support.
