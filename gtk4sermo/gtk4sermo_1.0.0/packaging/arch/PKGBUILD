@@ -21,18 +21,20 @@ backup=()
 options=()
 install=
 changelog=
-source=("$pkgname-$pkgver.tar.gz::https://haplo-dialog.fr/pub/gtk4sermo/$pkgname-$pkgver.tar.gz")
+# L'archive du tag contient les DEUX ports ; on descend dans celui-ci.
+source=("sermo-v$pkgver.tar.gz::https://gitlab.com/haplo-dialog/sermo/-/archive/v1.0.0/sermo-v1.0.0.tar.gz")
+_srcdir="sermo-v$pkgver/gtk4sermo/gtk4sermo_$pkgver"
 noextract=()
 sha256sums=('SKIP')
 
 prepare() {
-  cd "$pkgname-$pkgver"
+  cd "$_srcdir"
   # Patch de compatibilité si besoin
   :
 }
 
 build() {
-  cd "$pkgname-$pkgver"
+  cd "$_srcdir"
   NOCONFIGURE=1 ./autogen.sh
   ./configure --prefix=/usr \
               --mandir=/usr/share/man \
@@ -41,13 +43,13 @@ build() {
 }
 
 check() {
-  cd "$pkgname-$pkgver"
+  cd "$_srcdir"
   # make check 2>/dev/null || true
   :
 }
 
 package() {
-  cd "$pkgname-$pkgver"
+  cd "$_srcdir"
   make DESTDIR="$pkgdir" install
   install -Dm644 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
   install -d "$pkgdir/usr/share/doc/$pkgname/examples"

@@ -2,7 +2,7 @@
 
 **Backend :** GTK 3
 **Version :** 1.0.0
-**Binaire :** `/usr/bin/gtk3sermo` (+ alias rétro-compatible `gtkdialog`)
+**Binaire :** `/usr/bin/gtk3sermo`. L'alias `gtkdialog` vient du paquet séparé `gtksermo`.
 **Licence :** GPL-2.0-or-later
 
 ## Formats disponibles, et ce qu'ils valent
@@ -30,7 +30,7 @@ a marché.
 ```bash
 cd gtk3sermo_1.0.0/
 dpkg-buildpackage -b -us -uc
-# Résultat : ../gtk3sermo_1.0.0-1_amd64.deb
+# Résultat : ../gtk3sermo_1.0.0-10_amd64.deb
 ```
 
 ### Fedora / RHEL
@@ -63,9 +63,11 @@ sudo sh gtk3sermo.SlackBuild
 
 ## Binaire installé
 
-Le paquet fournit un seul binaire, `/usr/bin/gtk3sermo`, accompagné de
-l'alias rétro-compatible `gtkdialog` pour remplacer sans friction le
-gtkdialog historique (Laszlo Pere), abandonné en amont.
+Le paquet fournit un seul binaire, `/usr/bin/gtk3sermo`. L'alias
+rétro-compatible `gtkdialog`, qui remplace sans friction le gtkdialog historique
+(Laszlo Pere, abandonné en amont), est livré par un paquet SÉPARÉ, `gtksermo` :
+il entre en conflit avec `gtkdialog` et `gtk3dialog`, on l'installe donc à
+part.
 
 ---
 

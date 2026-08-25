@@ -41,8 +41,13 @@ rm -rf $PKG
 mkdir -p $TMP $PKG $OUTPUT
 cd $TMP
 rm -rf $PRGNAM-$VERSION
-tar xvf $OUTPUT/$PRGNAM-$VERSION.tar.gz
-cd $PRGNAM-$VERSION
+# L'archive du tag contient les DEUX ports. On la telecharge si elle n'est pas
+# deja dans $OUTPUT, puis on descend dans le port de ce SlackBuild.
+SRCTAR=$OUTPUT/sermo-v$VERSION.tar.gz
+[ -f "$SRCTAR" ] || wget -O "$SRCTAR" \
+  "https://gitlab.com/haplo-dialog/sermo/-/archive/v$VERSION/sermo-v$VERSION.tar.gz"
+tar xvf "$SRCTAR"
+cd sermo-v$VERSION/gtk3sermo/gtk3sermo_$VERSION
 chown -R root:root .
 find -L . \
  \( -perm 777 -o -perm 775 -o -perm 750 -o -perm 711 -o -perm 555 -o -perm 511 \) \

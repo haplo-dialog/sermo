@@ -75,7 +75,7 @@ gtk3sermo:
   extends: .autotools
   variables:
     PORT: gtk3sermo
-    DEPS: "automake autoconf libtool libgtk-3-dev libvte-2.91-dev"
+    DEPS: "automake autoconf libtool libgtk-3-dev libvte-2.91-dev libgtk-layer-shell-dev"
 
 gtk4sermo:
   extends: .autotools
@@ -115,7 +115,7 @@ exemples:gtk3sermo:
   needs: ["gtk3sermo"]
   variables:
     PORT: gtk3sermo
-    TOOLKIT_DEPS: "automake autoconf libtool libgtk-3-dev libvte-2.91-dev"
+    TOOLKIT_DEPS: "automake autoconf libtool libgtk-3-dev libvte-2.91-dev libgtk-layer-shell-dev"
 
 exemples:gtk4sermo:
   extends: .examples

@@ -9,7 +9,8 @@
 
 ```bash
 sudo apt-get install build-essential debhelper devscripts \
-  libgtk-3-dev (>= 3.22.0), libvte-2.91-dev, flex, bison, autoconf, automake, pkg-config
+    libgtk-3-dev libvte-2.91-dev libgtk-layer-shell-dev \
+    flex bison autoconf automake pkg-config
 ```
 
 ## Construction du paquet

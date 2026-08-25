@@ -29,7 +29,7 @@ adapté à sa cible.
    par colonne.
 2. **Le `.deb` se construit depuis l'arbre**, en une commande
    (`dpkg-buildpackage -us -uc -b`), et donne `gtk3sermo`, `gtksermo` et
-   `gtk4sermo`. Le projet ne l'héberge pas encore : il n'y a pas de release.
+   `gtk4sermo`. Les binaires obtenus sont publiés dans la release v1.0.0, avec leurs sommes.
 3. **Les autres cibles : recettes fournies, build à la demande.** Le projet
    n'héberge pas ces binaires ; on les construit si un besoin réel émerge.
 
@@ -91,8 +91,11 @@ rpmbuild -bb packaging/rpm/gtk3sermo.spec
 
 ## Compatibilité ascendante
 
-`gtk3sermo` installe un alias **`gtkdialog`** (binaire + page de manuel) : les
-scripts gtkdialog d'époque fonctionnent sans portage.
+L'alias **`gtkdialog`** est fourni par un paquet SÉPARÉ, **`gtksermo`** (binaire
+et lien de page de manuel), volontairement en conflit avec `gtkdialog` et
+`gtk3dialog`. Le paquet `gtk3sermo` seul ne l'installe PAS. Les scripts d'époque
+fonctionnent sans portage dès que `gtksermo` est installé — ou en appelant
+directement `gtk3sermo`. Depuis les sources, `make install` pose bien le lien.
 
 ## Build depuis les sources (sans paquet)
 

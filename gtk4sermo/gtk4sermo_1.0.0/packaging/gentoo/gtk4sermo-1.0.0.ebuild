@@ -3,7 +3,9 @@ inherit autotools
 
 DESCRIPTION="GTK4 dialog window creator for shell scripts"
 HOMEPAGE="https://haplo-dialog.fr"
-SRC_URI="https://haplo-dialog.fr/pub/gtk4sermo/${P}.tar.gz"
+SRC_URI="https://gitlab.com/haplo-dialog/sermo/-/archive/v1.0.0/sermo-v1.0.0.tar.gz -> sermo-v${PV}.tar.gz"
+# L\'archive du tag contient les DEUX ports ; on descend dans celui-ci.
+S="${WORKDIR}/sermo-v${PV}/gtk4sermo/gtk4sermo_${PV}"
 
 LICENSE="GPL-2.0-or-later"
 SLOT="0"

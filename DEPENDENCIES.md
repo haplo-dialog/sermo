@@ -1,8 +1,9 @@
 # Dépendances & prérequis - haplo-dialog
 
-Ce document liste les dépendances **réelles** de haplo-dialog (port unique
-**gtk3sermo**, backend GTK 3), dérivées directement des fichiers de build et de
-packaging du dépôt, et non d'une description rédigée à la main.
+Ce document liste les dépendances **réelles** des deux ports de haplo-dialog —
+**gtk3sermo** (backend GTK 3) et **gtk4sermo** (backend GTK 4) — dérivées
+directement des fichiers de build et de packaging du dépôt, et non d'une
+description rédigée à la main.
 
 ## Méthodologie
 
@@ -52,10 +53,12 @@ requis).
 | Port | Build | Toolkit (plancher) | Terminal | C++ |
 |------|-------|--------------------|----------|-----|
 | **gtk3sermo** | autotools | GTK+ 3 ≥ 3.22.0 | VTE 2.91 *(opt.)* | non |
+| **gtk4sermo** | autotools | GTK 4 ≥ 4.6.0 | VTE 2.91 GTK4 | non |
 
 | Port | Ancrage Wayland |
 |------|-----------------|
 | **gtk3sermo** | gtk-layer-shell ≥ 0.8.0 *(opt.)* |
+| **gtk4sermo** | *aucun* — l'ancrage n'est pas porté sur GTK 4 |
 
 *« opt. » = le widget terminal se désactive proprement (stub) si la lib est
 absente ; le reste du port fonctionne. De même pour gtk-layer-shell : sans
@@ -85,6 +88,19 @@ dépôt**. La colonne « build » regroupe développement + outils ; la colonne
 | Arch | `gtk3`, `vte3`, `gtk-layer-shell`, `flex`, `bison`, `autoconf`, `automake`, `pkgconfig` | `gtk3`, `vte3`, `gtk-layer-shell` |
 | Fedora/RPM | `gtk3-devel`, `vte291-devel`, `gtk-layer-shell-devel`, `flex`, `bison`, `autoconf`, `automake`, `pkgconfig` | `gtk3`, `vte291`, `gtk-layer-shell` |
 | Gentoo | `x11-libs/gtk+:3`, `x11-libs/vte:2.91`, `gui-libs/gtk-layer-shell` | idem |
+
+
+### gtk4sermo - GTK 4 ≥ 4.6.0 et VTE 2.91 GTK4
+
+Le port GTK 4 n'a **pas** l'ancrage Wayland : `layer`, `edge`, `dist` et
+`reserve` ne sont implémentés que côté GTK 3.
+
+| Distro | Build | Exécution |
+|--------|-------|-----------|
+| Debian/Ubuntu | `libgtk-4-dev (≥ 4.6.0)`, `libvte-2.91-gtk4-dev`, `flex`, `bison`, `autoconf (≥ 2.69)`, `automake (≥ 1.14)`, `pkg-config` | `libgtk-4-1 (≥ 4.6)`, `libvte-2.91-gtk4-0` |
+| Arch | `gtk4`, `vte4`, `flex`, `bison`, `autoconf`, `automake`, `pkgconfig` | `gtk4`, `vte4` |
+| Fedora/RPM | `gtk4-devel`, `vte291-gtk4-devel`, `flex`, `bison`, `autoconf`, `automake`, `pkgconfig` | `gtk4`, `vte291-gtk4` |
+| Gentoo | `gui-libs/gtk:4`, `x11-libs/vte:2.91-gtk4` | idem |
 
 Options de configuration : `./configure --without-vte` désactive le widget
 `<terminal>` ; `./configure --without-layer-shell` désactive l'ancrage Wayland.

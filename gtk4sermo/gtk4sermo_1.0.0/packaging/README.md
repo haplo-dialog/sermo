@@ -22,7 +22,7 @@
 ```bash
 cd gtk4sermo_1.0.0/
 dpkg-buildpackage -b -us -uc
-# Résultat : ../gtk4sermo_1.0.0-1_amd64.deb
+# Résultat : ../gtk4sermo_1.0.0-11_amd64.deb
 ```
 
 ### Fedora / RHEL

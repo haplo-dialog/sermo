@@ -9,7 +9,7 @@ Summary:        GTK4 dialog window creator for shell scripts
 
 License:        GPL-2.0-or-later
 URL:            https://haplo-dialog.fr
-Source0:        %{name}-%{version}.tar.gz
+Source0:        https://gitlab.com/haplo-dialog/sermo/-/archive/v1.0.0/sermo-v1.0.0.tar.gz
 Requires: gtk4-devel
 BuildRequires: vte291-gtk4-devel
 BuildRequires: flex
