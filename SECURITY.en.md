@@ -76,13 +76,25 @@ hardening above protects against **malformed input** and **memory-safety bugs** 
 not against a hostile script author, who can launch commands anyway. To interpret
 XML coming from a less trustworthy source, set `HAPLO_NO_SHELL_FALLBACK=1`.
 
-### Warnings treated as errors
+### Compiler warnings
+
+Exactly one is treated as an **error**, the one that stops the build:
 
 ```
--Wall -Wextra -Wshadow -Wnull-dereference
--Wstrict-prototypes -Wimplicit-fallthrough=3
 -Werror=format-security
 ```
+
+The others are enabled but **stay warnings**: the build succeeds with them. 24
+remain on the GTK 3 side and 36 on the GTK 4 side, inherited from upstream
+gtkdialog.
+
+```
+-Wall -Wextra -Wformat=2 -Wformat-overflow=2 -Wshadow -Wnull-dereference
+-Wstrict-prototypes -Wimplicit-fallthrough=3
+```
+
+Clearing them and switching to a global `-Werror` is an open track, not a fact:
+claiming it before doing it would be a guarantee the compiler contradicts.
 
 ---
 

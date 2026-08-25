@@ -104,6 +104,7 @@ gtk3sermo_CFLAGS = \
 	-DHAVE_LAYER_SHELL_IS_SUPPORTED=$(HAVE_LAYER_SHELL_IS_SUPPORTED) \
 	$(GLADE_LIB_CFLAGS) \
 	-Wall -Wextra -Wno-unused-parameter \
+	-Wformat=2 -Wformat-overflow=2 -Werror=format-security \
 	-Wno-deprecated-declarations \
 	-Wno-unused-variable \
 	-Wshadow \
@@ -128,4 +129,5 @@ gtk3sermo_LDADD = \
 	@LIBS@
 
 # Per-target linker flags.
-gtk3sermo_LDFLAGS = -pie -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack
+gtk3sermo_LDFLAGS = -pie -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack \
+	-Wl,-z,ibt -Wl,-z,shstk

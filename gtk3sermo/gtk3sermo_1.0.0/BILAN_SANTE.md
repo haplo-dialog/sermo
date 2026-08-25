@@ -5,6 +5,26 @@
 
 ## État vérifié — 2026-06-07 — Score : **93/100**
 
+> ⚠️ **Ce que valent les chiffres de ce document.** Les notes sur 100 sont une
+> **auto-évaluation** interne, posée à la main au fil du développement. Elles ne
+> sortent d'aucun outil, ne sont rejouables par personne, et ce fichier en donne
+> plusieurs qui se contredisent. Ne leur accordez pas plus de poids qu'à un avis.
+>
+> Ce qui est vérifiable, en revanche, l'est par une commande :
+>
+> | Garantie | Comment la vérifier |
+> |---|---|
+> | Durcissement du binaire (PIE, RELRO, BIND_NOW, NX, CET IBT/SHSTK, stack protector, FORTIFY) | `tests/garde_durcissement.sh src/<port>` |
+> | Le thread de la barre de progression ne touche pas GTK | `tests/garde_progressbar_thread.sh src/widget_progressbar.c` |
+> | Borne MAXWIDGETS sur la recopie des widgets | `tests/garde_maxwidgets.sh src/<port>` |
+> | `--do` annoncée, exécutée, ordonnée, fail-closed | `tests/garde_option_do.sh src/<port>` |
+> | `HAPLO_ALLOWED_CMDS` mordante et incontournable | `tests/garde_allowed_cmds.sh src/<port>` |
+> | En-tête SPDX sur chaque source | `tests/garde_spdx.sh src` |
+> | Exemples qui s'ouvrent vraiment | `tests/run_examples.sh src/<port>` |
+> | Corpus XML | `tests/xml/run_tests.sh <port>` |
+>
+> Ces huit bancs tournent à chaque passage de l'intégration continue.
+
 | Critère | État |
 |---|:--:|
 | Build + install | ✅ rc=0 |

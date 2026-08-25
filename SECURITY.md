@@ -77,13 +77,25 @@ sûreté mémoire**, pas contre un auteur de script hostile, qui peut de toute
 façon lancer des commandes. Pour interpréter du XML issu d'une source moins
 fiable, positionnez `HAPLO_NO_SHELL_FALLBACK=1`.
 
-### Warnings traités comme erreurs
+### Avertissements du compilateur
+
+Un seul est traité comme une **erreur**, celui qui arrête la construction :
 
 ```
--Wall -Wextra -Wshadow -Wnull-dereference
--Wstrict-prototypes -Wimplicit-fallthrough=3
 -Werror=format-security
 ```
+
+Les autres sont activés mais **restent des avertissements** : la construction
+réussit avec eux. Il en subsiste 24 côté GTK 3 et 36 côté GTK 4, hérités de
+l'amont gtkdialog.
+
+```
+-Wall -Wextra -Wformat=2 -Wformat-overflow=2 -Wshadow -Wnull-dereference
+-Wstrict-prototypes -Wimplicit-fallthrough=3
+```
+
+Les purger et passer `-Werror` global est une piste ouverte, pas un état de fait :
+l'annoncer avant de l'avoir fait serait une garantie que le compilateur dément.
 
 ---
 

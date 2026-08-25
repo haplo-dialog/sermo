@@ -91,7 +91,7 @@ AM_CFLAGS = \
 	-Wno-missing-prototypes \
 	-Wnull-dereference \
 	-Wimplicit-fallthrough=3 \
-	-Wformat -Wformat-overflow=2 -Werror=format-security \
+	-Wformat=2 -Wformat-overflow=2 -Werror=format-security \
 	-D_FORTIFY_SOURCE=3 \
 	-D_POSIX_C_SOURCE=200809L \
 	-fstack-protector-strong \
@@ -105,7 +105,8 @@ LIBS = \
 	$(VTE_LIBS) \
 	@LIBS@
 
-AM_LDFLAGS = -pie -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack
+AM_LDFLAGS = -pie -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack \
+	-Wl,-z,ibt -Wl,-z,shstk
 
 # Man page — installed to $(mandir)/man1/
 dist_man_MANS = gtk4sermo.1

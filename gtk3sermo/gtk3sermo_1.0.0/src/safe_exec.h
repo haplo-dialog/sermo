@@ -16,7 +16,9 @@
  * (safe_system returns -1, safe_popen returns NULL) — use it when commands
  * may incorporate untrusted input.
  */
-/* Drop-in replacement for system(): no /bin/sh -c, no shell injection. */
+/* Replaces system(): direct exec() by argv when the command carries no shell
+ * metacharacter, logged /bin/sh -c fallback otherwise (see the note above),
+ * refusable with HAPLO_NO_SHELL_FALLBACK=1. NOT a shell-free guarantee. */
 gint  safe_system(const gchar *command);
 
 /* Drop-in replacement for popen(cmd,"r"): returns FILE*, close with fclose(). */
