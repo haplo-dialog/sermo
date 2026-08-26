@@ -1,0 +1,75 @@
+# Fichiers générés par autoconf/automake/make
+/configure
+/aclocal.m4
+/config.h
+/config.log
+/config.status
+/stamp-h1
+Makefile
+Makefile.in
+/libtool
+/.deps/
+/.libs/
+/test-driver
+/compile
+/depcomp
+/install-sh
+/missing
+
+# Fichiers générés par flex/bison (garder les .c/.h pré-générés dans le dépôt)
+# src/gtkdialog_lexer.c  # gardé pour build sans flex
+# src/gtkdialog_parser.c # gardé pour build sans bison
+# src/gtkdialog_parser.h # gardé pour build sans bison
+
+# Objets compilés et binaires
+*.o
+*.lo
+*.la
+*.a
+src/gtk3sermo
+
+# Packaging Debian
+# « debian » est un lien vers packaging/debian : les deux chemins doivent etre
+# couverts, sinon debhelper depose ses dossiers d'assemblage en clair.
+debian/.debhelper/
+debian/gtk3sermo/
+debian/gtksermo/
+debian/tmp/
+debian/files
+debian/debhelper-build-stamp
+packaging/debian/.debhelper/
+packaging/debian/gtk3sermo/
+packaging/debian/gtksermo/
+packaging/debian/tmp/
+packaging/debian/files
+packaging/debian/debhelper-build-stamp
+*.deb
+*.changes
+*.buildinfo
+*.dsc
+*.tar.gz
+
+# Éditeurs et IDE
+*~
+*.orig
+*.rej
+*.swp
+.*.swp
+.idea/
+*.kate-swp
+\#*\#
+.\#*
+
+# Documentation générée
+doc/gtk3sermo.info
+doc/stamp-vti
+doc/gtk3sermo-haplo1-docs.pdf
+doc/gtk3sermo-haplo1-site/
+doc/gtk3sermo-haplo1-site.zip
+
+# Divers
+*.pyc
+__pycache__/
+
+# Engendre par configure depuis gtk3sermo.spec.in — ne pas suivre.
+/gtk3sermo.spec

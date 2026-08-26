@@ -21,8 +21,8 @@ DUR="${2:-30}"
 # Résoudre un nom de port en chemin de binaire si nécessaire.
 if [ -x "$ARG" ]; then
     BIN="$ARG"
-elif [ -x "$ROOT/$ARG/${ARG}_1.0.0/src/$ARG" ]; then
-    BIN="$ROOT/$ARG/${ARG}_1.0.0/src/$ARG"
+elif [ -x "$ROOT/$ARG/${ARG}_1.1.0/src/$ARG" ]; then
+    BIN="$ROOT/$ARG/${ARG}_1.1.0/src/$ARG"
 else
     echo "Binaire introuvable pour « $ARG » (compile d'abord le port, ou donne un chemin)." >&2
     exit 2

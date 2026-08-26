@@ -1,5 +1,5 @@
 # Dockerfile.gtk3sermo — Build multi-stage pour gtk3sermo
-# haplo-dialog 1.0.0 — haplo-dialog — GPL-2.0-or-later
+# sermo 1.1.0 — GPL-2.0-or-later
 #
 # Usage :
 #   docker build -f ci/Dockerfile.gtk3sermo -t haplo-dialog .
@@ -27,7 +27,7 @@ RUN apt-get update -qq && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /src
-COPY gtk3sermo/gtk3sermo_1.0.0 .
+COPY gtk3sermo/gtk3sermo_1.1.0 .
 
 RUN autoreconf -fi \
     && ./configure \
@@ -61,7 +61,7 @@ RUN gtk3sermo --version || true
 
 LABEL org.opencontainers.image.title="haplo-dialog gtk3sermo"
 LABEL org.opencontainers.image.description="GTK3 dialog box creator for shell scripts"
-LABEL org.opencontainers.image.version="1.0.0"
+LABEL org.opencontainers.image.version="1.1.0"
 LABEL org.opencontainers.image.licenses="GPL-2.0-or-later"
 LABEL org.opencontainers.image.source="https://haplo-dialog.fr"
 

@@ -19,7 +19,7 @@ GREEN='\033[0;32m'; RED='\033[0;31m'; NC='\033[0m'
 
 run_port() {
     port="$1"
-    src="$ROOT/$port/${port}_1.0.0/src"
+    src="$ROOT/$port/${port}_1.1.0/src"
     if [ ! -f "$src/safe_exec.c" ]; then
         printf "SKIP  %s (pas de safe_exec.c)\n" "$port"; return 0
     fi

@@ -1,0 +1,289 @@
+\input texinfo   @c -*-texinfo-*-
+@c ============================================================
+@c gtk3sermo.texi — Documentation officielle gtk3sermo
+@c gtk3sermo 1.1.0 (haplo-dialog, 2026)
+@c
+@c Ce document couvre l'API XML complète, les 43 widgets
+@c supportés et les options CLI du binaire @command{gtk3sermo}.
+@c
+@c Pour générer :
+@c   makeinfo --html gtk3sermo.texi
+@c   makeinfo --pdf  gtk3sermo.texi
+@c   makeinfo        gtk3sermo.texi  (→ gtk3sermo.info)
+@c ============================================================
+@include version.texi
+
+@c Variables propres au projet.
+@c Elles ne peuvent PAS vivre dans version.texi : depuis que info_TEXINFOS est
+@c actif, automake regenere ce fichier a chaque build et n'y met que UPDATED,
+@c UPDATED-MONTH, EDITION et VERSION. Les y laisser faisait afficher
+@c « {No value for 'TOOLKIT'} » dans le manuel installe.
+@set PORT gtk3sermo
+@set BINARY gtk3sermo
+@set TOOLKIT GTK 3
+@c %**start of header
+@setfilename gtk3sermo.info
+@settitle gtk3sermo @value{VERSION} User Manual
+@documentencoding UTF-8
+@c %**end of header
+
+@copying
+This manual documents @command{gtk3sermo} version @value{VERSION},
+a @value{TOOLKIT} dialog box creator for shell scripts.
+
+Copyright @copyright{} 2026 haplo-dialog @email{devel@@haplo-dialog.fr}.
+
+@quotation
+This manual is free documentation; you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the Free
+Software Foundation; either version 2 of the License, or (at your option) any
+later version.
+
+It is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
+PURPOSE.  See the GNU General Public License for more details.  On Debian
+systems the full text is in @file{/usr/share/common-licenses/GPL-2}.
+@end quotation
+
+@quotation
+This manual carries the same licence as the program it documents, so that a
+single text covers the whole distribution.  It was written from scratch by the
+haplo-dialog project: it shares no wording with the original @command{gtkdialog}
+manual by L@'aszl@'o Pere, which was under the GNU Free Documentation License.
+The program itself derives from that author's work and remains GPL-2.0-or-later;
+this notice concerns the documentation only.
+@end quotation
+@end copying
+
+@c Sans ces deux directives, le manuel s'installe mais n'apparait PAS dans le
+@c menu de l'index Info : on ne le trouve qu'en connaissant deja son nom de
+@c fichier. Verifie le 2026-08-26 — le menu du fichier « dir » etait vide.
+@dircategory Interfaces graphiques
+@direntry
+* gtk3sermo: (gtk3sermo).   Constructeur de dialogues GTK 3 decrits en XML, pour scripts shell.
+@end direntry
+
+@titlepage
+@title gtk3sermo User Manual
+@subtitle Version @value{VERSION} — @value{TOOLKIT} Edition
+@subtitle haplo-dialog — @value{UPDATED-MONTH}
+@author László Pere (original), Thunor (2011--2014)
+@author haplo-dialog (gtk3sermo port, 2026)
+@page
+@vskip 0pt plus 1filll
+@insertcopying
+@end titlepage
+
+@contents
+
+@ifnottex
+@node Top
+@top gtk3sermo @value{VERSION}
+
+@insertcopying
+@end ifnottex
+
+@menu
+* Introduction::        Qu'est-ce que gtk3sermo ?
+* Installation::        Comment installer gtk3sermo.
+* Invocation::          Options de la ligne de commande.
+* XML Syntax::          Syntaxe XML des descriptions de dialog.
+* Widgets::             Liste des 43 widgets disponibles.
+* Examples::            Exemples de scripts shell.
+* Security::            Considérations de sécurité.
+* Index::               Index général.
+@end menu
+
+@node Introduction
+@chapter Introduction
+
+@cindex introduction
+@pindex gtk3sermo
+
+@command{gtk3sermo} est un constructeur de dialogues graphiques @value{TOOLKIT}
+piloté par une description XML. Il permet aux scripts shell de créer des
+interfaces graphiques natives sans aucune connaissance de la programmation
+@value{TOOLKIT}.
+
+@command{gtk3sermo} est le port de référence de @strong{haplo-dialog},
+le successeur moderne, durci et maintenu de gtkdialog
+(László Pere, 2003--2007 ; Thunor, 2011--2014).
+Là où gtkdialog est abandonné, @strong{haplo-dialog} le fait revivre :
+corrigé, durci et maintenu.
+
+@section Compatibilité gtkdialog
+
+@command{gtk3sermo} (backend GTK 3) reprend fidèlement la syntaxe XML
+de gtkdialog et fournit l'alias rétro-compatible @command{gtkdialog} :
+les scripts écrits pour gtkdialog original s'exécutent sans modification.
+Il expose @strong{43 widgets} et constitue la base de production de
+@strong{haplo-dialog}.
+
+@node Installation
+@chapter Installation
+
+@section Pré-requis
+@itemize
+@item GTK 3 ≥ 3.22
+@item GLib 2.0 (libglib2.0-dev)
+@item @command{flex} et @command{bison} (parser XML)
+@end itemize
+
+@section Compilation
+@example
+@group
+# autotools
+./autogen.sh && ./configure && make
+sudo make install
+@end group
+@end example
+
+@node Invocation
+@chapter Invocation
+
+@section Synopsis
+@example
+gtk3sermo [OPTION]...
+gtk3sermo --program=VARIABLE
+gtk3sermo --file=FILE
+gtk3sermo --stdin
+@end example
+
+@section Options principales
+@table @option
+@item --program=@var{VARIABLE}
+Lire la description XML depuis la variable d'environnement @var{VARIABLE}.
+@item --file=@var{FILE}
+Lire la description XML depuis le fichier @var{FILE}.
+@item --stdin
+Lire la description XML depuis l'entrée standard.
+@item --do=@var{CMD}
+Exécuter la commande shell @var{CMD} après la fermeture du dialogue.
+Les valeurs des widgets sont exportées comme variables d'environnement.
+@item --version
+Afficher la version et quitter.
+@item --help
+Afficher l'aide et quitter.
+@end table
+
+@node XML Syntax
+@chapter Syntaxe XML
+
+La description XML suit la même syntaxe que gtkdialog original.
+La balise racine est @code{<window>} qui contient des widgets imbriqués.
+
+@example
+<window title="Ma fenêtre" width-request="400">
+  <vbox>
+    <entry><variable>NOM</variable></entry>
+    <button ok></button>
+  </vbox>
+</window>
+@end example
+
+@node Widgets
+@chapter Widgets
+
+@command{gtk3sermo} supporte @strong{43 widgets} :
+
+@table @code
+@item <window>
+Fenêtre principale ou dialogue.
+@item <button>, <okbutton>, <cancelbutton>
+Boutons d'action.
+@item <entry>
+Champ de saisie texte.
+@item <text>, <label>
+Texte statique.
+@item <checkbox>
+Case à cocher.
+@item <radiobutton>
+Bouton radio.
+@item <comboboxtext>
+Liste déroulante.
+@item <list>
+Liste multi-sélection.
+@item <tree>
+Arborescence hiérarchique.
+@item <table>
+Tableau multi-colonnes.
+@item <progressbar>
+Barre de progression.
+@item <hscale>, <vscale>
+Curseur horizontal/vertical.
+@item <spinbutton>
+Compteur numérique.
+@item <notebook>
+Onglets.
+@item <hbox>, <vbox>
+Conteneurs de disposition.
+@item <frame>
+Cadre avec titre.
+@item <menubar>, <menu>, <menuitem>
+Barre de menus.
+@item <terminal>
+Terminal embarqué (GTK 3).
+@item <calendar>
+Calendrier — exporte YYYY-MM-DD.
+@item <switch>
+Interrupteur on/off.
+@item <password>
+Champ mot de passe masqué.
+@item <searchentry>
+Champ de recherche avec icône.
+@item <levelbar>
+Barre de niveau.
+@item <infobar>
+Barre d'information colorée.
+@item <spinner>
+Indicateur d'activité animé.
+@end table
+
+@node Examples
+@chapter Exemples
+
+@section Dialogue simple
+@example
+#!/bin/sh
+export DIALOG='
+<window title="Bonjour">
+  <vbox>
+    <text><label>Votre nom :</label></text>
+    <entry><variable>NOM</variable></entry>
+    <button ok></button>
+  </vbox>
+</window>'
+gtk3sermo --program=DIALOG --do='echo "Bonjour $NOM"'
+@end example
+
+@node Security
+@chapter Sécurité
+
+@itemize
+@item @code{safe_system()} / @code{safe_popen()} partout — jamais @code{system()} direct.
+Une commande sans métacaractère shell est lancée par @code{exec()} direct, sans shell ;
+avec métacaractère, un repli @code{/bin/sh -c} est journalisé.
+@item @code{HAPLO_NO_SHELL_FALLBACK=1} refuse ce repli et échoue au lieu d'exécuter.
+@item @code{HAPLO_ALLOWED_CMDS=ls,cat,date} borne les commandes lançables à une liste
+de noms. Éteinte par défaut. Quand elle est posée, le repli shell est refusé aussi —
+sinon @command{sh -c} la contournerait en s'appelant @command{sh}.
+@item @code{fclose()} sur tout @code{FILE*} issu de @code{safe_popen()} — jamais @code{pclose()}.
+@item Environnement des processus lancés filtré : le bloc XML (plusieurs Kio) n'est pas hérité.
+@item Drapeaux de durcissement : @code{FORTIFY_SOURCE=3}, @code{fstack-protector-strong}, PIE, Full RELRO.
+@end itemize
+
+@noindent
+Ce que le programme ne fait @strong{pas}, et qu'il ne faut pas lui prêter :
+
+@itemize
+@item Aucune élévation de privilèges. Ni @command{pkexec}, ni @command{sudo} : un
+dialogue qui a besoin de droits doit être lancé avec ces droits.
+@item Aucune validation des chemins de fichiers passés dans le XML.
+@end itemize
+
+@node Index
+@unnumbered Index
+
+@printindex cp
+
+@bye

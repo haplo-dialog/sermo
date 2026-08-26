@@ -18,13 +18,13 @@
 > overwritten your `gtk3dialog` — reinstall your distribution's own.
 >
 > **The `sermo` family packages are published**, attached to the
-> [v1.0.0-4](https://gitlab.com/haplo-dialog/sermo/-/releases/v1.0.0-4) release
+> [v1.1.0](https://gitlab.com/haplo-dialog/sermo/-/releases/v1.1.0) release
 > along with their SHA256 sums: `gtk3sermo`, `gtk4sermo`, `gtksermo` and the
 > debug symbols. You can also build from source — see
 > [Installation](#installation).
 
 [![Licence](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.0.0-informational.svg)](CHANGELOG.en.md)
+[![Version](https://img.shields.io/badge/version-1.1.0-informational.svg)](CHANGELOG.en.md)
 [![Toolkit](https://img.shields.io/badge/toolkit-GTK%203%20%2B%20GTK%204-success.svg)](#the-two-ports)
 [![Tests](https://img.shields.io/badge/tests-55%2F55%20XML%20·%209%2F9%20behaviour-brightgreen.svg)](#tests--quality)
 
@@ -117,31 +117,35 @@ One shared C core (flex/bison grammar + state machine + `safe_exec`), two backen
 
 ### Download the release
 
-The packages are attached to the [**v1.0.0-4**](https://gitlab.com/haplo-dialog/sermo/-/releases/v1.0.0-4) release, with their checksums.
+The packages are attached to the [**v1.1.0**](https://gitlab.com/haplo-dialog/sermo/-/releases/v1.1.0) release, with their checksums.
 There is **no APT repository**: you download, you verify, you install.
 
 ```sh
 sha256sum -c SHA256SUMS
-U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/1.0.0-4
-for f in gtk3sermo_1.0.0-11_amd64.deb gtksermo_1.0.0-11_all.deb SHA256SUMS; do
+U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/1.1.0
+for f in gtk3sermo_1.1.0-1_amd64.deb gtksermo_1.1.0-1_all.deb SHA256SUMS; do
     curl -fLO "$U/$f"
 done
 
 sha256sum --ignore-missing -c SHA256SUMS
-sudo apt install ./gtk3sermo_1.0.0-11_amd64.deb
+sudo apt install ./gtk3sermo_1.1.0-1_amd64.deb
 ```
 
 | Package | Command installed | Conflicts |
 |---|---|---|
-| `gtk3sermo` 1.0.0-11 | `/usr/bin/gtk3sermo` | none |
-| `gtk4sermo` 1.0.0-12 | `/usr/bin/gtk4sermo` | none |
-| `gtksermo` 1.0.0-11 | `/usr/bin/gtkdialog` | **with `gtkdialog` and `gtk3dialog`** |
+| `gtk3sermo` 1.1.0-1 | `/usr/bin/gtk3sermo` | none |
+| `gtk4sermo` 1.1.0-1 | `/usr/bin/gtk4sermo` | none |
+| `gtksermo` 1.1.0-1 | `/usr/bin/gtkdialog` | **with `gtkdialog` and `gtk3dialog`** |
 
-> ⚠️ **Do not install the packages from the `v1.0.0` release**, kept online for
-> the record. They carry three defects fixed since: the output handed to the
-> shell can be executed by `eval` if whoever uses the dialog types
-> `$(command)` into a field, clicking a `<switch>` kills the program, and under
-> a French locale a number written with a dot silently reads as zero.
+> ⚠️ **Do not install the packages attached to release `v1.0.0`** (versions
+> `1.0.0-10` and `1.0.0-11`), kept online for the record. They carry three defects
+> fixed since: the output handed to the shell can be executed by `eval` if whoever
+> uses the dialog types `$(command)` into a field, clicking a `<switch>` kills the
+> program, and under a French locale a number written with a dot silently reads as
+> zero.
+>
+> Release `v1.0.0-4` does carry the three fixes: its packages are sound, merely
+> superseded by those of `v1.1.0`.
 
 The first two install without conflict, including alongside BunsenLabs'
 `gtk3dialog`. The third provides the `gtkdialog` command, so it conflicts with
@@ -153,7 +157,7 @@ The `-dbgsym` packages are only useful for reading a stack trace.
 
 ```sh
 git clone https://gitlab.com/haplo-dialog/sermo.git
-cd sermo/gtk3sermo/gtk3sermo_1.0.0        # or gtk4sermo/gtk4sermo_1.0.0
+cd sermo/gtk3sermo/gtk3sermo_1.1.0        # or gtk4sermo/gtk4sermo_1.1.0
 dpkg-buildpackage -us -uc -b
 ```
 
@@ -175,7 +179,7 @@ The resulting packages — and the split is deliberate:
 ### From source, without packaging
 
 ```sh
-cd gtk3sermo/gtk3sermo_1.0.0 && autoreconf -fi && ./configure && make -j"$(nproc)" && sudo make install
+cd gtk3sermo/gtk3sermo_1.1.0 && autoreconf -fi && ./configure && make -j"$(nproc)" && sudo make install
 ```
 
 ⚠️ Here `make install` also drops the `gtkdialog` symlink, without the safety net
@@ -209,9 +213,9 @@ Vulnerability report: see [SECURITY.md](SECURITY.en.md).
 
 ## Documentation
 
-- User/developer manuals (`gtk3sermo/gtk3sermo_1.0.0/MANUEL_*.md`).
+- User/developer manuals (`gtk3sermo/gtk3sermo_1.1.0/MANUEL_*.md`).
 - Man pages `gtk3sermo(1)` and XML reference `haplo-dialog-xml(5)`.
-- Texinfo manuals (`gtk3sermo/gtk3sermo_1.0.0/doc/`).
+- Texinfo manuals (`gtk3sermo/gtk3sermo_1.1.0/doc/`).
 - Website: <https://haplo-dialog.fr>.
 
 ---

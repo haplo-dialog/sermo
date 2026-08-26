@@ -46,7 +46,7 @@ adapté à sa cible.
 Une recette fournie n'est pas un paquet testé. Le tableau dit lequel des deux,
 pour éviter la lecture optimiste d'une colonne de coches identiques.
 
-`gtk3sermo` fournit, dans `gtk3sermo/gtk3sermo_1.0.0/packaging/` :
+`gtk3sermo` fournit, dans `gtk3sermo/gtk3sermo_1.1.0/packaging/` :
 
 | Cible | Recette fournie | Construite et vérifiée par le projet |
 |---|:--:|---|
@@ -65,7 +65,7 @@ Si vous en faites tourner une, dites-le nous : elle passera dans la colonne de
 droite, avec la version et la distribution où elle a marché.
 
 ```
-gtk3sermo/gtk3sermo_1.0.0/packaging/
+gtk3sermo/gtk3sermo_1.1.0/packaging/
 ├── debian/      # debian/ (control, rules, *.install, *.links…) → dpkg-buildpackage
 ├── rpm/         # *.spec                                        → rpmbuild
 ├── arch/        # PKGBUILD (+ .SRCINFO)                         → makepkg
@@ -76,7 +76,7 @@ gtk3sermo/gtk3sermo_1.0.0/packaging/
 ## Construire un paquet pour votre distribution
 
 ```sh
-# Debian/Ubuntu (depuis gtk3sermo/gtk3sermo_1.0.0/)
+# Debian/Ubuntu (depuis gtk3sermo/gtk3sermo_1.1.0/)
 dpkg-buildpackage -us -uc -b        # utilise packaging/debian/
 
 # Fedora/openSUSE
@@ -101,7 +101,7 @@ directement `gtk3sermo`. Depuis les sources, `make install` pose bien le lien.
 
 ```sh
 # autotools - gtk3sermo
-cd gtk3sermo/gtk3sermo_1.0.0 && autoreconf -fi && ./configure && make -j"$(nproc)" && sudo make install
+cd gtk3sermo/gtk3sermo_1.1.0 && autoreconf -fi && ./configure && make -j"$(nproc)" && sudo make install
 ```
 
 ## Domaine du projet

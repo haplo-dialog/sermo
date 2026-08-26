@@ -1,0 +1,155 @@
+# Dockerfile.build — Environnement de build reproductible pour gtk3sermo 1.0.0
+#
+# Compile le binaire, lance les tests, et produit un paquet .deb.
+#
+# Utilisation — le contexte est CE dossier (gtk3sermo_1.1.0/) :
+#   cd gtk3sermo/gtk3sermo_1.1.0
+#   docker build -f Dockerfile.build -t gtk3sermo-build .
+#   mkdir -p ../../dist
+#   docker run --rm -v "$PWD/../../dist":/dist gtk3sermo-build
+#
+#   Le .deb et les journaux sont copiés dans dist/, à la racine du dépôt.
+#
+# Build avec options :
+#   docker build --build-arg ENABLE_DEBUG=yes -f Dockerfile.build -t gtk3sermo-build-dbg .
+#   docker build --build-arg ENABLE_VTE=no    -f Dockerfile.build -t gtk3sermo-build-novte .
+#
+# S'arrêter à un étage :
+#   docker build --target tester -f Dockerfile.build -t gtk3sermo-test .
+#
+# ⚠️ Ne pas confondre avec ci/Dockerfile.gtk3sermo, qui a un autre but : celui-là
+# produit une image d'EXÉCUTION minimale (deux étages), son contexte est la
+# RACINE du dépôt, et il ne construit aucun paquet.
+#
+# Ce fichier existait dans la version publique initiale (2026-08-13) puis a été
+# perdu lors du renommage gtk3dialog → gtk3sermo, alors que COMPILE.md et
+# BILAN_SANTE.md ont continué de le décrire. Restauré le 2026-08-25, adapté aux
+# noms et aux chemins d'aujourd'hui, et éprouvé.
+#
+# haplo-dialog — 2026 — GPL-2.0-or-later
+
+# ---------------------------------------------------------------------------
+# Étape 1 : dépendances de build
+# ---------------------------------------------------------------------------
+FROM debian:testing AS builder
+
+LABEL maintainer="devel@haplo-dialog.fr"
+LABEL description="Environnement de build pour gtk3sermo 1.0.0"
+
+ARG ENABLE_DEBUG=no
+ARG ENABLE_VTE=yes
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update -qq && apt-get install -y --no-install-recommends \
+    build-essential \
+    autoconf \
+    automake \
+    libtool \
+    pkg-config \
+    flex \
+    bison \
+    libgtk-3-dev \
+    libglib2.0-dev \
+    libvte-2.91-dev \
+    libgtk-layer-shell-dev \
+    check \
+    devscripts \
+    debhelper \
+    dpkg-dev \
+    lintian \
+    binutils \
+    file \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# ---------------------------------------------------------------------------
+# Étape 2 : compilation
+# ---------------------------------------------------------------------------
+WORKDIR /build/gtk3sermo
+
+COPY . .
+
+RUN if [ ! -f configure ]; then bash autogen.sh; fi
+
+RUN VTE_FLAG="--with-vte"; \
+    [ "$ENABLE_VTE" = "no" ] && VTE_FLAG="--without-vte"; \
+    DEBUG_FLAG=""; \
+    [ "$ENABLE_DEBUG" = "yes" ] && DEBUG_FLAG="--enable-debug"; \
+    ./configure \
+        --prefix=/usr \
+        --enable-unit-tests \
+        $VTE_FLAG \
+        $DEBUG_FLAG
+
+RUN make -j"$(nproc)"
+
+# ---------------------------------------------------------------------------
+# Étape 3 : tests
+# ---------------------------------------------------------------------------
+FROM builder AS tester
+
+WORKDIR /build/gtk3sermo
+
+# Tests unitaires C (test_safe_exec, test_stringman) — aucun affichage requis.
+#
+# set -o pipefail est indispensable : sans lui, « make check | tee » rend le code
+# de sortie de tee, c'est-à-dire 0, quoi qu'ait fait make. C'est exactement ce
+# qui est arrivé le 2026-08-25 — make check échouait à l'édition de liens de
+# test_stringman et l'image se construisait quand même, verte.
+#
+# Le grep sur FAIL:/ERROR: est gardé en second filet : il attrape un test qui
+# échoue sans faire échouer make, mais il n'aurait jamais vu une erreur d'édition
+# de liens, qui n'écrit ni l'un ni l'autre.
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+RUN make check 2>&1 | tee /tmp/make_check.log
+
+RUN if grep -qE "^(FAIL|ERROR):" /tmp/make_check.log; then \
+        echo "=== TESTS ÉCHOUÉS ===" && cat /tmp/make_check.log && exit 1; \
+    fi
+
+RUN bash tests/run_tests.sh src/gtk3sermo 2>&1 | tee /tmp/run_tests.log
+
+# Aucun appel à une fonction interdite (strcpy, sprintf, system, atof, strtod…).
+# Le banc vit à la racine du dépôt, hors de ce contexte de build : on rejoue ici
+# la même recherche, en dur, pour que l'étage garde son sens tout seul.
+RUN ! grep -rnE '(^|[^A-Za-z0-9_])(strcpy|strcat|sprintf|gets|atof|strtod)[[:space:]]*\(' \
+        --include='*.c' src/ \
+        | grep -vE 'gtkdialog_(lexer|parser)\.[ch]|^\s*[0-9]+:\s*(/\*|\*|//)' \
+    || { echo "=== fonction interdite appelée dans src/ ==="; exit 1; }
+
+# Vérification du binaire compilé
+RUN file src/gtk3sermo && \
+    echo "--- Durcissement ---" && \
+    readelf -dW src/gtk3sermo | grep -E 'BIND_NOW|FLAGS' && \
+    readelf -lW src/gtk3sermo | grep -E 'GNU_RELRO|GNU_STACK' && \
+    readelf -nW src/gtk3sermo | grep -iE 'IBT|SHSTK' || true
+
+# ---------------------------------------------------------------------------
+# Étape 4 : construction du paquet .deb
+# ---------------------------------------------------------------------------
+FROM tester AS packager
+
+WORKDIR /build/gtk3sermo
+
+# debian/ est un lien symbolique vers packaging/debian : dpkg-buildpackage le suit.
+RUN dpkg-buildpackage -us -uc -b -j"$(nproc)" 2>&1 | tail -20
+
+RUN lintian ../gtk3sermo_*.deb 2>&1 | grep -v "^N:" || true
+
+# ---------------------------------------------------------------------------
+# Étape 5 : image finale minimaliste (export des artefacts seulement)
+# ---------------------------------------------------------------------------
+FROM debian:testing-slim AS exporter
+
+WORKDIR /artifacts
+
+COPY --from=packager /build/*.deb        ./
+COPY --from=tester   /tmp/make_check.log ./
+COPY --from=tester   /tmp/run_tests.log  ./
+
+CMD ["sh", "-c", \
+    "cp /artifacts/* /dist/ 2>/dev/null && \
+     echo 'Artefacts copiés dans /dist/' && \
+     ls -lh /dist/*.deb"]

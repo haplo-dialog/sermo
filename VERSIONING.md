@@ -46,7 +46,7 @@ haplo-dialog distribue **deux ports** : **`gtk3sermo`** (backend GTK 3), le port
 de référence, et **`gtk4sermo`** (backend GTK 4). L'alias rétro-compatible
 **`gtkdialog`** est fourni par un troisième paquet, **`gtksermo`**.
 
-La version amont (`1.0.0`) est **commune aux deux ports** : c'est le même cœur, la
+La version amont (`1.1.0`) est **commune aux deux ports** : c'est le même cœur, la
 même grammaire. En revanche la **révision d'empaquetage** avance port par port,
 puisqu'un correctif ne touche pas toujours les deux. Les deux numéros peuvent donc
 diverger — `gtk3sermo 1.0.0-10` et `gtk4sermo 1.0.0-11` par exemple — et c'est
@@ -68,16 +68,27 @@ est à faire **deux fois**.
 | Debian | `<port>/…/packaging/debian/changelog` | `<port> (X.Y.Z-N)` — voir ci-dessous |
 | Arch | `<port>/…/packaging/arch/PKGBUILD` + `.SRCINFO` | `pkgver=X.Y.Z` |
 | RPM | `<port>/…/packaging/rpm/<port>.spec` | `%global version X.Y.Z` |
-| Gentoo | `<port>/…/packaging/gentoo/<port>-X.Y.Z.ebuild` | version **dans le nom de fichier** |
-| Slackware | `<port>/…/packaging/slackware/<port>.SlackBuild` | `VERSION=${VERSION:-X.Y.Z}` |
+| Gentoo — ebuild | `<port>/…/packaging/gentoo/<port>-X.Y.Z.ebuild` | version **dans le nom de fichier** (`git mv`) |
+| Gentoo — Manifest | `<port>/…/packaging/gentoo/Manifest` | `DIST sermo-vX.Y.Z.tar.gz` + les deux commentaires |
+| Gentoo — mode d'emploi | `<port>/…/packaging/gentoo/README.gentoo.md` | les deux commandes citent le nom de l'ebuild |
+| Slackware — recette | `<port>/…/packaging/slackware/<port>.SlackBuild` | `VERSION=${VERSION:-X.Y.Z}` |
+| Slackware — mode d'emploi | `<port>/…/packaging/slackware/README.slackware.md` | le nom du `.tgz` produit, 4 lignes |
+| Script de build | `ci/build.sh` | `src_dir()` code le **chemin versionné** des deux ports |
+| Image Docker | `ci/Dockerfile.gtk3sermo` | `COPY` du chemin versionné + `LABEL …image.version` |
+| Manuel info | `<port>/doc/version.texi` | `@set EDITION` / `@set VERSION` |
 | Doc | `CHANGELOG.md`, `CHANGELOG.en.md`, `SECURITY.md`, `SECURITY.en.md`, `NEWS`, badges des `README` | tableaux & en-têtes |
+
+Le modèle RPM `<port>/<port>.spec.in` (ou `gtkdialog.spec.in`) n'est **pas** dans
+cette liste : depuis la 1.1.0 il écrit `%define version @VERSION@`, que `configure`
+remplit depuis `AC_INIT`. Il suit donc tout seul. Le `.spec` à la racine du port
+est un fichier **produit** — ne jamais l'éditer à la main.
 
 Le port GTK 4 n'a **pas** de `CMakeLists.txt` : il se construit par autotools
 seulement. Le modèle `.cmake` du `.gitlab-ci.yml` n'est donc étendu par aucun job.
 
 > ⚠️ **Particularité** : la version est encodée dans le **nom du dossier**
-> (`gtk3sermo_1.0.0/`) et dans le **nom de l'ebuild**
-> (`gtk3sermo-1.0.0.ebuild`). Une montée de version implique donc un `git mv`
+> (`gtk3sermo_1.1.0/`) et dans le **nom de l'ebuild**
+> (`gtk3sermo-1.1.0.ebuild`). Une montée de version implique donc un `git mv`
 > de ces chemins. *(Piste future : découpler la version du nom de dossier pour
 > alléger les bumps.)*
 
@@ -153,10 +164,16 @@ vertes (le pipeline passe). `main` ne doit jamais être cassée.
   une clé est disponible.
 - Un tag pointe sur le commit où le CHANGELOG, les `configure.ac`/`CMakeLists.txt`
   et le packaging déclarent tous `X.Y.Z`.
-- État actuel : **trois étiquettes** posées — `v1.0.0`, `v1.0.0-2` et `v1.0.0-3`.
-  `v1.0.0` est celle qui correspond aux paquets publiés dans les *releases*
-  GitLab. Les deux autres sont des états intermédiaires ; le `README` dit
-  lui-même de ne pas les installer.
+- État actuel : **cinq étiquettes** posées — `v1.0.0`, `v1.0.0-2`, `v1.0.0-3`,
+  `v1.0.0-4` et `v1.1.0`.
+- Deux d'entre elles seulement ont une *release* GitLab avec des paquets joints :
+  - `v1.0.0` porte les paquets **défectueux** (`1.0.0-10`, `1.0.0-11`), gardés
+    en ligne pour l'historique — le `README` dit de ne pas les installer ;
+  - `v1.0.0-4` porte les mêmes paquets **corrigés** (`1.0.0-11`, `1.0.0-12`).
+- `v1.0.0-2` et `v1.0.0-3` sont des états intermédiaires du dépôt : aucune
+  release ne leur est attachée.
+- `v1.1.0` est la version courante ; ses paquets (`1.1.0-1`) remplacent tous
+  les précédents.
 
 ```sh
 # Poser une release :

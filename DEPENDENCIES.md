@@ -14,11 +14,11 @@ complet de fichiers, et chaque ligne ci-dessous a été relue dans **les deux**.
 
 | Source | Ce qu'on en extrait |
 |--------|---------------------|
-| `<port>/<port>_1.0.0/configure.ac` | `PKG_CHECK_MODULES`, `AC_ARG_WITH`, planchers de version |
-| `<port>/<port>_1.0.0/packaging/debian/control` | `Build-Depends`, `Depends`, `Recommends`, `Suggests` |
-| `<port>/<port>_1.0.0/packaging/arch/PKGBUILD` | `depends`, `makedepends`, `optdepends` |
-| `<port>/<port>_1.0.0/packaging/rpm/*.spec` | `BuildRequires`, `Requires`, `Recommends` |
-| `<port>/<port>_1.0.0/packaging/gentoo/*.ebuild` | `BDEPEND`, `DEPEND`, `RDEPEND` |
+| `<port>/<port>_1.1.0/configure.ac` | `PKG_CHECK_MODULES`, `AC_ARG_WITH`, planchers de version |
+| `<port>/<port>_1.1.0/packaging/debian/control` | `Build-Depends`, `Depends`, `Recommends`, `Suggests` |
+| `<port>/<port>_1.1.0/packaging/arch/PKGBUILD` | `depends`, `makedepends`, `optdepends` |
+| `<port>/<port>_1.1.0/packaging/rpm/*.spec` | `BuildRequires`, `Requires`, `Recommends` |
+| `<port>/<port>_1.1.0/packaging/gentoo/*.ebuild` | `BDEPEND`, `DEPEND`, `RDEPEND` |
 
 En cas de divergence entre ce que le build exige réellement et ce que le
 packaging déclare, c'est le **système de build** (le compilateur et l'éditeur de
@@ -143,7 +143,7 @@ sudo dnf install gtk4-devel vte291-gtk4-devel                    # gtk4sermo
 Build effectif — le même pour les deux, seul le dossier change :
 
 ```sh
-cd gtk3sermo/gtk3sermo_1.0.0     # ou : cd gtk4sermo/gtk4sermo_1.0.0
+cd gtk3sermo/gtk3sermo_1.1.0     # ou : cd gtk4sermo/gtk4sermo_1.1.0
 autoreconf -fi && ./configure && make
 ```
 

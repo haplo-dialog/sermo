@@ -57,7 +57,7 @@ jobs:
       # (gtk3sermo). Elle était documentée mais jamais rejouée : c'est pour ça
       # que `make check` est resté cassé quatre mois sans que personne le voie.
       - name: Compiler, tester unitairement, installer
-        working-directory: ${{ matrix.port }}/${{ matrix.port }}_1.0.0
+        working-directory: ${{ matrix.port }}/${{ matrix.port }}_1.1.0
         run: |
           autoreconf -fi
           ./configure --prefix="$GITHUB_WORKSPACE/inst" ${{ matrix.extra_configure }}
@@ -75,20 +75,20 @@ jobs:
       # Mesure sur le BINAIRE PRODUIT, pas sur les drapeaux annoncés : un flag posé
       # dans un Makefile ne prouve rien s'il ne survit pas à l'édition de liens.
       - name: Durcissement (readelf sur le binaire)
-        working-directory: ${{ matrix.port }}/${{ matrix.port }}_1.0.0
+        working-directory: ${{ matrix.port }}/${{ matrix.port }}_1.1.0
         run: bash "$GITHUB_WORKSPACE/tests/garde_durcissement.sh" "src/${{ matrix.port }}"
 
       # Statique, parce que la faute qu'il empêche est une course qui ne se
       # déclenche qu'une fois sur dix : un test comportemental serait vert la
       # plupart du temps, donc ne prouverait rien.
       - name: Garde — thread de la barre de progression
-        run: sh tests/garde_progressbar_thread.sh "${{ matrix.port }}/${{ matrix.port }}_1.0.0/src/widget_progressbar.c"
+        run: sh tests/garde_progressbar_thread.sh "${{ matrix.port }}/${{ matrix.port }}_1.1.0/src/widget_progressbar.c"
 
       - name: Garde — en-têtes SPDX
-        run: bash tests/garde_spdx.sh "${{ matrix.port }}/${{ matrix.port }}_1.0.0/src"
+        run: bash tests/garde_spdx.sh "${{ matrix.port }}/${{ matrix.port }}_1.1.0/src"
 
       - name: Garde — aucune fonction interdite
-        run: bash tests/garde_fonctions_interdites.sh "${{ matrix.port }}/${{ matrix.port }}_1.0.0/src"
+        run: bash tests/garde_fonctions_interdites.sh "${{ matrix.port }}/${{ matrix.port }}_1.1.0/src"
 
       # Barrière à l'entrée : aucun en-tête « · poste <machine> » venu du dépôt
       # privé ne doit entrer ici. Une fuite de ce genre a coûté la recréation
@@ -129,40 +129,40 @@ jobs:
           locale-gen
 
       - name: Compiler
-        working-directory: ${{ matrix.port }}/${{ matrix.port }}_1.0.0
+        working-directory: ${{ matrix.port }}/${{ matrix.port }}_1.1.0
         run: |
           autoreconf -fi
           ./configure
           make -j"$(nproc)"
 
       - name: Lancer les exemples livrés
-        working-directory: ${{ matrix.port }}/${{ matrix.port }}_1.0.0
+        working-directory: ${{ matrix.port }}/${{ matrix.port }}_1.1.0
         env:
           LC_ALL: fr_FR.UTF-8
           LANG: fr_FR.UTF-8
         run: bash tests/run_examples.sh "src/${{ matrix.port }}"
 
       - name: Garde — MAXWIDGETS
-        working-directory: ${{ matrix.port }}/${{ matrix.port }}_1.0.0
+        working-directory: ${{ matrix.port }}/${{ matrix.port }}_1.1.0
         run: bash "$GITHUB_WORKSPACE/tests/garde_maxwidgets.sh" "src/${{ matrix.port }}"
 
       - name: Garde — option --do
-        working-directory: ${{ matrix.port }}/${{ matrix.port }}_1.0.0
+        working-directory: ${{ matrix.port }}/${{ matrix.port }}_1.1.0
         run: bash "$GITHUB_WORKSPACE/tests/garde_option_do.sh" "src/${{ matrix.port }}"
 
       - name: Garde — HAPLO_ALLOWED_CMDS
-        working-directory: ${{ matrix.port }}/${{ matrix.port }}_1.0.0
+        working-directory: ${{ matrix.port }}/${{ matrix.port }}_1.1.0
         run: bash "$GITHUB_WORKSPACE/tests/garde_allowed_cmds.sh" "src/${{ matrix.port }}"
 
       # La ligne rendue au shell doit rester des données : le banc ouvre une
       # vraie fenêtre, clique, et passe la ligne produite à eval sous
       # surveillance d'un fichier témoin.
       - name: Garde — échappement de la sortie
-        working-directory: ${{ matrix.port }}/${{ matrix.port }}_1.0.0
+        working-directory: ${{ matrix.port }}/${{ matrix.port }}_1.1.0
         run: bash "$GITHUB_WORKSPACE/tests/garde_echappement_sortie.sh" "src/${{ matrix.port }}"
 
       # run_examples.sh ouvre les fenêtres mais ne clique jamais. Ouvrir ne
       # suffit pas : un <switch> cliqué tuait les deux ports par SIGSEGV.
       - name: Garde — les widgets survivent au clic
-        working-directory: ${{ matrix.port }}/${{ matrix.port }}_1.0.0
+        working-directory: ${{ matrix.port }}/${{ matrix.port }}_1.1.0
         run: bash "$GITHUB_WORKSPACE/tests/garde_clic_widgets.sh" "src/${{ matrix.port }}"

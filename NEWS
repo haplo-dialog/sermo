@@ -45,16 +45,16 @@ Pour installer :
   sha256sum -c SHA256SUMS
   sudo apt install ./gtk3sermo_1.0.0-10_amd64.deb
   # Pour construire soi-meme depuis un clone :
-  #   cd sermo/gtk3sermo/gtk3sermo_1.0.0 && dpkg-buildpackage -us -uc -b
+  #   cd sermo/gtk3sermo/gtk3sermo_1.1.0 && dpkg-buildpackage -us -uc -b
   # (Les paquets obtenus s'appellent gtk3sermo, gtksermo et gtk4sermo.
   #  La commande « gtkdialog » est dans gtksermo, un paquet separe, en
   #  conflit assume avec le gtk3dialog de BunsenLabs.)
 
   # Arch Linux (recette fournie, jamais construite par nos soins)
-  cd gtk3sermo/gtk3sermo_1.0.0/packaging/arch && makepkg -si
+  cd gtk3sermo/gtk3sermo_1.1.0/packaging/arch && makepkg -si
 
   # Depuis les sources (autotools)
-  cd gtk3sermo/gtk3sermo_1.0.0 && autoreconf -fi && ./configure && make && sudo make install
+  cd gtk3sermo/gtk3sermo_1.1.0 && autoreconf -fi && ./configure && make && sudo make install
 
 Documentation : https://haplo-dialog.fr
 Rapport de bugs : devel@haplo-dialog.fr

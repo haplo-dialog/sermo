@@ -1,6 +1,6 @@
 #!/bin/sh
 # run_tests.sh — Suite de régression XML haplo-dialog
-# haplo-dialog 1.0.0 — haplo-dialog — GPL-2.0-or-later
+# sermo 1.1.0 — GPL-2.0-or-later
 #
 # Usage :
 #   ./run_tests.sh gtk3sermo          # tester avec gtk3sermo

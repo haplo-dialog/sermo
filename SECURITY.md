@@ -9,8 +9,10 @@
 
 | Port | Version | Support sécurité |
 |------|---------|-----------------|
-| gtk3sermo | 1.0.0 | ✅ Actif |
-| gtk4sermo | 1.0.0 | ✅ Actif |
+| gtk3sermo | 1.1.0 | ✅ Actif |
+| gtk3sermo | 1.0.0 | ⚠️ Plus supportée — trois défauts corrigés en 1.1.0 |
+| gtk4sermo | 1.1.0 | ✅ Actif |
+| gtk4sermo | 1.0.0 | ⚠️ Plus supportée — trois défauts corrigés en 1.1.0 |
 
 Les deux ports partagent le même cœur C et la même grammaire. Depuis le
 2026-08-24 ils ont la **même posture mémoire** : `g_strlcpy` pour les copies de

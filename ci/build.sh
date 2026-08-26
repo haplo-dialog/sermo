@@ -1,11 +1,11 @@
 #!/bin/sh
-# build.sh — Script de build universel haplo-dialog
-# haplo-dialog 1.0.0 — GPL-2.0-or-later
+# build.sh — Script de build universel sermo
+# sermo 1.1.0 — GPL-2.0-or-later
 #
 # Usage :
-#   ./ci/build.sh                    # build gtk3sermo (seul port distribué)
-#   ./ci/build.sh all                # alias de gtk3sermo
-#   ./ci/build.sh gtk3sermo              # build un seul port
+#   ./ci/build.sh                        # build gtk3sermo (port par défaut)
+#   ./ci/build.sh all                    # build les deux ports
+#   ./ci/build.sh gtk4sermo              # build un seul port
 #   ./ci/build.sh gtk3sermo --test       # build + tests
 #   ./ci/build.sh gtk3sermo --clean      # nettoyage
 
@@ -37,9 +37,9 @@ for arg in "$@"; do
     case "$arg" in
         --test)  RUN_TESTS=1 ;;
         --clean) CLEAN=1 ;;
-        all)     PORTS="gtk3sermo" ;;
-        gtk3sermo) PORTS="$PORTS $arg" ;;
-        *) warn "Argument inconnu : $arg" ;;
+        all)     PORTS="gtk3sermo gtk4sermo" ;;
+        gtk3sermo|gtk4sermo) PORTS="$PORTS $arg" ;;
+        *) err "Argument inconnu : $arg (attendu : all, gtk3sermo, gtk4sermo, --test, --clean)" ;;
     esac
 done
 
@@ -49,13 +49,14 @@ done
 # ── Répertoires source ────────────────────────────────────────────────────────
 src_dir() {
     case "$1" in
-        gtk3sermo)  echo "${ROOT_DIR}/gtk3sermo/gtk3sermo_1.0.0" ;;
+        gtk3sermo)  echo "${ROOT_DIR}/gtk3sermo/gtk3sermo_1.1.0" ;;
+        gtk4sermo)  echo "${ROOT_DIR}/gtk4sermo/gtk4sermo_1.1.0" ;;
     esac
 }
 
 build_system() {
     case "$1" in
-        gtk3sermo) echo "autotools" ;;
+        gtk3sermo|gtk4sermo) echo "autotools" ;;
     esac
 }
 
@@ -81,8 +82,19 @@ build_autotools() {
     ok "${port} compilé"
 
     if [ "$RUN_TESTS" = "1" ]; then
-        info "Tests ${port}"
-        make check || warn "Tests ${port} : échec non bloquant"
+        info "Tests unitaires ${port} (make check)"
+        chklog="${BUILD_DIR}/${port}-check.log"
+        make check > "$chklog" 2>&1 || warn "Tests ${port} : échec non bloquant"
+        # Ne jamais annoncer « testé » quand rien n'a tourné : make check
+        # traverse les sous-répertoires et rend 0 même sans une seule épreuve.
+        total=$(sed -n 's/^# TOTAL: *\([0-9]*\).*/\1/p' "$chklog" | head -1)
+        if [ -z "$total" ] || [ "$total" = "0" ]; then
+            warn "${port} : AUCUN test unitaire câblé dans l'autotools (journal : $chklog)"
+            warn "         les épreuves de ce port sont à la racine : tests/ (lancées par le pipeline)"
+        else
+            fails=$(sed -n 's/^# FAIL: *\([0-9]*\).*/\1/p' "$chklog" | head -1)
+            ok "${port} : ${total} test(s) unitaire(s), ${fails:-0} échec(s)"
+        fi
     fi
 
     make install
