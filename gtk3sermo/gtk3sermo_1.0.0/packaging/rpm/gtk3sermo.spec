@@ -17,6 +17,7 @@ BuildRequires: bison
 BuildRequires: autoconf
 BuildRequires: automake
 BuildRequires: pkgconfig
+BuildRequires: texinfo
 
 Requires: gtk3
 Requires: vte291

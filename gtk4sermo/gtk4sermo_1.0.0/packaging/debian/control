@@ -2,7 +2,9 @@ Source: gtk4sermo
 Section: utils
 Priority: optional
 Maintainer: haplo-dialog <devel@haplo-dialog.fr>
-Build-Depends: debhelper-compat (= 13), libgtk-4-dev (>= 4.6.0), libvte-2.91-gtk4-dev, flex, bison, autoconf (>= 2.69), automake (>= 1.14), pkg-config
+Build-Depends: debhelper-compat (= 13), libgtk-4-dev (>= 4.6.0), libvte-2.91-gtk4-dev,
+               flex, bison, autoconf (>= 2.69), automake (>= 1.14), pkg-config,
+               texinfo
 Standards-Version: 4.6.2
 Homepage: https://haplo-dialog.fr
 Vcs-Browser: https://gitlab.com/haplo-dialog/sermo

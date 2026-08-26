@@ -1,15 +1,15 @@
-
-# gtk3sermo.texi — documentation GTK3 complète.
+# gtk3sermo.texi — manuel du port, construit et installé.
 #
-# La génération automatique reste désactivée pour éviter la dépendance
-# makeinfo au moment du build Debian. Pour générer manuellement :
-#   makeinfo --html gtk3sermo.texi      → HTML
-#   makeinfo --pdf  gtk3sermo.texi      → PDF
-#   makeinfo        gtk3sermo.texi      → gtk3sermo.info
+# info_TEXINFOS demande makeinfo au moment du build : le paquet texinfo est donc
+# dans les Build-Depends. La génération était restée désactivée pour éviter cette
+# dépendance, au prix d'un manuel qui n'existait que dans l'archive source —
+# `info gtk3sermo` ne trouvait rien sur une machine où le paquet était installé.
+# Activée le 2026-08-26.
 #
-# To re-enable automated generation:
-#   pdf_TEXINFOS = gtk3sermo.texi
-#   info_TEXINFOS = gtk3sermo.texi
+# À la main, pour d'autres formats :
+#   makeinfo --html gtk3sermo.texi    → HTML
+#   makeinfo --pdf  gtk3sermo.texi    → PDF
 
-EXTRA_DIST = gtk3sermo.texi version.texi
+info_TEXINFOS = gtk3sermo.texi
 
+EXTRA_DIST = version.texi

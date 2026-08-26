@@ -1,13 +1,15 @@
-# gtk4sermo.texi — documentation GTK4 complète.
+# gtk4sermo.texi — manuel du port, construit et installé.
 #
-# La génération automatique reste désactivée pour éviter la dépendance
-# makeinfo au moment du build Debian. Pour générer manuellement :
-#   makeinfo --html gtk4sermo.texi      → HTML
-#   makeinfo --pdf  gtk4sermo.texi      → PDF
-#   makeinfo        gtk4sermo.texi      → gtk4sermo.info
+# info_TEXINFOS demande makeinfo au moment du build : le paquet texinfo est donc
+# dans les Build-Depends. La génération était restée désactivée pour éviter cette
+# dépendance, au prix d'un manuel qui n'existait que dans l'archive source —
+# `info gtk4sermo` ne trouvait rien sur une machine où le paquet était installé.
+# Activée le 2026-08-26.
 #
-# To re-enable automated generation:
-#   pdf_TEXINFOS = gtk4sermo.texi
-#   info_TEXINFOS = gtk4sermo.texi
+# À la main, pour d'autres formats :
+#   makeinfo --html gtk4sermo.texi    → HTML
+#   makeinfo --pdf  gtk4sermo.texi    → PDF
 
-EXTRA_DIST = gtk4sermo.texi version.texi
+info_TEXINFOS = gtk4sermo.texi
+
+EXTRA_DIST = version.texi

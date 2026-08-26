@@ -13,9 +13,9 @@ Version: %{version}
 Release: %{release}
 License: GPL GNU
 Group: Application/Misc
-Packager: Pere Laszlo pipas@linux.pte.hu
+Packager: haplo-dialog <devel@haplo-dialog.fr>
 Source: %{name}-%{version}.tar.gz
-URL: https://haplo-dialog.fr/pub/gtk3sermo/%{name}-%{version}.tar.gz
+URL: https://gitlab.com/haplo-dialog/sermo
 BuildRoot: /var/tmp/%{name}-%{version}
 
 Summary: GTK3 GUI creation tool for shells and arbitrary interpreters. 

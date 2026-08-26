@@ -352,7 +352,7 @@ intégrés directement dans la règle `wlist` (patron Lot 0). Résultat : 6 sr (
 | Fichier | Modification |
 |---------|-------------|
 | `doc/gtk3sermo.texi` | Nouveau manuel Texinfo GTK3 (~480 lignes) : Invocation, XML, 36 widgets, Actions, Env, Exemples, Migration GTK2→GTK3 |
-| `doc/gtk3sermo.info` | Stub (régénérer avec `makeinfo doc/gtk3sermo.texi`) |
+| `doc/gtk3sermo.info` | Construit par `make` depuis le `.texi` et installé dans `/usr/share/info` — `info_TEXINFOS` est actif depuis le 2026-08-26. Le fichier n'est plus suivi par git : c'est un produit de build. |
 | `doc/gtk3sermo.info` | En-tête DEPRECATED ajouté, renvoi vers gtk3sermo.info |
 | `doc/version.texi` | `EDITION/VERSION = 1.0.0`, `UPDATED 22 May 2026` |
 | `doc/Makefile.am` | `EXTRA_DIST` inclut `gtk3sermo.texi`, commentaires mis à jour |
@@ -585,7 +585,7 @@ Intégration complète dans automaton.h/c, lexer.l, parser.y, widgets.c, variabl
 |----|-------------|---------|
 | R5 | `gtk_box_pack_start/end()` (9 occurrences) — deprecated GTK4 uniquement | Faible |
 | R6 | `gtk_container_get_children()` (2 occurrences) — deprecated GTK4 uniquement | Faible |
-| R7 | ✅ Résolu — `doc/gtk3sermo.texi` réécrit pour GTK3 (patch 13). `makeinfo` à lancer pour régénérer `gtk3sermo.info` | Résolu |
+| R7 | ✅ Résolu — `doc/gtk3sermo.texi` réécrit pour GTK3 (patch 13), et depuis le 2026-08-26 `make` construit le `.info` tout seul | Résolu |
 | R8 | ✅ Résolu — 48 exemples dont 6 nouveaux widgets | Résolu |
 | R9 | `create_gvim()` expérimental, annoté EXPERIMENTAL | Faible |
 | R10 | ✅ Résolu — garde `name[0]!='\0'` ajoutée dans `tag_attributes.c` | Résolu |

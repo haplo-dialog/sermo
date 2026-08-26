@@ -17,6 +17,7 @@ BDEPEND="
 	sys-devel/bison
 	sys-devel/autoconf
 	sys-devel/automake
+	sys-apps/texinfo
 "
 
 DEPEND="

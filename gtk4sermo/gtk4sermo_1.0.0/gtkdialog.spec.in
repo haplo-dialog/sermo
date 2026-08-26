@@ -1,9 +1,9 @@
-# $Id: gtk3d.spec.in,v 1.2 2004/11/22 06:36:20 pipas Exp pipas $
+# $Id: gtk4sermo.spec.in,v 1.2 2004/11/22 06:36:20 pipas Exp pipas $
 #
 # Copyright (c) 2003 Pere Laszlo pipas@linux.pte.hu
 # Copyright (c) 2026 haplo-dialog <devel@haplo-dialog.fr>
 #
-%define name gtk3d
+%define name gtk4sermo
 %define version 1.0.0
 %define release 1
 %define manifest %{_builddir}/%{name}-%{version}-%{release}.manifest
@@ -13,15 +13,15 @@ Version: %{version}
 Release: %{release}
 License: GPL GNU
 Group: Application/Misc
-Packager: Pere Laszlo pipas@linux.pte.hu
+Packager: haplo-dialog <devel@haplo-dialog.fr>
 Source: %{name}-%{version}.tar.gz
-URL: ftp://linux.pte.hu/pub/gtk3d/%{name}-%{version}.tar.gz
+URL: https://gitlab.com/haplo-dialog/sermo
 BuildRoot: /var/tmp/%{name}-%{version}
 
 Summary: GUI creation tool for shells and arbitrary interpreters. 
 
 %description
-The gtk3d is uses an XML like simple language as a GUI description
+gtk4sermo uses an XML like simple language as a GUI description
 language to produce dialog boxes. The program can be used with shells
 and arbitrary interpreters. Example programs included for BASH and AWK.
 

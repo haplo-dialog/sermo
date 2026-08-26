@@ -1,10 +1,4 @@
-@set UPDATED 22 August 2026
+@set UPDATED 26 August 2026
 @set UPDATED-MONTH August 2026
 @set EDITION 1.0.0
 @set VERSION 1.0.0
-@set PORT gtk3sermo
-@set BINARY gtk3sermo
-@set TOOLKIT GTK3
-@c version.texi est suivi par git : automake ne le produit que si info_TEXINFOS
-@c est actif, ce qui n'est pas le cas ici. Sans lui, « makeinfo gtk3sermo.texi »
-@c echoue sur un clone neuf et « make dist » s'arrete.

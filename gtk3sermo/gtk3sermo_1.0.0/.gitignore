@@ -55,3 +55,6 @@ doc/gtk3sermo-haplo1-site.zip
 # Divers
 *.pyc
 __pycache__/
+
+# Engendre par configure depuis gtk3sermo.spec.in — ne pas suivre.
+/gtk3sermo.spec

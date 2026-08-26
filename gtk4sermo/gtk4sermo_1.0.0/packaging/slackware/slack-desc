@@ -1,8 +1,8 @@
 gtk4sermo: gtk4sermo (GTK4 dialog window creator for shell scripts)
 gtk4sermo:
 gtk4sermo: gtk4sermo builds GTK4 dialog windows from an XML-like description
-gtk4sermo: language. Port GTK4 of gtk3d 1.0.0 — installs alongside
-gtk4sermo: gtk3d without conflict. 50 widgets including GTK4-native:
+gtk4sermo: language. GTK 4 port of the sermo suite — installs alongside
+gtk4sermo: gtk3sermo without conflict. 50 widgets including GTK4-native:
 gtk4sermo: stack, revealer, flowbox, overlay, drawingarea. Security: safe_exec,
 gtk4sermo: FORTIFY_SOURCE=3, PIE, Full RELRO.
 gtk4sermo: Toolkit: GTK4

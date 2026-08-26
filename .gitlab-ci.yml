@@ -87,7 +87,7 @@ gtk3sermo:
   variables:
     PORT: gtk3sermo
     EXTRA_CONFIGURE: "--enable-unit-tests"
-    DEPS: "automake autoconf libtool libgtk-3-dev libvte-2.91-dev libgtk-layer-shell-dev check"
+    DEPS: "automake autoconf libtool libgtk-3-dev libvte-2.91-dev libgtk-layer-shell-dev check texinfo"
 
 gtk4sermo:
   extends: .autotools
@@ -95,7 +95,7 @@ gtk4sermo:
     PORT: gtk4sermo
     # gtk4sermo n'a pas d'--enable-unit-tests : pas de tests C de son cote.
     EXTRA_CONFIGURE: ""
-    DEPS: "automake autoconf libtool libgtk-4-dev libvte-2.91-gtk4-dev"
+    DEPS: "automake autoconf libtool libgtk-4-dev libvte-2.91-gtk4-dev texinfo"
 
 # ─────────────────── exécution réelle des exemples ───────────────────
 # Ouvre vraiment les fenêtres, en français. Le banc sort en erreur dès qu'un
@@ -141,11 +141,11 @@ exemples:gtk3sermo:
   needs: ["gtk3sermo"]
   variables:
     PORT: gtk3sermo
-    TOOLKIT_DEPS: "automake autoconf libtool libgtk-3-dev libvte-2.91-dev libgtk-layer-shell-dev"
+    TOOLKIT_DEPS: "automake autoconf libtool libgtk-3-dev libvte-2.91-dev libgtk-layer-shell-dev texinfo"
 
 exemples:gtk4sermo:
   extends: .examples
   needs: ["gtk4sermo"]
   variables:
     PORT: gtk4sermo
-    TOOLKIT_DEPS: "automake autoconf libtool libgtk-4-dev libvte-2.91-gtk4-dev"
+    TOOLKIT_DEPS: "automake autoconf libtool libgtk-4-dev libvte-2.91-gtk4-dev texinfo"

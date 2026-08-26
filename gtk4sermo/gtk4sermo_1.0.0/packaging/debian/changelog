@@ -1,5 +1,29 @@
 gtk4sermo (1.0.0-12) unstable; urgency=medium
 
+  * Les manuels info sont enfin LIVRÉS. info_TEXINFOS était commenté dans les
+    deux doc/Makefile.am et aucun .install n'emportait de manuel : une fois le
+    paquet installé, « info gtk3sermo » ne trouvait rien. Les manuels
+    n'existaient que dans l'archive source. La raison invoquée était d'éviter
+    la dépendance makeinfo au build ; texinfo entre donc dans les Build-Depends,
+    et dans les recettes Arch, RPM et Gentoo, et dans les trois pipelines.
+    Deux défauts sont sortis au passage :
+    - version.texi contenait @set PORT, BINARY et TOOLKIT. Or automake le
+      REGÉNÈRE dès que info_TEXINFOS est actif, et n'y met que UPDATED,
+      UPDATED-MONTH, EDITION et VERSION. Le manuel installé affichait donc
+      « {No value for 'TOOLKIT'} ». Ces variables vivent maintenant dans le
+      .texi, qu'automake ne touche pas.
+    - Sans @dircategory ni @direntry, le manuel s'installait mais n'apparaissait
+      PAS dans le menu de l'index Info : on ne le trouvait qu'en connaissant
+      déjà son nom de fichier. Mesuré, le menu du fichier « dir » était vide.
+    Vérifié en installant les paquets construits : « info gtk3sermo » et
+    « info gtk4sermo » ouvrent le manuel, la navigation par nœud fonctionne
+    (« info gtk3sermo Security »), et les deux apparaissent dans l'index sous
+    « Interfaces graphiques ». lintian ne signale rien sur le manuel.
+  * Le fichier gtkdialog.spec du port GTK 4 était suivi par git alors qu'il est
+    ENGENDRÉ par configure depuis gtkdialog.spec.in. Retiré et ignoré, comme
+    côté GTK 3. Son modèle nommait encore le paquet « gtk3d », pointait une URL
+    FTP de 2004 et donnait l'amont comme empaqueteur ; la vraie recette RPM et
+    le slack-desc décrivaient eux aussi un « gtk3d » qui n'existe pas. Corrigés.
   * Le manuel amont orphelin doc/gtkdialog.texi est supprimé, avec sa forme
     engendrée doc/gtkdialog.info et deux autres artefacts que le port GTK 3
     n'avait pas (gtk4sermo.info, stamp-vti). doc/ des deux ports a désormais la
@@ -103,7 +127,8 @@ gtk4sermo (1.0.0-12) unstable; urgency=medium
     copyright, elle devient « haplo-dialog ». Là où elle nommait un système
     d'exploitation — « installé sur », « distribution cible », « disponible
     sur » — elle devient « Debian Testing » ou disparaît : un programme n'est
-    pas une distribution, et une substitution aveugle aurait écrit des faussetés.
+    pas une distribution, et une substitution aveugle aurait écrit des
+    faussetés.
   * Résidus de la même marque, que la chaîne exacte ne pouvait pas atteindre :
     « Paquet de la distribution haplo-histrio » dans les lintian-overrides du
     port GTK 4 (le port GTK 3 disait déjà « Paquet tiers »), « Haplo ships

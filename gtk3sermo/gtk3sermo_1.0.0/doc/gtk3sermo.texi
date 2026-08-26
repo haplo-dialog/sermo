@@ -12,6 +12,15 @@
 @c   makeinfo        gtk3sermo.texi  (→ gtk3sermo.info)
 @c ============================================================
 @include version.texi
+
+@c Variables propres au projet.
+@c Elles ne peuvent PAS vivre dans version.texi : depuis que info_TEXINFOS est
+@c actif, automake regenere ce fichier a chaque build et n'y met que UPDATED,
+@c UPDATED-MONTH, EDITION et VERSION. Les y laisser faisait afficher
+@c « {No value for 'TOOLKIT'} » dans le manuel installe.
+@set PORT gtk3sermo
+@set BINARY gtk3sermo
+@set TOOLKIT GTK 3
 @c %**start of header
 @setfilename gtk3sermo.info
 @settitle gtk3sermo @value{VERSION} User Manual
@@ -45,6 +54,14 @@ The program itself derives from that author's work and remains GPL-2.0-or-later;
 this notice concerns the documentation only.
 @end quotation
 @end copying
+
+@c Sans ces deux directives, le manuel s'installe mais n'apparait PAS dans le
+@c menu de l'index Info : on ne le trouve qu'en connaissant deja son nom de
+@c fichier. Verifie le 2026-08-26 — le menu du fichier « dir » etait vide.
+@dircategory Interfaces graphiques
+@direntry
+* gtk3sermo: (gtk3sermo).   Constructeur de dialogues GTK 3 decrits en XML, pour scripts shell.
+@end direntry
 
 @titlepage
 @title gtk3sermo User Manual

@@ -51,7 +51,7 @@ jobs:
           apt-get update -qq
           DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
             build-essential flex bison pkg-config ca-certificates \
-            automake autoconf libtool binutils ${{ matrix.deps }}
+            automake autoconf libtool binutils texinfo ${{ matrix.deps }}
 
       # extra_configure porte --enable-unit-tests là où l'option existe
       # (gtk3sermo). Elle était documentée mais jamais rejouée : c'est pour ça
@@ -114,7 +114,7 @@ jobs:
           apt-get update -qq
           DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
             build-essential flex bison pkg-config ca-certificates \
-            automake autoconf libtool ${{ matrix.deps }} \
+            automake autoconf libtool texinfo ${{ matrix.deps }} \
             xvfb xauth xdotool locales dbus-x11 fonts-dejavu-core
 
       - name: Locale française

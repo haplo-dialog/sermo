@@ -17,12 +17,13 @@ BuildRequires: bison
 BuildRequires: autoconf
 BuildRequires: automake
 BuildRequires: pkgconfig
+BuildRequires: texinfo
 
 Requires: gtk4
 Requires: vte291-gtk4
 
 %description
-gtk4sermo builds GTK4 dialog windows from an XML-like description language. Port GTK4 of gtk3d 1.0.0 — installs alongside gtk3d without conflict. 50 widgets including GTK4-native: stack, revealer, flowbox, overlay, drawingarea. Security: safe_exec, FORTIFY_SOURCE=3, PIE, Full RELRO.
+gtk4sermo builds GTK4 dialog windows from an XML-like description language. GTK 4 port of the sermo suite — installs alongside gtk3sermo without conflict. 50 widgets including GTK4-native: stack, revealer, flowbox, overlay, drawingarea. Security: safe_exec, FORTIFY_SOURCE=3, PIE, Full RELRO.
 
 Toolkit: GTK4.
 Security hardening: safe_exec, FORTIFY_SOURCE=3, PIE, Full RELRO, stack-protector-strong.
