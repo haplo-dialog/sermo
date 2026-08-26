@@ -73,3 +73,13 @@ __pycache__/
 
 # Engendre par configure depuis gtk3sermo.spec.in — ne pas suivre.
 /gtk3sermo.spec
+
+# Artefacts de « make check » (automake parallel-tests). Non couverts jusqu au
+# 2026-08-26 : une construction complete laissait 8 fichiers en clair.
+tests/check-shell.sh
+tests/test_safe_exec
+tests/test-suite.log
+tests/*.log
+tests/*.trs
+.dirstamp
+**/.dirstamp
