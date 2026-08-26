@@ -69,6 +69,14 @@ default:
     # legitimement system() et popen() pour dire qu'il les remplace — et exige une
     # frontiere de mot a GAUCHE, sinon safe_system compterait pour system.
     - bash "$CI_PROJECT_DIR/tests/garde_fonctions_interdites.sh" "$CI_PROJECT_DIR/$PORT/${PORT}_1.0.0/src"
+    # Ce depot est alimente par COPIE DE FICHIERS depuis le depot prive, ou une
+    # ordonnance impose a chaque .md un en-tete « maj : <date> · poste <machine> ».
+    # Une copie sans filtre y ferait entrer 46 fichiers portant le nom de la
+    # machine de travail. En aout 2026, une fuite de ce genre a coute la
+    # SUPPRESSION et la recreation du projet GitLab : reecrire l'historique
+    # n'avait pas suffi, le serveur servait encore les anciens commits par leur
+    # empreinte, et la liste publique des pipelines publiait ces empreintes.
+    - bash "$CI_PROJECT_DIR/tests/garde_pas_de_poste.sh" "$CI_PROJECT_DIR"
 
 .cmake:
   stage: build-test

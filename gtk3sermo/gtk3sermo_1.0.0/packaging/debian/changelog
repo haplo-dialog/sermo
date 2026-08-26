@@ -16,6 +16,18 @@ gtk3sermo (1.0.0-11) unstable; urgency=medium
     la chaîne d'origine, elle en fait des copies » — c'est faux deux fois :
     elle écrit des '\0' dedans, et line[0] EST la chaîne d'origine, que
     list_t_free() libère ensuite. Le contrat d'appartenance est écrit.
+  * Nouveau banc tests/garde_pas_de_poste.sh : aucun en-tête « maj : <date> ·
+    poste <machine> » ne doit entrer dans ce dépôt. Ce dépôt est alimenté par
+    copie de fichiers depuis le dépôt privé, où une ordonnance impose cet
+    en-tête à chaque .md — 46 fichiers y portent aujourd'hui le nom de la
+    machine de travail. Une copie sans filtre les ferait entrer ici. En août
+    2026, une fuite de ce genre a coûté la SUPPRESSION et la recréation du
+    projet GitLab : réécrire l'historique n'avait pas suffi, le serveur servait
+    encore les anciens commits par leur empreinte, et la liste publique des
+    pipelines publiait ces empreintes. Le banc porte un témoin de sensibilité,
+    et son motif vise la forme exacte de l'ordonnance — une première version,
+    trop large, signalait le mot « poste » dans une phrase française ordinaire
+    de tests/fuzz/fuzz.py.
   * Les manuels info sont enfin LIVRÉS. info_TEXINFOS était commenté dans les
     deux doc/Makefile.am et aucun .install n'emportait de manuel : une fois le
     paquet installé, « info gtk3sermo » ne trouvait rien. Les manuels

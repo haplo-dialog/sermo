@@ -90,6 +90,12 @@ jobs:
       - name: Garde — aucune fonction interdite
         run: bash tests/garde_fonctions_interdites.sh "${{ matrix.port }}/${{ matrix.port }}_1.0.0/src"
 
+      # Barrière à l'entrée : aucun en-tête « · poste <machine> » venu du dépôt
+      # privé ne doit entrer ici. Une fuite de ce genre a coûté la recréation
+      # complète du projet GitLab en août 2026.
+      - name: Garde — pas de nom de machine
+        run: bash tests/garde_pas_de_poste.sh "$GITHUB_WORKSPACE"
+
   exemples:
     name: ${{ matrix.port }} — exemples réels (Xvfb, fr_FR.UTF-8)
     runs-on: ubuntu-latest
