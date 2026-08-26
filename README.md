@@ -17,7 +17,7 @@
 > écraser votre `gtk3dialog` — réinstallez celui de votre distribution.
 >
 > **Les paquets de la famille `sermo` sont publiés**, joints à la release
-> [v1.0.0](https://gitlab.com/haplo-dialog/sermo/-/releases/v1.0.0) avec leurs
+> [v1.0.0-4](https://gitlab.com/haplo-dialog/sermo/-/releases/v1.0.0-4) avec leurs
 > sommes SHA256 : `gtk3sermo`, `gtk4sermo`, `gtksermo` et les symboles de
 > débogage. On peut aussi construire depuis les sources — voir
 > [Installation](#installation).
@@ -119,19 +119,31 @@ Un cœur C commun (grammaire flex/bison + automate + `safe_exec`), deux backends
 
 ### Télécharger la release
 
-Les paquets sont joints à la release [**v1.0.0**](https://gitlab.com/haplo-dialog/sermo/-/releases/v1.0.0), avec leurs sommes de
-contrôle. Il n'y a **pas de dépôt APT** : on télécharge, on vérifie, on installe.
+Les paquets sont joints à la release [**v1.0.0-4**](https://gitlab.com/haplo-dialog/sermo/-/releases/v1.0.0-4), avec leurs
+sommes de contrôle. Il n'y a **pas de dépôt APT** : on télécharge, on vérifie,
+on installe.
 
 ```sh
-sha256sum -c SHA256SUMS
-sudo apt install ./gtk3sermo_1.0.0-10_amd64.deb
+U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/1.0.0-4
+for f in gtk3sermo_1.0.0-11_amd64.deb gtksermo_1.0.0-11_all.deb SHA256SUMS; do
+    curl -fLO "$U/$f"
+done
+
+sha256sum --ignore-missing -c SHA256SUMS
+sudo apt install ./gtk3sermo_1.0.0-11_amd64.deb
 ```
 
 | Paquet | Commande installée | Conflits |
 |---|---|---|
-| `gtk3sermo` 1.0.0-10 | `/usr/bin/gtk3sermo` | aucun |
-| `gtk4sermo` 1.0.0-11 | `/usr/bin/gtk4sermo` | aucun |
-| `gtksermo` 1.0.0-10 | `/usr/bin/gtkdialog` | **avec `gtkdialog` et `gtk3dialog`** |
+| `gtk3sermo` 1.0.0-11 | `/usr/bin/gtk3sermo` | aucun |
+| `gtk4sermo` 1.0.0-12 | `/usr/bin/gtk4sermo` | aucun |
+| `gtksermo` 1.0.0-11 | `/usr/bin/gtkdialog` | **avec `gtkdialog` et `gtk3dialog`** |
+
+> ⚠️ **N'installez pas les paquets de la release `v1.0.0`**, restée en ligne
+> pour l'historique. Ils portent trois défauts corrigés depuis : la sortie
+> rendue au shell y est exécutable par `eval` si l'utilisateur du dialogue tape
+> `$(commande)` dans un champ, cliquer un `<switch>` tue le programme, et sous
+> locale française un nombre écrit avec un point vaut zéro en silence.
 
 Les deux premiers s'installent sans conflit, y compris à côté du `gtk3dialog` de
 BunsenLabs. Le troisième fournit la commande `gtkdialog`, donc il entre en

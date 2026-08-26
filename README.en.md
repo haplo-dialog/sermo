@@ -18,7 +18,7 @@
 > overwritten your `gtk3dialog` — reinstall your distribution's own.
 >
 > **The `sermo` family packages are published**, attached to the
-> [v1.0.0](https://gitlab.com/haplo-dialog/sermo/-/releases/v1.0.0) release
+> [v1.0.0-4](https://gitlab.com/haplo-dialog/sermo/-/releases/v1.0.0-4) release
 > along with their SHA256 sums: `gtk3sermo`, `gtk4sermo`, `gtksermo` and the
 > debug symbols. You can also build from source — see
 > [Installation](#installation).
@@ -117,19 +117,31 @@ One shared C core (flex/bison grammar + state machine + `safe_exec`), two backen
 
 ### Download the release
 
-The packages are attached to the [**v1.0.0**](https://gitlab.com/haplo-dialog/sermo/-/releases/v1.0.0) release, with their checksums.
+The packages are attached to the [**v1.0.0-4**](https://gitlab.com/haplo-dialog/sermo/-/releases/v1.0.0-4) release, with their checksums.
 There is **no APT repository**: you download, you verify, you install.
 
 ```sh
 sha256sum -c SHA256SUMS
-sudo apt install ./gtk3sermo_1.0.0-10_amd64.deb
+U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/1.0.0-4
+for f in gtk3sermo_1.0.0-11_amd64.deb gtksermo_1.0.0-11_all.deb SHA256SUMS; do
+    curl -fLO "$U/$f"
+done
+
+sha256sum --ignore-missing -c SHA256SUMS
+sudo apt install ./gtk3sermo_1.0.0-11_amd64.deb
 ```
 
 | Package | Command installed | Conflicts |
 |---|---|---|
-| `gtk3sermo` 1.0.0-10 | `/usr/bin/gtk3sermo` | none |
-| `gtk4sermo` 1.0.0-11 | `/usr/bin/gtk4sermo` | none |
-| `gtksermo` 1.0.0-10 | `/usr/bin/gtkdialog` | **with `gtkdialog` and `gtk3dialog`** |
+| `gtk3sermo` 1.0.0-11 | `/usr/bin/gtk3sermo` | none |
+| `gtk4sermo` 1.0.0-12 | `/usr/bin/gtk4sermo` | none |
+| `gtksermo` 1.0.0-11 | `/usr/bin/gtkdialog` | **with `gtkdialog` and `gtk3dialog`** |
+
+> ⚠️ **Do not install the packages from the `v1.0.0` release**, kept online for
+> the record. They carry three defects fixed since: the output handed to the
+> shell can be executed by `eval` if whoever uses the dialog types
+> `$(command)` into a field, clicking a `<switch>` kills the program, and under
+> a French locale a number written with a dot silently reads as zero.
 
 The first two install without conflict, including alongside BunsenLabs'
 `gtk3dialog`. The third provides the `gtkdialog` command, so it conflicts with
