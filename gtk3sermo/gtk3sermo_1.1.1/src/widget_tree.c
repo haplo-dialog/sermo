@@ -786,12 +786,12 @@ void widget_tree_save(variable *var)
 					g_free(string);
 				}
 				if (initialrow) {
-					fprintf(outfile, "%s", text);
+					fprintf(outfile, "%s", line);
 					initialrow = FALSE;
 				} else {
-					fprintf(outfile, "\n%s", text);
+					fprintf(outfile, "\n%s", line);
 				}
-				g_free(text);
+				g_free(line);
 
 				if (!gtk_tree_model_iter_next(GTK_TREE_MODEL(model), &iter)) break;
 			}
