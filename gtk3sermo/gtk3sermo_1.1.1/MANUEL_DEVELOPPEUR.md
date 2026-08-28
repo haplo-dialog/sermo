@@ -572,6 +572,7 @@ Ces flags dans `src/Makefile.am` ne doivent jamais être retirés :
 
 ```makefile
 AM_CFLAGS = ... \
+  -U_FORTIFY_SOURCE \           # désarme le =2 des drapeaux Debian
   -D_FORTIFY_SOURCE=3 \          # Buffer overflow detection runtime
   -fstack-protector-strong \     # Stack canaries
   -fPIE                          # Position Independent Executable

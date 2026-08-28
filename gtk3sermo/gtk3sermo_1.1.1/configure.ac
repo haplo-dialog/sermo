@@ -189,7 +189,7 @@ AC_CONFIG_FILES([
 # Hardening flags — vérifiés à la compilation
 # ---------------------------------------------------------------------------
 AC_SUBST([HARDENING_CFLAGS],
-  ["-fstack-protector-strong -fstack-clash-protection -fcf-protection=full -D_FORTIFY_SOURCE=3 -D_POSIX_C_SOURCE=200809L"])
+  ["-fstack-protector-strong -fstack-clash-protection -fcf-protection=full -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 -D_POSIX_C_SOURCE=200809L"])
 AC_SUBST([HARDENING_LDFLAGS],
   ["-pie -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack"])
 

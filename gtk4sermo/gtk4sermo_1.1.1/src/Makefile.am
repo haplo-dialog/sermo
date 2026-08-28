@@ -92,7 +92,7 @@ AM_CFLAGS = \
 	-Wnull-dereference \
 	-Wimplicit-fallthrough=3 \
 	-Wformat=2 -Wformat-overflow=2 -Werror=format-security \
-	-D_FORTIFY_SOURCE=3 \
+	-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 \
 	-D_POSIX_C_SOURCE=200809L \
 	-fstack-protector-strong \
 	-fstack-clash-protection \

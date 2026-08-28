@@ -9,10 +9,8 @@
 > Mesuré sur un `make clean && make` complet, GCC 15.3.0 / GTK 4.22.4 :
 > 67 fichiers compilés, 1 édition de liens, 0 erreur, binaire non allégé de
 > 1 579 264 octets (~1,58 Mo ; 388 280 octets une fois allégé dans le paquet).
-> 103 avertissements, dont **67 sont une seule et même cause** — `_FORTIFY_SOURCE`
-> redéfini, une fois par fichier compilé (voir ci-dessous). Restent donc
-> 36 avertissements de code, en 9 catégories, dominées par
-> `-Wunused-but-set-variable` (15) et `-Wsign-compare` (6).
+> **36 avertissements**, tous des avertissements de code, en 9 catégories,
+> dominées par `-Wunused-but-set-variable` (15) et `-Wsign-compare` (6).
 > Repère historique : 1549 avertissements avant la passe de nettoyage de mai 2026,
 > 128 après, avec le GCC de l'époque — les compilateurs diffèrent, les deux
 > chiffres ne se comparent pas directement.
@@ -22,10 +20,12 @@
 > pas bloquants.
 > `src/Makefile.am` filtre les dépréciations GTK 4.22 et le bruit hérité via
 > `-Wno-deprecated-declarations -Wno-missing-prototypes -Wno-unused-variable`.
-> `_FORTIFY_SOURCE` est défini **deux fois** sur la ligne de commande : `=2` par
-> les drapeaux Debian (`CPPFLAGS`), puis `=3` par `src/Makefile.am`. La seconde
-> définition l'emporte, donc le durcissement annoncé est bien celui appliqué,
-> mais chaque fichier compilé émet un avertissement. Même montage côté gtk3sermo.
+> Ce compte était de 103 jusqu'au 2026-08-28 : 67 avertissements venaient d'une
+> seule cause, `_FORTIFY_SOURCE` défini deux fois sur la ligne de commande — `=2`
+> par les drapeaux Debian (`CPPFLAGS`), puis `=3` par `src/Makefile.am` —, répétée
+> une fois par fichier compilé. Corrigé en désarmant la première définition
+> (`-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3`) : la valeur effective reste 3, mesurée,
+> et le bruit disparaît. Même correctif côté gtk3sermo, qui passe de 82 à 24.
 > Voir `BILAN_SANTE.md` (audit #4) et `NEWS` pour le détail des correctifs.
 
 ---
@@ -502,6 +502,7 @@ Ces flags dans `src/Makefile.am` ne doivent jamais être retirés :
 
 ```makefile
 AM_CFLAGS = ... \
+  -U_FORTIFY_SOURCE \           # désarme le =2 des drapeaux Debian
   -D_FORTIFY_SOURCE=3 \          # Buffer overflow detection runtime
   -fstack-protector-strong \     # Stack canaries
   -fPIE                          # Position Independent Executable
@@ -909,31 +910,40 @@ git push origin v0.9.1
 
 ## 13. Roadmap technique
 
-### Version 0.9.x — Stabilisation GTK4 (en cours)
+Cette section décrivait encore, en août 2026, un port « 0.9.x en cours » et une
+« Version 1.0 » à venir, alors que gtk4sermo est livré en 1.1.1 depuis le
+2026-08-28. Elle est refaite ici sur des faits mesurés à cette date.
 
-- [x] Migration GTK2 → GTK3 (45 fichiers)
-- [x] Correctifs de sécurité (safe_exec, strcpy, malloc)
-- [x] Mise à jour du build system
-- [ ] Compilation propre sur Debian 12 / Ubuntu 22.04
-- [ ] Tests fonctionnels sur les 30 widgets
-- [ ] Correction des erreurs résiduelles glade_support.c
-- [ ] Paquet .deb modernisé
+### Livré — 1.0.0 à 1.1.1 (mai à août 2026)
 
-### Version 0.9.5 — Améliorations qualité
+- [x] Migration GTK2 → GTK3 → GTK4
+- [x] Correctifs de sécurité (`safe_exec`, `strcpy`, `malloc`)
+- [x] Build system autotools remis à jour
+- [x] Compile et lie sans erreur sur Debian testing (GCC 15.3.0, GTK 4.22.4)
+- [x] Paquet `.deb`, joint à chaque release
+- [x] Intégration continue : `.gitlab-ci.yml`, `.github/workflows/ci.yml`,
+      `.gitea/workflows/ci.yml`
+- [x] `<table>`, `<menubar>` et `<menuitem>` portés sur GtkColumnView et
+      GMenuModel — ce ne sont plus des bouchons
+- [x] 56 widgets, 55 cas XML de régression, 58 exemples livrés
+- [x] Numéro de version unifié avec gtk3sermo depuis la 1.1.0
 
-- [ ] Réduction des avertissements gcc à < 5 avec `-Wall -Wextra`
-- [ ] Ajout de tests unitaires avec `cmocka` ou `check`
-- [ ] Intégration CI/CD (GitHub Actions ou GitLab CI)
-- [ ] Passage au standard C17 (`-std=c17`)
+### Ouvert
+
+- [ ] Avertissements gcc : **36 restants** (mesuré le 2026-08-28, GCC 15.3.0).
+      L'objectif « moins de 5 » n'est pas atteint. Les plus nombreux sont dans
+      `variables.c` (6) et `automaton.c` (5).
+- [ ] Ancrage Wayland (`layer`, `edge`, `dist`, `reserve`) : implémenté côté
+      gtk3sermo seulement. Mesuré : **0 symbole `gtk_layer_*`** dans le binaire
+      GTK 4. La bibliothèque layer-shell pour GTK 4 existe en Debian ; c'est le
+      code qui manque.
+- [ ] `glade_support.c` : 2 avertissements résiduels
+- [ ] Tests unitaires (`cmocka` ou `check`) : aucun cadre en place, la couverture
+      repose sur les 55 cas XML
+- [ ] Refactoring `signals.c` pour l'API GdkEvent de GTK 4
+- [ ] Passage explicite au standard C17 : aucun `-std=` n'est imposé aujourd'hui
 - [ ] Amélioration `safe_exec.c` pour supporter les pipes shell via `execvp()`
-
-### Version 1.0 — Migration GTK4
-
-- [x] Migration GTK3 → GTK4 (réalisée)
-- [ ] Refactoring `signals.c` pour la nouvelle API GdkEvent
-- [ ] Remplacement GtkTreeView par GtkColumnView (optionnel)
-- [ ] Support Wayland natif (sans XWayland)
-- [ ] Passage à Meson/Ninja (remplacement Autotools)
+- [ ] Passage à Meson/Ninja en remplacement des autotools
 
 ### Vision long terme
 
