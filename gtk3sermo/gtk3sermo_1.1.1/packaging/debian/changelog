@@ -1,3 +1,29 @@
+gtk3sermo (1.1.1-2) unstable; urgency=medium
+
+  * _FORTIFY_SOURCE etait defini deux fois a la compilation : =2 par les
+    drapeaux Debian dans CPPFLAGS, puis =3 par src/Makefile.am. GCC retenait
+    bien la seconde — le durcissement annonce etait celui applique — mais il
+    avertissait a chaque fichier compile : 58 avertissements sur 82.
+    -U_FORTIFY_SOURCE desarme la premiere definition. Mesure apres : 24
+    avertissements, 0 erreur, valeur effective 3 verifiee par une sonde
+    compilee avec la meme suite de drapeaux.
+  * HARDENING_CFLAGS et HARDENING_LDFLAGS etaient declares dans configure.ac et
+    references nulle part : le durcissement venait de listes recopiees en dur
+    dans src/Makefile.am, et les deux listes avaient diverge (-fPIE d'un cote,
+    -Wl,-z,ibt -Wl,-z,shstk de l'autre). Les completer puis les cabler donne une
+    source unique. Jeux de drapeaux de compilation et de lien compares avant et
+    apres, tries : identiques (34 drapeaux de compilation).
+  * Aucun changement fonctionnel. tests/xml/run_tests.sh : 55 PASS | 0 FAIL.
+    Durcissement releve dans le binaire produit : 5 symboles *_chk, canari de
+    pile, PIE, RELRO, liaison immediate.
+  * Documentation : le manuel developpeur annonçait 43 widgets en comptant des
+    fichiers — 43 fichiers portent 52 widgets, neuf n'ont pas de fichier a eux.
+    Les deux manuels developpeur se presentaient en 1.0.0 dans des dossiers
+    1.1.1, et la roadmap du manuel GTK 4 annonçait un port « 0.9.x en cours »
+    pour un port livre en 1.1.1.
+
+ -- S. Cage <s.cage@lucubratio.fr>  Fri, 28 Aug 2026 14:40:00 +0200
+
 gtk3sermo (1.1.1-1) unstable; urgency=medium
 
   * Les deux ports s'installent enfin cote a cote. Ils livraient tous deux
