@@ -1,7 +1,7 @@
 # Manuel Développeur et Mainteneur — gtk3sermo
 
-**Version :** 1.0.0  
-**Date :** Mai 2026  
+**Version :** 1.1.1  
+**Date :** Août 2026  
 **Audience :** Développeurs C, mainteneurs haplo-dialog  
 **Mainteneur :** haplo-dialog <devel@haplo-dialog.fr> | **Dépôt :** https://haplo-dialog.fr
 
@@ -49,7 +49,7 @@ gtk3sermo est un programme C de ~35 000 lignes organisé en trois couches distin
 ┌────────────────────────▼────────────────────────────────┐
 │                    COUCHE WIDGETS                        │
 │   widgets.c     ← dispatch, widget_opencommand()        │
-│   widget_*.c    ← 43 implémentations de widgets         │
+│   widget_*.c    ← 43 fichiers pour 52 widgets           │
 │   glade_support.c ← support GtkBuilder (.glade/.ui)     │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -136,7 +136,7 @@ src/
 ├── printing.c/.h          # Support impression GTK
 ├── glade_support.c/.h     # Support GtkBuilder / fichiers .ui
 │
-│   ── WIDGETS (43 fichiers, un par widget — extrait) ──
+│   ── WIDGETS (43 fichiers pour 52 widgets — extrait) ──
 ├── widgets.c/.h           # Dispatch, widget_opencommand(), widget_get_text_value()
 ├── widget_button.c/.h
 ├── widget_checkbox.c/.h

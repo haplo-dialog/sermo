@@ -1,17 +1,31 @@
 # Manuel Développeur et Mainteneur — gtk4sermo (gtk4sermo)
 
-**Version :** 1.0.0-gtk4  
-**Date :** Juin 2026 (mis à jour 2026-06-01)  
+**Version :** 1.1.1  
+**Date :** Août 2026 (mis à jour 2026-08-28)  
 **Audience :** Développeurs C, mainteneurs haplo-dialog  
 **Mainteneur :** haplo-dialog <devel@haplo-dialog.fr> | **Dépôt :** https://haplo-dialog.fr
 
-> **État de compilation (2026-06-01) :** `gtk4sermo` compile et lie sans erreur
-> (binaire ~1,45 Mo). Les warnings ont été réduits de 1549 à 128 (~92 %).
+> **État de compilation (2026-08-28) :** `gtk4sermo` compile et lie sans erreur.
+> Mesuré sur un `make clean && make` complet, GCC 15.3.0 / GTK 4.22.4 :
+> 67 fichiers compilés, 1 édition de liens, 0 erreur, binaire non allégé de
+> 1 579 264 octets (~1,58 Mo ; 388 280 octets une fois allégé dans le paquet).
+> 103 avertissements, dont **67 sont une seule et même cause** — `_FORTIFY_SOURCE`
+> redéfini, une fois par fichier compilé (voir ci-dessous). Restent donc
+> 36 avertissements de code, en 9 catégories, dominées par
+> `-Wunused-but-set-variable` (15) et `-Wsign-compare` (6).
+> Repère historique : 1549 avertissements avant la passe de nettoyage de mai 2026,
+> 128 après, avec le GCC de l'époque — les compilateurs diffèrent, les deux
+> chiffres ne se comparent pas directement.
 > Le port GTK4 des API GTK2/3 supprimées est complet (voir `src/gtk4-compat.h`).
-> Les 128 warnings résiduels sont des idiomes hérités de l'amont gtkdialog 0.8.3
-> (assignation en condition, casts entier↔pointeur) et ne sont pas bloquants.
+> Les avertissements de code résiduels sont des idiomes hérités de l'amont
+> gtkdialog 0.8.3 (assignation en condition, casts entier↔pointeur) et ne sont
+> pas bloquants.
 > `src/Makefile.am` filtre les dépréciations GTK 4.22 et le bruit hérité via
 > `-Wno-deprecated-declarations -Wno-missing-prototypes -Wno-unused-variable`.
+> `_FORTIFY_SOURCE` est défini **deux fois** sur la ligne de commande : `=2` par
+> les drapeaux Debian (`CPPFLAGS`), puis `=3` par `src/Makefile.am`. La seconde
+> définition l'emporte, donc le durcissement annoncé est bien celui appliqué,
+> mais chaque fichier compilé émet un avertissement. Même montage côté gtk3sermo.
 > Voir `BILAN_SANTE.md` (audit #4) et `NEWS` pour le détail des correctifs.
 
 ---
@@ -58,7 +72,7 @@ gtk4sermo est un programme C de ~35 000 lignes organisé en trois couches distin
 ┌────────────────────────▼────────────────────────────────┐
 │                    COUCHE WIDGETS                        │
 │   widgets.c     ← dispatch, widget_opencommand()        │
-│   widget_*.c    ← 30 implémentations de widgets         │
+│   widget_*.c    ← 50 fichiers pour 56 widgets           │
 │   glade_support.c ← support GtkBuilder (.glade/.ui)     │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -145,7 +159,7 @@ src/
 ├── printing.c/.h          # Support impression GTK
 ├── glade_support.c/.h     # Support GtkBuilder / fichiers .ui
 │
-│   ── WIDGETS (30 fichiers) ──
+│   ── WIDGETS (50 fichiers pour 56 widgets) ──
 ├── widgets.c/.h           # Dispatch, widget_opencommand(), widget_get_text_value()
 ├── widget_button.c/.h
 ├── widget_checkbox.c/.h
