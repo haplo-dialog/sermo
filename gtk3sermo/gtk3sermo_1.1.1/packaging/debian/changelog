@@ -1,3 +1,20 @@
+gtk3sermo (1.1.1-3) unstable; urgency=medium
+
+  * glade_support.c : le « return TRUE » etait hors du « if », malgre son
+    indentation. La fonction renvoyait vrai des la premiere iteration de la
+    boucle, sans egard au resultat de la comparaison : seul signals[0] pouvait
+    etre connecte, et un echec de connexion etait annonce comme un succes.
+  * widget_tree.c : dans widget_tree_save(), « text » n'est affectee qu'a
+    l'interieur de la boucle sur les colonnes. Si cette boucle ne tourne pas, «
+    text » etait lue par fprintf puis passee a g_free() sans avoir jamais ete
+    initialisee. On utilise « line », initialisee avant la boucle. Supprime
+    aussi une fuite.
+  * Mesures : 58 fichiers, 0 erreur, 24 -> 22 avertissements. Jeux
+    d'avertissements compares avant/apres : les deux disparus sont les deux
+    corriges, aucun n'est apparu. 55 PASS | 0 FAIL.
+
+ -- S. Cage <s.cage@lucubratio.fr>  Fri, 28 Aug 2026 21:15:00 +0200
+
 gtk3sermo (1.1.1-2) unstable; urgency=medium
 
   * _FORTIFY_SOURCE etait defini deux fois a la compilation : =2 par les

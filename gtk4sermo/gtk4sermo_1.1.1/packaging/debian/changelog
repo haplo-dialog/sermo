@@ -1,3 +1,37 @@
+gtk4sermo (1.1.1-3) unstable; urgency=medium
+
+  * tag_attributes.c : « if (!paramspec->flags & G_PARAM_WRITABLE) ». Le « !
+    » lie plus fort que le « & » : l'expression valait (!flags) & 2, donc
+    toujours 0. Le garde-fou « propriete non modifiable » ne s'est jamais
+    declenche. Le port GTK 3 portait ce correctif ; celui-ci ne l'avait
+    jamais recu.
+  * glade_support.c : meme correctif que le port GTK 3 — le « return TRUE »
+    etait hors du « if », la fonction renvoyait vrai des la premiere
+    iteration.
+  * widget_tree.c : meme correctif que le port GTK 3 — « text » lue par
+    fprintf puis liberee sans avoir ete initialisee si la boucle ne tourne
+    pas.
+  * variables.c : quatre « else » ambigus explicitement accolades, sans
+    changement de sens ; le parametre « window_id » masquait le global du
+    meme nom, renomme avec ses trois usages — sans quoi la comparaison qui
+    decide quels widgets sont detruits serait passee du parametre au global.
+  * automaton.c : widget_moved n'est appelee que depuis le bloc GtkSocket,
+    absent en GTK 4 ; elle passe sous la meme garde plutot que d'etre
+    supprimee.
+  * Six comparaisons signe/non-signe : le size_t est ramene vers gint, et
+    non l'inverse — un operande signe negatif converti en size_t inverserait
+    le test.
+  * gtkdialog_lexer.l : « %option noinput ». YY_INPUT est redefini et lit
+    par getnextchar(), input() ne sert jamais. Pas de « nounput » : unput()
+    est utilisee.
+  * Mesures : 67 fichiers, 0 erreur, 36 -> 17 avertissements. 55 PASS | 0
+    FAIL. Les 15 avertissements « variable affectee mais jamais utilisee »
+    restants sont VOLONTAIRES : ils signalent des fonctions que
+    gtk4-compat.h neutralise (border-width ignore, <filechooser> reduit a un
+    bouton). Les taire effacerait la seule alerte qui subsiste.
+
+ -- S. Cage <s.cage@lucubratio.fr>  Fri, 28 Aug 2026 21:15:00 +0200
+
 gtk4sermo (1.1.1-2) unstable; urgency=medium
 
   * _FORTIFY_SOURCE etait defini deux fois a la compilation : =2 par les
