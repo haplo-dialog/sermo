@@ -27,7 +27,7 @@ RUN apt-get update -qq && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /src
-COPY gtk3sermo/gtk3sermo_1.1.0 .
+COPY gtk3sermo/gtk3sermo_1.1.1 .
 
 RUN autoreconf -fi \
     && ./configure \

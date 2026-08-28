@@ -1,0 +1,36 @@
+#!/bin/sh
+# gtkdialog4 example: flowbox widget (GTK4-natif)
+GTKDIALOG=${GTKDIALOG:-gtk4sermo}
+
+MAIN_DIALOG='
+<window title="FlowBox galerie" border-width="12">
+  <vbox spacing="10">
+    <text><label>GtkFlowBox — grille adaptive :</label></text>
+    <flowbox min-children-per-line="2" max-children-per-line="5"
+             column-spacing="6" row-spacing="6" selection-mode="single">
+      <button><label>Alpha</label></button>
+      <button><label>Bravo</label></button>
+      <button><label>Charlie</label></button>
+      <button><label>Delta</label></button>
+      <button><label>Echo</label></button>
+      <button><label>Foxtrot</label></button>
+      <button><label>Golf</label></button>
+      <button><label>Hotel</label></button>
+      <variable>FB_MAIN</variable>
+    </flowbox>
+    <text>
+      <variable>LBL_SEL</variable>
+      <input>echo "Sélection : $FB_MAIN"</input>
+    </text>
+    <hseparator></hseparator>
+    <hbox homogeneous="true">
+      <button ok></button>
+    </hbox>
+  </vbox>
+</window>
+'
+export MAIN_DIALOG
+case $1 in
+  -d | --dump) echo "$MAIN_DIALOG" ;;
+  *) $GTKDIALOG --program=MAIN_DIALOG ;;
+esac

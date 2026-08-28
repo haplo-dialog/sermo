@@ -1,0 +1,32 @@
+#!/bin/sh
+# gtkdialog4 example: revealer widget (GTK4-natif)
+GTKDIALOG=${GTKDIALOG:-gtk4sermo}
+
+MAIN_DIALOG='
+<window title="Revealer animé" border-width="12">
+  <vbox spacing="10">
+    <button>
+      <label>Afficher / Masquer le panneau</label>
+      <action>if true show:RV_PANEL</action>
+      <action>if false hide:RV_PANEL</action>
+    </button>
+    <revealer transition="slide-down" duration="300">
+      <vbox>
+        <hseparator></hseparator>
+        <text><label>Panneau caché maintenant révélé !</label></text>
+        <entry><variable>ENT_SECRET</variable></entry>
+      </vbox>
+      <variable>RV_PANEL</variable>
+    </revealer>
+    <hseparator></hseparator>
+    <hbox homogeneous="true">
+      <button ok></button>
+    </hbox>
+  </vbox>
+</window>
+'
+export MAIN_DIALOG
+case $1 in
+  -d | --dump) echo "$MAIN_DIALOG" ;;
+  *) $GTKDIALOG --program=MAIN_DIALOG ;;
+esac

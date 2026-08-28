@@ -1,0 +1,31 @@
+#!/bin/sh
+# gtkdialog4 example: spinner widget
+GTKDIALOG=${GTKDIALOG:-gtk4sermo}
+
+MAIN_DIALOG='
+<window title="Spinner" border-width="12">
+  <vbox spacing="10">
+    <text><label>Spinner actif (chargement) :</label></text>
+    <spinner active="true">
+      <variable>SP_MAIN</variable>
+          </spinner>
+    <hseparator></hseparator>
+    <hbox homogeneous="true">
+      <button>
+        <label>Démarrer</label>
+        <action function="enable">SP_MAIN</action>
+      </button>
+      <button>
+        <label>Arrêter</label>
+        <action function="disable">SP_MAIN</action>
+      </button>
+      <button ok></button>
+    </hbox>
+  </vbox>
+</window>
+'
+export MAIN_DIALOG
+case $1 in
+  -d | --dump) echo "$MAIN_DIALOG" ;;
+  *) $GTKDIALOG --program=MAIN_DIALOG ;;
+esac

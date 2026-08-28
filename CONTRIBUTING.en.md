@@ -36,7 +36,7 @@ haplo-dialog provides two ports, `gtk3sermo` (GTK 3 backend) and `gtk4sermo` (GT
 ```
 haplo-dialog/
 ├── gtk3sermo/
-│   └── gtk3sermo_1.1.0/
+│   └── gtk3sermo_1.1.1/
 │       ├── src/
 │       │   ├── gtk3sermo.c      ← main entry point
 │       │   ├── safe_exec.c       ← GPL-2.0-or-later
@@ -73,7 +73,7 @@ sudo dnf install gcc flex bison gtk3-devel
 ### Development build
 
 ```sh
-cd gtk3sermo/gtk3sermo_1.1.0
+cd gtk3sermo/gtk3sermo_1.1.1
 autoreconf -fi
 ./configure --prefix=/usr/local CFLAGS="-g -O0 -fsanitize=address"
 make -j$(nproc)
@@ -293,7 +293,7 @@ case WIDGET_MONWIDGET:
 ### Unit tests (toolkit-free)
 
 ```sh
-cd gtk3sermo/gtk3sermo_1.1.0
+cd gtk3sermo/gtk3sermo_1.1.1
 autoreconf -fi && ./configure && make check
 ```
 
@@ -336,7 +336,7 @@ A broken build or a single failing test fails the pipeline. Before pushing,
 you can reproduce the job locally:
 
 ```sh
-cd gtk3sermo/gtk3sermo_1.1.0
+cd gtk3sermo/gtk3sermo_1.1.1
 autoreconf -fi && ./configure --prefix="$PWD/inst" && make -j"$(nproc)" && make install
 PATH="$PWD/inst/bin:$PATH" sh ../../tests/xml/run_tests.sh gtk3sermo
 ```

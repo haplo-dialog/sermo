@@ -1,0 +1,27 @@
+#!/bin/sh
+# gtkdialog4 example: searchentry widget
+GTKDIALOG=${GTKDIALOG:-gtk4sermo}
+
+MAIN_DIALOG='
+<window title="Recherche" border-width="12">
+  <vbox spacing="10">
+    <searchentry placeholder-text="Rechercher…">
+      <variable>SE_QUERY</variable>
+            <action signal="search-changed">refresh:LBL_RESULT</action>
+    </searchentry>
+    <text>
+      <variable>LBL_RESULT</variable>
+      <input>echo "Recherche : $SE_QUERY"</input>
+    </text>
+    <hseparator></hseparator>
+    <hbox homogeneous="true">
+      <button ok></button>
+    </hbox>
+  </vbox>
+</window>
+'
+export MAIN_DIALOG
+case $1 in
+  -d | --dump) echo "$MAIN_DIALOG" ;;
+  *) $GTKDIALOG --program=MAIN_DIALOG ;;
+esac

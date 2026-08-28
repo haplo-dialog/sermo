@@ -1,0 +1,46 @@
+#!/bin/sh
+# filechooser — example for the <filechooser> widget (GtkFileChooserButton)
+# gtkdialog-1.0.0 — haplo-dialog 2026
+#
+# The <filechooser> widget exports the absolute path of the selected file.
+# The signal is "file-set".
+# Attributes: action (open|save|select-folder|create-folder), title
+#
+# Usage:
+#   ./filechooser           — launch the dialog
+#   ./filechooser --dump    — print the XML definition
+
+GTKDIALOG=${GTKDIALOG:-gtk3sermo}
+
+MAIN_DIALOG='
+<window title="File chooser example" resizable="false">
+	<vbox>
+		<frame GtkFileChooserButton — inline file picker>
+			<vbox>
+				<text><label>Select a file:</label></text>
+				<filechooser>
+					<variable>CHOSEN_FILE</variable>
+					<action>echo "Selected: $CHOSEN_FILE"</action>
+				</filechooser>
+				<text><label>Select a folder:</label></text>
+				<filechooser>
+					<variable>CHOSEN_DIR</variable>
+					<action select-folder="true">echo "Folder: $CHOSEN_DIR"</action>
+				</filechooser>
+			</vbox>
+		</frame>
+		<hbox>
+			<button ok></button>
+			<button cancel></button>
+		</hbox>
+	</vbox>
+</window>
+'
+export MAIN_DIALOG
+
+case $1 in
+	-d | --dump) echo "$MAIN_DIALOG" ;;
+	*) $GTKDIALOG --program=MAIN_DIALOG
+	   echo "CHOSEN_FILE=$CHOSEN_FILE"
+	   echo "CHOSEN_DIR=$CHOSEN_DIR" ;;
+esac

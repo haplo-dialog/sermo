@@ -1,0 +1,29 @@
+#!/bin/sh
+# gtkdialog4 example: linkbutton widget
+GTKDIALOG=${GTKDIALOG:-gtk4sermo}
+
+MAIN_DIALOG='
+<window title="Bouton lien" border-width="12">
+  <vbox spacing="10">
+    <text><label>Cliquez pour ouvrir le site :</label></text>
+    <linkbutton>
+      <variable>LNK_HAPLO</variable>
+      <label>haplo-dialog</label>
+      <default>https://haplo-dialog.fr</default>
+      <action>echo "URI cliqué : $LNK_HAPLO"</action>
+    </linkbutton>
+    <linkbutton>
+      <label>Documentation GTK4</label>
+      <default>https://docs.gtk.org/gtk4/</default>
+    </linkbutton>
+    <hbox homogeneous="true">
+      <button ok></button>
+    </hbox>
+  </vbox>
+</window>
+'
+export MAIN_DIALOG
+case $1 in
+  -d | --dump) echo "$MAIN_DIALOG" ;;
+  *) $GTKDIALOG --program=MAIN_DIALOG ;;
+esac

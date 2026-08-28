@@ -1,4 +1,0 @@
-# Gentoo Manifest — gtk4sermo-1.1.0
-# Générer avec: ebuild gtk4sermo-1.1.0.ebuild manifest
-# (après avoir placé l'archive source dans /usr/portage/distfiles/)
-DIST sermo-v1.1.0.tar.gz 0 BLAKE2B SKIP SHA512 SKIP

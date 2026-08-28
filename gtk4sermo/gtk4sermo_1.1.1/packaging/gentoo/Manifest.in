@@ -1,0 +1,13 @@
+# GABARIT — ce n'est PAS un Manifest utilisable tel quel.
+#
+# Un Manifest Gentoo porte la taille et les empreintes reelles de l'archive
+# source. Celles-ci ne peuvent etre calculees qu'apres publication de l'archive
+# du tag, et portage REFUSE un digest a « SKIP » ou a taille nulle. Le fichier
+# s'appelait « Manifest » et portait justement des SKIP : il donnait l'illusion
+# d'une recette prete, alors qu'elle echouait des le premier appel.
+#
+# A generer sur la machine cible, apres avoir place l'archive dans distfiles :
+#
+#     ebuild gtk4sermo-1.1.1.ebuild manifest
+#
+# Voir README.gentoo.md.

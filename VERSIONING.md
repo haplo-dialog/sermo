@@ -46,7 +46,7 @@ haplo-dialog distribue **deux ports** : **`gtk3sermo`** (backend GTK 3), le port
 de référence, et **`gtk4sermo`** (backend GTK 4). L'alias rétro-compatible
 **`gtkdialog`** est fourni par un troisième paquet, **`gtksermo`**.
 
-La version amont (`1.1.0`) est **commune aux deux ports** : c'est le même cœur, la
+La version amont (`1.1.1`) est **commune aux deux ports** : c'est le même cœur, la
 même grammaire. En revanche la **révision d'empaquetage** avance port par port,
 puisqu'un correctif ne touche pas toujours les deux. Les deux numéros peuvent donc
 diverger — `gtk3sermo 1.0.0-10` et `gtk4sermo 1.0.0-11` par exemple — et c'est
@@ -87,8 +87,8 @@ Le port GTK 4 n'a **pas** de `CMakeLists.txt` : il se construit par autotools
 seulement. Le modèle `.cmake` du `.gitlab-ci.yml` n'est donc étendu par aucun job.
 
 > ⚠️ **Particularité** : la version est encodée dans le **nom du dossier**
-> (`gtk3sermo_1.1.0/`) et dans le **nom de l'ebuild**
-> (`gtk3sermo-1.1.0.ebuild`). Une montée de version implique donc un `git mv`
+> (`gtk3sermo_1.1.1/`) et dans le **nom de l'ebuild**
+> (`gtk3sermo-1.1.1.ebuild`). Une montée de version implique donc un `git mv`
 > de ces chemins. *(Piste future : découpler la version du nom de dossier pour
 > alléger les bumps.)*
 
@@ -164,16 +164,29 @@ vertes (le pipeline passe). `main` ne doit jamais être cassée.
   une clé est disponible.
 - Un tag pointe sur le commit où le CHANGELOG, les `configure.ac`/`CMakeLists.txt`
   et le packaging déclarent tous `X.Y.Z`.
-- État actuel : **cinq étiquettes** posées — `v1.0.0`, `v1.0.0-2`, `v1.0.0-3`,
-  `v1.0.0-4` et `v1.1.0`.
+- État actuel : **six étiquettes** posées — `v1.0.0`, `v1.0.0-2`, `v1.0.0-3`,
+  `v1.0.0-4`, `v1.1.0` et `v1.1.1`.
 - Deux d'entre elles seulement ont une *release* GitLab avec des paquets joints :
-  - `v1.0.0` porte les paquets **défectueux** (`1.0.0-10`, `1.0.0-11`), gardés
-    en ligne pour l'historique — le `README` dit de ne pas les installer ;
-  - `v1.0.0-4` porte les mêmes paquets **corrigés** (`1.0.0-11`, `1.0.0-12`).
+  - `v1.1.1`, la version courante ; ses paquets (`1.1.1-1`) remplacent tous
+    les précédents ;
+  - `v1.0.0-4`, qui porte les mêmes paquets à l'étape précédente (`1.0.0-11`,
+    `1.0.0-12`). Ils sont **sains** — ce sont eux qui ont apporté les trois
+    correctifs — simplement remplacés.
 - `v1.0.0-2` et `v1.0.0-3` sont des états intermédiaires du dépôt : aucune
-  release ne leur est attachée.
-- `v1.1.0` est la version courante ; ses paquets (`1.1.0-1`) remplacent tous
-  les précédents.
+  release ne leur a jamais été attachée.
+- **`v1.0.0` a eu une release, retirée le 2026-08-27.** Ses paquets
+  (`1.0.0-10`, `1.0.0-11`) portaient les trois défauts corrigés depuis, et les
+  laisser téléchargeables n'était pas défendable. L'étiquette git, elle, est
+  **conservée** : elle ne distribue rien et date le premier commit public.
+
+> **Une release et un paquet de registre sont deux objets distincts.** Les
+> fichiers joints à une release vivent dans le *registre de paquets générique*
+> (`packages/generic/sermo/<version>/`) ; la release n'en tient que des liens.
+> Supprimer la release seule laisse donc les fichiers téléchargeables par leur
+> URL directe. Pour retirer vraiment des paquets, il faut supprimer le **paquet
+> de registre** — et le faire **avant** la release, pour qu'un échec en cours de
+> route laisse une page visible aux liens morts plutôt que des paquets dangereux
+> accessibles en silence.
 
 ```sh
 # Poser une release :

@@ -38,7 +38,7 @@ default:
 .autotools:
   stage: build-test
   script:
-    - cd "$PORT/${PORT}_1.1.0"
+    - cd "$PORT/${PORT}_1.1.1"
     - autoreconf -fi
     # $EXTRA_CONFIGURE porte --enable-unit-tests la ou l'option existe (gtk3sermo).
     # Elle etait documentee mais jamais rejouee par la CI : c'est pour ca que
@@ -59,16 +59,16 @@ default:
     # ni GDK. Statique, parce que la faute qu'il empêche est une course qui ne
     # se déclenche qu'une fois sur dix — un test comportemental serait vert la
     # plupart du temps, donc ne prouverait rien.
-    - sh "$CI_PROJECT_DIR/tests/garde_progressbar_thread.sh" "$CI_PROJECT_DIR/$PORT/${PORT}_1.1.0/src/widget_progressbar.c"
+    - sh "$CI_PROJECT_DIR/tests/garde_progressbar_thread.sh" "$CI_PROJECT_DIR/$PORT/${PORT}_1.1.1/src/widget_progressbar.c"
     # LICENCES.md affirme que chaque fichier de src/ porte un SPDX : ce banc
     # rend l'affirmation tenable au lieu de la laisser vieillir.
-    - bash "$CI_PROJECT_DIR/tests/garde_spdx.sh" "$CI_PROJECT_DIR/$PORT/${PORT}_1.1.0/src"
+    - bash "$CI_PROJECT_DIR/tests/garde_spdx.sh" "$CI_PROJECT_DIR/$PORT/${PORT}_1.1.1/src"
     # SECURITY.md et TODO-SECURITY.md affirment qu'aucune fonction interdite
     # (strcpy/strcat/sprintf/system/popen) n'est appelee dans src/. Ce banc rend
     # l'affirmation tenable : il ignore les commentaires — safe_exec.c cite
     # legitimement system() et popen() pour dire qu'il les remplace — et exige une
     # frontiere de mot a GAUCHE, sinon safe_system compterait pour system.
-    - bash "$CI_PROJECT_DIR/tests/garde_fonctions_interdites.sh" "$CI_PROJECT_DIR/$PORT/${PORT}_1.1.0/src"
+    - bash "$CI_PROJECT_DIR/tests/garde_fonctions_interdites.sh" "$CI_PROJECT_DIR/$PORT/${PORT}_1.1.1/src"
     # Ce depot est alimente par COPIE DE FICHIERS depuis le depot prive, ou une
     # ordonnance impose a chaque .md un en-tete « maj : <date> · poste <machine> ».
     # Une copie sans filtre y ferait entrer 46 fichiers portant le nom de la
@@ -81,7 +81,7 @@ default:
 .cmake:
   stage: build-test
   script:
-    - cd "$PORT/${PORT}_1.1.0"
+    - cd "$PORT/${PORT}_1.1.1"
     - cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX="$CI_PROJECT_DIR/inst"
     - cmake --build build -j"$(nproc)"
     - cmake --install build
@@ -115,7 +115,7 @@ gtk4sermo:
   script:
     - sed -i 's/^# *fr_FR.UTF-8/fr_FR.UTF-8/' /etc/locale.gen
     - locale-gen
-    - cd "$PORT/${PORT}_1.1.0"
+    - cd "$PORT/${PORT}_1.1.1"
     - autoreconf -fi
     - ./configure
     - make -j"$(nproc)"

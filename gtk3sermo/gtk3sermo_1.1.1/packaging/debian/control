@@ -1,0 +1,59 @@
+Source: gtk3sermo
+Section: utils
+Priority: optional
+Maintainer: haplo-dialog <devel@haplo-dialog.fr>
+Build-Depends: debhelper-compat (= 13), libgtk-3-dev (>= 3.22.0), libvte-2.91-dev,
+               libgtk-layer-shell-dev (>= 0.8.0),
+               flex, bison, autoconf (>= 2.69), automake (>= 1.14), pkg-config,
+               texinfo
+Standards-Version: 4.6.2
+Homepage: https://haplo-dialog.fr
+Vcs-Browser: https://gitlab.com/haplo-dialog/sermo
+Vcs-Git: https://gitlab.com/haplo-dialog/sermo.git
+
+Package: gtk3sermo
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Breaks: haplo-dialog (<< 1.0.0-9)
+Replaces: haplo-dialog (<< 1.0.0-9)
+Description: GTK 3 dialog boxes for shell scripts (gtkdialog successor)
+ gtk3sermo builds native GTK 3 windows from an XML description, so a shell
+ script can show a real graphical interface without any toolkit knowledge.
+ .
+ It is a maintained, hardened fork of gtkdialog (Laszlo Pere, Thunor) and reads
+ the same XML: existing gtkdialog scripts run unchanged. 43 widgets. Install the
+ gtksermo package if you also want the gtkdialog command name itself.
+ .
+ Hardening: safe_exec (no system()), FORTIFY_SOURCE=3, PIE, Full RELRO,
+ stack-protector-strong.
+ .
+ Part of the haplo-dialog suite, alongside gtk4sermo (GTK 4). Both install
+ side by side.
+ .
+ Drop-in replacement for gtkdialog: same XML language, same command-line
+ interface, same behaviour — verified against a 55-case test corpus. Scripts
+ written for gtkdialog need no change.
+ .
+ Not to be confused with the gtk3dialog package distributed by BunsenLabs,
+ which is a different fork of the same ancestor.
+
+Package: gtksermo
+Architecture: all
+Depends: gtk3sermo (>= ${source:Version}), ${misc:Depends}
+Conflicts: gtkdialog, gtk3dialog, haplo-dialog
+Provides: gtkdialog
+Replaces: gtkdialog, haplo-dialog
+Description: compatibility command gtkdialog for gtk3sermo
+ Installs /usr/bin/gtkdialog as a link to gtk3sermo, so that existing
+ scripts written for the original gtkdialog keep working unchanged.
+ .
+ This package is SEPARATE on purpose. The name gtkdialog is also used
+ by other projects: the original gtkdialog, the gtk3dialog package
+ shipped by BunsenLabs, and the Puppy Linux builds. Only one package
+ may own /usr/bin/gtkdialog, so installing this one conflicts with
+ those. Keeping the link out of gtk3sermo lets gtk3sermo and gtk4sermo
+ be installed alongside any of them, and makes the trade-off an
+ explicit choice rather than a surprise.
+ .
+ Install it if you want the gtkdialog command. Leave it out to compare
+ implementations side by side.

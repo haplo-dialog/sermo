@@ -1,0 +1,749 @@
+.\" haplo-dialog-xml.5 — Référence de la syntaxe XML de gtk3sermo
+.\" sermo @PACKAGE_VERSION@ — sermo <devel@haplo-dialog.fr>
+.\" Licence : GPL-2.0-or-later
+.\"
+.TH HAPLO-DIALOG-XML 5 "27 August 2026" "sermo @PACKAGE_VERSION@" "sermo File Formats"
+.SH NOM
+haplo-dialog-xml \- syntaxe XML des dialogues gtk3sermo
+.SH DESCRIPTION
+gtk3sermo lit une description d'interface graphique écrite dans un dialecte
+XML et affiche la fenêtre correspondante. Cette page documente cette syntaxe
+XML, telle qu'interprétée par
+.BR gtk3sermo (1).
+.PP
+La syntaxe est héritée de
+.BR gtkdialog (1)
+(László Pere, 2003\-2013). Là où gtkdialog est aujourd'hui abandonné,
+haplo-dialog le fait revivre : corrigé, durci et maintenu. Pour les scripts
+existants, gtk3sermo fournit un alias rétro-compatible nommé \fBgtkdialog\fR.
+
+.SH STRUCTURE GÉNÉRALE
+
+.RS 4
+.nf
+<window title="Titre" width-request="400" height-request="200">
+  <vbox>
+    <text><label>Bonjour !</label></text>
+    <entry><variable>MON_CHAMP</variable></entry>
+    <button ok></button>
+  </vbox>
+</window>
+.fi
+.RE
+
+La balise
+.B <window>
+est
+.B facultative :
+une description qui commence directement par un conteneur, ou même par un widget
+nu, est acceptée telle quelle et une fenêtre s'ouvre — la grammaire l'enveloppe
+d'office. La description interne produite est identique à celle qu'on obtient
+avec un
+.B <window>
+explicite. C'est le motif de la plupart des dialogues écrits pour l'ancêtre
+gtkdialog, et il fonctionne toujours.
+
+Sans
+.BR <window> ,
+la fenêtre prend pour titre le nom du programme. L'écrire explicitement sert
+donc à choisir le titre, mais pas seulement : c'est la seule façon d'atteindre
+les réglages de la fenêtre elle\-même — taille par défaut, taille minimale,
+redimensionnement, barre d'en\-tête, décorations, icône, et l'ancrage Wayland.
+
+.B Une fenêtre ne porte qu'un seul enfant.
+Plusieurs widgets au premier niveau sont acceptés sans erreur, mais seul le
+premier s'affiche — avec ou sans racine explicite. Deux
+.B <window>
+frères : seul le premier existe, le second est perdu sans avertissement.
+Mettez donc un conteneur.
+
+Les widgets sont imbriqués dans des conteneurs
+.RB ( <hbox> ,
+.BR <vbox> ,
+.BR <frame> ,
+etc.).
+
+.SH ATTRIBUTS COMMUNS
+
+Les attributs suivants sont disponibles sur la plupart des widgets :
+
+.TP
+.B width-request=\fIN\fR
+Largeur minimale en pixels.
+.TP
+.B height-request=\fIN\fR
+Hauteur minimale en pixels.
+.TP
+.B visible=\fItrue|false\fR
+Visibilité initiale du widget (défaut : true).
+.TP
+.B sensitive=\fItrue|false\fR
+Interactivité du widget (défaut : true).
+.TP
+.B tooltip-text=\fItexte\fR
+Infobulle affichée au survol.
+
+.SH SOUS-ÉLÉMENTS COMMUNS
+
+.TP
+.B <label>texte</label>
+Texte affiché ou étiquette du widget. L'élément peut être vide
+(\fB<label></label>\fR, ou ne contenir que des espaces) : le widget porte
+alors une étiquette blanche, ce qui sert d'espaceur entre deux widgets.
+.TP
+.B <variable>NOM</variable>
+Nom de la variable d'environnement exportée à la fermeture.
+.TP
+.B <action>commande</action>
+Commande shell exécutée via
+.BR safe_exec ()
+lors d'un événement (clic, changement...).
+.TP
+.B <input>commande</input>
+Commande shell dont la sortie alimente le widget.
+.TP
+.B <default>valeur</default>
+Valeur initiale du widget. L'élément peut être vide
+(\fB<default></default>\fR) : le widget démarre alors à blanc.
+
+.TP
+.B <visible>valeur</visible>
+.B Synonyme de \fB<sensitive>\fB, et non l'inverse de « caché ».
+Ce sous\-élément \fBgrise\fR le widget, il ne le fait pas disparaître ; c'est
+l'attribut de balise \fBvisible="false"\fR — chose différente — qui le retire de
+l'affichage. Valeurs désactivantes : \fBfalse\fR, \fBno\fR, \fB0\fR, et
+\fBdisabled\fR qui est marqué déprécié dans le code au profit de \fBfalse\fR.
+La valeur \fBenabled\fR n'est comparée nulle part : c'est simplement l'absence
+de désactivation.
+.br
+Sur une \fB<entry>\fR seulement, la valeur \fBpassword\fR masque la saisie par
+des puces, sans passer par le widget \fB<password>\fR. C'est l'orthographe
+historique de gtkdialog, et elle explique pourquoi de vieux scripts masquent leur
+champ. \fBAttention : le masquage est purement visuel.\fR La valeur ressort
+\fBen clair\fR sur la sortie standard — ce n'est pas une protection, c'est un
+affichage.
+.br
+Ce sous\-élément ne s'écrit qu'en forme nue : \fB<visible foo="bar">\fR est une
+erreur de syntaxe.
+
+.SH WIDGETS — RÉFÉRENCE COMPLÈTE
+
+.SS Fenêtre principale
+.TP
+.B <window>
+Fenêtre principale du dialogue.
+.br
+Attributs : \fBtitle\fR, \fBwidth-request\fR, \fBheight-request\fR,
+\fBresizable\fR, \fBicon-name\fR, \fBdecorated\fR, \fBheaderbar\fR.
+.br
+Attributs Wayland (ancrage layer-shell) : \fBlayer\fR, \fBedge\fR, \fBdist\fR,
+\fBreserve\fR.
+
+.SS Qui dessine la barre de titre
+Trois cas, selon ce que la fenêtre demande.
+.TP
+.B (rien)
+Le gestionnaire de fenêtres dessine la barre de titre. C'est le défaut, et
+c'est ce qui fait qu'une fenêtre ressemble à toutes les autres du bureau.
+.TP
+.B headerbar="yes"
+Le programme dessine lui\-même sa barre de titre, un \fIGtkHeaderBar\fR, avec
+le titre de la fenêtre et un bouton de fermeture. C'est ce qu'on appelle les
+décorations côté client, ou CSD. Utile pour une fenêtre qui veut l'allure
+GNOME moderne.
+.br
+Volontairement désactivé par défaut : sous XFCE, une barre dessinée par
+l'application cesse de suivre le thème du gestionnaire de fenêtres, et ses
+boutons cessent de ressembler à ceux de toutes les autres fenêtres. Un script
+qui veut ce rendu le demande ; aucun ne l'obtient par surprise.
+.br
+Une valeur non reconnue est signalée et vaut \fBno\fR.
+.TP
+.B decorated="false"
+Personne ne dessine de barre de titre. La fenêtre est nue.
+
+.SS Ancrage Wayland de la fenêtre (layer-shell)
+Sous Wayland, une fenêtre peut se comporter en surface \fIlayer-shell\fR :
+barre, dock, fond d'écran, panneau flottant. Quatre attributs de
+.B <window>
+la placent. Ils n'ont d'effet que si le compositeur Wayland implémente le
+protocole \fIwlr-layer-shell\fR (sway, Hyprland, river, labwc, wayfire\&...) et
+si gtk3sermo a été compilé avec gtk-layer-shell.
+.br
+Ailleurs (X11, ou un compositeur Wayland sans ce protocole, comme GNOME),
+les quatre attributs sont ignorés et la fenêtre s'ouvre normalement : un
+message le signale sur la sortie d'erreur, le script continue.
+.br
+Cet ancrage est porté du fork \fIBunsenLabs gtk3dialog\fR, où il a été écrit
+par Dima Krasner (2021) puis étendu par Mick Amadio (2021\(en2024), sous
+GPL\-2.0\-or\-later. Voir \fBLICENCES.md\fR et \fBdebian/copyright\fR.
+.br
+\fBPort GTK\ 3 uniquement\fR : \fBgtk4sermo\fR ne contient aucun code
+layer-shell \(em voir \fBgtk4sermo-xml\fR(5).
+.TP
+.B layer="\fIvaleur\fR"
+Étage d'empilement de la surface :
+.BR background ,
+.BR bottom ,
+.BR top ,
+.BR overlay .
+De l'arrière-plan (sous les fenêtres) au premier plan (au-dessus de tout,
+plein écran compris).
+.TP
+.B edge="\fIvaleur\fR"
+Bord(s) d'écran auxquels la surface est arrimée.
+.br
+Un seul bord :
+.BR top ,
+.BR bottom ,
+.BR left ,
+.BR right .
+.br
+Un coin :
+.BR topleft ,
+.BR topright ,
+.BR bottomleft ,
+.BR bottomright .
+.br
+Deux bords opposés, ce qui étire la surface sur toute la largeur ou toute
+la hauteur de l'écran (la forme utile pour une barre ou un dock) :
+.BR hstride
+(gauche+droite),
+.BR vstride
+(haut+bas),
+.BR topstride ,
+.BR bottomstride ,
+.BR leftstride ,
+.BR rightstride .
+.TP
+.B dist="\fIn\fR"
+Marge en pixels entre la surface et les bords auxquels elle est arrimée.
+Entier de 0 à 200 ; 20 par défaut. Une valeur hors bornes ou mal formée est
+signalée par un avertissement, et la valeur par défaut s'applique.
+.TP
+.B reserve="yes|no"
+Indique si le compositeur garde libre l'espace occupé par la surface. Par
+défaut BnoR : la surface flotte au-dessus des fenêtres ordinaires, qui
+occupent tout l'écran et passent dessous. Avec ByesR, le compositeur
+réserve la place et dispose les autres fenêtres à côté, ce qu'on attend d'une
+barre et rarement d'un dock ou d'un widget de bureau. L'attribut n'a d'effet
+qu'avec BedgeR ; sans lui, un avertissement le signale. Une valeur autre
+que ByesR, BtrueR, B1R, BnoR, BfalseR ou B0R est
+signalée et vaut BnoR.
+.br
+La marge compte des deux côtés : mesuré sous sway, une barre de 48 pixels
+garde 48 pixels libres avec Bdist="0"R, et 88 avec Bdist="20"R.
+.PP
+Exemple : une barre de 40 pixels collée en haut de l'écran, sans marge, qui
+réserve sa place au lieu de recouvrir les fenêtres.
+.PP
+.nf
+.RS 4
+<window layer="top" edge="topstride" dist="0" reserve="yes" height\-request="40">
+  <hbox>
+    <text><label>Haplo</label></text>
+    <button><label>Menu</label></button>
+  </hbox>
+</window>
+.RE
+.fi
+
+.SS Conteneurs
+.TP
+.B <hbox>
+Conteneur horizontal. Enfants alignés de gauche à droite.
+.br
+Attributs : \fBspacing\fR, \fBhomogeneous\fR.
+.TP
+.B <vbox>
+Conteneur vertical. Enfants alignés de haut en bas.
+.TP
+.B <frame>
+Conteneur avec bordure et titre optionnel.
+.br
+Sous-éléments : \fB<label>\fR pour le titre.
+.TP
+.B <notebook>
+Onglets. Chaque enfant direct est une page.
+.br
+Sous-éléments : \fB<label>\fR pour le titre de chaque onglet.
+.TP
+.B <expander>
+Section repliable/dépliable.
+.br
+Sous-éléments : \fB<label>\fR pour le titre.
+.TP
+.B <aspectframe>
+Conteneur maintenant le ratio largeur/hauteur de son enfant.
+.br
+Attributs : \fBratio\fR (ex: \fI1.333\fR), \fBobey-child\fR.
+.TP
+.B <eventbox>
+Conteneur invisible captant les événements (souris, clavier) pour son enfant.
+
+.SS Boutons et contrôles booléens
+.TP
+.B <button>
+Bouton cliquable.
+.br
+Formes courtes : \fB<button ok>\fR \fB<button cancel>\fR \fB<button help>\fR
+\fB<button yes>\fR \fB<button no>\fR
+.br
+Attributs : \fBstock\fR (icône GTK).
+.br
+.B Action par défaut.
+Un bouton sans aucune \fB<action>\fR reçoit d'office une action de sortie dont
+la valeur est sa \fBpremière\fR directive \fB<label>\fR : à l'appui, le
+programme imprime \fBEXIT="\fIétiquette\fB"\fR et se termine. C'est ce
+mécanisme, jamais explicité jusqu'ici, qui fait fonctionner tous les exemples du
+type « \fB<button ok>\fR puis test sur \fB$EXIT\fR ». Un
+\fB<button></button>\fR sans étiquette se voit imposer « OK », qu'il affiche et
+qu'il renvoie. Dès qu'une seule \fB<action>\fR est déclarée, cette sortie
+automatique n'est pas créée : le bouton exécute l'action et la fenêtre reste
+ouverte.
+.br
+\fB<togglebutton>\fR fait exception : il reçoit bien l'étiquette « OK » par
+défaut, mais aucune action de sortie.
+.TP
+.B <checkbox>
+Case à cocher. Exporte \fBtrue\fR ou \fBfalse\fR.
+.TP
+.B <radiobutton>
+Bouton radio. Groupe via \fB<variable>\fR commune.
+.TP
+.B <togglebutton>
+Bouton avec état enfoncé/relâché.
+.TP
+.B <switch>
+Interrupteur on/off style mobile. Exporte \fBtrue\fR ou \fBfalse\fR.
+.TP
+.B <linkbutton>
+Bouton hyperlien. L'URI provient de \fB<default>\fR, le libellé de \fB<label>\fR.
+
+.SS Saisie de texte
+.TP
+.B <entry>
+Champ de saisie mono-ligne.
+.br
+Attributs : \fBmax-length\fR, \fBeditable\fR.
+.TP
+.B <password>
+Champ de saisie masqué (●●●●). Identique à \fB<entry>\fR en comportement.
+.TP
+.B <searchentry>
+Champ de recherche avec icône loupe intégrée.
+.TP
+.B <edit>
+Zone de texte multi-lignes (éditeur).
+.br
+Attributs : \fBeditable\fR, \fBwrap-mode\fR.
+
+.SS Affichage de texte
+.TP
+.B <text>
+Étiquette texte statique.
+.br
+Sous-éléments : \fB<label>\fR, \fB<input>\fR pour texte dynamique.
+.TP
+.B <statusbar>
+Barre d'état en bas de fenêtre.
+.TP
+.B <infobar>
+Bandeau d'information coloré (info/warning/error).
+.br
+Attributs : \fBmessage-type\fR (info|warning|error|question).
+
+.SS Listes et sélection
+.TP
+.B <combobox>
+Liste déroulante avec saisie libre possible.
+.br
+Sous-éléments : \fB<item>\fR pour chaque entrée.
+.TP
+.B <comboboxtext>
+Liste déroulante texte seulement (plus simple).
+.br
+Sous-éléments : \fB<item>texte</item>\fR.
+.TP
+.B <list>
+Liste à défilement, sélection simple ou multiple.
+.br
+Sous-éléments : \fB<item>\fR, \fB<column-header>\fR.
+.TP
+.B <tree>
+Arbre hiérarchique.
+.br
+Sous-éléments : \fB<item>\fR (format \fIParent/Enfant\fR).
+.TP
+.B <table>
+Grille de données tabulaires multi-colonnes.
+.br
+Sous-éléments : \fB<column-header>\fR, \fB<item>\fR.
+
+.SS Valeurs numériques
+.TP
+.B <hscale>
+Glissière horizontale.
+.br
+Attributs : \fBvalue\fR, \fBmin\fR, \fBmax\fR, \fBstep\fR.
+.TP
+.B <vscale>
+Glissière verticale.
+.TP
+.B <spinbutton>
+Sélecteur numérique avec boutons +/\-.
+.br
+Attributs : \fBvalue\fR, \fBmin\fR, \fBmax\fR, \fBstep\fR, \fBdigits\fR.
+.TP
+.B <levelbar>
+Barre de niveau (lecture seule).
+.br
+Attributs : \fBvalue\fR, \fBmin\fR, \fBmax\fR, \fBmode\fR (continuous|discrete).
+
+.SS Progression et animation
+.TP
+.B <progressbar>
+Barre de progression.
+.br
+Attributs : \fBvalue\fR (0.0\-1.0), \fBtext\fR.
+.TP
+.B <spinner>
+Indicateur d'activité animé (roue de chargement).
+.br
+Attributs : \fBactive\fR (true|false).
+.TP
+.B <pulse>
+Barre de progression en mode indéterminé (va-et-vient continu).
+.br
+Attributs : \fBtext\fR.
+
+.SS Date et heure
+.TP
+.B <calendar>
+Sélecteur de date graphique.
+.br
+Exporte la date sélectionnée au format \fBAAAA-MM-JJ\fR.
+
+.SS Médias et dessin
+.TP
+.B <pixmap>
+Affichage d'image.
+.br
+Sous-éléments : \fB<input file>\fR\fIchemin\fR\fB</input>\fR.
+.TP
+.B <image>
+Affichage d'image GTK 3 : icône nommée du thème courant ou fichier.
+.br
+Attributs : \fBicon-name\fR, \fBicon-size\fR.
+.TP
+.B <drawingarea>
+Zone de dessin personnalisée.
+.TP
+.B <colorbutton>
+Sélecteur de couleur.
+.br
+Exporte une couleur au format \fI#RRGGBB\fR.
+.TP
+.B <fontbutton>
+Sélecteur de police.
+.br
+Exporte le nom de la police sélectionnée.
+.TP
+.B <filechooser>
+Bouton de sélection de fichier ou de dossier. Exporte le chemin choisi.
+
+.SS Menus et navigation
+.TP
+.B <menubar>
+Barre de menus principale.
+.br
+Sous\-éléments, dans cet ordre \fBimpératif\fR : les \fB<menuitem>\fR
+d'abord, et le \fB<label>\fR du menu \fBen dernier\fR. Placé en tête ou entre
+deux entrées, il produit une erreur de syntaxe. La forme attribut
+\fB<menu label="Fichier">\fR se met, elle, en tête de la balise ouvrante et
+fonctionne — mais n'écrivez pas les deux : les ports ne choisissent pas le même.
+Un \fB<menu>\fR sans libellé affiche un texte de repli.
+.TP
+.B <menuitem>
+Entrée de menu.
+.br
+Attributs : \fBlabel\fR, \fBstock\fR, \fBaccel\fR.
+
+.SS Terminal et séparateurs
+.TP
+.B <terminal>
+Terminal interactif embarqué.
+.br
+Sous-éléments : \fB<input>\fR pour commande initiale.
+.TP
+.B <hseparator>
+Séparateur horizontal.
+.TP
+.B <vseparator>
+Séparateur vertical.
+
+.SS Contrôle du flux
+.TP
+.B <timer>
+Déclencheur temporel.
+.br
+Attributs : \fBinterval\fR (ms), \fBvisible\fR.
+.br
+Sous-éléments : \fB<action>\fR exécutée à chaque tick.
+
+.SH VARIABLES D'ENVIRONNEMENT
+
+À la fermeture du dialogue (bouton \fBOK\fR ou \fBEXIT\fR), gtk3sermo
+exporte chaque widget ayant une \fB<variable>\fR dans l'environnement shell :
+
+.RS 4
+.nf
+export MON_CHAMP="valeur saisie"
+export MA_CASE="true"
+export MON_SLIDER="0.75"
+.fi
+.RE
+
+Le script appelant récupère ces valeurs directement :
+
+.RS 4
+.nf
+gtk3sermo --program DIALOG_VAR
+echo "Nom saisi : $NOM"
+.fi
+.RE
+
+.SH ACTIONS SPÉCIALES
+
+Une
+.B <action>
+dont le texte commence par un préfixe connu suivi de « : » est traitée par le
+programme lui\-même. Tout le reste est lancé comme une commande shell.
+
+.B La comparaison ignore la casse
+mais pas l'orthographe :
+.B closewindow:
+et
+.B CLOSEWINDOW:
+sont équivalents, tandis qu'un préfixe inconnu — une faute de frappe, par
+exemple — n'est
+.B jamais signalé :
+la chaîne entière part au shell comme une commande ordinaire. Écrire
+\fBCLOSE:MAFENETRE\fR ne ferme donc rien, et n'affiche aucune erreur. C'est le
+piège le plus courant de ce langage.
+
+Le programme reconnaît
+.B vingt\-deux
+préfixes :
+
+.TP
+.B command:\fIcommande\fR
+Lance explicitement une commande shell. C'est aussi ce qui se passe par défaut
+quand aucun préfixe connu n'est reconnu.
+.TP
+.B exit:\fIvaleur\fR
+Imprime la valeur de chaque widget nommé, puis \fBEXIT="\fIvaleur\fB"\fR, et
+termine le programme.
+.TP
+.B closewindow:\fINOM\fR
+Ferme la fenêtre qui
+.I contient
+le widget nommé — pas seulement les fenêtres ouvertes par \fBlaunch:\fR. On peut
+donc fermer une fenêtre en nommant un simple champ qui s'y trouve. S'il reste au
+moins une autre fenêtre, le programme continue en silence ; sinon il imprime la
+seule ligne \fBEXIT="closewindow"\fR — \fBsans\fR les valeurs des widgets,
+contrairement à \fBexit:\fR — et se termine avec le code 0. Un nom inexistant ne
+provoque rien du tout.
+.TP
+.B launch:\fINOM\fR
+Ouvre une nouvelle fenêtre dont la description est dans la variable
+d'environnement \fINOM\fR.
+.TP
+.B enable:\fINOM\fR
+Rend le widget sensible aux actions de l'utilisateur.
+.TP
+.B disable:\fINOM\fR
+Rend le widget insensible. Son apparence indique qu'il est indisponible.
+.TP
+.B show:\fINOM\fR
+Affiche le widget.
+.TP
+.B hide:\fINOM\fR
+Masque le widget.
+.TP
+.B activate:\fINOM\fR
+Déclenche le widget comme si l'utilisateur l'avait actionné.
+.TP
+.B grabfocus:\fINOM\fR
+Donne le focus clavier au widget.
+.TP
+.B presentwindow:\fINOM\fR
+Ramène au premier plan la fenêtre qui contient le widget.
+.TP
+.B refresh:\fINOM\fR
+Réexécute la balise \fB<input>\fR du widget et le remplit avec le résultat.
+.TP
+.B save:\fINOM\fR
+Écrit le contenu du widget dans le fichier désigné par sa directive
+\fB<output file>\fR. Voir la note ci\-dessous.
+.TP
+.B fileselect:\fINOM\fR
+Ouvre un sélecteur de fichier et place le chemin choisi dans le widget.
+.TP
+.B clear:\fINOM\fR
+Vide le contenu du widget.
+.TP
+.B removeselected:\fINOM\fR
+Retire du widget l'élément sélectionné.
+.TP
+.B insert:\fINOM\fR
+Insère un élément dans le widget.
+.TP
+.B append:\fINOM\fR
+Ajoute un élément à la fin du widget.
+.TP
+.B break:
+Interrompt la liste d'actions du widget : les actions suivantes ne sont pas
+exécutées.
+.TP
+.B pulse:\fINOM\fR
+Fait avancer d'un cran une barre de progression en mode indéterminé.
+.TP
+.B start:\fINOM\fR
+Démarre le widget — un \fB<timer>\fR, par exemple.
+.TP
+.B stop:\fINOM\fR
+Arrête le widget.
+
+.SS Où écrit save:
+
+Le chemin vient de la première directive \fB<output file>\fR du widget. Sans
+elle, rien n'est écrit et un message part sur la sortie d'erreur
+(« No <output file> directive found. »). L'échec est
+.B par widget :
+dans un même déclenchement, un widget peut échouer pendant qu'un autre écrit.
+
+Tous les widgets ne savent pas se sauvegarder : ceux de saisie et de liste
+écrivent réellement un fichier, tandis que les conteneurs et les widgets
+purement décoratifs répondent « Save not implemented for this widget ».
+
+.B Piège de locale.
+Les valeurs numériques sont écrites avec les fonctions de formatage du C, qui
+suivent la locale. Sous \fBfr_FR\fR, une \fB<levelbar>\fR à 0.4 produit
+littéralement \fB0,4\fR, avec une virgule. Un script qui relit ce fichier pour
+calculer doit poser \fBLC_NUMERIC=C\fR autour du dialogue.
+
+.SS Préfixes conditionnels
+
+Devant l'action d'un widget à bascule — \fB<checkbox>\fR, \fB<radiobutton>\fR,
+\fB<togglebutton>\fR, \fB<expander>\fR —, on peut écrire \fBif true \fR ou
+\fBif false \fR : l'action n'est exécutée que si l'état correspond.
+
+.RS 4
+.nf
+<checkbox>
+  <label>Activer</label>
+  <variable>CB</variable>
+  <action>if true  echo "coché"</action>
+  <action>if false echo "décoché"</action>
+</checkbox>
+.fi
+.RE
+
+L'espace après \fBtrue\fR et \fBfalse\fR est
+.B obligatoire
+et il en faut exactement un : une tabulation ou un espace en trop ne sont pas
+reconnus, et l'action part alors au shell avec son préfixe, où elle échoue.
+
+Cette forme est distincte de l'attribut \fBcondition=\fR, qui, lui, prend le
+dessus quand les deux sont présents.
+
+.SH SÉCURITÉ
+
+Les commandes des balises \fB<action>\fR et \fB<input>\fR ne passent jamais
+par
+.BR system (3) :
+gtk3sermo les exécute au moyen des primitives GLib
+.RB ( g_spawn ).
+Une commande sans métacaractère shell est lancée directement par
+.BR exec ()
+sans aucun shell. Une commande qui contient un métacaractère shell
+(\fB|\fR, \fB&\fR, \fB;\fR, \fB<\fR, \fB>\fR, \fB$\fR, \fB\(ga\fR, etc.)
+retombe sur \fB/bin/sh \-c\fR — ce qui rétablit le risque d'injection pour
+cette commande — et cette retombée est journalisée. Positionner la variable
+d'environnement \fBHAPLO_NO_SHELL_FALLBACK\fR (à n'importe quelle valeur)
+refuse cette retombée et fait échouer la commande en sécurité
+(\fIfail-closed\fR). Le parser XML rejette proprement les documents malformés.
+.PP
+Ne jamais passer de données non validées dans une \fB<action>\fR ou un
+\fB<input>\fR. Voir \fBSECURITY.md\fR et
+.BR gtk3sermo (1)
+pour la politique de sécurité complète.
+
+.SH EXEMPLE COMPLET
+
+.RS 4
+.nf
+#!/bin/sh
+export FORMULAIRE='
+<window title="Inscription" width-request="380" height-request="260">
+  <vbox spacing="8">
+    <frame><label>Vos informations</label>
+      <vbox>
+        <hbox>
+          <text><label>Nom :</label></text>
+          <entry><variable>NOM</variable><default>Dupont</default></entry>
+        </hbox>
+        <hbox>
+          <text><label>Mot de passe :</label></text>
+          <password><variable>MDP</variable></password>
+        </hbox>
+        <checkbox>
+          <label>Accepter les conditions</label>
+          <variable>CGU</variable>
+        </checkbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button ok></button>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>'
+
+gtk3sermo --program FORMULAIRE
+
+if [ "$CGU" = "true" ] && [ -n "$NOM" ]; then
+    echo "Inscription de $NOM — CGU acceptées"
+else
+    echo "Inscription annulée ou CGU refusées"
+fi
+.fi
+.RE
+
+.SH VOIR AUSSI
+.BR gtk3sermo (1),
+.BR gtkdialog (1),
+.BR zenity (1),
+.BR yad (1)
+
+.SH HISTORIQUE
+
+haplo-dialog est un fork de
+.BR gtkdialog (1)
+(László Pere, 2003\-2013), modernisé et étendu par haplo-dialog en 2026.
+
+.SH AUTEURS
+.B haplo-dialog
+.br
+devel@haplo-dialog.fr
+.br
+Site : https://haplo-dialog.fr
+
+.SH LICENCE
+Documentation sous licence GPL-2.0-or-later, comme le programme :
+un seul texte couvre tout le dépôt.
+.br
+Logiciel sous licence GPL-2.0-or-later.
+.\" 2026-08-20 : ajout des attributs Wayland layer/edge/dist de <window> (portage layer-shell, d'après src/widget_window.c).
+.\" 2026-08-11 : page réalignée sur le code source (widgets d'après src/, <pixmap> via <input file>, calendrier AAAA-MM-JJ, SÉCURITÉ d'après safe_exec.c) — GTK 3 uniquement.

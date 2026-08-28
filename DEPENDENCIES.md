@@ -143,7 +143,7 @@ sudo dnf install gtk4-devel vte291-gtk4-devel                    # gtk4sermo
 Build effectif — le même pour les deux, seul le dossier change :
 
 ```sh
-cd gtk3sermo/gtk3sermo_1.1.0     # ou : cd gtk4sermo/gtk4sermo_1.1.0
+cd gtk3sermo/gtk3sermo_1.1.1     # ou : cd gtk4sermo/gtk4sermo_1.1.1
 autoreconf -fi && ./configure && make
 ```
 

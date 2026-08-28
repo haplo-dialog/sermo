@@ -1,0 +1,35 @@
+#!/bin/sh
+# gtkdialog4 example: drawingarea widget (GTK4-natif, Cairo)
+GTKDIALOG=${GTKDIALOG:-gtk4sermo}
+
+MAIN_DIALOG='
+<window title="Zone de dessin Cairo" border-width="12">
+  <vbox spacing="10">
+    <text><label>GtkDrawingArea avec fond personnalisé :</label></text>
+    <drawingarea width="400" height="200" background-color="#2d4a7a">
+      <variable>DA_MAIN</variable>
+    </drawingarea>
+    <hbox spacing="6">
+      <text><label>Couleur fond :</label></text>
+      <colorbutton>
+        <variable>CB_COLOR</variable>
+        <default>rgb(45,74,122)</default>
+        <action>refresh:DA_MAIN</action>
+      </colorbutton>
+      <button>
+        <label>Redessiner</label>
+        <action>refresh:DA_MAIN</action>
+      </button>
+    </hbox>
+    <hseparator></hseparator>
+    <hbox homogeneous="true">
+      <button ok></button>
+    </hbox>
+  </vbox>
+</window>
+'
+export MAIN_DIALOG
+case $1 in
+  -d | --dump) echo "$MAIN_DIALOG" ;;
+  *) $GTKDIALOG --program=MAIN_DIALOG ;;
+esac

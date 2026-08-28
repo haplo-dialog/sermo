@@ -1,0 +1,107 @@
+#!/bin/sh
+# image — example for the <image> widget (GtkImage GTK3 native)
+# gtkdialog-1.0.0 — haplo-dialog 2026
+#
+# <image> displays an icon from the current GTK theme or a file (PNG/SVG/JPG).
+# Unlike <pixmap>, it integrates natively with the GTK icon theme.
+#
+# Tag attributes:
+#   icon-name="name"                 — XDG icon name from current theme
+#   icon-size="button|small|large|dialog"  (default: large)
+#   file="/path/to/image.png"        — load from file
+#   width="N"  height="N"            — scale when loading from file
+#
+# <input> command: echo an icon-name or an absolute /path/to/file
+# Exported variable: icon-name currently displayed (empty if loaded from file)
+#
+# Usage:
+#   ./image            — launch the dialog
+#   ./image --dump     — print the XML definition
+
+GTKDIALOG=${GTKDIALOG:-gtk3sermo}
+
+MAIN_DIALOG='
+<window title="Image example" resizable="false">
+  <vbox spacing="8">
+
+    <frame Icones du theme GTK>
+      <hbox spacing="12" homogeneous="true">
+
+        <vbox>
+          <image icon-name="dialog-information" icon-size="dialog"></image>
+          <text><label>information</label></text>
+        </vbox>
+
+        <vbox>
+          <image icon-name="dialog-warning" icon-size="dialog"></image>
+          <text><label>warning</label></text>
+        </vbox>
+
+        <vbox>
+          <image icon-name="dialog-error" icon-size="dialog"></image>
+          <text><label>error</label></text>
+        </vbox>
+
+        <vbox>
+          <image icon-name="dialog-question" icon-size="dialog"></image>
+          <text><label>question</label></text>
+        </vbox>
+
+      </hbox>
+    </frame>
+
+    <frame Tailles disponibles>
+      <hbox spacing="8">
+        <vbox>
+          <image icon-name="document-save" icon-size="button"></image>
+          <text><label>button</label></text>
+        </vbox>
+        <vbox>
+          <image icon-name="document-save" icon-size="small"></image>
+          <text><label>small</label></text>
+        </vbox>
+        <vbox>
+          <image icon-name="document-save" icon-size="large"></image>
+          <text><label>large</label></text>
+        </vbox>
+        <vbox>
+          <image icon-name="document-save" icon-size="dialog"></image>
+          <text><label>dialog</label></text>
+        </vbox>
+      </hbox>
+    </frame>
+
+    <frame Image dynamique via input>
+      <hbox spacing="8">
+        <image icon-size="dialog">
+          <variable>DYN_IMAGE</variable>
+          <input>echo "system-run"</input>
+        </image>
+        <vbox>
+          <text><label>Choisir une icone :</label></text>
+          <comboboxtext>
+            <variable>ICON_CHOICE</variable>
+            <item>system-run</item>
+            <item>utilities-terminal</item>
+            <item>preferences-system</item>
+            <item>network-wired</item>
+            <item>drive-harddisk</item>
+            <action>refresh:DYN_IMAGE</action>
+          </comboboxtext>
+        </vbox>
+      </hbox>
+    </frame>
+
+    <button ok></button>
+  </vbox>
+</window>
+'
+export MAIN_DIALOG
+
+case $1 in
+  -d | --dump) echo "$MAIN_DIALOG" ;;
+  *)
+    $GTKDIALOG --program=MAIN_DIALOG
+    echo "DYN_IMAGE=$DYN_IMAGE"
+    ;;
+esac

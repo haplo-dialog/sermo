@@ -1,0 +1,27 @@
+#!/bin/sh
+# gtkdialog4 example: calendar widget
+GTKDIALOG=${GTKDIALOG:-gtk4sermo}
+
+MAIN_DIALOG='
+<window title="Calendrier" border-width="12">
+  <vbox spacing="10">
+    <calendar>
+      <variable>CAL_DATE</variable>
+      <action>echo "Date sélectionnée : $CAL_DATE"</action>
+    </calendar>
+    <hseparator></hseparator>
+    <entry>
+      <variable>ENT_DATE</variable>
+      <input>echo $CAL_DATE</input>
+    </entry>
+    <hbox homogeneous="true">
+      <button ok></button>
+    </hbox>
+  </vbox>
+</window>
+'
+export MAIN_DIALOG
+case $1 in
+  -d | --dump) echo "$MAIN_DIALOG" ;;
+  *) $GTKDIALOG --program=MAIN_DIALOG ;;
+esac

@@ -1,0 +1,62 @@
+#!/bin/sh
+# infobar — example for the <infobar> widget (GtkInfoBar)
+# gtkdialog-1.0.0 — haplo-dialog 2026
+#
+# The <infobar> widget shows a coloured message bar (info/warning/error/question).
+# The variable exports the text of the label. The signal is "response".
+# The message-type attribute controls the colour:
+#   info (blue) | warning (yellow) | error (red) | question (grey)
+#
+# Usage:
+#   ./infobar          — launch the dialog
+#   ./infobar --dump   — print the XML definition
+
+GTKDIALOG=${GTKDIALOG:-gtk3sermo}
+
+MAIN_DIALOG='
+<window title="InfoBar example" resizable="false">
+	<vbox>
+		<frame GtkInfoBar — notification bar>
+			<vbox>
+				<infobar>
+					<label>This is an informational message.</label>
+					<variable>INFO_MSG</variable>
+					<input>echo "Info bar ready."</input>
+				</infobar>
+				<infobar>
+					<label>Warning: this action cannot be undone!</label>
+					<variable>WARN_MSG</variable>
+				</infobar>
+				<infobar>
+					<label>Error: configuration file not found.</label>
+					<variable>ERR_MSG</variable>
+				</infobar>
+				<hbox>
+					<text><label>Dynamic message:</label></text>
+					<entry>
+						<variable>DYN_TEXT</variable>
+						<default>Type a message here</default>
+					</entry>
+					<button>
+						<label>Update InfoBar</label>
+						<action>refresh:INFO_MSG</action>
+					</button>
+				</hbox>
+			</vbox>
+		</frame>
+		<hbox>
+			<button ok></button>
+			<button cancel></button>
+		</hbox>
+	</vbox>
+</window>
+'
+export MAIN_DIALOG
+
+case $1 in
+	-d | --dump) echo "$MAIN_DIALOG" ;;
+	*) $GTKDIALOG --program=MAIN_DIALOG
+	   echo "INFO_MSG=$INFO_MSG"
+	   echo "WARN_MSG=$WARN_MSG"
+	   echo "ERR_MSG=$ERR_MSG" ;;
+esac

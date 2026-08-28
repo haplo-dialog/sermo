@@ -5,6 +5,42 @@ This file summarises the important changes from the user's point of view.
 For the complete technical history, see CHANGELOG.md.
 
 ──────────────────────────────────────────────────
+Version 1.1.1 (2026-08-27), Fixes
+──────────────────────────────────────────────────
+
+The two ports finally install side by side: both shipped the same manual page,
+and dpkg refused the second one — while the documentation promised the opposite.
+
+That page was also wrong: it described the Wayland anchoring as working in both
+ports, when only the GTK 3 one has it. The GTK 4 port now has its own page,
+which says what it actually does.
+
+The shipped examples called commands the packages do not provide. They now call
+their own port's binary.
+
+Also: the manual pages follow the version instead of staying frozen;
+"make install" no longer overwrites an already installed gtkdialog; "--version"
+prints a single number; a <spinbutton> in the GTK 4 port no longer prints two
+warnings on every open; and the test suite no longer returns a silent success
+when it finds no binary.
+
+──────────────────────────────────────────────────
+Version 1.1.0 (2026-08-26), Both ports on a single number
+──────────────────────────────────────────────────
+
+The packages carried two numbers to read — gtk3sermo 1.0.0-11 and gtk4sermo
+1.0.0-12. They are all on 1.1.1 now, and there is only one thing to read.
+
+This version brings the info manuals ("info gtk3sermo" finally opens
+something), the --do option, the optional HAPLO_ALLOWED_CMDS bound, and ten
+behaviours the program has always had with nothing documenting them.
+
+It fixes three serious defects: the output handed to the shell could be executed
+by eval if whoever used the dialog typed $(command) into a field, clicking a
+<switch> killed the program, and under a French locale a number written with a
+dot silently read as zero.
+
+──────────────────────────────────────────────────
 Version 1.0.0 (2026-05-29), First public release
 ──────────────────────────────────────────────────
 
@@ -39,10 +75,10 @@ fixed, hardened, maintained.
 
 To install:
 
-  # The packages are attached to the v1.0.0 release, with their checksums.
+  # The packages are attached to the v1.1.1 release, with their checksums.
   # There is NO APT repository: you download, you verify, you install.
   sha256sum -c SHA256SUMS
-  sudo apt install ./gtk3sermo_1.0.0-10_amd64.deb
+  sudo apt install ./gtk3sermo_1.1.1-1_amd64.deb
   # To build them yourself from a clone:
   #   cd sermo/gtk3sermo/gtk3sermo_1.1.0 && dpkg-buildpackage -us -uc -b
   # (The resulting packages are gtk3sermo, gtksermo and gtk4sermo.

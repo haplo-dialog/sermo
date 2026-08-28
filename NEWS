@@ -5,6 +5,45 @@ Ce fichier résume les changements importants du point de vue de l'utilisateur.
 Pour l'historique technique complet, voir CHANGELOG.md.
 
 ──────────────────────────────────────────────────
+Version 1.1.1 (2026-08-27), Corrections
+──────────────────────────────────────────────────
+
+Les deux ports s'installent enfin cote a cote : ils livraient tous deux la meme
+page de manuel, et dpkg refusait le second — alors que la documentation
+promettait l'inverse.
+
+Cette page disait aussi faux : elle decrivait l'ancrage Wayland comme
+fonctionnel dans les deux ports, alors que seul le port GTK 3 l'a. Le port GTK 4
+a maintenant sa propre page, qui dit ce qu'il fait vraiment.
+
+Les exemples livres appelaient des commandes que les paquets ne fournissent pas.
+Ils appellent maintenant le binaire de leur propre port.
+
+Plus : les pages de manuel suivent la version au lieu de rester figees ;
+« make install » n'ecrase plus un gtkdialog deja installe ; « --version » ne
+donne plus qu'un seul numero ; un <spinbutton> du port GTK 4 n'imprime plus deux
+avertissements a chaque ouverture ; et la suite de tests ne rend plus un succes
+muet quand elle ne trouve aucun binaire.
+
+──────────────────────────────────────────────────
+Version 1.1.0 (2026-08-26), Les deux ports sur un seul numero
+──────────────────────────────────────────────────
+
+Les paquets portaient deux numeros a lire — gtk3sermo 1.0.0-11 et gtk4sermo
+1.0.0-12. Ils sont maintenant tous en 1.1.1, et il n'y a plus qu'une chose a
+lire.
+
+Cette version apporte les manuels info (« info gtk3sermo » ouvre enfin quelque
+chose), l'option --do, la borne facultative HAPLO_ALLOWED_CMDS, et dix
+comportements que le programme avait depuis toujours sans que rien ne les
+documente.
+
+Elle corrige trois defauts serieux : la sortie rendue au shell pouvait etre
+executee par eval si l'utilisateur du dialogue tapait $(commande) dans un champ,
+cliquer un <switch> tuait le programme, et sous locale francaise un nombre ecrit
+avec un point valait zero en silence.
+
+──────────────────────────────────────────────────
 Version 1.0.0 (2026-05-29), Première version publique
 ──────────────────────────────────────────────────
 
@@ -40,10 +79,10 @@ corrigé, durci, maintenu.
 
 Pour installer :
 
-  # Les paquets sont joints a la release v1.0.0, avec leurs sommes.
+  # Les paquets sont joints a la release v1.1.1, avec leurs sommes.
   # Il n'y a PAS de depot APT : on telecharge, on verifie, on installe.
   sha256sum -c SHA256SUMS
-  sudo apt install ./gtk3sermo_1.0.0-10_amd64.deb
+  sudo apt install ./gtk3sermo_1.1.1-1_amd64.deb
   # Pour construire soi-meme depuis un clone :
   #   cd sermo/gtk3sermo/gtk3sermo_1.1.0 && dpkg-buildpackage -us -uc -b
   # (Les paquets obtenus s'appellent gtk3sermo, gtksermo et gtk4sermo.

@@ -1,0 +1,114 @@
+gtk4sermo-1.1.1 — 2026-08-27 — collision de paquets, promesses fausses
+  * Les deux ports s'installent enfin côte à côte. gtk3sermo et gtk4sermo
+    livraient tous deux /usr/share/man/man5/haplo-dialog-xml.5.gz sans aucune
+    relation déclarée : dpkg refusait le second, dans les deux ordres et même en
+    une seule transaction — alors que le README et la note de release
+    promettaient l'inverse. Le port GTK 4 livre désormais sa propre page,
+    gtk4sermo-xml.5. Mesuré après correctif : 0 fichier en commun, dépaquetage
+    conjoint rc=0.
+  * Cette page disait faux. Elle décrivait l'ancrage Wayland (layer/edge/dist/
+    reserve) comme fonctionnel dans les deux ports. Mesure : 8 symboles
+    gtk_layer_* dans le binaire gtk3sermo, 0 dans gtk4sermo, qui ne lie aucune
+    bibliothèque layer-shell. La page du port GTK 4 le dit maintenant, et celle
+    du port GTK 3 crédite l'origine du code — le fork BunsenLabs gtk3dialog,
+    écrit par Dima Krasner et étendu par Mick Amadio, GPL-2.0-or-later.
+  * Les pages de manuel suivent la version. Elles portaient « 1.0.0 » en dur
+    dans leur ligne .TH : le pied de page de man mentait à chaque montée. Elles
+    deviennent des gabarits .in remplis par configure.
+  * make install n'écrase plus un gtkdialog existant. Le hook posait le lien par
+    « ln -sf … || true » : écrasement silencieux, échec masqué. L'alias passe
+    derrière --enable-gtkdialog-alias, éteint par défaut ; le paquet gtksermo
+    reste la voie propre et devient un paquet de liens purs.
+  * Les exemples livrés appelaient des commandes absentes : 215 appelaient
+    gtkdialog (fourni par le seul paquet gtksermo) et 17, côté GTK 4,
+    gtkdialog4 — que rien ne fournit. Tous passent à
+    GTKDIALOG=${GTKDIALOG:-<port>}. Vérifié avec un PATH ne contenant que le
+    binaire du port : la fenêtre s'ouvre.
+  * <spinbutton> du port GTK 4 imprimait deux GLib-GObject-CRITICAL à chaque
+    ouverture : icon-press/icon-release branchés sur un GtkSpinButton, qui ne
+    les a plus en GTK 4. Bloc recopié du port GTK 3 sans revérification.
+  * --version n'affiche plus qu'un seul numéro. Elle donnait « gtk3sermo version
+    1.1.0 gtk3sermo 1.1.0 » et « … 1.1.0 1.1.0-gtk4 ».
+  * La suite XML ne rend plus un succès muet : sans binaire, elle sortait rc=0
+    avec une sortie vide. Elle cherche maintenant aussi dans l'arbre construit,
+    et sort en rc=2 si elle ne trouve rien.
+  * Empaquetage : dépendances écrites à la main retirées (${shlibs:Depends} les
+    calcule, avec les bons noms t64), overrides lintian morts supprimés,
+    .SRCINFO réaligné sur son PKGBUILD (texinfo), src/gtkdialog.1 supprimé — il
+    n'était installé par rien et prétendait le contraire.
+
+gtk4sermo-1.0.0-gtk4 — 2026-06-06 (audit #5) — grammaire réparée, tests XML 0/52 → 52/52
+  * Avant cette session : le port GTK4 compilait (audit #4) mais échouait à TOUS
+    les tests XML — 0/52 — faute d'une grammaire complète. Corrigé → 52/52.
+  * Lexer : gestion des commentaires <!-- --> (état ST_COMMENT) ; le ">" de "-->"
+    ne fuite plus comme token au parser Bison.
+  * Lexer : espaces / tabulations / sauts de ligne entre attributs d'un même tag
+    ignorés (état ST_TAG_ATTR).
+  * --print-ir : gtk_init_check() en mode --print-ir — l'analyse ne requiert plus
+    de serveur X (exécution headless).
+  * Câblage de 8 widgets qui avaient un widget_*.c mais aucune grammaire :
+    switch, password, calendar, infobar, spinner, searchentry, levelbar,
+    drawingarea. Désormais reconnus par la grammaire (utilisables). Aucun nouveau
+    fichier widget créé — le compteur de 50 widgets est inchangé.
+  * Résultat : build make → rc=0, 0 erreur ; tests XML tests/xml/ (52 cas,
+    --print-ir, headless) 52/52 PASS ; warnings 128 → 77 (idiomes amont,
+    non bloquants).
+  * Bugs communs à la famille corrigés : troncature des noms de widgets
+    auto-générés (g_snprintf(name, sizeof(name), …) sur char* → 8 octets, corrigé
+    en 64) ; instruction lue non initialisée (instruction inst = {0};).
+
+gtk4sermo-1.0.0-gtk4 — 2026-06-01
+  * Compilation complète du port GTK4 : 0 erreur, binaire gtk4sermo (~1,45 Mo)
+  * Port GTK4 complet — toutes les API GTK2/3 retirées portées via gtk4-compat.h :
+    - GtkRadioButton → GtkCheckButton groupés (gtk_check_button_set_group)
+    - GtkMenu/GTK_IS_MENU/GTK_IS_MENU_BAR/GTK_IS_TOOL_BUTTON → shims
+    - gtk_init(argc,argv), gtk_scrolled_window_new(...) → variantes GTK4
+    - GtkIconSize (BUTTON/DND/DIALOG/MENU…), gtk_image_*_from_icon_name
+    - gtk_label_set_line_wrap → set_wrap ; gtk_entry_set_width_chars → editable
+    - gtk_calendar_select_* , gtk_window_set_position/icon, GTK_WIN_POS_*
+    - gtk_builder_connect_signals_full retiré ; populate-popup retiré
+    - vte_terminal_get_padding (no-op) ; vte_terminal_set_color_dim retiré
+  * Réduction warnings 1549 → 128 (~92 %) :
+    - return-type (variables.c, gtkdialog.c) ; définitions multiples (extern+def unique)
+    - _GNU_SOURCE harmonisé ; gdk_rgba_parse ordre d'arguments corrigé
+    - widget_tree.c formats gint64/guint64/GType ; automaton.c -Waddress
+    - combobox/comboboxtext portés sur GtkComboBoxText
+    - safe_exec : nonnull retiré ; *string initialisées
+    - -Wno-deprecated-declarations, -Wno-missing-prototypes, -Wno-unused-variable
+  * Warnings résiduels (128) = idiomes amont non bloquants
+
+gtkdialog-1.0.0 — 2026-05-20
+  * Fork haplo-dialog de gtkdialog 0.8.3
+  * Migration GTK2 → GTK3 (>= 3.22) sur 45 fichiers sources
+  * Suppression de libglade-2.0 — remplacement par GtkBuilder (GTK3 natif)
+  * Mise à jour VTE : vte >= 0.23.5 → vte-2.91
+  * Sécurité : nouveau module safe_exec.c/.h
+    - safe_system() remplace system() — pas de /bin/sh -c
+    - safe_popen() remplace popen() — pas d'injection shell
+  * Remplacement de strcpy/strcat/sprintf par g_strlcpy/g_strlcat/g_snprintf
+  * Remplacement de malloc() par g_malloc()/g_new()
+  * Flags de compilation sécurisés :
+    -D_FORTIFY_SOURCE=2 -fstack-protector-strong -fPIE -pie
+    -Wl,-z,relro -Wl,-z,now
+  * Migration API GTK3 :
+    - gtk_hbox_new/gtk_vbox_new → gtk_box_new()
+    - GdkColor → GdkRGBA, gdk_color_parse → gdk_rgba_parse()
+    - GTK_STOCK_* → labels avec mnémoniques
+    - GtkObject → GObject
+    - gtk_widget_set_usize → gtk_widget_set_size_request()
+    - expose-event → draw
+    - vte_terminal_fork_command → vte_terminal_spawn_sync()
+  * Mise à jour configure.in pour gtk+-3.0, vte-2.91
+  * Ajout safe_exec.c/.h dans src/Makefile.am
+  * Suppression des dépendances mortes : python-gtk2-dev, gthread-2.0 (intégré)
+  * Documentation complète :
+    CAHIER_DES_CHARGES.md, MANUEL_UTILISATEUR.md, MANUEL_DEVELOPPEUR.md
+  * Compatibilité descendante : 100% avec scripts gtkdialog 0.8.3
+
+gtkdialog 0.8.3-parrot0 — 2016-02-04
+  * Paquet Parrot OS par Lisetta "Sheireen" Ferrero <sheireen@frozenbox.org>
+
+gtkdialog 0.8.3 — 2012
+  * Dernière version officielle par Thunor <thunorsif@hotmail.com>
+
+Document horodaté — dernière mise à jour : 2026-06-07 (audit #5 — grammaire réparée, tests XML 0/52 → 52/52).

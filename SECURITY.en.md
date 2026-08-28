@@ -1,7 +1,7 @@
 # Security policy — sermo
 
 **Maintainer:** haplo-dialog, devel@haplo-dialog.fr
-**Date:** 2026-05-29
+**Date:** 2026-08-27
 
 ---
 
@@ -9,10 +9,10 @@
 
 | Port | Version | Security support |
 |------|---------|-----------------|
-| gtk3sermo | 1.1.0 | ✅ Active |
-| gtk3sermo | 1.0.0 | ⚠️ No longer supported — three defects fixed in 1.1.0 |
-| gtk4sermo | 1.1.0 | ✅ Active |
-| gtk4sermo | 1.0.0 | ⚠️ No longer supported — three defects fixed in 1.1.0 |
+| gtk3sermo | 1.1.1 | ✅ Active |
+| gtk3sermo | 1.0.0 | ⚠️ No longer supported — three defects fixed in 1.1.0 ; see also 1.1.1 |
+| gtk4sermo | 1.1.1 | ✅ Active |
+| gtk4sermo | 1.0.0 | ⚠️ No longer supported — three defects fixed in 1.1.0 ; see also 1.1.1 |
 
 Both ports share the same C core and the same grammar. Since 2026-08-24 they
 have the **same memory-safety posture**: `g_strlcpy` for name copies, an explicit

@@ -1,0 +1,47 @@
+#!/bin/sh
+# switch — example for the <switch> widget (GtkSwitch, GTK3 native)
+# gtkdialog-1.0.0 — haplo-dialog 2026
+#
+# The <switch> widget exports "true" when active, "false" when inactive.
+# The signal is "notify::active".
+#
+# Usage:
+#   ./switch            — launch the dialog
+#   ./switch --dump     — print the XML definition
+
+GTKDIALOG=${GTKDIALOG:-gtk3sermo}
+
+MAIN_DIALOG='
+<window title="Switch example" resizable="false">
+	<vbox>
+		<frame GtkSwitch — sliding on/off toggle>
+			<hbox>
+				<text><label>Enable feature:</label></text>
+				<switch>
+					<variable>MY_SWITCH</variable>
+					<default>false</default>
+					<action>echo "Switch is now: $MY_SWITCH"</action>
+					<action>if true  enable:FEATURE_LABEL</action>
+					<action>if false disable:FEATURE_LABEL</action>
+				</switch>
+			</hbox>
+			<text>
+				<label>Feature is active!</label>
+				<variable>FEATURE_LABEL</variable>
+				<sensitive>false</sensitive>
+			</text>
+		</frame>
+		<hbox>
+			<button ok></button>
+			<button cancel></button>
+		</hbox>
+	</vbox>
+</window>
+'
+export MAIN_DIALOG
+
+case $1 in
+	-d | --dump) echo "$MAIN_DIALOG" ;;
+	*) $GTKDIALOG --program=MAIN_DIALOG
+	   echo "MY_SWITCH=$MY_SWITCH" ;;
+esac

@@ -30,18 +30,47 @@ fail() { printf "${RED}FAIL${NC}  %s\n" "$*"; FAIL=$((FAIL+1)); }
 skip() { printf "${YELLOW}SKIP${NC}  %s\n" "$*"; SKIP=$((SKIP+1)); }
 info() { printf "${BLUE}────${NC}  %s\n" "$*"; }
 
-# ── Vérifier le binaire ──────────────────────────────────────────────────────
-if [ "$BINARY" = "all" ]; then
-    for bin in gtk3sermo gtk4sermo; do
-        command -v "$bin" > /dev/null 2>&1 && "$0" "$bin"
+# ── Trouver le binaire ───────────────────────────────────────────────────────
+# On cherche d'abord dans le PATH, puis dans l'arbre construit : le README dit
+# « cloner puis construire », et sans cette seconde recherche la suite ne trouvait
+# rien. Elle rendait alors rc=0 avec une sortie VIDE — un succès muet, où le
+# lecteur croyait avoir vérifié 55/55 alors que zéro test avait tourné.
+RACINE="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+trouver_binaire() {
+    if command -v "$1" > /dev/null 2>&1; then command -v "$1"; return 0; fi
+    for c in "$RACINE/$1/$1"_*/src/"$1" "$RACINE/_build/install/bin/$1"; do
+        [ -x "$c" ] && { echo "$c"; return 0; }
     done
+    return 1
+}
+
+if [ "$BINARY" = "all" ]; then
+    trouves=0
+    for bin in gtk3sermo gtk4sermo; do
+        if chemin=$(trouver_binaire "$bin"); then
+            trouves=$((trouves+1))
+            "$0" "$chemin" || exit $?
+        fi
+    done
+    if [ "$trouves" = "0" ]; then
+        echo "Aucun binaire trouvé : ni dans le PATH, ni dans l'arbre construit." >&2
+        echo "Construis d'abord un port, ou installe un paquet. AUCUN test n'a tourné." >&2
+        exit 2
+    fi
     exit 0
 fi
 
-if ! command -v "$BINARY" > /dev/null 2>&1; then
-    echo "Binaire '$BINARY' non trouvé — tests ignorés"
-    exit 0
+if ! CHEMIN=$(trouver_binaire "$BINARY"); then
+    if [ -x "$BINARY" ]; then
+        CHEMIN="$BINARY"
+    else
+        echo "Binaire '$BINARY' introuvable : ni dans le PATH, ni dans l'arbre construit." >&2
+        echo "AUCUN test n'a tourné." >&2
+        exit 2
+    fi
 fi
+BINARY="$CHEMIN"
 
 BIN_VERSION=$("$BINARY" --version 2>/dev/null | head -1 || echo "inconnu")
 info "Suite XML haplo-dialog — ${BINARY} (${BIN_VERSION})"

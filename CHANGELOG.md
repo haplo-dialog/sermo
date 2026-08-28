@@ -12,6 +12,47 @@ Versionning : [Semantic Versioning](https://semver.org/lang/fr/) à partir de 1.
 
 ---
 
+## [1.1.1] - 2026-08-27
+
+### Supprimé
+- **Les paquets de la release `v1.0.0` sont retirés (2026-08-27)** : les cinq
+  `.deb` (`gtk3sermo 1.0.0-10`, `gtk4sermo 1.0.0-11`, `gtksermo 1.0.0-10` et les
+  deux paquets de symboles) portaient les trois défauts corrigés depuis — la
+  sortie rendue au shell exécutable par `eval` si l'utilisateur du dialogue tape
+  `$(commande)` dans un champ, le `<switch>` qui tue le programme au clic, et le
+  nombre à point qui vaut zéro en silence sous locale française. Les laisser
+  téléchargeables « pour l'historique » n'était pas défendable : un moteur de
+  recherche ou un vieux signet y mène aussi bien qu'à la version courante.
+  La page de release est retirée avec eux.
+  Ce que l'opération a appris : **une release et un paquet de registre sont deux
+  objets distincts.** Les fichiers vivent dans le registre générique
+  (`packages/generic/sermo/1.0.0/`) et la release n'en tient que des liens —
+  supprimer la release seule les aurait laissés accessibles par leur URL directe.
+  Le registre est donc supprimé **en premier**, pour qu'un échec en cours de route
+  laisse une page visible aux liens morts plutôt que des paquets dangereux
+  accessibles en silence. Et le rôle compte autant que la portée du jeton :
+  d'après la documentation GitLab, **créer** une release demande *Developer*,
+  mais **supprimer** un paquet ou une release demande *Maintainer*.
+  L'**étiquette git `v1.0.0` est conservée** : elle ne distribue rien et date le
+  premier commit public. Les paquets retirés sont archivés hors dépôt, sommes
+  vérifiées, pour que l'opération reste rattrapable.
+
+### Corrigé
+- **Les deux ports ne pouvaient pas s'installer ensemble (2026-08-27)** : `gtk3sermo` et `gtk4sermo` livraient tous deux `/usr/share/man/man5/haplo-dialog-xml.5.gz`, sans aucune relation déclarée entre eux. `dpkg` refusait le second — dans les deux ordres, et même donnés ensemble en une seule transaction. Or la description des deux paquets, le `README` et la note de la release affirmaient qu'ils « s'installent sans conflit ». Une seule collision sur 219 et 214 fichiers, mais elle frappait exactement le scénario promis. Le port GTK 4 livre désormais sa propre page, `gtk4sermo-xml.5` ; le port de référence garde le nom canonique. Mesuré après correctif dans une racine `dpkg` vierge : **0 fichier en commun**, dépaquetage conjoint `rc=0`, les deux binaires et les deux pages présents.
+- **La page de manuel promettait l'ancrage Wayland dans les deux ports (2026-08-27)** : elle décrivait `layer`/`edge`/`dist`/`reserve` comme fonctionnels, et elle était livrée **à l'identique** par les deux ports. Mesuré sur les binaires livrés : `nm -D` rend **8** symboles `gtk_layer_*` côté `gtk3sermo` et **0** côté `gtk4sermo`, qui ne lie aucune bibliothèque layer-shell ; `git log -S "gtk_layer_init_for_window"` ne rend aucun commit côté GTK 4 — ce code n'a jamais existé là. Ce qui trompe : `libgtk-layer-shell0` est bien installé sur la machine de développement, mais c'est la bibliothèque **GTK 3** ; celle de GTK 4 est un paquet distinct. La page du port GTK 4 dit maintenant ce qu'il fait vraiment, et le comportement a été vérifié : les quatre attributs y sont ignorés en silence et la fenêtre s'ouvre normalement.
+- **L'origine du code Wayland n'était pas dans l'en-tête ni dans le manuel (2026-08-27)** : l'ancrage est porté du fork **BunsenLabs gtk3dialog**, où il a été écrit par Dima Krasner (2021) puis étendu par Mick Amadio (2021-2024), sous GPL-2.0-or-later. L'attribution existait dans `AUTHORS`, `LICENCES.md`, `debian/copyright` et en commentaire de milieu de fichier — mais pas dans les lignes `Copyright` de `widget_window.c`, ni dans la page de manuel que lit l'utilisateur. Les deux sont posées.
+- **Les pages de manuel ne suivaient pas la version (2026-08-27)** : les six portaient « 1.0.0 » **en dur** dans leur ligne `.TH`, si bien que le pied de page rendu par `man` mentait à chaque montée — dans une version dont l'argument est « il n'y a plus qu'une chose à lire ». Elles deviennent des gabarits `.in` remplis par `configure`, même patron que les `.spec.in`. Vérifié sur les pages **livrées dans les `.deb`** : les quatre disent la version courante.
+- **`make install` écrasait en silence un `gtkdialog` existant (2026-08-27)** : le hook autotools posait le lien par `ln -sf … || true` — écrasement muet d'un `gtkdialog` de distribution, et le `|| true` masquait jusqu'à l'échec. C'est le contraire de ce que promettent le `README` et les descriptions de paquet. L'alias passe derrière `--enable-gtkdialog-alias`, **éteint par défaut**, et le hook refuse d'écraser une cible qui n'est pas un lien. Mesuré : 0 fichier `gtkdialog*` posé par défaut, 2 avec l'option. Le paquet `gtksermo` reste la voie propre — il déclare le conflit au vu et au su de `dpkg` — et devient un paquet de liens purs.
+- **Les exemples livrés appelaient des commandes que les paquets ne fournissent pas (2026-08-27)** : sur 239 exemples, **215** appelaient `gtkdialog`, fourni par le seul paquet `gtksermo` que rien ne rend obligatoire — et côté GTK 4 cela lançait donc le port **GTK 3** ; **17** appelaient `gtkdialog4`, qu'**aucun** des cinq paquets ne fournit. Tous passent à `GTKDIALOG=${GTKDIALOG:-<port>}` : chacun appelle le binaire de son propre port, et reste surchargeable. Vérifié en lançant un exemple avec un `PATH` ne contenant **que** le binaire du port : la fenêtre s'ouvre, aucune commande introuvable.
+- **`<spinbutton>` du port GTK 4 imprimait deux avertissements GTK à chaque ouverture (2026-08-27)** : `icon-press`/`icon-release` étaient branchés sur un `GtkSpinButton`. En GTK 3 celui-ci dérive de `GtkEntry` et hérite de ces signaux ; en GTK 4 non — c'est un `GtkWidget` qui implémente `GtkEditable`. Bloc recopié du port GTK 3 sans revérification, son commentaire disait encore « GTK3: always available ». Mesure par widget : `<spinbutton>` **2** avertissements, `<entry>` **0**, `<entry password="true">` **0**. Après correctif : **0**.
+- **`--version` affichait deux fois la version (2026-08-27)** : « gtk3sermo version 1.1.0 gtk3sermo 1.1.0 » d'un côté, « … 1.1.0 1.1.0-gtk4 » de l'autre — soit deux numéros à lire, ce que la 1.1.0 disait justement avoir supprimé. `BUILD_DETAILS` était écrit en dur dans `configure.ac` et répétait ce que `PACKAGE_NAME`/`PACKAGE_VERSION` impriment déjà.
+- **La suite XML rendait un succès muet (2026-08-27)** : `./tests/xml/run_tests.sh all` sortait `rc=0` avec une **sortie vide** et zéro test exécuté pour qui avait suivi la recette « cloner puis construire » sans installer — le script ne cherchait que dans le `PATH`. Le lecteur croyait avoir vérifié 55/55. Elle cherche maintenant aussi dans l'arbre construit et sort en `rc=2` si elle ne trouve rien. Éprouvé dans les deux sens.
+- **`make check` restait vert avec un binaire entièrement cassé (2026-08-27)** : c'est le contrôle que `CONTRIBUTING.md` exige avant fusion. Deux causes cumulées. Le wrapper engendré lançait `run_tests.sh` **sans argument**, si bien que le script cherchait le binaire dans le `PATH`, ne trouvait pas celui du build, et **sautait** les sections qui l'éprouvent — saut qu'automake résumait en `PASS`. Et les épreuves elles-mêmes ne pouvaient pas échouer : chacune ne cherchait qu'un mot dans la sortie, de sorte qu'un binaire n'imprimant **rien** les passait toutes. Sabotage mesuré avant correctif : un faux binaire réduit à `exit 1` donnait **49 passés / 0 échoué**. Le wrapper passe désormais le binaire construit, un binaire introuvable est un échec et non un saut, et les épreuves exigent une preuve **positive**. Éprouvé par deux sabotages : binaire muet et binaire trop permissif, tous deux attrapés.
+- **L'avertissement de `--do` criait « injection risk » sur son propre exemple (2026-08-27)** : l'exemple donné par la page de manuel déclenchait `safe_system: shell fallback (injection risk)` à chaque exécution, alors que la note de release présente `--do` comme la voie sûre. La commande de `--do` vient de l'**auteur du script**, qui a déjà le droit de lancer des commandes — c'est le modèle de confiance assumé. Le message devient factuel ; **le refus reste une alarme**, vérifié sous `HAPLO_NO_SHELL_FALLBACK=1`.
+- **Empaquetage (2026-08-27)** : `libgtk-3-0 (>= 3.22)` et `libvte-2.91-0` étaient écrits à la main **en double** de `${shlibs:Depends}`, qui les calcule avec les bons noms `t64` — le nom écrit à la main n'existe plus comme paquet réel dans testing, il n'est satisfait que par un `Provides` de transition. Retirés des deux ports. Les overrides lintian `initial-upload-closes-no-bugs` sont morts et signalés comme inutilisés : supprimés. Le `.SRCINFO` avait de nouveau divergé de son `PKGBUILD` (`texinfo` manquant), or c'est lui que les outils Arch lisent en premier. La page de manuel renvoyait au suivi d'incidents du projet, qui répond **404**. `src/gtkdialog.1` est supprimé : installé par rien, il affirmait pourtant « This file is installed as /usr/share/man/man1/gtkdialog.1 ».
+
+---
+
 ## [1.1.0] - 2026-08-26
 
 ### Ajouté
