@@ -786,12 +786,12 @@ void widget_tree_save(variable *var)
 					g_free(string);
 				}
 				if (initialrow) {
-					fprintf(outfile, "%s", text);
+					fprintf(outfile, "%s", line);
 					initialrow = FALSE;
 				} else {
-					fprintf(outfile, "\n%s", text);
+					fprintf(outfile, "\n%s", line);
 				}
-				g_free(text);
+				g_free(line);
 
 				if (!gtk_tree_model_iter_next(GTK_TREE_MODEL(model), &iter)) break;
 			}
@@ -1302,30 +1302,30 @@ static void widget_tree_pixmap_column_cell_layout_function(
 	GtkCellLayout *cell_layout, GtkCellRenderer *cell,
 	GtkTreeModel *tree_model, GtkTreeIter *iter, GtkTreeView *treeview)
 {
-	gchar            *icon_name;
-	gchar            *stock_id;
+	gchar            *cell_icon_name;
+	gchar            *cell_stock_id;
 
 #ifdef DEBUG_TRANSITS
 	fprintf(stderr, "%s(): Entering.\n", __func__);
 #endif
 
-	gtk_tree_model_get(tree_model, iter, ColumnStockId, &stock_id,
-		ColumnIconName, &icon_name, -1);
+	gtk_tree_model_get(tree_model, iter, ColumnStockId, &cell_stock_id,
+		ColumnIconName, &cell_icon_name, -1);
 
-	if (stock_id != NULL) {
+	if (cell_stock_id != NULL) {
 #ifdef DEBUG_CONTENT
 		fprintf(stderr, "%s(): This row has a stock_id: '%s'\n",
-			__func__, stock_id);
+			__func__, cell_stock_id);
 #endif
-		g_object_set(G_OBJECT(cell), "stock-id", stock_id, NULL);
+		g_object_set(G_OBJECT(cell), "stock-id", cell_stock_id, NULL);
 		g_object_set(G_OBJECT(cell), "icon-name", NULL, NULL);
-	} else if (icon_name != NULL) {
+	} else if (cell_icon_name != NULL) {
 #ifdef DEBUG_CONTENT
 		fprintf(stderr, "%s(): This row has an icon_name: '%s'\n",
-			__func__, icon_name);
+			__func__, cell_icon_name);
 #endif
 		g_object_set(G_OBJECT(cell), "stock-id", NULL, NULL);
-		g_object_set(G_OBJECT(cell), "icon-name", icon_name, NULL);
+		g_object_set(G_OBJECT(cell), "icon-name", cell_icon_name, NULL);
 	} else {
 #ifdef DEBUG_CONTENT
 		fprintf(stderr, "%s(): This row has no icon set.\n", __func__);

@@ -72,7 +72,9 @@ static gboolean try_set_property(GtkWidget *widget, namevalue  *nameval)
 		return FALSE;
 	}
 	
-	if (!paramspec->flags & G_PARAM_WRITABLE) {
+	/* Bug fix: operator precedence — !x & y evaluates (!x) & y, not !(x & y).
+	 * Without the parentheses, the writable check was always wrong on non-zero flags. */
+	if (!(paramspec->flags & G_PARAM_WRITABLE)) {
 		if (!option_no_warning)
 			g_warning("%s(): Property '%s' is not writable.", 
 				__func__, nameval->name);

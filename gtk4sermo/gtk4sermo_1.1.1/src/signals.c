@@ -1539,9 +1539,9 @@ gboolean widget_signal_executor_eval_condition(gchar *condition)
 			}
 
 			/* Fix any escaped double-quotes if present */
-			for (index = 0; index < strlen(argument); index++)
+			for (index = 0; index < (gint)strlen(argument); index++)
 				if (argument[index] == '\\' && argument[index + 1] == '"' )
-					for (count = index; count < strlen(argument); count++)
+					for (count = index; count < (gint)strlen(argument); count++)
 						argument[count] = argument[count + 1];
 
 			/* Remove enveloping spaces if present */

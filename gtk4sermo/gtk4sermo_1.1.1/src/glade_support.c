@@ -249,12 +249,13 @@ find_and_connect_handler(
 	gint n;
 	
 	for (n = 0; signals[n].name != NULL; ++n) {
-		if (g_ascii_strcasecmp(signals[n].name, signal_name) == 0)
+		if (g_ascii_strcasecmp(signals[n].name, signal_name) == 0) {
 			g_signal_connect(G_OBJECT(widget), 
 					signal_name, 
 					signals[n].callback, 
 					g_strdup(handler_name));
 			return TRUE;
+		}
 	}
 
 	return FALSE;

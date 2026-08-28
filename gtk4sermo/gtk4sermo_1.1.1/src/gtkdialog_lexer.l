@@ -58,6 +58,12 @@ gchar *Token;
 	 **************************************************************
 	* %option debug */
 
+/* input() n'est jamais appelee ici : YY_INPUT est redefini plus haut et lit
+ * par getnextchar(). Sans cette option, flex l'engendre quand meme et gcc
+ * signale une fonction statique inutilisee a chaque construction.
+ * unput() EST utilisee (voir plus bas) : pas de « nounput ». */
+%option noinput
+
 %x EMBEDDED
 %x ST_TAG_ATTR ST_QUOTED_TAGATTR
 %x ST_STRING ST_QUOTED_STRING

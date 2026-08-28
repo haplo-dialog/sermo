@@ -987,6 +987,10 @@ inner_border.top=%i inner_border.bottom=%i\n", __func__, inner_border.left,
 	return scrolledwindow;
 }
 
+/* Utilisee uniquement par le bloc GtkSocket ci-dessous (X11). GtkSocket a
+ * disparu en GTK 4 : sous cette garde, la fonction n'est plus compilee du
+ * tout, ce qui retire aussi le masquage du global « window ». */
+#ifndef GTK4_NO_SOCKET
 static
 gboolean widget_moved(GtkWidget *widget,
                       GdkEvent *event,
@@ -1031,6 +1035,7 @@ gboolean widget_moved(GtkWidget *widget,
 
 	return FALSE;
 }
+#endif  /* GTK4_NO_SOCKET */
 
 #ifndef GTK4_NO_SOCKET
 static GtkWidget *
@@ -1517,7 +1522,7 @@ instruction_new(instruction new)
 	PIP_DEBUG("instruction_counter=%d, memory_counter=%d", 
 			instruction_counter, memory_counter);
 	
-	if (instruction_counter == memory_counter)
+	if (instruction_counter == (int)memory_counter)
 		_more_memory_needed();
 
 	program[instruction_counter++] = new;
@@ -1532,7 +1537,7 @@ instruction_get_pc(void)
 void
 instruction_set_jump(gint from, gint where)
 {
-	if (from >= memory_counter)
+	if (from >= (gint)memory_counter)
 		g_error("Jump from a nonexistent instruction memory location.");
 	program[from].ival = where;
 }

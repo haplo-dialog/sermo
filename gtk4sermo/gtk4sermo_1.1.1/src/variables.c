@@ -1319,21 +1319,23 @@ int _tree_insert(variable *new, variable *actual)
 		exit(EXIT_FAILURE);
 	}
 
-	if (compare < 0)
+	if (compare < 0) {
 		if (actual->left == NULL) {
 			actual->left = new;
 			return (0);
 		} else {
 			return (_tree_insert(new, actual->left));
 		}
+	}
 
-	if (compare > 0)
+	if (compare > 0) {
 		if (actual->right == NULL) {
 			actual->right = new;
 			return (0);
 		} else {
 			return (_tree_insert(new, actual->right));
 		}
+	}
 
 	return (0);
 }
@@ -1358,17 +1360,19 @@ static variable *_tree_find(const char *name, variable *actual)
 	if (compare == 0)
 		return (actual);
 
-	if (compare < 0)
+	if (compare < 0) {
 		if (actual->left != NULL)
 			return _tree_find(name, actual->left);
 		else
 			return NULL;
+	}
 
-	if (compare > 0)
+	if (compare > 0) {
 		if (actual->right != NULL)
 			return _tree_find(name, actual->right);
 		else
 			return NULL;
+	}
 
 	return NULL;
 }
@@ -1411,7 +1415,7 @@ gint variables_count_widgets(void)
  ***********************************************************************/
 /* This function will drop all the widgets with the given parent */
 
-void variables_drop_by_window_id(variable *actual, gint window_id)
+void variables_drop_by_window_id(variable *actual, gint drop_window_id)
 {
 	gint              index = 0;
 #if HAVE_SYS_INOTIFY_H
@@ -1436,7 +1440,7 @@ void variables_drop_by_window_id(variable *actual, gint window_id)
 	if (actual != NULL) {
 
 		if (actual->left != NULL)
-			variables_drop_by_window_id(actual->left, window_id);
+			variables_drop_by_window_id(actual->left, drop_window_id);
 
 		if (actual->Widget != NULL) {
 
@@ -1460,7 +1464,7 @@ void variables_drop_by_window_id(variable *actual, gint window_id)
 
 			//Redundant: if (gtk_widget_get_toplevel(actual->Widget) == Parent) {
 			//Redundant: if (gtk_widget_get_ancestor(actual->Widget, GTK_TYPE_WINDOW) == Parent) {
-			if (actual->window_id == window_id) {
+			if (actual->window_id == drop_window_id) {
 
 				/* Timer callbacks cancel themselves when they
 				 * detect that var and var->widget are NULL */
@@ -1515,7 +1519,7 @@ void variables_drop_by_window_id(variable *actual, gint window_id)
 		}
 
 		if (actual->right != NULL)
-			variables_drop_by_window_id(actual->right, window_id);
+			variables_drop_by_window_id(actual->right, drop_window_id);
 
 	}
 

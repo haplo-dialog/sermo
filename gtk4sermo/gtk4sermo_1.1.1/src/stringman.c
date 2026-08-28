@@ -486,7 +486,7 @@ list_t *linecutter(char *str, int fs)
 
 	parts->line[0] = str;
 	
-	for(n = 0; n <= strlen(str); ++n){
+	for(n = 0; n <= (int)strlen(str); ++n){
 		if (str[n] == fs){
 			/* g_strdup et non strdup : list_t_free libere par g_free,
 			 * et melanger les deux allocateurs est indefini. */
@@ -498,7 +498,7 @@ list_t *linecutter(char *str, int fs)
 	parts->line[parts->n_lines] = NULL;
 
 	for (n = 0; n < parts->n_lines - 1; ++n){
-		for (q = 0; q < strlen(parts->line[n]); ++q)
+		for (q = 0; q < (int)strlen(parts->line[n]); ++q)
 			if (*(parts->line[n] + q) == fs)
 				*(parts->line[n] + q)= '\0';
 	}
