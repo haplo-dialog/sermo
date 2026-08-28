@@ -568,19 +568,36 @@ gchar *s = g_strdup_printf(fmt, ...);  // Pour allocation dynamique
 
 ### 7.3 Flags de compilation — NE PAS SUPPRIMER
 
-Ces flags dans `src/Makefile.am` ne doivent jamais être retirés :
+Le durcissement a **une seule source** : `configure.ac`. Il y était déjà déclaré,
+mais n'y était référencé nulle part — les drapeaux étaient recopiés en dur dans
+`src/Makefile.am`, et les deux listes avaient divergé (`-fPIE` d'un côté,
+`-Wl,-z,ibt -Wl,-z,shstk` de l'autre). Depuis le 2026-08-28 elles sont câblées.
+
+```m4
+# configure.ac — la source
+AC_SUBST([HARDENING_CFLAGS],
+  ["-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 -D_POSIX_C_SOURCE=200809L \
+    -fstack-protector-strong -fstack-clash-protection -fcf-protection=full -fPIE"])
+AC_SUBST([HARDENING_LDFLAGS],
+  ["-pie -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -Wl,-z,ibt -Wl,-z,shstk"])
+```
 
 ```makefile
-AM_CFLAGS = ... \
-  -U_FORTIFY_SOURCE \           # désarme le =2 des drapeaux Debian
-  -D_FORTIFY_SOURCE=3 \          # Buffer overflow detection runtime
-  -fstack-protector-strong \     # Stack canaries
-  -fPIE                          # Position Independent Executable
-
-AM_LDFLAGS = -pie \
-  -Wl,-z,relro \                 # Read-only relocations
-  -Wl,-z,now                     # Immediate binding (full RELRO)
+# src/Makefile.am — la consommation, rien de plus
+gtk3sermo_CFLAGS  = ... @HARDENING_CFLAGS@
+gtk3sermo_LDFLAGS = @HARDENING_LDFLAGS@
 ```
+
+Ce qu'ils apportent : `_FORTIFY_SOURCE=3` (contrôles de dépassement à
+l'exécution), canaris de pile, protection du flot de contrôle, exécutable
+repositionnable, RELRO complet et liaison immédiate.
+
+`-U_FORTIFY_SOURCE` n'est pas décoratif : les drapeaux Debian posent
+`-D_FORTIFY_SOURCE=2` dans `CPPFLAGS`. Sans le `-U`, GCC avertit à **chaque**
+fichier compilé — c'était 125 lignes de bruit sur les deux ports réunis.
+
+**Ne jamais remettre ces drapeaux en dur dans `src/Makefile.am`** : c'est
+exactement comme ça que les deux listes ont divergé.
 
 ### 7.4 Validation des entrées utilisateur
 

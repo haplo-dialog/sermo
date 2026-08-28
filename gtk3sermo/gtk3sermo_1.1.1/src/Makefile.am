@@ -134,12 +134,7 @@ gtk3sermo_CFLAGS = \
 	-Wno-missing-prototypes \
 	-Wnull-dereference \
 	-Wimplicit-fallthrough=3 \
-	-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 \
-	-D_POSIX_C_SOURCE=200809L \
-	-fstack-protector-strong \
-	-fstack-clash-protection \
-	-fcf-protection=full \
-	-fPIE \
+	@HARDENING_CFLAGS@ \
 	@DEBUG_CFLAGS@
 
 # Per-target link libraries.
@@ -151,5 +146,4 @@ gtk3sermo_LDADD = \
 	@LIBS@
 
 # Per-target linker flags.
-gtk3sermo_LDFLAGS = -pie -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack \
-	-Wl,-z,ibt -Wl,-z,shstk
+gtk3sermo_LDFLAGS = @HARDENING_LDFLAGS@

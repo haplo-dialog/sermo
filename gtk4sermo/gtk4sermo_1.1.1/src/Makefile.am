@@ -92,12 +92,7 @@ AM_CFLAGS = \
 	-Wnull-dereference \
 	-Wimplicit-fallthrough=3 \
 	-Wformat=2 -Wformat-overflow=2 -Werror=format-security \
-	-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 \
-	-D_POSIX_C_SOURCE=200809L \
-	-fstack-protector-strong \
-	-fstack-clash-protection \
-	-fcf-protection=full \
-	-fPIE
+	@HARDENING_CFLAGS@
 
 LIBS = \
 	$(GTK_LIBS) \
@@ -105,8 +100,7 @@ LIBS = \
 	$(VTE_LIBS) \
 	@LIBS@
 
-AM_LDFLAGS = -pie -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack \
-	-Wl,-z,ibt -Wl,-z,shstk
+AM_LDFLAGS = @HARDENING_LDFLAGS@
 
 # Man page — installed to $(mandir)/man1/
 # Pages engendrees par configure depuis les .in : la version suit AC_INIT

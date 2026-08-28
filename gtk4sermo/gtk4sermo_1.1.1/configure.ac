@@ -79,10 +79,15 @@ AC_SUBST([DEBUG_CFLAGS])
 # ---------------------------------------------------------------------------
 # Hardening flags — vérifiés à la compilation
 # ---------------------------------------------------------------------------
+# Source unique du durcissement. Ces deux variables sont consommees par
+# src/Makefile.am (@HARDENING_CFLAGS@ / @HARDENING_LDFLAGS@) : ne pas remettre
+# les drapeaux en dur la-bas, ils y avaient diverge de ceux-ci.
+# -U_FORTIFY_SOURCE desarme le -D_FORTIFY_SOURCE=2 pose par les drapeaux Debian
+# dans CPPFLAGS ; sans lui, chaque fichier compile emet un avertissement.
 AC_SUBST([HARDENING_CFLAGS],
-  ["-fstack-protector-strong -fstack-clash-protection -fcf-protection=full -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 -D_POSIX_C_SOURCE=200809L"])
+  ["-U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3 -D_POSIX_C_SOURCE=200809L -fstack-protector-strong -fstack-clash-protection -fcf-protection=full -fPIE"])
 AC_SUBST([HARDENING_LDFLAGS],
-  ["-pie -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack"])
+  ["-pie -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -Wl,-z,ibt -Wl,-z,shstk"])
 
 AC_OUTPUT(
 	Makefile
