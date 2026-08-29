@@ -96,12 +96,26 @@ verifie_binaire() {
 SORTIE=$(mktemp); ETAT=$(mktemp); ERRS=$(mktemp)
 trap 'rm -f "$SORTIE" "$ETAT" "$ERRS"' EXIT INT TERM
 
+# Bruit d'ENVIRONNEMENT, a ne PAS confondre avec un defaut du programme. Une
+# machine d'integration nue n'a ni bus d'accessibilite ni acceleration 3D, et
+# GTK le dit — bruyamment. Mesure dans un conteneur debian:testing :
+#   Gtk-WARNING **: Unable to acquire the address of the accessibility bus:
+#   ... org.a11y.Bus was not provided by any .service files.
+# Les valeurs rendues etaient parfaitement JUSTES, et les 11 cas echouaient
+# quand meme. Un banc qui accuse le code pour une lacune de la machine est
+# aussi nuisible qu'un banc qui se tait.
+BRUIT='accessibility bus|org\.a11y|libEGL|DRI3|dbind|dconf|Failed to connect to the session bus'
+
 joue() {
-    MAIN_DIALOG="$(cat "$2")" xvfb-run -a \
+    # GTK lui-meme conseille GTK_A11Y=none quand il n'y a pas de bus : on coupe
+    # le message a la source plutot que de le filtrer apres coup.
+    MAIN_DIALOG="$(cat "$2")" GTK_A11Y=none xvfb-run -a \
         timeout "$TIMEOUT" "$1" --program=MAIN_DIALOG >"$SORTIE.brut" 2>"$ERRS" || true
     grep -E '^[A-Za-z_][A-Za-z0-9_]*=' "$SORTIE.brut" 2>/dev/null \
         | grep -v '^EXIT=' | LC_ALL=C sort > "$SORTIE"
-    if grep -qE 'CRITICAL|WARNING \*\*' "$ERRS" 2>/dev/null; then
+    # Ceinture ET bretelles : on filtre aussi le bruit connu, au cas ou une
+    # autre machine en produirait un que GTK_A11Y ne couvre pas.
+    if grep -E 'CRITICAL|WARNING \*\*' "$ERRS" 2>/dev/null | grep -qvE "$BRUIT"; then
         printf '91' > "$ETAT"
     elif [ ! -s "$SORTIE" ]; then
         printf '90' > "$ETAT"

@@ -2,31 +2,18 @@
 
 **A modern, hardened and maintained descendant of gtkdialog — GTK 3 and GTK 4 ports.**
 
-> ## ⚠️ Renaming: what changed, and what you need to know
+> ### ⚠️ If you installed a `gtk3dialog` package from this project
 >
-> This project shipped its package under the name **`gtk3dialog`**. That name is
-> already used by a package distributed by **BunsenLabs**, which we had not noticed.
-> Two packages sharing a name cannot coexist: one silently replaces the other.
+> That name also belongs to a **BunsenLabs** package. Two packages sharing a name
+> cannot coexist: ours may have **silently replaced yours**. Ours have been
+> withdrawn — if you had one, **reinstall your distribution's `gtk3dialog`**.
 >
-> The GTK family is therefore now called **`gtk3sermo`**, **`gtk4sermo`** and
-> **`gtksermo`** (gtkdialog compatibility), under the **haplo-dialog** suite —
-> which goes back to being what it always was: the name of the **product**, not of
-> a single port.
->
-> **The old `gtk3dialog` packages have been withdrawn**: they are no longer
-> downloadable anywhere. If you had installed one on BunsenLabs, it may have
-> overwritten your `gtk3dialog` — reinstall your distribution's own.
->
-> **The `sermo` family packages are published**, attached to the
-> [v1.1.3](https://gitlab.com/haplo-dialog/sermo/-/releases/v1.1.3) release
-> along with their SHA256 sums: `gtk3sermo`, `gtk4sermo`, `gtksermo` and the
-> debug symbols. You can also build from source — see
-> [Installation](#installation).
+> Our packages are now called `gtk3sermo`, `gtk4sermo` and `gtksermo`.
 
 [![Licence](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.1.3-informational.svg)](CHANGELOG.en.md)
 [![Toolkit](https://img.shields.io/badge/toolkit-GTK%203%20%2B%20GTK%204-success.svg)](#the-two-ports)
-[![Tests](https://img.shields.io/badge/tests-55%2F55%20XML%20·%209%2F9%20behaviour-brightgreen.svg)](#tests--quality)
+[![Tests](https://img.shields.io/badge/tests-55%2F55%20XML%20·%2011%2F11%20behaviour-brightgreen.svg)](#tests--quality)
 
 Describe an interface in XML, export it into a variable, run the binary —
 a real **native GTK 3** window opens, and the values you enter come back

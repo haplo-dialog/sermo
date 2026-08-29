@@ -2,30 +2,19 @@
 
 **Un descendant moderne, durci et maintenu de gtkdialog — ports GTK 3 et GTK 4.**
 
-> ## ⚠️ Renommage : ce qui a changé, et ce qu'il faut savoir
+> ### ⚠️ Si vous aviez installé un paquet `gtk3dialog` de ce projet
 >
-> Ce projet a distribué son paquet sous le nom **`gtk3dialog`**. Ce nom est déjà
-> utilisé par un paquet distribué par **BunsenLabs**, ce que nous n'avions pas vu.
-> Deux paquets de même nom ne cohabitent pas : l'un remplace l'autre en silence.
+> Ce nom est aussi celui d'un paquet de **BunsenLabs**. Deux paquets de même nom
+> ne cohabitent pas : le nôtre a pu **écraser le vôtre en silence**. Les nôtres
+> sont retirés — si vous en aviez un, **réinstallez le `gtk3dialog` de votre
+> distribution**.
 >
-> La famille GTK s'appelle donc désormais **`gtk3sermo`**, **`gtk4sermo`** et
-> **`gtksermo`** (compatibilité gtkdialog), sous la suite **haplo-dialog** — qui
-> redevient ce qu'elle a toujours été : le nom du **produit**, pas celui d'un port.
->
-> **Les anciens paquets `gtk3dialog` sont retirés** : ils ne sont plus
-> téléchargeables nulle part. Si vous en aviez installé un sous BunsenLabs, il a pu
-> écraser votre `gtk3dialog` — réinstallez celui de votre distribution.
->
-> **Les paquets de la famille `sermo` sont publiés**, joints à la release
-> [v1.1.3](https://gitlab.com/haplo-dialog/sermo/-/releases/v1.1.3) avec leurs
-> sommes SHA256 : `gtk3sermo`, `gtk4sermo`, `gtksermo` et les symboles de
-> débogage. On peut aussi construire depuis les sources — voir
-> [Installation](#installation).
+> Nos paquets s'appellent aujourd'hui `gtk3sermo`, `gtk4sermo` et `gtksermo`.
 
 [![Licence](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.1.3-informational.svg)](CHANGELOG.md)
 [![Toolkit](https://img.shields.io/badge/toolkit-GTK%203%20%2B%20GTK%204-success.svg)](#les-deux-ports)
-[![Tests](https://img.shields.io/badge/tests-55%2F55%20XML%20·%209%2F9%20comportement-brightgreen.svg)](#tests--qualité)
+[![Tests](https://img.shields.io/badge/tests-55%2F55%20XML%20·%2011%2F11%20comportement-brightgreen.svg)](#tests--qualité)
 
 Décrivez une interface en XML, exportez-la dans une variable, lancez le binaire —
 une vraie fenêtre **native** s'ouvre — GTK 3 ou GTK 4, au choix du port —, et
