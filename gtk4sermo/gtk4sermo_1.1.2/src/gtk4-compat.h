@@ -756,6 +756,9 @@ _compat_fc_set_filename(GtkFileChooser *fc, const gchar *path)
  * Input extension events are handled differently (input devices API).
  * ================================================================ */
 
+/* ⛔ API GTK 1/2 (evenements de tablette), retiree bien avant GTK 4 et sans
+ * aucun equivalent : verifie, 0 symbole dans libgtk-4.so.1 et 0 occurrence
+ * dans les en-tetes. Ce no-op dit donc VRAI. */
 #define gtk_widget_set_extension_events(w, mask) /* GTK4 no-op */
 
 /* ================================================================
@@ -1086,14 +1089,20 @@ _compat_fc_add_shortcut_folder(GtkFileChooser *fc, const char *path, GError **er
  * elles renvoient toujours FALSE car ces types n'existent plus.
  * ================================================================ */
 
-#define GTK_IS_MENU_ITEM(w)              (FALSE)
+/* une entree de menu n'est pas un widget en GTK 4 : on teste le porteur */
+#define GTK_IS_MENU_ITEM(w)  hp_menuitem_est_entree(w)
 #define GTK_IS_CHECK_MENU_ITEM(w)             hp_menuitem_est_cochable(w)
-#define GTK_IS_RADIO_MENU_ITEM(w)        (FALSE)
+/* idem, genre 4 */
+#define GTK_IS_RADIO_MENU_ITEM(w)  hp_menuitem_est_radio(w)
 #define GTK_CHECK_MENU_ITEM(w)           (w)
 /* Entrées de menu cochables : implémentées dans widget_menuitem.c sur une
  * GSimpleAction étatique accrochée au porteur. Ces deux macros valaient
  * (FALSE), ce qui rendait mortes les trois branches de signals.c. */
 gboolean hp_menuitem_est_cochable(gpointer porteur);
+gboolean hp_menuitem_est_entree(gpointer porteur);
+gboolean hp_menuitem_est_separateur(gpointer porteur);
+gboolean hp_menuitem_est_radio(gpointer porteur);
+gboolean hp_est_menu(gpointer w);
 void     hp_menu_set_sensitive(gpointer porteur, gboolean actif);
 gboolean hp_menuitem_get_actif(gpointer porteur);
 #define gtk_check_menu_item_get_active(w) hp_menuitem_get_actif(w)
@@ -1110,6 +1119,8 @@ gboolean hp_menuitem_get_actif(gpointer porteur);
  * gtk_viewport_set_shadow_type — retiré en GTK4 (style via CSS).
  * ================================================================ */
 
+/* ⛔ GTK 4 a retire les types d'ombre : l'apparence passe par le CSS.
+ * Verifie : 0 symbole, 0 occurrence dans les en-tetes. Ce no-op dit VRAI. */
 #define gtk_viewport_set_shadow_type(vp, type)   /* no-op GTK4 */
 
 /* ================================================================
@@ -1361,16 +1372,23 @@ static inline GtkWidget *_compat_radio_new_with_label_from_widget(GtkWidget *mem
 /* Widget classes removed in GTK4 — no instances exist, so type checks
  * always evaluate to FALSE. */
 #ifndef GTK_IS_TOOL_BUTTON
-#define GTK_IS_TOOL_BUTTON(w)         (FALSE)
+/* ⛔ GtkToolButton a disparu en GTK 4 avec toute la barre d'outils, et il
+ * n'a AUCUN equivalent. Ce (FALSE) n'est donc pas un mensonge : il dit
+ * vrai. Le laisser sans ce commentaire, si : on croyait a un shim en
+ * attente de portage. */
+#define GTK_IS_TOOL_BUTTON(w)  (FALSE)
 #endif
 #ifndef GTK_IS_SEPARATOR_MENU_ITEM
-#define GTK_IS_SEPARATOR_MENU_ITEM(w) (FALSE)
+/* idem, genre 2 */
+#define GTK_IS_SEPARATOR_MENU_ITEM(w)  hp_menuitem_est_separateur(w)
 #endif
 #ifndef GTK_IS_MENU_BAR
-#define GTK_IS_MENU_BAR(w)            (FALSE)
+/* vrai equivalent GTK 4, verifie : GtkPopoverMenuBar */
+#define GTK_IS_MENU_BAR(w)  GTK_IS_POPOVER_MENU_BAR(w)
 #endif
 #ifndef GTK_IS_MENU
-#define GTK_IS_MENU(w)                (FALSE)
+/* GtkPopoverMenu, ou notre porteur qui transporte le modele du menu */
+#define GTK_IS_MENU(w)  hp_est_menu(w)
 #endif
 
 #endif /* GTK4_COMPAT_H */

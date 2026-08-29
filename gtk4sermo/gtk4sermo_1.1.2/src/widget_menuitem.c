@@ -74,6 +74,47 @@ static gboolean hp_mi_verite(const gchar *v)
             atoi(v) == 1) ? TRUE : FALSE;
 }
 
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Reconnaître une entrée de menu — remplaçants honnêtes de GTK_IS_MENU_ITEM,
+ * GTK_IS_SEPARATOR_MENU_ITEM et GTK_IS_RADIO_MENU_ITEM.
+ *
+ * En GTK 4 une entrée de menu N'EST PAS un widget : il n'existe donc aucun
+ * type à tester. Ce port transporte chaque entrée par un « porteur » inerte
+ * marqué « _menu_kind » — c'est LUI qui fait foi :
+ *     1 = entrée ordinaire   2 = séparateur   3 = case à cocher   4 = radio
+ * ───────────────────────────────────────────────────────────────────────── */
+static gint hp_mi_genre(gpointer porteur)
+{
+	if (porteur == NULL || !G_IS_OBJECT(porteur)) return 0;
+	return GPOINTER_TO_INT(g_object_get_data(G_OBJECT(porteur), "_menu_kind"));
+}
+
+gboolean hp_menuitem_est_entree(gpointer porteur)
+{
+	gint g = hp_mi_genre(porteur);
+	return (g == 1 || g == 3 || g == 4) ? TRUE : FALSE;
+}
+
+gboolean hp_menuitem_est_separateur(gpointer porteur)
+{
+	return (hp_mi_genre(porteur) == 2) ? TRUE : FALSE;
+}
+
+gboolean hp_menuitem_est_radio(gpointer porteur)
+{
+	return (hp_mi_genre(porteur) == 4) ? TRUE : FALSE;
+}
+
+/* Un <menu> : soit le vrai widget GTK 4 (venu d'un .ui), soit notre porteur,
+ * reconnaissable au modèle de menu qu'il transporte. */
+gboolean hp_est_menu(gpointer w)
+{
+	if (w == NULL || !G_IS_OBJECT(w)) return FALSE;
+	if (GTK_IS_POPOVER_MENU(w)) return TRUE;
+	return g_object_get_data(G_OBJECT(w), "_menu_model") != NULL;
+}
+
 gboolean hp_menuitem_est_cochable(gpointer porteur)
 {
     if (porteur == NULL || !G_IS_OBJECT(porteur)) return FALSE;
