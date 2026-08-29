@@ -111,7 +111,7 @@ gtk4sermo:
 .examples:
   stage: run-test
   variables:
-    DEPS: "$TOOLKIT_DEPS xvfb xauth xdotool locales dbus-x11 fonts-dejavu-core"
+    DEPS: "$TOOLKIT_DEPS xvfb xauth xdotool locales dbus-x11 fonts-dejavu-core adwaita-icon-theme"
   script:
     - sed -i 's/^# *fr_FR.UTF-8/fr_FR.UTF-8/' /etc/locale.gen
     - locale-gen

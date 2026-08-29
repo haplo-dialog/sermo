@@ -18,7 +18,7 @@
 
 set -e
 BIN="${1:-}"
-GREEN='\033[0;32m'; RED='\033[0;31m'; BLUE='\033[0;34m'; NC='\033[0m'
+GREEN='\033[0;32m'; RED='\033[0;31m'; BLUE='\033[0;34m'; YELLOW='\033[1;33m'; NC='\033[0m'
 mort() { printf "${RED}ERREUR : %s${NC}\n" "$1" >&2; printf "AUCUNE mesure n'a ete faite.\n" >&2; exit 2; }
 
 [ -n "$BIN" ] || mort "usage : geometrie.sh <chemin du binaire>"
@@ -27,11 +27,20 @@ case "$BIN" in */*) : ;; *) mort "donne un CHEMIN, pas un nom : « $BIN » irait
 command -v Xvfb   >/dev/null 2>&1 || mort "Xvfb manquant (paquet xvfb)"
 command -v xdotool >/dev/null 2>&1 || mort "xdotool manquant (paquet xdotool)"
 
-DISP=":${DISPLAY_NUM:-96}"
-Xvfb "$DISP" -screen 0 1280x1024x24 >/dev/null 2>&1 &
-XPID=$!
-trap 'kill $XPID 2>/dev/null' EXIT
-sleep 2
+# ⚠️ Chercher un affichage LIBRE, ne pas en coder un en dur : deux executions
+# simultanees — ou un Xvfb reste vivant apres un « timeout » — se marchaient
+# dessus, et l'echec ressemblait alors a un defaut du binaire teste.
+DISP=""
+for _n in 96 97 98 99 100 101 102 103; do
+    [ -e "/tmp/.X11-unix/X$_n" ] && continue
+    Xvfb ":$_n" -screen 0 1280x1024x24 >/dev/null 2>&1 &
+    XPID=$!
+    sleep 2
+    if kill -0 "$XPID" 2>/dev/null && [ -e "/tmp/.X11-unix/X$_n" ]; then DISP=":$_n"; break; fi
+    kill "$XPID" 2>/dev/null
+done
+[ -n "$DISP" ] || mort "aucun affichage Xvfb n'a pu demarrer (:96 a :103 essayes)"
+trap 'kill $XPID 2>/dev/null' EXIT INT TERM
 
 taille() {
     _n=$1
@@ -93,12 +102,29 @@ taille_icone() {
     printf '%s' "$_g"
 }
 
-P16=$(taille_icone 16); printf '  pixmap theme-icon-size=16  %s\n' "$P16"
-P64=$(taille_icone 64); printf '  pixmap theme-icon-size=64  %s\n' "$P64"
-if [ "$P16" = "$P64" ]; then
-    printf "${RED}FAIL${NC}  la taille ne suit pas : l'icone de theme n'est PAS chargee\n"; echec=1
+# Ce controle EXIGE un theme d'icones. Un conteneur d'integration continue nu
+# n'en a aucun : gtk_icon_theme_has_icon("folder") rend alors 0, l'image n'est
+# jamais chargee, et les deux tailles sont egales — ce qui ressemble au defaut
+# qu'on traque. C'est une lacune d'ENVIRONNEMENT, pas un defaut de code : on
+# saute, et on le DIT fort. (Le CI installe adwaita-icon-theme pour que ce
+# controle tourne vraiment ; sans lui il ne prouverait rien.)
+icone_testee=0
+if [ -z "$(find /usr/share/icons "$HOME/.local/share/icons" -maxdepth 2 -name index.theme 2>/dev/null | head -1)" ]; then
+    printf "${YELLOW}SAUTE${NC} <pixmap> : aucun theme d'icones installe sur cette machine.\n"
+    printf "      Installe adwaita-icon-theme pour que ce controle serve a quelque chose.\n"
+else
+    icone_testee=1
+    P16=$(taille_icone 16); printf '  pixmap theme-icon-size=16  %s\n' "$P16"
+    P64=$(taille_icone 64); printf '  pixmap theme-icon-size=64  %s\n' "$P64"
+    if [ "$P16" = "$P64" ]; then
+        printf "${RED}FAIL${NC}  la taille ne suit pas : l'icone de theme n'est PAS chargee\n"; echec=1
+    fi
 fi
 
 printf '\n'
 if [ "$echec" -gt 0 ]; then printf "${RED}ECHEC — la geometrie n'est pas conforme${NC}\n"; exit 1; fi
-printf "${GREEN}SUCCES — border-width +%s x +%s pour N=40, et l'icone de theme suit sa taille${NC}\n" "$dl" "$dh"
+if [ "$icone_testee" = 1 ]; then
+    printf "${GREEN}SUCCES — border-width +%s x +%s pour N=40, et l'icone de theme suit sa taille${NC}\n" "$dl" "$dh"
+else
+    printf "${GREEN}SUCCES — border-width +%s x +%s pour N=40${NC} ${YELLOW}(controle <pixmap> SAUTE)${NC}\n" "$dl" "$dh"
+fi

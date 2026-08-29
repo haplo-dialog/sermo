@@ -121,7 +121,7 @@ jobs:
           DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
             build-essential flex bison pkg-config ca-certificates \
             automake autoconf libtool texinfo ${{ matrix.deps }} \
-            xvfb xauth xdotool locales dbus-x11 fonts-dejavu-core
+            xvfb xauth xdotool locales dbus-x11 fonts-dejavu-core adwaita-icon-theme
 
       - name: Locale française
         run: |
