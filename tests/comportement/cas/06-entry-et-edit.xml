@@ -1,0 +1,5 @@
+<!-- DESC: entry et edit : le texte par defaut ressort -->
+<window><vbox>
+<entry><variable>EN</variable><default>bonjour</default></entry>
+<edit><variable>ED</variable><default>ligne</default></edit>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

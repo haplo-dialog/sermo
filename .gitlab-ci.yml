@@ -143,6 +143,16 @@ gtk4sermo:
     # tuait les deux ports par SIGSEGV pendant que les 55 et 58 exemples etaient
     # comptes OK et que le pipeline restait vert. Ouvrir ne suffit pas.
     - bash "$CI_PROJECT_DIR/tests/garde_clic_widgets.sh" "src/$PORT"
+    # Le comportement REEL, et pas seulement l'analyse du XML. tests/xml lance
+    # --print-ir : il PARSE le XML et ne construit AUCUN widget. Le 2026-08-29,
+    # cinq fonctions du port GTK 4 se sont revelees mortes ou menteuses alors
+    # que les 55 cas XML etaient verts depuis des mois — <checkbox> rendait
+    # "false" pour <default>true</default>, <filechooser> etait un bouton.
+    # Ce banc-ci LANCE le dialogue et compare les variables rendues.
+    - sh "$CI_PROJECT_DIR/tests/comportement/run.sh" "$CI_PROJECT_DIR/$PORT/${PORT}_1.1.2/src/$PORT"
+    # border-width ne produit AUCUNE variable : il change une TAILLE. Aucun test
+    # ne regardait de taille, et il a ete ignore pendant toute la vie du port.
+    - sh "$CI_PROJECT_DIR/tests/comportement/geometrie.sh" "$CI_PROJECT_DIR/$PORT/${PORT}_1.1.2/src/$PORT"
 
 exemples:gtk3sermo:
   extends: .examples

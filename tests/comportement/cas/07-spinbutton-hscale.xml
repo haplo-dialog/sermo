@@ -1,0 +1,5 @@
+<!-- DESC: spinbutton et hscale : la valeur par defaut ressort -->
+<window><vbox>
+<spinbutton range-min="0" range-max="100"><variable>SP</variable><default>42</default></spinbutton>
+<hscale range-min="0" range-max="100"><variable>HS</variable><default>7</default></hscale>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>
