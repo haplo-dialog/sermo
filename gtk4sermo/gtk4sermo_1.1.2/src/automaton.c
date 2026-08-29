@@ -1140,7 +1140,6 @@ instruction_execute_push(
 		AttributeSet  *Attr,
 		tag_attr      *tag_attributes)
 {
-	GList            *accel_group = NULL;
 	GList            *element;
 	GtkWidget        *scrolled_window = NULL;
 	GtkWidget        *Widget = NULL;

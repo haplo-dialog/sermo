@@ -23,6 +23,15 @@ AC_SUBST(YACC)
 # GTK4 — requires 4.6.0 minimum (stable, widely packaged on Debian Testing)
 pkg_modules="gtk4 >= 4.6.0"
 PKG_CHECK_MODULES(GTK, [$pkg_modules])
+
+# X11 : nécessaire au placement de fenêtre (XMoveWindow), que GTK 4 a retiré
+# côté client. FACULTATIF — sans lui le placement avertit au lieu d'agir, et
+# rien d'autre ne change. Aucune dépendance nouvelle en pratique :
+# libgtk-4-dev dépend déjà de libx11-dev, et libX11.so.6 est déjà liée au
+# binaire par GTK.
+PKG_CHECK_MODULES([X11], [x11],
+  [AC_DEFINE([HAVE_X11], [1], [Placement de fenêtre disponible via XMoveWindow])],
+  [AC_SUBST(X11_CFLAGS, "") AC_SUBST(X11_LIBS, "")])
 AC_SUBST(GTK_CFLAGS)
 AC_SUBST(GTK_LIBS)
 

@@ -95,7 +95,6 @@ gint      function_signals_block = FALSE;
 gint      project_space_expand   = -1;
 gint      project_space_fill     = -1;
 GtkWidget *lastradiowidget       = NULL;
-GList     *accel_groups          = NULL;
 GList     *widget_hide_list      = NULL;
 GList     *widget_show_list      = NULL;
 gint      window_id              = 0;
@@ -555,7 +554,6 @@ main(int argc, char *argv[])
 	/* Initialise global variables */
 	GTKD_FUNCTION_SIGNALS_RESET;
 	lastradiowidget = NULL;
-	accel_groups = NULL;
 	widget_hide_list = widget_show_list = NULL;
 	window_id = 0;
 

@@ -996,6 +996,10 @@ variable *variables_enable(const char *name)
 		return (NULL);
 
 	gtk_widget_set_sensitive(var->Widget, TRUE);
+	/* Un <menu> n'est pas un widget en GTK 4 : ses entrées vivent dans un
+	 * GSimpleActionGroup. set_sensitive sur le porteur ne grisait rien. */
+	if (var->Type == WIDGET_MENU || var->Type == WIDGET_MENUBAR)
+		hp_menu_set_sensitive(var->Widget, TRUE);
 	return (var);
 }
 
@@ -1017,6 +1021,10 @@ variable *variables_disable(const char *name)
 		return (NULL);
 
 	gtk_widget_set_sensitive(var->Widget, FALSE);
+	/* Un <menu> n'est pas un widget en GTK 4 : ses entrées vivent dans un
+	 * GSimpleActionGroup. set_sensitive sur le porteur ne grisait rien. */
+	if (var->Type == WIDGET_MENU || var->Type == WIDGET_MENUBAR)
+		hp_menu_set_sensitive(var->Widget, FALSE);
 	return (var);
 }
 

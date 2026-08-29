@@ -27,6 +27,11 @@
 #endif
 #include <gtk/gtk.h>
 #include "config.h"
+#if defined(GDK_WINDOWING_X11) && defined(HAVE_X11)
+#include <gdk/x11/gdkx.h>
+#include <X11/Xlib.h>
+#define HP_X11 1
+#endif
 #include "gtkdialog.h"
 #include "attributes.h"
 #include "automaton.h"
@@ -166,6 +171,82 @@ static void _apply_headerbar(GtkWidget *window, tag_attr *attr)
  * Gdk-4.0.gir type explicitement <type name="Texture"/>.
  * ───────────────────────────────────────────────────────────────────────── */
 
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Placement de fenêtre (déclaré dans gtk4-compat.h).
+ *
+ * GTK 4 a retiré le placement par le client : gtk_window_move et
+ * gtk_window_set_position n'existent plus. Sur X11 on peut encore le faire
+ * par XMoveWindow ; sur Wayland le protocole ne le permet pas — ce n'est pas
+ * une lacune de GTK, c'est un choix de Wayland.
+ *
+ * ⛔ On ne fait PAS semblant : quand le backend ne le permet pas, on avertit
+ * UNE fois. Les deux macros valaient ((void)0), donc --geometry=+X+Y et le
+ * centrage étaient avalés sans un mot.
+ *
+ * Le placement se fait sur « map » : avant, la surface n'existe pas.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+typedef struct { int x, y; gboolean centrer; } HpPlace;
+
+static void hp_place_libere(gpointer p) { g_free(p); }
+
+static void hp_place_applique(GtkWidget *w, gpointer d)
+{
+	HpPlace    *pl   = d;
+	GtkNative  *nat  = gtk_widget_get_native(w);
+	GdkSurface *surf = nat ? gtk_native_get_surface(nat) : NULL;
+
+#ifdef HP_X11
+	if (surf != NULL && GDK_IS_X11_SURFACE(surf)) {
+		GdkDisplay *dpy = gdk_surface_get_display(surf);
+		int x = pl->x, y = pl->y;
+
+		if (pl->centrer) {
+			GdkMonitor  *mon = gdk_display_get_monitor_at_surface(dpy, surf);
+			GdkRectangle geo;
+
+			if (mon == NULL) return;
+			gdk_monitor_get_geometry(mon, &geo);
+			x = geo.x + (geo.width  - gdk_surface_get_width(surf))  / 2;
+			y = geo.y + (geo.height - gdk_surface_get_height(surf)) / 2;
+			if (x < geo.x) x = geo.x;
+			if (y < geo.y) y = geo.y;
+		}
+		XMoveWindow(gdk_x11_display_get_xdisplay(dpy),
+			gdk_x11_surface_get_xid(surf), x, y);
+		XFlush(gdk_x11_display_get_xdisplay(dpy));
+		return;
+	}
+#else
+	(void)surf;
+#endif
+	{
+		static gboolean dit = FALSE;
+		if (!dit) {
+			dit = TRUE;
+			g_warning("placement de fenêtre ignoré : ce backend graphique ne "
+				"permet pas à l'application de se placer elle-même (Wayland). "
+				"Passez par les réglages du gestionnaire de fenêtres.");
+		}
+	}
+}
+
+static void hp_place_arme(GtkWindow *w, int x, int y, gboolean centrer)
+{
+	HpPlace *pl;
+
+	if (w == NULL) return;
+	pl = g_new0(HpPlace, 1);
+	pl->x = x; pl->y = y; pl->centrer = centrer;
+	g_object_set_data_full(G_OBJECT(w), "_hp_place", pl, hp_place_libere);
+	g_signal_connect(w, "map", G_CALLBACK(hp_place_applique), pl);
+}
+
+void hp_window_place (GtkWindow *w, int x, int y) { hp_place_arme(w, x, y, FALSE); }
+void hp_window_centre(GtkWindow *w)               { hp_place_arme(w, 0, 0, TRUE);  }
+
+
 typedef struct { gchar *chemin; } HpIcone;
 
 static void hp_icone_libere(gpointer p, GClosure *fermeture)
@@ -232,7 +313,6 @@ GtkWidget *widget_window_create(
 {
 	gchar            *value;
 	GError           *error = NULL;
-	GList            *accel_group = NULL;
 	GList            *element;
 	gint              border_width;
 	GtkWidget        *widget;
@@ -282,22 +362,9 @@ GtkWidget *widget_window_create(
 	s = pop();
 	gtk_container_add(GTK_CONTAINER(widget), s.widgets[0]);
 
-	/* Thunor: Each menu created will have an accelerator group
-	 * for its menuitems which will require adding to the window */
-	if (accel_groups) {
-		accel_group = g_list_first(accel_groups);
-		while (accel_group) {
-			gtk_window_add_accel_group(GTK_WINDOW(widget),
-				GTK_ACCEL_GROUP(accel_group->data));
-#ifdef DEBUG
-			fprintf(stderr, "%s: Adding accel_group=%p to window\n",
-				__func__, accel_group->data);
-#endif
-			accel_group = accel_group->next;
-		}
-		g_list_free(accel_groups);
-		accel_groups = NULL;
-	}
+	/* Le bloc « accel_groups » a été retiré : la liste n'était JAMAIS
+	 * remplie, et gtk_window_add_accel_group était un no-op. Ce n'était pas
+	 * un portage incomplet, c'était du code inatteignable. */
 
 #ifdef DEBUG_TRANSITS
 	fprintf(stderr, "%s(): Exiting.\n", __func__);

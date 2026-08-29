@@ -1094,6 +1094,7 @@ _compat_fc_add_shortcut_folder(GtkFileChooser *fc, const char *path, GError **er
  * GSimpleAction étatique accrochée au porteur. Ces deux macros valaient
  * (FALSE), ce qui rendait mortes les trois branches de signals.c. */
 gboolean hp_menuitem_est_cochable(gpointer porteur);
+void     hp_menu_set_sensitive(gpointer porteur, gboolean actif);
 gboolean hp_menuitem_get_actif(gpointer porteur);
 #define gtk_check_menu_item_get_active(w) hp_menuitem_get_actif(w)
 
@@ -1116,7 +1117,7 @@ gboolean hp_menuitem_get_actif(gpointer porteur);
  * le positionnement explicite des fenêtres n'est plus supporté.
  * ================================================================ */
 
-#define gtk_widget_set_uposition(w, x, y)        do { (void)(x); (void)(y); } while (0)
+#define gtk_widget_set_uposition(w, x, y)  hp_window_place(GTK_WINDOW(w), (x), (y))
 
 /* ================================================================
  * GdkEvent* — les structures d'évènement concrètes ont été retirées
@@ -1296,8 +1297,23 @@ gboolean hp_window_set_icon_from_file(GtkWindow *w, const char *chemin, GError *
 #define gtk_window_set_icon_from_file(w, f, err) \
     hp_window_set_icon_from_file(GTK_WINDOW(w), (f), (err))
 #endif
+/* ────────────────────────────────────────────────────────────────────────
+ * Placement de fenêtre — GTK 4 a retiré le placement par le client.
+ *
+ * Ces deux macros valaient ((void)0) : --geometry=+X+Y et le centrage étaient
+ * avalés en silence. Reste faisable sur X11 par XMoveWindow, impossible sur
+ * Wayland (aucun protocole de placement, c'est un choix du protocole).
+ * libX11 est déjà liée au binaire par GTK, et libgtk-4-dev dépend déjà de
+ * libx11-dev : aucune dépendance nouvelle.
+ * Sur un backend qui ne le permet pas, on AVERTIT une fois au lieu de faire
+ * croire que l'option a été honorée. Implémenté dans widget_window.c.
+ * ──────────────────────────────────────────────────────────────────────── */
+void hp_window_place (GtkWindow *w, int x, int y);
+void hp_window_centre(GtkWindow *w);
+
 #ifndef gtk_window_set_position
-#define gtk_window_set_position(w, pos)  ((void)0)
+#define gtk_window_set_position(w, pos) \
+    do { if ((pos) != GTK_WIN_POS_NONE) hp_window_centre(GTK_WINDOW(w)); } while (0)
 #endif
 #ifndef GTK_WIN_POS_CENTER_ALWAYS
 #define GTK_WIN_POS_NONE             0
@@ -1306,12 +1322,11 @@ gboolean hp_window_set_icon_from_file(GtkWindow *w, const char *chemin, GError *
 #define GTK_WIN_POS_CENTER_ALWAYS    3
 #define GTK_WIN_POS_CENTER_ON_PARENT 4
 #endif
-#ifndef gtk_window_add_accel_group
-#define gtk_window_add_accel_group(w, g)  ((void)0)
-#endif
-#ifndef GTK_ACCEL_GROUP
-#define GTK_ACCEL_GROUP(g)  (g)
-#endif
+/* Accélérateurs : GtkAccelGroup a disparu en GTK 4. Ces deux macros
+ * protégeaient un bloc de widget_window.c que rien n'alimentait — la liste
+ * « accel_groups » n'était jamais remplie. Ce n'était pas un portage
+ * incomplet, c'était du code inatteignable. Le bloc et la liste sont
+ * supprimés ; les macros n'ont plus d'appelant. */
 
 /* ================================================================
  * GtkRadioButton — removed in GTK4. Radio behaviour is now provided by

@@ -55,7 +55,6 @@ extern gint project_space_fill;
 extern GtkWidget *lastradiowidget;
 
 /* An accumulated list of menu accelerator groups to be added to the window */
-extern GList *accel_groups;
 
 /* A list of widgets to hide and to show */
 extern GList *widget_hide_list, *widget_show_list;

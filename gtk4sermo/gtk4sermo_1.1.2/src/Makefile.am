@@ -82,6 +82,7 @@ AM_CFLAGS = \
 	$(GTK_CFLAGS) \
 	$(GTHREAD_CFLAGS) \
 	$(VTE_CFLAGS) -DHAVE_VTE=$(HAVE_VTE) \
+	$(X11_CFLAGS) \
 	-include $(top_srcdir)/src/gtk4-compat.h \
 	-Wall -Wextra -Wno-unused-parameter \
 	-Wno-deprecated-declarations \
@@ -98,6 +99,7 @@ LIBS = \
 	$(GTK_LIBS) \
 	$(GTHREAD_LIBS) \
 	$(VTE_LIBS) \
+	$(X11_LIBS) \
 	@LIBS@
 
 AM_LDFLAGS = @HARDENING_LDFLAGS@

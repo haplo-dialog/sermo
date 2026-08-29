@@ -358,6 +358,41 @@ GtkWidget *widget_menu_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     return porteur;
 }
 
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * enable: / disable: sur un <menu> entier.
+ *
+ * En GTK 4 une entrée de menu n'est pas un widget : gtk_widget_set_sensitive
+ * sur le porteur du <menu> ne grisait donc RIEN, et « disable:mnu01 » restait
+ * sans effet.
+ *
+ * On agit sur ce qui existe réellement : le GSimpleActionGroup que le <menu>
+ * transporte déjà. Désactiver toutes ses actions grise toutes ses entrées.
+ *
+ * ⛔ On ne s'appuie PAS sur l'ordre des enfants d'un GtkPopoverMenuBar pour
+ * retrouver « le bon menu » : c'est un détail d'implémentation de GTK, non
+ * documenté, et s'il changeait on griserait le mauvais menu sans plantage et
+ * sans un mot.
+ * ───────────────────────────────────────────────────────────────────────── */
+void hp_menu_set_sensitive(gpointer porteur, gboolean actif)
+{
+	GSimpleActionGroup *grp;
+	gchar             **noms;
+	gchar             **q;
+
+	if (porteur == NULL || !G_IS_OBJECT(porteur)) return;
+	grp = g_object_get_data(G_OBJECT(porteur), "_menu_actions");
+	if (grp == NULL) return;
+
+	noms = g_action_group_list_actions(G_ACTION_GROUP(grp));
+	for (q = noms; q && *q; q++) {
+		GAction *a = g_action_map_lookup_action(G_ACTION_MAP(grp), *q);
+		if (a && G_IS_SIMPLE_ACTION(a))
+			g_simple_action_set_enabled(G_SIMPLE_ACTION(a), actif);
+	}
+	g_strfreev(noms);
+}
+
 gchar *widget_menuitem_envvar_construct(GtkWidget *w)
 {
     /* Seules les entrées cochables ont une valeur, comme en GTK 3. */
