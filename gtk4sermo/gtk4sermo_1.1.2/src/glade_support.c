@@ -579,6 +579,14 @@ register_widgets(GtkBuilder *glade_xml)
 
 	widget_list = gtk_builder_get_objects(glade_xml) /* was: glade_xml_get_widget_prefix */;
 	for (li = widget_list; li != NULL; li = li->next) {
+		/* ⛔ GTK 4 : gtk_builder_get_objects() rend AUSSI des objets qui ne sont
+		 * PAS des widgets — un <menu> d'un .ui devient un GMenu (GMenuModel).
+		 * gtk_widget_get_name() y rendait NULL après un Gtk-CRITICAL, puis
+		 * attributeset_set_if_unset(..., NULL) faisait sauter le
+		 * g_assert(value != NULL) de new_tag_attributeset : le programme mourait
+		 * sur SIGABRT dès qu'un .ui contenait un menu. Mesuré le 2026-08-29. */
+		if (!GTK_IS_WIDGET(li->data))
+			continue;
 		widget = li->data;
 		name = gtk_widget_get_name(li->data);
 		Attr = attributeset_new();
@@ -604,6 +612,14 @@ refresh_widgets(GtkBuilder *glade_xml)
 
 	widget_list = gtk_builder_get_objects(glade_xml) /* was: glade_xml_get_widget_prefix */;
 	for (li = widget_list; li != NULL; li = li->next) {
+		/* ⛔ GTK 4 : gtk_builder_get_objects() rend AUSSI des objets qui ne sont
+		 * PAS des widgets — un <menu> d'un .ui devient un GMenu (GMenuModel).
+		 * gtk_widget_get_name() y rendait NULL après un Gtk-CRITICAL, puis
+		 * attributeset_set_if_unset(..., NULL) faisait sauter le
+		 * g_assert(value != NULL) de new_tag_attributeset : le programme mourait
+		 * sur SIGABRT dès qu'un .ui contenait un menu. Mesuré le 2026-08-29. */
+		if (!GTK_IS_WIDGET(li->data))
+			continue;
 		widget = li->data;
 		name = gtk_widget_get_name(li->data);
 		variables_refresh(name);
@@ -864,8 +880,12 @@ run_program_by_glade(
 	 */
 	(void) signal_handler_connector;
 	/* gtk_signal_connect() removed in GTK3 — use g_signal_connect() */
-	g_signal_connect(G_OBJECT(main_window), "delete-event",
-			   G_CALLBACK(window_delete_event_handler), NULL);
+	/* GTK 4 : GtkWindow n'a plus « delete-event ». g_signal_connect y émettait
+	 * un GLib-GObject-CRITICAL à chaque chargement d'un .ui, et la fermeture
+	 * n'était pas relayée. Le relais existe déjà pour le mode XML
+	 * (signals.c, window_close_request_handler). */
+	g_signal_connect(G_OBJECT(main_window), "close-request",
+			   G_CALLBACK(window_close_request_handler), NULL);
 	
 	refresh_widgets(glade_xml);
 	

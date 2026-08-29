@@ -34,8 +34,9 @@
  * Environment variable: "YYYY-MM-DD" (ISO 8601 format).
  * Signals:
  *   day-selected        — fires when user clicks a day
- *   month-changed       — fires when navigating months
- *   day-selected-double-click — fires on double-click (like "confirm")
+ *   prev-month / next-month / prev-year / next-year — navigation
+ *   (⛔ « month-changed » et « day-selected-double-click » n'existent PAS en
+ *    GTK 4 : g_signal_lookup rend 0 pour les deux.)
  *
  * The <default> attribute accepts "YYYY-MM-DD" format.
  * Month in GtkCalendar is 0-based (January = 0), adjusted internally.
@@ -71,16 +72,91 @@ static void widget_calendar_input_by_items(variable *var);
  * Setting a date from a "YYYY-MM-DD" string requires parsing.
  */
 
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Remplaçants GTK 4 des deux macros mortes (déclarés dans gtk4-compat.h).
+ *
+ * ⚠️ gtk_calendar_get_date et gtk_calendar_select_day sont désormais des
+ * MACROS : on entoure leur nom de parenthèses pour appeler la VRAIE fonction
+ * GTK et empêcher l'expansion.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+static void hp_calendar_apply(GtkCalendar *calendar, gint year, gint month1, gint day)
+{
+	GDateTime *dt;
+	gint       jours_du_mois;
+
+	year   = CLAMP(year, 1, 9999);
+	month1 = CLAMP(month1, 1, 12);
+	jours_du_mois = (gint)g_date_get_days_in_month((GDateMonth)month1, (GDateYear)year);
+	day = CLAMP(day, 1, jours_du_mois);
+
+	/* Midi et non minuit : dans certains fuseaux, minuit n'existe pas le jour
+	 * d'un changement d'heure et g_date_time_new_local() décalerait la date. */
+	dt = g_date_time_new_local(year, month1, day, 12, 0, 0);
+	if (dt == NULL) {
+		g_warning("%s(): date invalide %04d-%02d-%02d.", __func__, year, month1, day);
+		return;		/* gtk_calendar_set_date asserte date != NULL */
+	}
+
+#if GTK_CHECK_VERSION(4, 20, 0)
+	gtk_calendar_set_date(calendar, dt);
+#else
+	G_GNUC_BEGIN_IGNORE_DEPRECATIONS
+	(gtk_calendar_select_day)(calendar, dt);
+	G_GNUC_END_IGNORE_DEPRECATIONS
+#endif
+	g_date_time_unref(dt);
+}
+
+static void hp_calendar_current(GtkCalendar *calendar, gint *year, gint *month1, gint *day)
+{
+	GDateTime *cur = (gtk_calendar_get_date)(calendar);
+
+	if (cur) {
+		*year   = g_date_time_get_year(cur);
+		*month1 = g_date_time_get_month(cur);
+		*day    = g_date_time_get_day_of_month(cur);
+		g_date_time_unref(cur);
+	} else {
+		*year = 1970; *month1 = 1; *day = 1;
+	}
+}
+
+void hp_calendar_set_date(GtkWidget *calendar, gint year, gint month0, gint day)
+{
+	if (!GTK_IS_CALENDAR(calendar)) return;
+	hp_calendar_apply(GTK_CALENDAR(calendar), year, month0 + 1, day);
+}
+
+void hp_calendar_select_month(GtkWidget *calendar, gint month0, gint year)
+{
+	gint y, m1, d;
+
+	if (!GTK_IS_CALENDAR(calendar)) return;
+	hp_calendar_current(GTK_CALENDAR(calendar), &y, &m1, &d);
+	hp_calendar_apply(GTK_CALENDAR(calendar), year, month0 + 1, d);
+}
+
+void hp_calendar_select_day(GtkWidget *calendar, gint day)
+{
+	gint y, m1, d;
+
+	if (!GTK_IS_CALENDAR(calendar)) return;
+	hp_calendar_current(GTK_CALENDAR(calendar), &y, &m1, &d);
+	hp_calendar_apply(GTK_CALENDAR(calendar), y, m1, day);
+}
+
 /* Helper: set calendar date from "YYYY-MM-DD" string */
 static void calendar_set_date_from_string(GtkCalendar *calendar,
 	const gchar *datestr)
 {
 	gint year = 0, month = 0, day = 0;
 	if (datestr && sscanf(datestr, "%d-%d-%d", &year, &month, &day) == 3) {
-		/* GtkCalendar month is 0-based */
-		gtk_calendar_select_month(calendar,
-			CLAMP(month - 1, 0, 11), (guint)year);
-		gtk_calendar_select_day(calendar, (guint)CLAMP(day, 1, 31));
+		/* Un SEUL appel : régler mois puis jour séparément échoue quand le
+		 * jour courant n'existe pas dans le mois visé (31 → février). */
+		hp_calendar_set_date(GTK_WIDGET(calendar),
+			year, CLAMP(month - 1, 0, 11), day);
 	}
 }
 
@@ -259,7 +335,18 @@ void widget_calendar_refresh(variable *var)
 		/* Connect signals */
 		g_signal_connect(G_OBJECT(var->Widget), "day-selected",
 			G_CALLBACK(on_any_widget_changed_event), (gpointer)var->Attributes);
-		g_signal_connect(G_OBJECT(var->Widget), "month-changed",
+		/* GTK 4 : « month-changed » n'existe plus sur GtkCalendar — mesuré,
+		 * g_signal_lookup rend 0 et g_signal_connect émettait
+		 * « signal 'month-changed' is invalid for instance … GtkCalendar »
+		 * quatre fois par exécution. Remplaçants nommés, MÊME arité
+		 * void (GtkCalendar *, gpointer), donc aucun adaptateur. */
+		g_signal_connect(G_OBJECT(var->Widget), "prev-month",
+			G_CALLBACK(on_any_widget_changed_event), (gpointer)var->Attributes);
+		g_signal_connect(G_OBJECT(var->Widget), "next-month",
+			G_CALLBACK(on_any_widget_changed_event), (gpointer)var->Attributes);
+		g_signal_connect(G_OBJECT(var->Widget), "prev-year",
+			G_CALLBACK(on_any_widget_changed_event), (gpointer)var->Attributes);
+		g_signal_connect(G_OBJECT(var->Widget), "next-year",
 			G_CALLBACK(on_any_widget_changed_event), (gpointer)var->Attributes);
 	}
 

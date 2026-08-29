@@ -152,6 +152,81 @@ static void _apply_headerbar(GtkWidget *window, tag_attr *attr)
 	gtk_window_set_titlebar(GTK_WINDOW(window), bar);
 }
 
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Icône de fenêtre par CHEMIN de fichier.
+ *
+ * GTK 4 a retiré gtk_window_set_icon_from_file : on descend au GdkToplevel,
+ * qui n'existe qu'après la réalisation de la fenêtre — d'où le report sur
+ * « realize ». Cet appel tardif l'emporte sur le gtk_window_set_icon_name()
+ * posé à la création.
+ *
+ * ⚠️ gdk_toplevel_set_icon_list attend des GdkTexture, malgré le nom
+ * « surfaces » de son paramètre. Se fier au nom mène au plantage ;
+ * Gdk-4.0.gir type explicitement <type name="Texture"/>.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+typedef struct { gchar *chemin; } HpIcone;
+
+static void hp_icone_libere(gpointer p, GClosure *fermeture)
+{
+	HpIcone *ic = p;
+	(void)fermeture;
+	if (ic) { g_free(ic->chemin); g_free(ic); }
+}
+
+static void hp_icone_pose(GtkWidget *w, gpointer d)
+{
+	HpIcone    *ic = d;
+	GtkNative  *nat;
+	GdkSurface *surf;
+	GdkTexture *tex;
+	GError     *err = NULL;
+	GList      *liste;
+
+	nat  = gtk_widget_get_native(w);
+	surf = nat ? gtk_native_get_surface(nat) : NULL;
+	if (surf == NULL || !GDK_IS_TOPLEVEL(surf))
+		return;
+
+	tex = gdk_texture_new_from_filename(ic->chemin, &err);
+	if (tex == NULL) {
+		g_warning("icône de fenêtre « %s » : %s", ic->chemin,
+			err ? err->message : "erreur inconnue");
+		g_clear_error(&err);
+		return;
+	}
+	liste = g_list_append(NULL, tex);
+	gdk_toplevel_set_icon_list(GDK_TOPLEVEL(surf), liste);
+	g_list_free(liste);
+	g_object_unref(tex);
+}
+
+gboolean hp_window_set_icon_from_file(GtkWindow *w, const char *chemin, GError **err)
+{
+	HpIcone *ic;
+
+	/* find_pixmap() rend la chaîne VIDE quand il n'a rien trouvé : ne pas la
+	 * passer à GDK, et surtout ne pas répondre « réussi ». */
+	if (w == NULL || chemin == NULL || *chemin == '\0') {
+		g_set_error(err, G_FILE_ERROR, G_FILE_ERROR_NOENT,
+			"aucun fichier d'icône utilisable");
+		return FALSE;
+	}
+	if (!g_file_test(chemin, G_FILE_TEST_IS_REGULAR)) {
+		g_set_error(err, G_FILE_ERROR, G_FILE_ERROR_NOENT,
+			"fichier d'icône introuvable : %s", chemin);
+		return FALSE;
+	}
+
+	ic = g_new0(HpIcone, 1);
+	ic->chemin = g_strdup(chemin);
+	g_signal_connect_data(G_OBJECT(w), "realize",
+		G_CALLBACK(hp_icone_pose), ic, hp_icone_libere, 0);
+	return TRUE;
+}
+
+
 GtkWidget *widget_window_create(
 	AttributeSet *Attr, tag_attr *attr, gint Type)
 {

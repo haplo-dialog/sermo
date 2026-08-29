@@ -834,9 +834,13 @@ _compat_color_button_set_alpha(GtkWidget *btn, guint16 alpha)
  *   gtk_calendar_get_date(cal, &year, &month, &day)
  *     → gtk_calendar_get_date(cal) returns GDateTime*
  *   gtk_calendar_select_month(cal, month, year)
- *     → gtk_calendar_select_month(cal, month, year) STILL EXISTS in GTK4 ✅
+ *     → ⛔ SUPPRIMÉ en GTK 4. Ce commentaire disait « STILL EXISTS » ; c'est
+ *       lui qui a produit les macros mortes 400 lignes plus bas, et le
+ *       calendrier a rendu la date du jour au lieu de la date demandée
+ *       pendant toute la vie du port. Voir hp_calendar_* ci-dessous.
  *   gtk_calendar_select_day(cal, day)
- *     → gtk_calendar_select_day(cal, day) STILL EXISTS in GTK4 ✅
+ *     → existe encore, mais prend un GDateTime*, plus un entier, et il est
+ *       déprécié depuis 4.20 au profit de gtk_calendar_set_date().
  * Only gtk_calendar_get_date() changed — shim here.
  * ================================================================ */
 
@@ -1249,12 +1253,39 @@ static inline void _compat_image_get_icon_name(GtkImage *img, const char **out, 
 /* GtkCalendar select_* renamed to set_* and take a GDateTime in 4.x.
  * The legacy integer API is shimmed to no-ops to preserve compilation;
  * callers should migrate to gtk_calendar_select_day(GDateTime*). */
-#define gtk_calendar_select_month(cal, mon, yr)  ((void)0)
-#define gtk_calendar_select_day(cal, day)        ((void)0)
+/* En GTK 4 la date d'un GtkCalendar est un GDateTime *valide*, pas trois
+ * entiers, et on ne peut PAS régler mois et jour séparément. Mesuré sur
+ * GTK 4.22.4 : date = 2001-12-31, puis gtk_calendar_set_month(cal, 1) →
+ *   « Gtk-CRITICAL: gtk_calendar_set_month: assertion 'date != NULL' failed »
+ * et la date reste inchangée. On reconstruit donc une date complète, valide,
+ * posée en UN seul appel. Implémentation dans widget_calendar.c.
+ * month0 est 0-based, comme l'ancienne API GTK 3 et comme
+ * _compat_calendar_get_date() plus haut : ⛔ ne toucher ni au « -1 » du getter
+ * ni au « +1 » de widget_calendar.c, les deux se compensent. */
+void hp_calendar_set_date     (GtkWidget *calendar, int year, int month0, int day);
+void hp_calendar_select_month (GtkWidget *calendar, int month0, int year);
+void hp_calendar_select_day   (GtkWidget *calendar, int day);
+
+#define gtk_calendar_select_month(cal, mon, yr) \
+    hp_calendar_select_month(GTK_WIDGET(cal), (int)(mon), (int)(yr))
+#define gtk_calendar_select_day(cal, day) \
+    hp_calendar_select_day(GTK_WIDGET(cal), (int)(day))
 
 /* GtkWindow legacy positioning / icon / accel-group APIs removed in GTK4. */
 #ifndef gtk_window_set_icon_from_file
-#define gtk_window_set_icon_from_file(w, f, err)  (TRUE)
+/* ⛔ Cette macro valait (TRUE) : elle annonçait un SUCCÈS sans rien faire.
+ * Mesuré le 2026-08-29 sur le même XML : gtk3sermo pose bien l'icône du
+ * fichier (xprop _NET_WM_ICON rend « Icon (64 x 64) », pixels du PNG), tandis
+ * que gtk4sermo rendait « Icon (32 x 32) » toute blanche — le repli du
+ * gtk_window_set_icon_name(PACKAGE) posé plus loin, PACKAGE n'existant dans
+ * aucun thème. Le fichier demandé était intégralement ignoré, et l'appelant
+ * croyait avoir réussi.
+ * GTK 4 n'a plus d'équivalent au niveau GtkWindow : il faut descendre au
+ * GdkToplevel, qui n'existe qu'APRÈS la réalisation. Implémentée dans
+ * widget_window.c. */
+gboolean hp_window_set_icon_from_file(GtkWindow *w, const char *chemin, GError **err);
+#define gtk_window_set_icon_from_file(w, f, err) \
+    hp_window_set_icon_from_file(GTK_WINDOW(w), (f), (err))
 #endif
 #ifndef gtk_window_set_position
 #define gtk_window_set_position(w, pos)  ((void)0)
