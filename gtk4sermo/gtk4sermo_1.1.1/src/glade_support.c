@@ -502,7 +502,7 @@ signal_handler_connector(
 					user_data))
 			return;
 
-	if (GTK_IS_TOGGLE_BUTTON(object))
+	if (hp_is_toggleable(object))
 		if (gtk_toggle_button_signal_handler_connector(handler_name,
 					object,
 					signal_name,
@@ -637,7 +637,7 @@ gint widget_get_type_from_pointer(GtkWidget *widget)
 	else if (GTK_IS_COLOR_BUTTON(widget))
 		retval = WIDGET_COLORBUTTON;
 /* GtkWidget--->GtkContainer--->GtkBin--->GtkButton--->GtkToggleButton */
-	else if (GTK_IS_TOGGLE_BUTTON(widget))
+	else if (hp_is_toggleable(widget))
 		retval = WIDGET_TOGGLEBUTTON;
 /* GtkWidget--->GtkContainer--->GtkBin--->GtkButton--->GtkFontButton */
 	else if (GTK_IS_FONT_BUTTON(widget))

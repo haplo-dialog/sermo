@@ -83,6 +83,91 @@ static inline void _compat_gtk_main_quit(void)
 #define gtk_main_quit() _compat_gtk_main_quit()
 
 /* ================================================================
+ * gtk_container_set_border_width — supprimé en GTK 4 (plus de GtkContainer)
+ *
+ * GTK 3 : N px de blanc À L'INTÉRIEUR du conteneur, autour du bloc de ses
+ *         enfants, UNE seule fois.
+ * GTK 4 : on pose la marge sur le widget qui PORTE le contenu.
+ *
+ *   - GtkWindow → son enfant unique. La fenêtre est une racine : personne
+ *     ne prélèverait sa marge. Et un padding CSS sur le nœud « window »
+ *     rétrécirait AUSSI la barre de titre — mesuré sur GTK 4.22.4 :
+ *         padding CSS 20px : enfant 360x222, headerbar 360x38  (mauvais)
+ *         marge sur enfant : enfant 360x222, headerbar 400x38  (bon)
+ *   - GtkFrame  → son enfant, sinon on repousserait le cadre dessiné et
+ *     son étiquette au lieu d'écarter le contenu du trait.
+ *   - le reste, en pratique GtkBox → le widget lui-même : une boîte ne
+ *     peint ni fond ni bordure, marge extérieure et padding intérieur y
+ *     donnent le même rendu.
+ *
+ * ⛔ NE PAS poser la marge sur CHAQUE enfant : les écarts internes
+ *    doubleraient (2N au lieu de N).
+ * ================================================================ */
+
+#define _COMPAT_BW_SELF     "gtk4sermo-bw-self"
+#define _COMPAT_BW_CHILD    "gtk4sermo-bw-child"
+#define _COMPAT_BW_PENDING  "gtk4sermo-bw-pending"
+
+/* Ajoute (ou retire) la contribution « bordure » aux quatre marges de w.
+ * La valeur déjà posée est mémorisée sous key : un second appel CORRIGE au
+ * lieu d'accumuler. Les marges venant du XML (margin-start="10") ne sont
+ * jamais écrasées, elles s'additionnent — comme en GTK 3 où border-width et
+ * GtkWidget:margin étaient deux choses distinctes. */
+static inline void
+_compat_bw_apply(GtkWidget *w, int n, const char *key)
+{
+    int prev, delta, v;
+
+    if (w == NULL)
+        return;
+
+    prev  = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), key));
+    delta = n - prev;
+    if (delta == 0)
+        return;
+
+    v = gtk_widget_get_margin_start(w)  + delta; gtk_widget_set_margin_start (w, v > 0 ? v : 0);
+    v = gtk_widget_get_margin_end(w)    + delta; gtk_widget_set_margin_end   (w, v > 0 ? v : 0);
+    v = gtk_widget_get_margin_top(w)    + delta; gtk_widget_set_margin_top   (w, v > 0 ? v : 0);
+    v = gtk_widget_get_margin_bottom(w) + delta; gtk_widget_set_margin_bottom(w, v > 0 ? v : 0);
+
+    g_object_set_data(G_OBJECT(w), key, GINT_TO_POINTER(n));
+}
+
+static inline void
+_compat_set_border_width(GtkWidget *w, guint border)
+{
+    GtkWidget *child;
+    int        n;
+
+    if (w == NULL)
+        return;
+
+    /* La valeur vient d'un XML non fiable : on la borne. */
+    n = (border > 4096u) ? 4096 : (int)border;
+
+    if (GTK_IS_WINDOW(w))
+        child = gtk_window_get_child(GTK_WINDOW(w));
+    else if (GTK_IS_FRAME(w))
+        child = gtk_frame_get_child(GTK_FRAME(w));
+    else {
+        _compat_bw_apply(w, n, _COMPAT_BW_SELF);
+        return;
+    }
+
+    if (child != NULL) {
+        _compat_bw_apply(child, n, _COMPAT_BW_CHILD);
+    } else {
+        /* Enfant pas encore posé — cas de widget_window.c, qui pose la
+         * bordure par défaut AVANT d'ajouter son contenu. On mémorise ;
+         * _compat_container_add() videra la consigne. Le +1 distingue
+         * « 0 demandé » de « rien demandé ». */
+        g_object_set_data(G_OBJECT(w), _COMPAT_BW_PENDING,
+                          GINT_TO_POINTER(n + 1));
+    }
+}
+
+/* ================================================================
  * GtkContainer  — removed in GTK4
  *   gtk_container_add        → per-widget child setter
  *   gtk_container_remove     → per-widget remove or gtk_widget_unparent
@@ -122,6 +207,15 @@ _compat_container_add(GtkWidget *parent, GtkWidget *child)
         g_warning("gtk4-compat: gtk_container_add: unhandled parent type '%s' — "
                   "child '%s' not added. GTK4_TODO: add explicit call.",
                   G_OBJECT_TYPE_NAME(parent), G_OBJECT_TYPE_NAME(child));
+    }
+
+    /* Bordure demandée avant que l'enfant n'existe : on la vide ici. */
+    if (GTK_IS_WINDOW(parent) || GTK_IS_FRAME(parent)) {
+        gpointer attente = g_object_get_data(G_OBJECT(parent), _COMPAT_BW_PENDING);
+        if (attente != NULL) {
+            _compat_bw_apply(child, GPOINTER_TO_INT(attente) - 1, _COMPAT_BW_CHILD);
+            g_object_set_data(G_OBJECT(parent), _COMPAT_BW_PENDING, NULL);
+        }
     }
 }
 
@@ -826,9 +920,26 @@ _compat_aspect_frame_new(const gchar *label,
 
 #define GTK4_NO_FILECHOOSERBUTTON 1
 
-/* gtk_file_chooser_button_new shimmed to a plain GtkButton */
+/* ────────────────────────────────────────────────────────────────────────
+ * <filechooser> — GtkFileChooserButton a disparu en GTK 4.
+ *
+ * Ce shim rendait « gtk_button_new_with_label(title) » : un bouton ordinaire.
+ * L'attribut action="select-folder" était jeté, le signal "file-set" n'existe
+ * pas sur un GtkButton, et gtk_file_chooser_get_file() sur ce bouton rendait
+ * NULL avec deux Gtk-CRITICAL — donc la variable shell valait TOUJOURS "".
+ * Pire : <output file:…> tronquait le fichier de destination puis n'écrivait
+ * rien.
+ *
+ * L'implémentation réelle est dans widget_filechooser.c, sur GtkFileDialog
+ * (GTK 4.10+, présent en 4.22). Le chemin choisi est mémorisé sur le bouton.
+ * ──────────────────────────────────────────────────────────────────────── */
+GtkWidget *hp_filechooser_new(const char *titre, int action);
+GFile     *hp_filechooser_get_file(gpointer bouton);
+void       hp_filechooser_set_path(gpointer bouton, const char *chemin);
+void       hp_filechooser_connect(gpointer bouton, gpointer attrs);
+
 #define gtk_file_chooser_button_new(title, action) \
-    gtk_button_new_with_label(title)
+    hp_filechooser_new((title), (int)(action))
 
 /* ================================================================
  * gtk_widget_hide — still present in GTK4 ✅
@@ -852,8 +963,52 @@ _compat_aspect_frame_new(const gchar *label,
 #define GTK_HSCALE(w) GTK_SCALE(w)
 
 /* ================================================================
+
  * gtk_toggle_button_new / gtk_toggle_button_get_active — GTK4 ✅
  * ================================================================ */
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Bascules — GTK 4 a CASSÉ l'héritage GtkCheckButton → GtkToggleButton.
+ *
+ * Mesuré sur GTK 4.22.4 :
+ *     gtk_check_button_new()  → GTK_IS_CHECK_BUTTON=1  GTK_IS_TOGGLE_BUTTON=0
+ *     gtk_toggle_button_new() → GTK_IS_CHECK_BUTTON=0  GTK_IS_TOGGLE_BUTTON=1
+ *
+ * Appeler gtk_toggle_button_get_active() sur une <checkbox> ou un
+ * <radiobutton> — qui sont des GtkCheckButton, groupées pour le second —
+ * rendait donc TOUJOURS FALSE, avec deux Gtk-CRITICAL, et la variable shell
+ * mentait en silence : <checkbox><default>true</default> sortait CB="false".
+ * Un script qui teste [ "$CB" = "true" ] prenait systematiquement la mauvaise
+ * branche.
+ *
+ * Ces trois fonctions aiguillent sur le type RÉEL du widget. Ne pas revenir
+ * a un appel direct a gtk_toggle_button_* : c est exactement ce qui mentait.
+ * ───────────────────────────────────────────────────────────────────────── */
+static inline gboolean hp_is_toggleable(gpointer w)
+{
+    if (w == NULL) return FALSE;
+    return (GTK_IS_CHECK_BUTTON(w) || GTK_IS_TOGGLE_BUTTON(w)) ? TRUE : FALSE;
+}
+
+static inline gboolean hp_toggle_get_active(gpointer w)
+{
+    if (w == NULL) return FALSE;
+    if (GTK_IS_CHECK_BUTTON(w))
+        return gtk_check_button_get_active(GTK_CHECK_BUTTON(w));
+    if (GTK_IS_TOGGLE_BUTTON(w))
+        return gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w));
+    return FALSE;
+}
+
+static inline void hp_toggle_set_active(gpointer w, gboolean actif)
+{
+    if (w == NULL) return;
+    if (GTK_IS_CHECK_BUTTON(w))
+        gtk_check_button_set_active(GTK_CHECK_BUTTON(w), actif);
+    else if (GTK_IS_TOGGLE_BUTTON(w))
+        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(w), actif);
+}
+
 
 /* GtkToggleButton still exists in GTK4 — no shim needed */
 
@@ -926,10 +1081,15 @@ _compat_fc_add_shortcut_folder(GtkFileChooser *fc, const char *path, GError **er
  * ================================================================ */
 
 #define GTK_IS_MENU_ITEM(w)              (FALSE)
-#define GTK_IS_CHECK_MENU_ITEM(w)        (FALSE)
+#define GTK_IS_CHECK_MENU_ITEM(w)             hp_menuitem_est_cochable(w)
 #define GTK_IS_RADIO_MENU_ITEM(w)        (FALSE)
 #define GTK_CHECK_MENU_ITEM(w)           (w)
-#define gtk_check_menu_item_get_active(w) (FALSE)
+/* Entrées de menu cochables : implémentées dans widget_menuitem.c sur une
+ * GSimpleAction étatique accrochée au porteur. Ces deux macros valaient
+ * (FALSE), ce qui rendait mortes les trois branches de signals.c. */
+gboolean hp_menuitem_est_cochable(gpointer porteur);
+gboolean hp_menuitem_get_actif(gpointer porteur);
+#define gtk_check_menu_item_get_active(w) hp_menuitem_get_actif(w)
 
 /* ================================================================
  * vte_terminal_get_padding — retiré dans vte-gtk4.
@@ -1029,9 +1189,11 @@ typedef struct {
  * Batch GTK2/3 → GTK4 widget-API shims (version-independent renames)
  * ================================================================ */
 
-/* gtk_container_set_border_width — removed; use margins. No-op here. */
+/* gtk_container_set_border_width — supprimé en GTK 4 ; implémenté plus haut
+ * par _compat_set_border_width() (marges sur le porteur du contenu). */
 #ifndef gtk_container_set_border_width
-#define gtk_container_set_border_width(w, n)  ((void)0)
+#define gtk_container_set_border_width(w, n) \
+    _compat_set_border_width(GTK_WIDGET(w), (guint)(n))
 #endif
 
 /* GtkIconSize enum values removed in GTK4 (only NORMAL/LARGE remain). */
@@ -1081,7 +1243,7 @@ static inline void _compat_image_get_icon_name(GtkImage *img, const char **out, 
 
 /* GtkFileChooser unselect_all — removed; no-op. */
 #ifndef gtk_file_chooser_unselect_all
-#define gtk_file_chooser_unselect_all(fc)  ((void)0)
+#define gtk_file_chooser_unselect_all(fc)  hp_filechooser_set_path((fc), NULL)
 #endif
 
 /* GtkCalendar select_* renamed to set_* and take a GDateTime in 4.x.

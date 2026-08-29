@@ -452,8 +452,8 @@ gchar *widget_button_envvar_construct(GtkWidget *widget)
 	fprintf(stderr, "%s(): Entering.\n", __func__);
 #endif
 
-	if (GTK_IS_TOGGLE_BUTTON(widget)) {
-		if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
+	if (hp_is_toggleable(widget)) {
+		if (hp_toggle_get_active(widget)) {
 			string = g_strdup("true");
 		} else {
 			string = g_strdup("false");
@@ -546,7 +546,7 @@ void widget_button_refresh(variable *var)
 				} else {
 					is_active = 0;
 				}
-				gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(var->Widget),
+				hp_toggle_set_active(var->Widget,
 					is_active);
 			} else {
 				fprintf(stderr, "%s(): <default> not implemented for this widget.\n",
@@ -655,8 +655,7 @@ void widget_button_save(variable *var)
 		 * widget's data to it */
 		if (filename) {
 			if ((outfile = fopen(filename, "w"))) {
-				is_active = gtk_toggle_button_get_active(
-					GTK_TOGGLE_BUTTON(var->Widget));
+				is_active = hp_toggle_get_active(var->Widget);
 				if (is_active) fprintf(outfile, "%s", "true");
 				else fprintf(outfile, "%s", "false");
 				fclose(outfile);
@@ -710,7 +709,7 @@ static void widget_button_input_by_command(variable *var, char *command)
 				} else {
 					is_active = 0;
 				}
-				gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(var->Widget), is_active);
+				hp_toggle_set_active(var->Widget, is_active);
 			}
 			/* Close the file */
 			fclose(infile);  /* safe_popen/fdopen → fclose */

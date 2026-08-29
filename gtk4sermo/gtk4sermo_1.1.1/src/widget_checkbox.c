@@ -57,7 +57,7 @@ void widget_checkbox_clear(variable *var)
 	fprintf(stderr, "%s(): Entering.\n", __func__);
 #endif
 
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(var->Widget), FALSE);
+	hp_toggle_set_active(var->Widget, FALSE);
 
 #ifdef DEBUG_TRANSITS
 	fprintf(stderr, "%s(): Exiting.\n", __func__);
@@ -126,7 +126,7 @@ gchar *widget_checkbox_envvar_construct(GtkWidget *widget)
 	fprintf(stderr, "%s(): Entering.\n", __func__);
 #endif
 
-	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
+	if (hp_toggle_get_active(widget)) {
 		string = g_strdup("true");
 	} else {
 		string = g_strdup("false");
@@ -210,7 +210,7 @@ void widget_checkbox_refresh(variable *var)
 			} else {
 				is_active = 0;
 			}
-			gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(var->Widget), is_active);
+			hp_toggle_set_active(var->Widget, is_active);
 		}
 		if (attributeset_is_avail(var->Attributes, ATTR_HEIGHT))
 			fprintf(stderr, "%s(): <height> not implemented for this widget.\n",
@@ -285,8 +285,7 @@ void widget_checkbox_save(variable *var)
 	 * widget's data to it */
 	if (filename) {
 		if ((outfile = fopen(filename, "w"))) {
-			is_active = gtk_toggle_button_get_active(
-				GTK_TOGGLE_BUTTON(var->Widget));
+			is_active = hp_toggle_get_active(var->Widget);
 			if (is_active) fprintf(outfile, "%s", "true");
 			else fprintf(outfile, "%s", "false");
 			fclose(outfile);
@@ -338,7 +337,7 @@ static void widget_checkbox_input_by_command(variable *var, char *command)
 			} else {
 				is_active = 0;
 			}
-			gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(var->Widget), is_active);
+			hp_toggle_set_active(var->Widget, is_active);
 
 		}
 		/* Close the file */
@@ -383,7 +382,7 @@ static void widget_checkbox_input_by_file(variable *var, char *filename)
 			} else {
 				is_active = 0;
 			}
-			gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(var->Widget), is_active);
+			hp_toggle_set_active(var->Widget, is_active);
 
 		}
 		/* Close the file */

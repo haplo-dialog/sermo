@@ -43,6 +43,118 @@ static void _menuitem_activate(GSimpleAction *a, GVariant *p, gpointer data)
     if (cmd && *cmd) safe_system(cmd);
 }
 
+/* ─────────────────────────────────────────────────────────────────────────
+ * Entrées de menu COCHABLES — <menuitem checkbox="…"> et
+ * <menuitem radiobutton="…">
+ *
+ * GTK 4 a supprimé GtkCheckMenuItem : une entrée de menu n'est plus un widget,
+ * c'est un GMenuItem qui désigne une GAction. L'état coché vit donc dans une
+ * GSimpleAction ÉTATIQUE, accrochée au porteur par g_object_set_data_full.
+ * Le porteur est déjà var->Widget : rien d'autre n'est nécessaire, ni table
+ * globale, ni recherche dans un GActionMap.
+ *
+ * Avant ce correctif, gtk4-compat.h définissait GTK_IS_CHECK_MENU_ITEM(w) à
+ * (FALSE) et gtk_check_menu_item_get_active(w) à (FALSE) : les trois branches
+ * de signals.c qui lisent l'état d'une entrée cochable étaient du code mort, et
+ * la variable shell ne sortait jamais.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+#define HP_MI_ACTION  "_menu_gaction"   /* GSimpleAction étatique          */
+#define HP_MI_ACTIF   "_menu_actif"     /* dernier état connu (int 0/1)    */
+#define HP_MI_ATTRS   "_menu_attrs"     /* AttributeSet* pour les <action> */
+#define HP_MI_GROUPE  "_menu_groupe"    /* GPtrArray* des porteurs frères  */
+
+/* Vérité au sens de gtkdialog : « true », « yes » ou un entier valant 1.
+ * Reproduit à l'identique gtk3sermo/src/widget_menuitem.c. */
+static gboolean hp_mi_verite(const gchar *v)
+{
+    if (v == NULL) return FALSE;
+    return (g_ascii_strcasecmp(v, "true") == 0 ||
+            g_ascii_strcasecmp(v, "yes")  == 0 ||
+            atoi(v) == 1) ? TRUE : FALSE;
+}
+
+gboolean hp_menuitem_est_cochable(gpointer porteur)
+{
+    if (porteur == NULL || !G_IS_OBJECT(porteur)) return FALSE;
+    return g_object_get_data(G_OBJECT(porteur), HP_MI_ACTION) != NULL;
+}
+
+gboolean hp_menuitem_get_actif(gpointer porteur)
+{
+    GSimpleAction *a;
+    GVariant      *etat;
+    gboolean       r = FALSE;
+
+    if (!hp_menuitem_est_cochable(porteur)) return FALSE;
+    a = g_object_get_data(G_OBJECT(porteur), HP_MI_ACTION);
+    etat = g_action_get_state(G_ACTION(a));
+    if (etat) {
+        r = g_variant_get_boolean(etat);
+        g_variant_unref(etat);
+    }
+    return r;
+}
+
+/* Pose l'état SANS déclencher les <action> : sert à <default>, <input>,
+ * et à la remise à zéro des frères d'un groupe radio. Rend TRUE si la
+ * valeur a réellement changé. */
+static gboolean hp_mi_set_actif_silencieux(GtkWidget *porteur, gboolean actif)
+{
+    GSimpleAction *a;
+
+    if (!hp_menuitem_est_cochable(porteur)) return FALSE;
+    if (hp_menuitem_get_actif(porteur) == actif) return FALSE;
+
+    a = g_object_get_data(G_OBJECT(porteur), HP_MI_ACTION);
+    g_simple_action_set_state(a, g_variant_new_boolean(actif));
+    g_object_set_data(G_OBJECT(porteur), HP_MI_ACTIF, GINT_TO_POINTER(actif ? 1 : 0));
+    return TRUE;
+}
+
+/* « change-state » : GTK ne valide PAS tout seul quand un gestionnaire est
+ * branché — c'est à nous de poser l'état. Mesuré : sans set_state ici, l'état
+ * ne bouge jamais. */
+static void hp_mi_change_state(GSimpleAction *a, GVariant *val, gpointer data)
+{
+    GtkWidget    *porteur = GTK_WIDGET(data);
+    AttributeSet *Attr;
+    GPtrArray    *groupe;
+    gboolean      neuf, avant;
+
+    if (val == NULL || porteur == NULL) return;
+    neuf  = g_variant_get_boolean(val);
+    avant = hp_menuitem_get_actif(porteur);
+
+    g_simple_action_set_state(a, g_variant_new_boolean(neuf));
+    g_object_set_data(G_OBJECT(porteur), HP_MI_ACTIF, GINT_TO_POINTER(neuf ? 1 : 0));
+
+    /* Exclusion mutuelle : une entrée radio qui passe à vrai éteint ses
+     * frères. On n'émet « toggled » que sur ceux qui CHANGENT réellement —
+     * sinon les <action> non préfixées des frères tourneraient à chaque
+     * sélection, y compris pour ceux qui n'ont rien gagné ni perdu. */
+    groupe = g_object_get_data(G_OBJECT(porteur), HP_MI_GROUPE);
+    if (groupe != NULL && neuf) {
+        guint i;
+        for (i = 0; i < groupe->len; i++) {
+            GtkWidget *frere = g_ptr_array_index(groupe, i);
+            if (frere == porteur) continue;
+            if (hp_mi_set_actif_silencieux(frere, FALSE)) {
+                AttributeSet *fa = g_object_get_data(G_OBJECT(frere), HP_MI_ATTRS);
+                if (fa) on_any_widget_toggled_event(frere, fa);
+            }
+        }
+    }
+
+    if (neuf == avant) return;   /* rien n'a change pour CE porteur */
+
+    Attr = g_object_get_data(G_OBJECT(porteur), HP_MI_ATTRS);
+    if (Attr) {
+        on_any_widget_toggled_event(porteur, Attr);
+        on_any_widget_activate_event(porteur, Attr);
+    }
+}
+
 /* ───────────────────────────────────────────────────────────────────────────
  * <menuitem> et <menuitemseparator> ne sont pas des widgets affichables en
  * GTK4 : ils décrivent une entrée de menu, que le <menu> parent transforme en
@@ -85,6 +197,42 @@ GtkWidget *widget_menuitem_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     }
 
     gtk_widget_set_visible(porteur, FALSE);
+
+    /* Entrée cochable ? C'est la PRÉSENCE de l'attribut qui décide ; sa
+     * valeur ne donne que l'état initial. Même ordre de priorité qu'en
+     * GTK 3 : checkbox d'abord, radiobutton ensuite. */
+    if (Type != WIDGET_MENUITEMSEPARATOR && attr) {
+        const gchar *v = NULL;
+        gint         genre_coche = 0;
+
+        if ((v = get_tag_attribute(attr, "checkbox")) != NULL)          genre_coche = 3;
+        else if ((v = get_tag_attribute(attr, "radiobutton")) != NULL)  genre_coche = 4;
+
+        if (genre_coche != 0) {
+            gchar         *nom  = g_strdup_printf("mi_%d", ++_menu_action_counter);
+            gboolean       init = hp_mi_verite(v);
+            GSimpleAction *a    = g_simple_action_new_stateful(
+                                      nom, NULL, g_variant_new_boolean(init));
+
+            g_signal_connect(a, "change-state",
+                             G_CALLBACK(hp_mi_change_state), porteur);
+
+            g_object_set_data_full(G_OBJECT(porteur), HP_MI_ACTION,
+                                   a, (GDestroyNotify)g_object_unref);
+            g_object_set_data_full(G_OBJECT(porteur), "_menu_nom", nom, g_free);
+            g_object_set_data(G_OBJECT(porteur), HP_MI_ACTIF,
+                              GINT_TO_POINTER(init ? 1 : 0));
+            g_object_set_data(G_OBJECT(porteur), HP_MI_ATTRS, Attr);
+            g_object_set_data(G_OBJECT(porteur), "_menu_kind",
+                              GINT_TO_POINTER(genre_coche));
+            g_object_set_data_full(G_OBJECT(porteur), "_menu_label",
+                                   g_strdup(label ? label : ""), g_free);
+            g_object_set_data_full(G_OBJECT(porteur), "_menu_action",
+                                   g_strdup(action ? action : ""), g_free);
+            return porteur;
+        }
+    }
+
     g_object_set_data(G_OBJECT(porteur), "_menu_kind",
         GINT_TO_POINTER(Type == WIDGET_MENUITEMSEPARATOR ? 2 : 1));
     g_object_set_data_full(G_OBJECT(porteur), "_menu_label",
@@ -105,6 +253,7 @@ GtkWidget *widget_menu_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     GSimpleActionGroup *actions = g_simple_action_group_new();
     GList              *el      = NULL;
     gchar              *label   = NULL;
+    GPtrArray          *radios  = NULL;
     gint                n;
 
     (void)Type;
@@ -124,7 +273,35 @@ GtkWidget *widget_menu_create(AttributeSet *Attr, tag_attr *attr, gint Type)
             if (g_menu_model_get_n_items(G_MENU_MODEL(section)) > 0) {
                 g_menu_append_section(modele, NULL, G_MENU_MODEL(section));
                 g_object_unref(section);
+
+    /* Les entrées radio d'un même <menu> forment un groupe : chacune reçoit
+     * la liste de ses frères pour pouvoir les éteindre en passant à vrai. */
+    if (radios != NULL) {
+        guint i;
+        for (i = 0; i < radios->len; i++)
+            g_object_set_data_full(G_OBJECT(g_ptr_array_index(radios, i)),
+                                   HP_MI_GROUPE, g_ptr_array_ref(radios),
+                                   (GDestroyNotify)g_ptr_array_unref);
+        g_ptr_array_unref(radios);
+    }
                 section = g_menu_new();
+            }
+        } else if (genre == 3 || genre == 4) {
+            /* Entrée cochable : l'action existe déjà, créée par
+             * widget_menuitem_create(). On ne fait que la publier. */
+            const gchar   *ml  = g_object_get_data(G_OBJECT(enfant), "_menu_label");
+            const gchar   *nom = g_object_get_data(G_OBJECT(enfant), "_menu_nom");
+            GSimpleAction *a   = g_object_get_data(G_OBJECT(enfant), HP_MI_ACTION);
+
+            if (a && nom) {
+                gchar *cible = g_strdup_printf("menu.%s", nom);
+                g_action_map_add_action(G_ACTION_MAP(actions), G_ACTION(a));
+                g_menu_append(section, (ml && *ml) ? ml : "…", cible);
+                g_free(cible);
+            }
+            if (genre == 4) {
+                if (radios == NULL) radios = g_ptr_array_new();
+                g_ptr_array_add(radios, enfant);
             }
         } else if (genre == 1) {
             const gchar *ml  = g_object_get_data(G_OBJECT(enfant), "_menu_label");
@@ -181,10 +358,27 @@ GtkWidget *widget_menu_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     return porteur;
 }
 
-gchar *widget_menuitem_envvar_construct(GtkWidget *w)               { return g_strdup(""); }
+gchar *widget_menuitem_envvar_construct(GtkWidget *w)
+{
+    /* Seules les entrées cochables ont une valeur, comme en GTK 3. */
+    if (hp_menuitem_est_cochable(w))
+        return g_strdup(hp_menuitem_get_actif(w) ? "true" : "false");
+    return g_strdup("");
+}
 gchar *widget_menuitem_envvar_all_construct(variable *var)          { return NULL; }
 void   widget_menuitem_clear(variable *var)                         {}
-void   widget_menuitem_refresh(variable *var)                       {}
+void   widget_menuitem_refresh(variable *var)
+{
+    GList *el = NULL;
+
+    if (var == NULL || !hp_menuitem_est_cochable(var->Widget)) return;
+
+    /* <default>true</default> : appliqué sans déclencher les <action>. */
+    if (var->Attributes && attributeset_is_avail(var->Attributes, ATTR_DEFAULT)) {
+        const gchar *v = attributeset_get_first(&el, var->Attributes, ATTR_DEFAULT);
+        hp_mi_set_actif_silencieux(var->Widget, hp_mi_verite(v));
+    }
+}
 void   widget_menuitem_fileselect(variable *var, const gchar *n, const gchar *v) {}
 void   widget_menuitem_removeselected(variable *var)                {}
 void   widget_menuitem_save(variable *var)                          {}

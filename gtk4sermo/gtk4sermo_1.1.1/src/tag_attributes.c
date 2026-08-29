@@ -220,6 +220,7 @@ gint widget_set_tag_attributes(GtkWidget *widget, tag_attr *attr)
 	gboolean	success;
 	gint 		q;
 	gint 		retval = 0;
+	const gchar    *bordure = NULL;
 
 	g_assert(GTK_IS_WIDGET(widget));
 #ifdef DEBUG
@@ -231,10 +232,26 @@ gint widget_set_tag_attributes(GtkWidget *widget, tag_attr *attr)
 	for (q = 0; q < attr->n; ++q) {
 		/* Thunor: killed tag attributes have null names */
 		if (attr->pairs[q].name[0] != 0) {
+			/* GTK 4 : GtkContainer a disparu, « border-width » n'est plus une
+			 * propriete GObject. g_object_class_find_property() rendrait NULL
+			 * et l'attribut serait avale EN SILENCE — c'est ce qui rendait
+			 * border-width sans effet dans les 47 exemples livres. On le
+			 * retient et on l'applique APRES la boucle, pour que le resultat
+			 * ne depende pas de l'ordre des attributs dans le XML. */
+			if (strcmp(attr->pairs[q].name, "border-width") == 0 ||
+			    strcmp(attr->pairs[q].name, "border_width") == 0) {
+				bordure = attr->pairs[q].value;
+				++retval;
+				continue;
+			}
 			success = try_set_property(widget, attr->pairs + q);
 			if (success) ++retval;
 		}
 	}
+	
+	if (bordure != NULL)
+		gtk_container_set_border_width(GTK_CONTAINER(widget),
+			(guint)strtoul(bordure, NULL, 10));
 	
 	return retval;
 }

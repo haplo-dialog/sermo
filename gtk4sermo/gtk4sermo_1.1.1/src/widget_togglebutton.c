@@ -36,7 +36,7 @@ static void widget_togglebutton_input_by_file(variable *var, char *filename);
 
 void widget_togglebutton_clear(variable *var)
 {
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(var->Widget), FALSE);
+    hp_toggle_set_active(var->Widget, FALSE);
 }
 
 GtkWidget *widget_togglebutton_create(AttributeSet *Attr, tag_attr *attr, gint Type)
@@ -64,7 +64,7 @@ gchar *widget_togglebutton_envvar_all_construct(variable *var)
 gchar *widget_togglebutton_envvar_construct(GtkWidget *widget)
 {
     return g_strdup(
-        gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget)) ? "true" : "false");
+        hp_toggle_get_active(widget) ? "true" : "false");
 }
 
 void widget_togglebutton_fileselect(variable *var, const char *name, const char *value)
@@ -100,7 +100,7 @@ void widget_togglebutton_refresh(variable *var)
             gboolean active = (strcasecmp(act, "true") == 0 ||
                                strcasecmp(act, "yes")  == 0 ||
                                atoi(act) == 1);
-            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(var->Widget), active);
+            hp_toggle_set_active(var->Widget, active);
         }
         if ((attributeset_cmp_left(var->Attributes, ATTR_SENSITIVE, "false")) ||
             (attributeset_cmp_left(var->Attributes, ATTR_SENSITIVE, "disabled")) ||
@@ -133,7 +133,7 @@ void widget_togglebutton_save(variable *var)
     }
     if (filename && (outfile = fopen(filename, "w"))) {
         fprintf(outfile, "%s\n",
-            gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(var->Widget))
+            hp_toggle_get_active(var->Widget)
             ? "true" : "false");
         fclose(outfile);
     }
@@ -147,7 +147,7 @@ static void widget_togglebutton_input_by_command(variable *var, char *command)
         if (fgets(line, sizeof(line), infile)) {
             gboolean a = (strcasecmp(line, "true") == 0 ||
                           strcasecmp(line, "yes")  == 0 || atoi(line) == 1);
-            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(var->Widget), a);
+            hp_toggle_set_active(var->Widget, a);
         }
         fclose(infile);
     }
@@ -161,7 +161,7 @@ static void widget_togglebutton_input_by_file(variable *var, char *filename)
         if (fgets(line, sizeof(line), infile)) {
             gboolean a = (strcasecmp(line, "true") == 0 ||
                           strcasecmp(line, "yes")  == 0 || atoi(line) == 1);
-            gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(var->Widget), a);
+            hp_toggle_set_active(var->Widget, a);
         }
         fclose(infile);
     }

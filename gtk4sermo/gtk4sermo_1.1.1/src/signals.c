@@ -1317,8 +1317,8 @@ void widget_signal_executor(GtkWidget *widget, AttributeSet *Attr,
 
 			/* There's a class hierarchy to be aware of here */
 /* GtkWidget--->GtkContainer--->GtkBin--->GtkButton--->GtkToggleButton */
-			if (GTK_IS_TOGGLE_BUTTON(widget)) {
-				is_active = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+			if (hp_is_toggleable(widget)) {
+				is_active = hp_toggle_get_active(widget);
 /* GtkWidget--->GtkContainer--->GtkBin--->GtkExpander */
 			} else if (GTK_IS_EXPANDER(widget)) {
 				is_active = gtk_expander_get_expanded(GTK_EXPANDER(widget));
@@ -1361,9 +1361,9 @@ void widget_signal_executor(GtkWidget *widget, AttributeSet *Attr,
 
 			/* There's a class hierarchy to be aware of here */
 /* GtkWidget--->GtkContainer--->GtkBin--->GtkButton--->GtkToggleButton */
-			if (GTK_IS_TOGGLE_BUTTON(widget)) {
+			if (hp_is_toggleable(widget)) {
 				if (strcasecmp(signal_name, "toggled") == 0) {
-					is_active = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+					is_active = hp_toggle_get_active(widget);
 				}
 /* GtkWidget--->GtkContainer--->GtkBin--->GtkButton--->GtkColorButton */
 			} else if (GTK_IS_COLOR_BUTTON(widget)) {
@@ -1564,8 +1564,8 @@ gboolean widget_signal_executor_eval_condition(gchar *condition)
 
 					/* There's a class hierarchy to be aware of here */
 /* GtkWidget--->GtkContainer--->GtkBin--->GtkButton--->GtkToggleButton */
-					if (GTK_IS_TOGGLE_BUTTON(var->Widget)) {
-						state = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(var->Widget));
+					if (hp_is_toggleable(var->Widget)) {
+						state = hp_toggle_get_active(var->Widget);
 /* GtkWidget--->GtkContainer--->GtkBin--->GtkExpander */
 					} else if (GTK_IS_EXPANDER(var->Widget)) {
 						state = gtk_expander_get_expanded(GTK_EXPANDER(var->Widget));

@@ -83,7 +83,7 @@ void widget_filechooser_clear(variable *var)
 	fprintf(stderr, "%s(): Entering.\n", __func__);
 #endif
 
-	gtk_file_chooser_unselect_all(GTK_FILE_CHOOSER(var->Widget));
+	hp_filechooser_set_path(var->Widget, NULL);
 
 #ifdef DEBUG_TRANSITS
 	fprintf(stderr, "%s(): Exiting.\n", __func__);
@@ -93,6 +93,121 @@ void widget_filechooser_clear(variable *var)
 /***********************************************************************
  * Create                                                              *
  ***********************************************************************/
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Implémentation réelle du <filechooser> en GTK 4.
+ *
+ * GtkFileChooserButton n'existe plus. On rend un GtkButton qui ouvre un
+ * GtkFileDialog au clic. GtkFileDialog est ASYNCHRONE : on ne bloque pas la
+ * boucle principale, le chemin choisi est mémorisé sur le bouton par le
+ * rappel, et c'est LUI qui déclenche ensuite les <action> — exactement ce que
+ * faisait le signal "file-set" du port GTK 3.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+#define HP_FC_PATH   "gtk4sermo-fc-path"
+#define HP_FC_ATTRS  "gtk4sermo-fc-attrs"
+#define HP_FC_ACTION "gtk4sermo-fc-action"
+
+void hp_filechooser_set_path(gpointer bouton, const char *chemin)
+{
+    GtkWidget *b = GTK_WIDGET(bouton);
+
+    if (b == NULL) return;
+
+    g_object_set_data_full(G_OBJECT(b), HP_FC_PATH,
+                           (chemin && *chemin) ? g_strdup(chemin) : NULL, g_free);
+
+    /* Le bouton affiche le nom du fichier, comme le faisait GtkFileChooserButton. */
+    if (GTK_IS_BUTTON(b)) {
+        if (chemin && *chemin) {
+            gchar *base = g_path_get_basename(chemin);
+            gtk_button_set_label(GTK_BUTTON(b), base);
+            g_free(base);
+        } else {
+            const gchar *t = g_object_get_data(G_OBJECT(b), "gtk4sermo-fc-title");
+            gtk_button_set_label(GTK_BUTTON(b), (t && *t) ? t : "Select File");
+        }
+    }
+}
+
+GFile *hp_filechooser_get_file(gpointer bouton)
+{
+    const gchar *chemin;
+
+    if (bouton == NULL || !G_IS_OBJECT(bouton)) return NULL;
+    chemin = g_object_get_data(G_OBJECT(bouton), HP_FC_PATH);
+    return (chemin && *chemin) ? g_file_new_for_path(chemin) : NULL;
+}
+
+void hp_filechooser_connect(gpointer bouton, gpointer attrs)
+{
+    if (bouton && G_IS_OBJECT(bouton))
+        g_object_set_data(G_OBJECT(bouton), HP_FC_ATTRS, attrs);
+}
+
+static void hp_fc_choisi(GObject *source, GAsyncResult *res, gpointer data)
+{
+    GtkWidget    *b   = GTK_WIDGET(data);
+    GtkFileDialog *d  = GTK_FILE_DIALOG(source);
+    AttributeSet *Attr;
+    GFile        *f;
+    GError       *err = NULL;
+    gint          action;
+
+    action = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(b), HP_FC_ACTION));
+    f = (action == 1) ? gtk_file_dialog_select_folder_finish(d, res, &err)
+                      : gtk_file_dialog_open_finish(d, res, &err);
+
+    if (f == NULL) {
+        /* Annulation : ce n'est pas une erreur, on ne touche a rien. */
+        if (err) g_error_free(err);
+        return;
+    }
+
+    {
+        gchar *chemin = g_file_get_path(f);
+        hp_filechooser_set_path(b, chemin);
+        g_free(chemin);
+    }
+    g_object_unref(f);
+
+    /* Equivalent du signal "file-set" du port GTK 3. */
+    Attr = g_object_get_data(G_OBJECT(b), HP_FC_ATTRS);
+    if (Attr) on_any_widget_changed_event(b, Attr);
+}
+
+static void hp_fc_clic(GtkButton *b, gpointer data)
+{
+    GtkFileDialog *d = gtk_file_dialog_new();
+    GtkRoot       *r = gtk_widget_get_root(GTK_WIDGET(b));
+    GtkWindow     *parent = GTK_IS_WINDOW(r) ? GTK_WINDOW(r) : NULL;
+    const gchar   *titre = g_object_get_data(G_OBJECT(b), "gtk4sermo-fc-title");
+    gint           action = GPOINTER_TO_INT(data);
+
+    if (titre && *titre) gtk_file_dialog_set_title(d, titre);
+
+    if (action == 1)
+        gtk_file_dialog_select_folder(d, parent, NULL, hp_fc_choisi, b);
+    else
+        gtk_file_dialog_open(d, parent, NULL, hp_fc_choisi, b);
+
+    g_object_unref(d);
+}
+
+GtkWidget *hp_filechooser_new(const char *titre, int action)
+{
+    /* action : 1 = dossier (GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER), sinon fichier */
+    gint  mode = (action == GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER) ? 1 : 0;
+    GtkWidget *b = gtk_button_new_with_label((titre && *titre) ? titre : "Select File");
+
+    g_object_set_data_full(G_OBJECT(b), "gtk4sermo-fc-title",
+                           g_strdup(titre ? titre : ""), g_free);
+    g_object_set_data(G_OBJECT(b), HP_FC_ACTION, GINT_TO_POINTER(mode));
+    g_signal_connect(b, "clicked", G_CALLBACK(hp_fc_clic), GINT_TO_POINTER(mode));
+    return b;
+}
+
 
 GtkWidget *widget_filechooser_create(
 	AttributeSet *Attr, tag_attr *attr, gint Type)
@@ -166,7 +281,7 @@ gchar *widget_filechooser_envvar_construct(GtkWidget *widget)
 #endif
 
 	/* gtk_file_chooser_get_file() is the GTK4-forward-compatible API */
-	file = gtk_file_chooser_get_file(GTK_FILE_CHOOSER(widget));
+	file = hp_filechooser_get_file(widget);
 	if (file) {
 		path = g_file_get_path(file);
 		g_object_unref(file);
@@ -248,8 +363,7 @@ void widget_filechooser_refresh(variable *var)
 			value = attributeset_get_first(&element, var->Attributes,
 				ATTR_DEFAULT);
 			if (value && *value)
-				gtk_file_chooser_set_filename(
-					GTK_FILE_CHOOSER(var->Widget), value);
+				hp_filechooser_set_path(var->Widget, value);
 		}
 		if (attributeset_is_avail(var->Attributes, ATTR_HEIGHT))
 			g_warning("%s(): <height> not implemented for this widget.",
@@ -264,8 +378,7 @@ void widget_filechooser_refresh(variable *var)
 			gtk_widget_set_sensitive(var->Widget, FALSE);
 
 		/* Connect signals */
-		g_signal_connect(G_OBJECT(var->Widget), "file-set",
-			G_CALLBACK(on_any_widget_changed_event), (gpointer)var->Attributes);
+		hp_filechooser_connect(var->Widget, var->Attributes);
 	}
 
 #ifdef DEBUG_TRANSITS
@@ -319,7 +432,7 @@ void widget_filechooser_save(variable *var)
 
 	if (filename) {
 		if ((outfile = fopen(filename, "w"))) {
-			file = gtk_file_chooser_get_file(GTK_FILE_CHOOSER(var->Widget));
+			file = hp_filechooser_get_file(var->Widget);
 			if (file) {
 				path = g_file_get_path(file);
 				g_object_unref(file);
@@ -366,8 +479,7 @@ static void widget_filechooser_input_by_command(variable *var, char *command)
 			for (count = (gint)strlen(line) - 1; count >= 0; count--)
 				if (line[count] == 13 || line[count] == 10) line[count] = 0;
 			if (*line)
-				gtk_file_chooser_set_filename(
-					GTK_FILE_CHOOSER(var->Widget), line);
+				hp_filechooser_set_path(var->Widget, line);
 		}
 		fclose(infile);
 	} else {
@@ -399,8 +511,7 @@ static void widget_filechooser_input_by_file(variable *var, char *filename)
 			for (count = (gint)strlen(line) - 1; count >= 0; count--)
 				if (line[count] == 13 || line[count] == 10) line[count] = 0;
 			if (*line)
-				gtk_file_chooser_set_filename(
-					GTK_FILE_CHOOSER(var->Widget), line);
+				hp_filechooser_set_path(var->Widget, line);
 		}
 		fclose(infile);
 	} else {
