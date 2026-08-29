@@ -9,10 +9,12 @@
 
 | Port | Version | Security support |
 |------|---------|-----------------|
-| gtk3sermo | 1.1.2 | ✅ Active |
+| gtk3sermo | 1.1.3 | ✅ Active |
+| gtk3sermo | 1.1.2 | ⚠️ Superseded by 1.1.3 |
 | gtk3sermo | 1.1.1 | ⚠️ Superseded by 1.1.2 |
 | gtk3sermo | 1.0.0 | ⚠️ No longer supported — three defects fixed in 1.1.0 ; see also 1.1.1 |
-| gtk4sermo | 1.1.2 | ✅ Active |
+| gtk4sermo | 1.1.3 | ✅ Active |
+| gtk4sermo | 1.1.2 | ⚠️ Superseded by 1.1.3 |
 | gtk4sermo | 1.1.1 | ⚠️ Superseded by 1.1.2 |
 | gtk4sermo | 1.0.0 | ⚠️ No longer supported — three defects fixed in 1.1.0 ; see also 1.1.1 |
 

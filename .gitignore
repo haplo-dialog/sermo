@@ -111,7 +111,7 @@ build_out.log
 
 # artefacts de construction (2026-08-15)
 /gtk3sermo/SHA256SUMS
-/gtk3sermo/gtk3sermo_1.1.2/gtk3sermo.spec
+/gtk3sermo/gtk3sermo_1.1.3/gtk3sermo.spec
 
 # Arbre de construction de ci/build.sh — jamais suivi.
 _build/

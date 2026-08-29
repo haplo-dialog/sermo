@@ -49,8 +49,8 @@ done
 # ── Répertoires source ────────────────────────────────────────────────────────
 src_dir() {
     case "$1" in
-        gtk3sermo)  echo "${ROOT_DIR}/gtk3sermo/gtk3sermo_1.1.2" ;;
-        gtk4sermo)  echo "${ROOT_DIR}/gtk4sermo/gtk4sermo_1.1.2" ;;
+        gtk3sermo)  echo "${ROOT_DIR}/gtk3sermo/gtk3sermo_1.1.3" ;;
+        gtk4sermo)  echo "${ROOT_DIR}/gtk4sermo/gtk4sermo_1.1.3" ;;
     esac
 }
 
