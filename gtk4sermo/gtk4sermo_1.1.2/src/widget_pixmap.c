@@ -70,6 +70,46 @@ void widget_pixmap_clear(variable *var)
  * Create                                                              *
  ***********************************************************************/
 
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * Icone prise dans le THEME (déclarée dans gtk4-compat.h).
+ *
+ * GTK 4 n'a plus de chemin GdkPixbuf : gtk_icon_theme_lookup_icon rend un
+ * GtkIconPaintable, et GtkImage sait l'afficher directement — pas de pixbuf
+ * intermédiaire à fabriquer.
+ *
+ * ⚠️ lookup_icon ne rend JAMAIS NULL : pour un nom inconnu il rend
+ * « image-missing ». On demande donc has_icon d'abord, pour restituer la
+ * sémantique GTK 3 (rien trouvé → l'appelant affiche l'icône cassée).
+ * ───────────────────────────────────────────────────────────────────────── */
+GtkWidget *hp_image_from_icon_theme(const char *nom, int taille)
+{
+	GtkIconTheme     *theme;
+	GtkIconPaintable *icone;
+	GtkWidget        *image;
+
+	if (nom == NULL || *nom == '\0')
+		return NULL;
+	/* Valeur venue d'un XML non fiable : on la borne. */
+	if (taille < 1)    taille = 32;
+	if (taille > 4096) taille = 4096;
+
+	theme = gtk_icon_theme_get_for_display(gdk_display_get_default());
+	if (theme == NULL || !gtk_icon_theme_has_icon(theme, nom))
+		return NULL;
+
+	icone = gtk_icon_theme_lookup_icon(theme, nom, NULL, taille, 1,
+		GTK_TEXT_DIR_NONE, 0);
+	if (icone == NULL)
+		return NULL;
+
+	image = gtk_image_new_from_paintable(GDK_PAINTABLE(icone));
+	gtk_widget_set_size_request(image, taille, taille);
+	g_object_unref(icone);
+	return image;
+}
+
+
 GtkWidget *widget_pixmap_create(
 	AttributeSet *Attr, tag_attr *attr, gint Type)
 {
@@ -123,13 +163,9 @@ GtkWidget *widget_pixmap_create(
 				if (attr &&
 					(value = get_tag_attribute(attr, "theme-icon-size")))
 					theme_icon_size = atoi(value);
-				pixbuf = gtk_icon_theme_load_icon(icon_theme, icon_name,
-					theme_icon_size, 0, &error);
-				if (pixbuf) {
-					widget = gtk_image_new_from_pixbuf(pixbuf);
-					/* pixbuf is no longer required and should be unreferenced */
-					g_object_unref(pixbuf);
-				} else {
+				(void)icon_theme;
+				widget = hp_image_from_icon_theme(icon_name, theme_icon_size);
+				if (widget == NULL) {
 					/* pixbuf is null (file not found) so by using this
 					 * function gtk will substitute a broken image icon */
 					widget = gtk_image_new_from_file("");

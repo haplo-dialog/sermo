@@ -116,7 +116,6 @@ GtkWidget *widget_infobar_create(
 {
 	GList            *element;
 	GtkWidget        *widget;
-	GtkWidget        *content_area;
 	GtkWidget        *label;
 	GtkMessageType    msg_type = GTK_MESSAGE_INFO;
 	const gchar      *msg_text = "";
@@ -139,14 +138,14 @@ GtkWidget *widget_infobar_create(
 	widget = gtk_info_bar_new();
 	gtk_info_bar_set_message_type(GTK_INFO_BAR(widget), msg_type);
 	gtk_info_bar_set_show_close_button(GTK_INFO_BAR(widget), TRUE);
+	gtk_info_bar_set_revealed(GTK_INFO_BAR(widget), TRUE);
 
-	/* Add a label to the content area */
-	content_area = gtk_info_bar_get_content_area(GTK_INFO_BAR(widget));
+	/* GTK 4 : gtk_info_bar_get_content_area() n'existe plus (nm -D : 0).
+	 * L'enfant se pose directement par add_child. */
 	label = gtk_label_new(msg_text);
 	gtk_label_set_line_wrap(GTK_LABEL(label), TRUE);
 	gtk_label_set_xalign(GTK_LABEL(label), 0.0f);
-	gtk_container_add(GTK_CONTAINER(content_area), label);
-	gtk_widget_show(label);
+	gtk_info_bar_add_child(GTK_INFO_BAR(widget), label);
 
 	/* Store reference to the label for later updates */
 	g_object_set_data(G_OBJECT(widget), "_label", label);
@@ -234,6 +233,27 @@ void widget_infobar_fileselect(
  * Refresh                                                             *
  ***********************************************************************/
 
+/***********************************************************************
+ * Response — trampoline d'arité                                       *
+ ***********************************************************************/
+/* ⛔ Le signal « response » de GtkInfoBar vaut
+ *       void (GtkInfoBar *barre, gint response_id, gpointer data)
+ * — mesuré : g_signal_query rend n_params=1, param[0]=gint.
+ *
+ * Brancher directement on_any_widget_changed_event(GtkWidget *, AttributeSet *)
+ * fait donc arriver le response_id LÀ OÙ le code attend le pointeur
+ * AttributeSet. Reproduit sur cette machine : en passant 0x55aa55aa0000 à
+ * g_signal_connect, le gestionnaire reçoit 0xfffffff9 — c'est-à-dire -7,
+ * GTK_RESPONSE_CLOSE. Le déréférencer tue le processus.
+ *
+ * Ce trampoline rétablit l'arité. Les DEUX ports portaient la même faute. */
+static void widget_infobar_response_event(GtkWidget *widget,
+	gint response_id, AttributeSet *Attr)
+{
+	(void)response_id;
+	on_any_widget_changed_event(widget, Attr);
+}
+
 void widget_infobar_refresh(variable *var)
 {
 	GList            *element;
@@ -282,7 +302,8 @@ void widget_infobar_refresh(variable *var)
 
 		/* Connect signals */
 		g_signal_connect(G_OBJECT(var->Widget), "response",
-			G_CALLBACK(on_any_widget_changed_event), (gpointer)var->Attributes);
+			G_CALLBACK(widget_infobar_response_event),
+			(gpointer)var->Attributes);
 	}
 
 #ifdef DEBUG_TRANSITS

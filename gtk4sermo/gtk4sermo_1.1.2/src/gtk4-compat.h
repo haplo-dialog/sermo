@@ -203,6 +203,12 @@ _compat_container_add(GtkWidget *parent, GtkWidget *child)
             gtk_paned_set_start_child(GTK_PANED(parent), child);
         else
             gtk_paned_set_end_child(GTK_PANED(parent), child);
+    } else if (GTK_IS_INFO_BAR(parent)) {
+        /* GtkInfoBar n'est ni une GtkBox ni rien d'autre de la chaîne testée
+         * plus haut (mesuré : GTK_IS_BOX(infobar) == 0). Sans cette branche,
+         * un gtk_container_add() sur un infobar perdait son enfant EN SILENCE
+         * dans le g_warning ci-dessous. */
+        gtk_info_bar_add_child(GTK_INFO_BAR(parent), child);
     } else {
         g_warning("gtk4-compat: gtk_container_add: unhandled parent type '%s' — "
                   "child '%s' not added. GTK4_TODO: add explicit call.",
@@ -662,7 +668,9 @@ _compat_fc_set_filename(GtkFileChooser *fc, const gchar *path)
 #define gtk_icon_theme_get_default() \
     gtk_icon_theme_get_for_display(gdk_display_get_default())
 
-/* gtk_icon_theme_load_icon still exists in GTK4 ✅ */
+/* ⛔ gtk_icon_theme_load_icon N'EXISTE PLUS en GTK 4 — ce commentaire disait
+ * le contraire, et 565 lignes plus bas la fonction etait remplacee par un
+ * stub (NULL). Voir hp_image_from_icon_theme() plus bas. */
 
 /* ================================================================
  * gtk_main_iteration_do  — removed in GTK4
@@ -865,30 +873,24 @@ _compat_calendar_get_date(GtkCalendar *cal,
     _compat_calendar_get_date(GTK_CALENDAR(cal), (year), (month), (day))
 
 /* ================================================================
- * GtkInfoBar — removed in GTK4
- * Replaced by a GtkBox + GtkLabel styled with CSS.
- * We keep the API surface as a thin struct wrapper so widget_infobar.c
- * compiles unchanged. The infobar is rendered as a coloured GtkBox.
+ * GtkInfoBar — DÉPRÉCIÉ en 4.10, mais TOUJOURS PRÉSENT en 4.22.4.
+ *   en-tête : gtk/deprecated/gtkinfobar.h, tiré par gtk/gtk.h ligne 173
+ *   nm -D libgtk-4.so.1 : gtk_info_bar_new, _set_message_type,
+ *     _set_show_close_button, _add_child, _remove_child, _set_revealed
+ *     — tous présents. src/Makefile.am porte déjà -Wno-deprecated-declarations.
+ *
+ * Ce shim le remplaçait par un GtkBox : set_message_type devenait une macro
+ * VIDE (le type de message était ignoré), set_show_close_button un no-op, et
+ * GTK_INFO_BAR(w) était réécrit en GTK_BOX(w). Le code branchait alors le
+ * signal « response » sur une GtkBox, qui ne l'a pas : un
+ * GLib-GObject-CRITICAL à chaque <infobar>.
+ *
+ * On rend la main aux VRAIES macros de gtkinfobar.h. Seule
+ * gtk_info_bar_get_content_area() a réellement disparu (nm -D : 0) :
+ * widget_infobar.c appelle gtk_info_bar_add_child() à la place.
+ * GTK4_NO_INFOBAR n'était référencé nulle part (grep sur *.c : zéro) — retiré.
  * ================================================================ */
 
-#define GTK4_NO_INFOBAR 1   /* signal to widget_infobar.c */
-
-/* Map the GTK3 GtkInfoBar API to our GtkBox-based replacement */
-#define gtk_info_bar_new()                   gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6)
-#define gtk_info_bar_set_message_type(w, t)  /* GTK4_TODO: apply CSS class */
-#define gtk_info_bar_set_show_close_button(w, v) /* no-op in GTK4 box */
-
-static inline GtkWidget *
-_compat_info_bar_get_content_area(GtkWidget *box)
-{
-    /* In our shim the "content area" is the box itself */
-    return box;
-}
-#define gtk_info_bar_get_content_area(w) _compat_info_bar_get_content_area(GTK_WIDGET(w))
-#undef GTK_INFO_BAR
-#define GTK_INFO_BAR(w)  GTK_BOX(w)
-#undef GTK_IS_INFO_BAR
-#define GTK_IS_INFO_BAR(w) GTK_IS_BOX(w)
 
 /* GtkMessageType : toujours fourni par GTK4 (gtkenums.h, utilisé par
  * GtkMessageDialog encore présent). Aucune redéfinition nécessaire —
@@ -1233,10 +1235,17 @@ static inline GtkWidget *_compat_image_new_from_icon_name(const char *name, ...)
 static inline void _compat_image_get_icon_name(GtkImage *img, const char **out, ...)
     { if (out) *out = (gtk_image_get_icon_name)(img); }
 
-/* gtk_icon_theme_load_icon — removed in GTK4; no GdkPixbuf path. Stub NULL. */
-#ifndef gtk_icon_theme_load_icon
-#define gtk_icon_theme_load_icon(theme, name, size, flags, err)  (NULL)
-#endif
+/* gtk_icon_theme_load_icon — supprimee en GTK 4 : il n'existe plus de chemin
+ * GdkPixbuf. L'API est gtk_icon_theme_lookup_icon(), qui rend un
+ * GtkIconPaintable (donc un GdkPaintable), pas un GdkPixbuf.
+ *
+ * Le stub rendait NULL : <pixmap><input file stock="…" icon="…"> tombait donc
+ * TOUJOURS dans la branche « fichier introuvable » et affichait l'icone cassee,
+ * quel que soit le theme installe.
+ *
+ * On ne fabrique PAS de pixbuf intermediaire : GtkImage sait afficher un
+ * paintable. Implementation dans widget_pixmap.c. */
+GtkWidget *hp_image_from_icon_theme(const char *nom, int taille);
 
 /* Label line-wrap renamed. */
 #define gtk_label_set_line_wrap(l, w)   gtk_label_set_wrap(GTK_LABEL(l), (w))

@@ -71,6 +71,34 @@ if [ "$dl" -lt 70 ] || [ "$dh" -lt 70 ]; then
     printf "${RED}FAIL${NC}  de 0 a 40 : +%s x +%s px, on attend ~+80 dans chaque dimension\n" "$dl" "$dh"; echec=1
 fi
 
+# ── 2. <pixmap> : l'icone prise dans le THEME suit-elle la taille demandee ? ──
+# gtk_icon_theme_load_icon a disparu en GTK 4 ; un stub rendait NULL, donc le
+# widget tombait toujours sur l'icone cassee, quel que soit le theme installe.
+# Aucune variable shell ne le trahit : seule la TAILLE le montre.
+taille_icone() {
+    _s=$1
+    _x="<window title=\"pix$_s\"><vbox><pixmap theme-icon-size=\"$_s\"><input file icon=\"folder\"></input></pixmap></vbox></window>"
+    MAIN_DIALOG="$_x" DISPLAY=$DISP timeout 15 "$BIN" --program=MAIN_DIALOG >/dev/null 2>&1 &
+    _p=$!
+    _g=""; _i=0
+    while [ "$_i" -lt 8 ]; do
+        sleep 1
+        _g=$(DISPLAY=$DISP xdotool search --name "pix$_s" getwindowgeometry 2>/dev/null \
+             | grep -oE 'Geometry: [0-9]+x[0-9]+' | awk '{print $2}')
+        [ -n "$_g" ] && break
+        _i=$((_i+1))
+    done
+    kill $_p 2>/dev/null; wait $_p 2>/dev/null || true
+    [ -n "$_g" ] || mort "fenetre « pix$_s » jamais apparue"
+    printf '%s' "$_g"
+}
+
+P16=$(taille_icone 16); printf '  pixmap theme-icon-size=16  %s\n' "$P16"
+P64=$(taille_icone 64); printf '  pixmap theme-icon-size=64  %s\n' "$P64"
+if [ "$P16" = "$P64" ]; then
+    printf "${RED}FAIL${NC}  la taille ne suit pas : l'icone de theme n'est PAS chargee\n"; echec=1
+fi
+
 printf '\n'
-if [ "$echec" -gt 0 ]; then printf "${RED}ECHEC — border-width n'est pas applique correctement${NC}\n"; exit 1; fi
-printf "${GREEN}SUCCES — border-width grandit la fenetre de 2N (mesure : +%s x +%s pour N=40)${NC}\n" "$dl" "$dh"
+if [ "$echec" -gt 0 ]; then printf "${RED}ECHEC — la geometrie n'est pas conforme${NC}\n"; exit 1; fi
+printf "${GREEN}SUCCES — border-width +%s x +%s pour N=40, et l'icone de theme suit sa taille${NC}\n" "$dl" "$dh"

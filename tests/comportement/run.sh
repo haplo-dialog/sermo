@@ -83,21 +83,32 @@ verifie_binaire() {
     case "$1" in */*) : ;; *) mort "donne un CHEMIN, pas un nom : « $1 » irait chercher dans le PATH." ;; esac
 }
 
-# Joue un cas et rend sur stdout les variables shell, triées.
-# Rend 90 si le programme n'a pas fini, 91 s'il a émis un CRITICAL/WARNING.
+# Joue un cas. Écrit les variables shell triées dans $SORTIE, et l'état dans
+# $ETAT : 0 normal, 90 sortie vide, 91 CRITICAL/WARNING émis.
+#
+# ⛔ Pourquoi passer par des FICHIERS et non par une variable : la première
+# version faisait « v=$(joue …) ; rc=$RC ». Or une substitution de commande
+# s'exécute dans un SOUS-SHELL — le RC posé dedans ne remonte JAMAIS. Le
+# contrôle des Gtk-CRITICAL était donc du code mort, et un cas qui en émettait
+# passait quand même. Mesuré le 2026-08-29 : le cas 11-infobar était vert sur
+# un binaire qui crachait un CRITICAL. C'est précisément le genre de succès
+# muet que ce banc existe pour empêcher.
+SORTIE=$(mktemp); ETAT=$(mktemp); ERRS=$(mktemp)
+trap 'rm -f "$SORTIE" "$ETAT" "$ERRS"' EXIT INT TERM
+
 joue() {
-    _bin=$1; _xml=$2; _err=$(mktemp); _out=$(mktemp)
-    MAIN_DIALOG="$(cat "$_xml")" xvfb-run -a \
-        timeout "$TIMEOUT" "$_bin" --program=MAIN_DIALOG >"$_out" 2>"$_err" || true
-    _rc=0
-    if grep -qE 'CRITICAL|WARNING \*\*' "$_err" 2>/dev/null; then _rc=91; fi
-    # Les variables shell : lignes NOM="valeur". On trie pour ne pas dependre de
-    # l'ordre d'evaluation, et on retire EXIT qui ne dit rien du comportement.
-    grep -E '^[A-Za-z_][A-Za-z0-9_]*=' "$_out" 2>/dev/null | grep -v '^EXIT=' | LC_ALL=C sort
-    if [ ! -s "$_out" ] && [ "$_rc" = 0 ]; then _rc=90; fi
-    printf '%s' "$_rc" > "$_err.rc"
-    RC=$(cat "$_err.rc"); rm -f "$_err" "$_out" "$_err.rc"
-    return 0
+    MAIN_DIALOG="$(cat "$2")" xvfb-run -a \
+        timeout "$TIMEOUT" "$1" --program=MAIN_DIALOG >"$SORTIE.brut" 2>"$ERRS" || true
+    grep -E '^[A-Za-z_][A-Za-z0-9_]*=' "$SORTIE.brut" 2>/dev/null \
+        | grep -v '^EXIT=' | LC_ALL=C sort > "$SORTIE"
+    if grep -qE 'CRITICAL|WARNING \*\*' "$ERRS" 2>/dev/null; then
+        printf '91' > "$ETAT"
+    elif [ ! -s "$SORTIE" ]; then
+        printf '90' > "$ETAT"
+    else
+        printf '0' > "$ETAT"
+    fi
+    rm -f "$SORTIE.brut"
 }
 
 if [ "$MODE" = diff ]; then
@@ -107,8 +118,8 @@ if [ "$MODE" = diff ]; then
     for xml in "$CAS"/*.xml; do
         nom=$(basename "$xml" .xml)
         desc=$(grep '^<!-- DESC:' "$xml" 2>/dev/null | sed 's/<!-- DESC: //;s/ -->//' || echo "$nom")
-        va=$(joue "$A" "$xml"); rca=$RC
-        vb=$(joue "$B" "$xml"); rcb=$RC
+        joue "$A" "$xml"; va=$(cat "$SORTIE"); rca=$(cat "$ETAT")
+        joue "$B" "$xml"; vb=$(cat "$SORTIE"); rcb=$(cat "$ETAT")
         if [ "$rca" = 91 ]; then ko "$nom — $(basename "$A") a émis un CRITICAL"; continue; fi
         if [ "$rcb" = 91 ]; then ko "$nom — $(basename "$B") a émis un CRITICAL"; continue; fi
         if [ "$rca" = 90 ] || [ "$rcb" = 90 ]; then ko "$nom — sortie vide (le dialogue ne s'est pas fermé ?)"; continue; fi
@@ -128,7 +139,7 @@ else
         att="$CAS/$nom.attendu"
         desc=$(grep '^<!-- DESC:' "$xml" 2>/dev/null | sed 's/<!-- DESC: //;s/ -->//' || echo "$nom")
         [ -f "$att" ] || { ko "$nom — fichier .attendu manquant"; continue; }
-        v=$(joue "$BIN" "$xml"); rc=$RC
+        joue "$BIN" "$xml"; v=$(cat "$SORTIE"); rc=$(cat "$ETAT")
         if [ "$rc" = 91 ]; then ko "$nom — Gtk-CRITICAL émis"; continue; fi
         if [ "$rc" = 90 ]; then ko "$nom — sortie vide (le dialogue ne s'est pas fermé ?)"; continue; fi
         if [ "$v" = "$(cat "$att")" ]; then ok "$nom : $desc"

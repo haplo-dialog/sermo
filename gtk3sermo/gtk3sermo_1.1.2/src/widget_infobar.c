@@ -234,6 +234,27 @@ void widget_infobar_fileselect(
  * Refresh                                                             *
  ***********************************************************************/
 
+/***********************************************************************
+ * Response — trampoline d'arité                                       *
+ ***********************************************************************/
+/* ⛔ Le signal « response » de GtkInfoBar vaut
+ *       void (GtkInfoBar *barre, gint response_id, gpointer data)
+ * — mesuré : g_signal_query rend n_params=1, param[0]=gint.
+ *
+ * Brancher directement on_any_widget_changed_event(GtkWidget *, AttributeSet *)
+ * fait donc arriver le response_id LÀ OÙ le code attend le pointeur
+ * AttributeSet. Reproduit sur cette machine : en passant 0x55aa55aa0000 à
+ * g_signal_connect, le gestionnaire reçoit 0xfffffff9 — c'est-à-dire -7,
+ * GTK_RESPONSE_CLOSE. Le déréférencer tue le processus.
+ *
+ * Ce trampoline rétablit l'arité. Les DEUX ports portaient la même faute. */
+static void widget_infobar_response_event(GtkWidget *widget,
+	gint response_id, AttributeSet *Attr)
+{
+	(void)response_id;
+	on_any_widget_changed_event(widget, Attr);
+}
+
 void widget_infobar_refresh(variable *var)
 {
 	GList            *element;
@@ -282,7 +303,8 @@ void widget_infobar_refresh(variable *var)
 
 		/* Connect signals */
 		g_signal_connect(G_OBJECT(var->Widget), "response",
-			G_CALLBACK(on_any_widget_changed_event), (gpointer)var->Attributes);
+			G_CALLBACK(widget_infobar_response_event),
+			(gpointer)var->Attributes);
 	}
 
 #ifdef DEBUG_TRANSITS
