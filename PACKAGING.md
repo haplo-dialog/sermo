@@ -5,7 +5,7 @@
 > soins sont fournies pour les autres familles de distributions.
 >
 > **Les binaires sont publiés** depuis le 2026-08-24, joints à la release
-> [v1.1.1](https://gitlab.com/haplo-dialog/sermo/-/releases/v1.1.1) avec leurs sommes de contrôle : `gtk3sermo`, `gtk4sermo`,
+> [v1.1.2](https://gitlab.com/haplo-dialog/sermo/-/releases/v1.1.2) avec leurs sommes de contrôle : `gtk3sermo`, `gtk4sermo`,
 > `gtksermo` et les deux paquets de symboles. Il n'y a **pas de dépôt APT** :
 > on télécharge, on vérifie, on installe. Les anciens paquets `gtk3dialog` ont
 > été retirés au renommage, et ceux de la `v1.0.0` l'ont été le 2026-08-27
@@ -30,7 +30,7 @@ adapté à sa cible.
    par colonne.
 2. **Le `.deb` se construit depuis l'arbre**, en une commande
    (`dpkg-buildpackage -us -uc -b`), et donne `gtk3sermo`, `gtksermo` et
-   `gtk4sermo`. Les binaires obtenus sont publiés dans la release v1.1.1, avec leurs sommes.
+   `gtk4sermo`. Les binaires obtenus sont publiés dans la release v1.1.2, avec leurs sommes.
 3. **Les autres cibles : recettes fournies, build à la demande.** Le projet
    n'héberge pas ces binaires ; on les construit si un besoin réel émerge.
 
@@ -47,7 +47,7 @@ adapté à sa cible.
 Une recette fournie n'est pas un paquet testé. Le tableau dit lequel des deux,
 pour éviter la lecture optimiste d'une colonne de coches identiques.
 
-`gtk3sermo` fournit, dans `gtk3sermo/gtk3sermo_1.1.1/packaging/` :
+`gtk3sermo` fournit, dans `gtk3sermo/gtk3sermo_1.1.2/packaging/` :
 
 | Cible | Recette fournie | Construite et vérifiée par le projet |
 |---|:--:|---|
@@ -67,7 +67,7 @@ Si vous en faites tourner une, dites-le nous : elle passera dans la colonne de
 droite, avec la version et la distribution où elle a marché.
 
 ```
-gtk3sermo/gtk3sermo_1.1.1/packaging/
+gtk3sermo/gtk3sermo_1.1.2/packaging/
 ├── debian/      # debian/ (control, rules, *.install, *.links…) → dpkg-buildpackage
 ├── rpm/         # *.spec                                        → rpmbuild
 ├── arch/        # PKGBUILD (+ .SRCINFO)                         → makepkg
@@ -78,7 +78,7 @@ gtk3sermo/gtk3sermo_1.1.1/packaging/
 ## Construire un paquet pour votre distribution
 
 ```sh
-# Debian/Ubuntu (depuis gtk3sermo/gtk3sermo_1.1.1/)
+# Debian/Ubuntu (depuis gtk3sermo/gtk3sermo_1.1.2/)
 dpkg-buildpackage -us -uc -b        # utilise packaging/debian/
 
 # Fedora/openSUSE
@@ -103,7 +103,7 @@ directement `gtk3sermo`. Depuis les sources, `make install` pose bien le lien.
 
 ```sh
 # autotools - gtk3sermo
-cd gtk3sermo/gtk3sermo_1.1.1 && autoreconf -fi && ./configure && make -j"$(nproc)" && sudo make install
+cd gtk3sermo/gtk3sermo_1.1.2 && autoreconf -fi && ./configure && make -j"$(nproc)" && sudo make install
 ```
 
 ## Domaine du projet

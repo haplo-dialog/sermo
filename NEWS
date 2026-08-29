@@ -82,7 +82,7 @@ Pour installer :
   # Les paquets sont joints a la release v1.1.1, avec leurs sommes.
   # Il n'y a PAS de depot APT : on telecharge, on verifie, on installe.
   sha256sum -c SHA256SUMS
-  sudo apt install ./gtk3sermo_1.1.1-1_amd64.deb
+  sudo apt install ./gtk3sermo_1.1.2-1_amd64.deb
   # Pour construire soi-meme depuis un clone :
   #   cd sermo/gtk3sermo/gtk3sermo_1.1.0 && dpkg-buildpackage -us -uc -b
   # (Les paquets obtenus s'appellent gtk3sermo, gtksermo et gtk4sermo.

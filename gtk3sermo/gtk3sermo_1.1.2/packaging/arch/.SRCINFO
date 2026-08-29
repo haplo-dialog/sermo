@@ -1,0 +1,25 @@
+pkgbase = gtk3sermo
+	pkgdesc = GTK3 dialog window creator for shell scripts
+	pkgver = 1.1.2
+	pkgrel = 1
+	url = https://haplo-dialog.fr
+	arch = x86_64
+	arch = aarch64
+	license = GPL-2.0-or-later
+	makedepends = gtk3
+	makedepends = vte3
+	makedepends = gtk-layer-shell
+	makedepends = flex
+	makedepends = bison
+	makedepends = autoconf
+	makedepends = automake
+	makedepends = pkgconfig
+	makedepends = texinfo
+	depends = gtk3
+	depends = vte3
+	depends = gtk-layer-shell
+	provides = gtk3sermo
+	source = sermo-v1.1.2.tar.gz::https://gitlab.com/haplo-dialog/sermo/-/archive/v1.1.2/sermo-v1.1.2.tar.gz
+	sha256sums = SKIP
+
+pkgname = gtk3sermo

@@ -78,7 +78,7 @@ To install:
   # The packages are attached to the v1.1.1 release, with their checksums.
   # There is NO APT repository: you download, you verify, you install.
   sha256sum -c SHA256SUMS
-  sudo apt install ./gtk3sermo_1.1.1-1_amd64.deb
+  sudo apt install ./gtk3sermo_1.1.2-1_amd64.deb
   # To build them yourself from a clone:
   #   cd sermo/gtk3sermo/gtk3sermo_1.1.0 && dpkg-buildpackage -us -uc -b
   # (The resulting packages are gtk3sermo, gtksermo and gtk4sermo.
