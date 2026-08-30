@@ -13,7 +13,7 @@
 [![Licence](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.1.3-informational.svg)](CHANGELOG.en.md)
 [![Toolkit](https://img.shields.io/badge/toolkit-GTK%203%20%2B%20GTK%204-success.svg)](#the-two-ports)
-[![Tests](https://img.shields.io/badge/tests-55%2F55%20XML%20·%2011%2F11%20behaviour-brightgreen.svg)](#tests--quality)
+[![Tests](https://img.shields.io/badge/tests-55%2F55%20XML%20·%209%2F9%20unit%20·%2011%2F11%20behaviour-brightgreen.svg)](#tests--quality)
 
 Describe an interface in XML, export it into a variable, run the binary —
 a real **native GTK 3** window opens, and the values you enter come back
@@ -190,8 +190,16 @@ Vulnerability report: see [SECURITY.md](SECURITY.en.md).
 
 ## Tests & quality
 
-- **XML regression**: `./tests/xml/run_tests.sh all`, **55/55** (headless parse `--print-ir`).
-- **Behaviour**: `./tests/run_unit_tests.sh all`, `safe_exec`, **9/9** (without an X server).
+- **XML regression**: `./tests/xml/run_tests.sh <path-to-binary>`, **55/55**.
+  ⚠️ This bench runs `--print-ir`: it **parses** the XML without building a
+  single widget. It says nothing about behaviour.
+- **Core unit tests**: `./tests/run_unit_tests.sh all`, `safe_exec`, **9/9 per
+  port** (without an X server).
+- **Real behaviour**: `./tests/comportement/run.sh <path-to-binary>`, **11/11** —
+  it **launches** the dialogue under Xvfb and compares the variables it emits.
+  `--diff <gtk3> <gtk4>` mode: the GTK 3 port acts as the oracle.
+  Plus `./tests/comportement/geometrie.sh`, for what no variable reveals
+  (`border-width`, theme icon size).
 - **Fuzzing** of the parser: `./tests/fuzz/run_fuzz.sh gtk3sermo 60` (afl++ or built-in fallback).
 - **CI**: build + tests, `.gitlab-ci.yml` and `.gitea/workflows/`.
 

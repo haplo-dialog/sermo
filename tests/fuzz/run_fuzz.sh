@@ -18,16 +18,52 @@ ROOT=$(cd "$SCRIPT_DIR/../.." && pwd)
 ARG="${1:?usage: run_fuzz.sh <port|binaire> [secondes]}"
 DUR="${2:-30}"
 
-# Résoudre un nom de port en chemin de binaire si nécessaire.
-if [ -x "$ARG" ]; then
+# ─────────────────────────────────────────────────────────────────────────
+# ⛔ DEUX PIEGES CORRIGES ICI, tous deux SILENCIEUX.
+#
+# 1. « [ -x "$ARG" ] » est VRAI pour un REPERTOIRE : les repertoires portent le
+#    bit x. La commande publiee dans le README, « ./run_fuzz.sh gtk3sermo 60 »,
+#    lancee depuis la racine, prenait donc le REPERTOIRE gtk3sermo/ pour un
+#    binaire — et le fuzzer annonçait « 0 crash » sans avoir rien fuzze.
+#    On exige desormais un FICHIER regulier executable.
+#
+# 2. Le repli codait « _1.1.0 » en dur. Une montee de version amont renomme le
+#    dossier (voir VERSIONING.md) : le repli ne trouvait plus rien. Le chemin
+#    se RESOUT.
+#
+# Constate le 2026-08-30. Meme famille que le defaut de run_unit_tests.sh.
+# ─────────────────────────────────────────────────────────────────────────
+BIN=""
+if [ -f "$ARG" ] && [ -x "$ARG" ]; then
     BIN="$ARG"
-elif [ -x "$ROOT/$ARG/${ARG}_1.1.0/src/$ARG" ]; then
-    BIN="$ROOT/$ARG/${ARG}_1.1.0/src/$ARG"
 else
-    echo "Binaire introuvable pour « $ARG » (compile d'abord le port, ou donne un chemin)." >&2
+    if [ -d "$ARG" ]; then
+        echo "« $ARG » est un REPERTOIRE, pas un binaire — on ne fuzze pas un dossier." >&2
+    fi
+    for _c in "$ROOT/$ARG/${ARG}_"*/src/"$ARG"; do
+        [ -f "$_c" ] && [ -x "$_c" ] && { BIN="$_c"; break; }
+    done
+fi
+if [ -z "$BIN" ]; then
+    echo "Binaire introuvable pour « $ARG »." >&2
+    echo "  Donne un CHEMIN vers un fichier executable, ou construis d'abord le port." >&2
+    # N'afficher le motif de recherche que si l'argument est un NOM de port :
+    # avec un chemin, « $ROOT/$ARG/... » produit une chaine absurde.
+    case "$ARG" in
+        */*) : ;;
+        *)   echo "  Cherche : $ROOT/$ARG/${ARG}_*/src/$ARG" >&2 ;;
+    esac
     exit 2
 fi
+echo "  binaire fuzze : $BIN"
+
 CORPUS="$ROOT/tests/xml"
+_n=$(find "$CORPUS" -maxdepth 1 -name '*.xml' 2>/dev/null | wc -l)
+if [ "$_n" -eq 0 ]; then
+    echo "Corpus vide : aucun .xml dans $CORPUS — le fuzzer n'aurait rien a muter." >&2
+    exit 2
+fi
+echo "  corpus        : $_n fichier(s)"
 
 if command -v afl-fuzz >/dev/null 2>&1; then
     echo "afl++ détecté — campagne afl-fuzz (Ctrl-C pour arrêter)."

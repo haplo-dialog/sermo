@@ -14,7 +14,7 @@
 [![Licence](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.1.3-informational.svg)](CHANGELOG.md)
 [![Toolkit](https://img.shields.io/badge/toolkit-GTK%203%20%2B%20GTK%204-success.svg)](#les-deux-ports)
-[![Tests](https://img.shields.io/badge/tests-55%2F55%20XML%20·%2011%2F11%20comportement-brightgreen.svg)](#tests--qualité)
+[![Tests](https://img.shields.io/badge/tests-55%2F55%20XML%20·%209%2F9%20unitaires%20·%2011%2F11%20comportement-brightgreen.svg)](#tests--qualité)
 
 Décrivez une interface en XML, exportez-la dans une variable, lancez le binaire —
 une vraie fenêtre **native** s'ouvre — GTK 3 ou GTK 4, au choix du port —, et
@@ -196,8 +196,16 @@ Signalement de vulnérabilité : voir [SECURITY.md](SECURITY.md).
 
 ## Tests & qualité
 
-- **Régression XML** : `./tests/xml/run_tests.sh all`, **55/55** (parse headless `--print-ir`).
-- **Comportement** : `./tests/run_unit_tests.sh all`, `safe_exec`, **9/9** (sans serveur X).
+- **Régression XML** : `./tests/xml/run_tests.sh <chemin-du-binaire>`, **55/55**.
+  ⚠️ Ce banc lance `--print-ir` : il **analyse** le XML sans construire un seul
+  widget. Il ne dit rien du comportement.
+- **Unitaires du cœur** : `./tests/run_unit_tests.sh all`, `safe_exec`, **9/9 par
+  port** (sans serveur X).
+- **Comportement réel** : `./tests/comportement/run.sh <chemin-du-binaire>`,
+  **11/11** — il **lance** le dialogue sous Xvfb et compare les variables
+  rendues. Mode `--diff <gtk3> <gtk4>` : le port GTK 3 sert d'oracle.
+  Plus `./tests/comportement/geometrie.sh`, pour ce qu'aucune variable ne trahit
+  (`border-width`, taille d'icône de thème).
 - **Fuzzing** du parser : `./tests/fuzz/run_fuzz.sh gtk3sermo 60` (afl++ ou repli intégré).
 - **CI** : build + tests, `.gitlab-ci.yml` et `.gitea/workflows/`.
 
