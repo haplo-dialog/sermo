@@ -12,6 +12,140 @@ Versioning: [Semantic Versioning](https://semver.org/) starting from 1.0.0.
 
 ---
 
+## [1.1.3] - 2026-08-29
+
+### Fixed
+
+- ⚠️ **A crash affecting BOTH ports.** Clicking an `<infobar>`'s close button
+  killed the program with SIGSEGV. `widget_infobar.c` connected
+  `on_any_widget_changed_event(GtkWidget *, AttributeSet *)` to the `response`
+  signal, whose real arity is `(GtkInfoBar *, gint, gpointer)` —
+  `g_signal_query` returns `n_params=1, param[0]=gint`. The `response_id`
+  therefore arrived **where the `AttributeSet` pointer was expected**.
+  Reproduced with a compiled probe: passing `0x55aa55aa0000` to
+  `g_signal_connect`, the handler receives `0xfffffff9`, i.e. `-7`,
+  `GTK_RESPONSE_CLOSE`. A trampoline restores the arity. **Every earlier version
+  carries this defect**, gtk3sermo included.
+- **A `.ui` file containing a `<menu>` crashed the GTK 4 port** (SIGABRT). In
+  GTK 4, `gtk_builder_get_objects()` also returns objects that are not widgets;
+  `gtk_widget_get_name()` returned `NULL` there, and an assertion failed.
+- `<calendar>` returned **today's date** instead of the requested one: the
+  macros that set it were `((void)0)`. In GTK 4 month and day cannot be set
+  separately — `set_month` on a 31 December returns
+  `assertion 'date != NULL' failed` and changes nothing. A complete, valid date
+  is now set in a single call.
+- `<infobar>` was a disguised `GtkBox`: the message type was ignored.
+  `GtkInfoBar` still exists in GTK 4.22, deprecated but present; only
+  `get_content_area()` is gone.
+- `<pixmap>` **never** loaded a theme icon: `gtk_icon_theme_load_icon` was a stub
+  returning `NULL`.
+- The window icon **reported success while doing nothing**: the shim was
+  `(TRUE)`. Measured with `xprop _NET_WM_ICON` — the reference returns
+  `Icon (64 x 64)`, the port returned a blank `Icon (32 x 32)`.
+- `--geometry=+X+Y` was silently swallowed. Implemented on X11 via
+  `XMoveWindow`; on Wayland the protocol forbids it, and a warning says so
+  instead of pretending the option was honoured.
+- `disable:` on a whole `<menu>` had no effect.
+- Menus in a `.ui` file were not recognised: five `GTK_IS_MENU_*` macros were
+  `(FALSE)`.
+
+### Removed
+
+- Accelerators, **removed rather than implemented**: the `accel_groups` list was
+  never populated. This was not an incomplete port, it was unreachable code — a
+  shim guarding dead code creates the illusion of work in progress.
+
+### Added
+
+- **`tests/comportement/`**: a bench that **launches** the dialogue under Xvfb
+  and compares the variables it emits, with the GTK 3 port as oracle in `--diff`
+  mode. The `tests/xml/` suite runs `--print-ir`: it **parses** the XML without
+  building a single widget, and therefore says nothing about behaviour. That
+  misunderstanding is what left twelve dead functions in place. Plus
+  `geometrie.sh`, for what no variable reveals (`border-width`, theme icon size).
+
+---
+
+## [1.1.2] - 2026-08-29
+
+### Fixed
+
+- ⚠️ **Data loss.** `<filechooser>` with `<output file:…>` called `fopen("w")` —
+  which **truncates** — then wrote nothing, the value always being empty.
+  Measured: a 26-byte file dropped to **0**.
+- **`<checkbox>` and `<radiobutton>` silently returned a WRONG value.** GTK 4
+  broke the `GtkCheckButton` → `GtkToggleButton` inheritance: measured,
+  `gtk_check_button_new()` gives `GTK_IS_TOGGLE_BUTTON=0`. Calling
+  `gtk_toggle_button_get_active()` on it **always** returned FALSE.
+  `<checkbox><default>true</default>` emitted `CB="false"`: a script testing
+  `[ "$CB" = "true" ]` systematically took the wrong branch.
+- **`border-width` was swallowed without any warning.** The attribute does not
+  go through the compatibility macro but through the generic GObject property
+  path; in GTK 4, `GtkContainer` is gone and the property no longer exists.
+  47 of the shipped examples use it. Measured: the same window goes from 56×16
+  whatever the value, to 56×16 / 96×56 / 136×96 for 0 / 20 / 40 — **exactly +2N**.
+- **Checkable menu entries did not exist.** GTK 4 removed `GtkCheckMenuItem`;
+  the state now lives in a stateful `GSimpleAction`. Radios within one `<menu>`
+  exclude each other, and `toggled` is emitted only on those that **actually
+  change**.
+- **`<filechooser>` was a plain button.**
+  `gtk_file_chooser_button_new(title, action)` was
+  `gtk_button_new_with_label(title)`: the `action="select-folder"` attribute was
+  discarded, and a `GtkButton` has no `"file-set"` signal. Reimplemented on
+  `GtkFileDialog`, asynchronous.
+
+---
+
+## [1.1.1-3] - 2026-08-28
+
+### Fixed
+
+- `glade_support.c`: a `return TRUE;` sat **outside the `if`**, despite its
+  indentation. The function returned true on the very first iteration
+  regardless of the comparison: only `signals[0]` could ever be connected, and a
+  failed connection was reported as success. **Both ports.**
+- `widget_tree.c`: in `widget_tree_save()`, `text` is only assigned inside the
+  column loop. If that loop does not run, `text` was read by `fprintf` then
+  passed to `g_free()` **having never been initialised**. **Both ports.**
+- GTK 4 port: `if (!paramspec->flags & G_PARAM_WRITABLE)` — `!` binds tighter
+  than `&`, so the expression was `(!flags) & 2`, i.e. **always 0**. The
+  "property is not writable" guard never fired. The GTK 3 port carried this fix;
+  the GTK 4 port had never received it.
+- GTK 4 port: compiler warnings down from 36 to 17 — four dangling `else`
+  braced without changing meaning, a parameter shadowing a global (renamed
+  **along with its three uses**, otherwise the comparison deciding which widgets
+  get destroyed would have switched from the parameter to the global), six
+  sign/unsigned comparisons, and `%option noinput` in the lexer.
+
+---
+
+## [1.1.1-2] - 2026-08-28
+
+### Fixed
+
+- **`_FORTIFY_SOURCE` was defined twice at compile time**: `=2` by the Debian
+  flags in `CPPFLAGS`, then `=3` by `src/Makefile.am`. GCC did keep the second —
+  the advertised hardening was the applied one, verified by a probe and by the
+  binaries — but it warned on **every compiled file**: 125 lines of noise across
+  both ports, drowning the 60 real code warnings. `-U_FORTIFY_SOURCE` disarms
+  the first.
+- **`HARDENING_CFLAGS` and `HARDENING_LDFLAGS` were declared then ignored.**
+  `configure.ac` defined them, no `Makefile.am` referenced them: hardening came
+  from hard-copied lists, and the two lists had **diverged** — `-fPIE` missing
+  from the first, `-Wl,-z,ibt -Wl,-z,shstk` from the second. Wiring them as-is
+  would therefore have **weakened** the binaries; they were completed first.
+  Proof that nothing moved: the compile and link flag sets, extracted and sorted
+  before and after, are identical.
+
+### Changed
+
+- Documentation: the GTK 4 developer manual claimed **30 widgets**, the port has
+  **56**; the GTK 3 one said "43 files, one per widget", while 43 files carry
+  **52 widgets**. Both manuals presented themselves as 1.0.0 inside 1.1.1
+  directories.
+
+---
+
 ## [1.1.1] - 2026-08-27
 
 ### Removed

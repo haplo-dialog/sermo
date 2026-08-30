@@ -10,13 +10,25 @@
 | Port | Version | Security support |
 |------|---------|-----------------|
 | gtk3sermo | 1.1.3 | ✅ Active |
-| gtk3sermo | 1.1.2 | ⚠️ Superseded by 1.1.3 |
-| gtk3sermo | 1.1.1 | ⚠️ Superseded by 1.1.2 |
+| gtk3sermo | 1.1.2 | ⚠️ **Crash** — see below. Take 1.1.3. |
+| gtk3sermo | 1.1.1 | ⚠️ **Crash** — see below. Take 1.1.3. |
 | gtk3sermo | 1.0.0 | ⚠️ No longer supported — three defects fixed in 1.1.0 ; see also 1.1.1 |
 | gtk4sermo | 1.1.3 | ✅ Active |
-| gtk4sermo | 1.1.2 | ⚠️ Superseded by 1.1.3 |
-| gtk4sermo | 1.1.1 | ⚠️ Superseded by 1.1.2 |
+| gtk4sermo | 1.1.2 | ⚠️ **Crash** — see below. Take 1.1.3. |
+| gtk4sermo | 1.1.1 | ⚠️ **Crash** — see below. Take 1.1.3. |
 | gtk4sermo | 1.0.0 | ⚠️ No longer supported — three defects fixed in 1.1.0 ; see also 1.1.1 |
+
+> ### ⚠️ Every version before 1.1.3 crashes on `<infobar>`
+>
+> Clicking an `<infobar>`'s close button kills the program (SIGSEGV). The
+> `response` signal handler received an integer where it expected a pointer —
+> measured arity `(GtkInfoBar *, gint, gpointer)` against the connected
+> `(GtkWidget *, AttributeSet *)`. Reproduced on the **published** packages,
+> downloaded anonymously: `rc=139`.
+>
+> The defect affects **both ports**, `gtk3sermo` included. It is fixed only in
+> **1.1.3**.
+
 
 Both ports share the same C core and the same grammar. Since 2026-08-24 they
 have the **same memory-safety posture**: `g_strlcpy` for name copies, an explicit

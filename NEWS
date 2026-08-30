@@ -4,6 +4,57 @@ haplo-dialog, Annonces pour les utilisateurs
 Ce fichier résume les changements importants du point de vue de l'utilisateur.
 Pour l'historique technique complet, voir CHANGELOG.md.
 
+────────────────────────────────────────────────────────────────
+Version 1.1.3 (2026-08-29), Un plantage corrige dans les DEUX ports
+────────────────────────────────────────────────────────────────
+
+⚠️ Si vos scripts utilisent <infobar>, prenez cette version.
+
+Cliquer le bouton de fermeture d'un <infobar> tuait le programme. Le defaut
+touchait les DEUX ports, gtk3sermo compris, et il est present dans TOUTES les
+versions anterieures. Le gestionnaire du signal recevait un entier la ou il
+attendait un pointeur.
+
+Un fichier .ui contenant un menu faisait aussi planter le port GTK 4.
+
+Sept fonctions du port GTK 4 passent par ailleurs de mortes a vivantes :
+<calendar> rendait la date du jour au lieu de la date demandee, <infobar>
+ignorait son type de message, <pixmap> ne chargeait jamais une icone de theme,
+l'icone de fenetre annoncait un succes sans rien faire, --geometry etait avale,
+disable: sur un <menu> restait sans effet, et les menus d'un fichier .ui
+n'etaient pas reconnus.
+
+────────────────────────────────────────────────────────────────
+Version 1.1.2 (2026-08-29), Cinq fonctions qui ne faisaient rien
+────────────────────────────────────────────────────────────────
+
+⚠️ Perte de donnees corrigee : <filechooser> avec <output file:...> vidait le
+fichier de destination sans rien y ecrire. Un fichier de 26 octets tombait a 0.
+
+⚠️ <checkbox> et <radiobutton> rendaient une valeur FAUSSE, sans bruit.
+<checkbox><default>true</default> sortait "false" : un script qui teste
+[ "$CB" = "true" ] prenait systematiquement la mauvaise branche.
+
+border-width etait ignore — 47 des exemples livres l'utilisent. Les entrees de
+menu cochables ne rendaient aucune valeur. <filechooser> etait un bouton
+ordinaire, qui ne choisissait aucun fichier.
+
+────────────────────────────────────────────────────────────────
+Version 1.1.1-3 (2026-08-28), Deux defauts dans les deux ports
+────────────────────────────────────────────────────────────────
+
+Un « return TRUE » place hors de son « if » faisait annoncer un succes la ou la
+connexion d'un signal avait echoue. Et l'enregistrement d'un <tree> lisait puis
+liberait un pointeur jamais initialise quand l'arbre n'avait aucune colonne.
+
+────────────────────────────────────────────────────────────────
+Version 1.1.1-2 (2026-08-28), Fabrication et documentation
+────────────────────────────────────────────────────────────────
+
+Rien ne change a l'usage. Le durcissement annonce etait bien celui applique,
+mais il etait declare a deux endroits qui avaient diverge — et l'un des deux
+etait ignore. La documentation annonçait 30 widgets la ou le port GTK 4 en a 56.
+
 ──────────────────────────────────────────────────
 Version 1.1.1 (2026-08-27), Corrections
 ──────────────────────────────────────────────────

@@ -10,13 +10,25 @@
 | Port | Version | Support sécurité |
 |------|---------|-----------------|
 | gtk3sermo | 1.1.3 | ✅ Actif |
-| gtk3sermo | 1.1.2 | ⚠️ Remplacée par la 1.1.3 |
-| gtk3sermo | 1.1.1 | ⚠️ Remplacée par la 1.1.2 |
+| gtk3sermo | 1.1.2 | ⚠️ **Plantage** — voir ci-dessous. Prendre la 1.1.3. |
+| gtk3sermo | 1.1.1 | ⚠️ **Plantage** — voir ci-dessous. Prendre la 1.1.3. |
 | gtk3sermo | 1.0.0 | ⚠️ Plus supportée — trois défauts corrigés en 1.1.0 ; voir aussi la 1.1.1 |
 | gtk4sermo | 1.1.3 | ✅ Actif |
-| gtk4sermo | 1.1.2 | ⚠️ Remplacée par la 1.1.3 |
-| gtk4sermo | 1.1.1 | ⚠️ Remplacée par la 1.1.2 |
+| gtk4sermo | 1.1.2 | ⚠️ **Plantage** — voir ci-dessous. Prendre la 1.1.3. |
+| gtk4sermo | 1.1.1 | ⚠️ **Plantage** — voir ci-dessous. Prendre la 1.1.3. |
 | gtk4sermo | 1.0.0 | ⚠️ Plus supportée — trois défauts corrigés en 1.1.0 ; voir aussi la 1.1.1 |
+
+> ### ⚠️ Toutes les versions antérieures à la 1.1.3 plantent sur `<infobar>`
+>
+> Cliquer le bouton de fermeture d'un `<infobar>` tue le programme (SIGSEGV).
+> Le gestionnaire du signal `response` recevait un entier là où il attendait un
+> pointeur — arité mesurée `(GtkInfoBar *, gint, gpointer)` contre
+> `(GtkWidget *, AttributeSet *)` branché. Reproduit sur les paquets **publiés**,
+> téléchargés anonymement : `rc=139`.
+>
+> Le défaut touche **les deux ports**, `gtk3sermo` compris. Il est corrigé
+> uniquement en **1.1.3**.
+
 
 Les deux ports partagent le même cœur C et la même grammaire. Depuis le
 2026-08-24 ils ont la **même posture mémoire** : `g_strlcpy` pour les copies de
