@@ -25,6 +25,15 @@ workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH
+    # Les etiquettes n'avaient AUCUN pipeline : ces deux regles ne matchent que
+    # des branches et des MR. Consequence vue le 2026-08-30 : la page de la
+    # release v1.1.3 affiche le pipeline de BRANCHE du commit etiquete, rouge
+    # parce qu'il manquait adwaita-icon-theme aux dependances de test -- un
+    # defaut de la recette CI, pas du logiciel livre. Et rien ne pouvait le
+    # rendre vert : on ne peut pas lancer de pipeline sur une etiquette quand
+    # aucune regle ne la reconnait. Desormais une etiquette a son propre
+    # pipeline, avec la recette corrigee.
+    - if: $CI_COMMIT_TAG
 
 default:
   image: debian:testing
