@@ -24,7 +24,9 @@ Thank you for your interest in haplo-dialog. This document explains how to contr
 - Read [SECURITY.md](SECURITY.en.md) **in full** before any change to the core
 - Follow the [Code of Conduct](CODE_OF_CONDUCT.md)
 - For security bugs: write to `devel@haplo-dialog.fr`, **do not open a public ticket**
-- For functional bugs: open a ticket with a minimal reproducible XML script
+- For functional bugs: open a ticket with a minimal reproducible XML script.
+  The issue tracker requires a GitLab account; without one, the same report is
+  welcome by email at `devel@haplo-dialog.fr`
 
 **Reference port:**  
 haplo-dialog provides two ports, `gtk3sermo` (GTK 3 backend) and `gtk4sermo` (GTK 4 backend). The backwards-compatible `gtkdialog` alias ships in a separate package, `gtksermo`. It is a maintained descendant of gtkdialog (a fork of Laszlo Pere's gtkdialog 0.8.3), fixed and hardened. Other descendants exist, notably Mick Amadio's BunsenLabs fork, which also ports gtkdialog to GTK 3.
