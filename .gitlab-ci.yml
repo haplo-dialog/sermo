@@ -41,7 +41,7 @@ default:
   before_script:
     - apt-get update -qq
     - DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends
-      build-essential flex bison pkg-config ca-certificates $DEPS
+      build-essential flex bison pkg-config ca-certificates git $DEPS
 
 # ──────────────────────────── modèles ────────────────────────────
 .autotools:
@@ -86,6 +86,12 @@ default:
     # n'avait pas suffi, le serveur servait encore les anciens commits par leur
     # empreinte, et la liste publique des pipelines publiait ces empreintes.
     - bash "$CI_PROJECT_DIR/tests/garde_pas_de_poste.sh" "$CI_PROJECT_DIR"
+    # Le garde ci-dessus ne couvre que l'en-tete « poste <hostname> ». L'identite
+    # NOMINATIVE, elle, est revenue par une autre porte : les lignes de cloture des
+    # debian/changelog, parties dans les .deb publies ou « apt changelog » les
+    # affiche. Celui-ci verrouille la facade entiere -- arbre suivi par git, plafond
+    # des entrees historiques deja publiees, et auteur du dernier commit.
+    - sh "$CI_PROJECT_DIR/tests/verifie-facade.sh"
 
 .cmake:
   stage: build-test
