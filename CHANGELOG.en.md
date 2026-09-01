@@ -8,7 +8,21 @@ Versioning: [Semantic Versioning](https://semver.org/) starting from 1.0.0.
 
 ## [Unreleased] - v1.2.0 (in progress)
 
-*Nothing yet.*
+### Fixed
+
+- **GTK 4 port — `<tree>`:** setting the `stock-id` property on the cell renderer
+  emitted a `GLib-GObject-CRITICAL` per row — that property was removed from
+  `GtkCellRendererPixbuf` in GTK 4. A `stock-id` is now read as an `icon-name`.
+  The value `<tree>` exported was already correct; the warnings are gone.
+- **GTK 4 port — `<table>`:** two defects. (1) The header was read from the first
+  `<item>`, which consumed the only data row — it is now read from `<label>`,
+  like the GTK 3 port, and **every** `<item>` becomes a row. (2) Cells were split
+  on tab, so `<item>col1|col2</item>` stayed a single cell. Splitting is now on
+  `|` for `<item>`/`<label>` (tab is kept for command input). A `<table>` finally
+  returns its column value.
+
+Both defects were found by comparing, widget by widget, the value the GTK 4 port
+returns to the shell against the reference GTK 3 port.
 
 ---
 
