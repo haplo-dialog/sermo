@@ -123,7 +123,7 @@ static void _cell_bind(GtkSignalListItemFactory *factory,
 }
 
 /* ─── Parse une ligne TSV → tableau de cellules ─────────────────────────── */
-static int _parse_tsv(const char *line, gchar **cells, int max_cols)
+static int _parse_tsv(const char *line, gchar **cells, int max_cols, char delim)
 {
     char buf[TABLE_LINE_MAX];
     size_t len = strlen(line);
@@ -134,7 +134,7 @@ static int _parse_tsv(const char *line, gchar **cells, int max_cols)
     int col = 0;
     char *tok = buf, *end;
     while (col < max_cols) {
-        end = strchr(tok, '\t');
+        end = strchr(tok, delim);
         if (end) *end = '\0';
         cells[col++] = g_strdup(tok);
         if (!end) break;
@@ -177,6 +177,23 @@ GtkWidget *widget_table_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     int    row_count = 0;
     gboolean has_header = FALSE;
 
+    /* En-tetes depuis <label>col1|col2</label> (parite gtk3, PAS le 1er
+     * <item>). Si present, TOUS les <item> deviennent des lignes. */
+    if (Attr) {
+        GList *ell = NULL;
+        gchar *lbl = attributeset_get_first(&ell, Attr, ATTR_LABEL);
+        if (lbl && *lbl) {
+            gchar *hc[TABLE_COLS_MAX] = {NULL};
+            int hn = _parse_tsv(lbl, hc, TABLE_COLS_MAX, '|');
+            if (hn > 0) {
+                td->n_cols = hn;
+                for (int i = 0; i < hn; i++) td->headers[i] = g_strdup(hc[i] ? hc[i] : "");
+                for (int i = 0; i < hn; i++) g_free(hc[i]);
+                has_header = TRUE;
+            }
+        }
+    }
+
     /* ── Lire les items statiques XML ──────────────────────────────── */
     if (Attr) {
         GList *el = NULL;
@@ -184,7 +201,7 @@ GtkWidget *widget_table_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         while (item && row_count < TABLE_ROWS_MAX) {
             if (!*item) { item = attributeset_get_next(&el, Attr, ATTR_ITEM); continue; }
             gchar *cells[TABLE_COLS_MAX] = {NULL};
-            int n = _parse_tsv(item, cells, TABLE_COLS_MAX);
+            int n = _parse_tsv(item, cells, TABLE_COLS_MAX, '|');
             if (n > 0) {
                 if (!has_header) {
                     /* Première ligne = en-têtes */
@@ -216,7 +233,7 @@ GtkWidget *widget_table_create(AttributeSet *Attr, tag_attr *attr, gint Type)
                 gboolean first = !has_header;
                 while (fgets(line, sizeof(line), fp) && row_count < TABLE_ROWS_MAX) {
                     gchar *cells[TABLE_COLS_MAX] = {NULL};
-                    int n = _parse_tsv(line, cells, TABLE_COLS_MAX);
+                    int n = _parse_tsv(line, cells, TABLE_COLS_MAX, '\t');
                     if (n <= 0) continue;
                     if (first) {
                         td->n_cols = n;
