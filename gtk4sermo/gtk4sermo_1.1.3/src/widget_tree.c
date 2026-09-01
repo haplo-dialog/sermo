@@ -1317,20 +1317,18 @@ static void widget_tree_pixmap_column_cell_layout_function(
 		fprintf(stderr, "%s(): This row has a stock_id: '%s'\n",
 			__func__, cell_stock_id);
 #endif
-		g_object_set(G_OBJECT(cell), "stock-id", cell_stock_id, NULL);
-		g_object_set(G_OBJECT(cell), "icon-name", NULL, NULL);
+		/* GTK4 : plus de "stock-id" ; un stock-id se lit comme icon-name. */
+		g_object_set(G_OBJECT(cell), "icon-name", cell_stock_id, NULL);
 	} else if (cell_icon_name != NULL) {
 #ifdef DEBUG_CONTENT
 		fprintf(stderr, "%s(): This row has an icon_name: '%s'\n",
 			__func__, cell_icon_name);
 #endif
-		g_object_set(G_OBJECT(cell), "stock-id", NULL, NULL);
 		g_object_set(G_OBJECT(cell), "icon-name", cell_icon_name, NULL);
 	} else {
 #ifdef DEBUG_CONTENT
 		fprintf(stderr, "%s(): This row has no icon set.\n", __func__);
 #endif
-		g_object_set(G_OBJECT(cell), "stock-id", NULL, NULL);
 		g_object_set(G_OBJECT(cell), "icon-name", NULL, NULL);
 	}
 
