@@ -1,0 +1,167 @@
+.\" qt6sermo.1 — man page for qt6sermo 1.0.0
+.\" haplo-dialog <devel@haplo-dialog.fr>
+.\" This file is installed as /usr/share/man/man1/qt6sermo.1
+.\"
+.TH QT6DIALOG 1 "June 2026" "qt6sermo 1.0.0" "haplo-dialog User Commands"
+.SH NAME
+qt6sermo \- Qt6 dialog box creator for shell scripts
+.SH SYNOPSIS
+.B qt6sermo
+[\fIOPTION\fR]...
+.br
+.B qt6sermo
+\fB\-\-program\fR=\fIVARIABLE\fR
+.br
+.B qt6sermo
+\fB\-\-file\fR=\fIFILE\fR
+.br
+.B qt6sermo
+\fB\-\-stdin\fR
+.br
+.IR VARIABLE =\(aq<window>...</window>\(aq
+.B qt6sermo
+\fB\-\-program\fR=\fIVARIABLE\fR
+.SH DESCRIPTION
+.B qt6sermo
+reads a Qt6 GUI description written in an XML dialect and displays
+the resulting dialog window.
+It is designed to be called from shell scripts to present interactive forms,
+progress bars, list views, and other widgets without requiring knowledge of
+Qt6 programming.
+.PP
+The GUI description can be supplied from an environment variable
+.RB ( \-\-program ),
+a file
+.RB ( \-\-file ),
+or standard input
+.RB ( \-\-stdin ).
+.PP
+When the dialog exits (for example when an action triggers EXIT),
+.B qt6sermo
+writes the current value of each named widget to standard output in the form:
+.PP
+.RS 4
+.nf
+WIDGET_NAME="current_value"
+.fi
+.RE
+.PP
+which is typically captured with
+.BR "eval $(qt6sermo ...)" .
+.SH OPTIONS
+.TP
+.BI \-\-program= VARIABLE
+Read the XML dialog description from the environment variable
+.IR VARIABLE .
+.TP
+.BI \-\-file= FILE
+Read the XML dialog description from
+.IR FILE .
+.TP
+.B \-\-stdin
+Read the XML dialog description from standard input.
+.TP
+.BI \-\-include= FILE
+Include and execute
+.I FILE
+before running the main GUI description (shell functions).
+.TP
+.BI \-\-event\-driven= FILE
+Execute
+.I FILE
+as an event-driven program.
+.TP
+.B \-\-print\-ir
+Parse the GUI description, print the internal representation, and exit
+without displaying any window.
+.TP
+.B \-\-debug
+Enable debug mode (lexer character trace).
+.TP
+.BI \-\-geometry= GEOMETRY
+Set the initial window placement and size (X11 convention).
+.TP
+.B \-\-center
+Centre the windows on the screen.
+.TP
+.B \-\-no\-warning
+Suppress non-fatal warning messages.
+.TP
+.B \-\-version
+Print version and exit.
+.TP
+.B \-\-help
+Print usage summary and exit.
+.SH ENVIRONMENT
+The GUI description is read from the environment variable named by
+.BR \-\-program .
+Widget values are printed to standard output as
+.B NAME="value"
+assignments when the dialog exits.
+.SH FILES
+.TP
+.I /usr/share/doc/qt6sermo/
+Documentation, examples, and reference pages.
+.TP
+.I /usr/share/man/man1/qt6sermo.1.gz
+This manual page.
+.SH EXAMPLES
+.SS Simple yes/no dialog
+.nf
+export DIALOG='
+<window title="Confirm">
+  <vbox>
+    <text><label>Proceed?</label></text>
+    <hbox>
+      <button ok></button>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>'
+qt6sermo --program=DIALOG
+.fi
+.SS Read entry value
+.nf
+export DIALOG='
+<window>
+  <vbox>
+    <entry><variable>NAME</variable></entry>
+    <button ok></button>
+  </vbox>
+</window>'
+eval $(qt6sermo --program=DIALOG)
+echo "Name: $NAME"
+.fi
+.SH SEE ALSO
+.BR haplo-dialog-xml (5),
+.BR gtk3dialog (1),
+.BR gtk4dialog (1),
+.BR fltk1dialog (1),
+.BR efl1dialog (1),
+.BR sdl3dialog (1),
+.BR gtkdialog (1)
+.SH BUGS
+Report bugs at <https://haplo-dialog.fr> or <devel@haplo-dialog.fr>.
+.SH AUTHORS
+László Pere (original gtkdialog, 2003\(en2013).
+.br
+Thunor (gtkdialog maintenance, 2011\(en2014).
+.br
+haplo-dialog <devel@haplo-dialog.fr> (qt6sermo port, 2026).
+.SH LICENSE
+GNU General Public License version 2 or later.
+See
+.I /usr/share/doc/qt6sermo/COPYING
+or <https://www.gnu.org/licenses/gpl-2.0.html>.
+.SH REMERCIEMENTS
+Ce logiciel a été développé avec l'assistance de
+.B Claude
+(Anthropic, https://www.anthropic.com) dans le cadre du projet
+.B haplo-dialog
+sur haplo-dialog.
+.PP
+L'IA a contribué à la conception de l'architecture, l'implémentation
+des widgets, la rédaction de la documentation et la création des tests unitaires.
+.PP
+.I "Ce projet a bénéficié de l'assistance de Claude (Anthropic) — mai 2026."
+.\" Document horodaté — dernière mise à jour : 2026-06-10 (audit #6 — haplo-dialog v1.0.0).

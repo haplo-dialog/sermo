@@ -8,6 +8,17 @@ Versionning : [Semantic Versioning](https://semver.org/lang/fr/) à partir de 1.
 
 ## [Unreleased] - v1.2.0 (en cours)
 
+### Ajouté
+
+- **`qt6sermo` — troisième port, Qt 6.** La même syntaxe XML que gtk3sermo et
+  gtk4sermo, rendue avec Qt 6 (Qt Widgets). « Écrit une fois, tourne en GTK 3,
+  GTK 4 ou Qt 6. » Version 1.0.0 (port le plus jeune ; versionné indépendamment
+  des autres). Sa parité de valeur avec le port GTK 3 de référence est vérifiée
+  par un banc de comportement de 23 cas, livré dans son arbre
+  (`qt6sermo_1.0.0/tests/comportement/`). Empaquetage `.deb` fourni. La sortie
+  au shell passe par le même durcissement que les autres ports : échappement
+  complet (`\ " $ \``), liste blanche `HAPLO_ALLOWED_CMDS` opt-in, `--do`.
+
 ### Corrigé
 
 - **Port GTK 4 — `<tree>` :** poser la propriété `stock-id` sur le rendu de

@@ -1,0 +1,2 @@
+<!-- DESC: fontbutton (etalon gtk3sermo) -->
+<window><vbox><fontbutton><variable>FB</variable><default>Sans 12</default></fontbutton><timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

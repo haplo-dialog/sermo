@@ -1,0 +1,23 @@
+Source: qt6sermo
+Section: utils
+Priority: optional
+Maintainer: haplo-dialog <devel@haplo-dialog.fr>
+Build-Depends: debhelper-compat (= 13), qt6-base-dev (>= 6.2.0), flex, bison, cmake (>= 3.20), pkg-config, g++
+Standards-Version: 4.6.2
+Homepage: https://haplo-dialog.fr
+Vcs-Browser: https://gitlab.com/haplo-dialog/sermo
+Vcs-Git: https://gitlab.com/haplo-dialog/sermo.git
+
+Package: qt6sermo
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libqt6core6 (>= 6.2), libqt6widgets6, libqt6gui6
+Description: Qt6 dialog window creator for shell scripts
+ qt6sermo builds Qt6-based dialog windows from an XML-like description
+ language. Most complete port: 42/42 widgets including QMenuBar,
+ QCalendarWidget, QCheckBox(switch), QTableWidget, QFontDialog.
+ Targets KDE Plasma 6, Qt-based desktops.
+ Security: safe_exec, PIE, RELRO.
+ .
+ Toolkit: Qt6 — haplo-dialog fork 1.0.0.
+ Security: safe_exec (no system()), FORTIFY_SOURCE=3, PIE, Full RELRO,
+ stack-protector-strong.

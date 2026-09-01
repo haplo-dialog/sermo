@@ -1,0 +1,2 @@
+<!-- DESC: vscale (etalon gtk3sermo) -->
+<window><vbox><vscale range-min="0" range-max="100"><variable>VS</variable><default>42</default></vscale><timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

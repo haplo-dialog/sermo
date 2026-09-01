@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Métadonnées AppStream pour qt6sermo (suite haplo-dialog, haplo-dialog).
+  Type « console-application » : l'outil s'invoque depuis le shell (il
+  affiche des fenêtres Qt 6 mais n'est pas lançable utilement depuis un menu).
+-->
+<component type="console-application">
+  <!-- Le tiret de « haplo-dialog » déclenche l'alerte (non bloquante)
+       cid-rdns-contains-hyphen : il vient du nom de domaine lui-même.
+       Alternative AppStream documentée : fr.haplo_dialog.qt6sermo. -->
+  <id>fr.haplo-dialog.qt6sermo</id>
+  <metadata_license>FSFAP</metadata_license>
+  <project_license>GPL-2.0-or-later</project_license>
+  <name>qt6sermo</name>
+  <summary>Native Qt 6 dialogs described in XML from the shell</summary>
+  <summary xml:lang="fr">Interfaces graphiques Qt 6 natives décrites en XML depuis le shell</summary>
+  <description>
+    <p>
+      qt6sermo builds native Qt 6 dialog windows from a simple XML description,
+      letting shell scripts display interactive graphical interfaces without
+      any knowledge of the underlying toolkit. It is one of the six ports of
+      the haplo-dialog suite, the haplo-dialog fork of gtkdialog.
+    </p>
+    <p xml:lang="fr">
+      qt6sermo construit des fenêtres de dialogue Qt 6 natives à partir d'une
+      description XML simple, permettant aux scripts shell d'afficher des
+      interfaces graphiques interactives sans connaître le toolkit
+      sous-jacent. C'est l'un des six ports de la suite haplo-dialog, le
+      fork haplo-dialog de gtkdialog.
+    </p>
+  </description>
+  <categories>
+    <category>Development</category>
+    <category>Utility</category>
+  </categories>
+  <url type="homepage">https://haplo-dialog.fr</url>
+  <!-- Pas encore de pages dédiées sur le site : on pointe vers la racine
+       (seule URL joignable). À affiner quand traqueur/page contact existeront.
+       Note : appstreamcli 1.1.2 rejette « mailto: » dans url contact (bogue du
+       validateur, la spec l'autorise) ; l'adresse est dans update_contact. -->
+  <url type="bugtracker">https://haplo-dialog.fr</url>
+  <url type="contact">https://haplo-dialog.fr</url>
+  <update_contact>devel@haplo-dialog.fr</update_contact>
+  <provides>
+    <binary>qt6sermo</binary>
+  </provides>
+  <developer id="fr.haplo-dialog">
+    <name>haplo-dialog</name>
+  </developer>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="1.0.0" date="2026-06-03">
+      <description>
+        <p>First stable release of the haplo-dialog fork (six-toolkit suite).</p>
+        <p xml:lang="fr">Première version stable du fork haplo-dialog (suite à six toolkits).</p>
+      </description>
+    </release>
+  </releases>
+</component>

@@ -1,0 +1,5 @@
+<!-- DESC: infobar : le texte ressort, et aucun CRITICAL n'est emis -->
+<window><vbox>
+<infobar><variable>IB</variable><label>attention</label><default>warning</default></infobar>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer>
+</vbox></window>

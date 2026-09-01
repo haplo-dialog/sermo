@@ -1,0 +1,75 @@
+qt6sermo — 1.0.0-qt6
+==============================
+
+Port Qt6 de gtk3d : utilitaire C/C++ pour créer des interfaces Qt6
+depuis des scripts shell ou tout autre langage interprété, via une
+syntaxe XML simple.
+
+Installable simultanément avec gtk3d (GTK3) et gtk4d (GTK4).
+
+  Distributeur : haplo-dialog
+  Distribution : haplo-dialog (Debian Testing)
+  Qt6          : >= 6.2.0
+  QTermWidget  : qtermwidget6 (optionnel, pour <terminal>)
+  Binaire      : qt6sermo
+  Contact      : devel@haplo-dialog.fr
+  Dépôt        : https://haplo-dialog.fr
+  Développeurs : S.Cage & D.Marques
+
+Pourquoi Qt6 ?
+--------------
+  - Widgets les plus complets : menus, terminal, table, colorbutton...
+  - Intégration thème KDE Plasma native
+  - Wayland-first
+  - Seul port offrant <menubar> ET <table> fonctionnels
+
+Différences par rapport à gtk3d (GTK3)
+-------------------------------------------
+  - Bibliothèque : Qt6 >= 6.2.0 (au lieu de gtk+-3.0)
+  - Build system : CMake (au lieu de Autotools) — nécessité du MOC Qt
+  - Binaire      : /usr/bin/qt6sermo
+  - Couche de compatibilité via src/qt6-compat.h (force-included)
+  - Terminal     : QTermWidget au lieu de VTE (optionnel)
+  - Menus        : QMenuBar + QAction (enfin fonctionnels !)
+  - Table        : QTableWidget (widget manquant dans GTK4)
+
+Dépendances (Debian/Ubuntu)
+----------------------------
+  qt6-base-dev (>= 6.2.0)
+  qtermwidget-qt6-dev          (optionnel — terminal)
+  cmake (>= 3.16)
+  flex bison pkg-config g++
+
+Compilation
+-----------
+  cmake -B build -DCMAKE_BUILD_TYPE=Release
+  cmake --build build -j$(nproc)
+  sudo cmake --install build    # installe /usr/bin/qt6sermo
+
+État de vérification (2026-06-06)
+---------------------------------
+  - Build cmake --build → rc=0, 0 erreur ; binaire qt6sermo (240 Ko) exécutable.
+  - Tests XML tests/xml/ : 52/52 PASS (--print-ir, headless ; était 50/52).
+    Les deux cas restants — <levelbar> et <drawingarea> — sont désormais câblés
+    (enum automaton.h + grammaire + dispatch création). Compteur : 41/41 widgets.
+  - Warnings : 43 (idiomes amont gtkdialog, non bloquants).
+  Voir CAHIER_DES_CHARGES.md pour la feuille de route complète.
+
+---
+
+## Remerciements — Assistance IA
+
+Ce travail a été réalisé avec l'assistance de **Claude**,
+le modèle de langage d'[Anthropic](https://www.anthropic.com),
+dans le cadre du développement de la famille **haplo-dialog** sur haplo-dialog.
+
+L'IA a contribué à : la conception de l'architecture, l'implémentation des widgets,
+la rédaction de la documentation, la création des tests unitaires (CTest),
+l'intégration de QTermWidget6, la sous-classe Fl_Table hiérarchique (FLTK),
+l'amélioration de l'export d'état SDL3/ImGui, et la mise à jour de tous les
+fichiers de packaging et de documentation.
+
+> *"Ce projet a bénéficié de l'assistance de Claude (Anthropic) —
+> mai 2026."*
+
+Document horodaté — dernière mise à jour : 2026-06-07 (audit #5 — vérification finale : build rc=0, tests XML 52/52, levelbar/drawingarea câblés).

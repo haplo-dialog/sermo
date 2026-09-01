@@ -1,0 +1,20 @@
+pkgbase = qt6sermo
+	pkgdesc = Qt6 dialog window creator for shell scripts
+	pkgver = 1.0.0
+	pkgrel = 1
+	url = https://haplo-dialog.fr
+	arch = x86_64
+	arch = aarch64
+	license = GPL-2.0-or-later
+	makedepends = qt6-base
+	makedepends = qt6-tools
+	makedepends = flex
+	makedepends = bison
+	makedepends = cmake
+	makedepends = pkgconfig
+	depends = qt6-base
+	provides = qt6sermo
+	source = qt6sermo-1.0.0.tar.gz::https://haplo-dialog.fr/pub/qt6sermo/qt6sermo-1.0.0.tar.gz
+	sha256sums = SKIP
+
+pkgname = qt6sermo

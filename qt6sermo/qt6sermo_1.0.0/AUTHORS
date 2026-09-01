@@ -1,0 +1,27 @@
+gtkdialog — Programme original
+==============================
+Program:       Pere László <pipas@linux.pte.hu>
+Documentation: Kiss Gábor <gabor@gamma.ttk.pte.hu>
+Maintenu par:  Thunor <thunorsif@hotmail.com> (2011-2012)
+
+Patches d'origine:
+  Moose On The Loose <kensmith1313666@gmail.com>  — PRG_STDIN, 2011-04-04
+  Patriot                                          — closewindow, 2009-10-27
+  Fabio Tranchitella <kobold@debian.org>           — Debian 03_stdin
+  Luca Falavigna <dktrkranz@ubuntu.com>            — Debian 01_bashism / 02_documentation_paths
+  Szabo Viktor <wyck@freemail.hu>
+  Csaszar-Csutoras Peter <spy@c2.hu>
+
+qt6sermo 1.0.0 — Fork haplo-dialog (port Qt6)
+========================================
+Distributeur : haplo-dialog (https://haplo-dialog.fr)
+Distribution : haplo-dialog — basée sur Debian Testing
+
+Mainteneur   : <devel@haplo-dialog.fr>
+Développeurs : S.Cage, D.Marques
+
+Port Qt6 du core gtk3d sécurisé : build CMake (Qt6 >= 6.2, AUTOMOC/AUTORCC),
+pont C/C++ via qt6-compat.h + extern "C", QTermWidget6 optionnel, QTreeWidget
+pour <table>, QMenuBar/QMenu pour <menubar>. 42 fichiers widget_*.cpp.
+
+Document horodaté — dernière mise à jour : 2026-06-07.

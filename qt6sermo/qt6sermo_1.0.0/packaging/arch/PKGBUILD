@@ -1,0 +1,54 @@
+# Maintainer: haplo-dialog <devel@haplo-dialog.fr>
+# Port: Qt6 — haplo-dialog family
+
+pkgname=qt6sermo
+pkgver=1.0.0
+pkgrel=1
+epoch=
+pkgdesc="Qt6 dialog window creator for shell scripts"
+arch=('x86_64' 'aarch64')
+url="https://haplo-dialog.fr"
+license=('GPL-2.0-or-later')
+groups=()
+depends=('qt6-base')
+makedepends=('qt6-base' 'qt6-tools' 'flex' 'bison' 'cmake' 'pkgconfig')
+checkdepends=()
+optdepends=()
+provides=('qt6sermo')
+conflicts=()
+replaces=()
+backup=()
+options=()
+install=
+changelog=
+source=("$pkgname-$pkgver.tar.gz::https://haplo-dialog.fr/pub/qt6sermo/$pkgname-$pkgver.tar.gz")
+noextract=()
+sha256sums=('SKIP')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+  # Patch de compatibilité si besoin
+  :
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+  cmake -B build -S . \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr
+  cmake --build build
+}
+
+check() {
+  cd "$pkgname-$pkgver"
+  # make check 2>/dev/null || true
+  :
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+  cmake --install build --destdir "$pkgdir"
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+  install -d "$pkgdir/usr/share/doc/$pkgname/examples"
+  cp -r examples/* "$pkgdir/usr/share/doc/$pkgname/examples/" 2>/dev/null || true
+}

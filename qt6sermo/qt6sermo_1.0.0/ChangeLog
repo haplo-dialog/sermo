@@ -1,0 +1,46 @@
+qt6sermo-1.0.0 — 2026-06-06 (audit #5) — vérification finale
+  * Build vérifié de bout en bout : cmake --build → rc=0, 0 erreur ; binaire
+    qt6sermo (240 Ko) exécutable (--version rc=0). Warnings : 43 (idiomes amont
+    gtkdialog, non bloquants).
+  * Tests XML tests/xml/ (52 cas, --print-ir, headless) : 52/52 PASS (était 50/52).
+  * Grammaire : <levelbar> et <drawingarea> désormais câblés (enum automaton.h +
+    grammaire + dispatch création) — les deux cas XML qui échouaient passent.
+    Le compteur reste à 41/41 widgets (aucun nouveau fichier).
+  * Bugs communs à la famille corrigés : troncature des noms de widgets
+    auto-générés (g_snprintf(name, sizeof(name), …) sur char* → 8 octets, corrigé
+    en 64) ; if (var->Name == NULL) → if (var == NULL || var->Name[0] == '\0') ;
+    instruction lue non initialisée (instruction inst = {0};) ; fonctions sans
+    return restaurées (get_program_from_*, _tree_insert, _tree_find) ; condition
+    morte if (!s.widgets || …) nettoyée (menubar).
+
+qt6sermo-1.0.0 — 2026-06-02
+  * Alignement documentation sur l'état du code (audit consolidé).
+  * Contacts/domaines harmonisés : devel@haplo-dialog.fr, https://haplo-dialog.fr.
+
+qt6sermo-1.0.0 — 2026-05-28 (v2 — durcissement + correctifs)
+  * Bilan de santé : 94/100.
+  * qt6-compat.h : g_strdup_printf VLA → snprintf_safe() deux-passes ;
+    gint32/gint64 + _Static_assert sur les tailles ; g_debug/g_info
+    conditionnels -DDEBUG ; g_strdup → _qt6_strdup() warn_unused_result.
+  * widget_terminal.cpp / widget_table.cpp : pclose(fp) → fclose(fp)
+    (comportement indéfini fdopen/pclose corrigé).
+  * widget_menubar.cpp : bounds check sur dépilage de pile
+    (MENUBAR_MAX_CHILDREN = 64).
+  * CMakeLists.txt : CMAKE_EXPORT_COMPILE_COMMANDS ON ; cible cppcheck ajoutée.
+  * Drapeaux de durcissement : FORTIFY_SOURCE=3, fstack-protector-strong,
+    fstack-clash-protection, fcf-protection=full, PIE, Full RELRO, NX stack ;
+    LTO activé en Release.
+
+qt6sermo-1.0.0 — 2026-05 (port initial Qt6)
+  * Port Qt6 du core gtk3d sécurisé (origine gtkdialog 0.8.3, László Pere).
+  * Build system CMake 3.20 (Qt6 >= 6.2, AUTOMOC/AUTORCC).
+  * Pont C/C++ via qt6-compat.h + extern "C".
+  * <table> via QTreeWidget multi-colonnes ; <menubar> via QMenuBar/QMenu.
+  * <terminal> via QTermWidget6 optionnel, fallback QPlainTextEdit.
+  * Compatibilité descendante : syntaxe XML et comportement identiques à
+    gtkdialog 0.8.3 (couleurs au format #RRGGBB).
+
+gtkdialog 0.8.3 — 2012
+  * Dernière version officielle par Thunor <thunorsif@hotmail.com>.
+
+Document horodaté — dernière mise à jour : 2026-06-07 (audit #5 — vérification finale : build rc=0, tests XML 52/52, levelbar/drawingarea câblés).

@@ -1,0 +1,2 @@
+<!-- DESC: list (etalon gtk3sermo) -->
+<window><vbox><list><variable>LI</variable><item>x</item><item>y</item></list><timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

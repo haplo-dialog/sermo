@@ -1,0 +1,4 @@
+<!-- DESC: <input> command : la sortie du shell alimente le widget -->
+<window><vbox>
+<entry><variable>IN</variable><input>echo depuis-le-shell</input></entry>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

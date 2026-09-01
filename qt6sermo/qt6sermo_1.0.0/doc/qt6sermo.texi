@@ -1,0 +1,282 @@
+\input texinfo   @c -*-texinfo-*-
+@c ============================================================
+@c qt6sermo.texi — Documentation officielle qt6sermo
+@c qt6sermo 1.0.0 (haplo-dialog, 2026)
+@c
+@c Ce document couvre l'API XML complète, les 49 widgets
+@c supportés et les options CLI du binaire @command{qt6sermo}.
+@c
+@c Pour générer :
+@c   makeinfo --html qt6sermo.texi
+@c   makeinfo --pdf  qt6sermo.texi
+@c   makeinfo        qt6sermo.texi  (→ qt6sermo.info)
+@c ============================================================
+@include version.texi
+@c %**start of header
+@setfilename qt6sermo.info
+@settitle qt6sermo @value{VERSION} User Manual
+@documentencoding UTF-8
+@c %**end of header
+
+@copying
+This manual documents @command{qt6sermo} version @value{VERSION},
+a @value{TOOLKIT} dialog box creator for shell scripts.
+
+Copyright @copyright{} 2003--2007 László Pere.
+@*
+Copyright @copyright{} 2011--2014 Thunor.
+@*
+Copyright @copyright{} 2026 haplo-dialog @email{devel@@haplo-dialog.fr}.
+
+@quotation
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections, with no Front-Cover Texts, and no Back-Cover Texts.
+@end quotation
+@end copying
+
+@titlepage
+@title qt6sermo User Manual
+@subtitle Version @value{VERSION} — @value{TOOLKIT} Edition
+@subtitle haplo-dialog — @value{UPDATED-MONTH}
+@author László Pere (original), Thunor (2011--2014)
+@author haplo-dialog (qt6sermo port, 2026)
+@page
+@vskip 0pt plus 1filll
+@insertcopying
+@end titlepage
+
+@contents
+
+@ifnottex
+@node Top
+@top qt6sermo @value{VERSION}
+
+@insertcopying
+@end ifnottex
+
+@menu
+* Introduction::        Qu'est-ce que qt6sermo ?
+* Installation::        Comment installer qt6sermo.
+* Invocation::          Options de la ligne de commande.
+* XML Syntax::          Syntaxe XML des descriptions de dialog.
+* Widgets::             Liste des 49 widgets disponibles.
+* Examples::            Exemples de scripts shell.
+* Security::            Considérations de sécurité.
+* Index::               Index général.
+@end menu
+
+@node Introduction
+@chapter Introduction
+
+@cindex introduction
+@pindex qt6sermo
+
+@command{qt6sermo} est un constructeur de dialogues graphiques @value{TOOLKIT}
+piloté par une description XML. Il permet aux scripts shell de créer des
+interfaces graphiques natives sans aucune connaissance de la programmation
+@value{TOOLKIT}.
+
+@command{qt6sermo} fait partie de la famille @strong{haplo-dialog},
+6 ports du logiciel gtkdialog original (László Pere, 2003--2013),
+modernisés et sécurisés par haplo-dialog en 2026.
+
+@section La famille haplo-dialog
+
+@multitable @columnfractions .25 .25 .15 .35
+@headitem Port @tab Binaire @tab Toolkit @tab Description
+@item gtk3dialog @tab @command{gtk3dialog} @tab GTK3 @tab Port de référence (production)
+@item gtk4dialog @tab @command{gtk4dialog} @tab GTK4 @tab 54 widgets, GtkColumnView
+@item fltk1dialog @tab @command{fltk1dialog} @tab FLTK 1.4 @tab Léger, sans GLib
+@item efl1dialog @tab @command{efl1dialog} @tab EFL/Elementary @tab Natif Enlightenment
+@item qt6sermo @tab @command{qt6sermo} @tab Qt6 @tab Terminal live optionnel
+@item sdl3dialog @tab @command{sdl3dialog} @tab SDL3+ImGui @tab Immediate mode, multi-OS
+@end multitable
+
+@node Installation
+@chapter Installation
+
+@section Pré-requis
+@itemize
+@item CMake ≥ 3.20
+@item Qt6 ≥ 6.2 (Core + Widgets)
+@item @command{flex} et @command{bison} (parser XML)
+@item GLib 2.0 (libglib2.0-dev) — optionnel, tests unitaires uniquement
+@end itemize
+
+@section Compilation
+@example
+@group
+# CMake
+cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build
+sudo cmake --install build
+@end group
+@end example
+
+@node Invocation
+@chapter Invocation
+
+@section Synopsis
+@example
+qt6sermo [OPTION]...
+qt6sermo --program=VARIABLE
+qt6sermo --file=FILE
+qt6sermo --stdin
+@end example
+
+@section Options principales
+@table @option
+@item --program=@var{VARIABLE}
+Lire la description XML depuis la variable d'environnement @var{VARIABLE}.
+@item --file=@var{FILE}
+Lire la description XML depuis le fichier @var{FILE}.
+@item --stdin
+Lire la description XML depuis l'entrée standard.
+@item --include=@var{FILE}
+Inclure et exécuter @var{FILE} avant le programme principal (fonctions shell).
+@item --event-driven=@var{FILE}
+Exécuter @var{FILE} comme programme événementiel.
+@item --print-ir
+Analyser la description, afficher la représentation interne et quitter
+(sans fenêtre — utilisé par la suite @file{tests/xml/}).
+@item --debug
+Mode débogage (trace des caractères traités par le lexer).
+@item --geometry=@var{GEOMETRY}
+Placement et taille de la fenêtre (convention X11).
+@item --center
+Centrer les fenêtres à l'écran.
+@item --no-warning
+Supprimer les avertissements non fatals.
+@item --version
+Afficher la version et quitter.
+@item --help
+Afficher l'aide et quitter.
+@end table
+
+À la fermeture du dialogue, les valeurs des widgets nommés sont écrites sur
+la sortie standard sous la forme @code{VARIABLE="valeur"}, à récupérer avec
+@code{eval $(qt6sermo ...)}.
+
+@node XML Syntax
+@chapter Syntaxe XML
+
+La description XML suit la même syntaxe que gtkdialog original.
+La balise racine est @code{<window>} qui contient des widgets imbriqués.
+
+@example
+<window title="Ma fenêtre" width-request="400">
+  <vbox>
+    <entry><variable>NOM</variable></entry>
+    <button ok></button>
+  </vbox>
+</window>
+@end example
+
+@node Widgets
+@chapter Widgets
+
+@command{qt6sermo} supporte @strong{49 widgets}, dont les principaux :
+
+@table @code
+@item <window>
+Fenêtre principale ou dialogue.
+@item <button>, <okbutton>, <cancelbutton>
+Boutons d'action.
+@item <entry>
+Champ de saisie texte.
+@item <text>, <label>
+Texte statique.
+@item <checkbox>
+Case à cocher.
+@item <radiobutton>
+Bouton radio.
+@item <comboboxtext>
+Liste déroulante.
+@item <list>
+Liste multi-sélection.
+@item <tree>
+Arborescence hiérarchique.
+@item <table>
+Tableau multi-colonnes.
+@item <progressbar>
+Barre de progression.
+@item <hscale>, <vscale>
+Curseur horizontal/vertical.
+@item <spinbutton>
+Compteur numérique.
+@item <notebook>
+Onglets.
+@item <hbox>, <vbox>
+Conteneurs de disposition.
+@item <frame>
+Cadre avec titre.
+@item <menubar>, <menu>, <menuitem>
+Barre de menus.
+@item <terminal>
+Terminal embarqué (Qt6).
+@item <calendar>
+Calendrier — exporte YYYY-MM-DD.
+@item <switch>
+Interrupteur on/off.
+@item <password>
+Champ mot de passe masqué.
+@item <searchentry>
+Champ de recherche avec icône.
+@item <levelbar>
+Barre de niveau.
+@item <infobar>
+Barre d'information colorée.
+@item <spinner>
+Indicateur d'activité animé.
+@end table
+
+@node Examples
+@chapter Exemples
+
+@section Dialogue simple
+@example
+#!/bin/sh
+export DIALOG='
+<window title="Bonjour">
+  <vbox>
+    <text><label>Votre nom :</label></text>
+    <entry><variable>NOM</variable></entry>
+    <button ok></button>
+  </vbox>
+</window>'
+eval $(qt6sermo --program=DIALOG)
+echo "Bonjour $NOM"
+@end example
+
+@node Security
+@chapter Sécurité
+
+@itemize
+@item Élévation de privilèges via @command{pkexec} (PolicyKit), jamais @command{sudo} en mode GUI.
+@item Liste blanche de commandes pour @code{CMD_INPUT}.
+@item Validation des chemins avant accès fichier.
+@item @code{safe_system()} / @code{safe_popen()} utilisés partout — jamais @code{system()} direct.
+@item @code{fclose()} sur tout @code{FILE*} issu de @code{safe_popen()} — jamais @code{pclose()}.
+@item Drapeaux de durcissement : @code{FORTIFY_SOURCE=3}, @code{fstack-protector-strong}, PIE, Full RELRO.
+@end itemize
+
+@node Index
+@unnumbered Index
+
+@printindex cp
+
+
+@section Remerciements — Assistance IA
+
+Ce travail a été réalisé avec l'assistance de @strong{Claude},
+le modèle de langage d'Anthropic (@url{https://www.anthropic.com}),
+dans le cadre du développement de la famille @strong{haplo-dialog} sur haplo-dialog.
+
+@quotation
+Ce projet a bénéficié de l'assistance de Claude (Anthropic) ---
+mai 2026.
+@end quotation
+
+@bye
+@c Document horodaté — dernière mise à jour : 2026-06-10 (audit #6 — haplo-dialog v1.0.0).

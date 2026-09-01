@@ -1,0 +1,76 @@
+qt6sermo — TODO / Feuille de route
+====================================
+
+Légende : [ ] à faire  [~] en cours  [x] terminé  [!] bloqué
+
+─── Étape 1 : Infrastructure ────────────────────────────────────────────────
+
+[x] Copier le core depuis gtk3dialog
+[x] Vérifier l'absence de dépendances GTK dans le core
+[x] Compléter qt6-compat.h : couvrir tous les appels GLib du core
+[x] Configurer build system
+
+─── Étape 2 : Widgets ───────────────────────────────────────────────────────
+
+[x] widget_window  —  QMainWindow
+[x] widget_button  —  QPushButton
+[x] widget_checkbox  —  QCheckBox
+[x] widget_radiobutton  —  QRadioButton
+[x] widget_entry  —  QLineEdit
+[x] widget_text  —  QLabel
+[x] widget_edit  —  QTextEdit
+[x] widget_hbox  —  QHBoxLayout
+[x] widget_vbox  —  QVBoxLayout
+[x] widget_frame  —  QGroupBox
+[x] widget_notebook  —  QTabWidget
+[x] widget_expander  —  QGroupBox (checkable)
+[x] widget_list  —  QListWidget
+[x] widget_tree  —  QTreeWidget
+[x] widget_combobox  —  QComboBox
+[x] widget_comboboxtext  —  QComboBox (editable)
+[x] widget_progressbar  —  QProgressBar
+[x] widget_hscale  —  QSlider (Horizontal)
+[x] widget_vscale  —  QSlider (Vertical)
+[x] widget_spinbutton  —  QSpinBox
+[x] widget_statusbar  —  QStatusBar
+[x] widget_hseparator  —  QFrame (HLine)
+[x] widget_vseparator  —  QFrame (VLine)
+[x] widget_pixmap  —  QLabel + QPixmap
+[x] widget_togglebutton  —  QPushButton (checkable)
+[x] widget_timer  —  QTimer
+[x] widget_colorbutton  —  QColorDialog
+[x] widget_fontbutton  —  QFontDialog
+[x] widget_terminal  —  QPlainTextEdit (stub)
+[x] widget_menubar  —  QMenuBar + QMenu
+[x] widget_menuitem  —  QAction
+[x] widget_table  —  QTableWidget
+
+─── Étape 3 : Documentation ─────────────────────────────────────────────────
+
+[x] BILAN_SANTE.md mis à jour (78/100)
+[x] CAHIER_DES_CHARGES.md mis à jour
+[x] examples/*/demo.sh — 32 scripts
+[x] doc/reference/*.html — 32 pages
+[ ] MANUEL_UTILISATEUR.md — compléter widgets avancés
+[ ] MANUEL_DEVELOPPEUR.md — compléter tips toolkit
+
+─── Étape 4 : Compilation et tests ──────────────────────────────────────────
+
+[ ] mkdir build (build system)
+[ ] make && make install
+[ ] Test script XML minimaliste
+[ ] checksec : PIE + RELRO + stack canary
+[ ] valgrind : 0 leak
+
+─── Étape 5 : Packaging ─────────────────────────────────────────────────────
+
+[ ] debian/control
+[ ] dpkg-buildpackage → qt6sermo_1.0.0_amd64.deb
+[ ] Vérifier coexistence /usr/bin/qt6sermo + autres binaires
+
+─── Items hérités (non prioritaires) ────────────────────────────────────────
+
+[ ] Support --center (centrage fenêtre)
+[ ] Man page qt6sermo(1)
+
+Document horodaté — dernière mise à jour : 2026-06-07 (audit #3 — haplo-dialog v1.0.0).

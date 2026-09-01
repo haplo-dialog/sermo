@@ -1,0 +1,11 @@
+qt6sermo: qt6sermo (Qt6 dialog window creator for shell scripts)
+qt6sermo:
+qt6sermo: qt6sermo builds Qt6-based dialog windows from an XML-like
+qt6sermo: description language. Most complete port: 32/32 widgets including
+qt6sermo: QMenuBar, QTableWidget, QFontDialog. Targets KDE Plasma 6, Qt-based
+qt6sermo: desktops. Security: safe_exec, PIE, RELRO.
+qt6sermo: 
+qt6sermo: Toolkit: Qt6
+qt6sermo: Security: safe_exec, PIE, RELRO, FORTIFY_SOURCE=3
+qt6sermo: haplo-dialog <devel@haplo-dialog.fr> — https://haplo-dialog.fr
+qt6sermo:

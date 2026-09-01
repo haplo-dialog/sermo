@@ -1,0 +1,8 @@
+<!-- DESC: menuitem checkbox= et radiobutton= rendent leur etat -->
+<window><vbox><menubar><menu label="Test">
+<menuitem checkbox="true"><label>coche</label><variable>MC_VRAI</variable></menuitem>
+<menuitem checkbox="false"><label>vide</label><variable>MC_FAUX</variable></menuitem>
+<menuitem radiobutton="true"><label>r1</label><variable>MR_VRAI</variable></menuitem>
+<menuitem radiobutton="false"><label>r2</label><variable>MR_FAUX</variable></menuitem>
+</menu></menubar>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

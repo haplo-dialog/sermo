@@ -1,0 +1,7 @@
+<!-- DESC: comboboxtext : le premier item est selectionne et ressort -->
+<!-- Note : <combobox> nu rend "" sur les DEUX ports (rien n'est selectionne
+     par defaut, y compris en GTK 3). Un cas la-dessus ne prouverait rien ;
+     on teste <comboboxtext>, qui rend une vraie valeur. -->
+<window><vbox>
+<comboboxtext><variable>CO</variable><item>un</item><item>deux</item><item>trois</item></comboboxtext>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

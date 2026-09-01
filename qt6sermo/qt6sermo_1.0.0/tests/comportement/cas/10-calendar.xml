@@ -1,0 +1,7 @@
+<!-- DESC: calendar : la date demandee est posee, y compris 29 fevrier et fin de mois -->
+<window><vbox>
+<calendar><variable>CAL_A</variable><default>2001-03-07</default></calendar>
+<calendar><variable>CAL_B</variable><default>2000-02-29</default></calendar>
+<calendar><variable>CAL_C</variable><default>1999-12-31</default></calendar>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer>
+</vbox></window>

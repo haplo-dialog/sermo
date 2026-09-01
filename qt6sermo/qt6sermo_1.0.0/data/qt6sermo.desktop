@@ -1,0 +1,17 @@
+# Entrée de bureau pour qt6sermo (suite haplo-dialog, haplo-dialog).
+# NoDisplay=true : qt6sermo est un outil en ligne de commande ; lancé sans
+# argument depuis un menu, il n'afficherait rien d'utile. Cette entrée sert
+# à l'association icône/métadonnées (AppStream), pas au lancement par menu.
+[Desktop Entry]
+Type=Application
+Name=qt6sermo
+GenericName=XML GUI dialog tool
+GenericName[fr]=Outil de dialogues graphiques XML
+Comment=Native Qt 6 graphical interfaces described in XML from the shell
+Comment[fr]=Interfaces graphiques Qt 6 natives décrites en XML depuis le shell
+TryExec=qt6sermo
+Exec=qt6sermo --file %f
+Icon=qt6sermo
+Terminal=false
+NoDisplay=true
+Categories=Development;Utility;

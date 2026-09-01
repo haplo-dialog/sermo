@@ -1,0 +1,2 @@
+<!-- DESC: edit (etalon gtk3sermo) -->
+<window><vbox><edit><variable>ED</variable><default>ligne</default></edit><timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

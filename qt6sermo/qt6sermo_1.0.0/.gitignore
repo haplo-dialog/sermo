@@ -1,0 +1,11 @@
+# Build CMake (hors arbre recommandé)
+/build/
+/build-*/
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.o
+*.so
+/qt6sermo
+*_autogen/

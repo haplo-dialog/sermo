@@ -1,0 +1,4 @@
+<!-- DESC: filechooser : <default> est pris et ressort en variable -->
+<window><vbox>
+<filechooser><variable>FC</variable><default>/etc/hostname</default></filechooser>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

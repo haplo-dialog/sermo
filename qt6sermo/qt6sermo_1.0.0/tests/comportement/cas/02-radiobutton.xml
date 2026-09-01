@@ -1,0 +1,5 @@
+<!-- DESC: radiobutton : seul celui qui porte <default>true</default> est vrai -->
+<window><vbox>
+<radiobutton><label>A</label><variable>RA</variable></radiobutton>
+<radiobutton><label>B</label><variable>RB</variable><default>true</default></radiobutton>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>
