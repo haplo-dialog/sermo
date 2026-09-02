@@ -1397,6 +1397,15 @@ instruction_execute_push(
 	 * — point unique où Widget et tag_attributes sont disponibles. */
 	qt6_layout_register(Widget, tag_attributes);
 
+	/* ⚠️ Les widgets défilants (edit, tree, list, table, text…) sont EMPILÉS
+	 * dans leur conteneur de défilement, pas nus : c'est put_in_the_scrolled_window()
+	 * qui produit ce que voient les conteneurs parents. Sans cette seconde
+	 * inscription, la recherche de space-expand se faisait sur le widget
+	 * INTÉRIEUR et échouait : un <edit space-expand="true"> gardait sa largeur
+	 * minimale au lieu de remplir son cadre. */
+	if (scrolled_window != NULL)
+		qt6_layout_register(scrolled_window, tag_attributes);
+
 	/*
 	 ** Now we create a new variable or refresh the old one for this
 	 ** new widget.

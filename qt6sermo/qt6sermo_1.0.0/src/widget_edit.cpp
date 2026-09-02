@@ -117,6 +117,13 @@ GtkWidget *widget_edit_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     QTextEdit *te = new QTextEdit();
     te->setReadOnly(false);
     te->setMinimumSize(w, h);
+    /* Pas d'enroulement des lignes : le port GTK 3 de référence ne pose aucun
+     * mode d'enroulement sur son GtkTextView, dont le défaut est
+     * GTK_WRAP_NONE — les lignes longues débordent et sont atteignables par la
+     * barre de défilement horizontale. Le défaut de Qt (WidgetWidth) coupait
+     * au contraire les lignes, tassant la sortie des commandes (dmesg, lsblk,
+     * journalctl) sur une colonne étroite. */
+    te->setLineWrapMode(QTextEdit::NoWrap);
 
     if (Attr) {
         GList *element = NULL;

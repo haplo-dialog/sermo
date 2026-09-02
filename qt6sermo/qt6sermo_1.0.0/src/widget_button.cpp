@@ -42,6 +42,20 @@ GtkWidget *widget_button_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         }
     }
 
+    /* image-position : le port de référence GTK 3 place l'icône à DROITE du
+     * libellé quand image-position vaut "right" (ou 1 = GTK_POS_RIGHT).
+     * Un QPushButton dessine toujours son icône du côté « début » de sa
+     * direction de mise en page ; on inverse donc cette direction POUR CE
+     * BOUTON SEUL, ce qui suffit à faire passer l'icône à droite du texte.
+     * Le libellé, lui, n'est pas retourné : le style le dessine via
+     * QStyle::drawItemText(), dont la direction d'écriture est déduite du
+     * contenu (Qt::LayoutDirectionAuto), pas de celle du widget. */
+    if (attr && label && *label && !btn->icon().isNull()) {
+        const char *ipos = get_tag_attribute(attr, "image-position");
+        if (ipos && (g_ascii_strcasecmp(ipos, "right") == 0 || atoi(ipos) == 1))
+            btn->setLayoutDirection(Qt::RightToLeft);
+    }
+
     /* Taille : ne forcer un minimum que si width/height-request est explicite ;
      * sinon laisser Qt/le layout dimensionner (évite les boutons trop gros). */
     if (attr) {

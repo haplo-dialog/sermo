@@ -87,6 +87,16 @@ void qt6_container_add(Qt6Widget_C *container, Qt6Widget_C *child) {
     if (!container || !child) return;
     QWidget *c  = static_cast<QWidget*>(container);
     QWidget *ch = static_cast<QWidget*>(child);
+    /* Conteneur de défilement : l'enfant doit être confié au VIEWPORT via
+     * setWidget(), pas simplement reparenté. Avec un setParent() nu, l'enfant
+     * n'est pas géré par la zone de défilement : setWidgetResizable(true) reste
+     * sans effet et le widget garde sa taille propre — un <edit> restait à ses
+     * 300 px de large au milieu d'un cadre trois fois plus large, avec deux
+     * jeux de barres de défilement imbriquées. */
+    if (auto *sa = qobject_cast<QScrollArea*>(c)) {
+        sa->setWidget(ch);
+        return;
+    }
     if (auto *lay = qobject_cast<QBoxLayout*>(c->layout()))
         lay->addWidget(ch);
     else
