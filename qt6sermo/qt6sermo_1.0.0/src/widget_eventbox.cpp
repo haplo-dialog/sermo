@@ -17,10 +17,19 @@ GtkWidget *widget_eventbox_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     QVBoxLayout *layout = new QVBoxLayout(box);
     layout->setContentsMargins(0, 0, 0, 0);
     /* Dépiler l'enfant (groupé par SUM) et le ré-parenter — sinon il reste
-     * sans parent (fenêtre top-level). */
+     * sans parent (fenêtre top-level).
+     * Facteur d'étirement posé comme dans widget_vbox/hbox/frame, par
+     * cohérence. ⚠️ Mesuré le 2026-09-02 : avec l'enfant unique habituel d'un
+     * eventbox, le rendu était DÉJÀ identique à l'étalon sans ce facteur (la
+     * politique de taille Qt suffit à étendre un enfant seul). Ce n'est donc
+     * pas un correctif de défaut observable, mais l'expression explicite de
+     * l'intention, qui vaut dès que l'eventbox groupe plusieurs enfants. */
     stackelement s = pop();
-    for (int n = 0; n < s.nwidgets; ++n)
-        if (s.widgets[n]) layout->addWidget(static_cast<QWidget *>(s.widgets[n]));
+    for (int n = 0; n < s.nwidgets; ++n) {
+        if (!s.widgets[n]) continue;
+        int e = qt6_layout_get_expand((GtkWidget *)s.widgets[n]);
+        layout->addWidget(static_cast<QWidget *>(s.widgets[n]), e ? 1 : 0);
+    }
     return (GtkWidget *)box;
 }
 gchar *widget_eventbox_envvar_construct(GtkWidget *w) { (void)w; return g_strdup(""); }
