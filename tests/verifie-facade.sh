@@ -32,8 +32,10 @@ cd "$ICI" || exit 1
 # au travers, et c'est exactement sous cette forme que le nom reel a ete
 # publie dans quatre fichiers du port Qt 6 le 2026-09-02. Le motif accepte
 # desormais les deux graphies. « Marques » est ajoute : l'ancien binome n'a
-# rien a faire dans un depot public, sous aucune forme.
-MOTIFS='s\.cage@lucubratio|lucubratio|S\.? ?Cage|D\.? ?Marques|Marques|haplo-seb|/home/akej|haplo-linux\.fr'
+# rien a faire dans un depot public. Motif RESSERRE a « D.Marques » : un
+# « Marques » nu attrapait le mot « remarques » dans le changelog. Une garde
+# qui crie pour rien finit par etre ignoree — c'est pire que pas de garde.
+MOTIFS='s\.cage@lucubratio|lucubratio|S\.? ?Cage|D\.? ?Marques|haplo-seb|/home/akej|haplo-linux\.fr'
 
 # Plafond des lignes de clôture nominatives déjà publiées, par fichier.
 PLAFOND="$ICI/tests/facade-plafond"
