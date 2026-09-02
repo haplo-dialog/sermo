@@ -8,6 +8,12 @@ aclocal.m4
 autom4te.cache/
 config.h
 config.h.in
+# ⚠️ EXCEPTION — chez les ports autotools, config.h.in est ENGENDRÉ par
+# autoheader, d'où son exclusion ci-dessus. Le port Qt 6 est bâti par CMake :
+# là, config.h.in est une SOURCE, et config.h en est engendré. Sans cette
+# exception le modèle restait hors du dépôt et le port ne compilait dans
+# aucun clone — panne constatée au premier passage en intégration continue.
+!qt6sermo/qt6sermo_1.0.0/src/config.h.in
 config.log
 config.status
 config.guess
