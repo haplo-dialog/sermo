@@ -13,7 +13,7 @@ Versioning: [Semantic Versioning](https://semver.org/) starting from 1.0.0.
 - **`qt6sermo` — third port, Qt 6.** The same XML syntax as gtk3sermo and
   gtk4sermo, rendered with Qt 6 (Qt Widgets). "Write once, run on GTK 3, GTK 4
   or Qt 6." Version 1.0.0 (the youngest port; versioned independently). Its value
-  parity with the reference GTK 3 port is checked by a 23-case behaviour bench
+  parity with the reference GTK 3 port is checked by a 24-case behaviour bench
   shipped in its tree (`qt6sermo_1.0.0/tests/comportement/`). A `.deb` recipe is
   provided. Output to the shell goes through the same hardening as the other
   ports: full escaping (`\ " $ \``), opt-in `HAPLO_ALLOWED_CMDS` allowlist,
@@ -21,6 +21,27 @@ Versioning: [Semantic Versioning](https://semver.org/) starting from 1.0.0.
 
 ### Fixed
 
+- **Qt 6 port — `<edit>` fed by `<input>`:** the command was run with its internal
+  prefix still attached (`Command:bash …`), the shell answered
+  `Command:bash: not found`, and **every `<edit>` fed by a command stayed empty,
+  silently**. The GTK 3 port's dispatch is restored, together with the
+  `File:<path>` form that was missing too, and the loop over every `<input>`
+  instead of the first one only. A bench case now covers this form (the bench
+  goes from 23 to 24 cases): both existing `<edit>` cases used `<default>` only,
+  hence the blind spot.
+- **Qt 6 port — rendering:** five visual gaps against the reference GTK 3 port,
+  found by running the `system-tools` example under both.
+  (1) A `<frame label="…">` showed no title — the label was only read from the
+  attribute set, never from the tag attribute.
+  (2) `<notebook>` tab labels were rotated 90°; they are horizontal again, as in
+  GTK, with position and current index unchanged.
+  (3) `image-position="right"` was ignored on `<button>`.
+  (4) `<edit>` lines were wrapped, whereas the reference does not wrap them.
+  (5) An `<edit space-expand="true">` did not fill its frame: scrolled widgets are
+  stacked inside their scroll container, but the expand hint was only registered
+  on the inner widget; and a scroll area's child was reparented instead of being
+  handed to its viewport, which produced two nested sets of scrollbars. None of
+  these fixes affects an exported value.
 - **GTK 4 port — `<tree>`:** setting the `stock-id` property on the cell renderer
   emitted a `GLib-GObject-CRITICAL` per row — that property was removed from
   `GtkCellRendererPixbuf` in GTK 4. A `stock-id` is now read as an `icon-name`.

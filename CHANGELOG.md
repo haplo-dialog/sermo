@@ -14,13 +14,36 @@ Versionning : [Semantic Versioning](https://semver.org/lang/fr/) à partir de 1.
   gtk4sermo, rendue avec Qt 6 (Qt Widgets). « Écrit une fois, tourne en GTK 3,
   GTK 4 ou Qt 6. » Version 1.0.0 (port le plus jeune ; versionné indépendamment
   des autres). Sa parité de valeur avec le port GTK 3 de référence est vérifiée
-  par un banc de comportement de 23 cas, livré dans son arbre
+  par un banc de comportement de 24 cas, livré dans son arbre
   (`qt6sermo_1.0.0/tests/comportement/`). Empaquetage `.deb` fourni. La sortie
   au shell passe par le même durcissement que les autres ports : échappement
   complet (`\ " $ \``), liste blanche `HAPLO_ALLOWED_CMDS` opt-in, `--do`.
 
 ### Corrigé
 
+- **Port Qt 6 — `<edit>` alimenté par `<input>` :** la commande était lancée
+  littéralement préfixée (`Command:bash …`), le shell répondait
+  `Command:bash: not found`, et **tout cadre `<edit>` alimenté par une commande
+  restait vide, en silence**. L'aiguillage du port GTK 3 est rétabli, avec la
+  forme `File:<chemin>` qui manquait aussi et la boucle sur tous les `<input>`
+  au lieu du seul premier. Un cas de banc couvre désormais cette forme (le banc
+  passe de 23 à 24 cas) : ses deux cas `<edit>` n'utilisaient que `<default>`,
+  d'où l'angle mort.
+- **Port Qt 6 — rendu :** cinq écarts visuels avec le port GTK 3 de référence,
+  relevés en jouant l'exemple `system-tools` sous les deux ports.
+  (1) Le titre d'un `<frame label="…">` ne s'affichait pas — le libellé n'était
+  lu que dans l'ensemble d'attributs, jamais dans l'attribut de balise.
+  (2) Les libellés d'onglets d'un `<notebook>` étaient pivotés à 90° ; ils sont
+  de nouveau horizontaux, comme en GTK, sans changer position ni index.
+  (3) `image-position="right"` était ignoré sur les `<button>`.
+  (4) Les lignes des `<edit>` étaient enroulées, alors que la référence ne les
+  enroule pas.
+  (5) Un `<edit space-expand="true">` ne remplissait pas son cadre : les widgets
+  défilants sont empilés dans leur conteneur de défilement, mais l'indice
+  d'étirement n'était enregistré que sur le widget intérieur ; et l'enfant d'une
+  zone de défilement était reparenté au lieu d'être confié à son viewport, ce qui
+  produisait deux jeux de barres imbriquées. Aucune valeur exportée n'est
+  affectée par ces correctifs.
 - **Port GTK 4 — `<tree>` :** poser la propriété `stock-id` sur le rendu de
   cellule émettait des `GLib-GObject-CRITICAL` à chaque ligne — cette propriété a
   été supprimée de `GtkCellRendererPixbuf` en GTK 4. Un `stock-id` s'y lit
