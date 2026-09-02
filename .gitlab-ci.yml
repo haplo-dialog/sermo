@@ -134,7 +134,11 @@ qt6sermo:
   variables:
     PORT: qt6sermo
     VER: "1.0.0"
-    DEPS: "cmake qt6-base-dev"
+    # libglib2.0-dev n'est PAS une dependance du port : il lie Qt, pas GLib.
+    # Elle sert au dernier pas du modele, tests/run_unit_tests.sh, qui compile
+    # safe_exec.c a part, contre la VRAIE glib et non le shim — c'est le meme
+    # test pour les trois ports. Sans elle : « glib.h: No such file or directory ».
+    DEPS: "cmake qt6-base-dev libglib2.0-dev"
 
 # ─────────────────── exécution réelle des exemples ───────────────────
 # Ouvre vraiment les fenêtres, en français. Le banc sort en erreur dès qu'un
