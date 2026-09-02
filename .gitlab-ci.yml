@@ -95,8 +95,12 @@ default:
 
 .cmake:
   stage: build-test
+  variables:
+    # Chaque port est versionne independamment : qt6sermo est en 1.0.0 quand les
+    # ports GTK sont en 1.1.3. La version ne peut donc pas rester en dur ici.
+    VER: "1.1.3"
   script:
-    - cd "$PORT/${PORT}_1.1.3"
+    - cd "$PORT/${PORT}_$VER"
     - cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX="$CI_PROJECT_DIR/inst"
     - cmake --build build -j"$(nproc)"
     - cmake --install build
@@ -119,6 +123,18 @@ gtk4sermo:
     # gtk4sermo n'a pas d'--enable-unit-tests : pas de tests C de son cote.
     EXTRA_CONFIGURE: ""
     DEPS: "automake autoconf libtool libgtk-4-dev libvte-2.91-gtk4-dev texinfo"
+
+# ──────────────────────────── port (CMake) ────────────────────────────
+# Troisieme port, hors GTK. Branche a la CI le 2026-09-02, une fois vert sur les
+# DEUX suites : 55/55 cas XML et 24/24 au banc de comportement. Il ne l'etait pas
+# avant : la grammaire refusait les elements vides (<label></label>,
+# <default></default>...), dix regles jamais portees depuis le port de reference.
+qt6sermo:
+  extends: .cmake
+  variables:
+    PORT: qt6sermo
+    VER: "1.0.0"
+    DEPS: "cmake qt6-base-dev"
 
 # ─────────────────── exécution réelle des exemples ───────────────────
 # Ouvre vraiment les fenêtres, en français. Le banc sort en erreur dès qu'un
@@ -182,3 +198,20 @@ exemples:gtk4sermo:
   variables:
     PORT: gtk4sermo
     TOOLKIT_DEPS: "automake autoconf libtool libgtk-4-dev libvte-2.91-gtk4-dev texinfo"
+
+# ─────────────── comportement du port Qt 6 ───────────────
+# Le port Qt 6 se construit avec CMake et non autotools : il ne peut pas etendre
+# .examples, qui appelle autoreconf. Son banc de comportement lui est propre et
+# vit dans son arbre : 24 cas rejoues sous Xvfb, chacun compare a la valeur que
+# rend le port GTK 3 de reference. C'est ce banc qui a demasque un <edit> dont
+# la commande <input> n'etait jamais lancee, alors que la suite XML etait verte.
+exemples:qt6sermo:
+  stage: run-test
+  needs: ["qt6sermo"]
+  variables:
+    DEPS: "cmake qt6-base-dev xvfb xauth locales dbus-x11 fonts-dejavu-core"
+  script:
+    - cd qt6sermo/qt6sermo_1.0.0
+    - cmake -B build -DCMAKE_BUILD_TYPE=Release
+    - cmake --build build -j"$(nproc)"
+    - QT6_BIN="$PWD/build/qt6sermo" sh tests/comportement/run.sh

@@ -873,26 +873,42 @@ attr
 label
   :    LABEL STRING ELABEL          {
 		token_store_with_argument( SET | ATTR_LABEL, $2);     }
+  |    LABEL ELABEL                 {
+		/* An empty <label></label> is a legitimate value: it asks for a
+		 * blank label, typically used as a spacer between two widgets.
+		 * A label made only of whitespace lands here too, because the
+		 * lexer drops blanks before the string rule can start. */
+		token_store_with_argument( SET | ATTR_LABEL, "");     }
   ;
 
 sensitive
   : SENSITIVE STRING ESENSITIVE       {
      token_store_with_argument( SET | ATTR_SENSITIVE, $2);  }
+  | SENSITIVE ESENSITIVE {
+     gtkdialog_error("the <sensitive> element is empty; it requires a value.");  }
   ; 
 
 defaultvalue
   : DEFAULT STRING EDEFAULT  {
      token_store_with_argument( SET | ATTR_DEFAULT, $2);   }
+  | DEFAULT EDEFAULT {
+     /* An empty <default></default> is a legitimate value: it asks for an
+      * empty initial content, e.g. an entry that starts blank. */
+     token_store_with_argument( SET | ATTR_DEFAULT, "");   }
   ;
 
 width
   : WIDTH STRING EWIDTH             {
      token_store_with_argument( SET | ATTR_WIDTH, $2);    }
+  | WIDTH EWIDTH {
+     gtkdialog_error("the <width> element is empty; it requires a value.");    }
   ;
 
 height
   : HEIGHT STRING EHEIGHT           {
      token_store_with_argument( SET | ATTR_HEIGHT, $2);   }
+  | HEIGHT EHEIGHT {
+     gtkdialog_error("the <height> element is empty; it requires a value.");   }
   ;
 
 input
@@ -911,6 +927,12 @@ input
   | PART_INPUTFILE tagattr '>' EINPUT {
 		token_store_with_argument_attr(SET|ATTR_INPUT|SUB_ATTR_FILE, "", $2); 
 	}
+  | INPUT EINPUT {
+		gtkdialog_error("the <input> element is empty; it requires a command.");
+	}
+  | INPUTFILE EINPUT {
+		gtkdialog_error("the <input file> element is empty; it requires a file name.");
+	}
   ;
 
 output
@@ -919,6 +941,12 @@ output
 	}
   | OUTPUTFILE STRING EOUTPUT {
          	token_store_with_argument(SET|ATTR_OUTPUT|SUB_ATTR_FILE,$2);
+	}
+  | OUTPUT EOUTPUT {
+		gtkdialog_error("the <output> element is empty; it requires a value.");
+	}
+  | OUTPUTFILE EOUTPUT {
+		gtkdialog_error("the <output file> element is empty; it requires a file name.");
 	}
   ;
 
@@ -929,6 +957,11 @@ variable
   | PART_VARIABLE tagattr '>' STRING EVARIABLE {
 		token_store_with_argument_attr(SET | ATTR_VARIABLE, $4, $2);
 	}
+  | VARIABLE EVARIABLE {
+		/* An unnamed variable would leave the widget unreachable from the
+		 * shell side, so this is refused rather than silently accepted. */
+		gtkdialog_error("the <variable> element is empty; it requires a name.");
+	}
   ; 
 
 action
@@ -937,6 +970,9 @@ action
 	}
   | PART_ACTION tagattr '>' STRING EACTION {
 		token_store_with_argument_attr(SET | ATTR_ACTION, $4, $2);
+	}
+  | ACTION EACTION {
+		gtkdialog_error("the <action> element is empty; it requires a command.");
 	}
   ;
 
