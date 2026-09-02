@@ -127,7 +127,10 @@ set(WIDGET_SOURCES
 )
 
 # ─── Binaire ─────────────────────────────────────────────────────────────────
-add_executable(qt6sermo ${CORE_SOURCES} ${WIDGET_SOURCES})
+# data/qt6sermo.qrc embarque l'icône dans le binaire : sans elle, un qt6sermo
+# non installé ne posait aucun _NET_WM_ICON et le gestionnaire de fenêtres
+# affichait une icône générique (voir le commentaire du .qrc).
+add_executable(qt6sermo ${CORE_SOURCES} ${WIDGET_SOURCES} data/qt6sermo.qrc)
 
 target_include_directories(qt6sermo PRIVATE
   src/

@@ -70,8 +70,20 @@ GtkWidget *widget_window_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     win->setWindowTitle(QString::fromUtf8(title));
     /* Icône de fenêtre (_NET_WM_ICON) : sinon le gestionnaire de fenêtres
      * affiche une icône générique dans la barre de titre. */
-    win->setWindowIcon(QIcon::fromTheme(QStringLiteral("qt6sermo"),
-        QIcon(QStringLiteral("/usr/share/icons/hicolor/32x32/apps/qt6sermo.png"))));
+    /* Icône de fenêtre (_NET_WM_ICON). Trois sources, dans cet ordre :
+     *   1. le thème d'icônes — respecte le thème de l'utilisateur ;
+     *   2. le fichier installé par le paquet ;
+     *   3. l'icône EMBARQUÉE dans le binaire (ressource Qt).
+     * Le repli 3 est indispensable : sans lui, un binaire non installé ne posait
+     * AUCUN _NET_WM_ICON — vérifié à l'xprop, « not found » — et le gestionnaire
+     * de fenêtres affichait une icône générique, là où le port GTK 3 de
+     * référence publie « Icon (32 x 32) ». */
+    QIcon appicon = QIcon::fromTheme(QStringLiteral("qt6sermo"));
+    if (appicon.isNull())
+        appicon = QIcon(QStringLiteral("/usr/share/icons/hicolor/32x32/apps/qt6sermo.png"));
+    if (appicon.isNull())
+        appicon = QIcon(QStringLiteral(":/qt6sermo.png"));
+    win->setWindowIcon(appicon);
     if (sized) win->resize(dw, dh);
     if (minw > 0 || minh > 0) win->setMinimumSize(minw, minh);
 
