@@ -38,7 +38,7 @@
 il était le seul membre de la famille à offrir les 30 widgets du catalogue gtkdialog
 d'origine, y compris `<menubar>` et `<table>` alors en stub dans les autres ports.
 Aujourd'hui le catalogue s'est étendu : qt6sermo offre 49 widgets fonctionnels,
-et gtk4dialog (54) est le port le plus fourni de la famille.
+et gtk4sermo (54) est le port le plus fourni de la famille.
 
 ### 1.2 Motivation
 
@@ -47,7 +47,7 @@ existe mais ne fournit que des boîtes de dialogue ponctuelles. `qt6sermo` sera 
 premier constructeur XML complet pour Qt6, s'intégrant nativement dans les environnements
 KDE Plasma 6. Les widgets `<menubar>`, `<table>` et `<terminal>` (via `QTermWidget`) sont
 tous disponibles nativement dans Qt6, ce qui en faisait à l'époque le port le plus
-complet (gtk4dialog, 54 widgets, est aujourd'hui le plus fourni).
+complet (gtk4sermo, 54 widgets, est aujourd'hui le plus fourni).
 
 ---
 
@@ -55,7 +55,7 @@ complet (gtk4dialog, 54 widgets, est aujourd'hui le plus fourni).
 
 ### 2.1 Inclus
 
-- Réutilisation du core gtk3d (32 fichiers, ~23 500 lignes) sans modification
+- Réutilisation du core gtk3sermo (32 fichiers, ~23 500 lignes) sans modification
 - Couche de compatibilité `qt6-compat.h` / `qt6-compat.cpp` (shims GLib → stdlib, `extern "C"`)
 - Réécriture de la couche widget en C++/Qt6 (`widget_*.cpp`, ~30 fichiers)
 - Build system CMake avec `CMAKE_AUTOMOC=ON` (obligatoire pour QObject/signaux Qt)
@@ -80,7 +80,7 @@ complet (gtk4dialog, 54 widgets, est aujourd'hui le plus fourni).
 | P1 | Coexistence sans conflit avec `gtk3sermo` et `gtk4sermo` |
 | P1 | 30/30 widgets du catalogue gtkdialog d'origine (objectif initial — 49 widgets offerts aujourd'hui) |
 | P1 | Intégration thème KDE Plasma 6 native |
-| P2 | `<menubar>` et `<table>` fonctionnels (manquants dans GTK4) |
+| P2 | `<menubar>` et `<table>` fonctionnels  |
 | P2 | `<terminal>` via `QTermWidget` |
 | P3 | Package `.deb` sur haplo-dialog |
 
@@ -207,7 +207,7 @@ qt6sermo/qt6sermo_1.0.0/
 ├── CMakeLists.txt            ← Qt6, AUTOMOC, Flex/Bison, QTermWidget
 ├── src/
 │   ├── qt6-compat.h/.cpp     ← shims GLib→stdlib, extern "C", GSList minimal
-│   ├── [32 fichiers core]    ← copiés depuis gtk3d, non modifiés
+│   ├── [32 fichiers core]    ← copiés depuis gtk3sermo, non modifiés
 │   └── [~30 fichiers widget] ← à implémenter en C++/Qt6
 │       widget_window.cpp  widget_button.cpp  widget_menubar.cpp
 │       widget_table.cpp   widget_terminal.cpp ...

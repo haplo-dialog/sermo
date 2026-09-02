@@ -78,7 +78,7 @@ echo '<window><vbox><text><label>Hello Qt6!</label></text>
 ```
 
 La syntaxe XML est identique à celle de gtkdialog : les dialogues écrits pour
-gtk3d fonctionnent sans modification sous qt6sermo.
+gtk3sermo fonctionnent sans modification sous qt6sermo.
 
 ---
 

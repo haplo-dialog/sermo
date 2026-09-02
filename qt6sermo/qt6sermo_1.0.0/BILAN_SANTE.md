@@ -141,7 +141,7 @@ et de documentation.
 
 ## Audit #4 — Harmonisation et alignement des ports (2026-06-01)
 
-Session transversale appliquant à ce port les correctifs éprouvés sur gtk4d,
+Session transversale appliquant à ce port les correctifs éprouvés sur gtk4sermo,
 dans le cadre de l'uniformisation de toute la famille haplo-dialog.
 
 | Domaine | Action |
@@ -149,7 +149,7 @@ dans le cadre de l'uniformisation de toute la famille haplo-dialog.
 | Test `test_compat.cpp` | **Blocage levé.** Cause racine : `_Static_assert(...)` (C11) illégal en C++ dans `src/qt6-compat.h`, qui interrompait l'analyse de l'en-tête (typedef `gsize` non vu). Désormais via la macro portable `QT6_STATIC_ASSERT` (→ `static_assert` en C++). |
 | Sécurité | Attribut `nonnull` retiré de `safe_exec.h` — `-Wnonnull-compare` supprimé. |
 | Préprocesseur | `_GNU_SOURCE` et macros `g_*` de `qt6-compat.h` protégés par `#ifndef`. |
-| Flags d'avertissement | `CMakeLists.txt` aligné sur gtk4d ; `-Wno-missing-prototypes` restreint au C via `$<$<COMPILE_LANGUAGE:C>:…>` (évite le warning cc1plus sur les cibles C++). |
+| Flags d'avertissement | `CMakeLists.txt` aligné sur gtk4sermo ; `-Wno-missing-prototypes` restreint au C via `$<$<COMPILE_LANGUAGE:C>:…>` (évite le warning cc1plus sur les cibles C++). |
 | Licence | Harmonisée de GPL-3.0+ vers **GPL-2.0-or-later** (sources, site de référence, recettes de packaging). |
 
 **Vérification (réelle, ce jour) :** `ctest` → **2/2 tests passés** (dont `compat`,

@@ -26,7 +26,7 @@
 
 ## 1. Vue d'ensemble de l'architecture
 
-qt6sermo est le port **Qt6** du fork gtk3dialog (origine gtkdialog 0.8.3) et le
+qt6sermo est le port **Qt6** du fork gtk3sermo (origine gtkdialog 0.8.3) et le
 **port phare** de la famille. Il interprète le **même format XML** que gtkdialog
 et construit l'interface avec les Qt Widgets (Qt6 Core + Widgets). Le cœur reste
 en C ; widgets et shim sont en C++ (Qt est C++).
@@ -53,15 +53,15 @@ en C ; widgets et shim sont en C++ (Qt est C++).
 
 ### 1.1 Principes de conception
 
-- **Compatibilité XML d'abord** : un dialogue gtk3d tourne sous qt6sermo sans
+- **Compatibilité XML d'abord** : un dialogue gtk3sermo tourne sous qt6sermo sans
   modification.
 - **Cœur partagé** : actions/automaton/variables/signals/safe_exec/stack/
   stringman/lexer/parser communs aux ports.
 - **Spécificités Qt** : les signaux/slots Qt remplacent les signaux GTK ; le shim
   fait le pont entre le système d'actions C et le mécanisme signal/slot.
 
-> **Note d'identité :** le fichier `src/gtk3d.h` encore présent est un en-tête de
-> compatibilité de noms hérité ; il ne doit pas être confondu avec le port gtk3d.
+> **Note d'identité :** le fichier `src/gtk3sermo.h` encore présent est un en-tête de
+> compatibilité de noms hérité ; il ne doit pas être confondu avec le port gtk3sermo.
 > Le binaire et le projet s'appellent bien `qt6sermo` / qt6sermo.
 
 ---
@@ -95,7 +95,7 @@ cmake --build build -j$(nproc)
 | `safe_exec.c` | C | Exécution sécurisée des commandes |
 | `qt6-compat.cpp/.h` | C++ | Shim : `GtkWidget*` → `QWidget*`, stubs Gdk |
 | `widget_*.cpp/.h` | C++ | Une implémentation par widget |
-| `gtk3d.h` | C | En-tête de compat de noms hérité (pas le port gtk3d) |
+| `gtk3sermo.h` | C | En-tête de compat de noms hérité (pas le port gtk3sermo) |
 
 ---
 
@@ -203,7 +203,7 @@ la CI l'exécute sous `xvfb-run` (étages docs / build-test / qa).
 
 - Suivre Qt6 (mises à jour mineures) et les dépréciations d'API Widgets.
 - Garder `qt6-compat` synchronisé avec les besoins du cœur partagé.
-- Vérifier l'identité (binaire/projet = qt6sermo ; `gtk3d.h` reste un alias hérité).
+- Vérifier l'identité (binaire/projet = qt6sermo ; `gtk3sermo.h` reste un alias hérité).
 - `cppcheck --enable=warning,portability,style src/*.c` avant release ; exécuter
   les tests unitaires (`ctest`).
 
