@@ -18,7 +18,7 @@ Distributeur : haplo-dialog (https://haplo-dialog.fr)
 Distribution : haplo-dialog — basée sur Debian Testing
 
 Mainteneur   : <devel@haplo-dialog.fr>
-Développeurs : S.Cage, D.Marques
+Mainteneur : haplo-dialog <devel@haplo-dialog.fr>
 
 Port Qt6 du core gtk3d sécurisé : build CMake (Qt6 >= 6.2, AUTOMOC/AUTORCC),
 pont C/C++ via qt6-compat.h + extern "C", QTermWidget6 optionnel, QTreeWidget

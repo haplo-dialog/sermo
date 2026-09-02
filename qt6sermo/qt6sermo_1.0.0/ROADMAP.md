@@ -47,14 +47,14 @@
 
 ### 🔮 v1.1.0 — « Multi-toolkit » (long terme)
 
-- [ ] Sélection du toolkit via `HAPLO_DIALOG_TOOLKIT=gtk3|gtk4|qt6|fltk|efl|sdl3`
+- [ ] Sélection du port via `HAPLO_DIALOG_TOOLKIT=gtk3|gtk4|qt6`
 - [ ] API shell commune entre les six ports
 
 ---
 
 ## Contacts et ressources
 
-- **Mainteneur :** S.Cage, D.Marques — devel@haplo-dialog.fr
+- **Mainteneur :** haplo-dialog — devel@haplo-dialog.fr
 - **Dépôt :** https://haplo-dialog.fr
 - **Qt6 API :** https://doc.qt.io/qt-6/
 - **Licence :** GPL-2.0-or-later

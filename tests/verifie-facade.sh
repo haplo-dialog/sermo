@@ -28,7 +28,12 @@ cd "$ICI" || exit 1
 
 # Motifs interdits. haplo-linux.fr en fait partie : ce projet est autonome, il
 # ne doit pas se relier au reste par une URL oubliée.
-MOTIFS='s\.cage@lucubratio|lucubratio|S\. Cage|haplo-seb|/home/akej|haplo-linux\.fr'
+# ⚠️ « S\. Cage » exigeait une ESPACE apres le point : « S.Cage » passait donc
+# au travers, et c'est exactement sous cette forme que le nom reel a ete
+# publie dans quatre fichiers du port Qt 6 le 2026-09-02. Le motif accepte
+# desormais les deux graphies. « Marques » est ajoute : l'ancien binome n'a
+# rien a faire dans un depot public, sous aucune forme.
+MOTIFS='s\.cage@lucubratio|lucubratio|S\.? ?Cage|D\.? ?Marques|Marques|haplo-seb|/home/akej|haplo-linux\.fr'
 
 # Plafond des lignes de clôture nominatives déjà publiées, par fichier.
 PLAFOND="$ICI/tests/facade-plafond"

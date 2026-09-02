@@ -3,7 +3,7 @@
 **Version :** 1.0.0-qt6
 **Date :** Mai 2026 (mis à jour 2026-05-29)
 **Audience :** Développeurs C/C++, mainteneurs haplo-dialog
-**Mainteneur :** S.Cage, D.Marques <devel@haplo-dialog.fr> | **Dépôt :** https://haplo-dialog.fr
+**Mainteneur :** haplo-dialog <devel@haplo-dialog.fr> | **Dépôt :** https://haplo-dialog.fr
 
 ---
 

@@ -127,9 +127,8 @@ dans le cadre du développement de la famille **haplo-dialog** sur haplo-dialog.
 
 L'IA a contribué à : la conception de l'architecture, l'implémentation des widgets,
 la rédaction de la documentation, la création des tests unitaires (CTest),
-l'intégration de QTermWidget6, la sous-classe Fl_Table hiérarchique (FLTK),
-l'amélioration de l'export d'état SDL3/ImGui, et la mise à jour de tous les
-fichiers de packaging et de documentation.
+l'intégration de QTermWidget, et la mise à jour des fichiers d'empaquetage
+et de documentation.
 
 > *"Ce projet a bénéficié de l'assistance de Claude (Anthropic) —
 > mai 2026."*
