@@ -77,7 +77,7 @@ complet (gtk4dialog, 54 widgets, est aujourd'hui le plus fourni).
 | Priorité | Objectif |
 |----------|---------|
 | P1 | Produire un binaire `qt6sermo` compilant sur Debian Testing |
-| P1 | Coexistence sans conflit avec `gtk3d`, `gtk4d`, `fltk1d` |
+| P1 | Coexistence sans conflit avec `gtk3sermo` et `gtk4sermo` |
 | P1 | 30/30 widgets du catalogue gtkdialog d'origine (objectif initial — 49 widgets offerts aujourd'hui) |
 | P1 | Intégration thème KDE Plasma 6 native |
 | P2 | `<menubar>` et `<table>` fonctionnels (manquants dans GTK4) |

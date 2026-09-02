@@ -45,10 +45,21 @@ GtkWidget *widget_window_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         if (t && *t) title = t;
     }
 
+    /* ⚠️ Une taille n'est imposée que si l'XML la demande. Le port GTK 3 de
+     * référence n'appelle gtk_window_set_default_size() QUE pour un
+     * default-width/height explicite ; sans cela la fenêtre prend sa taille
+     * naturelle. Un resize(640, 480) inconditionnel donnait ici une fenêtre
+     * quatre fois trop grande, presque vide, là où la référence rend 320×105. */
+    bool sized = false;
+    int  minw = 0, minh = 0;
     if (attr) {
         const char *v;
-        if ((v = get_tag_attribute(attr, "default-width")))  dw = atoi(v);
-        if ((v = get_tag_attribute(attr, "default-height"))) dh = atoi(v);
+        if ((v = get_tag_attribute(attr, "default-width")))  { dw = atoi(v); sized = true; }
+        if ((v = get_tag_attribute(attr, "default-height"))) { dh = atoi(v); sized = true; }
+        /* width-request/height-request = taille MINIMALE, comme
+         * gtk_widget_set_size_request() côté référence. */
+        if ((v = get_tag_attribute(attr, "width-request")))  minw = atoi(v);
+        if ((v = get_tag_attribute(attr, "height-request"))) minh = atoi(v);
         if ((v = get_tag_attribute(attr, "resizable"))) {
             /* resizable=false : taille fixée après show() */
             (void)v; /* géré ci-dessous */
@@ -61,7 +72,8 @@ GtkWidget *widget_window_create(AttributeSet *Attr, tag_attr *attr, gint Type)
      * affiche une icône générique dans la barre de titre. */
     win->setWindowIcon(QIcon::fromTheme(QStringLiteral("qt6sermo"),
         QIcon(QStringLiteral("/usr/share/icons/hicolor/32x32/apps/qt6sermo.png"))));
-    win->resize(dw, dh);
+    if (sized) win->resize(dw, dh);
+    if (minw > 0 || minh > 0) win->setMinimumSize(minw, minh);
 
     /* Widget central avec layout vertical */
     QWidget     *central = new QWidget(win);
@@ -77,12 +89,19 @@ GtkWidget *widget_window_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         layout->addWidget(child);
     }
 
-    /* Centrage */
+    /* Sans taille imposée, la fenêtre prend celle de son contenu (comme la
+     * référence). adjustSize() force ce calcul maintenant, pour que le centrage
+     * ci-dessous travaille sur la vraie taille et non sur une valeur par défaut. */
+    if (!sized) win->adjustSize();
+
+    /* Centrage — sur la taille RÉELLE de la fenêtre, pas sur dw/dh, qui ne
+     * valent plus rien quand aucune taille n'a été demandée. */
     if (attr) {
         const char *pos = get_tag_attribute(attr, "window-position");
         if (pos && atoi(pos) == 1) { /* GTK_WIN_POS_CENTER */
             QRect sr = QGuiApplication::primaryScreen()->availableGeometry();
-            win->move((sr.width() - dw) / 2, (sr.height() - dh) / 2);
+            QSize ws = win->size();
+            win->move((sr.width() - ws.width()) / 2, (sr.height() - ws.height()) / 2);
         }
     }
 

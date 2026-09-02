@@ -1,5 +1,6 @@
 /* widget_button.cpp — Bouton Qt6
- * fltk1d 1.0.0 — haplo-dialog <devel@haplo-dialog.fr>
+ * qt6sermo 1.0.0 — haplo-dialog <devel@haplo-dialog.fr>
+ * Licence : GPL-2.0-or-later
  */
 #include "qt6-compat.h"
 #include "gtk3d.h"
@@ -21,6 +22,23 @@ GtkWidget *widget_button_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     GList *element = nullptr;
     gchar *label = nullptr;
     if (Attr) label = attributeset_get_first(&element, Attr, ATTR_LABEL);
+
+    /* Boutons standard : <button ok>, <button cancel>, <button yes>… n'ont pas
+     * de <label>, leur libellé vient de leur TYPE. Le port de référence le pose
+     * explicitement (widget_button.c : « OK », « Cancel », « Help », « No »,
+     * « Yes »). Sans cela le bouton sortait VIDE — visible dès l'exemple
+     * d'accueil, dont le <button ok> n'affichait rien. */
+    if (!label || !*label) {
+        switch (Type) {
+        case WIDGET_OKBUTTON:     label = (gchar *)"OK";     break;
+        case WIDGET_CANCELBUTTON: label = (gchar *)"Cancel"; break;
+        case WIDGET_HELPBUTTON:   label = (gchar *)"Help";   break;
+        case WIDGET_NOBUTTON:     label = (gchar *)"No";     break;
+        case WIDGET_YESBUTTON:    label = (gchar *)"Yes";    break;
+        default: break;
+        }
+    }
+
     QPushButton *btn = new QPushButton(label ? QString::fromUtf8(label) : QString());
 
     /* Icône : <input file icon="nom"> / stock="nom" → thème d'icônes Qt

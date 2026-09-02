@@ -86,12 +86,10 @@ modernisés et sécurisés par haplo-dialog en 2026.
 
 @multitable @columnfractions .25 .25 .15 .35
 @headitem Port @tab Binaire @tab Toolkit @tab Description
-@item gtk3dialog @tab @command{gtk3dialog} @tab GTK3 @tab Port de référence (production)
-@item gtk4dialog @tab @command{gtk4dialog} @tab GTK4 @tab 54 widgets, GtkColumnView
-@item fltk1dialog @tab @command{fltk1dialog} @tab FLTK 1.4 @tab Léger, sans GLib
-@item efl1dialog @tab @command{efl1dialog} @tab EFL/Elementary @tab Natif Enlightenment
-@item qt6sermo @tab @command{qt6sermo} @tab Qt6 @tab Terminal live optionnel
-@item sdl3dialog @tab @command{sdl3dialog} @tab SDL3+ImGui @tab Immediate mode, multi-OS
+@item gtk3sermo @tab @command{gtk3sermo} @tab GTK 3 @tab Port de référence
+@item gtk4sermo @tab @command{gtk4sermo} @tab GTK 4 @tab Widgets natifs GTK 4
+@item qt6sermo @tab @command{qt6sermo} @tab Qt 6 @tab Terminal intégré optionnel
+@item gtksermo @tab @command{gtkdialog} @tab --- @tab Alias rétro-compatible
 @end multitable
 
 @node Installation

@@ -31,7 +31,7 @@
 └──────────────────────────────────────────────────────────────┘
 ```
 
-> **Référence :** gtk3d=90 · gtk4d=91 · qt6sermo=90 · fltk1d=89 · efl1d=90 · sdl3d=88
+> **Référence :** gtk3sermo=90 · gtk4sermo=91 · qt6sermo=90
 
 **Score précédent : 93/100.**
 

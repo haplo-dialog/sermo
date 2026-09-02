@@ -60,12 +60,10 @@ Les 6 ports dialog s'installent **simultanément sans conflit** :
 
 | Binaire | Port | Toolkit |
 |---------|------|---------|
-| `/usr/bin/gtk3dialog` (+ symlink `gtkdialog`) | gtk3dialog | GTK3 |
-| `/usr/bin/gtk4dialog` | gtk4dialog | GTK4 |
-| `/usr/bin/fltk1dialog` | fltk1dialog | FLTK |
-| `/usr/bin/efl1dialog` | efl1dialog | EFL |
-| `/usr/bin/qt6sermo` | qt6sermo | Qt6 |
-| `/usr/bin/sdl3dialog` | sdl3dialog | SDL3 |
+| `/usr/bin/gtk3sermo` | gtk3sermo | GTK 3 |
+| `/usr/bin/gtk4sermo` | gtk4sermo | GTK 4 |
+| `/usr/bin/qt6sermo` | qt6sermo | Qt 6 |
+| `/usr/bin/gtkdialog` (alias, paquet `gtksermo`) | gtksermo | --- |
 
 ---
 
