@@ -6,7 +6,7 @@
 export MAIN_DIALOG='
 <window title="VScale qt6sermo" width-request="150" height-request="300">
   <hbox>
-    <vscale><variable>NIV</variable><value>30</value><lower>0</lower><upper>100</upper></vscale>
+    <vscale><variable>NIV</variable><default>30</default></vscale>
     <button ok></button>
   </hbox>
 </window>'

@@ -887,7 +887,7 @@ create_dialog() {
         <action>bash "$SCRIPT_PATH" --do about</action>
       </button>
       <text space-expand="true" space-fill="true">
-        <label>Exemple gtk3sermo 1.0.0</label>
+        <label>Rendu par $MOTEUR</label>
       </text>
       <button space-expand="false" space-fill="false">
         <label>Quitter</label>
@@ -901,12 +901,21 @@ XMLEOF
 )
 }
 
+# ── Moteur de rendu ─────────────────────────────────────────────────────────
+# Le dialecte XML est commun aux trois ports : le MEME script tourne sur
+# gtk3sermo, gtk4sermo et qt6sermo. Surchargez GTKDIALOG pour en choisir un :
+#     GTKDIALOG=qt6sermo ./system-tools.sh
+GTKDIALOG="${GTKDIALOG:-gtk3sermo}"
+# Nom affiche dans le pied de la fenetre : le MEME script, mais on voit
+# lequel des trois moteurs a dessine ce qu'on regarde.
+MOTEUR=$(basename "$GTKDIALOG")
+
 # ── Vérification des dépendances ────────────────────────────────────────────
 
 check_deps() {
     local missing=()
-    command -v gtk3sermo &>/dev/null || command -v gtkdialog &>/dev/null \
-        || missing+=("gtk3sermo")
+    command -v "$GTKDIALOG" &>/dev/null || [ -x "$GTKDIALOG" ] \
+        || command -v gtkdialog &>/dev/null || missing+=("$GTKDIALOG")
     command -v pkexec &>/dev/null || missing+=("pkexec")
     [ -n "$TERMINAL" ] || missing+=("un terminal graphique")
     [ -n "$EDITEUR" ]  || missing+=("un editeur graphique")
@@ -929,4 +938,4 @@ create_dialog
 
 # NE PAS utiliser set -e ici : gtk3sermo renvoie un code non-zéro normal
 # à la fermeture de la fenêtre, ce qui déclencherait un arrêt prématuré.
-gtk3sermo --program=MAIN_DIALOG --center
+"$GTKDIALOG" --program=MAIN_DIALOG --center

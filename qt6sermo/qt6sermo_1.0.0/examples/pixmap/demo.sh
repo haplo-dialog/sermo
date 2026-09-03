@@ -6,7 +6,7 @@
 export MAIN_DIALOG='
 <window title="Image qt6sermo" width-request="350" height-request="200">
   <vbox>
-    <pixmap><variable>IMG</variable><filename>/usr/share/pixmaps/haplo-logo.png</filename></pixmap>
+    <pixmap><variable>IMG</variable><input file>/usr/share/pixmaps/debian-logo.png</input></pixmap>
     <button ok></button>
   </vbox>
 </window>'

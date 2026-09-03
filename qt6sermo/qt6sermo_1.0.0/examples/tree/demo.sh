@@ -6,11 +6,12 @@
 export MAIN_DIALOG='
 <window title="Arbre qt6sermo" width-request="350" height-request="300">
   <vbox>
-    <tree><variable>NODE</variable>
-      <item>Racine
-        <item>Enfant 1</item>
-        <item>Enfant 2</item>
-      </item>
+    <tree>
+      <label>Élément|Détail</label>
+      <variable>NODE</variable>
+      <item>Racine|dossier</item>
+      <item>Enfant 1|fichier</item>
+      <item>Enfant 2|fichier</item>
     </tree>
     <button ok></button>
   </vbox>

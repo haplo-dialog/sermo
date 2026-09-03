@@ -6,7 +6,7 @@
 export MAIN_DIALOG='
 <window title="HScale qt6sermo" width-request="400" height-request="130">
   <vbox>
-    <hscale><variable>VOL</variable><value>50</value><lower>0</lower><upper>100</upper></hscale>
+    <hscale><variable>VOL</variable><default>50</default></hscale>
     <button ok></button>
   </vbox>
 </window>'

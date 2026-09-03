@@ -7,9 +7,11 @@ export MAIN_DIALOG='
 <window title="MenuItem qt6sermo" width-request="400" height-request="300">
   <vbox>
     <menubar>
-      <menu><label>Actions</label>
+      <menu>
         <menuitem><label>Action 1</label><action>echo "Action 1"</action></menuitem>
         <menuitem><label>Action 2</label><action>echo "Action 2"</action></menuitem>
+      
+        <label>Actions</label>
       </menu>
     </menubar>
   </vbox>

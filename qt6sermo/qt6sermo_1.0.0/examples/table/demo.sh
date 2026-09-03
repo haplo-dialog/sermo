@@ -7,7 +7,7 @@ export MAIN_DIALOG='
 <window title="Tableau qt6sermo" width-request="500" height-request="300">
   <vbox>
     <table><variable>TABLE</variable>
-      <column>Nom</column><column>Valeur</column>
+      <label>Nom|Valeur</label>
       <item>Alpha|100</item>
       <item>Beta|200</item>
     </table>

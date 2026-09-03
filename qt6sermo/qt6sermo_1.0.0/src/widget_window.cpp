@@ -90,7 +90,18 @@ GtkWidget *widget_window_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     /* Widget central avec layout vertical */
     QWidget     *central = new QWidget(win);
     QVBoxLayout *layout  = new QVBoxLayout(central);
-    layout->setContentsMargins(4, 4, 4, 4);
+    /* border-width : marge du conteneur, comme gtk_container_set_border_width().
+     * Le port l'ignorait complètement — la fenêtre gardait la même taille quelle
+     * que soit la valeur, alors que le port de référence grandit de 2N. Défaut
+     * invisible pour le banc de valeurs, vu par geometrie.sh. « margin » est
+     * l'ancien nom, encore accepté par le dialecte. Défaut 5, comme l'oracle. */
+    int bordure = 5;
+    if (attr) {
+        const char *v;
+        if ((v = get_tag_attribute(attr, "margin")))        bordure = atoi(v);
+        if ((v = get_tag_attribute(attr, "border-width")))  bordure = atoi(v);
+    }
+    layout->setContentsMargins(bordure, bordure, bordure, bordure);
     layout->setSpacing(2);
     win->setCentralWidget(central);
 
@@ -104,7 +115,17 @@ GtkWidget *widget_window_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     /* Sans taille imposée, la fenêtre prend celle de son contenu (comme la
      * référence). adjustSize() force ce calcul maintenant, pour que le centrage
      * ci-dessous travaille sur la vraie taille et non sur une valeur par défaut. */
-    if (!sized) win->adjustSize();
+    /* ⚠️ PAS adjustSize() : pour une fenêtre dont la disposition s'étire, Qt
+     * remonte le résultat à 200x100 au minimum. Le port de référence n'a aucun
+     * plancher — une fenêtre ne contenant qu'une icône de 26 px fait 26 px.
+     * Ce plancher rendait toutes les petites fenêtres identiques : le banc
+     * geometrie.sh mesurait 200x100 pour theme-icon-size=16 ET =64, et concluait
+     * « l'icône n'est pas chargée » alors qu'elle l'était. resize(sizeHint())
+     * demande la même taille naturelle, sans le plancher. Mesuré 2026-09-03. */
+    if (!sized) {
+        win->ensurePolished();
+        win->resize(win->sizeHint());
+    }
 
     /* Centrage — sur la taille RÉELLE de la fenêtre, pas sur dw/dh, qui ne
      * valent plus rien quand aucune taille n'a été demandée. */

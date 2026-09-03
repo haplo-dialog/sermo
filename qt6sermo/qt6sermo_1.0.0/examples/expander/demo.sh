@@ -6,7 +6,7 @@
 export MAIN_DIALOG='
 <window title="Expander qt6sermo" width-request="350" height-request="200">
   <vbox>
-    <expander><label>Détails</label>
+    <expander label="Détails">
       <vbox><text><label>Option cachée</label></text></vbox>
     </expander>
     <button ok></button>

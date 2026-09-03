@@ -306,7 +306,18 @@ _compat_box_pack(GtkBox *box, GtkWidget *child,
          * de GTK3 (le premier empilé finit le plus au bord).
          * ⚠️ Ne PAS aligner la boîte elle-même : essayé, cela décale toute la
          * mise en page dans le parent. */
-        if (!expand) {
+        /* ⚠️ Le drapeau ci-dessous ne se lève JAMAIS deux fois : dès qu'un enfant
+         * extensible est entré dans la boîte, il n'y a plus de bord à simuler et
+         * plus AUCUN ressort ne doit être posé. Sans lui, le ressort retiré par
+         * la branche « expand » était RECRÉÉ par l'enfant non extensible suivant,
+         * et cette étiquette extensible parasite s'intercalait au milieu de la
+         * ligne : dans system-tools, la colonne « Actions rapides » flottait au
+         * centre avec un trou de chaque côté. Mesuré le 2026-09-03 en comparant
+         * les trois ports sur le même script. */
+        gboolean deja_extensible =
+            GPOINTER_TO_INT(g_object_get_data(G_OBJECT(box), "_compat_boite_extensible"));
+
+        if (!expand && !deja_extensible) {
             GtkWidget *ressort = g_object_get_data(G_OBJECT(box), "_compat_ressort_fin");
             if (ressort == NULL) {
                 ressort = gtk_label_new(NULL);
@@ -318,6 +329,9 @@ _compat_box_pack(GtkBox *box, GtkWidget *child,
                 g_object_set_data(G_OBJECT(box), "_compat_ressort_fin", ressort);
             }
             gtk_box_insert_child_after(box, child, ressort);
+        } else if (!expand) {
+            /* Boîte déjà « ouverte » par un enfant extensible : simple ordre. */
+            gtk_box_prepend(box, child);
         } else {
             /* Un enfant extensible reclame l'espace en trop : GTK3 repartit, et
              * l'effet de bord disparait. Si un ressort avait ete pose par un
@@ -329,6 +343,8 @@ _compat_box_pack(GtkBox *box, GtkWidget *child,
                 gtk_box_remove(box, ressort);
                 g_object_set_data(G_OBJECT(box), "_compat_ressort_fin", NULL);
             }
+            g_object_set_data(G_OBJECT(box), "_compat_boite_extensible",
+                              GINT_TO_POINTER(1));
             gtk_box_prepend(box, child);
         }
     } else {

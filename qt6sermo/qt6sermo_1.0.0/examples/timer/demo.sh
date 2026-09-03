@@ -7,7 +7,7 @@ export MAIN_DIALOG='
 <window title="Timer qt6sermo" width-request="350" height-request="150">
   <vbox>
     <text><label>Ce dialogue se ferme dans 5 secondes.</label></text>
-    <timer><variable>TICK</variable><value>5000</value><action>EXIT:0</action></timer>
+    <timer><variable>TICK</variable><default>5000</default><action>EXIT:0</action></timer>
     <button><label>Fermer</label><action>EXIT:0</action></button>
   </vbox>
 </window>'

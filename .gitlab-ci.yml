@@ -219,3 +219,9 @@ exemples:qt6sermo:
     - cmake -B build -DCMAKE_BUILD_TYPE=Release
     - cmake --build build -j"$(nproc)"
     - QT6_BIN="$PWD/build/qt6sermo" sh tests/comportement/run.sh
+    # ⚠️ La MISE EN PAGE, que le banc de valeurs ne peut pas voir : il compare des
+    # variables, or border-width et theme-icon-size n'en produisent aucune. Ce
+    # controle manquait au port Qt 6 (il tournait deja pour gtk3/gtk4) et deux
+    # defauts y ont vecu sans etre vus : border-width totalement ignore, et les
+    # icones de theme jamais chargees. Ajoute le 2026-09-03.
+    - sh "$CI_PROJECT_DIR/tests/comportement/geometrie.sh" "$PWD/build/qt6sermo"

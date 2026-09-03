@@ -6,7 +6,7 @@
 export MAIN_DIALOG='
 <window title="Terminal qt6sermo" width-request="600" height-request="400">
   <vbox>
-    <terminal><variable>TERM</variable><value>bash</value></terminal>
+    <terminal><variable>TERM</variable><default>bash</default></terminal>
     <button ok></button>
   </vbox>
 </window>'

@@ -6,7 +6,7 @@
 export MAIN_DIALOG='
 <window title="Spin qt6sermo" width-request="300" height-request="130">
   <vbox>
-    <spinbutton><variable>QTE</variable><value>1</value><lower>0</lower><upper>99</upper></spinbutton>
+    <spinbutton><variable>QTE</variable><default>1</default></spinbutton>
     <button ok></button>
   </vbox>
 </window>'

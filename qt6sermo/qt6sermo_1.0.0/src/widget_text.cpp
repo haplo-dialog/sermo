@@ -25,6 +25,11 @@ GtkWidget *widget_text_create(AttributeSet *Attr, tag_attr *attr, gint Type)
      * cellule à sa largeur minimale et coupait « Debian GNU/Linux » en deux. */
     lbl->setWordWrap(false);
     lbl->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    /* GtkLabel est CENTRÉ par défaut (xalign 0.5), QLabel est aligné à gauche.
+     * Sans cette ligne le même XML ne rendait pas pareil : gtk3sermo et
+     * gtk4sermo centraient « Votre nom : », qt6sermo le collait à gauche.
+     * Mesuré sur les captures des trois ports le 2026-09-03. */
+    lbl->setAlignment(Qt::AlignCenter);
 
     if (Attr) {
         /* <text><label>…</label></text> : cas le plus courant (était ignoré). */

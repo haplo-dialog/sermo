@@ -39,7 +39,10 @@ RACINE="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 trouver_binaire() {
     if command -v "$1" > /dev/null 2>&1; then command -v "$1"; return 0; fi
-    for c in "$RACINE/$1/$1"_*/src/"$1" "$RACINE/_build/install/bin/$1"; do
+    # qt6sermo se construit avec CMake : son binaire est sous build/, pas sous src/.
+    # Sans ce chemin, le port était introuvable et sautait en silence.
+    for c in "$RACINE/$1/$1"_*/src/"$1" "$RACINE/$1/$1"_*/build/"$1" \
+             "$RACINE/_build/install/bin/$1"; do
         [ -x "$c" ] && { echo "$c"; return 0; }
     done
     return 1
@@ -47,7 +50,7 @@ trouver_binaire() {
 
 if [ "$BINARY" = "all" ]; then
     trouves=0
-    for bin in gtk3sermo gtk4sermo; do
+    for bin in gtk3sermo gtk4sermo qt6sermo; do
         if chemin=$(trouver_binaire "$bin"); then
             trouves=$((trouves+1))
             "$0" "$chemin" || exit $?

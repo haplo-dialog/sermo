@@ -6,7 +6,7 @@
 export MAIN_DIALOG='
 <window title="Frame qt6sermo" width-request="350" height-request="200">
   <vbox>
-    <frame><label>Options</label>
+    <frame label="Options">
       <vbox>
         <checkbox><label>Option 1</label></checkbox>
         <checkbox><label>Option 2</label></checkbox>

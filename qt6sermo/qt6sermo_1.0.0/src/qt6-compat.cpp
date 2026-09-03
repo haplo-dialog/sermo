@@ -138,8 +138,44 @@ void *qt6_scroll_new(int w, int h) {
  * d'événements Qt ; gtk_main_quit l'arrête.
  */
 #include <QtWidgets/QApplication>
+#include <QtGui/QIcon>
+#include <QtCore/QDir>
+#include <QtCore/QFile>
+#include <QtCore/QSettings>
+#include <QtCore/QStandardPaths>
 
 static QApplication *qt6_app = nullptr;
+
+/* ⚠️ Sans thème d'icônes déclaré, QIcon::fromTheme() rend un pixmap VIDE : le
+ * dialecte <pixmap><input file icon="folder"> n'affichait rien, et la fenêtre
+ * gardait la même taille quel que soit theme-icon-size. Le port de référence
+ * n'a pas ce problème — GTK lit le réglage du bureau tout seul. Qt, lancé hors
+ * d'une session de bureau (Xvfb, CI), n'a personne pour le lui dire.
+ * On reproduit donc la chaîne de GTK : réglage gtk-3.0, puis Adwaita, puis
+ * hicolor. Mesuré par tests/comportement/geometrie.sh le 2026-09-03. */
+static void qt6_theme_icones_par_defaut(void)
+{
+    if (!QIcon::themeName().isEmpty()) return;
+
+    QStringList candidats;
+    const QString ini = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation)
+                        + QStringLiteral("/gtk-3.0/settings.ini");
+    if (QFile::exists(ini)) {
+        const QString v = QSettings(ini, QSettings::IniFormat)
+                              .value(QStringLiteral("Settings/gtk-icon-theme-name")).toString();
+        if (!v.isEmpty()) candidats << v;
+    }
+    candidats << QStringLiteral("Adwaita") << QStringLiteral("hicolor");
+
+    for (const QString &nom : candidats) {
+        for (const QString &racine : QIcon::themeSearchPaths()) {
+            if (QDir(racine + QLatin1Char('/') + nom).exists()) {
+                QIcon::setThemeName(nom);
+                return;
+            }
+        }
+    }
+}
 
 extern "C" {
 
@@ -148,6 +184,7 @@ extern int option_print_ir;   /* gboolean (gint) défini dans gtkdialog.c */
 void qt6_app_init(int *argc, char ***argv) {
     if (option_print_ir) return;               /* parse seul : pas de QApplication */
     if (!qt6_app) qt6_app = new QApplication(*argc, *argv);
+    qt6_theme_icones_par_defaut();
 }
 
 int qt6_app_run(void) {

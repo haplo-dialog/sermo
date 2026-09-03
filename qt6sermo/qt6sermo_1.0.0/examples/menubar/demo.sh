@@ -7,9 +7,11 @@ export MAIN_DIALOG='
 <window title="Menu qt6sermo" width-request="400" height-request="300">
   <vbox>
     <menubar>
-      <menu><label>Fichier</label>
+      <menu>
         <menuitem><label>Nouveau</label><action>echo Nouveau</action></menuitem>
         <menuitem><label>Quitter</label><action>EXIT:0</action></menuitem>
+      
+        <label>Fichier</label>
       </menu>
     </menubar>
     <text><label>Zone principale</label></text>

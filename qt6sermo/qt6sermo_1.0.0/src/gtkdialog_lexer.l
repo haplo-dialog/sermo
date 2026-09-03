@@ -272,6 +272,19 @@ gchar *Token;
 	return(FRAME);
 }
 
+\<frame[ ]+[^=>]*\> {
+	/* <frame Un titre nu> : le label est donné en attributs NUS, sans nom=valeur.
+	   Sans cette règle la forme tombe dans PART_FRAME (qui attend nom="valeur")
+	   et l'analyse échoue. Mesuré contre l'oracle gtk3sermo le 2026-09-03.
+	   NB : ce commentaire doit rester INDENTÉ — en colonne 0, flex le lit
+	   comme une règle (« unrecognized rule »). */
+	Token="<frame>";
+	gtkdialog_lval.cval = g_strdup(&yytext[7]);
+	gtkdialog_lval.cval[strlen(gtkdialog_lval.cval) - 1] = '\0';	/* le '>' */
+	g_strstrip(gtkdialog_lval.cval);
+	return(FRAME);
+}
+
 \<frame[ ]+ {
 	Token="<frame>";
 	BEGIN(ST_TAG_ATTR);

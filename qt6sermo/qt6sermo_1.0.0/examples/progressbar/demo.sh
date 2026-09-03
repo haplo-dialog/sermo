@@ -6,7 +6,7 @@
 export MAIN_DIALOG='
 <window title="Progress qt6sermo" width-request="350" height-request="120">
   <vbox>
-    <progressbar><variable>PROGRESS</variable><value>65</value></progressbar>
+    <progressbar><variable>PROGRESS</variable><default>65</default></progressbar>
     <button ok></button>
   </vbox>
 </window>'
