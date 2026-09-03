@@ -1,6 +1,6 @@
 # haplo-dialog
 
-**Un descendant moderne, durci et maintenu de gtkdialog — ports GTK 3 et GTK 4.**
+**Un descendant moderne, durci et maintenu de gtkdialog — ports GTK 3, GTK 4 et Qt 6.**
 
 > ### ⚠️ Si vous aviez installé un paquet `gtk3dialog` de ce projet
 >
@@ -13,11 +13,11 @@
 
 [![Licence](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.1.3-informational.svg)](CHANGELOG.md)
-[![Toolkit](https://img.shields.io/badge/toolkit-GTK%203%20%2B%20GTK%204-success.svg)](#les-deux-ports)
+[![Toolkit](https://img.shields.io/badge/toolkit-GTK%203%20%2B%20GTK%204%20%2B%20Qt%206-success.svg)](#les-trois-ports)
 [![Tests](https://img.shields.io/badge/tests-55%2F55%20XML%20·%209%2F9%20unitaires%20·%2011%2F11%20comportement-brightgreen.svg)](#tests--qualité)
 
 Décrivez une interface en XML, exportez-la dans une variable, lancez le binaire —
-une vraie fenêtre **native** s'ouvre — GTK 3 ou GTK 4, au choix du port —, et
+une vraie fenêtre **native** s'ouvre — GTK 3, GTK 4 ou Qt 6, au choix du port —, et
 les valeurs saisies reviennent dans vos variables shell. Là où **gtkdialog** est abandonné, haplo-dialog le fait
 revivre : corrigé, durci, maintenu. Du grec *haplóos*, « simple ».
 
@@ -80,24 +80,29 @@ gtk3sermo --program=MAIN_DIALOG --do='echo "Bonjour $NOM"'
 
 ---
 
-## Les deux ports
+## Les trois ports
 
-Un cœur C commun (grammaire flex/bison + automate + `safe_exec`), deux backends.
+Un cœur C commun (grammaire flex/bison + automate + `safe_exec`), trois backends.
 
 | Port | Binaire | Toolkit | Balises de widget | Particularité |
 |------|---------|---------|:------:|---------------|
 | **gtk3sermo** | `gtk3sermo` | GTK 3 | 52 | **Référence** · le plus éprouvé |
 | **gtk4sermo** | `gtk4sermo` | GTK 4 | 56 | les 52 mêmes, plus `flowbox`, `overlay`, `revealer`, `stack` |
+| **qt6sermo** | `qt6sermo` | Qt 6 (≥ 6.2) | 52 | les 52 mêmes · construit par **CMake** (≥ 3.20) · versionné à part (**1.0.0**) · pas encore de `.deb` |
 
-> Une seule grammaire pour les deux ports. Le compte est celui des **balises de
+> Une seule grammaire pour les trois ports. Le compte est celui des **balises de
 > widget acceptées par la grammaire** (`src/gtkdialog_lexer.l`), alias compris —
 > il ne compte pas les balises de structure comme `<action>` ou `<variable>`.
 >
-> Les documents internes de chaque port citent un autre chiffre — **43** et
-> **50** — parce qu'ils comptent les **fichiers d'implémentation**
-> (`ls src/widget_*.c`). Les deux sont exacts : plusieurs balises partagent un
+> Les documents internes de chaque port citent un autre chiffre — **43**, **50**
+> et **47** — parce qu'ils comptent les **fichiers d'implémentation**
+> (`ls src/widget_*.c*`). Ils sont tous exacts : plusieurs balises partagent un
 > même fichier (les alias, les variantes `h`/`v`). Quand un chiffre apparaît
 > quelque part, il dit lequel des deux il est.
+>
+> L'**ancrage Wayland** (protocole layer-shell) n'existe que sur `gtk3sermo` :
+> ni `gtk4sermo` ni `qt6sermo` ne le proposent. Sur le port Qt 6, la balise
+> `<terminal>` dépend en plus de QTermWidget, qui est optionnel.
 >
 > La commande `gtkdialog` elle-même n'est PAS dans ces paquets : elle est fournie
 > par un paquet séparé, **`gtksermo`**. Voir [Installation](#installation).
@@ -127,6 +132,11 @@ sudo apt install ./gtk3sermo_1.1.3-1_amd64.deb
 | `gtk3sermo` 1.1.3-1 | `/usr/bin/gtk3sermo` | aucun |
 | `gtk4sermo` 1.1.3-1 | `/usr/bin/gtk4sermo` | aucun |
 | `gtksermo` 1.1.3-1 | `/usr/bin/gtkdialog` | **avec `gtkdialog` et `gtk3dialog`** |
+
+> Le port **Qt 6** n'a **pas** de paquet livré : `qt6sermo` 1.0.0 se construit
+> depuis les sources (voir plus bas). Sa recette Debian existe
+> (`qt6sermo/qt6sermo_1.0.0/packaging/debian/`), mais nous n'avons pas encore
+> construit ce `.deb`.
 
 > ⚠️ **Les paquets de la release `v1.0.0` ont été retirés** (versions `1.0.0-10`
 > et `1.0.0-11`). Ils portaient trois défauts : la sortie rendue au shell y était
@@ -178,6 +188,14 @@ cd gtk3sermo/gtk3sermo_1.1.3 && autoreconf -fi && ./configure && make -j"$(nproc
 conflits de paquets : à éviter si vous avez déjà un `gtkdialog` ou un
 `gtk3dialog` installé par votre distribution.
 
+Le port Qt 6 ne se construit pas en autotools mais avec **CMake** (≥ 3.20) et
+**Qt 6** (≥ 6.2) ; QTermWidget est optionnel et ne sert qu'à la balise
+`<terminal>` :
+
+```sh
+cd qt6sermo/qt6sermo_1.0.0 && cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j"$(nproc)" && sudo cmake --install build
+```
+
 Des recettes RPM, Arch, Gentoo et Slackware existent dans `packaging/`, mais
 **aucune n'a jamais été construite par nous** et leur URL de source ne répond pas
 encore. Voir [PACKAGING.md](PACKAGING.md).
@@ -200,12 +218,17 @@ Signalement de vulnérabilité : voir [SECURITY.md](SECURITY.md).
   ⚠️ Ce banc lance `--print-ir` : il **analyse** le XML sans construire un seul
   widget. Il ne dit rien du comportement.
 - **Unitaires du cœur** : `./tests/run_unit_tests.sh all`, `safe_exec`, **9/9 par
-  port** (sans serveur X).
+  port** (sans serveur X) — le raccourci `all` ne parcourt que les deux ports
+  GTK ; pour le port Qt 6, passer `qt6sermo` en argument.
 - **Comportement réel** : `./tests/comportement/run.sh <chemin-du-binaire>`,
   **11/11** — il **lance** le dialogue sous Xvfb et compare les variables
   rendues. Mode `--diff <gtk3> <gtk4>` : le port GTK 3 sert d'oracle.
   Plus `./tests/comportement/geometrie.sh`, pour ce qu'aucune variable ne trahit
   (`border-width`, taille d'icône de thème).
+- **Comportement du port Qt 6** : banc propre au port,
+  `qt6sermo/qt6sermo_1.0.0/tests/comportement/run.sh`, **24/24** — les valeurs
+  attendues y sont celles du port GTK 3, donc « vert » = parité de valeur avec
+  la référence. La suite XML partagée y passe aussi **55/55**.
 - **Fuzzing** du parser : `./tests/fuzz/run_fuzz.sh gtk3sermo 60` (afl++ ou repli intégré).
 - **CI** : build + tests, `.gitlab-ci.yml` et `.gitea/workflows/`.
 

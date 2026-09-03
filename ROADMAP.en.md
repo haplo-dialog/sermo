@@ -5,15 +5,18 @@
 
 ---
 
-## Current version: 1.0.0 (May 2026) ✅
+## Current version: 1.1.3 ✅
 
-First stable public version, **two ports**: `gtk3sermo` (GTK 3 backend,
-**52 widget tags**) and `gtk4sermo` (GTK 4 backend, **56** — the same 52, plus
-`flowbox`, `overlay`, `revealer`, `stack`). The backwards-compatible `gtkdialog`
-alias ships in a third package, `gtksermo`.
+**Three ports**: `gtk3sermo` (GTK 3 backend, **52 widget tags**), `gtk4sermo`
+(GTK 4 backend, **56** — the same 52, plus `flowbox`, `overlay`, `revealer`,
+`stack`) and `qt6sermo` (Qt 6 ≥ 6.2 backend, CMake ≥ 3.20 build, **52 documented
+tags**; the four GTK 4-specific tags are missing there), versioned independently
+at **1.0.0**. The backwards-compatible `gtkdialog` alias ships in a fourth
+package, `gtksermo`.
 
 The packages are downloadable from the GitLab releases. Packaging revisions
-advance port by port and may diverge; that is normal (see `VERSIONING.md` §2).
+advance port by port and may diverge; that is normal (see `VERSIONING.md` §2):
+the `qt6sermo` `.deb` is not built yet (source and recipe are provided).
 
 ---
 
@@ -64,8 +67,11 @@ Priority: make the project maintainable in the long term.
 |------|----------|-----------|-----|
 | `gtk3sermo` | ✅ Production | haplo-dialog | yes — build, XML, behaviour, 7 benches, real examples |
 | `gtk4sermo` | ✅ Production | haplo-dialog | yes — same pipeline, same benches |
+| `qt6sermo` | 🚧 Source only, `.deb` not built | haplo-dialog | yes — added on 2026-09-02, pipeline green |
 
-`gtk3sermo` is the reference port of sermo (GTK 3 backend, 52 widget tags). It provides the backward-compatible `gtkdialog` alias.
+`gtk3sermo` is the reference port of sermo (GTK 3 backend, 52 widget tags). It provides the backward-compatible `gtkdialog` alias, and it is the only port with Wayland layer-shell anchoring (`layer`, `edge`, `dist`, `reserve`).
+
+`qt6sermo` is the third port: it passes the same XML suite (**55/55**) and the same behaviour bench (**24/24**, value parity with `gtk3sermo`), with **47 `widget_*` files** and **52 documented tags**; `QTermWidget` is optional there (`<terminal>` tag).
 
 ---
 

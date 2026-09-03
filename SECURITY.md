@@ -17,6 +17,7 @@
 | gtk4sermo | 1.1.2 | ⚠️ **Plantage** — voir ci-dessous. Prendre la 1.1.3. |
 | gtk4sermo | 1.1.1 | ⚠️ **Plantage** — voir ci-dessous. Prendre la 1.1.3. |
 | gtk4sermo | 1.0.0 | ⚠️ Plus supportée — trois défauts corrigés en 1.1.0 ; voir aussi la 1.1.1 |
+| qt6sermo | 1.0.0 | ✅ Actif — troisième port, versionné à part ; source et recette fournies, paquet `.deb` pas encore construit |
 
 > ### ⚠️ Toutes les versions antérieures à la 1.1.3 plantent sur `<infobar>`
 >
@@ -30,16 +31,24 @@
 > uniquement en **1.1.3**.
 
 
-Les deux ports partagent le même cœur C et la même grammaire. Depuis le
+Les deux ports GTK partagent le même cœur C et la même grammaire. Depuis le
 2026-08-24 ils ont la **même posture mémoire** : `g_strlcpy` pour les copies de
 noms, borne explicite sur la recopie des widgets d'un conteneur, et aucune
 fonction de la famille `strcpy`/`strcat`/`sprintf`/`gets`, ce qu'un banc
-rejoue à chaque poussée sur les deux `src/`. L'alias
+rejoue à chaque poussée sur leurs deux `src/`. L'alias
 rétro-compatible `gtkdialog` est fourni par un paquet séparé, `gtksermo`.
 
-⚠️ Le port GTK 4 est le plus jeune : il a reçu la même passe, mais il a moins
-d'usage réel derrière lui. Ce qui reste ouvert est listé, port par port, dans
-les fichiers `TODO-SECURITY.md`.
+Un **troisième port**, `qt6sermo` (Qt 6 ≥ 6.2, construit par CMake ≥ 3.20,
+QTermWidget facultatif pour `<terminal>`), est branché à l'intégration continue
+depuis le 2026-09-02 : il y passe la suite XML partagée (55/55) et le banc de
+comportement (24/24, parité de valeur avec le port GTK 3 de référence). Il est
+versionné indépendamment (1.0.0). Les bancs de sûreté mémoire cités ci-dessus
+ne sont **pas** encore rejoués sur son `src/` : rien n'est donc affirmé ici de
+sa posture mémoire.
+
+⚠️ Le port GTK 4 a reçu la même passe que le port GTK 3, mais il a moins d'usage
+réel derrière lui ; `qt6sermo` est le plus jeune des trois. Ce qui reste ouvert
+est listé, port par port, dans les fichiers `TODO-SECURITY.md`.
 
 ---
 
@@ -89,7 +98,7 @@ Envoyez un email à **devel@haplo-dialog.fr** avec :
 
 ### Modèle de confiance
 
-Les deux ports exécutent l'interface décrite par l'**auteur du script XML**,
+Les trois ports exécutent l'interface décrite par l'**auteur du script XML**,
 comme un script shell exécute ce que son auteur écrit. Les balises `<action>`/`<input>`
 peuvent lancer des commandes : **c'est voulu et documenté**. La frontière de
 confiance est donc l'auteur **local** du script, pas un tiers distant. Le

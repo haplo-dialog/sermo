@@ -42,15 +42,21 @@ Avant 1.0.0, aucune garantie de compatibilité n'était offerte (phase `0.y`).
 
 ## 2. Où vit le numéro de version (sources de vérité)
 
-haplo-dialog distribue **deux ports** : **`gtk3sermo`** (backend GTK 3), le port
-de référence, et **`gtk4sermo`** (backend GTK 4). L'alias rétro-compatible
-**`gtkdialog`** est fourni par un troisième paquet, **`gtksermo`**.
+haplo-dialog distribue **trois ports** : **`gtk3sermo`** (backend GTK 3), le port
+de référence, **`gtk4sermo`** (backend GTK 4) et **`qt6sermo`** (backend Qt 6).
+L'alias rétro-compatible **`gtkdialog`** est fourni par un paquet à part,
+**`gtksermo`**.
 
-La version amont (`1.1.3`) est **commune aux deux ports** : c'est le même cœur, la
-même grammaire. En revanche la **révision d'empaquetage** avance port par port,
-puisqu'un correctif ne touche pas toujours les deux. Les deux numéros peuvent donc
-diverger — `gtk3sermo 1.0.0-10` et `gtk4sermo 1.0.0-11` par exemple — et c'est
-normal. Chaque port a son `debian/changelog`, qui fait foi pour lui.
+La version amont (`1.1.3`) est **commune aux deux ports GTK** : c'est le même
+cœur, la même grammaire. En revanche la **révision d'empaquetage** avance port par
+port, puisqu'un correctif ne touche pas toujours les deux. Les deux numéros
+peuvent donc diverger — `gtk3sermo 1.0.0-10` et `gtk4sermo 1.0.0-11` par exemple
+— et c'est normal. Chaque port a son `debian/changelog`, qui fait foi pour lui.
+
+**`qt6sermo` est versionné indépendamment** : il est en `1.0.0-1` quand les ports
+GTK sont en `1.1.3`. Il ne partage ni le numéro amont, ni le cycle de release —
+seulement la grammaire XML. La check-list ci-dessous ne le concerne donc pas : il
+a sa propre montée de version, sur les mêmes emplacements transposés à CMake.
 
 ### Emplacements à mettre à jour (check-list de release)
 
@@ -58,12 +64,13 @@ Une montée de version doit toucher les fichiers suivants, c'est la check-list
 de release :
 
 `<port>` vaut `gtk3sermo` ou `gtk4sermo` : sauf mention contraire, chaque ligne
-est à faire **deux fois**.
+est à faire **deux fois**. `qt6sermo` n'entre pas dans cette check-list — il
+avance sur son propre numéro (voir ci-dessus).
 
 | Emplacement | Fichier(s) | Champ |
 |-------------|-----------|-------|
 | Build autotools | `<port>/…/configure.ac` | `AC_INIT([<port>], [X.Y.Z], …)` |
-| Build CMake — **gtk3sermo seulement** | `gtk3sermo/…/CMakeLists.txt` | `project(gtk3sermo VERSION X.Y.Z …)` |
+| Build CMake — **gtk3sermo seulement** (parmi les ports GTK) | `gtk3sermo/…/CMakeLists.txt` | `project(gtk3sermo VERSION X.Y.Z …)` |
 | **Nom du dossier** | `<port>/<port>_X.Y.Z/` | la version est **dans le chemin** |
 | Debian | `<port>/…/packaging/debian/changelog` | `<port> (X.Y.Z-N)` — voir ci-dessous |
 | Arch | `<port>/…/packaging/arch/PKGBUILD` + `.SRCINFO` | `pkgver=X.Y.Z` |
@@ -73,7 +80,7 @@ est à faire **deux fois**.
 | Gentoo — mode d'emploi | `<port>/…/packaging/gentoo/README.gentoo.md` | les deux commandes citent le nom de l'ebuild |
 | Slackware — recette | `<port>/…/packaging/slackware/<port>.SlackBuild` | `VERSION=${VERSION:-X.Y.Z}` |
 | Slackware — mode d'emploi | `<port>/…/packaging/slackware/README.slackware.md` | le nom du `.tgz` produit, 4 lignes |
-| Script de build | `ci/build.sh` | `src_dir()` code le **chemin versionné** des deux ports |
+| Script de build | `ci/build.sh` | `src_dir()` code le **chemin versionné** des deux ports GTK — le script ne connaît pas `qt6sermo` |
 | Image Docker | `ci/Dockerfile.gtk3sermo` | `COPY` du chemin versionné + `LABEL …image.version` |
 | Manuel info | `<port>/doc/version.texi` | `@set EDITION` / `@set VERSION` |
 | Doc | `CHANGELOG.md`, `CHANGELOG.en.md`, `SECURITY.md`, `SECURITY.en.md`, `NEWS`, badges des `README` | tableaux & en-têtes |
@@ -84,7 +91,9 @@ remplit depuis `AC_INIT`. Il suit donc tout seul. Le `.spec` à la racine du por
 est un fichier **produit** — ne jamais l'éditer à la main.
 
 Le port GTK 4 n'a **pas** de `CMakeLists.txt` : il se construit par autotools
-seulement. Le modèle `.cmake` du `.gitlab-ci.yml` n'est donc étendu par aucun job.
+seulement. Le modèle `.cmake` du `.gitlab-ci.yml`, lui, n'est plus inutilisé :
+le job `qt6sermo` l'étend depuis le **2026-09-02**, avec sa propre variable `VER`
+(`1.0.0`), puisque ce port n'a pas le numéro des ports GTK.
 
 > ⚠️ **Particularité** : la version est encodée dans le **nom du dossier**
 > (`gtk3sermo_1.1.3/`) et dans le **nom de l'ebuild**
@@ -201,12 +210,14 @@ git push gitlab vX.Y.Z
 Pour publier `X.Y.Z` :
 
 1. **Geler** : s'assurer que `main` compile et que les tests passent, **dans les
-   deux ports** — `./ci/build.sh gtk3sermo --test` puis
+   deux ports GTK** — `./ci/build.sh gtk3sermo --test` puis
    `./ci/build.sh gtk4sermo --test`, ou simplement attendre que le pipeline
-   GitLab soit vert : il rejoue les deux ports, les sept garde-fous et les
-   exemples réels sous Xvfb en locale française.
-2. **Bumper la version** dans tous les emplacements de la §2, **pour chaque
-   port** : `configure.ac`, `CMakeLists.txt` (gtk3sermo seulement), dossier
+   GitLab soit vert : il rejoue les **trois** ports — `qt6sermo` compris depuis
+   le 2026-09-02, par CMake et avec son propre banc de comportement — les sept
+   garde-fous et les exemples réels sous Xvfb en locale française.
+2. **Bumper la version** dans tous les emplacements de la §2, **pour chaque port
+   GTK** (`qt6sermo` a son propre numéro et sa propre montée) : `configure.ac`,
+   `CMakeLists.txt` (gtk3sermo seulement), dossier
    `<port>_X.Y.Z/`, `PKGBUILD` + `.SRCINFO`, `*.spec` (`%global version`),
    ebuild renommé, `SlackBuild`, et une entrée dans chaque `debian/changelog`.
 3. **Clore le CHANGELOG** : `## [Unreleased]` → `## [X.Y.Z], AAAA-MM-JJ`, et

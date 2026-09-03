@@ -4,10 +4,10 @@
 
 | Composant | Fichiers | Licence | Raison |
 |-----------|----------|---------|--------|
-| Cœur et widgets | `src/*.c`, `src/*.h`, `src/safe_exec.c`, `src/variables.c`, `src/stringman.c`, `src/stack.c` | **GPL-2.0-or-later** | Héritage direct gtkdialog (László Pere), copyleft fort |
+| Cœur et widgets | `src/*.c`, `src/*.h`, `src/*.cpp` (port Qt 6), `src/safe_exec.c`, `src/variables.c`, `src/stringman.c`, `src/stack.c` | **GPL-2.0-or-later** | Héritage direct gtkdialog (László Pere), copyleft fort |
 | Parser XML | `src/gtkdialog_lexer.l`, `src/gtkdialog_parser.y` | **GPL-2.0-or-later** | Héritage direct gtkdialog original |
 | Documentation | `doc/*.texi`, `man/`, `*-site/*.html` | **GPL-2.0-or-later** | Un seul texte pour tout le dépôt. La documentation était annoncée CC-BY-SA 4.0 alors que les manuels texinfo portaient en réalité une GFDL dans leur propre en-tête, et `debian/copyright` disait GPL : trois papiers, trois licences pour les mêmes fichiers. Tranché le 2026-08-25 en faveur de la GPL. Les manuels texinfo ont été écrits par le projet et ne partagent aucune phrase avec le manuel d'origine de László Pere, qui était sous GFDL — mesuré : 0 séquence de six mots en commun côté `gtk3sermo`, et côté `gtk4sermo` les seules communes venaient d'une section que le projet avait lui-même ajoutée à ce manuel-là. |
-| Exemples écrits par le projet | `gtk3sermo/…/examples/showcase/` (5 scripts), `gtk3sermo/…/examples/system-tools/` (1 script), `tests/xml/*.xml` (55 fichiers) | **CC0-1.0** | Domaine public, utilisables sans restriction. Vérifié le 2026-08-25 : les 61 portent l'en-tête. Le port GTK 4 n'a ni `showcase/` ni `system-tools/` — ses exemples sont hérités de l'amont gtkdialog et restent en GPL-2.0-or-later. |
+| Exemples écrits par le projet | `gtk3sermo/…/examples/showcase/` (5 scripts), `gtk3sermo/…/examples/system-tools/` (1 script), `tests/xml/*.xml` (55 fichiers) | **CC0-1.0** | Domaine public, utilisables sans restriction. Vérifié le 2026-08-25 : les 61 portent l'en-tête. Le port GTK 4 n'a ni `showcase/` ni `system-tools/` — ses exemples sont hérités de l'amont gtkdialog et restent en GPL-2.0-or-later. Le port Qt 6 n'a pas non plus ces deux répertoires, mais ses exemples ne sont pas hérités : ses 32 scripts `examples/*/demo.sh` ont été écrits par le projet et portent tous l'en-tête **CC0-1.0** (vérifié le 2026-09-03). |
 | Exemples hérités de gtkdialog | le reste de `examples/` | **GPL-2.0-or-later** | Comme le reste du dépôt |
 | Jeux d'icônes de tiers | `examples/button/`, `examples/togglebutton/`, `examples/pfeme/` | **GPL-2** | elementary, fast-forward, nuvola — chacun avec son `COPYING` sur place |
 | Packaging | `packaging/` | **GPL-2.0-or-later** | Scripts de build liés au projet |
@@ -45,10 +45,20 @@ exclusive, bords opposés, 2021-2024).
 
 ## Identification SPDX dans les sources
 
-Chaque fichier de `src/`, dans les deux ports, porte un identifiant SPDX en
+Chaque fichier de `src/`, dans les deux ports GTK, porte un identifiant SPDX en
 première ligne — 115 fichiers pour gtk3sermo, 131 pour gtk4sermo, sans exception.
 Le banc `tests/garde_spdx.sh` le vérifie à chaque passage de la CI, pour que
 cette phrase reste vraie.
+
+Le troisième port, `qt6sermo`, n'est **pas** encore aligné sur cette règle.
+Mesuré le 2026-09-03 sur ses 123 fichiers `.c`/`.h`/`.cpp` de `src/` : quatre
+seulement — ceux repris du cœur partagé (`safe_exec.c`, `variables.c`,
+`stringman.c`, `stack.c`) — portent un identifiant SPDX ; les autres portent la
+licence en clair (« Licence : GPL-2.0-or-later ») et 36 ne portent aucune
+mention. Le banc `tests/garde_spdx.sh` ne lui est pas appliqué par la CI. La
+licence du port ne fait pas de doute pour autant : GPL-2.0-or-later, d'après
+`qt6sermo/qt6sermo_1.0.0/packaging/debian/copyright` — c'est la **forme** de la
+mention qui manque, pas la licence.
 
 Les répertoires `examples/` et `tests/xml/` relèvent d'une autre licence : voir
 plus haut.

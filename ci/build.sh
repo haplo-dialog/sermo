@@ -4,8 +4,9 @@
 #
 # Usage :
 #   ./ci/build.sh                        # build gtk3sermo (port par défaut)
-#   ./ci/build.sh all                    # build les deux ports
+#   ./ci/build.sh all                    # build les trois ports
 #   ./ci/build.sh gtk4sermo              # build un seul port
+#   ./ci/build.sh qt6sermo               # build le port Qt 6 (CMake)
 #   ./ci/build.sh gtk3sermo --test       # build + tests
 #   ./ci/build.sh gtk3sermo --clean      # nettoyage
 
@@ -37,9 +38,9 @@ for arg in "$@"; do
     case "$arg" in
         --test)  RUN_TESTS=1 ;;
         --clean) CLEAN=1 ;;
-        all)     PORTS="gtk3sermo gtk4sermo" ;;
-        gtk3sermo|gtk4sermo) PORTS="$PORTS $arg" ;;
-        *) err "Argument inconnu : $arg (attendu : all, gtk3sermo, gtk4sermo, --test, --clean)" ;;
+        all)     PORTS="gtk3sermo gtk4sermo qt6sermo" ;;
+        gtk3sermo|gtk4sermo|qt6sermo) PORTS="$PORTS $arg" ;;
+        *) err "Argument inconnu : $arg (attendu : all, gtk3sermo, gtk4sermo, qt6sermo, --test, --clean)" ;;
     esac
 done
 
@@ -51,12 +52,16 @@ src_dir() {
     case "$1" in
         gtk3sermo)  echo "${ROOT_DIR}/gtk3sermo/gtk3sermo_1.1.3" ;;
         gtk4sermo)  echo "${ROOT_DIR}/gtk4sermo/gtk4sermo_1.1.3" ;;
+        # Chaque port est versionné indépendamment : qt6sermo est en 1.0.0
+        # quand les ports GTK sont en 1.1.3. Pas de version en dur commune.
+        qt6sermo)   echo "${ROOT_DIR}/qt6sermo/qt6sermo_1.0.0" ;;
     esac
 }
 
 build_system() {
     case "$1" in
         gtk3sermo|gtk4sermo) echo "autotools" ;;
+        qt6sermo)            echo "cmake" ;;
     esac
 }
 

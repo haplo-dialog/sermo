@@ -17,6 +17,7 @@
 | gtk4sermo | 1.1.2 | ⚠️ **Crash** — see below. Take 1.1.3. |
 | gtk4sermo | 1.1.1 | ⚠️ **Crash** — see below. Take 1.1.3. |
 | gtk4sermo | 1.0.0 | ⚠️ No longer supported — three defects fixed in 1.1.0 ; see also 1.1.1 |
+| qt6sermo | 1.0.0 | ✅ Active — third port, versioned separately; source and recipe shipped, `.deb` package not built yet |
 
 > ### ⚠️ Every version before 1.1.3 crashes on `<infobar>`
 >
@@ -30,16 +31,23 @@
 > **1.1.3**.
 
 
-Both ports share the same C core and the same grammar. Since 2026-08-24 they
+Both GTK ports share the same C core and the same grammar. Since 2026-08-24 they
 have the **same memory-safety posture**: `g_strlcpy` for name copies, an explicit
 bound on copying a container's widgets, and none of the
-`strcpy`/`strcat`/`sprintf`/`gets` family — which a bench replays on both `src/`
-trees at every push. The backwards-compatible `gtkdialog`
+`strcpy`/`strcat`/`sprintf`/`gets` family — which a bench replays on their two
+`src/` trees at every push. The backwards-compatible `gtkdialog`
 alias ships in a separate package, `gtksermo`.
 
-⚠️ The GTK 4 port is the younger one: it received the same pass, but it has less
-real-world use behind it. What remains open is listed, port by port, in the
-`TODO-SECURITY.md` files.
+A **third port**, `qt6sermo` (Qt 6 ≥ 6.2, built with CMake ≥ 3.20, QTermWidget
+optional for `<terminal>`), has been wired into continuous integration since
+2026-09-02: there it passes the shared XML suite (55/55) and the behaviour bench
+(24/24, value parity with the reference GTK 3 port). It is versioned
+independently (1.0.0). The memory-safety benches above are **not** replayed on
+its `src/` yet: nothing is claimed here about its memory posture.
+
+⚠️ The GTK 4 port received the same pass as the GTK 3 one, but it has less
+real-world use behind it; `qt6sermo` is the youngest of the three. What remains
+open is listed, port by port, in the `TODO-SECURITY.md` files.
 
 ---
 
@@ -89,7 +97,7 @@ Send an email to **devel@haplo-dialog.fr** with:
 
 ### Trust model
 
-Both ports run the interface described by the **author of the XML script**, just
+All three ports run the interface described by the **author of the XML script**, just
 as a shell script runs what its author writes. The `<action>`/`<input>` tags can
 launch commands: **this is intended and documented**. The trust boundary is
 therefore the **local** author of the script, not a remote third party. The

@@ -1,6 +1,6 @@
 # haplo-dialog
 
-**A modern, hardened and maintained descendant of gtkdialog — GTK 3 and GTK 4 ports.**
+**A modern, hardened and maintained descendant of gtkdialog — GTK 3, GTK 4 and Qt 6 ports.**
 
 > ### ⚠️ If you installed a `gtk3dialog` package from this project
 >
@@ -12,12 +12,12 @@
 
 [![Licence](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.1.3-informational.svg)](CHANGELOG.en.md)
-[![Toolkit](https://img.shields.io/badge/toolkit-GTK%203%20%2B%20GTK%204-success.svg)](#the-two-ports)
+[![Toolkit](https://img.shields.io/badge/toolkit-GTK%203%20%2B%20GTK%204%20%2B%20Qt%206-success.svg)](#the-three-ports)
 [![Tests](https://img.shields.io/badge/tests-55%2F55%20XML%20·%209%2F9%20unit%20·%2011%2F11%20behaviour-brightgreen.svg)](#tests--quality)
 
 Describe an interface in XML, export it into a variable, run the binary —
-a real **native GTK 3** window opens, and the values you enter come back
-in your shell variables. Where **gtkdialog** has been abandoned, haplo-dialog
+a real **native** window opens — GTK 3, GTK 4 or Qt 6, depending on the port —
+and the values you enter come back in your shell variables. Where **gtkdialog** has been abandoned, haplo-dialog
 brings it back to life: fixed, hardened, maintained. From the Greek *haplóos*, "simple".
 
 ---
@@ -77,23 +77,28 @@ gtk3sermo --program=MAIN_DIALOG --do='echo "Hello $NAME"'
 
 ---
 
-## The two ports
+## The three ports
 
-One shared C core (flex/bison grammar + state machine + `safe_exec`), two backends.
+One shared C core (flex/bison grammar + state machine + `safe_exec`), three backends.
 
 | Port | Binary | Toolkit | Widget tags | Notes |
 |------|---------|---------|:------:|---------------|
 | **gtk3sermo** | `gtk3sermo` | GTK 3 | 52 | **Reference** · the most battle-tested |
 | **gtk4sermo** | `gtk4sermo` | GTK 4 | 56 | the same 52, plus `flowbox`, `overlay`, `revealer`, `stack` |
+| **qt6sermo** | `qt6sermo` | Qt 6 (≥ 6.2) | 52 | the same 52 · built with **CMake** (≥ 3.20) · versioned separately (**1.0.0**) · no `.deb` yet |
 
-> One grammar for both ports. The count is the number of **widget tags accepted by
+> One grammar for all three ports. The count is the number of **widget tags accepted by
 > the grammar** (`src/gtkdialog_lexer.l`), aliases included — it does not count
 > structural tags such as `<action>` or `<variable>`.
 >
-> The internal documents of each port quote a different figure — **43** and
-> **50** — because they count **implementation files** (`ls src/widget_*.c`).
-> Both are accurate: several tags share one file (aliases, `h`/`v` variants).
+> The internal documents of each port quote a different figure — **43**, **50**
+> and **47** — because they count **implementation files** (`ls src/widget_*.c*`).
+> All are accurate: several tags share one file (aliases, `h`/`v` variants).
 > Wherever a figure appears, it says which of the two it is.
+>
+> **Wayland anchoring** (the layer-shell protocol) exists only in `gtk3sermo`:
+> neither `gtk4sermo` nor `qt6sermo` offers it. On the Qt 6 port, the
+> `<terminal>` tag additionally depends on QTermWidget, which is optional.
 >
 > The `gtkdialog` command itself is NOT in these packages: it ships in a separate
 > package, **`gtksermo`**. See [Installation](#installation).
@@ -122,6 +127,11 @@ sudo apt install ./gtk3sermo_1.1.3-1_amd64.deb
 | `gtk3sermo` 1.1.3-1 | `/usr/bin/gtk3sermo` | none |
 | `gtk4sermo` 1.1.3-1 | `/usr/bin/gtk4sermo` | none |
 | `gtksermo` 1.1.3-1 | `/usr/bin/gtkdialog` | **with `gtkdialog` and `gtk3dialog`** |
+
+> The **Qt 6** port has **no** shipped package: `qt6sermo` 1.0.0 is built from
+> source (see below). Its Debian recipe exists
+> (`qt6sermo/qt6sermo_1.0.0/packaging/debian/`), but we have not built that
+> `.deb` yet.
 
 > ⚠️ **The packages from release `v1.0.0` have been withdrawn** (versions
 > `1.0.0-10` and `1.0.0-11`). They carried three defects: the output handed to the
@@ -172,6 +182,13 @@ cd gtk3sermo/gtk3sermo_1.1.3 && autoreconf -fi && ./configure && make -j"$(nproc
 of package conflicts: avoid it if you already have a `gtkdialog` or a
 `gtk3dialog` installed by your distribution.
 
+The Qt 6 port does not use autotools: it builds with **CMake** (≥ 3.20) and
+**Qt 6** (≥ 6.2); QTermWidget is optional and only serves the `<terminal>` tag:
+
+```sh
+cd qt6sermo/qt6sermo_1.0.0 && cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j"$(nproc)" && sudo cmake --install build
+```
+
 RPM, Arch, Gentoo and Slackware recipes exist under `packaging/`, but **none has
 ever been built by us** and their source URL does not resolve yet. See
 [PACKAGING.md](PACKAGING.md).
@@ -194,12 +211,17 @@ Vulnerability report: see [SECURITY.md](SECURITY.en.md).
   ⚠️ This bench runs `--print-ir`: it **parses** the XML without building a
   single widget. It says nothing about behaviour.
 - **Core unit tests**: `./tests/run_unit_tests.sh all`, `safe_exec`, **9/9 per
-  port** (without an X server).
+  GTK port** (without an X server) — the `all` mode only walks `gtk3sermo` and
+  `gtk4sermo`.
 - **Real behaviour**: `./tests/comportement/run.sh <path-to-binary>`, **11/11** —
   it **launches** the dialogue under Xvfb and compares the variables it emits.
   `--diff <gtk3> <gtk4>` mode: the GTK 3 port acts as the oracle.
   Plus `./tests/comportement/geometrie.sh`, for what no variable reveals
   (`border-width`, theme icon size).
+- **Qt 6 port behaviour**: the port's own bench,
+  `qt6sermo/qt6sermo_1.0.0/tests/comportement/run.sh`, **24/24** — its expected
+  values are the GTK 3 port's, so green means value parity with the reference.
+  The shared XML suite also passes **55/55** there.
 - **Fuzzing** of the parser: `./tests/fuzz/run_fuzz.sh gtk3sermo 60` (afl++ or built-in fallback).
 - **CI**: build + tests, `.gitlab-ci.yml` and `.gitea/workflows/`.
 

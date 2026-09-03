@@ -29,7 +29,7 @@ Thank you for your interest in haplo-dialog. This document explains how to contr
   welcome by email at `devel@haplo-dialog.fr`
 
 **Reference port:**  
-haplo-dialog provides two ports, `gtk3sermo` (GTK 3 backend) and `gtk4sermo` (GTK 4 backend). The backwards-compatible `gtkdialog` alias ships in a separate package, `gtksermo`. It is a maintained descendant of gtkdialog (a fork of Laszlo Pere's gtkdialog 0.8.3), fixed and hardened. Other descendants exist, notably Mick Amadio's BunsenLabs fork, which also ports gtkdialog to GTK 3.
+haplo-dialog provides three ports: `gtk3sermo` (GTK 3 backend), `gtk4sermo` (GTK 4 backend) and `qt6sermo` (Qt 6 backend, versioned independently: 1.0.0 while the GTK ports are at 1.1.3). `gtk3sermo` remains the reference port: it is the only one that provides the Wayland anchoring (layer-shell). The backwards-compatible `gtkdialog` alias ships in a separate package, `gtksermo`. It is a maintained descendant of gtkdialog (a fork of Laszlo Pere's gtkdialog 0.8.3), fixed and hardened. Other descendants exist, notably Mick Amadio's BunsenLabs fork, which also ports gtkdialog to GTK 3.
 
 ---
 
@@ -49,6 +49,8 @@ haplo-dialog/
 │       ├── examples/             ← #!/bin/sh scripts, one per widget (GPL; showcase/ and system-tools/ are CC0)
 │       ├── doc/
 │       └── packaging/
+├── gtk4sermo/                    ← GTK 4 port (autotools, same layout)
+├── qt6sermo/                     ← Qt 6 port (CMake; qt6sermo_1.0.0/)
 └── tests/
     ├── xml/                      ← XML regression (55 cases)
     ├── unit/test_safe_exec.c     ← behaviour tests (safe_exec)
@@ -71,6 +73,11 @@ sudo pacman -S base-devel flex bison gtk3
 # Fedora
 sudo dnf install gcc flex bison gtk3-devel
 ```
+
+These packages cover the reference port `gtk3sermo`; `gtk4sermo` needs
+`libgtk-4-dev` instead. The Qt 6 port does not build with autotools: it needs
+CMake (≥ 3.20) and Qt 6 (≥ 6.2) — on Debian `cmake qt6-base-dev` — with
+QTermWidget optional and only used by the `<terminal>` widget.
 
 ### Development build
 
@@ -101,8 +108,8 @@ clang-format --dry-run src/my_new_file.c
 3. Modify the code, one subject per branch
 4. Test the port you touched: make check, then
    sh tests/xml/run_tests.sh <port> and sh tests/run_unit_tests.sh <port>
-5. If the fix touches BOTH ports, carry it into both: they share the core,
-   and a silent divergence appears fast
+5. If the fix touches SEVERAL ports, carry it into each of them: they share
+   the core, and a silent divergence appears fast
 6. Commit (see below)
 7. Open a Merge Request on gitlab.com/haplo-dialog/sermo,
    or send the patch to devel@haplo-dialog.fr
@@ -140,7 +147,7 @@ it by language would make `git log` unreadable.*
 
 ## 5. Code standards
 
-### C (core and widgets, both ports)
+### C / C++ (core and widgets, the three ports)
 
 - Standard: **C11** (`-std=c11`)
 - Formatting: do **not** run `clang-format -i` on existing files. The
@@ -190,6 +197,11 @@ char *p = malloc(strlen(user_input) + 1); /* unbounded */
 A widget is wired in at **several points**: the implementation, the grammar
 (lexer + parser) and the dispatch points (`automaton.c`, `widgets.c`). Take an
 existing widget as a model, here `<switch>` (`src/widget_switch.c/.h`).
+
+The eight steps below describe the reference port `gtk3sermo` (autotools).
+The other ports wire in at the same points; the Qt 6 port writes its widgets
+in `.cpp` and declares its sources in its `CMakeLists.txt`, not in
+`src/Makefile.am`.
 
 **1. Implement `src/widget_monwidget.c` + `src/widget_monwidget.h`**
 
@@ -327,10 +339,10 @@ valgrind --leak-check=full --error-exitcode=1 \
 
 ### Continuous integration (CI)
 
-The repository provides `.gitlab-ci.yml` (GitLab CI, `debian:testing` image, target: Debian testing). On every push / merge request, the job:
+The repository provides `.gitlab-ci.yml` (GitLab CI, `debian:testing` image, target: Debian testing). On every push / merge request, one job per port:
 
 1. installs the build dependencies;
-2. compiles (autotools);
+2. compiles (autotools for the GTK ports, CMake for the Qt 6 port);
 3. validates the binary against the 55 XML cases (`tests/xml/run_tests.sh`, `--print-ir`,
    without an X server).
 

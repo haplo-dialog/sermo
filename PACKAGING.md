@@ -6,7 +6,9 @@
 >
 > **Les binaires sont publiés** depuis le 2026-08-24, joints à la release
 > [v1.1.3](https://gitlab.com/haplo-dialog/sermo/-/releases/v1.1.3) avec leurs sommes de contrôle : `gtk3sermo`, `gtk4sermo`,
-> `gtksermo` et les deux paquets de symboles. Il n'y a **pas de dépôt APT** :
+> `gtksermo` et les deux paquets de symboles. Le troisième port, `qt6sermo`
+> (1.0.0-1), n'a **pas encore** de `.deb` construit : sa source et ses recettes
+> sont dans l'arbre, rien n'est publié pour lui. Il n'y a **pas de dépôt APT** :
 > on télécharge, on vérifie, on installe. Les anciens paquets `gtk3dialog` ont
 > été retirés au renommage, et ceux de la `v1.0.0` l'ont été le 2026-08-27
 > parce qu'ils portaient trois défauts — voir le `README`.
@@ -14,8 +16,9 @@
 
 ## Principe : la source est le livrable principal
 
-haplo-dialog fournit **deux ports**, `gtk3sermo` (backend GTK 3) et `gtk4sermo`
-(backend GTK 4). `gtk3sermo` est le port de
+haplo-dialog fournit **trois ports** : `gtk3sermo` (backend GTK 3), `gtk4sermo`
+(backend GTK 4) et `qt6sermo` (backend Qt 6, construit par CMake et versionné à
+part). `gtk3sermo` est le port de
 référence. Le projet maintient **un** paquet binaire, le `.deb` de `haplo-dialog`,
 et fournit, dans l'arbre, des **recettes** pour les autres familles de
 distributions. Héberger un binaire pour chaque cible serait ingérable : le modèle
@@ -31,6 +34,8 @@ adapté à sa cible.
 2. **Le `.deb` se construit depuis l'arbre**, en une commande
    (`dpkg-buildpackage -us -uc -b`), et donne `gtk3sermo`, `gtksermo` et
    `gtk4sermo`. Les binaires obtenus sont publiés dans la release v1.1.3, avec leurs sommes.
+   `qt6sermo` a lui aussi sa recette `debian/`, mais son `.deb` n'a **pas encore
+   été construit** ni publié.
 3. **Les autres cibles : recettes fournies, build à la demande.** Le projet
    n'héberge pas ces binaires ; on les construit si un besoin réel émerge.
 
@@ -38,8 +43,9 @@ adapté à sa cible.
 
 | Cible | Fourni ? | Où |
 |-------|:--:|-----|
-| Source (les deux ports) | ✅ | dépôt Git |
+| Source (les trois ports) | ✅ | dépôt Git |
 | `.deb` (`gtk3sermo`, `gtksermo`, `gtk4sermo`) | ✅ | recette dans l'arbre, **binaires publiés** dans la release, avec leurs sommes |
+| `.deb` (`qt6sermo`) | ⏳ | recette dans l'arbre ; **pas encore construit ni publié** |
 | Paquets pour les autres distributions | ❌ | recettes dans l'arbre ; build par l'aval |
 
 ## Recettes disponibles, et ce qu'elles valent
@@ -75,6 +81,11 @@ gtk3sermo/gtk3sermo_1.1.3/packaging/
 └── slackware/   # *.SlackBuild (+ doinst.sh)                    → SlackBuild
 ```
 
+`qt6sermo` fournit les **mêmes cinq formats** sous
+`qt6sermo/qt6sermo_1.0.0/packaging/`, calqués sur CMake. Aucun n'a été construit
+ni vérifié par nos soins, `debian/` compris : la colonne de droite du tableau
+ci-dessus ne vaut donc **pas** pour lui.
+
 ## Construire un paquet pour votre distribution
 
 ```sh
@@ -104,6 +115,9 @@ directement `gtk3sermo`. Depuis les sources, `make install` pose bien le lien.
 ```sh
 # autotools - gtk3sermo
 cd gtk3sermo/gtk3sermo_1.1.3 && autoreconf -fi && ./configure && make -j"$(nproc)" && sudo make install
+
+# CMake - qt6sermo
+cd qt6sermo/qt6sermo_1.0.0 && cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j"$(nproc)" && sudo cmake --install build
 ```
 
 ## Domaine du projet
