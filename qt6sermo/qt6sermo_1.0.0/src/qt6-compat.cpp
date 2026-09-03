@@ -155,7 +155,12 @@ static QApplication *qt6_app = nullptr;
  * hicolor. Mesuré par tests/comportement/geometrie.sh le 2026-09-03. */
 static void qt6_theme_icones_par_defaut(void)
 {
-    if (!QIcon::themeName().isEmpty()) return;
+    /* « hicolor » n'est pas un choix de thème : c'est le SOCLE de repli de la
+     * spécification — Qt le rapporte quand rien n'est configuré (mesuré en
+     * conteneur CI : themeName()=="hicolor", toutes les icônes nulles). Ne
+     * s'arrêter que devant un VRAI thème. */
+    const QString deja = QIcon::themeName();
+    if (!deja.isEmpty() && deja != QLatin1String("hicolor")) return;
 
     QStringList candidats;
     const QString ini = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation)

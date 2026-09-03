@@ -10,7 +10,9 @@ Vcs-Git: https://gitlab.com/haplo-dialog/sermo.git
 
 Package: qt6sermo
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, libqt6core6 (>= 6.2), libqt6widgets6, libqt6gui6
+# libqt6svg6 : les themes d'icones modernes (Adwaita...) sont en SVG ; sans le
+# greffon, <pixmap><input file icon="..."> rend une image vide.
+Depends: ${shlibs:Depends}, ${misc:Depends}, libqt6core6 (>= 6.2), libqt6widgets6, libqt6gui6, libqt6svg6
 Description: Qt6 dialog window creator for shell scripts
  qt6sermo builds Qt6-based dialog windows from an XML-like description
  language. Most complete port: 42/42 widgets including QMenuBar,

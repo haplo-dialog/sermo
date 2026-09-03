@@ -233,7 +233,9 @@ exemples:qt6sermo:
     # poussee, 2026-09-03). adwaita-icon-theme : sans theme d'icones, le
     # controle <pixmap> de geometrie.sh SAUTE en silence — or c'est justement
     # lui qui a demasque les icones jamais chargees du port.
-    DEPS: "cmake qt6-base-dev xvfb xauth xdotool locales dbus-x11 fonts-dejavu-core adwaita-icon-theme"
+    # libqt6svg6 : l'Adwaita moderne est presque toute en SVG symbolique — sans le
+    # greffon SVG, QIcon rend des pixmaps NULS et le controle <pixmap> echoue.
+    DEPS: "cmake qt6-base-dev xvfb xauth xdotool locales dbus-x11 fonts-dejavu-core adwaita-icon-theme libqt6svg6"
   script:
     - sed -i 's/^# *fr_FR.UTF-8/fr_FR.UTF-8/' /etc/locale.gen
     - locale-gen

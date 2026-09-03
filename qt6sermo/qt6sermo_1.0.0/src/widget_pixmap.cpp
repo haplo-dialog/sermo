@@ -25,6 +25,25 @@
 #include <QtWidgets/QLabel>
 #include <QtGui/QPixmap>
 #include <QtGui/QIcon>
+
+/* Icône de thème AU FORMAT DEMANDÉ, comme gtk_icon_theme_load_icon chez le
+ * port de référence : GTK remet l'icône à l'échelle voulue et replie sur la
+ * variante -symbolic (l'Adwaita moderne est presque toute symbolique). Qt ne
+ * fait ni l'un ni l'autre : en conteneur CI, « folder » rendait un pixmap NUL
+ * (pas de repli symbolique), et forcé sur Adwaita, 16x16 pour une demande de
+ * 64 — la fenêtre ne suivait pas theme-icon-size, geometrie.sh le voyait.
+ * Mesuré le 2026-09-03. */
+static QPixmap pixmap_icone_theme(const char *nom, int taille)
+{
+    QIcon ic = QIcon::fromTheme(QString::fromUtf8(nom));
+    if (ic.isNull())
+        ic = QIcon::fromTheme(QString::fromUtf8(nom) + QStringLiteral("-symbolic"));
+    if (ic.isNull()) return QPixmap();
+    QPixmap px = ic.pixmap(taille, taille);
+    if (!px.isNull() && px.width() != taille && px.height() != taille)
+        px = px.scaled(taille, taille, Qt::KeepAspectRatio, Qt::SmoothTransformation);
+    return px;
+}
 #include <QtCore/QString>
 
 #include <string.h>
@@ -79,8 +98,7 @@ GtkWidget *widget_pixmap_create(AttributeSet *Attr, tag_attr *attr, gint Type)
                     const char *v;
                     if (attr && (v = get_tag_attribute(attr, "stock-icon-size")))
                         taille_stock = atoi(v);
-                    px = QIcon::fromTheme(QString::fromUtf8(nom_stock))
-                             .pixmap(taille_stock, taille_stock);
+                    px = pixmap_icone_theme(nom_stock, taille_stock);
                     filepath = nom_stock;
                     break;
                 }
@@ -92,8 +110,7 @@ GtkWidget *widget_pixmap_create(AttributeSet *Attr, tag_attr *attr, gint Type)
                     else if (larg > -1) taille_theme = larg;
                     if (attr && (v = get_tag_attribute(attr, "theme-icon-size")))
                         taille_theme = atoi(v);
-                    px = QIcon::fromTheme(QString::fromUtf8(nom_icone))
-                             .pixmap(taille_theme, taille_theme);
+                    px = pixmap_icone_theme(nom_icone, taille_theme);
                     filepath = nom_icone;
                     break;
                 }
