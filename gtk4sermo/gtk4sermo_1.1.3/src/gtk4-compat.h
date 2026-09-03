@@ -292,10 +292,48 @@ _compat_box_pack(GtkBox *box, GtkWidget *child,
 {
     GtkOrientation axe = gtk_orientable_get_orientation(GTK_ORIENTABLE(box));
 
-    if (at_end)
-        gtk_box_prepend(box, child);
-    else
+    if (at_end) {
+        /* ⚠️ GTK3 : pack_end ne fixe pas que l'ORDRE, il COLLE le groupe au bord
+         * opposé de la boîte — à droite pour une hbox. gtk_box_prepend seul ne
+         * reproduisait que l'ordre : les enfants s'alignaient à GAUCHE alors que
+         * le port de référence les aligne à DROITE. Défaut visible sur chaque
+         * en-tête de l'exemple system-tools — le cœur empile TOUS les enfants
+         * d'une hbox avec pack_end (widget_hbox.c).
+         *
+         * On reproduit le bord comme GTK3 le fait : un RESSORT extensible posé
+         * une seule fois en tête de boîte pousse le groupe vers la fin. Les
+         * enfants suivants s'insèrent juste après lui, ce qui préserve l'ordre
+         * de GTK3 (le premier empilé finit le plus au bord).
+         * ⚠️ Ne PAS aligner la boîte elle-même : essayé, cela décale toute la
+         * mise en page dans le parent. */
+        if (!expand) {
+            GtkWidget *ressort = g_object_get_data(G_OBJECT(box), "_compat_ressort_fin");
+            if (ressort == NULL) {
+                ressort = gtk_label_new(NULL);
+                if (axe == GTK_ORIENTATION_HORIZONTAL)
+                    gtk_widget_set_hexpand(ressort, TRUE);
+                else
+                    gtk_widget_set_vexpand(ressort, TRUE);
+                gtk_box_prepend(box, ressort);
+                g_object_set_data(G_OBJECT(box), "_compat_ressort_fin", ressort);
+            }
+            gtk_box_insert_child_after(box, child, ressort);
+        } else {
+            /* Un enfant extensible reclame l'espace en trop : GTK3 repartit, et
+             * l'effet de bord disparait. Si un ressort avait ete pose par un
+             * enfant precedent, il FAUT le retirer — sinon les deux se disputent
+             * la place et toute la ligne part a droite (constate sur le pied de
+             * page de system-tools : « A propos » se collait a « Quitter »). */
+            GtkWidget *ressort = g_object_get_data(G_OBJECT(box), "_compat_ressort_fin");
+            if (ressort != NULL) {
+                gtk_box_remove(box, ressort);
+                g_object_set_data(G_OBJECT(box), "_compat_ressort_fin", NULL);
+            }
+            gtk_box_prepend(box, child);
+        }
+    } else {
         gtk_box_append(box, child);
+    }
 
     /* GTK3 : « expand » = recevoir l'espace en trop, sur l'axe de la boîte
      * seulement. Poser hexpand ET vexpand faisait aussi grossir l'enfant sur
@@ -312,11 +350,20 @@ _compat_box_pack(GtkBox *box, GtkWidget *child,
      * taille naturelle et se centre. GTK4 aligne en FILL par défaut, d'où des
      * boutons étirés sur toute la largeur de leur colonne. Sur l'axe
      * transverse, GTK3 remplissait toujours : on n'y touche pas. */
+    /* ⚠️ « fill=FALSE » ne veut PAS dire « centré ». En GTK3 il signifie « ne pas
+     * étirer l'enfant à son allocation ». L'enfant n'est centré que s'il a reçu
+     * de l'espace en trop, donc seulement quand expand=TRUE. Sans expansion, son
+     * allocation EST sa taille naturelle et il reste collé au DÉBUT.
+     * Centrer dans les deux cas décalait tout un cadre : les cinq boutons de la
+     * colonne « Actions rapides » de system-tools flottaient au milieu du cadre
+     * au lieu de se ranger sous son titre — le cadre empile son contenu avec
+     * expand=FALSE, fill=FALSE (widget_frame.c). */
     if (!fill) {
+        GtkAlign ou = expand ? GTK_ALIGN_CENTER : GTK_ALIGN_START;
         if (axe == GTK_ORIENTATION_HORIZONTAL)
-            gtk_widget_set_halign(child, GTK_ALIGN_CENTER);
+            gtk_widget_set_halign(child, ou);
         else
-            gtk_widget_set_valign(child, GTK_ALIGN_CENTER);
+            gtk_widget_set_valign(child, ou);
     }
     if (padding > 0) {
         gtk_widget_set_margin_start (child, (int)padding);
