@@ -28,15 +28,15 @@ GtkWidget *widget_vscale_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 
     if (attr) {
         const char *v;
-        if ((v = get_tag_attribute(attr, "range-min")) || (v = get_tag_attribute(attr, "min")))   vmin  = atof(v);
-        if ((v = get_tag_attribute(attr, "range-max")) || (v = get_tag_attribute(attr, "max")))   vmax  = atof(v);
-        if ((v = get_tag_attribute(attr, "range-step")) || (v = get_tag_attribute(attr, "step"))) vstep = atof(v);
-        if ((v = get_tag_attribute(attr, "value"))) vval  = atof(v);
+        if ((v = get_tag_attribute(attr, "range-min")) || (v = get_tag_attribute(attr, "min")))   vmin  = g_ascii_strtod(v, NULL);
+        if ((v = get_tag_attribute(attr, "range-max")) || (v = get_tag_attribute(attr, "max")))   vmax  = g_ascii_strtod(v, NULL);
+        if ((v = get_tag_attribute(attr, "range-step")) || (v = get_tag_attribute(attr, "step"))) vstep = g_ascii_strtod(v, NULL);
+        if ((v = get_tag_attribute(attr, "value"))) vval  = g_ascii_strtod(v, NULL);
     }
     if (Attr) {
         GList *element = NULL;
         gchar *def = attributeset_get_first(&element, Attr, ATTR_DEFAULT);
-        if (def && *def) vval = atof(def);
+        if (def && *def) vval = g_ascii_strtod(def, NULL);
     }
     vval = widget_command_value(Attr, vval);   /* <input>echo N</input> prioritaire */
 

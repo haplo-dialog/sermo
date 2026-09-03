@@ -101,12 +101,27 @@ default:
     VER: "1.1.3"
   script:
     - cd "$PORT/${PORT}_$VER"
-    - cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX="$CI_PROJECT_DIR/inst"
+    # BUILD_TESTING=ON : les tests CTest du shim (test_compat, test_safe_exec)
+    # etaient declares mais JAMAIS rejoues en CI — le patron que ce fichier
+    # denonce lui-meme plus haut (« documentee mais jamais rejouee »). C'est le
+    # shim qui a menti deux fois (g_ascii_strtod→strtod, leurres de securite) :
+    # ses tests tournent desormais a chaque poussee. (2026-09-03)
+    - cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON -DCMAKE_INSTALL_PREFIX="$CI_PROJECT_DIR/inst"
     - cmake --build build -j"$(nproc)"
+    - ctest --test-dir build --output-on-failure
     - cmake --install build
     - test -x "$CI_PROJECT_DIR/inst/bin/$PORT"
     - PATH="$CI_PROJECT_DIR/inst/bin:$PATH" sh "$CI_PROJECT_DIR/tests/xml/run_tests.sh" "$PORT"
     - sh "$CI_PROJECT_DIR/tests/run_unit_tests.sh" "$PORT"   # tests de comportement (cœur)
+    # Les memes gardes que les jobs autotools — ils manquaient au port CMake, et
+    # SECURITY.md affirmait pourtant « verifie a chaque poussee » pour les trois
+    # ports. Un strtod nu a vecu dans tag_attributes.c derriere ce trou, et le
+    # garde ne lisait meme pas les .cpp (47 fichiers hors champ). (2026-09-03)
+    - bash "$CI_PROJECT_DIR/tests/garde_fonctions_interdites.sh" "$CI_PROJECT_DIR/$PORT/${PORT}_$VER/src"
+    # Durcissement mesure sur le BINAIRE, pas sur les drapeaux annonces : la
+    # note CET IBT/SHSTK tombait en silence (crt de la glibc testing sans note,
+    # fusion en ET du lieur) jusqu'aux -Wl,-z,ibt/-z,shstk du CMakeLists.
+    - bash "$CI_PROJECT_DIR/tests/garde_durcissement.sh" "build/$PORT"
 
 # ──────────────────────────── ports (autotools) ────────────────────────────
 gtk3sermo:
@@ -213,11 +228,24 @@ exemples:qt6sermo:
   stage: run-test
   needs: ["qt6sermo"]
   variables:
-    DEPS: "cmake qt6-base-dev xvfb xauth locales dbus-x11 fonts-dejavu-core"
+    # xdotool : geometrie.sh et run_examples.sh cherchent les fenetres avec lui —
+    # sans lui le job etait ROUGE des le premier pas ajoute (verifie avant
+    # poussee, 2026-09-03). adwaita-icon-theme : sans theme d'icones, le
+    # controle <pixmap> de geometrie.sh SAUTE en silence — or c'est justement
+    # lui qui a demasque les icones jamais chargees du port.
+    DEPS: "cmake qt6-base-dev xvfb xauth xdotool locales dbus-x11 fonts-dejavu-core adwaita-icon-theme"
   script:
+    - sed -i 's/^# *fr_FR.UTF-8/fr_FR.UTF-8/' /etc/locale.gen
+    - locale-gen
     - cd qt6sermo/qt6sermo_1.0.0
     - cmake -B build -DCMAKE_BUILD_TYPE=Release
     - cmake --build build -j"$(nproc)"
+    # La promesse de l'etage (en-tete du fichier) : lancer REELLEMENT les
+    # exemples livres, sous Xvfb et en locale fr_FR.UTF-8. Le job ne lancait
+    # AUCUN des 32 exemples ni la locale francaise — c'est en francais que le
+    # shim g_ascii_strtod→strtod tronquait les decimales en silence. Meme banc
+    # que les ports GTK (copie dans l'arbre du port, qt6sermo dans ses shims).
+    - LC_ALL=fr_FR.UTF-8 LANG=fr_FR.UTF-8 bash tests/run_examples.sh build/qt6sermo
     - QT6_BIN="$PWD/build/qt6sermo" sh tests/comportement/run.sh
     # ⚠️ La MISE EN PAGE, que le banc de valeurs ne peut pas voir : il compare des
     # variables, or border-width et theme-icon-size n'en produisent aucune. Ce

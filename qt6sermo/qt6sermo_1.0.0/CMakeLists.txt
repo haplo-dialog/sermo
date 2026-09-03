@@ -170,6 +170,15 @@ target_compile_options(qt6sermo PRIVATE
 target_link_options(qt6sermo PRIVATE
   -pie -Wl,-z,relro -Wl,-z,now
   -Wl,-z,noexecstack
+  # Ces deux -z FORCENT la note ELF « x86 feature: IBT, SHSTK » dans le binaire.
+  # ⚠️ Indispensable : sur Debian testing (drift du 2026-09), Scrt1.o/crti.o de
+  # la glibc ne portent plus la note, et la fusion du lieur est un ET — chaque
+  # binaire lié la perdait, -fcf-protection=full ou pas (mesuré au readelf le
+  # 2026-09-03 : les .o l'avaient tous, le binaire non ; un main() trivial la
+  # perdait aussi). Les ports GTK posent ces mêmes drapeaux (configure.ac:99).
+  -Wl,-z,ibt -Wl,-z,shstk
+  # Répétés au lien pour la recompilation LTO :
+  -fcf-protection=full -fstack-protector-strong -fstack-clash-protection
 )
 
 target_link_libraries(qt6sermo PRIVATE
@@ -180,6 +189,9 @@ target_link_libraries(qt6sermo PRIVATE
 
 
 # ─── LTO (Link-Time Optimization) en Release ─────────────────────────────
+# NB : la perte de la note CET constatée le 2026-09-03 ne venait PAS de la LTO
+# mais des crt de la glibc testing (voir -Wl,-z,ibt/shstk ci-dessus) — un lien
+# trivial sans LTO la perdait aussi. La LTO reste donc active.
 include(CheckIPOSupported)
 check_ipo_supported(RESULT _ipo_ok OUTPUT _ipo_err)
 if(_ipo_ok AND CMAKE_BUILD_TYPE STREQUAL "Release")

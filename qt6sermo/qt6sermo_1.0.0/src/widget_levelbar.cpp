@@ -30,14 +30,14 @@ GtkWidget *widget_levelbar_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         double rmin = 0.0, rmax = 100.0, val = 0.0;
         if (attr) {
             const char *v;
-            if ((v = get_tag_attribute(attr, "range-min")) || (v = get_tag_attribute(attr, "min"))) rmin = atof(v);
-            if ((v = get_tag_attribute(attr, "range-max")) || (v = get_tag_attribute(attr, "max"))) rmax = atof(v);
-            if ((v = get_tag_attribute(attr, "value"))) val = atof(v);
+            if ((v = get_tag_attribute(attr, "range-min")) || (v = get_tag_attribute(attr, "min"))) rmin = g_ascii_strtod(v, NULL);
+            if ((v = get_tag_attribute(attr, "range-max")) || (v = get_tag_attribute(attr, "max"))) rmax = g_ascii_strtod(v, NULL);
+            if ((v = get_tag_attribute(attr, "value"))) val = g_ascii_strtod(v, NULL);
             if ((v = get_tag_attribute(attr, "width-request"))) pb->setMinimumWidth(atoi(v));
         }
         GList *el = NULL;
         gchar *def = attributeset_get_first(&el, Attr, ATTR_DEFAULT);
-        if (def && *def) val = atof(def);
+        if (def && *def) val = g_ascii_strtod(def, NULL);
         val = widget_command_value(Attr, val);          /* <input> prioritaire */
         double frac = (rmax > rmin) ? (val - rmin) / (rmax - rmin) : 0.0;
         if (frac < 0.0) frac = 0.0;

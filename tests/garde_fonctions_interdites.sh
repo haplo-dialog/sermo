@@ -39,7 +39,10 @@ trouves=0
 ignores=0
 examines=0
 
-for f in "$SRC"/*.c "$SRC"/*.h; do
+# *.cpp aussi : le port Qt 6 est en C++ — sans cette ligne ses 47 widgets
+# échappaient au banc, et un strtod nu y a vécu (tag_attributes.c, trouvé par
+# l'audit du 2026-09-03) pendant que SECURITY.md affirmait le contraire.
+for f in "$SRC"/*.c "$SRC"/*.h "$SRC"/*.cpp; do
 	[ -e "$f" ] || continue
 	if est_engendre "$f"; then ignores=$((ignores + 1)); continue; fi
 	examines=$((examines + 1))
@@ -69,6 +72,20 @@ for f in "$SRC"/*.c "$SRC"/*.h; do
 			print FILENAME ":" FNR ":" out
 		}
 	' "$f" | LC_ALL=C grep -naE "(^|[^A-Za-z0-9_])(${INTERDITES})[[:space:]]*\(" || true)
+
+	# Dérogation EXPLICITE : la primitive sous g_ascii_strtod doit bien appeler
+	# strtod quelque part (épinglé locale « C » par strtod_l, ou repli assumé).
+	# Une ligne portant le marqueur « garde:primitive-locale » dans son
+	# commentaire est exemptée — le marqueur se voit en revue, un contournement
+	# silencieux non.
+	if [ -n "$hits" ]; then
+		derogees=$(LC_ALL=C grep -n 'garde:primitive-locale' "$f" | cut -d: -f1 | tr '\n' '|' | sed 's/|$//')
+		if [ -n "$derogees" ]; then
+			# format d'une ligne de hits : N:FICHIER:FNR:code (le N vient du grep -n
+			# de la recherche) — le numéro de LIGNE source est le 3e champ.
+			hits=$(printf '%s\n' "$hits" | LC_ALL=C grep -avE "^[0-9]+:[^:]*:(${derogees}):" || true)
+		fi
+	fi
 
 	if [ -n "$hits" ]; then
 		echo "$hits" | sed 's/^[0-9]*://' | while IFS= read -r l; do

@@ -22,6 +22,10 @@ BIN="${1:?usage: run_examples.sh /chemin/vers/binaire [examples/]}"
 BIN="$(readlink -f "$BIN")"
 EXAMPLES="${2:-$(cd "$(dirname "$0")/.." && pwd)/examples}"
 [[ -d "$EXAMPLES" ]] || { echo "répertoire d'exemples introuvable : $EXAMPLES" >&2; exit 2; }
+# ⚠️ Toujours ABSOLU : la sonde fait « cd » dans chaque exemple puis relance le
+# script par son chemin — relatif, il devient introuvable et les 32 exemples
+# sortaient « aucune fenêtre » alors que tout marchait (vécu le 2026-09-03).
+EXAMPLES="$(readlink -f "$EXAMPLES")"
 
 for t in xvfb-run xdotool timeout; do
     command -v "$t" >/dev/null || { echo "outil manquant : $t" >&2; exit 2; }
@@ -30,7 +34,7 @@ done
 # Les exemples codent en dur GTKDIALOG=gtkdialog (ou gtkdialog4, gtk3sermo…).
 # On détourne tous ces noms vers le binaire à tester, via le PATH.
 SHIM="$(mktemp -d)"; trap 'rm -rf "$SHIM"' EXIT
-for n in gtkdialog gtkdialog4 gtk3sermo gtk4sermo gtksermo; do
+for n in gtkdialog gtkdialog4 gtk3sermo gtk4sermo gtksermo qt6sermo; do
     printf '#!/bin/sh\nexec "%s" "$@"\n' "$BIN" > "$SHIM/$n"; chmod +x "$SHIM/$n"
 done
 export PATH="$SHIM:$PATH"

@@ -38,7 +38,7 @@ static int progressbar_value_from_command(const char *input, int fallback)
     if (!fp) return fallback;
     char line[64];
     int  v = fallback;
-    if (fgets(line, sizeof line, fp)) v = (int)atof(line);
+    if (fgets(line, sizeof line, fp)) v = (int)g_ascii_strtod(line, NULL);
     fclose(fp);
     return v;
 }
@@ -62,7 +62,7 @@ GtkWidget *widget_progressbar_create(AttributeSet *Attr, tag_attr *attr, gint Ty
             val = attributeset_get_first(&e2, Attr, ATTR_DEFAULT);
         }
         if (cmd && *cmd)      pb->setValue(progressbar_value_from_command(cmd, 0));
-        else if (val)         pb->setValue((int)atof(val));
+        else if (val)         pb->setValue((int)g_ascii_strtod(val, NULL));
 
         element = NULL;
         gchar *txt = attributeset_get_first(&element, Attr, ATTR_LABEL);

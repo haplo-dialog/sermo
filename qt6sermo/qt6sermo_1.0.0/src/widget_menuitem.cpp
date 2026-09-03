@@ -82,7 +82,7 @@ GtkWidget *widget_menuitem_create(AttributeSet *Attr, tag_attr *attr, gint Type)
             holder->setProperty("menuitem_check",
                 cb ? QStringLiteral("check") : QStringLiteral("radio"));
             holder->setProperty("menuitem_checked",
-                (strcasecmp(st, "true") == 0 || strcmp(st, "1") == 0));
+                (g_ascii_strcasecmp(st, "true") == 0 || strcmp(st, "1") == 0));
         }
     }
 

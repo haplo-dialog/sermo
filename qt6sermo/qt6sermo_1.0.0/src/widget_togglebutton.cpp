@@ -27,7 +27,7 @@ GtkWidget *widget_togglebutton_create(AttributeSet *Attr, tag_attr *attr, gint T
     if (Attr) {
         element = nullptr;
         gchar *def = attributeset_get_first(&element, Attr, ATTR_DEFAULT);
-        if (def && (strcasecmp(def, "true") == 0 || strcmp(def, "1") == 0))
+        if (def && (g_ascii_strcasecmp(def, "true") == 0 || strcmp(def, "1") == 0))
             btn->setChecked(true);
     }
     return (GtkWidget *)btn;

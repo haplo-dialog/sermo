@@ -60,12 +60,12 @@ GtkWidget *widget_entry_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         const char *v;
         /* visibility="false" ou visible="false" → champ mot de passe */
         if ((v = get_tag_attribute(attr, "visibility")))
-            if (strcasecmp(v, "false") == 0 || strcmp(v, "0") == 0)
+            if (g_ascii_strcasecmp(v, "false") == 0 || strcmp(v, "0") == 0)
                 le->setEchoMode(QLineEdit::Password);
         if ((v = get_tag_attribute(attr, "max-length")))
             le->setMaxLength(atoi(v));
         if ((v = get_tag_attribute(attr, "sensitive")))
-            if (strcasecmp(v, "false") == 0) le->setEnabled(false);
+            if (g_ascii_strcasecmp(v, "false") == 0) le->setEnabled(false);
     }
     return (GtkWidget *)le;
 }

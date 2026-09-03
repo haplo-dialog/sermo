@@ -40,14 +40,21 @@ GtkWidget *widget_timer_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     placeholder->hide();
     placeholder->setFixedSize(0, 0);
 
+    /* ⚠️ PAS atof() : gtkdialog.c appelle setlocale(LC_ALL, ""), donc sous une
+     * locale française atof("2.5") rend 2 — la partie décimale disparaît EN
+     * SILENCE. Mesuré le 2026-09-03 : interval="2.5" déclenchait à 2000 ms sous
+     * fr_FR et à 2500 ms sous C. Les ports GTK n'ont pas ce défaut : ils
+     * n'utilisent jamais atof. g_ascii_strtod lit toujours le point décimal,
+     * quelle que soit la locale. Corrigé partout dans le port (24 appels).
+     */
     double interval_ms = 1000.0;
 
     if (attr) {
         const char *v;
         if ((v = get_tag_attribute(attr, "interval")))
-            interval_ms = atof(v) * 1000.0;
+            interval_ms = g_ascii_strtod(v, NULL) * 1000.0;
         if ((v = get_tag_attribute(attr, "milliseconds")))
-            interval_ms = atof(v);
+            interval_ms = g_ascii_strtod(v, NULL);
     }
 
     placeholder->setProperty("timerTicks", (qlonglong)0);
@@ -67,10 +74,10 @@ GtkWidget *widget_timer_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         GList *ae = nullptr;
         gchar *cmd = attributeset_get_first(&ae, acap, ATTR_ACTION);
         while (cmd) {
-            gchar *function = attributeset_get_this_tagattr(&ae, acap, ATTR_ACTION, "function");
+            gchar *function = attributeset_get_this_tagattr(&ae, acap, ATTR_ACTION, (gchar *)"function");
             if (!function)
-                function = attributeset_get_this_tagattr(&ae, acap, ATTR_ACTION, "type");
-            gchar *signal = attributeset_get_this_tagattr(&ae, acap, ATTR_ACTION, "signal");
+                function = attributeset_get_this_tagattr(&ae, acap, ATTR_ACTION, (gchar *)"type");
+            gchar *signal = attributeset_get_this_tagattr(&ae, acap, ATTR_ACTION, (gchar *)"signal");
             if (!signal || g_ascii_strcasecmp(signal, "tick") == 0)
                 execute_action(nullptr, cmd, function);
             cmd = attributeset_get_next(&ae, acap, ATTR_ACTION);

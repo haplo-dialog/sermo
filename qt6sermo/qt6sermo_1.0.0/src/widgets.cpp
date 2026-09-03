@@ -87,7 +87,7 @@ static std::map<QWidget *, bool> g_qt6_expand;
 
 static bool qt6_attr_true(const char *v)
 {
-    return v && (!strcasecmp(v, "true") || !strcasecmp(v, "yes") || atoi(v) == 1);
+    return v && (!g_ascii_strcasecmp(v, "true") || !g_ascii_strcasecmp(v, "yes") || atoi(v) == 1);
 }
 
 extern "C" void qt6_layout_register(GtkWidget *widget, tag_attr *attr)
@@ -156,7 +156,7 @@ double widget_command_value(AttributeSet *Attr, double fallback)
     if (!cmd || !*cmd) cmd = inp;
     fp = widget_opencommand(cmd);
     if (!fp) return fallback;
-    if (fgets(line, sizeof line, fp)) v = atof(line);
+    if (fgets(line, sizeof line, fp)) v = g_ascii_strtod(line, NULL);
     fclose(fp);   /* widget_opencommand = safe_popen (fdopen) → fclose */
     return v;
 }
@@ -393,8 +393,8 @@ void widget_visibility_list_add(GtkWidget *widget, tag_attr *attr)
         if (attr) {
             gchar *value = get_tag_attribute(attr, "visible");
             if (value &&
-                (strcasecmp(value, "false") == 0 ||
-                 strcasecmp(value, "no")    == 0 ||
+                (g_ascii_strcasecmp(value, "false") == 0 ||
+                 g_ascii_strcasecmp(value, "no")    == 0 ||
                  strcmp(value, "0")         == 0)) {
                 visible = FALSE;
             }

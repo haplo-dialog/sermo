@@ -97,7 +97,9 @@ static gboolean try_set_property(GtkWidget *widget, namevalue  *nameval)
 		case G_TYPE_FLOAT:
 			g_object_set(G_OBJECT(widget),
 					nameval->name,
-					(gfloat)strtod(nameval->value, NULL),
+					/* g_ascii_strtod, PAS strtod : sous fr_FR strtod("2.5") vaut 2 —
+					 * même appel que le port de référence au même endroit. */
+					(gfloat)g_ascii_strtod(nameval->value, NULL),
 					NULL);
 			break;
 		case G_TYPE_DOUBLE:

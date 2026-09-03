@@ -1,4 +1,4 @@
-gtk3sermo-1.0.0
+gtk3sermo-1.1.3
 =======================
 
 Utilitaire C pour créer des interfaces GTK3 depuis des scripts shell ou
@@ -38,10 +38,10 @@ Changements par rapport à 0.8.3
   - <window> se dimensionne automatiquement à l'écran (patch 18)
   - <edit> avec <input command> pré-remplit la zone de texte (patch 18)
 
-État de vérification (2026-06-06)
+État de vérification (2026-09-03)
 ---------------------------------
   - Build make → rc=0, 0 erreur ; binaire gtk3sermo (1,4 Mo) exécutable.
-  - Tests XML tests/xml/ : 52/52 PASS (--print-ir, headless).
+  - Tests XML tests/xml/ : 55/55 PASS (--print-ir, headless).
   - Warnings : 34 (idiomes amont gtkdialog, non bloquants).
 
 Compilation
@@ -58,7 +58,7 @@ Documentation
   MANUEL_DEVELOPPEUR.md  — Architecture et contribution
   COMPILE.md             — Instructions de compilation rapide
   doc/gtk3sermo.texi    — Manuel Texinfo (source) ; doc/gtk3sermo.info généré
-  examples/              — Exemples par widget (53 répertoires)
+  examples/              — Exemples par widget (56 répertoires)
 
 Licence
 -------

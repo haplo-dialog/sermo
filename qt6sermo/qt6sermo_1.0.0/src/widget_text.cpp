@@ -55,7 +55,7 @@ GtkWidget *widget_text_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         const char *v;
         if ((v = get_tag_attribute(attr, "width-request")))
             lbl->setMinimumWidth(atoi(v));
-        if ((v = get_tag_attribute(attr, "sensitive")) && strcasecmp(v, "false") == 0)
+        if ((v = get_tag_attribute(attr, "sensitive")) && g_ascii_strcasecmp(v, "false") == 0)
             lbl->setEnabled(false);
     }
     return (GtkWidget *)lbl;

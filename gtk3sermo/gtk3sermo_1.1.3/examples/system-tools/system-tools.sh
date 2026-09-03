@@ -914,8 +914,17 @@ MOTEUR=$(basename "$GTKDIALOG")
 
 check_deps() {
     local missing=()
-    command -v "$GTKDIALOG" &>/dev/null || [ -x "$GTKDIALOG" ] \
-        || command -v gtkdialog &>/dev/null || missing+=("$GTKDIALOG")
+    if ! command -v "$GTKDIALOG" &>/dev/null && [ ! -x "$GTKDIALOG" ]; then
+        # Repli COHÉRENT : si l'alias gtkdialog du PATH satisfait la
+        # dépendance, c'est LUI qu'on exécutera — avant, check_deps se disait
+        # satisfait par gtkdialog mais la dernière ligne lançait quand même
+        # "$GTKDIALOG", introuvable. (2026-09-03)
+        if command -v gtkdialog &>/dev/null; then
+            GTKDIALOG=gtkdialog
+        else
+            missing+=("$GTKDIALOG")
+        fi
+    fi
     command -v pkexec &>/dev/null || missing+=("pkexec")
     [ -n "$TERMINAL" ] || missing+=("un terminal graphique")
     [ -n "$EDITEUR" ]  || missing+=("un editeur graphique")

@@ -17,11 +17,11 @@
 static int icon_size_px(const char *name)
 {
     if (!name) return 24;
-    if (!strcasecmp(name, "menu") || !strcasecmp(name, "button") ||
-        !strcasecmp(name, "small-toolbar")) return 16;
-    if (!strcasecmp(name, "large-toolbar")) return 24;
-    if (!strcasecmp(name, "dnd"))    return 32;
-    if (!strcasecmp(name, "dialog")) return 48;
+    if (!g_ascii_strcasecmp(name, "menu") || !g_ascii_strcasecmp(name, "button") ||
+        !g_ascii_strcasecmp(name, "small-toolbar")) return 16;
+    if (!g_ascii_strcasecmp(name, "large-toolbar")) return 24;
+    if (!g_ascii_strcasecmp(name, "dnd"))    return 32;
+    if (!g_ascii_strcasecmp(name, "dialog")) return 48;
     int n = atoi(name);
     return n > 0 ? n : 24;
 }

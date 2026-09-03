@@ -36,10 +36,10 @@ GtkWidget *widget_spinbutton_create(AttributeSet *Attr, tag_attr *attr, gint Typ
 
     if (attr) {
         const char *v;
-        if ((v = get_tag_attribute(attr, "range-min")) || (v = get_tag_attribute(attr, "min")))  sb->setMinimum(atof(v));
-        if ((v = get_tag_attribute(attr, "range-max")) || (v = get_tag_attribute(attr, "max")))  sb->setMaximum(atof(v));
-        if ((v = get_tag_attribute(attr, "range-step")) || (v = get_tag_attribute(attr, "step"))) sb->setSingleStep(atof(v));
-        if ((v = get_tag_attribute(attr, "value")))  sb->setValue(atof(v));
+        if ((v = get_tag_attribute(attr, "range-min")) || (v = get_tag_attribute(attr, "min")))  sb->setMinimum(g_ascii_strtod(v, NULL));
+        if ((v = get_tag_attribute(attr, "range-max")) || (v = get_tag_attribute(attr, "max")))  sb->setMaximum(g_ascii_strtod(v, NULL));
+        if ((v = get_tag_attribute(attr, "range-step")) || (v = get_tag_attribute(attr, "step"))) sb->setSingleStep(g_ascii_strtod(v, NULL));
+        if ((v = get_tag_attribute(attr, "value")))  sb->setValue(g_ascii_strtod(v, NULL));
         if ((v = get_tag_attribute(attr, "digits"))) sb->setDecimals(atoi(v));
         if ((v = get_tag_attribute(attr, "width-request")))  sb->setMinimumWidth(atoi(v));
         if ((v = get_tag_attribute(attr, "height-request"))) sb->setMinimumHeight(atoi(v));
@@ -48,7 +48,7 @@ GtkWidget *widget_spinbutton_create(AttributeSet *Attr, tag_attr *attr, gint Typ
     if (Attr) {
         GList *element = NULL;
         gchar *def = attributeset_get_first(&element, Attr, ATTR_DEFAULT);
-        if (def && *def) sb->setValue(atof(def));
+        if (def && *def) sb->setValue(g_ascii_strtod(def, NULL));
         /* <input>echo N</input> prioritaire (NaN-safe : fallback = valeur actuelle). */
         sb->setValue(widget_command_value(Attr, sb->value()));
     }

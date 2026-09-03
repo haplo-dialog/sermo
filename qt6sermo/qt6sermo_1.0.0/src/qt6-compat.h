@@ -38,6 +38,11 @@ typedef int64_t       gint64;
 typedef uint64_t      guint64;
 typedef unsigned long GType;
 #include <stddef.h>
+#include <stdarg.h>     /* g_build_filename */
+#include <errno.h>      /* rapport d'échec d'exec (g_spawn_*) */
+#include <fcntl.h>      /* pipe2 O_CLOEXEC */
+#include <sys/stat.h>   /* g_file_test */
+#include <unistd.h>     /* access, pipe */
 typedef size_t       gsize;
 typedef ptrdiff_t    gssize;
 
@@ -61,20 +66,39 @@ QT6_STATIC_ASSERT(sizeof(gint64) == 8, "gint64 must be 8 bytes");
 #define NULL ((void*)0)
 #endif
 
-/* ─── Mémoire ───────────────────────────────────────────────────────────── */
-#define g_malloc(n)          malloc(n)
-#define g_malloc0(n)         calloc(1, n)
-#define g_realloc(p, n)      realloc((p), (n))
+/* ─── Mémoire ─────────────────────────────────────────────────────────────
+ * ⚠️ Contrat GLib : g_malloc et famille AVORTENT sur échec d'allocation et ne
+ * rendent jamais NULL — le code écrit en style GLib ne teste donc pas les
+ * retours. Shimmer sur malloc nu inversait ce contrat : sous pression mémoire,
+ * déréférencement de NULL au lieu d'un abort net. (Audit du 2026-09-03.) */
+static inline void *_qt6_malloc(size_t n)  { void *p = malloc(n ? n : 1);      if (!p) abort(); return p; }
+static inline void *_qt6_malloc0(size_t n) { void *p = calloc(1, n ? n : 1);   if (!p) abort(); return p; }
+static inline void *_qt6_realloc(void *q, size_t n) { void *p = realloc(q, n ? n : 1); if (!p) abort(); return p; }
+#define g_malloc(n)          _qt6_malloc(n)
+#define g_malloc0(n)         _qt6_malloc0(n)
+#define g_realloc(p, n)      _qt6_realloc((p), (n))
 #define g_free(p)            free(p)
-#define g_new(t, n)          ((t*)malloc(sizeof(t) * (n)))
-#define g_new0(t, n)         ((t*)calloc((n), sizeof(t)))
-#define g_renew(t, p, n)     ((t*)realloc((p), sizeof(t) * (n)))
+#define g_new(t, n)          ((t*)_qt6_malloc(sizeof(t) * (n)))
+#define g_new0(t, n)         ((t*)_qt6_malloc0((size_t)(n) * sizeof(t)))
+#define g_renew(t, p, n)     ((t*)_qt6_realloc((p), sizeof(t) * (n)))
 
 /* ─── Chaînes ───────────────────────────────────────────────────────────── */
 static inline __attribute__((warn_unused_result, malloc))
-char *_qt6_strdup(const char *s) { return s ? strdup(s) : NULL; }
+char *_qt6_strdup(const char *s) {
+    if (!s) return NULL;
+    char *r = strdup(s); if (!r) abort();   /* contrat mémoire GLib */
+    return r;
+}
 #define g_strdup(s) _qt6_strdup(s)
-#define g_strndup(s, n)           strndup((s), (n))
+/* GLib rend NULL pour une entrée NULL ; strndup(NULL, n) segfaulte.
+ * g_strdup avait reçu cette garde, g_strndup juste en dessous non. */
+static inline __attribute__((warn_unused_result, malloc))
+char *_qt6_strndup(const char *s, size_t n) {
+    if (!s) return NULL;
+    char *r = strndup(s, n); if (!r) abort();
+    return r;
+}
+#define g_strndup(s, n)           _qt6_strndup((s), (n))
 /* g_strlcpy / g_strlcat — bornées, toujours null-terminées, retournent
  * la longueur de la source (resp. longueur combinée) comme dans GLib. */
 static inline gsize g_strlcpy(char *dst, const char *src, gsize size) {
@@ -98,10 +122,45 @@ static inline gsize g_strlcat(char *dst, const char *src, gsize size) {
     }
     return dstlen + srclen;
 }
-#define g_strtod(s, e)            strtod((s), (e))
-#define g_ascii_strtod(s, e)      strtod((s), (e))
+/* ⚠️ PAS strtod() nu : gtkdialog.c appelle setlocale(LC_ALL, ""), donc sous une
+ * locale française strtod("2.5") s'arrête au point et rend 2 — la partie
+ * décimale disparaît EN SILENCE. Le contrat de g_ascii_strtod est justement
+ * d'être indépendant de la locale ; le shim le trahissait. Mesuré le
+ * 2026-09-03 : <timer interval="2.5"> déclenchait à 2000 ms sous fr_FR.UTF-8
+ * et à 2500 ms sous C — même binaire, même XML. Le correctif force la locale
+ * « C » via strtod_l, sans toucher la locale du processus. */
+#include <locale.h>
+static inline double _compat_ascii_strtod(const char *s, char **end) {
+    static locale_t loc_c = (locale_t)0;
+    if (loc_c == (locale_t)0)
+        loc_c = newlocale(LC_ALL_MASK, "C", (locale_t)0);
+    if (loc_c != (locale_t)0)
+        return strtod_l(s, end, loc_c);
+    return strtod(s, end);   /* repli si newlocale échoue — garde:primitive-locale */
+}
+/* g_strtod ≠ g_ascii_strtod : GLib essaie la locale COURANTE puis la locale C
+ * et garde la conversion la plus longue — sous fr_FR, g_strtod("2,5") vaut 2.5.
+ * L'aliaser sur le parseur C-only trahissait ce second contrat. */
+static inline double _qt6_strtod_dual(const char *s, char **end) {
+    char *e1 = NULL, *e2 = NULL;
+    double v1 = strtod(s, &e1);          /* volontairement locale — garde:primitive-locale */
+    double v2 = _compat_ascii_strtod(s, &e2);
+    if (e2 > e1) { if (end) *end = e2; return v2; }
+    if (end) *end = e1;
+    return v1;
+}
+#define g_strtod(s, e)            _qt6_strtod_dual((s), (e))
+#define g_ascii_strtod(s, e)      _compat_ascii_strtod((s), (e))
 #define g_ascii_strtoull(s,e,b)   strtoull((s),(e),(b))
-#define g_strcmp0(a, b)           strcmp((a)?(a):"",(b)?(b):"")
+/* Contrat GLib : NULL trie AVANT toute chaîne (g_strcmp0(NULL,"") = -1) ;
+ * mapper NULL sur "" rendait NULL et chaîne vide indiscernables, et la macro
+ * double-évaluait ses arguments. */
+static inline int _qt6_strcmp0(const char *a, const char *b) {
+    if (!a) return (b != NULL) ? -1 : 0;
+    if (!b) return 1;
+    return strcmp(a, b);
+}
+#define g_strcmp0(a, b)           _qt6_strcmp0((a), (b))
 #define g_str_has_prefix(s,p)     (strncmp((s),(p),strlen(p))==0)
 #define g_str_has_suffix(s,x) \
     (strlen(s)>=strlen(x) && strcmp((s)+strlen(s)-strlen(x),(x))==0)
@@ -121,7 +180,10 @@ static inline char *snprintf_safe(const char *fmt, ...) {
 }
 #define g_strdup_printf(fmt, ...) snprintf_safe(fmt, ##__VA_ARGS__)
 static inline char **g_strsplit(const char *string, const char *delimiter, int max_tokens) {
-    if (!string) { char **r=(char**)malloc(sizeof(char*)); r[0]=NULL; return r; }
+    /* Contrat GLib mesuré : string NULL → NULL ; chaîne VIDE → vecteur vide
+     * (premier élément NULL), pas [""]. (Audit 2026-09-03.) */
+    if (!string) return NULL;
+    if (!*string) { char **r=(char**)_qt6_malloc(sizeof(char*)); r[0]=NULL; return r; }
     if (!delimiter || !*delimiter) {
         char **r=(char**)malloc(2*sizeof(char*)); r[0]=strdup(string); r[1]=NULL; return r; }
     int cap=8,n=0; char **out=(char**)malloc((size_t)cap*sizeof(char*));
@@ -142,8 +204,33 @@ static inline void g_strfreev(char **v) {
     for (char **p = v; *p; p++) free(*p);
     free(v);
 }
-#define g_strjoinv(sep,v)         g_strdup("")
-#define g_path_get_dirname(p)     g_strdup(".")
+/* Ces quatre-là rendaient des CONSTANTES ("" , ".", 0) — zéro appelant
+ * aujourd'hui, mais exportés à tout le cœur : le prochain appelant aurait
+ * hérité d'un mensonge silencieux. Implémentés pour de vrai (audit 2026-09-03). */
+static inline char *g_strjoinv(const char *sep, char **v) {
+    if (!v || !v[0]) return _qt6_strdup("");
+    size_t seplen = sep ? strlen(sep) : 0, total = 0;
+    int n = 0;
+    for (; v[n]; n++) total += strlen(v[n]);
+    char *r = (char *)_qt6_malloc(total + seplen * (size_t)(n - 1) + 1);
+    char *w = r;
+    for (int i = 0; i < n; i++) {
+        size_t l = strlen(v[i]); memcpy(w, v[i], l); w += l;
+        if (v[i + 1] && seplen) { memcpy(w, sep, seplen); w += seplen; }
+    }
+    *w = '\0';
+    return r;
+}
+static inline char *g_path_get_dirname(const char *file_name) {
+    if (!file_name) return _qt6_strdup(".");
+    const char *slash = strrchr(file_name, '/');
+    if (!slash) return _qt6_strdup(".");
+    while (slash > file_name && slash[-1] == '/') slash--;
+    if (slash == file_name) return _qt6_strdup("/");
+    size_t l = (size_t)(slash - file_name);
+    char *r = (char *)_qt6_malloc(l + 1); memcpy(r, file_name, l); r[l] = '\0';
+    return r;
+}
 static inline char *g_path_get_basename(const char *file_name) {
     if(!file_name || !*file_name){ char *r=(char*)malloc(2); r[0]='.'; r[1]='\0'; return r; }
     size_t len=strlen(file_name);
@@ -153,27 +240,116 @@ static inline char *g_path_get_basename(const char *file_name) {
     size_t blen=(size_t)(file_name+len-base);
     char *r=(char*)malloc(blen+1); memcpy(r,base,blen); r[blen]='\0'; return r;
 }
-#define g_build_filename(...)     g_strdup("")
-#define g_file_test(f,t)          0
-#define GFileTest int
+static inline char *_qt6_build_filename(const char *first, ...) {
+    if (!first) return _qt6_strdup("");
+    size_t rl = strlen(first);
+    char *r = (char *)_qt6_malloc(rl + 1); memcpy(r, first, rl + 1);
+    va_list ap; va_start(ap, first);
+    const char *seg;
+    while ((seg = va_arg(ap, const char *)) != NULL) {
+        while (*seg == '/') seg++;
+        size_t sl = strlen(seg);
+        r = (char *)_qt6_realloc(r, rl + 1 + sl + 1);
+        while (rl && r[rl - 1] == '/') rl--;   /* un seul séparateur */
+        r[rl++] = '/';
+        memcpy(r + rl, seg, sl + 1); rl += sl;
+    }
+    va_end(ap);
+    return r;
+}
+/* le NULL final est ajouté ici ; un NULL déjà passé par l'appelant arrête
+ * simplement la lecture plus tôt — sans danger. */
+#define g_build_filename(...)     _qt6_build_filename(__VA_ARGS__, (const char *)NULL)
+typedef int GFileTest;
+#define G_FILE_TEST_IS_REGULAR    (1 << 0)
+#define G_FILE_TEST_IS_SYMLINK    (1 << 1)
+#define G_FILE_TEST_IS_DIR        (1 << 2)
+#define G_FILE_TEST_IS_EXECUTABLE (1 << 3)
+#define G_FILE_TEST_EXISTS        (1 << 4)
+static inline gboolean g_file_test(const char *f, GFileTest t) {
+    struct stat st;
+    if ((t & G_FILE_TEST_IS_SYMLINK) && lstat(f, &st) == 0 && S_ISLNK(st.st_mode))
+        return TRUE;
+    if (stat(f, &st) != 0) return FALSE;
+    if (t & G_FILE_TEST_EXISTS) return TRUE;
+    if ((t & G_FILE_TEST_IS_REGULAR) && S_ISREG(st.st_mode)) return TRUE;
+    if ((t & G_FILE_TEST_IS_DIR) && S_ISDIR(st.st_mode)) return TRUE;
+    if ((t & G_FILE_TEST_IS_EXECUTABLE) && access(f, X_OK) == 0) return TRUE;
+    return FALSE;
+}
 
 /* ─── Helpers chaîne / UTF-8 (stringman.c, attributes.c…) ────────────────────
  * Le cœur n'utilise que de l'ASCII (préfixes de commandes, noms de widgets),
  * donc les fonctions « utf8 » se ramènent à leurs équivalents octet. */
-#include <strings.h>   /* strcasecmp */
+#include <strings.h>
 typedef uint32_t gunichar;
-#define g_ascii_strcasecmp(a,b)   strcasecmp((a),(b))
-#define g_ascii_strncasecmp(a,b,n) strncasecmp((a),(b),(n))
+/* ⚠️ Contrat g_ascii_* : repli de casse ASCII, INDÉPENDANT de la locale.
+ * str[n]casecmp suit LC_CTYPE (sous tr_TR, 'I'/'i' ne se replient plus l'un
+ * sur l'autre) — même famille de trahison que g_ascii_strtod→strtod, payée le
+ * 2026-09-03. Repli manuel A-Z, rien d'autre. */
+static inline int _qt6_ascii_lower(int c) { return (c >= 'A' && c <= 'Z') ? c + 32 : c; }
+static inline int _qt6_ascii_strcasecmp(const char *a, const char *b) {
+    int ca, cb;
+    do {
+        ca = _qt6_ascii_lower((unsigned char)*a++);
+        cb = _qt6_ascii_lower((unsigned char)*b++);
+    } while (ca && ca == cb);
+    return ca - cb;
+}
+static inline int _qt6_ascii_strncasecmp(const char *a, const char *b, size_t n) {
+    while (n--) {
+        int ca = _qt6_ascii_lower((unsigned char)*a++);
+        int cb = _qt6_ascii_lower((unsigned char)*b++);
+        if (ca != cb) return ca - cb;
+        if (!ca) return 0;
+    }
+    return 0;
+}
+#define g_ascii_strcasecmp(a,b)    _qt6_ascii_strcasecmp((a),(b))
+#define g_ascii_strncasecmp(a,b,n) _qt6_ascii_strncasecmp((a),(b),(n))
 #define g_snprintf(buf,n,fmt,...) snprintf((buf),(n),(fmt),##__VA_ARGS__)
-#define g_utf8_strchr(p,len,c)    ((char*)((p) ? strchr((p),(c)) : NULL))
-#define g_utf8_get_char(p)        ((gunichar)(unsigned char)*(p))
+/* Vrai décodage UTF-8 (audit 2026-09-03) : les versions « octet » rendaient
+ * 0xC3 pour « é », comptaient les octets au lieu des caractères, et tronquaient
+ * le gunichar cherché à un char. Faux pour tout libellé accentué — c'est-à-dire
+ * la langue du projet. */
+static inline gunichar g_utf8_get_char(const char *p) {
+    const unsigned char *u = (const unsigned char *)p;
+    if (u[0] < 0x80)          return u[0];
+    if ((u[0] & 0xE0) == 0xC0) return ((gunichar)(u[0] & 0x1F) << 6)  |  (u[1] & 0x3F);
+    if ((u[0] & 0xF0) == 0xE0) return ((gunichar)(u[0] & 0x0F) << 12) | ((gunichar)(u[1] & 0x3F) << 6)  |  (u[2] & 0x3F);
+    if ((u[0] & 0xF8) == 0xF0) return ((gunichar)(u[0] & 0x07) << 18) | ((gunichar)(u[1] & 0x3F) << 12) | ((gunichar)(u[2] & 0x3F) << 6) | (u[3] & 0x3F);
+    return 0xFFFD;   /* octet invalide : caractère de remplacement */
+}
+static inline const char *_qt6_utf8_next(const char *p) {
+    p++;
+    while ((*p & 0xC0) == 0x80) p++;
+    return p;
+}
+static inline char *g_utf8_strchr(const char *p, gssize len, gunichar c) {
+    if (!p) return NULL;
+    const char *end = (len < 0) ? NULL : p + len;
+    while (*p && (!end || p < end)) {
+        if (g_utf8_get_char(p) == c) return (char *)p;
+        p = _qt6_utf8_next(p);
+    }
+    return NULL;
+}
 static inline long g_utf8_strlen(const char *p, gssize max) {
     if (!p) return 0;
-    size_t len = strlen(p);
-    return (max < 0 || (size_t)max >= len) ? (long)len : (long)max;
+    long n = 0; gssize i = 0;
+    while (p[i] && (max < 0 || i < max)) {
+        if (((unsigned char)p[i] & 0xC0) != 0x80) n++;
+        i++;
+    }
+    return n;
 }
 static inline long g_utf8_pointer_to_offset(const char *str, const char *pos) {
-    return (long)(pos - str);
+    long n = 0;
+    while (str < pos) {
+        if (((unsigned char)*str & 0xC0) != 0x80) n++;
+        str++;
+    }
+    return n;
 }
 /* g_strchug : supprime les blancs en tête, en place, renvoie la chaîne. */
 static inline char *g_strchug(char *s) {
@@ -364,6 +540,11 @@ static inline gboolean g_shell_parse_argv(const char *line, int *argcp,
     char *save = NULL;
     for (char *tok = strtok_r(copy, " \t\n\r\f\v", &save); tok;
              tok = strtok_r(NULL, " \t\n\r\f\v", &save)) {
+        /* Contrat GLib : un mot non cité commençant par '#' ouvre un
+         * commentaire et TERMINE l'analyse. '#' n'est pas un métacaractère de
+         * safe_exec : sans ce cas, « cmd arg # note » passait les '#' en
+         * arguments réels là où le port de référence les élague. (2026-09-03) */
+        if (tok[0] == '#') break;
         if (n + 1 >= cap) { cap *= 2;
             char **grown = (char **)realloc(argv, (size_t)cap * sizeof(char *));
             if (!grown) { for (int i = 0; i < n; i++) free(argv[i]);
@@ -405,14 +586,34 @@ static inline void *g_ptr_array_free(GPtrArray *a, int free_seg) {
 static inline gboolean g_spawn_sync(const char *wd, char **argv, char **envp,
         int flags, void *setup, void *data,
         char **out_str, char **err_str, int *exit_status, GError **error) {
-    (void)wd; (void)envp; (void)flags; (void)setup; (void)data;
+    (void)wd; (void)flags; (void)setup; (void)data;
     (void)out_str; (void)err_str;
     if (!argv || !argv[0]) { _qt6_set_gerror(error, "no argv"); return FALSE; }
+    /* ⚠️ Contrat GLib : commande introuvable ⇒ FALSE + GError — l'appelant est
+     * AVERTI. L'ancien shim rendait TRUE avec exit_status 127<<8, comme si la
+     * commande avait tourné : l'échec d'exec était invisible. Technique GLib
+     * reproduite : un tube O_CLOEXEC que l'enfant n'écrit QUE si exec échoue —
+     * fermé tout seul (donc EOF côté parent) si exec réussit. (2026-09-03) */
+    int ep[2];
+    if (pipe2(ep, O_CLOEXEC) != 0) { _qt6_set_gerror(error, "pipe failed"); return FALSE; }
     pid_t pid = fork();
-    if (pid < 0) { _qt6_set_gerror(error, "fork failed"); return FALSE; }
-    if (pid == 0) { if(envp) execvpe(argv[0], argv, envp); else execvp(argv[0], argv); _exit(127); }
+    if (pid < 0) { close(ep[0]); close(ep[1]);
+        _qt6_set_gerror(error, "fork failed"); return FALSE; }
+    if (pid == 0) {
+        close(ep[0]);
+        if (envp) execvpe(argv[0], argv, envp); else execvp(argv[0], argv);
+        int err = errno;
+        ssize_t w = write(ep[1], &err, sizeof err); (void)w;
+        _exit(127);
+    }
+    close(ep[1]);
+    int execerr = 0;
+    ssize_t r;
+    while ((r = read(ep[0], &execerr, sizeof execerr)) < 0 && errno == EINTR) { }
+    close(ep[0]);
     int status = 0;
     while (waitpid(pid, &status, 0) < 0) { /* retry on EINTR */ }
+    if (r > 0) { _qt6_set_gerror(error, strerror(execerr)); return FALSE; }
     if (exit_status) *exit_status = status;
     return TRUE;
 }
@@ -433,7 +634,18 @@ static inline gboolean g_spawn_async_with_pipes(const char *wd, char **argv,
         _qt6_set_gerror(error, "fork failed");
         return FALSE;
     }
+    /* Mêmes deux écarts de contrat que g_spawn_sync, corrigés (2026-09-03) :
+     * (a) échec d'exec rapporté par un tube O_CLOEXEC (EOF = exec réussi) —
+     *     l'ancien shim rendait TRUE et le lecteur du pipe voyait juste EOF ;
+     * (b) *child_pid recevait le pid de l'INTERMÉDIAIRE, déjà moissonné — le
+     *     vrai pid du petit-fils transite maintenant par le même tube. */
+    int ep[2];
+    if (pipe2(ep, O_CLOEXEC) != 0) {
+        if (stdout_fd) { close(outpipe[0]); close(outpipe[1]); }
+        _qt6_set_gerror(error, "pipe failed"); return FALSE;
+    }
     if (pid == 0) {
+        close(ep[0]);
         pid_t grandchild = fork();
         if (grandchild == 0) {
             if (stdout_fd) {
@@ -441,16 +653,32 @@ static inline gboolean g_spawn_async_with_pipes(const char *wd, char **argv,
                 close(outpipe[0]); close(outpipe[1]);
             }
             if(envp) execvpe(argv[0], argv, envp); else execvp(argv[0], argv);
+            int err = errno;
+            ssize_t w = write(ep[1], &err, sizeof err); (void)w;
             _exit(127);
         }
+        /* pid du petit-fils vers le parent, par un canal qui survit à _exit */
+        ssize_t w = write(ep[1], &grandchild, sizeof grandchild); (void)w;
         _exit(0);
     }
+    close(ep[1]);
     if (stdout_fd) { close(outpipe[1]); *stdout_fd = outpipe[0]; }
     if (stdin_fd)  *stdin_fd  = -1;
     if (stderr_fd) *stderr_fd = -1;
     int dummy = 0;
     while (waitpid(pid, &dummy, 0) < 0) { /* reap intermediate */ }
-    if (child_pid) *child_pid = (GPid)pid;
+    pid_t vrai_pid = -1;
+    ssize_t r;
+    while ((r = read(ep[0], &vrai_pid, sizeof vrai_pid)) < 0 && errno == EINTR) { }
+    int execerr = 0; ssize_t r2;
+    while ((r2 = read(ep[0], &execerr, sizeof execerr)) < 0 && errno == EINTR) { }
+    close(ep[0]);
+    if (r2 > 0) {   /* le petit-fils a écrit son errno : exec a échoué */
+        if (stdout_fd) { close(*stdout_fd); *stdout_fd = -1; }
+        _qt6_set_gerror(error, strerror(execerr));
+        return FALSE;
+    }
+    if (child_pid) *child_pid = (GPid)(r > 0 ? vrai_pid : pid);
     return TRUE;
 }
 
@@ -780,10 +1008,12 @@ static inline char *g_strconcat(const char *first, ...) {
     return out;
 }
 static inline char **g_strsplit_set(const char *str, const char *delims, int max) {
+    /* mêmes cas de bord que g_strsplit : NULL → NULL, "" → vecteur vide. */
+    if (!str) return NULL;
     int n = 0, cap = 8;
-    char **out = (char **)malloc(sizeof(char *) * cap);
+    char **out = (char **)_qt6_malloc(sizeof(char *) * cap);
     const char *start = str;
-    if (!out || !str) { if (out) out[0] = NULL; return out; }
+    if (!*str) { out[0] = NULL; return out; }
     for (const char *p = str; ; p++) {
         int is_delim = (*p && strchr(delims, *p) != NULL);
         if (is_delim || *p == '\0') {
@@ -898,7 +1128,16 @@ static inline int g_option_context_parse(
  * Le clavier réel passe par Qt côté C++ ; ces stubs suffisent à compiler le
  * chemin GTK d'export des touches. */
 static inline const char *gdk_keyval_name(unsigned int keyval) { (void)keyval; return ""; }
-static inline unsigned int gdk_keyval_to_unicode(unsigned int keyval) { return keyval; }
+static inline unsigned int gdk_keyval_to_unicode(unsigned int keyval) {
+    /* Contrat GDK : le code point correspondant, ou 0 s'il n'y en a pas.
+     * Rendre keyval inchangé n'était correct que pour le Latin-1 : une flèche
+     * (0xFF51…) formatait un caractère de zone privée dans KEY_UNI au lieu de
+     * rien, là où le port de référence exporte 0. (Audit 2026-09-03.) */
+    if (keyval < 0x100) return keyval;                       /* Latin-1 direct */
+    if ((keyval & 0xFF000000u) == 0x01000000u)               /* forme U+xxxx de GDK */
+        return keyval & 0x00FFFFFFu;
+    return 0;                                                /* touche spéciale */
+}
 
 /* ─── GFileMonitor (signals.c — auto-refresh) ───────────────────────────────*/
 typedef int GFileMonitorEvent;
