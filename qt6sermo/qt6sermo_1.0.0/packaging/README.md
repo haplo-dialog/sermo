@@ -56,7 +56,7 @@ sudo sh qt6sermo.SlackBuild
 
 ## Coexistence des binaires
 
-Les 6 ports dialog s'installent **simultanément sans conflit** :
+Les trois ports s'installent **simultanément sans conflit** :
 
 | Binaire | Port | Toolkit |
 |---------|------|---------|

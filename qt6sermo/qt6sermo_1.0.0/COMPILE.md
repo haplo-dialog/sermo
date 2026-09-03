@@ -84,7 +84,7 @@ gtk3sermo fonctionnent sans modification sous qt6sermo.
 
 ## Tests XML communs (`tests/xml/`, sans display requis)
 
-Suite XML partagée par les six ports (52 cas, parsés via `--print-ir`, headless),
+Suite XML partagée par les trois ports (55 cas, parsés via `--print-ir`, headless),
 à la racine du dépôt :
 
 ```bash

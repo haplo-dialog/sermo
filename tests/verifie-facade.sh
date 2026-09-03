@@ -35,6 +35,9 @@ cd "$ICI" || exit 1
 # rien a faire dans un depot public. Motif RESSERRE a « D.Marques » : un
 # « Marques » nu attrapait le mot « remarques » dans le changelog. Une garde
 # qui crie pour rien finit par etre ignoree — c'est pire que pas de garde.
+# ⚠️ On lit en -a et non -I : « grep -I » SAUTE tout fichier que « file » juge
+# binaire. Le manuel info engendre par makeinfo est classe « data » — il a donc
+# publie le tableau des six ports sans que cette garde puisse le voir.
 MOTIFS='s\.cage@lucubratio|lucubratio|S\.? ?Cage|D\.? ?Marques|haplo-seb|/home/akej|haplo-linux\.fr'
 
 # Plafond des lignes de clôture nominatives déjà publiées, par fichier.
@@ -55,13 +58,13 @@ if ! git rev-parse --git-dir >/dev/null 2>&1; then
     exit 1
 fi
 sales=$(git ls-files -z \
-        | xargs -0 grep -lIE "$MOTIFS" 2>/dev/null \
+        | xargs -0 grep -laE "$MOTIFS" 2>/dev/null \
         | grep -v -e 'debian/changelog$' -e 'tests/verifie-facade\.sh$')
 if [ -n "$sales" ]; then
     dire "identité nominative dans l'arbre public :"
     printf '%s\n' "$sales" | sed 's/^/         /'
     printf '%s\n' "$sales" | while read -r f; do
-        grep -nIE "$MOTIFS" "$f" | head -2 | sed "s|^|         $f:|"
+        grep -naE "$MOTIFS" "$f" | head -2 | sed "s|^|         $f:|"
     done
 fi
 

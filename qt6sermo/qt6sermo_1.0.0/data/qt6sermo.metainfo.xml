@@ -18,14 +18,14 @@
     <p>
       qt6sermo builds native Qt 6 dialog windows from a simple XML description,
       letting shell scripts display interactive graphical interfaces without
-      any knowledge of the underlying toolkit. It is one of the six ports of
+      any knowledge of the underlying toolkit. It is one of the three ports of
       the haplo-dialog suite, the haplo-dialog fork of gtkdialog.
     </p>
     <p xml:lang="fr">
       qt6sermo construit des fenêtres de dialogue Qt 6 natives à partir d'une
       description XML simple, permettant aux scripts shell d'afficher des
       interfaces graphiques interactives sans connaître le toolkit
-      sous-jacent. C'est l'un des six ports de la suite haplo-dialog, le
+      sous-jacent. C'est l'un des trois ports de la suite haplo-dialog, le
       fork haplo-dialog de gtkdialog.
     </p>
   </description>

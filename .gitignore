@@ -121,3 +121,9 @@ build_out.log
 
 # Arbre de construction de ci/build.sh — jamais suivi.
 _build/
+
+# Manuel info ENGENDRE par makeinfo (texinfo est un Build-Depends). Les ports GTK
+# ne le suivent pas non plus. Il avait ete importe par erreur et publiait le
+# tableau des SIX ports, invisible de la garde : « file » le classe « data »,
+# donc « grep -I » le sautait.
+*.info

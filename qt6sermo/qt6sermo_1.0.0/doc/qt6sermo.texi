@@ -79,7 +79,7 @@ interfaces graphiques natives sans aucune connaissance de la programmation
 @value{TOOLKIT}.
 
 @command{qt6sermo} fait partie de la famille @strong{haplo-dialog},
-6 ports du logiciel gtkdialog original (László Pere, 2003--2013),
+3 ports du logiciel gtkdialog original (László Pere, 2003--2013),
 modernisés et sécurisés par haplo-dialog en 2026.
 
 @section La famille haplo-dialog

@@ -48,7 +48,7 @@
 ### 🔮 v1.1.0 — « Multi-toolkit » (long terme)
 
 - [ ] Sélection du port via `HAPLO_DIALOG_TOOLKIT=gtk3|gtk4|qt6`
-- [ ] API shell commune entre les six ports
+- [ ] API shell commune entre les trois ports
 
 ---
 
