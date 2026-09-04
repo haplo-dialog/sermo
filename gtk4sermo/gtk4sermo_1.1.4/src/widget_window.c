@@ -308,6 +308,8 @@ gboolean hp_window_set_icon_from_file(GtkWindow *w, const char *chemin, GError *
 }
 
 
+
+
 GtkWidget *widget_window_create(
 	AttributeSet *Attr, tag_attr *attr, gint Type)
 {
@@ -369,6 +371,7 @@ GtkWidget *widget_window_create(
 #ifdef DEBUG_TRANSITS
 	fprintf(stderr, "%s(): Exiting.\n", __func__);
 #endif
+
 
 	return widget;
 }

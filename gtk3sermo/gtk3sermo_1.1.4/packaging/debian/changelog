@@ -1,3 +1,15 @@
+gtk3sermo (1.1.4-2) unstable; urgency=medium
+
+  * Scripts livrés : les eval hérités des applications Puppy sont durcis. Une
+    injection réelle par NOM DE FICHIER dormait dans menubar et les deux
+    variantes pixmap (le nom se développait avant l'eval puis se faisait
+    ré-analyser — prouvée par exécution) : expansion différée, le contenu
+    n'est plus jamais re-parsé. Garde d'identifiant sur le déréférencement
+    indirect de pfeme/playmusic. Aucun de ces scripts n'évaluait de sortie
+    de dialogue.
+
+ -- haplo-dialog <devel@haplo-dialog.fr>  Fri, 04 Sep 2026 22:19:28 +0200
+
 gtk3sermo (1.1.4-1) unstable; urgency=medium
 
   * Durcissement CET : la note ELF IBT/SHSTK est forcée au lien

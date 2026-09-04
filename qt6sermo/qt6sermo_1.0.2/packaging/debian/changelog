@@ -1,3 +1,13 @@
+qt6sermo (1.0.2-2) unstable; urgency=medium
+
+  * Les 20 exemples qui évaluaient la sortie du dialogue (« eval $(...) »)
+    passent au motif --do : chaque script se fait rappeler par le dialogue,
+    les valeurs des widgets arrivent par l'environnement, et chaque script
+    se ferme par un EXIT:ok chaîné. Le dépôt n'enseigne plus des deux mains.
+    Les 32 exemples ouvrent toujours leur fenêtre ; ils honorent $GTKDIALOG.
+
+ -- haplo-dialog <devel@haplo-dialog.fr>  Fri, 04 Sep 2026 22:19:28 +0200
+
 qt6sermo (1.0.2-1) unstable; urgency=medium
 
   * <timer> : retour au contrat exact du port de référence, mesuré sur les

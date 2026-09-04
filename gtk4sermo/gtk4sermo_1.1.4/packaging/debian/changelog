@@ -1,3 +1,18 @@
+gtk4sermo (1.1.4-2) unstable; urgency=medium
+
+  * GTK 4 fait remonter l'expansion des enfants vers les parents, GTK 3 ne
+    propage rien : les ressorts d'émulation de pack_end contaminaient leurs
+    ancêtres, et le cadre « Actions rapides » d'outils-système traînait
+    ~220 px de vide à sa droite (vu sur la bande comparative du site,
+    bissecté à la sonde d'allocations). La contagion est bloquée dans le
+    shim ; la mise en page redevient celle du port de référence.
+  * Scripts livrés : mêmes durcissements que gtk3sermo 1.1.4-2 — injection
+    par nom de fichier neutralisée (menubar, pixmap_auto_refresh,
+    pixmap_file_monitor, expansion différée prouvée par exécution), garde
+    d'identifiant sur le déréférencement indirect (pfeme, playmusic).
+
+ -- haplo-dialog <devel@haplo-dialog.fr>  Fri, 04 Sep 2026 22:19:28 +0200
+
 gtk4sermo (1.1.4-1) unstable; urgency=medium
 
   * Ancrage en fin de boîte : le ressort posé par le shim de pack_end ne

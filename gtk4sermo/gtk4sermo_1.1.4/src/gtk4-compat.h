@@ -292,6 +292,21 @@ _compat_box_pack(GtkBox *box, GtkWidget *child,
 {
     GtkOrientation axe = gtk_orientable_get_orientation(GTK_ORIENTABLE(box));
 
+    /* ⚠️ GTK4 fait REMONTER hexpand/vexpand des enfants vers les parents ;
+     * GTK3 ne propage RIEN — l'expansion y est toujours explicite. Sans ce
+     * blocage, les ressorts d'émulation de pack_end (labels hexpand) posés
+     * DANS les boutons contaminaient leurs ancêtres : le cadre « Actions
+     * rapides » de system-tools devenait extensible par contagion et avalait
+     * ~220 px de vide (bissecté à la sonde d'allocations, 2026-09-04).
+     * set_hexpand(box, FALSE) pose aussi hexpand-set : la contagion s'arrête
+     * ici, et un expand EXPLICITE demandé plus tard sur cette boîte (branche
+     * expand ci-dessous, quand elle est elle-même empaquetée) le remplace
+     * sans conflit. On ne touche pas un drapeau déjà posé explicitement. */
+    if (!gtk_widget_get_hexpand_set(GTK_WIDGET(box)))
+        gtk_widget_set_hexpand(GTK_WIDGET(box), FALSE);
+    if (!gtk_widget_get_vexpand_set(GTK_WIDGET(box)))
+        gtk_widget_set_vexpand(GTK_WIDGET(box), FALSE);
+
     if (at_end) {
         /* ⚠️ GTK3 : pack_end ne fixe pas que l'ORDRE, il COLLE le groupe au bord
          * opposé de la boîte — à droite pour une hbox. gtk_box_prepend seul ne
@@ -317,7 +332,14 @@ _compat_box_pack(GtkBox *box, GtkWidget *child,
         gboolean deja_extensible =
             GPOINTER_TO_INT(g_object_get_data(G_OBJECT(box), "_compat_boite_extensible"));
 
-        if (!expand && !deja_extensible) {
+        /* JAMAIS de ressort dans une boîte HOMOGÈNE. En GTK3, pack_end n'y
+         * change que l'ORDRE : toutes les cellules sont égales, il n'y a pas
+         * de « reste à pousser vers le bord ». Et un ressort y gonfle la
+         * DEMANDE de largeur (cellules alignées sur la plus large × nombre
+         * d'enfants). NB : le vide de ~220 px vu sur system-tools venait,
+         * lui, de la CONTAGION d'expansion bloquée en tête de fonction —
+         * les deux gardes se complètent. 2026-09-04. */
+        if (!expand && !deja_extensible && !gtk_box_get_homogeneous(box)) {
             GtkWidget *ressort = g_object_get_data(G_OBJECT(box), "_compat_ressort_fin");
             if (ressort == NULL) {
                 ressort = gtk_label_new(NULL);
