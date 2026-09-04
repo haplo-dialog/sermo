@@ -5,6 +5,14 @@ This file summarises the important changes from the user's point of view.
 For the complete technical history, see CHANGELOG.md.
 
 ────────────────────────────────────────────────────────────────
+Version qt6sermo 1.0.2 (2026-09-04), The timer behaves like the GTK ports again
+
+  * <timer milliseconds="true"> fired immediately instead of waiting: fixed.
+    Decimal intervals are truncated to whole seconds again, exactly like
+    gtk3sermo and gtk4sermo — the same script now lasts the same on all
+    three engines.
+
+────────────────────────────────────────────────────────────────
 Version 1.1.4 (2026-09-04), Three ports shipped, qt6sermo now as a .deb
 
   * The Qt 6 port now ships as a package: qt6sermo 1.0.1-1 (versioned apart

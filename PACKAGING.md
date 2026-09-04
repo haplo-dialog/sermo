@@ -7,7 +7,7 @@
 > **Les binaires sont publiés** depuis le 2026-08-24, joints à la release
 > [v1.1.4](https://gitlab.com/haplo-dialog/sermo/-/releases/v1.1.4) avec leurs sommes de contrôle : `gtk3sermo`, `gtk4sermo`,
 > `gtksermo` et les deux paquets de symboles. Le troisième port, `qt6sermo`
-> (1.0.1-1), n'a **pas encore** de `.deb` construit : sa source et ses recettes
+> (1.0.2-1), n'a **pas encore** de `.deb` construit : sa source et ses recettes
 > sont dans l'arbre, rien n'est publié pour lui. Il n'y a **pas de dépôt APT** :
 > on télécharge, on vérifie, on installe. Les anciens paquets `gtk3dialog` ont
 > été retirés au renommage, et ceux de la `v1.0.0` l'ont été le 2026-08-27
@@ -82,7 +82,7 @@ gtk3sermo/gtk3sermo_1.1.4/packaging/
 ```
 
 `qt6sermo` fournit les **mêmes cinq formats** sous
-`qt6sermo/qt6sermo_1.0.1/packaging/`, calqués sur CMake. Aucun n'a été construit
+`qt6sermo/qt6sermo_1.0.2/packaging/`, calqués sur CMake. Aucun n'a été construit
 ni vérifié par nos soins, `debian/` compris : la colonne de droite du tableau
 ci-dessus ne vaut donc **pas** pour lui.
 
@@ -117,7 +117,7 @@ directement `gtk3sermo`. Depuis les sources, `make install` pose bien le lien.
 cd gtk3sermo/gtk3sermo_1.1.4 && autoreconf -fi && ./configure && make -j"$(nproc)" && sudo make install
 
 # CMake - qt6sermo
-cd qt6sermo/qt6sermo_1.0.1 && cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j"$(nproc)" && sudo cmake --install build
+cd qt6sermo/qt6sermo_1.0.2 && cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j"$(nproc)" && sudo cmake --install build
 ```
 
 ## Domaine du projet

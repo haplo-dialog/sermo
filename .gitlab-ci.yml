@@ -148,7 +148,7 @@ qt6sermo:
   extends: .cmake
   variables:
     PORT: qt6sermo
-    VER: "1.0.1"
+    VER: "1.0.2"
     # libglib2.0-dev n'est PAS une dependance du port : il lie Qt, pas GLib.
     # Elle sert au dernier pas du modele, tests/run_unit_tests.sh, qui compile
     # safe_exec.c a part, contre la VRAIE glib et non le shim — c'est le meme
@@ -239,7 +239,7 @@ exemples:qt6sermo:
   script:
     - sed -i 's/^# *fr_FR.UTF-8/fr_FR.UTF-8/' /etc/locale.gen
     - locale-gen
-    - cd qt6sermo/qt6sermo_1.0.1
+    - cd qt6sermo/qt6sermo_1.0.2
     - cmake -B build -DCMAKE_BUILD_TYPE=Release
     - cmake --build build -j"$(nproc)"
     # La promesse de l'etage (en-tete du fichier) : lancer REELLEMENT les
@@ -255,3 +255,8 @@ exemples:qt6sermo:
     # defauts y ont vecu sans etre vus : border-width totalement ignore, et les
     # icones de theme jamais chargees. Ajoute le 2026-09-03.
     - sh "$CI_PROJECT_DIR/tests/comportement/geometrie.sh" "$PWD/build/qt6sermo"
+    # Le CONTRAT de <timer> : le banc de valeurs ne mesure pas le TEMPS. Deux
+    # regressions vecues le 2026-09-04 sur le binaire livre : milliseconds lu
+    # comme une valeur (depart immediat), decimales honorees (l'oracle tronque
+    # par atoi). Bornes comparatives, tiennent sur machine lente.
+    - sh tests/comportement/minuterie.sh "$PWD/build/qt6sermo"

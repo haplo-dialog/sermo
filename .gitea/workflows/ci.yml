@@ -206,7 +206,7 @@ jobs:
             cmake qt6-base-dev libglib2.0-dev
 
       - name: Compiler et installer
-        working-directory: qt6sermo/qt6sermo_1.0.1
+        working-directory: qt6sermo/qt6sermo_1.0.2
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF \
             -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/inst"
@@ -239,11 +239,11 @@ jobs:
             cmake qt6-base-dev xvfb xauth locales dbus-x11 fonts-dejavu-core
 
       - name: Compiler
-        working-directory: qt6sermo/qt6sermo_1.0.1
+        working-directory: qt6sermo/qt6sermo_1.0.2
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build -j"$(nproc)"
 
       - name: Comportement — les valeurs rendues, pas seulement le XML
-        working-directory: qt6sermo/qt6sermo_1.0.1
+        working-directory: qt6sermo/qt6sermo_1.0.2
         run: QT6_BIN="$PWD/build/qt6sermo" sh tests/comportement/run.sh

@@ -88,7 +88,7 @@ Un cœur C commun (grammaire flex/bison + automate + `safe_exec`), trois backend
 |------|---------|---------|:------:|---------------|
 | **gtk3sermo** | `gtk3sermo` | GTK 3 | 52 | **Référence** · le plus éprouvé |
 | **gtk4sermo** | `gtk4sermo` | GTK 4 | 56 | les 52 mêmes, plus `flowbox`, `overlay`, `revealer`, `stack` |
-| **qt6sermo** | `qt6sermo` | Qt 6 (≥ 6.2) | 49 | 49 des 52 de la référence (sans `chooser`, `gvim`, `separator`) · construit par **CMake** (≥ 3.20) · versionné à part (**1.0.1**) · `.deb` livré |
+| **qt6sermo** | `qt6sermo` | Qt 6 (≥ 6.2) | 49 | 49 des 52 de la référence (sans `chooser`, `gvim`, `separator`) · construit par **CMake** (≥ 3.20) · versionné à part (**1.0.2**) · `.deb` livré |
 
 > Une seule grammaire pour les trois ports. Le compte est celui des **balises de
 > widget acceptées par la grammaire** (`src/gtkdialog_lexer.l`), alias compris —
@@ -133,13 +133,13 @@ sudo apt install ./gtk3sermo_1.1.4-1_amd64.deb
 | `gtk4sermo` 1.1.4-1 | `/usr/bin/gtk4sermo` | aucun |
 | `gtksermo` 1.1.4-1 | `/usr/bin/gtkdialog` | **avec `gtkdialog` et `gtk3dialog`** |
 
-> Le port **Qt 6** est livré lui aussi : `qt6sermo` 1.0.1-1 (`.deb` joint à la
+> Le port **Qt 6** est livré lui aussi : `qt6sermo` 1.0.2-1 (`.deb` joint à la
 > release v1.1.4, lintian sans erreur ni avertissement, dépend de `libqt6svg6`
 > pour les icônes de thème SVG). Il se construit aussi depuis les sources
-> (recette `qt6sermo/qt6sermo_1.0.1/packaging/debian/`, voir plus bas).
+> (recette `qt6sermo/qt6sermo_1.0.2/packaging/debian/`, voir plus bas).
 
-> ⚠️ **Les paquets de la release `v1.0.0` ont été retirés** (versions `1.0.1-10`
-> et `1.0.1-11`). Ils portaient trois défauts : la sortie rendue au shell y était
+> ⚠️ **Les paquets de la release `v1.0.0` ont été retirés** (versions `1.0.2-10`
+> et `1.0.2-11`). Ils portaient trois défauts : la sortie rendue au shell y était
 > exécutable par `eval` si l'utilisateur du dialogue tapait `$(commande)` dans un
 > champ, cliquer un `<switch>` tuait le programme, et sous locale française un
 > nombre écrit avec un point valait zéro en silence. **Si vous en aviez installé
@@ -193,7 +193,7 @@ Le port Qt 6 ne se construit pas en autotools mais avec **CMake** (≥ 3.20) et
 `<terminal>` :
 
 ```sh
-cd qt6sermo/qt6sermo_1.0.1 && cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j"$(nproc)" && sudo cmake --install build
+cd qt6sermo/qt6sermo_1.0.2 && cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j"$(nproc)" && sudo cmake --install build
 ```
 
 Des recettes RPM, Arch, Gentoo et Slackware existent dans `packaging/`, mais
@@ -226,7 +226,7 @@ Signalement de vulnérabilité : voir [SECURITY.md](SECURITY.md).
   Plus `./tests/comportement/geometrie.sh`, pour ce qu'aucune variable ne trahit
   (`border-width`, taille d'icône de thème).
 - **Comportement du port Qt 6** : banc propre au port,
-  `qt6sermo/qt6sermo_1.0.1/tests/comportement/run.sh`, **24/24** — les valeurs
+  `qt6sermo/qt6sermo_1.0.2/tests/comportement/run.sh`, **24/24** — les valeurs
   attendues y sont celles du port GTK 3, donc « vert » = parité de valeur avec
   la référence. La suite XML partagée y passe aussi **55/55**.
 - **Fuzzing** du parser : `./tests/fuzz/run_fuzz.sh gtk3sermo 60` (afl++ ou repli intégré).

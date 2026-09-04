@@ -54,7 +54,7 @@ src_dir() {
         gtk4sermo)  echo "${ROOT_DIR}/gtk4sermo/gtk4sermo_1.1.4" ;;
         # Chaque port est versionné indépendamment : qt6sermo est en 1.0.0
         # quand les ports GTK sont en 1.1.3. Pas de version en dur commune.
-        qt6sermo)   echo "${ROOT_DIR}/qt6sermo/qt6sermo_1.0.1" ;;
+        qt6sermo)   echo "${ROOT_DIR}/qt6sermo/qt6sermo_1.0.2" ;;
     esac
 }
 

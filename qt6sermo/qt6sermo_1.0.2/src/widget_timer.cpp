@@ -40,22 +40,30 @@ GtkWidget *widget_timer_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     placeholder->hide();
     placeholder->setFixedSize(0, 0);
 
-    /* ⚠️ PAS atof() : gtkdialog.c appelle setlocale(LC_ALL, ""), donc sous une
-     * locale française atof("2.5") rend 2 — la partie décimale disparaît EN
-     * SILENCE. Mesuré le 2026-09-03 : interval="2.5" déclenchait à 2000 ms sous
-     * fr_FR et à 2500 ms sous C. Les ports GTK n'ont pas ce défaut : ils
-     * n'utilisent jamais atof. g_ascii_strtod lit toujours le point décimal,
-     * quelle que soit la locale. Corrigé partout dans le port (24 appels).
-     */
-    double interval_ms = 1000.0;
-
+    /* Contrat de l'ORACLE (gtk3sermo, widget_timer.c:222-241), mesuré le
+     * 2026-09-04 sur les binaires installés :
+     *   - « milliseconds » est un BOOLÉEN (true/yes/1) : levé, « interval »
+     *     compte en millisecondes (défaut 1000) ; sinon en SECONDES ENTIÈRES
+     *     (atoi, défaut 1). Une première version le lisait comme la VALEUR en
+     *     ms — strtod("true") vaut 0, la minuterie partait immédiatement.
+     *   - « interval » passe par atoi : interval="1.5" vaut 1 chez l'oracle.
+     *     Honorer la décimale (version 1.0.1) était une INFIDÉLITÉ : le même
+     *     script ne durait pas pareil selon le port. atoi est sans danger de
+     *     locale pour des entiers. */
+    gboolean en_ms = FALSE;
+    long n = 1;                                   /* défaut oracle : 1 seconde */
     if (attr) {
         const char *v;
+        if ((v = get_tag_attribute(attr, "milliseconds")) &&
+            (g_ascii_strcasecmp(v, "true") == 0 ||
+             g_ascii_strcasecmp(v, "yes") == 0 || atoi(v) == 1)) {
+            en_ms = TRUE;
+            n = 1000;                             /* défaut oracle en mode ms */
+        }
         if ((v = get_tag_attribute(attr, "interval")))
-            interval_ms = g_ascii_strtod(v, NULL) * 1000.0;
-        if ((v = get_tag_attribute(attr, "milliseconds")))
-            interval_ms = g_ascii_strtod(v, NULL);
+            n = atoi(v);
     }
+    double interval_ms = en_ms ? (double)n : (double)n * 1000.0;
 
     placeholder->setProperty("timerTicks", (qlonglong)0);
 

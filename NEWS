@@ -5,6 +5,14 @@ Ce fichier résume les changements importants du point de vue de l'utilisateur.
 Pour l'historique technique complet, voir CHANGELOG.md.
 
 ────────────────────────────────────────────────────────────────
+Version qt6sermo 1.0.2 (2026-09-04), La minuterie retrouve le comportement des ports GTK
+
+  * <timer milliseconds="true"> partait immediatement au lieu d attendre :
+    corrige. Et les intervalles decimaux sont a nouveau tronques a la
+    seconde, exactement comme sur gtk3sermo et gtk4sermo — le meme script
+    dure desormais pareil sur les trois moteurs.
+
+────────────────────────────────────────────────────────────────
 Version 1.1.4 (2026-09-04), Trois ports livres, dont qt6sermo en .deb
 
   * Le port Qt 6 est desormais livre en paquet : qt6sermo 1.0.1-1 (versionne

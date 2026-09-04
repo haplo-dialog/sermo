@@ -13,8 +13,8 @@ Chaque ligne ci-dessous est tirée d'un fichier vérifiable dans l'arbre :
 leur jeu complet de fichiers, et chaque ligne ci-dessous a été relue dans **les
 deux**. Le troisième port, **qt6sermo**, ne se lit pas dans ce tableau : il se
 construit par **CMake**, sa source de vérité est
-`qt6sermo/qt6sermo_1.0.1/CMakeLists.txt`, et son packaging vit sous
-`qt6sermo/qt6sermo_1.0.1/packaging/` (mêmes cinq formats).
+`qt6sermo/qt6sermo_1.0.2/CMakeLists.txt`, et son packaging vit sous
+`qt6sermo/qt6sermo_1.0.2/packaging/` (mêmes cinq formats).
 
 | Source | Ce qu'on en extrait |
 |--------|---------------------|
@@ -187,7 +187,7 @@ autoreconf -fi && ./configure && make
 Le port Qt 6 se construit autrement — CMake, et son propre numéro de version :
 
 ```sh
-cd qt6sermo/qt6sermo_1.0.1
+cd qt6sermo/qt6sermo_1.0.2
 cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build
 ```
 

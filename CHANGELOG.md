@@ -6,6 +6,16 @@ Versionning : [Semantic Versioning](https://semver.org/lang/fr/) à partir de 1.
 
 ---
 
+## [qt6sermo 1.0.2] - 2026-09-04
+
+### Corrigé
+
+- **`<timer>` — retour au contrat du port de référence.** `milliseconds` est
+  un booléen (levé, `interval` compte en millisecondes) — la 1.0.1 le lisait
+  comme une valeur et la minuterie partait immédiatement. `interval` repasse
+  par `atoi` (secondes entières), comme l'oracle : les décimales honorées par
+  la 1.0.1 étaient une infidélité. Nouveau banc `minuterie.sh` en CI.
+
 ## [1.1.4] - 2026-09-04
 
 > Ports : gtk3sermo/gtk4sermo **1.1.4**, qt6sermo **1.0.1** (versionné à part),

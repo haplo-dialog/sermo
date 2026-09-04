@@ -6,6 +6,16 @@ Versioning: [Semantic Versioning](https://semver.org/) starting from 1.0.0.
 
 ---
 
+## [qt6sermo 1.0.2] - 2026-09-04
+
+### Fixed
+
+- **`<timer>` — back to the reference port's contract.** `milliseconds` is a
+  boolean (when set, `interval` counts in milliseconds) — 1.0.1 read it as a
+  value and the timer fired immediately. `interval` goes through `atoi`
+  (whole seconds) again, like the oracle: the decimals honored by 1.0.1 were
+  an infidelity. New `minuterie.sh` bench in CI.
+
 ## [1.1.4] - 2026-09-04
 
 > Ports: gtk3sermo/gtk4sermo **1.1.4**, qt6sermo **1.0.1** (versioned

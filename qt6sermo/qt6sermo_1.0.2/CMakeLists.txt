@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 cmake_policy(SET CMP0115 NEW)  # Explicit source file extensions required
-project(qt6sermo VERSION 1.0.1 LANGUAGES C CXX)
+project(qt6sermo VERSION 1.0.2 LANGUAGES C CXX)
 
 # config.h est ENGENDRÉ ici, pas versionné : une copie écrite à la main était
 # ignorée par git, donc absente de tout clone propre — le port ne compilait

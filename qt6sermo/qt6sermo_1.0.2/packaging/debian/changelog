@@ -1,3 +1,18 @@
+qt6sermo (1.0.2-1) unstable; urgency=medium
+
+  * <timer> : retour au contrat exact du port de référence, mesuré sur les
+    binaires installés. « milliseconds » est un BOOLÉEN (true/yes/1) qui fait
+    compter « interval » en millisecondes — la 1.0.1 le lisait comme une
+    valeur et la minuterie partait immédiatement. Et « interval » passe par
+    atoi (secondes entières) : honorer les décimales, présenté comme un
+    correctif dans la 1.0.1, était une infidélité — le même script ne durait
+    pas pareil selon le port.
+  * Nouveau banc tests/comportement/minuterie.sh (bornes comparatives,
+    robustes sur machine lente) : il attrape les deux régressions sur le
+    binaire 1.0.1 et tourne en CI.
+
+ -- haplo-dialog <devel@haplo-dialog.fr>  Fri, 04 Sep 2026 11:41:10 +0200
+
 qt6sermo (1.0.1-1) unstable; urgency=medium
 
   * Fidélité au port de référence, mesurée widget par widget contre l'oracle

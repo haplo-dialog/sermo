@@ -29,7 +29,7 @@ Merci de votre intérêt pour haplo-dialog. Ce document explique comment contrib
   bienvenu par courriel à `devel@haplo-dialog.fr`
 
 **Port de référence :**  
-haplo-dialog fournit trois ports : `gtk3sermo` (backend GTK 3), `gtk4sermo` (backend GTK 4) et `qt6sermo` (backend Qt 6, versionné indépendamment : 1.0.1 quand les ports GTK sont en 1.1.4). `gtk3sermo` reste le port de référence : il est le seul à fournir l'ancrage Wayland (layer-shell). L'alias rétro-compatible `gtkdialog` est fourni par un paquet séparé, `gtksermo`. C'est un descendant maintenu de gtkdialog (fork de gtkdialog 0.8.3 de Laszlo Pere), corrigé et durci. D'autres descendants existent, notamment le fork BunsenLabs de Mick Amadio, qui porte lui aussi gtkdialog sur GTK 3.
+haplo-dialog fournit trois ports : `gtk3sermo` (backend GTK 3), `gtk4sermo` (backend GTK 4) et `qt6sermo` (backend Qt 6, versionné indépendamment : 1.0.2 quand les ports GTK sont en 1.1.4). `gtk3sermo` reste le port de référence : il est le seul à fournir l'ancrage Wayland (layer-shell). L'alias rétro-compatible `gtkdialog` est fourni par un paquet séparé, `gtksermo`. C'est un descendant maintenu de gtkdialog (fork de gtkdialog 0.8.3 de Laszlo Pere), corrigé et durci. D'autres descendants existent, notamment le fork BunsenLabs de Mick Amadio, qui porte lui aussi gtkdialog sur GTK 3.
 
 ---
 
@@ -50,7 +50,7 @@ haplo-dialog/
 │       ├── doc/
 │       └── packaging/
 ├── gtk4sermo/                    ← port GTK 4 (autotools, même disposition)
-├── qt6sermo/                     ← port Qt 6 (CMake ; qt6sermo_1.0.1/)
+├── qt6sermo/                     ← port Qt 6 (CMake ; qt6sermo_1.0.2/)
 └── tests/
     ├── xml/                      ← régression XML (55 cas)
     ├── unit/test_safe_exec.c     ← tests de comportement (safe_exec)
