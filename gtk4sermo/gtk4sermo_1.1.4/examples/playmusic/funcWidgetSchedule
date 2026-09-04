@@ -15,6 +15,10 @@ funcWidgetSchedule() {
 	local value
 
 	## Indirect referencing (bash uses ${!1} too but it's not portable).
+	## ⚠️ $1 doit être un IDENTIFIANT : passé tel quel à eval, un argument comme
+	## « x;cmd » exécuterait cmd. Les appels internes sont propres — la garde
+	## rend la fonction sûre même appelée autrement. 2026-09-04.
+	case $1 in *[!A-Za-z0-9_]*|""|[0-9]*) echo "$FUNCNAME: nom de variable invalide: $1" >&2; return 1;; esac
 	eval value=\$$1
 
 	if [ $DEBUG_CONTENT -ne 0 ]; then

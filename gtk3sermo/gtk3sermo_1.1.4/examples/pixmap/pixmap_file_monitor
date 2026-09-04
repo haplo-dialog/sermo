@@ -9,7 +9,11 @@ mkdir -p "$TMPDIR"
 IMAGEFILES="`find /usr/share/pixmaps -maxdepth 1 -type f | head -2`"
 index=0
 for f in $IMAGEFILES; do
-	eval IMAGEFILE$index="$f"
+	# ⚠️ \$f DIFFÉRÉ : l'ancienne forme (eval IMAGEFILE$index="$f") développait
+	# le nom de fichier AVANT l'eval — un fichier nommé « x" ; cmd ; " » aurait
+	# fait exécuter cmd. Différée, l'affectation ne re-analyse jamais le contenu ;
+	# $index reste sûr (compteur interne). 2026-09-04.
+	eval "IMAGEFILE$index=\$f"
 	index=$((index + 1))
 done
 cp "$IMAGEFILE0" "$TMPDIR"/inputfile
