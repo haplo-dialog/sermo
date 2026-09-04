@@ -85,7 +85,7 @@ One shared C core (flex/bison grammar + state machine + `safe_exec`), three back
 |------|---------|---------|:------:|---------------|
 | **gtk3sermo** | `gtk3sermo` | GTK 3 | 52 | **Reference** · the most battle-tested |
 | **gtk4sermo** | `gtk4sermo` | GTK 4 | 56 | the same 52, plus `flowbox`, `overlay`, `revealer`, `stack` |
-| **qt6sermo** | `qt6sermo` | Qt 6 (≥ 6.2) | 52 | the same 52 · built with **CMake** (≥ 3.20) · versioned separately (**1.0.0**) · no `.deb` yet |
+| **qt6sermo** | `qt6sermo` | Qt 6 (≥ 6.2) | 49 | 49 of the reference’s 52 (no `chooser`, `gvim`, `separator`) · built with **CMake** (≥ 3.20) · versioned separately (**1.0.1**) · `.deb` shipped |
 
 > One grammar for all three ports. The count is the number of **widget tags accepted by
 > the grammar** (`src/gtkdialog_lexer.l`), aliases included — it does not count
@@ -128,10 +128,10 @@ sudo apt install ./gtk3sermo_1.1.4-1_amd64.deb
 | `gtk4sermo` 1.1.4-1 | `/usr/bin/gtk4sermo` | none |
 | `gtksermo` 1.1.4-1 | `/usr/bin/gtkdialog` | **with `gtkdialog` and `gtk3dialog`** |
 
-> The **Qt 6** port has **no** shipped package: `qt6sermo` 1.0.0 is built from
-> source (see below). Its Debian recipe exists
-> (`qt6sermo/qt6sermo_1.0.1/packaging/debian/`), but we have not built that
-> `.deb` yet.
+> The **Qt 6** port ships too: `qt6sermo` 1.0.1-1 (`.deb` attached to release
+> v1.1.4, lintian clean, depends on `libqt6svg6` for SVG icon themes). It can
+> also be built from source (recipe `qt6sermo/qt6sermo_1.0.1/packaging/debian/`,
+> see below).
 
 > ⚠️ **The packages from release `v1.0.0` have been withdrawn** (versions
 > `1.0.1-10` and `1.0.1-11`). They carried three defects: the output handed to the

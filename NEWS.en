@@ -5,6 +5,19 @@ This file summarises the important changes from the user's point of view.
 For the complete technical history, see CHANGELOG.md.
 
 ────────────────────────────────────────────────────────────────
+Version 1.1.4 (2026-09-04), Three ports shipped, qt6sermo now as a .deb
+
+  * The Qt 6 port now ships as a package: qt6sermo 1.0.1-1 (versioned apart
+    from the GTK ports). Same XML syntax, rendered with Qt Widgets.
+  * qt6sermo tracks the reference port much more closely: bare frame titles,
+    centered text, images and theme icons (SVG included), border-width,
+    small windows at their natural size, decimal timers under French locale.
+  * gtk4sermo: buttons anchored at the end of a row stay in place (the
+    system-tools header no longer floats mid-window).
+  * All three binaries ship with the CET protection (IBT/Shadow Stack) note
+    inscribed — it was silently lost at link time.
+
+────────────────────────────────────────────────────────────────
 Version 1.1.3 (2026-08-29), A crash fixed in BOTH ports
 ────────────────────────────────────────────────────────────────
 
