@@ -13,8 +13,8 @@ Chaque ligne ci-dessous est tirée d'un fichier vérifiable dans l'arbre :
 leur jeu complet de fichiers, et chaque ligne ci-dessous a été relue dans **les
 deux**. Le troisième port, **qt6sermo**, ne se lit pas dans ce tableau : il se
 construit par **CMake**, sa source de vérité est
-`qt6sermo/qt6sermo_1.0.0/CMakeLists.txt`, et son packaging vit sous
-`qt6sermo/qt6sermo_1.0.0/packaging/` (mêmes cinq formats).
+`qt6sermo/qt6sermo_1.0.1/CMakeLists.txt`, et son packaging vit sous
+`qt6sermo/qt6sermo_1.0.1/packaging/` (mêmes cinq formats).
 
 | Source | Ce qu'on en extrait |
 |--------|---------------------|
@@ -180,14 +180,14 @@ sudo dnf install qt6-qtbase-devel qt6-qttools-devel cmake gcc-c++  # qt6sermo
 Build effectif — le même pour les deux ports GTK, seul le dossier change :
 
 ```sh
-cd gtk3sermo/gtk3sermo_1.1.3     # ou : cd gtk4sermo/gtk4sermo_1.1.3
+cd gtk3sermo/gtk3sermo_1.1.4     # ou : cd gtk4sermo/gtk4sermo_1.1.4
 autoreconf -fi && ./configure && make
 ```
 
 Le port Qt 6 se construit autrement — CMake, et son propre numéro de version :
 
 ```sh
-cd qt6sermo/qt6sermo_1.0.0
+cd qt6sermo/qt6sermo_1.0.1
 cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build
 ```
 

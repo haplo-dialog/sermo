@@ -19,7 +19,7 @@ override_dh_auto_install:
 	cp -r examples/* $(CURDIR)/debian/qt6sermo/usr/share/doc/qt6sermo/examples/ 2>/dev/null || true
 	# Lanceur .desktop (masqué) et métadonnées AppStream — aussi installés par le build amont
 	install -D -m644 data/qt6sermo.desktop $(CURDIR)/debian/qt6sermo/usr/share/applications/qt6sermo.desktop
-	install -D -m644 data/qt6sermo.metainfo.xml $(CURDIR)/debian/qt6sermo/usr/share/metainfo/qt6sermo.metainfo.xml
+	install -D -m644 data/fr.haplo_dialog.qt6sermo.metainfo.xml $(CURDIR)/debian/qt6sermo/usr/share/metainfo/fr.haplo_dialog.qt6sermo.metainfo.xml
 
 override_dh_auto_test:
 	# Suite de tests (Check) désactivée à l'empaquetage — dépendance facultative.

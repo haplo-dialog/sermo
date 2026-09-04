@@ -6,9 +6,37 @@ Versionning : [Semantic Versioning](https://semver.org/lang/fr/) à partir de 1.
 
 ---
 
-## [Unreleased] - v1.2.0 (en cours)
+## [1.1.4] - 2026-09-04
+
+> Ports : gtk3sermo/gtk4sermo **1.1.4**, qt6sermo **1.0.1** (versionné à part),
+> gtksermo 1.1.4 (alias). Le tag de famille suit la version des ports GTK.
+
+### Corrigé
+
+- **qt6sermo — fidélité au port de référence** (mesuré widget par widget contre
+  l'oracle gtk3sermo) : forme `<frame Titre nu>` reconnue par le lexer ;
+  `<text>` centré comme GtkLabel ; `<pixmap>` complet (`<input file>`, `icon=`,
+  `stock=`, thème d'icônes déduit comme GTK, repli `-symbolic`, icône remise à
+  l'échelle demandée) ; `border-width` appliqué ; plus de plancher 200x100 sur
+  les petites fenêtres ; `<timer interval>` décimal correct en locale française.
+- **qt6sermo — le shim de compatibilité reçoit les vrais contrats GLib** :
+  `g_ascii_strtod`/`g_strtod` (locale), `g_ascii_str[n]casecmp` (ASCII pur),
+  `g_strcmp0`, `g_strndup`, `g_strsplit`, famille `g_utf8_*` (vrai décodage),
+  `g_shell_parse_argv` (commentaires `#`), `g_spawn_*` (échec d'exec rapporté),
+  `gdk_keyval_to_unicode`, `g_malloc` (avorte comme GLib).
+- **gtk4sermo — alignement en fin de boîte** : le ressort de `pack_end` ne se
+  recrée plus après retrait ; les en-têtes composés s'alignent comme en GTK 3.
+- **Durcissement** : la note ELF CET (IBT/SHSTK) est désormais FORCÉE au lien
+  (`-Wl,-z,ibt -Wl,-z,shstk`) — sur Debian testing courant elle se perdait à
+  l'édition de liens ; mesurée sur chaque binaire livré.
 
 ### Ajouté
+
+- Bancs élargis : suite XML partagée sur les TROIS ports (55 cas chacun),
+  `geometrie.sh` (mise en page : border-width, taille d'icônes) et exécution
+  réelle des 32 exemples qt6 en locale française, branchés en CI.
+
+### Ajouté — le port qt6sermo entre dans la release de famille
 
 - **`qt6sermo` — troisième port, Qt 6.** La même syntaxe XML que gtk3sermo et
   gtk4sermo, rendue avec Qt 6 (Qt Widgets). « Écrit une fois, tourne en GTK 3,

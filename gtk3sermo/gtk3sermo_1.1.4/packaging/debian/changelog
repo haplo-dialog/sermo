@@ -1,3 +1,19 @@
+gtk3sermo (1.1.4-1) unstable; urgency=medium
+
+  * Durcissement CET : la note ELF IBT/SHSTK est forcée au lien
+    (-Wl,-z,ibt -Wl,-z,shstk) — sur Debian testing courant elle se perdait
+    à l'édition de liens (crt de la glibc non marqués). Mesurée sur chaque
+    binaire livré.
+  * examples/system-tools : honore $GTKDIALOG (le moteur n'est plus codé en
+    dur) et affiche le moteur qui a rendu la fenêtre ; repli « gtkdialog »
+    cohérent entre la vérification des dépendances et l'exécution.
+  * tests : suite XML partagée jouée sur les trois ports (55 cas chacun),
+    run_examples.sh accepte un chemin d'exemples relatif, banc geometrie.sh
+    (border-width, taille des icônes de thème) généralisé.
+  * README : chiffres réalignés sur les bancs (55 cas XML, 56 exemples).
+
+ -- haplo-dialog <devel@haplo-dialog.fr>  Fri, 04 Sep 2026 08:43:24 +0200
+
 gtk3sermo (1.1.3-1) unstable; urgency=medium
 
   * Le signal « response » de GtkInfoBar faisait PLANTER les deux ports.

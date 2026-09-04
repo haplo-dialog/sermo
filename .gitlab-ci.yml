@@ -47,7 +47,7 @@ default:
 .autotools:
   stage: build-test
   script:
-    - cd "$PORT/${PORT}_1.1.3"
+    - cd "$PORT/${PORT}_1.1.4"
     - autoreconf -fi
     # $EXTRA_CONFIGURE porte --enable-unit-tests la ou l'option existe (gtk3sermo).
     # Elle etait documentee mais jamais rejouee par la CI : c'est pour ca que
@@ -68,16 +68,16 @@ default:
     # ni GDK. Statique, parce que la faute qu'il empêche est une course qui ne
     # se déclenche qu'une fois sur dix — un test comportemental serait vert la
     # plupart du temps, donc ne prouverait rien.
-    - sh "$CI_PROJECT_DIR/tests/garde_progressbar_thread.sh" "$CI_PROJECT_DIR/$PORT/${PORT}_1.1.3/src/widget_progressbar.c"
+    - sh "$CI_PROJECT_DIR/tests/garde_progressbar_thread.sh" "$CI_PROJECT_DIR/$PORT/${PORT}_1.1.4/src/widget_progressbar.c"
     # LICENCES.md affirme que chaque fichier de src/ porte un SPDX : ce banc
     # rend l'affirmation tenable au lieu de la laisser vieillir.
-    - bash "$CI_PROJECT_DIR/tests/garde_spdx.sh" "$CI_PROJECT_DIR/$PORT/${PORT}_1.1.3/src"
+    - bash "$CI_PROJECT_DIR/tests/garde_spdx.sh" "$CI_PROJECT_DIR/$PORT/${PORT}_1.1.4/src"
     # SECURITY.md et TODO-SECURITY.md affirment qu'aucune fonction interdite
     # (strcpy/strcat/sprintf/system/popen) n'est appelee dans src/. Ce banc rend
     # l'affirmation tenable : il ignore les commentaires — safe_exec.c cite
     # legitimement system() et popen() pour dire qu'il les remplace — et exige une
     # frontiere de mot a GAUCHE, sinon safe_system compterait pour system.
-    - bash "$CI_PROJECT_DIR/tests/garde_fonctions_interdites.sh" "$CI_PROJECT_DIR/$PORT/${PORT}_1.1.3/src"
+    - bash "$CI_PROJECT_DIR/tests/garde_fonctions_interdites.sh" "$CI_PROJECT_DIR/$PORT/${PORT}_1.1.4/src"
     # Ce depot est alimente par COPIE DE FICHIERS depuis le depot prive, ou une
     # ordonnance impose a chaque .md un en-tete « maj : <date> · poste <machine> ».
     # Une copie sans filtre y ferait entrer 46 fichiers portant le nom de la
@@ -98,7 +98,7 @@ default:
   variables:
     # Chaque port est versionne independamment : qt6sermo est en 1.0.0 quand les
     # ports GTK sont en 1.1.3. La version ne peut donc pas rester en dur ici.
-    VER: "1.1.3"
+    VER: "1.1.4"
   script:
     - cd "$PORT/${PORT}_$VER"
     # BUILD_TESTING=ON : les tests CTest du shim (test_compat, test_safe_exec)
@@ -148,7 +148,7 @@ qt6sermo:
   extends: .cmake
   variables:
     PORT: qt6sermo
-    VER: "1.0.0"
+    VER: "1.0.1"
     # libglib2.0-dev n'est PAS une dependance du port : il lie Qt, pas GLib.
     # Elle sert au dernier pas du modele, tests/run_unit_tests.sh, qui compile
     # safe_exec.c a part, contre la VRAIE glib et non le shim — c'est le meme
@@ -165,7 +165,7 @@ qt6sermo:
   script:
     - sed -i 's/^# *fr_FR.UTF-8/fr_FR.UTF-8/' /etc/locale.gen
     - locale-gen
-    - cd "$PORT/${PORT}_1.1.3"
+    - cd "$PORT/${PORT}_1.1.4"
     - autoreconf -fi
     - ./configure
     - make -j"$(nproc)"
@@ -199,10 +199,10 @@ qt6sermo:
     # que les 55 cas XML etaient verts depuis des mois — <checkbox> rendait
     # "false" pour <default>true</default>, <filechooser> etait un bouton.
     # Ce banc-ci LANCE le dialogue et compare les variables rendues.
-    - sh "$CI_PROJECT_DIR/tests/comportement/run.sh" "$CI_PROJECT_DIR/$PORT/${PORT}_1.1.3/src/$PORT"
+    - sh "$CI_PROJECT_DIR/tests/comportement/run.sh" "$CI_PROJECT_DIR/$PORT/${PORT}_1.1.4/src/$PORT"
     # border-width ne produit AUCUNE variable : il change une TAILLE. Aucun test
     # ne regardait de taille, et il a ete ignore pendant toute la vie du port.
-    - sh "$CI_PROJECT_DIR/tests/comportement/geometrie.sh" "$CI_PROJECT_DIR/$PORT/${PORT}_1.1.3/src/$PORT"
+    - sh "$CI_PROJECT_DIR/tests/comportement/geometrie.sh" "$CI_PROJECT_DIR/$PORT/${PORT}_1.1.4/src/$PORT"
 
 exemples:gtk3sermo:
   extends: .examples
@@ -239,7 +239,7 @@ exemples:qt6sermo:
   script:
     - sed -i 's/^# *fr_FR.UTF-8/fr_FR.UTF-8/' /etc/locale.gen
     - locale-gen
-    - cd qt6sermo/qt6sermo_1.0.0
+    - cd qt6sermo/qt6sermo_1.0.1
     - cmake -B build -DCMAKE_BUILD_TYPE=Release
     - cmake --build build -j"$(nproc)"
     # La promesse de l'etage (en-tete du fichier) : lancer REELLEMENT les

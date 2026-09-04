@@ -12,7 +12,7 @@
 > Nos paquets s'appellent aujourd'hui `gtk3sermo`, `gtk4sermo` et `gtksermo`.
 
 [![Licence](https://img.shields.io/badge/licence-GPL--2.0--or--later-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-1.1.3-informational.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.1.4-informational.svg)](CHANGELOG.md)
 [![Toolkit](https://img.shields.io/badge/toolkit-GTK%203%20%2B%20GTK%204%20%2B%20Qt%206-success.svg)](#les-trois-ports)
 [![Tests](https://img.shields.io/badge/tests-55%2F55%20XML%20·%209%2F9%20unitaires%20·%2011%2F11%20comportement-brightgreen.svg)](#tests--qualité)
 
@@ -113,40 +113,40 @@ Un cœur C commun (grammaire flex/bison + automate + `safe_exec`), trois backend
 
 ### Télécharger la release
 
-Les paquets sont joints à la release [**v1.1.3**](https://gitlab.com/haplo-dialog/sermo/-/releases/v1.1.3), avec leurs
+Les paquets sont joints à la release [**v1.1.4**](https://gitlab.com/haplo-dialog/sermo/-/releases/v1.1.4), avec leurs
 sommes de contrôle. Il n'y a **pas de dépôt APT** : on télécharge, on vérifie,
 on installe.
 
 ```sh
-U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/1.1.3
-for f in gtk3sermo_1.1.3-1_amd64.deb gtksermo_1.1.3-1_all.deb SHA256SUMS; do
+U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/1.1.4
+for f in gtk3sermo_1.1.4-1_amd64.deb gtksermo_1.1.4-1_all.deb SHA256SUMS; do
     curl -fLO "$U/$f"
 done
 
 sha256sum --ignore-missing -c SHA256SUMS
-sudo apt install ./gtk3sermo_1.1.3-1_amd64.deb
+sudo apt install ./gtk3sermo_1.1.4-1_amd64.deb
 ```
 
 | Paquet | Commande installée | Conflits |
 |---|---|---|
-| `gtk3sermo` 1.1.3-1 | `/usr/bin/gtk3sermo` | aucun |
-| `gtk4sermo` 1.1.3-1 | `/usr/bin/gtk4sermo` | aucun |
-| `gtksermo` 1.1.3-1 | `/usr/bin/gtkdialog` | **avec `gtkdialog` et `gtk3dialog`** |
+| `gtk3sermo` 1.1.4-1 | `/usr/bin/gtk3sermo` | aucun |
+| `gtk4sermo` 1.1.4-1 | `/usr/bin/gtk4sermo` | aucun |
+| `gtksermo` 1.1.4-1 | `/usr/bin/gtkdialog` | **avec `gtkdialog` et `gtk3dialog`** |
 
 > Le port **Qt 6** n'a **pas** de paquet livré : `qt6sermo` 1.0.0 se construit
 > depuis les sources (voir plus bas). Sa recette Debian existe
-> (`qt6sermo/qt6sermo_1.0.0/packaging/debian/`), mais nous n'avons pas encore
+> (`qt6sermo/qt6sermo_1.0.1/packaging/debian/`), mais nous n'avons pas encore
 > construit ce `.deb`.
 
-> ⚠️ **Les paquets de la release `v1.0.0` ont été retirés** (versions `1.0.0-10`
-> et `1.0.0-11`). Ils portaient trois défauts : la sortie rendue au shell y était
+> ⚠️ **Les paquets de la release `v1.0.0` ont été retirés** (versions `1.0.1-10`
+> et `1.0.1-11`). Ils portaient trois défauts : la sortie rendue au shell y était
 > exécutable par `eval` si l'utilisateur du dialogue tapait `$(commande)` dans un
 > champ, cliquer un `<switch>` tuait le programme, et sous locale française un
 > nombre écrit avec un point valait zéro en silence. **Si vous en aviez installé
-> un, remplacez-le** par le paquet correspondant de la `v1.1.3`.
+> un, remplacez-le** par le paquet correspondant de la `v1.1.4`.
 >
 > La release `v1.0.0-4` porte, elle, les trois correctifs : ses paquets sont sains,
-> simplement remplacés par ceux de la `v1.1.3`.
+> simplement remplacés par ceux de la `v1.1.4`.
 
 Les deux premiers s'installent sans conflit, y compris à côté du `gtk3dialog` de
 BunsenLabs. Le troisième fournit la commande `gtkdialog`, donc il entre en
@@ -158,7 +158,7 @@ Les paquets `-dbgsym` ne servent qu'à lire une trace d'exécution.
 
 ```sh
 git clone https://gitlab.com/haplo-dialog/sermo.git
-cd sermo/gtk3sermo/gtk3sermo_1.1.3        # ou gtk4sermo/gtk4sermo_1.1.3
+cd sermo/gtk3sermo/gtk3sermo_1.1.4        # ou gtk4sermo/gtk4sermo_1.1.4
 dpkg-buildpackage -us -uc -b
 ```
 
@@ -181,7 +181,7 @@ Les paquets obtenus, et le découpage est volontaire :
 ### Depuis les sources, sans paquet
 
 ```sh
-cd gtk3sermo/gtk3sermo_1.1.3 && autoreconf -fi && ./configure && make -j"$(nproc)" && sudo make install
+cd gtk3sermo/gtk3sermo_1.1.4 && autoreconf -fi && ./configure && make -j"$(nproc)" && sudo make install
 ```
 
 ⚠️ Ici `make install` pose aussi le lien `gtkdialog`, sans le garde-fou des
@@ -193,7 +193,7 @@ Le port Qt 6 ne se construit pas en autotools mais avec **CMake** (≥ 3.20) et
 `<terminal>` :
 
 ```sh
-cd qt6sermo/qt6sermo_1.0.0 && cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j"$(nproc)" && sudo cmake --install build
+cd qt6sermo/qt6sermo_1.0.1 && cmake -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j"$(nproc)" && sudo cmake --install build
 ```
 
 Des recettes RPM, Arch, Gentoo et Slackware existent dans `packaging/`, mais
@@ -226,7 +226,7 @@ Signalement de vulnérabilité : voir [SECURITY.md](SECURITY.md).
   Plus `./tests/comportement/geometrie.sh`, pour ce qu'aucune variable ne trahit
   (`border-width`, taille d'icône de thème).
 - **Comportement du port Qt 6** : banc propre au port,
-  `qt6sermo/qt6sermo_1.0.0/tests/comportement/run.sh`, **24/24** — les valeurs
+  `qt6sermo/qt6sermo_1.0.1/tests/comportement/run.sh`, **24/24** — les valeurs
   attendues y sont celles du port GTK 3, donc « vert » = parité de valeur avec
   la référence. La suite XML partagée y passe aussi **55/55**.
 - **Fuzzing** du parser : `./tests/fuzz/run_fuzz.sh gtk3sermo 60` (afl++ ou repli intégré).
@@ -236,9 +236,9 @@ Signalement de vulnérabilité : voir [SECURITY.md](SECURITY.md).
 
 ## Documentation
 
-- Manuels utilisateur/développeur (`gtk3sermo/gtk3sermo_1.1.3/MANUEL_*.md`).
+- Manuels utilisateur/développeur (`gtk3sermo/gtk3sermo_1.1.4/MANUEL_*.md`).
 - Pages de manuel `gtk3sermo(1)` et référence XML `haplo-dialog-xml(5)`.
-- Manuels Texinfo (`gtk3sermo/gtk3sermo_1.1.3/doc/`).
+- Manuels Texinfo (`gtk3sermo/gtk3sermo_1.1.4/doc/`).
 - Site : <https://haplo-dialog.fr>.
 
 ---

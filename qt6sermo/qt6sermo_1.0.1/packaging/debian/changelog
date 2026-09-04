@@ -1,0 +1,32 @@
+qt6sermo (1.0.1-1) unstable; urgency=medium
+
+  * Fidélité au port de référence, mesurée widget par widget contre l'oracle
+    gtk3sermo : forme <frame Titre nu> reconnue ; <text> centré comme
+    GtkLabel ; <pixmap> couvre tout le dialecte (<input file>, icon=,
+    stock=, thème d'icônes
+    déduit comme GTK, repli -symbolic, icône remise à l'échelle demandée) ;
+    border-width appliqué ; plus de plancher 200x100 ; <timer interval>
+    décimal correct sous locale française.
+  * Le shim de compatibilité honore les vrais contrats GLib :
+    g_ascii_strtod/g_strtod, g_ascii_str[n]casecmp (ASCII pur), g_strcmp0,
+    g_strndup, g_strsplit, famille g_utf8_* (vrai décodage),
+    g_shell_parse_argv (commentaires #), g_spawn_* (échec d'exec rapporté),
+    gdk_keyval_to_unicode, g_malloc (avorte comme GLib).
+  * Durcissement CET : note ELF IBT/SHSTK forcée au lien ; la LTO reste
+    active. 8/8 garanties mesurées sur le binaire.
+  * Dépend désormais de libqt6svg6 : les thèmes d'icônes modernes sont en
+    SVG — sans le greffon, les icônes de thème rendaient une image vide.
+  * Exemples : les 32 scripts livrés passent l'analyse et ouvrent leur
+    fenêtre (13 corrigés) ; banc de mise en page geometrie.sh en CI.
+
+ -- haplo-dialog <devel@haplo-dialog.fr>  Fri, 04 Sep 2026 08:43:24 +0200
+
+qt6sermo (1.0.0-1) unstable; urgency=medium
+
+  * Initial Debian packaging for qt6sermo — haplo-dialog fork.
+  * Qt6 dialog window creator for shell scripts.
+  * Toolkit: Qt6.
+  * Security hardening: safe_exec, FORTIFY_SOURCE=2, PIE, Full RELRO,
+    stack-protector-strong.
+
+ -- haplo-dialog <devel@haplo-dialog.fr>  Fri, 29 May 2026 12:00:00 +0200

@@ -47,14 +47,14 @@ de référence, **`gtk4sermo`** (backend GTK 4) et **`qt6sermo`** (backend Qt 6)
 L'alias rétro-compatible **`gtkdialog`** est fourni par un paquet à part,
 **`gtksermo`**.
 
-La version amont (`1.1.3`) est **commune aux deux ports GTK** : c'est le même
+La version amont (`1.1.4`) est **commune aux deux ports GTK** : c'est le même
 cœur, la même grammaire. En revanche la **révision d'empaquetage** avance port par
 port, puisqu'un correctif ne touche pas toujours les deux. Les deux numéros
-peuvent donc diverger — `gtk3sermo 1.0.0-10` et `gtk4sermo 1.0.0-11` par exemple
+peuvent donc diverger — `gtk3sermo 1.0.1-10` et `gtk4sermo 1.0.1-11` par exemple
 — et c'est normal. Chaque port a son `debian/changelog`, qui fait foi pour lui.
 
-**`qt6sermo` est versionné indépendamment** : il est en `1.0.0-1` quand les ports
-GTK sont en `1.1.3`. Il ne partage ni le numéro amont, ni le cycle de release —
+**`qt6sermo` est versionné indépendamment** : il est en `1.0.1-1` quand les ports
+GTK sont en `1.1.4`. Il ne partage ni le numéro amont, ni le cycle de release —
 seulement la grammaire XML. La check-list ci-dessous ne le concerne donc pas : il
 a sa propre montée de version, sur les mêmes emplacements transposés à CMake.
 
@@ -96,8 +96,8 @@ le job `qt6sermo` l'étend depuis le **2026-09-02**, avec sa propre variable `VE
 (`1.0.0`), puisque ce port n'a pas le numéro des ports GTK.
 
 > ⚠️ **Particularité** : la version est encodée dans le **nom du dossier**
-> (`gtk3sermo_1.1.3/`) et dans le **nom de l'ebuild**
-> (`gtk3sermo-1.1.3.ebuild`). Une montée de version implique donc un `git mv`
+> (`gtk3sermo_1.1.4/`) et dans le **nom de l'ebuild**
+> (`gtk3sermo-1.1.4.ebuild`). Une montée de version implique donc un `git mv`
 > de ces chemins. *(Piste future : découpler la version du nom de dossier pour
 > alléger les bumps.)*
 
@@ -174,17 +174,17 @@ vertes (le pipeline passe). `main` ne doit jamais être cassée.
 - Un tag pointe sur le commit où le CHANGELOG, les `configure.ac`/`CMakeLists.txt`
   et le packaging déclarent tous `X.Y.Z`.
 - État actuel : **six étiquettes** posées — `v1.0.0`, `v1.0.0-2`, `v1.0.0-3`,
-  `v1.0.0-4`, `v1.1.0`, `v1.1.1`, `v1.1.1-2`, `v1.1.1-3` `v1.1.2` et `v1.1.3`.
+  `v1.0.0-4`, `v1.1.0`, `v1.1.1`, `v1.1.1-2`, `v1.1.1-3` `v1.1.2`, `v1.1.3` et `v1.1.4`.
 - Deux d'entre elles seulement ont une *release* GitLab avec des paquets joints :
-  - `v1.1.3`, la version courante ; ses paquets (`1.1.3-1`) remplacent tous
+  - `v1.1.4`, la version courante ; ses paquets (`1.1.4-1`) remplacent tous
     les précédents ;
-  - `v1.0.0-4`, qui porte les mêmes paquets à l'étape précédente (`1.0.0-11`,
-    `1.0.0-12`). Ils sont **sains** — ce sont eux qui ont apporté les trois
+  - `v1.0.0-4`, qui porte les mêmes paquets à l'étape précédente (`1.0.1-11`,
+    `1.0.1-12`). Ils sont **sains** — ce sont eux qui ont apporté les trois
     correctifs — simplement remplacés.
 - `v1.0.0-2` et `v1.0.0-3` sont des états intermédiaires du dépôt : aucune
   release ne leur a jamais été attachée.
 - **`v1.0.0` a eu une release, retirée le 2026-08-27.** Ses paquets
-  (`1.0.0-10`, `1.0.0-11`) portaient les trois défauts corrigés depuis, et les
+  (`1.0.1-10`, `1.0.1-11`) portaient les trois défauts corrigés depuis, et les
   laisser téléchargeables n'était pas défendable. L'étiquette git, elle, est
   **conservée** : elle ne distribue rien et date le premier commit public.
 

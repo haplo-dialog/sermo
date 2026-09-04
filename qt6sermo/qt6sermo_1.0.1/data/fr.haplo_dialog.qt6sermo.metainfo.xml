@@ -8,7 +8,7 @@
   <!-- Le tiret de « haplo-dialog » déclenche l'alerte (non bloquante)
        cid-rdns-contains-hyphen : il vient du nom de domaine lui-même.
        Alternative AppStream documentée : fr.haplo_dialog.qt6sermo. -->
-  <id>fr.haplo-dialog.qt6sermo</id>
+  <id>fr.haplo_dialog.qt6sermo</id>
   <metadata_license>FSFAP</metadata_license>
   <project_license>GPL-2.0-or-later</project_license>
   <name>qt6sermo</name>

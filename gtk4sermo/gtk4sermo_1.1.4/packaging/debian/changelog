@@ -1,3 +1,18 @@
+gtk4sermo (1.1.4-1) unstable; urgency=medium
+
+  * Ancrage en fin de boîte : le ressort posé par le shim de pack_end ne
+    se recrée plus après son retrait par un enfant extensible — les en-têtes
+    composés (ex. examples/system-tools) s'alignent désormais comme sur le
+    port GTK 3 de référence.
+  * Durcissement CET : la note ELF IBT/SHSTK est forcée au lien
+    (-Wl,-z,ibt -Wl,-z,shstk) — elle se perdait à l'édition de liens sur
+    Debian testing courant. Mesurée sur chaque binaire livré.
+  * README : six mentions du binaire fantôme « gtk3d » corrigées (résidu de
+    renommage), chiffres réalignés sur les bancs (55 cas XML), références de
+    documents inexistants retirées.
+
+ -- haplo-dialog <devel@haplo-dialog.fr>  Fri, 04 Sep 2026 08:43:24 +0200
+
 gtk4sermo (1.1.3-1) unstable; urgency=medium
 
   * Le signal « response » de GtkInfoBar faisait PLANTER les deux ports.

@@ -2,7 +2,7 @@
 # Modernised for GTK3 — 2026 (haplo-dialog 1.1.0)
 # Renamed gtk3d → gtk3sermo (patch 13, 2026-05-22)
 AC_PREREQ([2.69])
-AC_INIT([gtk3sermo], [1.1.3], [devel@haplo-dialog.fr], [gtk3sermo],
+AC_INIT([gtk3sermo], [1.1.4], [devel@haplo-dialog.fr], [gtk3sermo],
         [https://haplo-dialog.fr])
 AM_INIT_AUTOMAKE([foreign subdir-objects -Wall -Werror])
 AC_CONFIG_HEADERS([config.h])

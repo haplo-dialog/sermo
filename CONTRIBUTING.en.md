@@ -29,7 +29,7 @@ Thank you for your interest in haplo-dialog. This document explains how to contr
   welcome by email at `devel@haplo-dialog.fr`
 
 **Reference port:**  
-haplo-dialog provides three ports: `gtk3sermo` (GTK 3 backend), `gtk4sermo` (GTK 4 backend) and `qt6sermo` (Qt 6 backend, versioned independently: 1.0.0 while the GTK ports are at 1.1.3). `gtk3sermo` remains the reference port: it is the only one that provides the Wayland anchoring (layer-shell). The backwards-compatible `gtkdialog` alias ships in a separate package, `gtksermo`. It is a maintained descendant of gtkdialog (a fork of Laszlo Pere's gtkdialog 0.8.3), fixed and hardened. Other descendants exist, notably Mick Amadio's BunsenLabs fork, which also ports gtkdialog to GTK 3.
+haplo-dialog provides three ports: `gtk3sermo` (GTK 3 backend), `gtk4sermo` (GTK 4 backend) and `qt6sermo` (Qt 6 backend, versioned independently: 1.0.1 while the GTK ports are at 1.1.4). `gtk3sermo` remains the reference port: it is the only one that provides the Wayland anchoring (layer-shell). The backwards-compatible `gtkdialog` alias ships in a separate package, `gtksermo`. It is a maintained descendant of gtkdialog (a fork of Laszlo Pere's gtkdialog 0.8.3), fixed and hardened. Other descendants exist, notably Mick Amadio's BunsenLabs fork, which also ports gtkdialog to GTK 3.
 
 ---
 
@@ -38,7 +38,7 @@ haplo-dialog provides three ports: `gtk3sermo` (GTK 3 backend), `gtk4sermo` (GTK
 ```
 haplo-dialog/
 ├── gtk3sermo/
-│   └── gtk3sermo_1.1.3/
+│   └── gtk3sermo_1.1.4/
 │       ├── src/
 │       │   ├── gtk3sermo.c      ← main entry point
 │       │   ├── safe_exec.c       ← GPL-2.0-or-later
@@ -50,7 +50,7 @@ haplo-dialog/
 │       ├── doc/
 │       └── packaging/
 ├── gtk4sermo/                    ← GTK 4 port (autotools, same layout)
-├── qt6sermo/                     ← Qt 6 port (CMake; qt6sermo_1.0.0/)
+├── qt6sermo/                     ← Qt 6 port (CMake; qt6sermo_1.0.1/)
 └── tests/
     ├── xml/                      ← XML regression (55 cases)
     ├── unit/test_safe_exec.c     ← behaviour tests (safe_exec)
@@ -82,7 +82,7 @@ QTermWidget optional and only used by the `<terminal>` widget.
 ### Development build
 
 ```sh
-cd gtk3sermo/gtk3sermo_1.1.3
+cd gtk3sermo/gtk3sermo_1.1.4
 autoreconf -fi
 ./configure --prefix=/usr/local CFLAGS="-g -O0 -fsanitize=address"
 make -j$(nproc)
@@ -307,7 +307,7 @@ case WIDGET_MONWIDGET:
 ### Unit tests (toolkit-free)
 
 ```sh
-cd gtk3sermo/gtk3sermo_1.1.3
+cd gtk3sermo/gtk3sermo_1.1.4
 autoreconf -fi && ./configure && make check
 ```
 
@@ -350,7 +350,7 @@ A broken build or a single failing test fails the pipeline. Before pushing,
 you can reproduce the job locally:
 
 ```sh
-cd gtk3sermo/gtk3sermo_1.1.3
+cd gtk3sermo/gtk3sermo_1.1.4
 autoreconf -fi && ./configure --prefix="$PWD/inst" && make -j"$(nproc)" && make install
 PATH="$PWD/inst/bin:$PATH" sh ../../tests/xml/run_tests.sh gtk3sermo
 ```
