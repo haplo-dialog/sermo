@@ -9,3 +9,12 @@ Makefile
 *.so
 /qt6sermo
 *_autogen/
+# Artefacts de dpkg-buildpackage : l'arbre du paquet mis en scène et les
+# fichiers d'état debhelper restaient non suivis après chaque build (relevé
+# par la régénération de fiche du 2026-09-04) — un git add -A distrait les
+# aurait embarqués dans l'historique public.
+packaging/debian/qt6sermo/
+packaging/debian/.debhelper/
+packaging/debian/files
+packaging/debian/debhelper-build-stamp
+packaging/debian/*.substvars
