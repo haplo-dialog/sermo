@@ -45,7 +45,7 @@ adapté à sa cible.
 |-------|:--:|-----|
 | Source (les trois ports) | ✅ | dépôt Git |
 | `.deb` (`gtk3sermo`, `gtksermo`, `gtk4sermo`) | ✅ | recette dans l'arbre, **binaires publiés** dans la release, avec leurs sommes |
-| `.deb` (`qt6sermo`) | ⏳ | recette dans l'arbre ; **pas encore construit ni publié** |
+| `.deb` (`qt6sermo`) | ✅ | construit et publié (release v1.1.4, lintian 0/0) — versionné à part des ports GTK |
 | Paquets pour les autres distributions | ❌ | recettes dans l'arbre ; build par l'aval |
 
 ## Recettes disponibles, et ce qu'elles valent

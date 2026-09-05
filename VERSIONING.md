@@ -50,7 +50,7 @@ L'alias rétro-compatible **`gtkdialog`** est fourni par un paquet à part,
 La version amont (`1.1.4`) est **commune aux deux ports GTK** : c'est le même
 cœur, la même grammaire. En revanche la **révision d'empaquetage** avance port par
 port, puisqu'un correctif ne touche pas toujours les deux. Les deux numéros
-peuvent donc diverger — `gtk3sermo 1.0.2-10` et `gtk4sermo 1.0.2-11` par exemple
+peuvent donc diverger — `gtk3sermo 1.0.0-10` et `gtk4sermo 1.0.0-11` par exemple
 — et c'est normal. Chaque port a son `debian/changelog`, qui fait foi pour lui.
 
 **`qt6sermo` est versionné indépendamment** : il est en `1.0.2-1` quand les ports
@@ -178,13 +178,13 @@ vertes (le pipeline passe). `main` ne doit jamais être cassée.
 - Deux d'entre elles seulement ont une *release* GitLab avec des paquets joints :
   - `v1.1.4`, la version courante ; ses paquets (`1.1.4-1`) remplacent tous
     les précédents ;
-  - `v1.0.0-4`, qui porte les mêmes paquets à l'étape précédente (`1.0.2-11`,
-    `1.0.2-12`). Ils sont **sains** — ce sont eux qui ont apporté les trois
+  - `v1.0.0-4`, qui porte les mêmes paquets à l'étape précédente (`1.0.0-11`,
+    `1.0.0-12`). Ils sont **sains** — ce sont eux qui ont apporté les trois
     correctifs — simplement remplacés.
 - `v1.0.0-2` et `v1.0.0-3` sont des états intermédiaires du dépôt : aucune
   release ne leur a jamais été attachée.
 - **`v1.0.0` a eu une release, retirée le 2026-08-27.** Ses paquets
-  (`1.0.2-10`, `1.0.2-11`) portaient les trois défauts corrigés depuis, et les
+  (`1.0.0-10`, `1.0.0-11`) portaient les trois défauts corrigés depuis, et les
   laisser téléchargeables n'était pas défendable. L'étiquette git, elle, est
   **conservée** : elle ne distribue rien et date le premier commit public.
 

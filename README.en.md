@@ -114,27 +114,27 @@ There is **no APT repository**: you download, you verify, you install.
 
 ```sh
 U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/1.1.4
-for f in gtk3sermo_1.1.4-1_amd64.deb gtksermo_1.1.4-1_all.deb SHA256SUMS; do
+for f in gtk3sermo_1.1.4-2_amd64.deb gtksermo_1.1.4-2_all.deb SHA256SUMS; do
     curl -fLO "$U/$f"
 done
 
 sha256sum --ignore-missing -c SHA256SUMS
-sudo apt install ./gtk3sermo_1.1.4-1_amd64.deb
+sudo apt install ./gtk3sermo_1.1.4-2_amd64.deb
 ```
 
 | Package | Command installed | Conflicts |
 |---|---|---|
-| `gtk3sermo` 1.1.4-1 | `/usr/bin/gtk3sermo` | none |
-| `gtk4sermo` 1.1.4-1 | `/usr/bin/gtk4sermo` | none |
-| `gtksermo` 1.1.4-1 | `/usr/bin/gtkdialog` | **with `gtkdialog` and `gtk3dialog`** |
+| `gtk3sermo` 1.1.4-2 | `/usr/bin/gtk3sermo` | none |
+| `gtk4sermo` 1.1.4-2 | `/usr/bin/gtk4sermo` | none |
+| `gtksermo` 1.1.4-2 | `/usr/bin/gtkdialog` | **with `gtkdialog` and `gtk3dialog`** |
 
-> The **Qt 6** port ships too: `qt6sermo` 1.0.2-1 (`.deb` attached to release
+> The **Qt 6** port ships too: `qt6sermo` 1.0.2-2 (`.deb` attached to release
 > v1.1.4, lintian clean, depends on `libqt6svg6` for SVG icon themes). It can
 > also be built from source (recipe `qt6sermo/qt6sermo_1.0.2/packaging/debian/`,
 > see below).
 
 > ⚠️ **The packages from release `v1.0.0` have been withdrawn** (versions
-> `1.0.2-10` and `1.0.2-11`). They carried three defects: the output handed to the
+> `1.0.0-10` and `1.0.0-11`). They carried three defects: the output handed to the
 > shell could be executed by `eval` if whoever used the dialog typed `$(command)`
 > into a field, clicking a `<switch>` killed the program, and under a French locale
 > a number written with a dot silently read as zero. **If you installed one,

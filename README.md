@@ -119,27 +119,27 @@ on installe.
 
 ```sh
 U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/1.1.4
-for f in gtk3sermo_1.1.4-1_amd64.deb gtksermo_1.1.4-1_all.deb SHA256SUMS; do
+for f in gtk3sermo_1.1.4-2_amd64.deb gtksermo_1.1.4-2_all.deb SHA256SUMS; do
     curl -fLO "$U/$f"
 done
 
 sha256sum --ignore-missing -c SHA256SUMS
-sudo apt install ./gtk3sermo_1.1.4-1_amd64.deb
+sudo apt install ./gtk3sermo_1.1.4-2_amd64.deb
 ```
 
 | Paquet | Commande installée | Conflits |
 |---|---|---|
-| `gtk3sermo` 1.1.4-1 | `/usr/bin/gtk3sermo` | aucun |
-| `gtk4sermo` 1.1.4-1 | `/usr/bin/gtk4sermo` | aucun |
-| `gtksermo` 1.1.4-1 | `/usr/bin/gtkdialog` | **avec `gtkdialog` et `gtk3dialog`** |
+| `gtk3sermo` 1.1.4-2 | `/usr/bin/gtk3sermo` | aucun |
+| `gtk4sermo` 1.1.4-2 | `/usr/bin/gtk4sermo` | aucun |
+| `gtksermo` 1.1.4-2 | `/usr/bin/gtkdialog` | **avec `gtkdialog` et `gtk3dialog`** |
 
-> Le port **Qt 6** est livré lui aussi : `qt6sermo` 1.0.2-1 (`.deb` joint à la
+> Le port **Qt 6** est livré lui aussi : `qt6sermo` 1.0.2-2 (`.deb` joint à la
 > release v1.1.4, lintian sans erreur ni avertissement, dépend de `libqt6svg6`
 > pour les icônes de thème SVG). Il se construit aussi depuis les sources
 > (recette `qt6sermo/qt6sermo_1.0.2/packaging/debian/`, voir plus bas).
 
-> ⚠️ **Les paquets de la release `v1.0.0` ont été retirés** (versions `1.0.2-10`
-> et `1.0.2-11`). Ils portaient trois défauts : la sortie rendue au shell y était
+> ⚠️ **Les paquets de la release `v1.0.0` ont été retirés** (versions `1.0.0-10`
+> et `1.0.0-11`). Ils portaient trois défauts : la sortie rendue au shell y était
 > exécutable par `eval` si l'utilisateur du dialogue tapait `$(commande)` dans un
 > champ, cliquer un `<switch>` tuait le programme, et sous locale française un
 > nombre écrit avec un point valait zéro en silence. **Si vous en aviez installé
