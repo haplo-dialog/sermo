@@ -1,0 +1,2 @@
+<!-- DESC: table (etalon gtk3sermo) -->
+<window><vbox><table><label>A|B</label><item>1|2</item><variable>TA</variable></table><timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

@@ -1,0 +1,4 @@
+<!-- DESC: edit alimente par <input>commande</input> — le prefixe interne « Command: » doit etre retire -->
+<window><vbox>
+<edit><variable>ED</variable><input>printf COMMANDE_OK</input></edit>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

@@ -1,0 +1,2 @@
+<!-- DESC: colorbutton (etalon gtk3sermo) -->
+<window><vbox><colorbutton><variable>CL</variable><default>#ff0000</default></colorbutton><timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

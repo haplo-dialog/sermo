@@ -1,0 +1,2 @@
+<!-- DESC: combobox (etalon gtk3sermo) -->
+<window><vbox><combobox><variable>CO</variable><item>un</item><item>deux</item></combobox><timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>
