@@ -343,7 +343,7 @@ gint get_program_from_variable(gchar *name)
 static gint 
 get_program_from_file(char *name)
 {
-	size_t tmp = 0; int result;
+	size_t tmp = 0; int result G_GNUC_UNUSED;
 	
 	PIP_DEBUG("Start.");
 	

@@ -397,7 +397,7 @@ void run_program()
 {
 	static int        is_launched = 0;
 	int               pc, q;
-	stackelement      s;
+	stackelement      s G_GNUC_UNUSED;
 	variable         *var;
 	gchar            *progname;
 
@@ -803,7 +803,7 @@ static GtkWidget *put_in_the_scrolled_window(GtkWidget *widget,
 	AttributeSet *Attr, tag_attr *attr, gint Type)
 {
 	GList            *element;
-	GtkWidget        *parent;
+	GtkWidget        *parent G_GNUC_UNUSED;
 	GtkWidget        *scrolledwindow;
 	gchar            *value;
 	gint              width = -1;
@@ -959,12 +959,12 @@ static GtkWidget *put_in_the_scrolled_window(GtkWidget *widget,
 	return scrolledwindow;
 }
 
-static
+static G_GNUC_UNUSED
 gboolean widget_moved(GtkWidget *widget,
                       GdkEvent *event,
                       gpointer user_data){
 	GtkRequisition size;
-	GtkWindow *window = user_data;
+	GtkWindow *win = user_data;
 	GdkEventType type;
 	GdkEventConfigure  *configure;
 	
@@ -991,10 +991,10 @@ gboolean widget_moved(GtkWidget *widget,
 				configure->width,
 				configure->height);
 #endif
-		//gtk_widget_set_size_request(window, 
+		//gtk_widget_set_size_request(win, 
 		//		configure->width -20,
 		//		configure->height);
-		gtk_window_move(GTK_WINDOW(window), configure->x, configure->y);
+		gtk_window_move(GTK_WINDOW(win), configure->x, configure->y);
 	}
 	
 	fflush(stderr);
@@ -1492,7 +1492,7 @@ instruction_new(instruction new)
 	PIP_DEBUG("instruction_counter=%d, memory_counter=%d", 
 			instruction_counter, memory_counter);
 	
-	if (instruction_counter == memory_counter)
+	if (instruction_counter == (gint)memory_counter)
 		_more_memory_needed();
 
 	program[instruction_counter++] = new;
@@ -1507,7 +1507,7 @@ instruction_get_pc(void)
 void
 instruction_set_jump(gint from, gint where)
 {
-	if (from >= memory_counter)
+	if (from >= (gint)memory_counter)
 		g_error("Jump from a nonexistent instruction memory location.");
 	program[from].ival = where;
 }

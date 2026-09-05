@@ -1313,21 +1313,23 @@ int _tree_insert(variable *new, variable *actual)
 		exit(EXIT_FAILURE);
 	}
 
-	if (compare < 0)
+	if (compare < 0) {
 		if (actual->left == NULL) {
 			actual->left = new;
 			return (0);
 		} else {
 			return (_tree_insert(new, actual->left));
 		}
+	}
 
-	if (compare > 0)
+	if (compare > 0) {
 		if (actual->right == NULL) {
 			actual->right = new;
 			return (0);
 		} else {
 			return (_tree_insert(new, actual->right));
 		}
+	}
 
 	return (0); /* unreachable: compare est toujours <0, ==0 ou >0 */
 }
@@ -1352,17 +1354,19 @@ static variable *_tree_find(const char *name, variable *actual)
 	if (compare == 0)
 		return (actual);
 
-	if (compare < 0)
+	if (compare < 0) {
 		if (actual->left != NULL)
 			return _tree_find(name, actual->left);
 		else
 			return NULL;
+	}
 
-	if (compare > 0)
+	if (compare > 0) {
 		if (actual->right != NULL)
 			return _tree_find(name, actual->right);
 		else
 			return NULL;
+	}
 
 	return NULL; /* unreachable */
 }
@@ -1405,7 +1409,7 @@ gint variables_count_widgets(void)
  ***********************************************************************/
 /* This function will drop all the widgets with the given parent */
 
-void variables_drop_by_window_id(variable *actual, gint window_id)
+void variables_drop_by_window_id(variable *actual, gint id_fenetre)
 {
 	gint              index = 0;
 #if HAVE_SYS_INOTIFY_H
@@ -1430,12 +1434,12 @@ void variables_drop_by_window_id(variable *actual, gint window_id)
 	if (actual != NULL) {
 
 		if (actual->left != NULL)
-			variables_drop_by_window_id(actual->left, window_id);
+			variables_drop_by_window_id(actual->left, id_fenetre);
 
 		if (actual->Widget != NULL) {
 
 #ifdef DEBUG
-			fprintf(stderr, "%s(): Name=%s Widget=%p window_id=%i Type=%i\n",
+			fprintf(stderr, "%s(): Name=%s Widget=%p id_fenetre=%i Type=%i\n",
 				__func__, actual->Name, actual->Widget, actual->window_id, actual->Type);
 #endif
 
@@ -1454,7 +1458,7 @@ void variables_drop_by_window_id(variable *actual, gint window_id)
 
 			//Redundant: if (gtk_widget_get_toplevel(actual->Widget) == Parent) {
 			//Redundant: if (gtk_widget_get_ancestor(actual->Widget, GTK_TYPE_WINDOW) == Parent) {
-			if (actual->window_id == window_id) {
+			if (actual->window_id == id_fenetre) {
 
 				/* Timer callbacks cancel themselves when they
 				 * detect that var and var->widget are NULL */
@@ -1501,7 +1505,7 @@ void variables_drop_by_window_id(variable *actual, gint window_id)
 				actual->Widget = NULL;
 
 #ifdef DEBUG
-				fprintf(stderr, "%s(): Name=%s Widget=%p window_id=%i Type=%i\n",
+				fprintf(stderr, "%s(): Name=%s Widget=%p id_fenetre=%i Type=%i\n",
 					__func__, actual->Name, actual->Widget, actual->window_id, actual->Type);
 #endif
 
@@ -1509,7 +1513,7 @@ void variables_drop_by_window_id(variable *actual, gint window_id)
 		}
 
 		if (actual->right != NULL)
-			variables_drop_by_window_id(actual->right, window_id);
+			variables_drop_by_window_id(actual->right, id_fenetre);
 
 	}
 
@@ -1619,7 +1623,7 @@ static void _variables_initialize(variable *actual)
 	GList *element;
 	char *socket_id;
 	char command[128];
-	int result;
+	int result G_GNUC_UNUSED;
 
 #ifdef DEBUG
 	fprintf(stderr, "%s: Start.\n", __func__);
@@ -1905,7 +1909,7 @@ void print_variables(variable *actual)
 
 int append_fromto_variable(const char *from, const char *to)
 {
-	GtkTreeModel *model;
+	GtkTreeModel *model G_GNUC_UNUSED;
 	GtkTreeIter   iter;
 	variable     *var_from, *var_to;
 	char         *value;

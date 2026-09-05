@@ -110,7 +110,7 @@ stackelement pop(void)
 
 void show_without_pop(GtkWidget *window)
 {
-	GtkWidget *parent;
+	GtkWidget *parent G_GNUC_UNUSED;
 	stackelement *current;
 	g_assert(window != NULL);
 	g_assert(sp != 0);

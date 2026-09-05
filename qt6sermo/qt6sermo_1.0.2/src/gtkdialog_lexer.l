@@ -66,6 +66,8 @@ gchar *Token;
 %x ST_STRING ST_QUOTED_STRING
 %x ST_COMMENT
 
+%option noinput
+
 %%
 
 	#ifdef DEBUG
@@ -812,7 +814,7 @@ gchar *Token;
 												}
 %%
 
-static gchar *
+G_GNUC_UNUSED static gchar *
 process_string(gchar *str)
 {
 	//fprintf(stderr, "%s(): Input = '%s'\n", __func__, str);

@@ -47,8 +47,8 @@ GtkWidget *widget_button_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         GList *ie = nullptr;
         gchar *inp = attributeset_get_first(&ie, Attr, ATTR_INPUT);
         if (inp) {
-            gchar *icon  = attributeset_get_this_tagattr(&ie, Attr, ATTR_INPUT, "icon");
-            gchar *stock = attributeset_get_this_tagattr(&ie, Attr, ATTR_INPUT, "stock");
+            gchar *icon  = attributeset_get_this_tagattr(&ie, Attr, ATTR_INPUT, (gchar *)"icon");
+            gchar *stock = attributeset_get_this_tagattr(&ie, Attr, ATTR_INPUT, (gchar *)"stock");
             const char *name = (icon && *icon) ? icon : ((stock && *stock) ? stock : nullptr);
             if (name) {
                 QIcon ic = QIcon::fromTheme(QString::fromUtf8(name));
@@ -96,10 +96,10 @@ GtkWidget *widget_button_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         GList *ae = nullptr;
         gchar *cmd = attributeset_get_first(&ae, acap, ATTR_ACTION);
         while (cmd) {
-            gchar *function = attributeset_get_this_tagattr(&ae, acap, ATTR_ACTION, "function");
+            gchar *function = attributeset_get_this_tagattr(&ae, acap, ATTR_ACTION, (gchar *)"function");
             if (!function)
-                function = attributeset_get_this_tagattr(&ae, acap, ATTR_ACTION, "type");
-            gchar *signal = attributeset_get_this_tagattr(&ae, acap, ATTR_ACTION, "signal");
+                function = attributeset_get_this_tagattr(&ae, acap, ATTR_ACTION, (gchar *)"type");
+            gchar *signal = attributeset_get_this_tagattr(&ae, acap, ATTR_ACTION, (gchar *)"signal");
             if (!signal || g_ascii_strcasecmp(signal, "clicked") == 0)
                 execute_action(nullptr, cmd, function);
             cmd = attributeset_get_next(&ae, acap, ATTR_ACTION);

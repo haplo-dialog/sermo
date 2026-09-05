@@ -1271,7 +1271,7 @@ void on_any_widget_auto_refresh_event(GFileMonitor *monitor, GFile *file,
 gboolean window_delete_event_handler(GtkWidget *widget, GtkWidget *event,
 	gpointer data)
 {
-	variable         *var;
+	variable         *var G_GNUC_UNUSED;
 
 #ifdef DEBUG_TRANSITS
 	fprintf(stderr, "%s(): Entering.\n", __func__);
@@ -1621,9 +1621,9 @@ gboolean widget_signal_executor_eval_condition(gchar *condition)
 			}
 
 			/* Fix any escaped double-quotes if present */
-			for (index = 0; index < strlen(argument); index++)
+			for (index = 0; index < (gint)strlen(argument); index++)
 				if (argument[index] == '\\' && argument[index + 1] == '"' )
-					for (count = index; count < strlen(argument); count++)
+					for (count = index; count < (gint)strlen(argument); count++)
 						argument[count] = argument[count + 1];
 
 			/* Remove enveloping spaces if present */
@@ -1915,7 +1915,7 @@ void widget_file_monitor_try_create(variable *var, gchar *filename)
 #else
 void widget_file_monitor_try_create(variable *var, gchar *filename)
 {
-	GError           *error;
+	GError           *error G_GNUC_UNUSED;
 	GFile            *file;
 	GFileMonitor     *monitor;
 	gchar             name[16];

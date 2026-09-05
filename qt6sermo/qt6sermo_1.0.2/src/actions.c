@@ -76,7 +76,7 @@ void action_shellcommand(GtkWidget *widget, char *string);
 
 void action_closewindow(GtkWidget *widget, char *string)
 {
-	GtkWidget        *window;
+	GtkWidget        *window G_GNUC_UNUSED;
 	variable         *existing;
 
 	g_assert(GTK_IS_WIDGET(widget));
@@ -164,7 +164,7 @@ void action_launchwindow(GtkWidget *widget, char *string)
 	extern gint       charsreaded;
 #endif
 	extern int        instruction_counter;
-	GtkWidget        *window;
+	GtkWidget        *window G_GNUC_UNUSED;
 	variable         *existing;
 	variable         *var;
 
@@ -303,11 +303,11 @@ void action_fileselect(GtkWidget *widget, char *string)
 	list_t                 *patterns = NULL;
 	variable               *var = NULL;
 	GList                  *element;
-	GtkFileChooserAction    action = GTK_FILE_CHOOSER_ACTION_OPEN;
-	GtkFileFilter          *filter;
-	GtkWidget              *chooser;
+	GtkFileChooserAction    action G_GNUC_UNUSED = GTK_FILE_CHOOSER_ACTION_OPEN;
+	GtkFileFilter          *filter G_GNUC_UNUSED;
+	GtkWidget              *chooser G_GNUC_UNUSED;
 	gchar                  *filename = NULL;
-	gchar                  *title = "Gtkdialog";
+	gchar                  *title G_GNUC_UNUSED = (gchar *)"Gtkdialog";
 	gchar                  *value;
 	gint                    count;
 	gint                    response;
@@ -590,7 +590,7 @@ void action_presentwindow(GtkWidget *widget, char *string)
 void action_shellcommand(GtkWidget *widget, char *string)
 {
 	char *command;
-	int result;
+	int result G_GNUC_UNUSED;
 
 	variables_export_all();
 

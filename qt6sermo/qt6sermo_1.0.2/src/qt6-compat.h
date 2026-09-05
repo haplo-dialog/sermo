@@ -56,6 +56,9 @@ typedef ptrdiff_t    gssize;
 #endif
 QT6_STATIC_ASSERT(sizeof(gint32) == 4, "gint32 must be 4 bytes");
 QT6_STATIC_ASSERT(sizeof(gint64) == 8, "gint64 must be 8 bytes");
+#ifndef G_GNUC_UNUSED
+#define G_GNUC_UNUSED __attribute__((unused))
+#endif
 #ifndef TRUE
 #define TRUE  1
 #endif
@@ -495,7 +498,7 @@ typedef void GObjectClass;
 #define g_object_set(obj, ...)            /* no-op */
 #define g_object_set_data(o,k,v)          /* no-op */
 #define g_object_get_data(o,k)            NULL
-#define g_object_unref(o)                 /* no-op */
+#define g_object_unref(o)                 ((void)(o))   /* no-op qui consomme son argument : un no-op nu laissait « if (x) ; » — corps vide signalé par le compilateur */
 
 /* ─── Exécution de processus (g_spawn / g_shell) — POSIX ──────────────────────
  * Le port Qt6 utilise QApplication, pas une boucle GLib : safe_exec.c
@@ -793,7 +796,7 @@ void *qt6_scroll_new(int w, int h);
 #define gtk_widget_set_visible(w,v)   ((v)?qt6_widget_show((Qt6Widget_C*)(w)):qt6_widget_hide((Qt6Widget_C*)(w)))
 #define gtk_widget_set_sensitive(w,s) qt6_widget_set_sensitive((Qt6Widget_C*)(w),(s))
 #define gtk_widget_queue_draw(w)      qt6_widget_redraw((Qt6Widget_C*)(w))
-#define gtk_widget_set_size_request(w,ww,hh) /* no-op */
+#define gtk_widget_set_size_request(w,ww,hh) ((void)(w),(void)(ww),(void)(hh)) /* no-op consommant ses arguments */
 #define gtk_container_add(c,w)        qt6_container_add((Qt6Widget_C*)(c),(Qt6Widget_C*)(w))
 #define GTK_IS_WIDGET(w)              ((w)!=NULL)
 #define GTK_WIDGET(w)                 ((void*)(w))
@@ -1145,7 +1148,7 @@ typedef int GFileMonitorEvent;
 #define G_FILE_MONITOR_EVENT_CHANGED   1
 #define g_file_new_for_path(p)                  ((GFile *)NULL)
 #define g_file_monitor_file(f,flags,c,err)      ((GFileMonitor *)NULL)
-#define g_file_monitor_cancel(m)                (TRUE)
+#define g_file_monitor_cancel(m)                ((void)(m))
 #define g_file_monitor_set_rate_limit(m,ms)     ((void)0)
 
 /* ─── Requisition + prédicats / stubs GTK manquants ─────────────────────────*/
@@ -1184,7 +1187,7 @@ typedef struct { int width, height; } GtkRequisition;
 #define gtk_widget_get_visible(w)           TRUE
 #define gtk_drawing_area_new()              NULL
 #define gtk_file_chooser_widget_new(...)    NULL
-#define gtk_file_chooser_add_shortcut_folder(...) FALSE
+#define gtk_file_chooser_add_shortcut_folder(...) ((void)0)
 #define gtk_label_new(s)                    NULL
 #define gtk_list_box_row_new()              NULL
 #define gtk_list_box_get_row_at_index(b,i)  NULL
