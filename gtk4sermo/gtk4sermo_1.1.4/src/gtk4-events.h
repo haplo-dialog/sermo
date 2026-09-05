@@ -26,6 +26,7 @@
  * <action signal="button-press-event"> keeps working.
  */
 void hp_gtk4_connect_widget_events(GtkWidget *widget, AttributeSet *Attr);
+void hp_gtk4_connect_click_events(GtkWidget *widget, AttributeSet *Attr);
 
 /*
  * Attach the window-level stand-ins: close-request for delete-event and

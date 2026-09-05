@@ -31,7 +31,18 @@
 #include "attributes.h"
 #include "automaton.h"
 #include "widgets.h"
+#include "gtk4-events.h"
 #include "signals.h"
+
+/* ⚠️ En GTK4, l'ancien gtk_bin_get_child (shimmé sur first_child) rend la
+ * GtkBox INTERNE du combo, pas l'entrée : gtk_editable_get_text y échouait
+ * (assertion GTK_IS_EDITABLE) et trois signaux se connectaient sur la boîte.
+ * gtk_combo_box_get_child rend le VRAI enfant — l'entrée quand has-entry.
+ * Mesuré sur les cas 15/23 du banc élargi, 2026-09-05. */
+static GtkWidget *combo_entree(GtkWidget *combo)
+{
+	return gtk_combo_box_get_child(GTK_COMBO_BOX(combo));
+}
 
 /* Defines */
 //#define DEBUG_CONTENT
@@ -94,7 +105,7 @@ void widget_comboboxtext_clear(variable *var)
 		fprintf(stderr, "%s(): clearing the entry\n", __func__);
 #endif
 		gtk_entry_set_text(
-			GTK_ENTRY(gtk_bin_get_child(GTK_BIN(var->Widget))), "");
+			GTK_ENTRY(combo_entree(var->Widget)), "");
 	}
 
 	/* We'll manage signals ourselves */
@@ -114,6 +125,8 @@ void widget_comboboxtext_clear(variable *var)
 	fprintf(stderr, "%s(): Exiting.\n", __func__);
 #endif
 }
+
+
 
 /***********************************************************************
  * Create                                                              *
@@ -317,7 +330,7 @@ void widget_comboboxtext_refresh(variable *var)
 		 * clear the entry */
 		if (var->Type == WIDGET_COMBOBOXENTRY) {
 			gtk_entry_set_text(
-				GTK_ENTRY(gtk_bin_get_child(GTK_BIN(var->Widget))), "");
+				GTK_ENTRY(combo_entree(var->Widget)), "");
 		}
 	}
 
@@ -404,7 +417,7 @@ void widget_comboboxtext_refresh(variable *var)
 				if (var->Type == WIDGET_COMBOBOXENTRY) {
 					if (!found) {
 						gtk_entry_set_text(GTK_ENTRY(
-							gtk_bin_get_child(GTK_BIN(var->Widget))), string);
+							combo_entree(var->Widget)), string);
 					}
 				}
 			}
@@ -428,20 +441,14 @@ void widget_comboboxtext_refresh(variable *var)
 		/* The comboboxtext functions also manage the comboboxentry */
 		if (var->Type == WIDGET_COMBOBOXENTRY) {
 			/* Connect to the activate signal of the child entry widget */
-			g_signal_connect(G_OBJECT(gtk_bin_get_child(
-				GTK_BIN(var->Widget))), "activate",
+			g_signal_connect(G_OBJECT(combo_entree(var->Widget)), "activate",
 				G_CALLBACK(on_any_widget_activate_event),
 				(gpointer)var->Attributes);
-			/* Connect to the button-press/release signals of the child
-			 * entry widget */
-			g_signal_connect(G_OBJECT(gtk_bin_get_child(
-				GTK_BIN(var->Widget))), "button-press-event",
-				G_CALLBACK(on_any_widget_button_pressed),
-				(gpointer)var->Attributes);
-			g_signal_connect(G_OBJECT(gtk_bin_get_child(
-				GTK_BIN(var->Widget))), "button-release-event",
-				G_CALLBACK(on_any_widget_button_released),
-				(gpointer)var->Attributes);
+			/* button-press/release-event n'existent plus en GTK4 : la couche
+			 * d'événements du port pose un GtkGestureClick équivalent sur la
+			 * vraie entrée (les mêmes actions <action signal=...> s'exécutent). */
+			hp_gtk4_connect_click_events(combo_entree(var->Widget),
+				var->Attributes);
 		}
 	}
 
@@ -486,7 +493,7 @@ void widget_comboboxtext_removeselected(variable *var)
 	 * clear the entry */
 	if (var->Type == WIDGET_COMBOBOXENTRY) {
 		gtk_entry_set_text(
-			GTK_ENTRY(gtk_bin_get_child(GTK_BIN(var->Widget))), "");
+			GTK_ENTRY(combo_entree(var->Widget)), "");
 	}
 	/* Auto-select the previous item rather than leaving it empty */
 	if (index > 0) index--; else index = 0;

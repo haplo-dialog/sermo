@@ -124,9 +124,20 @@ gchar *widget_combobox_envvar_construct(GtkWidget *widget)
 	fprintf(stderr, "%s(): Entering.\n", __func__);
 #endif
 
-	/* GTK3: GtkCombo removed — get text from the embedded entry */
-	text = (gchar*)gtk_entry_get_text(
-		GTK_ENTRY(gtk_bin_get_child(GTK_BIN(widget))));
+	/* GTK3: GtkCombo removed — get text from the embedded entry.
+	 * ⚠️ GTK4 : first_child (l'ancien gtk_bin_get_child shimmé) rend la
+	 * GtkBox interne, pas l'entrée — gtk_editable_get_text émettait une
+	 * assertion GTK_IS_EDITABLE (cas 15 du banc élargi). On passe par
+	 * gtk_combo_box_get_child, et si le combo n'a pas d'entrée, par le
+	 * texte de l'item actif. 2026-09-05. */
+	{
+		GtkWidget *enfant = gtk_combo_box_get_child(GTK_COMBO_BOX(widget));
+		if (enfant != NULL && GTK_IS_EDITABLE(enfant))
+			text = (gchar*)gtk_entry_get_text(GTK_ENTRY(enfant));
+		else
+			text = gtk_combo_box_text_get_active_text(
+				GTK_COMBO_BOX_TEXT(widget));
+	}
 	string = g_strdup(text);
 
 #ifdef DEBUG_TRANSITS

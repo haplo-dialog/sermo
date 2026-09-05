@@ -298,20 +298,33 @@ static void _on_destroy(GtkWidget *widget, gpointer data)
  * Public entry points                                                *
  * ------------------------------------------------------------------ */
 
-void hp_gtk4_connect_widget_events(GtkWidget *widget, AttributeSet *Attr)
+/* Les seuls boutons du pointeur — pour les widgets dont GTK3 ne branchait
+ * QUE button-press/release-event sur un ENFANT interne (l'entrée d'un
+ * comboboxentry) : leur donner la connexion complète doublerait les signaux
+ * clavier/focus déjà posés sur le parent. */
+void hp_gtk4_connect_click_events(GtkWidget *widget, AttributeSet *Attr)
 {
-	GtkEventController *click, *key, *motion, *focus;
+	GtkEventController *click;
 
 	g_return_if_fail(GTK_IS_WIDGET(widget));
 
-	/* Pointer buttons.  Button 0 means "any button", which is what the
-	 * GTK3 button-press-event delivered. */
 	click = GTK_EVENT_CONTROLLER(gtk_gesture_click_new());
 	gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(click), 0);
 	gtk_event_controller_set_propagation_phase(click, GTK_PHASE_BUBBLE);
 	g_signal_connect(click, "pressed", G_CALLBACK(_on_pressed), Attr);
 	g_signal_connect(click, "released", G_CALLBACK(_on_released), Attr);
 	gtk_widget_add_controller(widget, click);
+}
+
+void hp_gtk4_connect_widget_events(GtkWidget *widget, AttributeSet *Attr)
+{
+	GtkEventController *key, *motion, *focus;
+
+	g_return_if_fail(GTK_IS_WIDGET(widget));
+
+	/* Pointer buttons.  Button 0 means "any button", which is what the
+	 * GTK3 button-press-event delivered. */
+	hp_gtk4_connect_click_events(widget, Attr);
 
 	/* Keyboard.  CAPTURE, not BUBBLE: an editable widget swallows the key
 	 * in its own handler and returns TRUE, which ends the bubble before a
