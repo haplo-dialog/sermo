@@ -99,6 +99,11 @@ jobs:
       - name: Garde — pas de nom de machine
         run: bash tests/garde_pas_de_poste.sh "$GITHUB_WORKSPACE"
 
+      # L'identité NOMINATIVE revient par les lignes de clôture des changelogs.
+      # Ce garde verrouille la façade entière — même pas que sur GitLab.
+      - name: Garde — façade publique
+        run: sh tests/verifie-facade.sh
+
   exemples:
     name: ${{ matrix.port }} — exemples réels (Xvfb, fr_FR.UTF-8)
     runs-on: ubuntu-latest
@@ -205,12 +210,16 @@ jobs:
             build-essential flex bison pkg-config ca-certificates \
             cmake qt6-base-dev libglib2.0-dev
 
-      - name: Compiler et installer
+      # BUILD_TESTING=ON : les tests CTest du shim (test_compat, test_safe_exec)
+      # etaient declares mais jamais rejoues — le shim a menti deux fois
+      # (g_ascii_strtod, leurres). Aligne sur la reference le 2026-09-05.
+      - name: Compiler, tester (ctest) et installer
         working-directory: qt6sermo/qt6sermo_1.0.2
         run: |
-          cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF \
+          cmake -B build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON \
             -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/inst"
           cmake --build build -j"$(nproc)"
+          ctest --test-dir build --output-on-failure
           cmake --install build
           test -x "$GITHUB_WORKSPACE/inst/bin/qt6sermo"
 
@@ -219,6 +228,13 @@ jobs:
 
       - name: Tests de comportement (cœur)
         run: sh tests/run_unit_tests.sh qt6sermo
+
+      - name: Garde — aucune fonction interdite (les .cpp aussi)
+        run: bash tests/garde_fonctions_interdites.sh qt6sermo/qt6sermo_1.0.2/src
+
+      - name: Durcissement (readelf sur le binaire)
+        working-directory: qt6sermo/qt6sermo_1.0.2
+        run: bash "$GITHUB_WORKSPACE/tests/garde_durcissement.sh" "build/qt6sermo"
 
   # Le port Qt 6 ne peut pas rejoindre le travail « exemples » : celui-ci appelle
   # autoreconf. Son banc de comportement lui est propre et vit dans son arbre :
@@ -236,7 +252,13 @@ jobs:
           apt-get update -qq
           DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
             build-essential flex bison pkg-config ca-certificates \
-            cmake qt6-base-dev xvfb xauth locales dbus-x11 fonts-dejavu-core
+            cmake qt6-base-dev xvfb xauth xdotool locales dbus-x11 \
+            fonts-dejavu-core adwaita-icon-theme libqt6svg6
+
+      - name: Locale française
+        run: |
+          sed -i 's/^# *fr_FR.UTF-8/fr_FR.UTF-8/' /etc/locale.gen
+          locale-gen
 
       - name: Compiler
         working-directory: qt6sermo/qt6sermo_1.0.2
@@ -244,6 +266,21 @@ jobs:
           cmake -B build -DCMAKE_BUILD_TYPE=Release
           cmake --build build -j"$(nproc)"
 
+      - name: Lancer les 32 exemples livrés (fr_FR)
+        working-directory: qt6sermo/qt6sermo_1.0.2
+        env:
+          LC_ALL: fr_FR.UTF-8
+          LANG: fr_FR.UTF-8
+        run: bash tests/run_examples.sh build/qt6sermo
+
       - name: Comportement — les valeurs rendues, pas seulement le XML
         working-directory: qt6sermo/qt6sermo_1.0.2
         run: QT6_BIN="$PWD/build/qt6sermo" sh tests/comportement/run.sh
+
+      - name: Comportement — border-width et icônes de thème (géométrie)
+        working-directory: qt6sermo/qt6sermo_1.0.2
+        run: sh "$GITHUB_WORKSPACE/tests/comportement/geometrie.sh" "$PWD/build/qt6sermo"
+
+      - name: Comportement — le contrat de la minuterie
+        working-directory: qt6sermo/qt6sermo_1.0.2
+        run: sh tests/comportement/minuterie.sh "$PWD/build/qt6sermo"
