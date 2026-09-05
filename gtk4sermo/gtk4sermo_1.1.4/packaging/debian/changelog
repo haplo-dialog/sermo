@@ -1,3 +1,14 @@
+gtk4sermo (1.1.4-3) unstable; urgency=medium
+
+  * Les combos parlent GTK4 : l'entree d'un comboboxentry est atteinte par
+    gtk_combo_box_get_child (l'ancien chemin rendait la boite interne —
+    assertion GTK_IS_EDITABLE, signaux GTK3 invalides), « activate » se
+    branche sur la vraie entree, les clics passent par le controleur
+    GestureClick du port. Zero CRITICAL sur les quatre cas jadis latents ;
+    24/24 face au port de reference sur le banc elargi.
+
+ -- haplo-dialog <devel@haplo-dialog.fr>  Sat, 05 Sep 2026 10:05:03 +0200
+
 gtk4sermo (1.1.4-2) unstable; urgency=medium
 
   * GTK 4 fait remonter l'expansion des enfants vers les parents, GTK 3 ne

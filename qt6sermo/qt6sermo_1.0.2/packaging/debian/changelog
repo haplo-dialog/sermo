@@ -1,3 +1,13 @@
+qt6sermo (1.0.2-3) unstable; urgency=medium
+
+  * Compilation integrale a zero avertissement (41 idiomes herites
+    traites) ; deux macros no-op du shim consomment desormais leurs
+    arguments. Aucun
+    changement de comportement : 55/55 XML, 24/24 valeur, 24/24 sur le banc
+    partage de la famille, mise en page, minuterie, durcissement 8/8.
+
+ -- haplo-dialog <devel@haplo-dialog.fr>  Sat, 05 Sep 2026 10:05:03 +0200
+
 qt6sermo (1.0.2-2) unstable; urgency=medium
 
   * Les 20 exemples qui évaluaient la sortie du dialogue (« eval $(...) »)
