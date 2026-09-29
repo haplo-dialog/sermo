@@ -1,0 +1,3 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: searchentry (etalon gtk3sermo) -->
+<window><vbox><entry type="search"><variable>SE</variable><default>cherche</default></entry><timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

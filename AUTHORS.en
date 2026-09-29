@@ -1,0 +1,74 @@
+sermo (modular edition), List of authors and contributors
+==========================================================
+
+Project: sermo — modular edition (libsermocore core + rendering backends)
+Site   : https://haplo-dialog.fr
+Email  : devel@haplo-dialog.fr
+
+──────────────────────────────────────────────────
+Main author
+──────────────────────────────────────────────────
+
+S. Cage — haplo-dialog <devel@haplo-dialog.fr>
+  - libsermocore core (parsing + hardened execution, no toolkit)
+  - Seven rendering backends: gtk3, gtk4, qt6, fltk1, efl1, sdl3, ncurses
+  - Separate packaging, core↔backend boundary contract
+
+──────────────────────────────────────────────────
+sermo lineage
+──────────────────────────────────────────────────
+
+The modular edition continues the sermo lineage (43+ widgets, safe_system
+hardening, output escaping, unified lexer/parser on the gtk3sermo reference).
+
+──────────────────────────────────────────────────
+Original upstream, gtkdialog
+──────────────────────────────────────────────────
+
+sermo is a fork of gtkdialog. Upstream copyright notices are kept in every file
+that descends from it (see LICENCES.en.md).
+
+Pere László <pipas@linux.pte.hu>
+  - Original author of gtkdialog (copyright 2003-2007)
+
+Thunor <thunorsif@hotmail.com>
+  - Maintainer of gtkdialog 0.8.x, up to 0.8.3 (copyright 2011-2012)
+
+Kiss Gábor <gabor@gamma.ttk.pte.hu>
+  - gtkdialog documentation
+
+gtkdialog patches (from its AUTHORS file):
+  Moose On The Loose <kensmith1313666@gmail.com>, Patriot,
+  Fabio Tranchitella <kobold@debian.org>, Luca Falavigna <dktrkranz@ubuntu.com>,
+  Szabo Viktor <wyck@freemail.hu>, Csaszar-Csutoras Peter <spy@c2.hu>
+
+──────────────────────────────────────────────────
+Third-party GTK3 port, BunsenLabs / Puppy Linux
+──────────────────────────────────────────────────
+
+Dima Krasner <dima@dimakrasner.com>
+  - Wayland layer-shell support in the BunsenLabs fork (2021)
+
+Mick Amadio <01micko@gmail.com>
+  - Wayland layer-shell support (2021-2024)
+
+──────────────────────────────────────────────────
+Embedded third-party code (sdl3 backend)
+──────────────────────────────────────────────────
+
+Omar Cornut
+  - Dear ImGui (MIT)
+
+Sean Barrett
+  - stb libraries, modified by Dear ImGui (MIT or public domain)
+
+Tristan Grimmer, Disco Hello
+  - ProggyClean and ProggyForever fonts (MIT)
+
+──────────────────────────────────────────────────
+AI assistance
+──────────────────────────────────────────────────
+
+Part of the code, documentation and tests was written with the help of a
+language model (Claude, Anthropic), directed and reviewed by the maintainer.
+It is stated here, once and for all.

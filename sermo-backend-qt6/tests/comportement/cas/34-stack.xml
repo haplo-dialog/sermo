@@ -1,0 +1,10 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: stack : N pages, une seule visible ; l index de la page sort en variable -->
+<window><vbox>
+<stack page="1" switcher="true">
+<entry><variable>P0</variable><default>page zero</default></entry>
+<entry><variable>P1</variable><default>page un</default></entry>
+<entry><variable>P2</variable><default>page deux</default></entry>
+<variable>PAGE</variable>
+</stack>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

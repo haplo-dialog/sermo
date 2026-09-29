@@ -1,0 +1,8 @@
+<!-- SPDX-License-Identifier: CC0-1.0 -->
+<!-- DESC: pixmap avec input file -->
+<window title="Test pixmap" width-request="300" height-request="200">
+  <vbox>
+    <pixmap><input file>/usr/share/pixmaps/debian-logo.png</input></pixmap>
+    <button ok></button>
+  </vbox>
+</window>

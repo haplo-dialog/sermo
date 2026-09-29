@@ -1,0 +1,8 @@
+CBT_CMD="un"
+CBT_DEF="deux"
+CBT_FIC="ligne un"
+CB_CMD=""
+ED_CMD="texte
+ED_FIC="ligne unique
+EXEC="cbt=1 cb=0 ed=1 "
+_T="true"

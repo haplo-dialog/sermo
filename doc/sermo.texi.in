@@ -1,0 +1,287 @@
+\input texinfo   @c -*-texinfo-*-
+@c ============================================================
+@c sermo.texi — Official manual for sermo (modular sermo)
+@c
+@c Generate with:
+@c   makeinfo --html sermo.texi
+@c   makeinfo        sermo.texi     (→ sermo.info)
+@c ============================================================
+@set VERSION @PACKAGE_VERSION@
+@set UPDATED-MONTH September 2026
+@c %**start of header
+@setfilename sermo.info
+@settitle sermo @value{VERSION} User Manual
+@documentencoding UTF-8
+@c %**end of header
+
+@copying
+This manual documents @command{sermo} version @value{VERSION}, the
+toolkit-agnostic dialog box creator of the modular @strong{sermo} suite (a hardened
+core plus one rendering backend per toolkit).
+
+Copyright @copyright{} 2003-2007 László Pere.@*
+Copyright @copyright{} 2011-2012 Thunor.@*
+Copyright @copyright{} 2026 S. Cage, haplo-dialog @email{devel@@haplo-dialog.fr}.
+
+@quotation
+This manual is free documentation; you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the Free
+Software Foundation; either version 2 of the License, or (at your option) any
+later version. It is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY. See the GNU General Public License for more details. On
+Debian systems the full text is in @file{/usr/share/common-licenses/GPL-2}.
+@end quotation
+@end copying
+
+@dircategory Interfaces graphiques
+@direntry
+* sermo: (sermo).   Constructeur de dialogues XML pour scripts shell (multi-toolkit).
+@end direntry
+
+@titlepage
+@title sermo User Manual
+@subtitle Édition modulaire — version @value{VERSION}
+@subtitle haplo-dialog — @value{UPDATED-MONTH}
+@author László Pere (gtkdialog original), Thunor (2011--2014)
+@author haplo-dialog (sermo, 2026)
+@page
+@vskip 0pt plus 1filll
+@insertcopying
+@end titlepage
+
+@contents
+
+@ifnottex
+@node Top
+@top sermo @value{VERSION}
+
+@insertcopying
+@end ifnottex
+
+@menu
+* Introduction::        Qu'est-ce que sermo ?
+* Architecture::        Cœur libsermocore et backends de rendu.
+* Installation::        Comment installer sermo.
+* Invocation::          Options de la ligne de commande.
+* XML Syntax::          Syntaxe XML des descriptions de dialogue.
+* Widgets::             Widgets disponibles.
+* Examples::            Exemples de scripts shell.
+* Security::            Considérations de sécurité.
+* Index::               Index général.
+@end menu
+
+@node Introduction
+@chapter Introduction
+
+@cindex introduction
+@pindex sermo
+
+@command{sermo} est un constructeur de dialogues graphiques piloté par une
+description XML. Il permet aux scripts shell (ou Python, Perl@dots{}) de créer
+des interfaces graphiques sans aucune connaissance de la programmation d'une
+boîte à outils graphique.
+
+@command{sermo} est le successeur moderne, durci et maintenu de gtkdialog
+(László Pere, 2003--2007 ; Thunor, 2011--2014). Sa forme actuelle est
+@emph{modulaire} : le programme est séparé en un cœur unique et des backends de
+rendu (voir @ref{Architecture}).
+
+@section Compatibilité gtkdialog
+
+Le langage XML reprend fidèlement celui de gtkdialog. Le paquet optionnel
+@command{sermo-gtkdialog} (qui dépend du backend GTK 3) fournit la commande
+@command{gtkdialog}, de sorte que les scripts écrits pour gtkdialog s'exécutent
+sans modification.
+
+@node Architecture
+@chapter Architecture
+
+@cindex architecture
+@cindex libsermocore
+@cindex backend
+
+sermo est séparé en deux :
+
+@itemize
+@item
+un @strong{cœur} unique et durci, @code{libsermocore} : analyse (Flex/Bison),
+exécution sécurisée (@code{safe_system}/@code{safe_popen}), variables et
+actions, @strong{sans aucune dépendance graphique} dans sa variante neutre ;
+@item
+des @strong{backends de rendu} autonomes, un par bibliothèque graphique, qui ne
+font que @emph{dessiner} ce que le cœur décrit.
+@end itemize
+
+Le même script XML rend une interface équivalente sur les sept backends :
+
+@multitable @columnfractions .34 .30 .36
+@headitem Backend @tab Toolkit @tab Binaire
+@item @code{sermo-backend-gtk3}  @tab GTK 3      @tab @command{gtk3sermo}
+@item @code{sermo-backend-gtk4}  @tab GTK 4      @tab @command{gtk4sermo}
+@item @code{sermo-backend-qt6}   @tab Qt 6       @tab @command{qt6sermo}
+@item @code{sermo-backend-fltk1} @tab FLTK 1.4   @tab @command{fltk1sermo}
+@item @code{sermo-backend-efl1}  @tab EFL/Elementary @tab @command{efl1sermo}
+@item @code{sermo-backend-sdl3}  @tab SDL 3      @tab @command{sdl3sermo}
+@item @code{sermo-backend-ncurses} @tab ncursesw (terminal) @tab @command{ncursessermo}
+@end multitable
+
+@command{sermo} désigne le backend choisi par défaut (@command{update-alternatives}).
+Avantage principal : la légèreté --- installer un backend ne tire que @emph{sa}
+boîte à outils. Détails d'architecture : voir le manuel développeur.
+
+@node Installation
+@chapter Installation
+
+@section Depuis les paquets
+@example
+apt install sermo-backend-gtk3     # GTK 3
+apt install sermo-backend-fltk1    # FLTK, sans GTK ni Qt
+@end example
+
+@section Depuis les sources
+On compile d'abord le cœur @code{libsermocore} (variante neutre, GLib ou GTK4),
+puis le backend choisi contre ce cœur via pkg-config. Voir @file{COMPILE.md}.
+
+@node Invocation
+@chapter Invocation
+
+@section Synopsis
+@example
+sermo [OPTION]...
+sermo --program=VARIABLE
+sermo --file=FILE
+sermo --stdin
+@end example
+
+@section Options principales
+@table @option
+@item --program=@var{VARIABLE}
+Lire la description XML depuis la variable d'environnement @var{VARIABLE}.
+@item --file=@var{FILE}
+Lire la description XML depuis le fichier @var{FILE}.
+@item --stdin
+Lire la description XML depuis l'entrée standard.
+@item --do=@var{CMD}
+Exécuter @var{CMD} après la fermeture du dialogue ; les valeurs des widgets sont
+exportées comme variables d'environnement (voie recommandée, @ref{Security}).
+@item --include=@var{FILE}
+Rendre les fonctions shell de @var{FILE} disponibles à chaque action. Un chemin
+relatif part du dossier où le programme a été lancé.
+@item --glade-xml=@var{FILE}
+gtk3sermo et gtk4sermo seulement : construire le dialogue depuis un fichier
+d'interface GtkBuilder (Glade) écrit pour leur version de GTK. La fenêtre est
+l'objet que @code{--program} désigne (@code{MAIN_WINDOW} par défaut) ; les
+gestionnaires de signaux sont des actions sermo. Les autres ports refusent
+l'option (code de sortie 1).
+@item --print-ir
+Analyser la description, imprimer la représentation interne et quitter sans
+affichage (débogage et tests headless).
+@item --version
+Afficher la version et quitter.
+@end table
+
+@node XML Syntax
+@chapter Syntaxe XML
+
+La balise racine est @code{<window>}, qui contient des widgets imbriqués dans des
+conteneurs (@code{<vbox>}, @code{<hbox>}, @code{<frame>}, @code{<notebook>}).
+
+@example
+<window title="Ma fenêtre" width-request="400">
+  <vbox>
+    <entry><variable>NOM</variable></entry>
+    <button ok></button>
+  </vbox>
+</window>
+@end example
+
+Un widget nommé (@code{<variable>NOM</variable>}) exporte sa valeur sous la forme
+@code{NOM="valeur"} à la fermeture. La référence complète du langage (attributs,
+actions, signaux, entrées/sorties) est dans le manuel utilisateur
+(@file{MANUEL_UTILISATEUR.md}).
+
+@node Widgets
+@chapter Widgets
+
+Le langage supporte notamment :
+
+@table @code
+@item Conteneurs
+window, vbox, hbox, frame, notebook, expander, eventbox, aspectframe
+@item Affichage
+text, image, pixmap, statusbar, infobar, drawingarea
+@item Saisie
+entry, edit, password, searchentry, spinbutton, hscale, vscale, checkbox,
+togglebutton, radiobutton, switch
+@item Sélection
+combobox, comboboxtext, list, tree, table, colorbutton, fontbutton,
+filechooser, calendar
+@item Progression
+progressbar, pulse, spinner, levelbar
+@item Boutons
+button (+ formes stock ok/cancel/help/yes/no), linkbutton
+@item Menus
+menubar, menu, menuitem, separator
+@item Terminal et séparateurs
+terminal (backends GTK, VTE), hseparator, vseparator
+@item Minuteries
+timer
+@end table
+
+Certaines capacités dépendent du toolkit (p.@: ex.@: l'ancrage Wayland
+layer-shell est fourni par le backend GTK 3).
+
+@node Examples
+@chapter Exemples
+
+@example
+DIALOG='
+<window title="Hello">
+  <vbox>
+    <text><label>Hello, world!</label></text>
+    <button><label>OK</label><action>EXIT:ok</action></button>
+  </vbox>
+</window>'
+sermo --program=DIALOG
+@end example
+
+@example
+# Capture des valeurs, sans jamais relire une saisie comme du code :
+sermo --file=my_form.xml --do='echo "Nom : $NOM"'
+@end example
+
+@node Security
+@chapter Sécurité
+
+@cindex sécurité
+La frontière de confiance est l'@strong{auteur local du script}. L'exécution des
+commandes est concentrée dans le cœur durci :
+
+@itemize
+@item
+@code{safe_system} n'ouvre un shell que si la commande contient des
+métacaractères ; sinon exécution directe par @code{argv[]}. Le repli
+@code{/bin/sh -c} est journalisé, et refusé si @code{SERMO_NO_SHELL_FALLBACK=1}.
+@item
+Les valeurs exportées échappent @code{\}, @code{"}, @code{$} et l'accent grave,
+pour que @code{eval "$(sermo @dots{})"} ne réexécute pas une saisie.
+@item
+@option{--do} passe les valeurs par l'environnement : elles ne sont jamais
+relues comme du code. À préférer si le dialogue peut servir à autrui.
+@item
+Chaque @code{<input>} lit au plus 16 Mio (@code{SERMO_INPUT_MAX}, en octets ;
+@code{0} retire la limite). Au-delà, la lecture s'arrête et un avertissement
+part sur la sortie d'erreur. La barre de progression n'est pas plafonnée : elle
+ne garde qu'une ligne à la fois.
+@item
+Durcissement du binaire : FORTIFY=3, stack protector, CET IBT/SHSTK, PIE, RELRO,
+BIND_NOW.
+@end itemize
+
+Voir @file{SECURITY.md}.
+
+@node Index
+@unnumbered Index
+@printindex cp
+
+@bye

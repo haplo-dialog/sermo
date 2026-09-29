@@ -1,0 +1,19 @@
+<!--
+  Ressource Qt — icône de l'application embarquée dans le binaire.
+
+  POURQUOI. La recherche par thème (QIcon::fromTheme("qt6sermo")) ne trouve
+  l'icône que si le paquet est INSTALLÉ. Lancé depuis un arbre de compilation,
+  ou sur un système où l'icône n'est pas déployée, le binaire ne posait alors
+  AUCUN _NET_WM_ICON (mesuré à l'xprop : « not found »), et le gestionnaire de
+  fenêtres affichait une icône générique à la place de celle du projet — alors
+  que le port GTK 3 de référence, lui, publie bien « Icon (32 x 32) ».
+
+  Embarquer les 751 octets de l'icône garantit qu'il y en a toujours une.
+  Le fichier reste par ailleurs installé normalement dans le thème hicolor,
+  pour les lanceurs et les gestionnaires de fichiers.
+-->
+<RCC>
+  <qresource prefix="/">
+    <file alias="qt6sermo.png">icons/hicolor/32x32/apps/qt6sermo.png</file>
+  </qresource>
+</RCC>

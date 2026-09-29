@@ -1,0 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: pulse : barre indeterminee ; exporte la valeur fixe "pulse" -->
+<window><vbox>
+<pulse><variable>PU</variable></pulse>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

@@ -1,0 +1,9 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: <input> : entry garde la 1re ligne, text tout le contenu (saut de ligne final compris), que l'entrée vienne d'un fichier (<input file>, relatif au dossier de travail) ou d'une commande ; chaque commande ne s'exécute qu'une fois (PASSAGES compte les passages) -->
+<window><vbox>
+<entry><variable>ENTREE_FICHIER</variable><input file>donnees/deux-lignes.txt</input></entry>
+<text><variable>TEXTE_FICHIER</variable><input file>donnees/une-ligne.txt</input></text>
+<entry><variable>ENTREE_COMMANDE</variable><input>printf "cmd un\ncmd deux\n"</input></entry>
+<text><variable>TEXTE_COMMANDE</variable><input>echo passage >> compteur; echo commande</input></text>
+<text><variable>PASSAGES</variable><input>cat compteur | wc -l</input></text>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

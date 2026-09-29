@@ -1,0 +1,9 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: toolbar : barre d actions ; les enfants survivent et exportent leurs valeurs -->
+<window><vbox>
+<toolbar spacing="4">
+<button><label>Ouvrir</label></button>
+<checkbox><label>Gras</label><variable>GRAS</variable><default>true</default></checkbox>
+<entry><variable>CHERCHE</variable><default>motif</default></entry>
+</toolbar>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

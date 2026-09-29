@@ -1,0 +1,15 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: frame : le cadre exporte son TITRE (vide s'il n'en a pas), et ses enfants survivent (étalon gtk3) -->
+<window><vbox>
+<frame label="Options" label-xalign="0.0">
+<vbox>
+<entry><variable>F1</variable><default>dedans</default></entry>
+<checkbox><label>actif</label><variable>F2</variable><default>true</default></checkbox>
+</vbox>
+<variable>FR</variable>
+</frame>
+<frame>
+<vbox><entry><variable>F3</variable><default>sans-titre</default></entry></vbox>
+<variable>FS</variable>
+</frame>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

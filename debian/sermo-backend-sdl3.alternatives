@@ -1,0 +1,7 @@
+Name: sermo
+Link: /usr/bin/sermo
+Alternative: /usr/bin/sdl3sermo
+Dependents:
+  /usr/share/man/man1/sermo.1.gz sermo.1.gz /usr/share/man/man1/sdl3sermo.1.gz
+  /usr/share/info/sermo.info.gz sermo.info.gz /usr/share/info/sdl3sermo.info.gz
+Priority: 10

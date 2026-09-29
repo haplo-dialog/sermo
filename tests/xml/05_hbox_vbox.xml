@@ -1,0 +1,15 @@
+<!-- SPDX-License-Identifier: CC0-1.0 -->
+<!-- DESC: Conteneurs hbox/vbox imbriqués -->
+<window title="Test 05">
+  <vbox>
+    <hbox>
+      <vbox>
+        <text><label>Col 1</label></text>
+      </vbox>
+      <vbox>
+        <text><label>Col 2</label></text>
+      </vbox>
+    </hbox>
+    <button ok></button>
+  </vbox>
+</window>

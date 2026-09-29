@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-2.0-or-later
+     glade-entries_functions.glade (gtkdialog), écrit pour GTK 4 et gtk4sermo.
+     GTK 4 a retiré GtkVBox, GtkTable, GtkAlignment, GtkHButtonBox et les
+     boutons « stock » : même interface, faite de GtkBox et GtkGrid, mêmes
+     identifiants et mêmes gestionnaires. L'attribut object="objektum neve" de
+     l'original désignait un objet absent ; GTK 4 refuserait le fichier. -->
+<interface>
+  <object class="GtkWindow" id="login_window">
+    <property name="title">GtkDialog Example</property>
+    <child>
+      <object class="GtkBox" id="vbox1">
+        <property name="orientation">vertical</property>
+        <property name="spacing">5</property>
+        <property name="margin-start">5</property>
+        <property name="margin-end">5</property>
+        <property name="margin-top">5</property>
+        <property name="margin-bottom">5</property>
+        <child>
+          <object class="GtkFrame" id="frame1">
+            <property name="label-widget">
+              <object class="GtkLabel" id="label1">
+                <property name="label">&lt;b&gt;PostgreSQL Login&lt;/b&gt;</property>
+                <property name="use-markup">True</property>
+              </object>
+            </property>
+            <child>
+              <object class="GtkGrid" id="table1">
+                <property name="column-spacing">5</property>
+                <property name="row-spacing">5</property>
+                <property name="margin-start">12</property>
+                <property name="margin-end">5</property>
+                <property name="margin-top">5</property>
+                <property name="margin-bottom">5</property>
+                <child>
+                  <object class="GtkLabel" id="label2">
+                    <property name="label">Server:</property>
+                    <property name="xalign">0</property>
+                    <layout><property name="column">0</property><property name="row">0</property></layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="server_entry">
+                    <property name="hexpand">True</property>
+                    <property name="activates-default">True</property>
+                    <property name="text">localhost</property>
+                    <layout><property name="column">1</property><property name="row">0</property></layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="label3">
+                    <property name="label">Name:</property>
+                    <property name="xalign">0</property>
+                    <layout><property name="column">0</property><property name="row">1</property></layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="name_entry">
+                    <property name="hexpand">True</property>
+                    <property name="activates-default">True</property>
+                    <signal name="realize" handler="whoami"/>
+                    <layout><property name="column">1</property><property name="row">1</property></layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="label4">
+                    <property name="label">Database:</property>
+                    <property name="xalign">0</property>
+                    <layout><property name="column">0</property><property name="row">2</property></layout>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="database_entry">
+                    <property name="hexpand">True</property>
+                    <property name="activates-default">True</property>
+                    <layout><property name="column">1</property><property name="row">2</property></layout>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkBox" id="hbuttonbox1">
+            <property name="spacing">5</property>
+            <property name="halign">end</property>
+            <child>
+              <object class="GtkButton" id="cancel_button">
+                <property name="label">_Cancel</property>
+                <property name="use-underline">True</property>
+                <signal name="clicked" handler="echo &quot;hello&quot;"/>
+                <signal name="clicked" handler="exit:Cancel"/>
+              </object>
+            </child>
+            <child>
+              <object class="GtkButton" id="ok_button">
+                <property name="label">_OK</property>
+                <property name="use-underline">True</property>
+                <signal name="clicked" handler="login_server &quot;$server_entry&quot; &quot;$name_entry&quot; &quot;$database_entry&quot;"/>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

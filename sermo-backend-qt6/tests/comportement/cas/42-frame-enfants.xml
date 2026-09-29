@@ -1,0 +1,12 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: frame à plusieurs enfants : tous vivent, pas seulement le premier ; ici le deuxième, une progressbar, ferme le dialogue arrivée à 100 (étalon gtk3) -->
+<window><vbox>
+<frame Plusieurs>
+<entry><variable>PREMIER</variable><default>un</default></entry>
+<progressbar>
+<input>echo 100</input>
+<action function="exit">fin</action>
+</progressbar>
+<entry><variable>TROISIEME</variable><default>trois</default></entry>
+</frame>
+</vbox></window>

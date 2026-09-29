@@ -1,0 +1,8 @@
+<!-- SPDX-License-Identifier: CC0-1.0 -->
+<!-- DESC: Barre de progression -->
+<window title="Test 09">
+  <vbox>
+    <progressbar><input>echo 60</input><variable>PROG</variable></progressbar>
+    <button ok></button>
+  </vbox>
+</window>

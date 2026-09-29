@@ -1,0 +1,6 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: list remplie par <input> commande, seule dans sa fenêtre (elle a le focus : sa 1re rangée ressort) ; la commande s'exécute une fois -->
+<window><vbox>
+<list><variable>LI</variable><input>echo x >> n-li; printf "un\ndeux\n"</input></list>
+<text><variable>EXEC</variable><input>cat n-li | wc -l</input></text>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

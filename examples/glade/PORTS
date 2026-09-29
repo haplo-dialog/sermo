@@ -1,0 +1,4 @@
+# Ports qui savent faire tourner ces exemples : --glade-xml charge un fichier
+# GtkBuilder, ce que seuls les ports GTK savent faire. tests/run_examples.sh
+# les annonce « réservés » sur les autres ports au lieu de les compter en échec.
+gtk3 gtk4

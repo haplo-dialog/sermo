@@ -1,0 +1,7 @@
+Name: sermo
+Link: /usr/bin/sermo
+Alternative: /usr/bin/fltk1sermo
+Dependents:
+  /usr/share/man/man1/sermo.1.gz sermo.1.gz /usr/share/man/man1/fltk1sermo.1.gz
+  /usr/share/info/sermo.info.gz sermo.info.gz /usr/share/info/fltk1sermo.info.gz
+Priority: 30

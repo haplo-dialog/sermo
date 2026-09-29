@@ -1,0 +1,9 @@
+<window title="Nouvelle connexion" width-request="400">
+  <vbox>
+    <text><label>Utilisateur :</label></text>
+    <entry><variable>USER_INPUT</variable></entry>
+    <text><label>Mot de passe :</label></text>
+    <password><variable>PASS_INPUT</variable></password>
+    <hbox><button ok></button><button cancel></button></hbox>
+  </vbox>
+</window>

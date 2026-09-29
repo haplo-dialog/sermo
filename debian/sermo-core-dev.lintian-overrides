@@ -1,0 +1,6 @@
+# Pas d'envoi dans l'archive Debian : aucun bogue ITP à fermer. sermo est
+# distribué par le dépôt de son projet (https://gitlab.com/haplo-dialog/sermo).
+initial-upload-closes-no-bugs
+# config.h est un en-tête du cœur inclus par les backends de sermo, seuls
+# destinataires de ce paquet ; ses macros PACKAGE_* décrivent sermo lui-même.
+package-name-defined-in-config-h usr/include/sermo/config.h

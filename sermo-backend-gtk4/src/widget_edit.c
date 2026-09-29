@@ -1,0 +1,432 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+/*
+ * widget_edit.c: 
+ * Gtkdialog - A small utility for fast and easy GUI building.
+ * Copyright (C) 2003-2007  László Pere <pipas@linux.pte.hu>
+ * Copyright (C) 2011-2012  Thunor <thunorsif@hotmail.com>
+ * Copyright (C) 2026  haplo-dialog <devel@haplo-dialog.fr> (GTK3 port, security)
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
+/* Includes */
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+#include <gtk/gtk.h>
+#include "config.h"
+#include "gtkdialog.h"
+#include "attributes.h"
+#include "automaton.h"
+#include "widgets.h"
+#include "signals.h"
+#include "tag_attributes.h"
+#include "sermo_input.h"
+
+/* Defines */
+//#define DEBUG_CONTENT
+//#define DEBUG_TRANSITS
+
+/* Local function prototypes, located at file bottom */
+static void widget_edit_input_by_command(variable *var, char *command);
+static void widget_edit_input_by_file(variable *var, char *filename);
+static void widget_edit_input_by_items(variable *var);
+
+/* Notes: */
+
+/***********************************************************************
+ * Clear                                                               *
+ ***********************************************************************/
+
+void widget_edit_clear(variable *var)
+{
+	gchar            *var1;
+	gint              var2;
+
+#ifdef DEBUG_TRANSITS
+	fprintf(stderr, "%s(): Entering.\n", __func__);
+#endif
+
+	/* Thunor: This is all original code moved across when refactoring */
+	gtk_text_buffer_set_text(gtk_text_view_get_buffer(
+		GTK_TEXT_VIEW(var->Widget)), "", 0);
+
+#ifdef DEBUG_TRANSITS
+	fprintf(stderr, "%s(): Exiting.\n", __func__);
+#endif
+}
+
+/***********************************************************************
+ * Create                                                              *
+ ***********************************************************************/
+
+GtkWidget *widget_edit_create(
+	AttributeSet *Attr, tag_attr *attr, gint Type)
+{
+	GtkWidget        *widget;
+
+#ifdef DEBUG_TRANSITS
+	fprintf(stderr, "%s(): Entering.\n", __func__);
+#endif
+
+	/* Thunor: This is all original code moved across when refactoring */
+	widget = gtk_text_view_new();
+
+	/* background / foreground (extension sermo) : classe CSS unique sur ce
+	 * widget + fournisseur au niveau de l'affichage (GTK4). */
+	{
+		const gchar *bg = attr ? get_tag_attribute(attr, "background") : NULL;
+		const gchar *fg = attr ? get_tag_attribute(attr, "foreground") : NULL;
+		if (bg || fg) {
+			static guint seq = 0;
+			gchar *cls = g_strdup_printf("sermo-edit-%u", ++seq);
+			gchar *css = g_strdup_printf(
+				"textview.%s, textview.%s text { %s%s%s %s%s%s }", cls, cls,
+				bg ? "background-color: " : "", bg ? bg : "", bg ? ";" : "",
+				fg ? "color: " : "", fg ? fg : "", fg ? ";" : "");
+			GtkCssProvider *prov = gtk_css_provider_new();
+			gtk_css_provider_load_from_string(prov, css);
+			gtk_style_context_add_provider_for_display(gdk_display_get_default(),
+				GTK_STYLE_PROVIDER(prov), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+			gtk_widget_add_css_class(widget, cls);
+			g_object_unref(prov);
+			g_free(css); g_free(cls);
+			kill_tag_attribute(attr, "background");
+			kill_tag_attribute(attr, "foreground");
+		}
+	}
+
+#ifdef DEBUG_TRANSITS
+	fprintf(stderr, "%s(): Exiting.\n", __func__);
+#endif
+
+	return widget;
+}
+
+/***********************************************************************
+ * Environment Variable All Construct                                  *
+ ***********************************************************************/
+
+gchar *widget_edit_envvar_all_construct(variable *var)
+{
+	gchar            *string = NULL;
+
+#ifdef DEBUG_TRANSITS
+	fprintf(stderr, "%s(): Entering.\n", __func__);
+#endif
+
+	/* This function should not be connected-up by default */
+
+#ifdef DEBUG_CONTENT
+	fprintf(stderr, "%s(): Hello.\n", __func__);
+#endif
+
+#ifdef DEBUG_TRANSITS
+	fprintf(stderr, "%s(): Exiting.\n", __func__);
+#endif
+
+	return string;
+}
+
+/***********************************************************************
+ * Environment Variable Construct                                      *
+ ***********************************************************************/
+
+gchar *widget_edit_envvar_construct(GtkWidget *widget)
+{
+	GtkTextBuffer    *text_buffer;
+	GtkTextIter       start, end;		
+	gchar            *string = NULL;
+
+#ifdef DEBUG_TRANSITS
+	fprintf(stderr, "%s(): Entering.\n", __func__);
+#endif
+
+	/* Thunor: This is all original code moved across when refactoring */
+	text_buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(widget));
+	gtk_text_buffer_get_start_iter(text_buffer, &start);
+	gtk_text_buffer_get_end_iter(text_buffer, &end);
+	/* This function returns an allocated string so no need to strdup */
+	string = gtk_text_buffer_get_text(text_buffer, &start, &end, TRUE);
+
+#ifdef DEBUG_TRANSITS
+	fprintf(stderr, "%s(): Exiting.\n", __func__);
+#endif
+
+	return string;
+}
+
+/***********************************************************************
+ * Fileselect                                                          *
+ ***********************************************************************/
+
+void widget_edit_fileselect(
+	variable *var, const char *name, const char *value)
+{
+	gchar            *var1;
+	gint              var2;
+
+#ifdef DEBUG_TRANSITS
+	fprintf(stderr, "%s(): Entering.\n", __func__);
+#endif
+
+	fprintf(stderr, "%s(): Fileselect not implemented for this widget.\n", __func__);
+
+#ifdef DEBUG_TRANSITS
+	fprintf(stderr, "%s(): Exiting.\n", __func__);
+#endif
+}
+
+/***********************************************************************
+ * Refresh                                                             *
+ ***********************************************************************/
+
+void widget_edit_refresh(variable *var)
+{
+	GList            *element;
+	GtkTextBuffer    *text_buffer;
+	gchar            *act;
+	gint              initialised = FALSE;
+
+#ifdef DEBUG_TRANSITS
+	fprintf(stderr, "%s(): Entering.\n", __func__);
+#endif
+
+	/* Get initialised state of widget */
+	if (g_object_get_data(G_OBJECT(var->Widget), "_initialised") != NULL)
+		initialised = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(var->Widget), "_initialised"));
+
+	/* The <input> tag... */
+	act = attributeset_get_first(&element, var->Attributes, ATTR_INPUT);
+	while (act) {
+		if (input_is_shell_command(act))
+			widget_edit_input_by_command(var, act + 8);
+		/* input file stock = "File:", input file = "File:/path/to/file" */
+		if (strncasecmp(act, "file:", 5) == 0 && strlen(act) > 5) {
+			if (!initialised) {
+				/* Check for file-monitor and create if requested */
+				widget_file_monitor_try_create(var, act + 5);
+			}
+			widget_edit_input_by_file(var, act + 5);
+		}
+		act = attributeset_get_next(&element, var->Attributes, ATTR_INPUT);
+	}
+
+	/* The <item> tags... */
+	if (attributeset_is_avail(var->Attributes, ATTR_ITEM))
+		widget_edit_input_by_items(var);
+
+	/* Initialise these only once at start-up */
+	if (!initialised) {
+		/* Apply directives */
+		if (attributeset_is_avail(var->Attributes, ATTR_LABEL))
+			fprintf(stderr, "%s(): <label> not implemented for this widget.\n",
+				__func__);
+		if (attributeset_is_avail(var->Attributes, ATTR_DEFAULT)) {
+			/* Thunor: This is all original code moved across when refactoring */
+			text_buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(var->Widget));
+			gtk_text_buffer_set_text(text_buffer, attributeset_get_first(
+				&element, var->Attributes, ATTR_DEFAULT), -1);
+		}
+		if ((attributeset_cmp_left(var->Attributes, ATTR_SENSITIVE, "false")) ||
+			(attributeset_cmp_left(var->Attributes, ATTR_SENSITIVE, "disabled")) ||	/* Deprecated */
+			(attributeset_cmp_left(var->Attributes, ATTR_SENSITIVE, "no")) ||
+			(attributeset_cmp_left(var->Attributes, ATTR_SENSITIVE, "0")))
+			gtk_widget_set_sensitive(var->Widget, FALSE);
+
+		/* Connect signals */
+
+	}
+
+#ifdef DEBUG_TRANSITS
+	fprintf(stderr, "%s(): Exiting.\n", __func__);
+#endif
+}
+
+/***********************************************************************
+ * Removeselected                                                      *
+ ***********************************************************************/
+
+void widget_edit_removeselected(variable *var)
+{
+	gchar            *var1;
+	gint              var2;
+
+#ifdef DEBUG_TRANSITS
+	fprintf(stderr, "%s(): Entering.\n", __func__);
+#endif
+
+	/* Thunor: This is all original code moved across when refactoring */
+	gtk_text_buffer_delete_selection(gtk_text_view_get_buffer(
+		GTK_TEXT_VIEW(var->Widget)), FALSE, TRUE);
+
+#ifdef DEBUG_TRANSITS
+	fprintf(stderr, "%s(): Exiting.\n", __func__);
+#endif
+}
+
+/***********************************************************************
+ * Save                                                                *
+ ***********************************************************************/
+
+void widget_edit_save(variable *var)
+{
+	FILE             *outfile;
+	GList            *element;
+	GtkTextBuffer    *buffer;
+	GtkTextIter       start, end;
+	gchar            *act;
+	gchar            *filename = NULL;
+	gchar            *text;
+
+#ifdef DEBUG_TRANSITS
+	fprintf(stderr, "%s(): Entering.\n", __func__);
+#endif
+
+	/* We'll use the output file filename if available */
+	act = attributeset_get_first(&element, var->Attributes, ATTR_OUTPUT);
+	while (act) {
+		if (strncasecmp(act, "file:", 5) == 0 && strlen(act) > 5) {
+			filename = act + 5;
+			break;
+		}
+		act = attributeset_get_next(&element, var->Attributes, ATTR_OUTPUT);
+	}
+
+	/* If we have a valid filename then open it and dump the
+	 * widget's data to it */
+	if (filename) {
+		if ((outfile = fopen(filename, "w"))) {
+
+			/* Thunor: This is all original code moved across when refactoring */
+			buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(var->Widget));
+			gtk_text_buffer_get_start_iter(buffer, &start);
+			gtk_text_buffer_get_end_iter(buffer, &end);
+			text = gtk_text_buffer_get_text(buffer, &start, &end, FALSE);
+			fprintf(outfile, "%s", text);
+
+			/* Close the file */
+			fclose(outfile);
+		} else {
+			fprintf(stderr, "%s(): Couldn't open '%s' for writing.\n",
+				__func__, filename);
+		}
+	} else {
+		fprintf(stderr, "%s(): No <output file> directive found.\n", __func__);
+	}
+
+#ifdef DEBUG_TRANSITS
+	fprintf(stderr, "%s(): Exiting.\n", __func__);
+#endif
+}
+
+/***********************************************************************
+ * Input by Command                                                    *
+ ***********************************************************************/
+
+static void widget_edit_input_by_command(variable *var, char *command)
+{
+	FILE             *infile;
+	GtkTextBuffer    *buffer;
+	GString          *text;
+	gchar             line[512];
+
+#ifdef DEBUG_TRANSITS
+	fprintf(stderr, "%s(): Entering.\n", __func__);
+#endif
+
+#ifdef DEBUG_CONTENT
+	fprintf(stderr, "%s(): command: '%s'\n", __func__, command);
+#endif
+
+	if ((infile = widget_opencommand(command))) {
+		text = g_string_sized_new(4096);
+		while (fgets(line, sizeof(line), infile)) {
+			g_string_append(text, line);
+		}
+		fclose(infile);
+
+		buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(var->Widget));
+		gtk_text_buffer_set_text(buffer, text->str, (gint)text->len);
+		g_string_free(text, TRUE);
+	} else {
+		g_warning("%s(): Couldn't open command '%s' for reading.",
+			__func__, command);
+	}
+
+#ifdef DEBUG_TRANSITS
+	fprintf(stderr, "%s(): Exiting.\n", __func__);
+#endif
+}
+
+/***********************************************************************
+ * Input by File                                                       *
+ ***********************************************************************/
+
+static void widget_edit_input_by_file(variable *var, char *filename)
+{
+	FILE             *infile;
+	GtkTextBuffer    *buffer;
+	GString          *text;
+	gchar             line[512];
+
+#ifdef DEBUG_TRANSITS
+	fprintf(stderr, "%s(): Entering.\n", __func__);
+#endif
+
+	/* 2.7.3 : lu comme la commande, par sermo_fopen_input() — plafonné comme
+	 * tout <input>. La 2.7.2 allouait d'un coup la taille annoncée par
+	 * stat() : un très gros fichier faisait tomber le programme (g_malloc),
+	 * le tampon n'était jamais libéré, et une lecture partielle affichait
+	 * des octets jamais écrits. */
+	if ((infile = sermo_fopen_input(filename))) {
+		text = g_string_sized_new(4096);
+		while (fgets(line, sizeof(line), infile)) {
+			g_string_append(text, line);
+		}
+		fclose(infile);
+
+		buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(var->Widget));
+		gtk_text_buffer_set_text(buffer, text->str, (gint)text->len);
+		g_string_free(text, TRUE);
+	} else {
+		fprintf(stderr, "%s(): Couldn't open '%s' for reading.\n", __func__,
+			filename);
+	}
+
+#ifdef DEBUG_TRANSITS
+	fprintf(stderr, "%s(): Exiting.\n", __func__);
+#endif
+}
+
+/***********************************************************************
+ * Input by Items                                                      *
+ ***********************************************************************/
+
+static void widget_edit_input_by_items(variable *var)
+{
+	gchar            *var1;
+	gint              var2;
+
+#ifdef DEBUG_TRANSITS
+	fprintf(stderr, "%s(): Entering.\n", __func__);
+#endif
+
+	fprintf(stderr, "%s(): <item> not implemented for this widget.\n", __func__);
+
+#ifdef DEBUG_TRANSITS
+	fprintf(stderr, "%s(): Exiting.\n", __func__);
+#endif
+}

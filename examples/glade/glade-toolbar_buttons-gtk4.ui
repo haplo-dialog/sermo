@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- SPDX-License-Identifier: GPL-2.0-or-later
+     glade-toolbar_buttons.glade (gtkdialog), écrit pour GTK 4 et gtk4sermo.
+     GTK 4 a retiré GtkToolbar, GtkToolButton et les icônes « stock » : même
+     rangée de boutons, faite d'une GtkBox et de GtkButton à icône nommée,
+     mêmes identifiants et mêmes gestionnaires (home_toolbutton n'en avait pas
+     dans l'original). -->
+<interface>
+  <object class="GtkWindow" id="MAIN_WINDOW">
+    <property name="title">GtkDialog Example</property>
+    <property name="width-request">300</property>
+    <child>
+      <object class="GtkBox" id="toolbar1">
+        <property name="spacing">2</property>
+        <child>
+          <object class="GtkButton" id="toolbutton1">
+            <property name="icon-name">utilities-terminal</property>
+            <property name="tooltip-text">Terminal emulator.</property>
+            <signal name="clicked" handler="gnome-terminal&amp;"/>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="info_toolbutton">
+            <property name="icon-name">dialog-information</property>
+            <property name="tooltip-text">The devhelp documentation browser.</property>
+            <signal name="clicked" handler="devhelp&amp;"/>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="home_toolbutton">
+            <property name="icon-name">go-home</property>
+            <property name="tooltip-text">The firefox web browser.</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="filesystem_toolbutton">
+            <property name="icon-name">folder</property>
+            <property name="tooltip-text">The nautilus filemanager.</property>
+            <signal name="clicked" handler="nautilus&amp;"/>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="editor_toolbutton">
+            <property name="icon-name">text-x-generic</property>
+            <property name="tooltip-text">The gvim text editor.</property>
+            <signal name="clicked" handler="gvim"/>
+          </object>
+        </child>
+        <child>
+          <object class="GtkSeparator" id="separatortoolitem1">
+            <property name="orientation">vertical</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkButton" id="quit_toolbutton">
+            <property name="icon-name">application-exit</property>
+            <property name="tooltip-text">Quit this demo.</property>
+            <signal name="clicked" handler="exit:Normal"/>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

@@ -1,0 +1,6 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: levelbar rend sa valeur (point decimal, quelle que soit la locale) ; drawingarea ne rend RIEN -->
+<window><vbox>
+<levelbar><variable>LB</variable><default>0.5</default></levelbar>
+<drawingarea width="40" height="20"><variable>DA</variable></drawingarea>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

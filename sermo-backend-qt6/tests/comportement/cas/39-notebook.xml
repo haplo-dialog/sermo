@@ -1,0 +1,9 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: notebook : page courante exportée, et les enfants des DEUX onglets survivent (étalon gtk3) -->
+<window><vbox>
+<notebook tab-labels="Un|Deux">
+<vbox><entry><variable>N1</variable><default>page-un</default></entry></vbox>
+<vbox><entry><variable>N2</variable><default>page-deux</default></entry></vbox>
+<variable>NB</variable>
+</notebook>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

@@ -1,0 +1,83 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# .github/workflows/paquets.yml — construire les paquets Debian de sermo.
+#
+# CE QUE CETTE RECETTE FAIT — ET NE FAIT PAS
+#
+# Elle construit les .deb dans une Debian testing vierge et les dépose en
+# artefacts, avec le rapport lintian. Elle ne signe rien, ne pousse rien, ne
+# publie nulle part : la mise en ligne reste un geste manuel, décidé.
+#
+# Pourquoi une Debian vierge : un paquet construit sur un poste de travail
+# hérite du poste. Les .deb 2.5.0 dépendaient de libdrm2-amdgpu, venue d'un
+# dépôt tiers installé sur la machine de construction — ininstallables sur une
+# Debian ordinaire. Ici ne compte que ce que debian/control déclare.
+#
+# packaging/construire-paquets.sh va plus loin (installation, purge, mise à jour
+# depuis la 1.x) mais lance ses propres conteneurs : il se joue à la main, sur
+# un poste. Cette recette-ci couvre ce qu'une forge peut faire seule.
+
+name: paquets
+
+on:
+  push:
+    tags: ['*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  paquets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    container: debian:testing
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    steps:
+      - name: git pour le checkout
+        run: |
+          apt-get update -qq
+          apt-get install -y --no-install-recommends git ca-certificates
+
+      - uses: actions/checkout@v4
+
+      # apt-get build-dep a besoin des sources : l'image ne les active pas.
+      # On gère les deux formats, deb822 (actuel) et sources.list (ancien).
+      - name: activer les sources Debian
+        run: |
+          if [ -f /etc/apt/sources.list.d/debian.sources ]; then
+            sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/debian.sources
+          fi
+          if [ -f /etc/apt/sources.list ]; then
+            sed -n 's/^deb /deb-src /p' /etc/apt/sources.list >> /etc/apt/sources.list
+          fi
+          apt-get update -qq
+
+      - name: dépendances de construction
+        run: |
+          apt-get install -y --no-install-recommends build-essential devscripts lintian
+          apt-get build-dep -y --no-install-recommends .
+
+      - name: dépôt lisible par git
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      # -us -uc : rien n'est signé ici. La signature se fait hors CI, avec une
+      # clé qui n'a pas à exister sur une forge.
+      - name: construire
+        run: dpkg-buildpackage -us -uc
+
+      # Le .changes et les paquets sortent dans le répertoire PARENT.
+      - name: lintian
+        run: |
+          mkdir -p paquets
+          mv ../*.deb ../*.changes ../*.buildinfo ../*.dsc ../*.tar.* paquets/ 2>/dev/null || true
+          lintian --fail-on error paquets/*.changes
+
+      - name: paquets
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: paquets-debian
+          path: paquets/
+          retention-days: 14
+          if-no-files-found: error

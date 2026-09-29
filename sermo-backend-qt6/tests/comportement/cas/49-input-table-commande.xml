@@ -1,0 +1,6 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: table remplie par <input> commande (colonnes séparées par |), seule dans sa fenêtre : la 1re cellule de la 1re rangée ressort ; la commande s exécute une fois -->
+<window><vbox>
+<table><label>A|B</label><variable>TA</variable><input>echo x >> n-ta; printf "1|2\n3|4\n"</input></table>
+<text><variable>EXEC</variable><input>cat n-ta | wc -l</input></text>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

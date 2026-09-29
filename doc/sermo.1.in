@@ -1,0 +1,332 @@
+.\" sermo.1 — man page for sermo (modular sermo)
+.\" haplo-dialog <devel@haplo-dialog.fr>
+.\" Installed as /usr/share/man/man1/sermo.1
+.\"
+.TH SERMO 1 "September 2026" "sermo @PACKAGE_VERSION@" "sermo User Commands"
+.SH NAME
+sermo \- toolkit-agnostic dialog box creator for shell scripts
+.SH SYNOPSIS
+.B sermo
+[\fIOPTION\fR]...
+.br
+.B sermo
+\fB\-\-program\fR=\fIVARIABLE\fR
+.br
+.B sermo
+\fB\-\-file\fR=\fIFILE\fR
+.br
+.B sermo
+\fB\-\-stdin\fR
+.br
+.B VARIABLE=\(aq<window>...</window>\(aq sermo
+\fB\-\-program\fR=\fIVARIABLE\fR
+.SH DESCRIPTION
+.B sermo
+reads a GUI description written in an XML-like language and displays the
+resulting dialog window. It is designed to be called from shell scripts to
+present interactive forms, file choosers, progress bars, list views and other
+widgets without the script needing any knowledge of GUI programming.
+.PP
+.B sermo
+is the shared front end of a modular suite, which splits the program into a
+single hardened core
+.RB ( libsermocore ,
+parsing and command execution) and one rendering
+.I backend
+per toolkit. The name
+.B sermo
+resolves, through
+.BR update\-alternatives (1),
+to the default backend installed on the system. Backend binaries can also be
+called directly:
+.BR gtk3sermo ,
+.BR gtk4sermo ,
+.BR qt6sermo ,
+.BR fltk1sermo ,
+.BR efl1sermo ,
+.BR sdl3sermo ,
+.BR ncursessermo .
+The XML language and observable behaviour are identical across backends: the
+same script renders an equivalent interface on each toolkit.
+.PP
+The GUI description can be supplied from an environment variable
+.RB ( \-\-program ),
+a file
+.RB ( \-\-file ),
+or standard input
+.RB ( \-\-stdin ).
+.PP
+When a button action produces output (EXIT, REFRESH, etc.), sermo prints the
+current value of each named widget to standard output in the form
+\fINAME\fR=\(dq\fIvalue\fR\(dq.
+.PP
+Those lines escape the four characters the shell expands inside double quotes
+.RB ( \e ,
+.BR \(dq ,
+.B $
+and the backtick), so the calling shell may
+.B eval
+them. Bear in mind that a field's value is typed by whoever
+.I uses
+the dialog, who is not necessarily whoever wrote the script: if that matters,
+prefer
+.B \-\-do
+instead, which passes the values through the environment and never reads them
+back as code.
+.SH OPTIONS
+.TP
+.BR \-v ", " \-\-version
+Print version information and exit.
+.TP
+.BR \-d ", " \-\-debug
+Enable debug mode. Each character read from the dialog description is echoed to
+standard output as it is fed to the lexer.
+.TP
+.BI \-p " VARIABLE" "\fR,\fP \-\-program=" VARIABLE
+Read the GUI description from the shell environment variable
+.IR VARIABLE .
+.TP
+.BI \-f " FILE" "\fR,\fP \-\-file=" FILE
+Read the GUI description from
+.IR FILE .
+.TP
+.BR \-s ", " \-\-stdin
+Read the GUI description from standard input.
+.TP
+.BI \-\-do= CMD
+After the dialog has closed, run the shell command
+.IR CMD .
+The widget values are exported as environment variables first, so
+.I CMD
+can read them directly. The command goes through the same path as every other
+command the program runs: a direct
+.BR exec ()
+without a shell when
+.I CMD
+carries no shell metacharacter, a logged
+.B /bin/sh \-c
+fallback otherwise, and a clean refusal when
+.B SERMO_NO_SHELL_FALLBACK=1
+is set.
+.TP
+.BI \-i " FILE" "\fR,\fP \-\-include=" FILE
+Make the shell functions and variables of
+.I FILE
+available to every action. Each action's command is turned into
+.RB \(dq ". \fIFILE\fP; \fIcommand\fP" \(dq,
+so the file is sourced afresh in every action's sub-shell. A relative
+.I FILE
+is resolved against the directory the program was started from.
+.B \-\-do
+is the exception: its command is not prefixed.
+.TP
+.BI \-g " FILE" "\fR,\fP \-\-glade-xml=" FILE
+gtk3sermo and gtk4sermo only: build the dialog from a GtkBuilder (Glade)
+interface file, written for the toolkit's own GTK version; the window is the
+object whose id
+.B \-\-program
+names
+.RB ( MAIN_WINDOW
+by default), and signal handlers are sermo actions. The other ports refuse the
+option and end with status 1.
+.TP
+.BR \-w ", " \-\-no-warning
+Suppress non-fatal warning messages.
+.TP
+.BI \-G " GEOMETRY" "\fR,\fP \-\-geometry=" GEOMETRY
+Set the initial window placement and size,
+.RI [ W x H ][ + X + Y ]
+following the X11 convention (e.g. \fB800x600+0+0\fR).
+.TP
+.BR \-c ", " \-\-center
+Centre all windows on the screen.
+.TP
+.B \-\-print-ir
+Parse the GUI description, print the internal representation, and exit without
+displaying any window. Useful for debugging XML and for headless testing.
+.TP
+.BI \-\-space-expand= STATE
+Set the default
+.I expand
+packing state for all widgets
+.RB ( true " / " false ).
+.TP
+.BI \-\-space-fill= STATE
+Set the default
+.I fill
+packing state for all widgets
+.RB ( true " / " false ).
+.SH WIDGETS
+The XML dialog language supports the following tags on every backend (rendered
+with native widgets where the toolkit provides them, reimplemented otherwise).
+.SS Layout containers
+.BR window ", " vbox ", " hbox ", " frame ", " notebook ", " expander ,
+.BR eventbox ", " aspectframe
+.SS Display widgets
+.BR text ", " image ", " pixmap ", " statusbar ", " infobar ", " drawingarea
+.SS Input widgets
+.BR entry ", " edit ", " password ", " searchentry ", " spinbutton ", " hscale ,
+.BR vscale ", " checkbox ", " togglebutton ", " radiobutton ", " switch
+.SS Selection widgets
+.BR combobox ", " comboboxtext ", " list ", " tree ", " table ", " colorbutton ,
+.BR fontbutton ", " filechooser ", " calendar
+.SS Progress and activity indicators
+.BR progressbar ", " pulse ", " spinner ", " levelbar
+.SS Button widgets
+.BR button ", " linkbutton .
+The
+.B button
+tag also accepts the stock short forms
+.BR "button ok" ,
+.BR "button cancel" ,
+.BR "button help" ,
+.BR "button yes"
+and
+.BR "button no" .
+.SS Menu widgets
+.BR menubar ", " menu ", " menuitem ", " separator
+.SS Terminal and separators
+.BR terminal ", " hseparator ", " vseparator
+.PP
+The
+.B terminal
+widget requires VTE and is available on the GTK backends only.
+.SS Timers
+.BR timer
+.PP
+Each widget exports its current value as a shell environment variable when the
+dialog exits or an action requests a refresh.
+.SS Backend-specific features
+Some capabilities depend on the toolkit. Wayland
+.I wlr\-layer\-shell
+anchoring (the
+.BR layer ", " edge ", " dist " and " reserve
+window attributes, for bars and docks) is provided by the GTK 3 backend; on
+other backends or under X11 the attributes are ignored and an ordinary window
+is shown, leaving the script unaffected.
+.SH EXIT STATUS
+sermo exits with status
+.B 0
+on normal termination. The value printed on standard output by an EXIT action is
+a string, not a numeric exit code.
+.SH ENVIRONMENT
+.TP
+.B SERMO_DARK
+Force the dark (set to a true value) or light variant, overriding system theme
+detection. Otherwise sermo follows the current system theme.
+.TP
+.B GTK_THEME
+Override the GTK theme on GTK backends, e.g.
+.BR GTK_THEME=Adwaita:dark .
+.TP
+.B SERMO_INPUT_MAX
+The most bytes one
+.RB < input >
+reads, from a command or a file: 16 MiB (16777216) by default,
+.B 0
+for no limit. Beyond it, reading stops as if at end of file, and one warning is
+printed on standard error, never on standard output. A value that is not a
+number of bytes is reported, and the default applies. The progress bar is not
+capped: it keeps one line at a time.
+.TP
+.B SERMO_NO_SHELL_FALLBACK
+When set, refuse the
+.B /bin/sh \-c
+fallback used for
+.RB < input >/< action >
+commands that contain shell metacharacters, and fail closed instead. Commands
+without shell metacharacters still run via direct
+.BR exec ().
+.TP
+.B SERMO_ALLOWED_CMDS
+A comma-separated list of commands the program is allowed to run (e.g.
+.BR SERMO_ALLOWED_CMDS=ls,cat,/usr/local/bin/tool ).
+Unset by default. Meant for deploying a dialog into a less-trusted context (a
+kiosk, a guest session). An entry without a slash allows that name and the path
+.B PATH
+resolves it to; an entry with a slash allows exactly that path. A program that
+bears an allowed name but lives elsewhere is refused. While set, the
+.B /bin/sh \-c
+fallback is refused as well.
+.IP
+The 1.x names
+.B HAPLO_ALLOWED_CMDS
+and
+.B HAPLO_NO_SHELL_FALLBACK
+are still read, with a warning, when the
+.B SERMO_
+name is not set.
+.TP
+.B GTKDIALOG_PIXMAP_PATH
+Colon-separated list of directories searched for image files not found at the
+path given in the XML.
+.TP
+.B MAIN_DIALOG
+Fallback source variable, read when none of
+.BR \-\-program ,
+.BR \-\-file
+or
+.B \-\-stdin
+is given.
+.SH EXAMPLES
+Display a minimal dialog from a shell variable:
+.PP
+.nf
+DIALOG='
+<window title="Hello">
+  <vbox>
+    <text><label>Hello, world!</label></text>
+    <button><label>OK</label><action>EXIT:ok</action></button>
+  </vbox>
+</window>'
+sermo --program=DIALOG
+.fi
+.PP
+Read a dialog from a file and capture the output safely:
+.PP
+.nf
+sermo --file=my_form.xml --do='echo "User entered: $ENTRY"'
+.fi
+.SH FILES
+.TP
+.I /usr/bin/sermo
+The update-alternatives link to the default backend.
+.TP
+.I /usr/bin/gtk3sermo\fR, \fI/usr/bin/qt6sermo\fR, ...
+The individual backend executables.
+.SH COMPATIBILITY
+The GTK 3 backend
+.RB ( sermo\-backend\-gtk3 )
+provides the virtual package
+.BR gtkdialog ,
+so legacy dialogs that invoke
+.BR gtkdialog (1)
+continue to work unchanged.
+.SH SEE ALSO
+The full manual is installed by the package:
+.IP
+.B info sermo
+.PP
+.BR gtkdialog (1),
+.BR bash (1),
+.BR zenity (1),
+.BR yad (1)
+.PP
+Online: \fIhttps://haplo-dialog.fr\fR
+.SH BUGS
+Report bugs at <https://haplo-dialog.fr> or <devel@haplo-dialog.fr>.
+.SH AUTHORS
+Pere Laszlo <pipas@linux.pte.hu> (original gtkdialog author, 2003-2007).
+.br
+Thunor <thunorsif@hotmail.com> (2011-2012).
+.br
+S. Cage, haplo-dialog <devel@haplo-dialog.fr> (sermo; 2026).
+.SH COPYRIGHT
+Copyright \(co 2003-2007 Pere Laszlo.
+Copyright \(co 2011-2012 Thunor.
+Copyright \(co 2026 S. Cage (haplo-dialog).
+.PP
+License GPLv2+: GNU GPL version 2 or later
+.RI < https://gnu.org/licenses/gpl.html >.
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.

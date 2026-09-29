@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "sermoman": {
+      "command": "python3",
+      "args": ["/CHEMIN/ABSOLU/VERS/sermo/sermoman-mcp/server.py"]
+    }
+  }
+}

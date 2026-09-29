@@ -1,0 +1,10 @@
+<!-- SPDX-License-Identifier: CC0-1.0 -->
+<!-- DESC: Groupe de boutons radio -->
+<window title="Test 08">
+  <vbox>
+    <radiobutton><label>Choix 1</label><variable>RADIO</variable></radiobutton>
+    <radiobutton><label>Choix 2</label><variable>RADIO</variable></radiobutton>
+    <radiobutton><label>Choix 3</label><variable>RADIO</variable></radiobutton>
+    <button ok></button>
+  </vbox>
+</window>

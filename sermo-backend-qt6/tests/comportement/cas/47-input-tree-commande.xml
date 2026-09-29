@@ -1,0 +1,6 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: tree rempli par <input> commande, seul dans sa fenêtre (1re rangée) ; la commande s'exécute une fois -->
+<window><vbox>
+<tree><label>Col</label><variable>TR</variable><input>echo x >> n-tr; printf "un\ndeux\n"</input></tree>
+<text><variable>EXEC</variable><input>cat n-tr | wc -l</input></text>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

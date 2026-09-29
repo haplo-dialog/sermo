@@ -1,0 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: linkbutton : l URI de <default> ressort en variable -->
+<window><vbox>
+<linkbutton><variable>LB</variable><label>Site</label><default>https://haplo-dialog.fr/</default></linkbutton>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

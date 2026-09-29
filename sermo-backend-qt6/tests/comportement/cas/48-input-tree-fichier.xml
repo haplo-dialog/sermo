@@ -1,0 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: tree rempli par <input file>, seul dans sa fenêtre : sa 1re rangée ressort -->
+<window><vbox>
+<tree><label>Col</label><variable>TR</variable><input file>donnees/deux-lignes.txt</input></tree>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

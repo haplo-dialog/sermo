@@ -1,0 +1,1297 @@
+%{
+/*
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ *
+ * gtkdialog_parser.y: A simple grammar for the XML-like language we use.
+ * Gtkdialog - A small utility for fast and easy GUI building.
+ * Copyright (C) 2003-2007  László Pere <pipas@linux.pte.hu>
+ * Copyright (C) 2011-2012  Thunor <thunorsif@hotmail.com>
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+
+/*
+**
+** $Id: parser.y,v 1.5 2004/11/25 21:16:57 root Exp root $
+** $Log: parser.y,v $
+** Revision 1.5  2004/11/25 21:16:57  root
+** *** empty log message ***
+**
+** Revision 1.4  2004/11/25 21:15:21  root
+**   o No, the grammar still has problems.
+**
+** Revision 1.2  2004/11/25 19:53:03  pipas
+**   o New object: tag attributes.
+**
+** Revision 1.1  2004/11/19 22:10:08  pipas
+** Initial revision
+**
+*/
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <gtk/gtk.h>
+
+#include "gtk3d.h"
+#include "config.h"
+#include "automaton.h"
+#include "attributes.h"
+#include "gtkdialog_parser.h"
+#include "tag_attributes.h"
+
+int linenumber = 1;
+extern gchar *Token;
+extern gboolean option_no_warning;
+extern gboolean option_print_ir;
+
+//
+// Function declarations
+//
+int yywarning(char *c);
+void yyerror_simple(char *c);
+int gtkdialog_lex(void);
+int gtkdialog_error(char *c);
+
+static inline void
+start_up(void) 
+{
+	if (!option_print_ir) {
+		run_program();
+		return;
+	} else {
+		print_program();
+		exit(EXIT_SUCCESS);
+	}
+}
+
+%}
+
+%union { 
+  double     dval;
+  char      *cval;
+  GList     *lval;
+  tag_attr *nvval;
+  gint       ival;
+};
+
+%token         WINDOW PART_WINDOW EWINDOW
+%token         VBOX PART_VBOX EVBOX
+%token         HBOX PART_HBOX EHBOX
+%token         NOTEBOOK ENOTEBOOK PART_NOTEBOOK
+%token <cval>  FRAME
+%token         PART_FRAME
+%token <cval>  TAG_ATTR_NAME
+%type  <nvval> tagattr
+%token         EFRAME
+%token         ENTRY EENTRY PART_ENTRY
+%token         MENUBAR PART_MENUBAR EMENUBAR
+%token         MENU PART_MENU EMENU
+%token         MENUITEM PART_MENUITEM EMENUITEM
+%token         MENUITEMSEPARATOR EMENUITEMSEPARATOR
+%token         EDIT PART_EDIT EEDIT
+%token         TREE PART_TREE ETREE
+%token         CHOOSER PART_CHOOSER ECHOOSER
+%token         LABEL ELABEL
+%token         ITEM EITEM PART_ITEM
+%token         BUTTON PART_BUTTON EBUTTON 
+%token         BUTTONOK BUTTONCANCEL BUTTONHELP BUTTONYES BUTTONNO
+%token         CHECKBOX ECHECKBOX PART_CHECKBOX
+%token         RADIO ERADIO PART_RADIO
+%token         PROGRESSBAR EPROGRESSBAR PART_PROGRESSBAR
+%token         LIST PART_LIST ELIST
+%token         TABLE ETABLE PART_TABLE
+%token         COMBOBOX PART_COMBOBOX ECOMBOBOX
+%token         GVIM EGVIM
+%token         TEXT PART_TEXT ETEXT
+%token         PIXMAP PART_PIXMAP EPIXMAP 
+%token         DEFAULT EDEFAULT
+%token         SENSITIVE ESENSITIVE
+%token         VARIABLE PART_VARIABLE EVARIABLE
+%token         WIDTH EWIDTH
+%token         HEIGHT EHEIGHT
+%token         INPUT INPUTFILE EINPUT PART_INPUT PART_INPUTFILE
+%token         OUTPUT OUTPUTFILE EOUTPUT
+
+%token         ACTION EACTION PART_ACTION 
+
+%token         COMM ENDCOMM
+%token         IF ENDIF 
+%type  <ival>  then endif
+%token         WHILE EWHILE
+%type  <ival>  while do ewhile
+%token         SHOW_WIDGETS
+%token <cval>  EMB_VARIABLE EMB_NUMBER
+%token         END_OF_FILE
+%token <dval>  NUMBER 
+%token <cval>  STRING
+
+%left '='
+%left '-' '+'        
+%left '*' '/'
+
+%nonassoc      UMINUS 
+
+	/**************************************************************
+	 * Thunor: Newly supported widgets.
+	 **************************************************************/
+%token         HSEPARATOR PART_HSEPARATOR EHSEPARATOR
+%token         VSEPARATOR PART_VSEPARATOR EVSEPARATOR
+%token         COMBOBOXTEXT PART_COMBOBOXTEXT ECOMBOBOXTEXT
+%token         COMBOBOXENTRY PART_COMBOBOXENTRY ECOMBOBOXENTRY
+%token         HSCALE PART_HSCALE EHSCALE
+%token         VSCALE PART_VSCALE EVSCALE
+%token         SPINBUTTON PART_SPINBUTTON ESPINBUTTON
+%token         TIMER PART_TIMER ETIMER
+%token         TOGGLEBUTTON PART_TOGGLEBUTTON ETOGGLEBUTTON
+%token         STATUSBAR PART_STATUSBAR ESTATUSBAR
+%token         COLORBUTTON PART_COLORBUTTON ECOLORBUTTON
+%token         FONTBUTTON PART_FONTBUTTON EFONTBUTTON
+%token         TERMINAL PART_TERMINAL ETERMINAL
+%token         EVENTBOX PART_EVENTBOX EEVENTBOX
+%token         EXPANDER PART_EXPANDER EEXPANDER
+%token         SWITCH PART_SWITCH ESWITCH
+%token         FILECHOOSER PART_FILECHOOSER EFILECHOOSER
+%token         CALENDAR PART_CALENDAR ECALENDAR
+%token         LINKBUTTON PART_LINKBUTTON ELINKBUTTON
+%token         SEARCHENTRY PART_SEARCHENTRY ESEARCHENTRY
+%token         INFOBAR PART_INFOBAR EINFOBAR
+%token         SPINNER PART_SPINNER ESPINNER
+%token         IMAGE PART_IMAGE EIMAGE
+%token         PULSE PART_PULSE EPULSE
+%token         PASSWORD PART_PASSWORD EPASSWORD
+%token         ASPECTFRAME PART_ASPECTFRAME EASPECTFRAME
+%token         LEVELBAR PART_LEVELBAR ELEVELBAR
+%token         GRID PART_GRID EGRID
+%token         PANED PART_PANED EPANED
+%token         TOOLBAR PART_TOOLBAR ETOOLBAR
+%token         STACKPAGES PART_STACKPAGES ESTACKPAGES
+%token         WIZARD PART_WIZARD EWIZARD
+%token         MENUBUTTON PART_MENUBUTTON EMENUBUTTON
+%token         DRAWINGAREA PART_DRAWINGAREA EDRAWINGAREA
+/* Conteneurs GTK4 remontes au coeur — la grammaire etalon
+ * est l'UNION des grammaires des ports. */
+%token         FLOWBOX PART_FLOWBOX EFLOWBOX
+%token         OVERLAY PART_OVERLAY EOVERLAY
+%token         REVEALER PART_REVEALER EREVEALER
+%token         STACK PART_STACK ESTACK
+
+%%
+window
+  : attr wlist { 
+    		token_store(PUSH | WIDGET_WINDOW); 
+		start_up();
+	}
+  | WINDOW wlist attr EWINDOW { 
+    		token_store(PUSH | WIDGET_WINDOW); 
+		start_up();
+	}
+  | PART_WINDOW tagattr '>' wlist attr EWINDOW { 
+    		token_store_attr(PUSH | WIDGET_WINDOW, $2); 
+		start_up();
+	}
+  ;
+
+// Containers.
+
+wlist
+  : widget
+  | wlist widget       { 
+		token_store(SUM);      
+	}
+  | imperative
+  | wlist imperative
+  | VBOX wlist attr EVBOX   { 
+		token_store(PUSH | WIDGET_VBOX); 
+	}
+  | wlist VBOX wlist attr EVBOX   { 
+		token_store(PUSH | WIDGET_VBOX); 
+		token_store(SUM);      
+	}
+  | PART_VBOX tagattr '>' wlist attr EVBOX {
+		token_store_attr(PUSH | WIDGET_VBOX, $2); 
+	}
+  | wlist PART_VBOX tagattr '>' wlist attr EVBOX {
+		token_store_attr(PUSH | WIDGET_VBOX, $3); 
+		token_store(SUM);      
+	}
+  | HBOX wlist attr EHBOX   { 
+		token_store(PUSH | WIDGET_HBOX); 
+	}
+  | wlist HBOX wlist attr EHBOX   { 
+		token_store(PUSH | WIDGET_HBOX); 
+		token_store(SUM);      
+	}
+  | PART_HBOX tagattr '>' wlist attr EHBOX {
+		token_store_attr(PUSH | WIDGET_HBOX, $2); 
+	}
+  | wlist PART_HBOX tagattr '>' wlist attr EHBOX {
+		token_store_attr(PUSH | WIDGET_HBOX, $3); 
+		token_store(SUM);      
+	}
+  | EVENTBOX wlist attr EEVENTBOX   { 
+		token_store(PUSH | WIDGET_EVENTBOX); 
+	}
+  | wlist EVENTBOX wlist attr EEVENTBOX   { 
+		token_store(PUSH | WIDGET_EVENTBOX); 
+		token_store(SUM);      
+	}
+  | PART_EVENTBOX tagattr '>' wlist attr EEVENTBOX {
+		token_store_attr(PUSH | WIDGET_EVENTBOX, $2); 
+	}
+  | wlist PART_EVENTBOX tagattr '>' wlist attr EEVENTBOX {
+		token_store_attr(PUSH | WIDGET_EVENTBOX, $3); 
+		token_store(SUM);      
+	}
+  /* <menubutton> — bouton qui déroule ses <menuitem>.
+   * ⚠️ « menuwlist », PAS « wlist » : les <menuitem> ne font pas partie de la
+   * liste de widgets ordinaire, ils ont leur propre non-terminal — c'est déjà
+   * ce que fait <menu>. Avec wlist, le premier <menuitem> passe encore mais la
+   * directive qui suit (<variable>) provoque une erreur de syntaxe. */
+  | MENUBUTTON menuwlist attr EMENUBUTTON   {
+		token_store(PUSH | WIDGET_MENUBUTTON);
+	}
+  | wlist MENUBUTTON menuwlist attr EMENUBUTTON   {
+		token_store(PUSH | WIDGET_MENUBUTTON);
+		token_store(SUM);
+	}
+  | PART_MENUBUTTON tagattr '>' menuwlist attr EMENUBUTTON {
+		token_store_attr(PUSH | WIDGET_MENUBUTTON, $2);
+	}
+  | wlist PART_MENUBUTTON tagattr '>' menuwlist attr EMENUBUTTON {
+		token_store_attr(PUSH | WIDGET_MENUBUTTON, $3);
+		token_store(SUM);
+	}
+  /* <wizard> — suite d'étapes. Conteneur ordinaire côté grammaire :
+   * la navigation est fabriquée par chaque port, pas par l'analyseur. */
+  | WIZARD wlist attr EWIZARD   {
+		token_store(PUSH | WIDGET_WIZARD);
+	}
+  | wlist WIZARD wlist attr EWIZARD   {
+		token_store(PUSH | WIDGET_WIZARD);
+		token_store(SUM);
+	}
+  | PART_WIZARD tagattr '>' wlist attr EWIZARD {
+		token_store_attr(PUSH | WIDGET_WIZARD, $2);
+	}
+  | wlist PART_WIZARD tagattr '>' wlist attr EWIZARD {
+		token_store_attr(PUSH | WIDGET_WIZARD, $3);
+		token_store(SUM);
+	}
+  /* <stack> — N pages, une seule visible. ⚠️ Le jeton ne peut pas
+   * s'appeler STACK : stack.h définit déjà ce nom côté cœur. */
+  | STACKPAGES wlist attr ESTACKPAGES   {
+		token_store(PUSH | WIDGET_STACK_PAGES);
+	}
+  | wlist STACKPAGES wlist attr ESTACKPAGES   {
+		token_store(PUSH | WIDGET_STACK_PAGES);
+		token_store(SUM);
+	}
+  | PART_STACKPAGES tagattr '>' wlist attr ESTACKPAGES {
+		token_store_attr(PUSH | WIDGET_STACK_PAGES, $2);
+	}
+  | wlist PART_STACKPAGES tagattr '>' wlist attr ESTACKPAGES {
+		token_store_attr(PUSH | WIDGET_STACK_PAGES, $3);
+		token_store(SUM);
+	}
+  /* <toolbar> — barre d'actions. Conteneur ordinaire : quatre
+   * formes, enfants coalescés par SUM, un seul pop à la création. */
+  | TOOLBAR wlist attr ETOOLBAR   {
+		token_store(PUSH | WIDGET_TOOLBAR);
+	}
+  | wlist TOOLBAR wlist attr ETOOLBAR   {
+		token_store(PUSH | WIDGET_TOOLBAR);
+		token_store(SUM);
+	}
+  | PART_TOOLBAR tagattr '>' wlist attr ETOOLBAR {
+		token_store_attr(PUSH | WIDGET_TOOLBAR, $2);
+	}
+  | wlist PART_TOOLBAR tagattr '>' wlist attr ETOOLBAR {
+		token_store_attr(PUSH | WIDGET_TOOLBAR, $3);
+		token_store(SUM);
+	}
+  /* <paned> — deux zones séparées par une poignée déplaçable.
+   * Même patron de conteneur que <grid> : quatre formes. Le nombre d'enfants
+   * (exactement deux) est contrôlé à la CRÉATION, pas dans la grammaire — un
+   * message clair y vaut mieux qu'une erreur de syntaxe nue. */
+  | PANED wlist attr EPANED   {
+		token_store(PUSH | WIDGET_PANED);
+	}
+  | wlist PANED wlist attr EPANED   {
+		token_store(PUSH | WIDGET_PANED);
+		token_store(SUM);
+	}
+  | PART_PANED tagattr '>' wlist attr EPANED {
+		token_store_attr(PUSH | WIDGET_PANED, $2);
+	}
+  | wlist PART_PANED tagattr '>' wlist attr EPANED {
+		token_store_attr(PUSH | WIDGET_PANED, $3);
+		token_store(SUM);
+	}
+  /* <grid> — conteneur de mise en page. Même patron que
+   * <expander> : quatre formes (avec/sans attributs de balise, en tête de
+   * liste ou à la suite d'autres widgets). Les enfants sont coalescés par SUM,
+   * le conteneur les dépile en UNE fois. */
+  | GRID wlist attr EGRID   {
+		token_store(PUSH | WIDGET_GRID);
+	}
+  | wlist GRID wlist attr EGRID   {
+		token_store(PUSH | WIDGET_GRID);
+		token_store(SUM);
+	}
+  | PART_GRID tagattr '>' wlist attr EGRID {
+		token_store_attr(PUSH | WIDGET_GRID, $2);
+	}
+  | wlist PART_GRID tagattr '>' wlist attr EGRID {
+		token_store_attr(PUSH | WIDGET_GRID, $3);
+		token_store(SUM);
+	}
+  | EXPANDER wlist attr EEXPANDER   { 
+		token_store(PUSH | WIDGET_EXPANDER); 
+	}
+  | wlist EXPANDER wlist attr EEXPANDER   { 
+		token_store(PUSH | WIDGET_EXPANDER); 
+		token_store(SUM);      
+	}
+  | PART_EXPANDER tagattr '>' wlist attr EEXPANDER {
+		token_store_attr(PUSH | WIDGET_EXPANDER, $2); 
+	}
+  | wlist PART_EXPANDER tagattr '>' wlist attr EEXPANDER {
+		token_store_attr(PUSH | WIDGET_EXPANDER, $3);
+		token_store(SUM);
+	}
+  | SWITCH attr ESWITCH   {
+		token_store(PUSH | WIDGET_SWITCH);
+	}
+  | wlist SWITCH attr ESWITCH   {
+		token_store(PUSH | WIDGET_SWITCH);
+		token_store(SUM);
+	}
+  | PART_SWITCH tagattr '>' attr ESWITCH {
+		token_store_attr(PUSH | WIDGET_SWITCH, $2);
+	}
+  | wlist PART_SWITCH tagattr '>' attr ESWITCH {
+		token_store_attr(PUSH | WIDGET_SWITCH, $3);
+		token_store(SUM);
+	}
+  | FILECHOOSER attr EFILECHOOSER   {
+		token_store(PUSH | WIDGET_FILECHOOSER);
+	}
+  | wlist FILECHOOSER attr EFILECHOOSER   {
+		token_store(PUSH | WIDGET_FILECHOOSER);
+		token_store(SUM);
+	}
+  | PART_FILECHOOSER tagattr '>' attr EFILECHOOSER {
+		token_store_attr(PUSH | WIDGET_FILECHOOSER, $2);
+	}
+  | wlist PART_FILECHOOSER tagattr '>' attr EFILECHOOSER {
+		token_store_attr(PUSH | WIDGET_FILECHOOSER, $3);
+		token_store(SUM);
+	}
+  | CALENDAR attr ECALENDAR   {
+		token_store(PUSH | WIDGET_CALENDAR);
+	}
+  | wlist CALENDAR attr ECALENDAR   {
+		token_store(PUSH | WIDGET_CALENDAR);
+		token_store(SUM);
+	}
+  | PART_CALENDAR tagattr '>' attr ECALENDAR {
+		token_store_attr(PUSH | WIDGET_CALENDAR, $2);
+	}
+  | wlist PART_CALENDAR tagattr '>' attr ECALENDAR {
+		token_store_attr(PUSH | WIDGET_CALENDAR, $3);
+		token_store(SUM);
+	}
+  | LINKBUTTON attr ELINKBUTTON   {
+		token_store(PUSH | WIDGET_LINKBUTTON);
+	}
+  | wlist LINKBUTTON attr ELINKBUTTON   {
+		token_store(PUSH | WIDGET_LINKBUTTON);
+		token_store(SUM);
+	}
+  | PART_LINKBUTTON tagattr '>' attr ELINKBUTTON {
+		token_store_attr(PUSH | WIDGET_LINKBUTTON, $2);
+	}
+  | wlist PART_LINKBUTTON tagattr '>' attr ELINKBUTTON {
+		token_store_attr(PUSH | WIDGET_LINKBUTTON, $3);
+		token_store(SUM);
+	}
+  | SEARCHENTRY attr ESEARCHENTRY   {
+		token_store(PUSH | WIDGET_SEARCHENTRY);
+	}
+  | wlist SEARCHENTRY attr ESEARCHENTRY   {
+		token_store(PUSH | WIDGET_SEARCHENTRY);
+		token_store(SUM);
+	}
+  | PART_SEARCHENTRY tagattr '>' attr ESEARCHENTRY {
+		token_store_attr(PUSH | WIDGET_SEARCHENTRY, $2);
+	}
+  | wlist PART_SEARCHENTRY tagattr '>' attr ESEARCHENTRY {
+		token_store_attr(PUSH | WIDGET_SEARCHENTRY, $3);
+		token_store(SUM);
+	}
+  | INFOBAR attr EINFOBAR   {
+		token_store(PUSH | WIDGET_INFOBAR);
+	}
+  | wlist INFOBAR attr EINFOBAR   {
+		token_store(PUSH | WIDGET_INFOBAR);
+		token_store(SUM);
+	}
+  | PART_INFOBAR tagattr '>' attr EINFOBAR {
+		token_store_attr(PUSH | WIDGET_INFOBAR, $2);
+	}
+  | wlist PART_INFOBAR tagattr '>' attr EINFOBAR {
+		token_store_attr(PUSH | WIDGET_INFOBAR, $3);
+		token_store(SUM);
+	}
+  | NOTEBOOK wlist attr ENOTEBOOK   { 
+		token_store(PUSH | WIDGET_NOTEBOOK); 
+	}
+  | wlist NOTEBOOK wlist attr ENOTEBOOK   { 
+		token_store(PUSH | WIDGET_NOTEBOOK); 
+		token_store(SUM);      
+	}
+  | PART_NOTEBOOK tagattr '>' wlist attr ENOTEBOOK {
+		token_store_attr(PUSH | WIDGET_NOTEBOOK, $2);
+	}
+  | wlist PART_NOTEBOOK tagattr '>' wlist attr ENOTEBOOK {
+		token_store_attr(PUSH | WIDGET_NOTEBOOK, $3);
+		token_store(SUM);      
+	}
+  | FRAME wlist attr EFRAME {
+		token_store_with_argument(SET|ATTR_LABEL, $1);
+		token_store(PUSH | WIDGET_FRAME);
+	}
+  | wlist FRAME wlist attr EFRAME {
+		token_store_with_argument(SET|ATTR_LABEL, $2);
+		token_store(PUSH | WIDGET_FRAME);
+		token_store(SUM);
+	}
+  | PART_FRAME tagattr '>' wlist attr EFRAME {
+		token_store_attr(PUSH | WIDGET_FRAME, $2);
+	}
+  | wlist PART_FRAME tagattr '>' wlist attr EFRAME {
+		token_store_attr(PUSH | WIDGET_FRAME, $3);
+		token_store(SUM);
+	}
+  | SPINNER attr ESPINNER {
+		token_store(PUSH | WIDGET_SPINNER);
+	}
+  | wlist SPINNER attr ESPINNER {
+		token_store(PUSH | WIDGET_SPINNER);
+		token_store(SUM);
+	}
+  | PART_SPINNER tagattr '>' attr ESPINNER {
+		token_store_attr(PUSH | WIDGET_SPINNER, $2);
+	}
+  | wlist PART_SPINNER tagattr '>' attr ESPINNER {
+		token_store_attr(PUSH | WIDGET_SPINNER, $3);
+		token_store(SUM);
+	}
+  | LEVELBAR attr ELEVELBAR {
+		token_store(PUSH | WIDGET_LEVELBAR);
+	}
+  | wlist LEVELBAR attr ELEVELBAR {
+		token_store(PUSH | WIDGET_LEVELBAR);
+		token_store(SUM);
+	}
+  | PART_LEVELBAR tagattr '>' attr ELEVELBAR {
+		token_store_attr(PUSH | WIDGET_LEVELBAR, $2);
+	}
+  | wlist PART_LEVELBAR tagattr '>' attr ELEVELBAR {
+		token_store_attr(PUSH | WIDGET_LEVELBAR, $3);
+		token_store(SUM);
+	}
+  | DRAWINGAREA attr EDRAWINGAREA {
+		token_store(PUSH | WIDGET_DRAWINGAREA);
+	}
+  | wlist DRAWINGAREA attr EDRAWINGAREA {
+		token_store(PUSH | WIDGET_DRAWINGAREA);
+		token_store(SUM);
+	}
+  | PART_DRAWINGAREA tagattr '>' attr EDRAWINGAREA {
+		token_store_attr(PUSH | WIDGET_DRAWINGAREA, $2);
+	}
+  | wlist PART_DRAWINGAREA tagattr '>' attr EDRAWINGAREA {
+		token_store_attr(PUSH | WIDGET_DRAWINGAREA, $3);
+		token_store(SUM);
+	}
+  | FLOWBOX wlist attr EFLOWBOX {
+		token_store(PUSH | WIDGET_FLOWBOX);
+	}
+  | wlist FLOWBOX wlist attr EFLOWBOX {
+		token_store(PUSH | WIDGET_FLOWBOX);
+		token_store(SUM);
+	}
+  | PART_FLOWBOX tagattr '>' wlist attr EFLOWBOX {
+		token_store_attr(PUSH | WIDGET_FLOWBOX, $2);
+	}
+  | wlist PART_FLOWBOX tagattr '>' wlist attr EFLOWBOX {
+		token_store_attr(PUSH | WIDGET_FLOWBOX, $3);
+		token_store(SUM);
+	}
+  | OVERLAY wlist attr EOVERLAY {
+		token_store(PUSH | WIDGET_OVERLAY);
+	}
+  | wlist OVERLAY wlist attr EOVERLAY {
+		token_store(PUSH | WIDGET_OVERLAY);
+		token_store(SUM);
+	}
+  | PART_OVERLAY tagattr '>' wlist attr EOVERLAY {
+		token_store_attr(PUSH | WIDGET_OVERLAY, $2);
+	}
+  | wlist PART_OVERLAY tagattr '>' wlist attr EOVERLAY {
+		token_store_attr(PUSH | WIDGET_OVERLAY, $3);
+		token_store(SUM);
+	}
+  | REVEALER wlist attr EREVEALER {
+		token_store(PUSH | WIDGET_REVEALER);
+	}
+  | wlist REVEALER wlist attr EREVEALER {
+		token_store(PUSH | WIDGET_REVEALER);
+		token_store(SUM);
+	}
+  | PART_REVEALER tagattr '>' wlist attr EREVEALER {
+		token_store_attr(PUSH | WIDGET_REVEALER, $2);
+	}
+  | wlist PART_REVEALER tagattr '>' wlist attr EREVEALER {
+		token_store_attr(PUSH | WIDGET_REVEALER, $3);
+		token_store(SUM);
+	}
+  | STACK wlist attr ESTACK {
+		token_store(PUSH | WIDGET_STACK);
+	}
+  | wlist STACK wlist attr ESTACK {
+		token_store(PUSH | WIDGET_STACK);
+		token_store(SUM);
+	}
+  | PART_STACK tagattr '>' wlist attr ESTACK {
+		token_store_attr(PUSH | WIDGET_STACK, $2);
+	}
+  | wlist PART_STACK tagattr '>' wlist attr ESTACK {
+		token_store_attr(PUSH | WIDGET_STACK, $3);
+		token_store(SUM);
+	}
+  | IMAGE attr EIMAGE {
+		token_store(PUSH | WIDGET_IMAGE);
+	}
+  | wlist IMAGE attr EIMAGE {
+		token_store(PUSH | WIDGET_IMAGE);
+		token_store(SUM);
+	}
+  | PART_IMAGE tagattr '>' attr EIMAGE {
+		token_store_attr(PUSH | WIDGET_IMAGE, $2);
+	}
+  | wlist PART_IMAGE tagattr '>' attr EIMAGE {
+		token_store_attr(PUSH | WIDGET_IMAGE, $3);
+		token_store(SUM);
+	}
+  | PULSE attr EPULSE {
+		token_store(PUSH | WIDGET_PULSE);
+	}
+  | wlist PULSE attr EPULSE {
+		token_store(PUSH | WIDGET_PULSE);
+		token_store(SUM);
+	}
+  | PART_PULSE tagattr '>' attr EPULSE {
+		token_store_attr(PUSH | WIDGET_PULSE, $2);
+	}
+  | wlist PART_PULSE tagattr '>' attr EPULSE {
+		token_store_attr(PUSH | WIDGET_PULSE, $3);
+		token_store(SUM);
+	}
+  | PASSWORD attr EPASSWORD {
+		token_store(PUSH | WIDGET_PASSWORD);
+	}
+  | wlist PASSWORD attr EPASSWORD {
+		token_store(PUSH | WIDGET_PASSWORD);
+		token_store(SUM);
+	}
+  | PART_PASSWORD tagattr '>' attr EPASSWORD {
+		token_store_attr(PUSH | WIDGET_PASSWORD, $2);
+	}
+  | wlist PART_PASSWORD tagattr '>' attr EPASSWORD {
+		token_store_attr(PUSH | WIDGET_PASSWORD, $3);
+		token_store(SUM);
+	}
+  | ASPECTFRAME wlist attr EASPECTFRAME {
+		token_store(PUSH | WIDGET_ASPECTFRAME);
+	}
+  | wlist ASPECTFRAME wlist attr EASPECTFRAME {
+		token_store(PUSH | WIDGET_ASPECTFRAME);
+		token_store(SUM);
+	}
+  | PART_ASPECTFRAME tagattr '>' wlist attr EASPECTFRAME {
+		token_store_attr(PUSH | WIDGET_ASPECTFRAME, $2);
+	}
+  | wlist PART_ASPECTFRAME tagattr '>' wlist attr EASPECTFRAME {
+		token_store_attr(PUSH | WIDGET_ASPECTFRAME, $3);
+		token_store(SUM);
+	}
+  ;
+
+widget
+  :  text
+  | entry
+  | edit
+  | tree
+  | chooser
+  | button
+  | checkbox
+  | radiobutton
+  | progressbar
+  | list
+  | table
+  | combobox
+  | pixmap
+  | gvim
+  | menubar
+  | hseparator
+  | vseparator
+  | comboboxtext
+  | comboboxentry
+  | hscale
+  | vscale
+  | spinbutton
+  | timer
+  | togglebutton
+  | statusbar
+  | colorbutton
+  | fontbutton
+  | terminal
+  ;
+
+
+
+
+
+
+entry
+  : ENTRY attr EENTRY {
+                          token_store(PUSH | WIDGET_ENTRY); 
+			 }
+  | PART_ENTRY tagattr '>' attr EENTRY {
+                token_store_attr(PUSH | WIDGET_ENTRY, $2);
+	}
+  | ENTRY attr ENTRY {
+                  yyerror("</entry> expected instead of <entry>.");} 
+  ;
+
+edit
+  : EDIT attr EEDIT  {
+    		token_store(PUSH | WIDGET_EDIT); 
+	}
+  | PART_EDIT tagattr '>' attr EEDIT {
+    		token_store_attr(PUSH | WIDGET_EDIT, $2); 
+    	}
+  | EDIT attr EDIT   {
+    		yyerror("</edit> expected instead of <edit>.");
+	}
+  ;
+
+tree
+  : TREE attr ETREE  {
+		token_store(PUSH | WIDGET_TREE); 
+	}
+  | PART_TREE tagattr '>' attr ETREE {
+    		token_store_attr(PUSH | WIDGET_TREE, $2); 
+	}
+  | TREE attr TREE {
+   		yyerror("</tree> expected instead of <tree>.");
+	}
+  ;
+
+chooser
+  : CHOOSER attr ECHOOSER  {
+		token_store(PUSH | WIDGET_CHOOSER); 
+	}
+  | PART_CHOOSER tagattr '>' attr ECHOOSER {
+		token_store_attr(PUSH | WIDGET_CHOOSER, $2); 
+	}
+  | CHOOSER attr CHOOSER {
+		yyerror("</chooser> expected instead of <chooser>.");
+	}
+  ;
+
+text
+  : TEXT attr ETEXT {
+		token_store(PUSH | WIDGET_TEXT); 
+	} 
+  | PART_TEXT tagattr '>' attr ETEXT {
+                token_store_attr(PUSH | WIDGET_TEXT, $2);
+	}
+  | TEXT attr TEXT  {yyerror("</text> expected instead of <text>.");}
+  ;
+
+button
+  : BUTTON attr EBUTTON       {token_store(PUSH | WIDGET_BUTTON);  }
+  | PART_BUTTON tagattr '>' attr EBUTTON {
+                token_store_attr(PUSH | WIDGET_BUTTON, $2);
+	}
+  | BUTTONOK attr EBUTTON     {token_store(PUSH | WIDGET_OKBUTTON);}
+  | BUTTONCANCEL attr EBUTTON {token_store(PUSH | WIDGET_CANCELBUTTON);}
+  | BUTTONHELP attr EBUTTON   {token_store(PUSH | WIDGET_HELPBUTTON);}
+  | BUTTONNO attr EBUTTON     {token_store(PUSH | WIDGET_NOBUTTON);}
+  | BUTTONYES attr EBUTTON    {token_store(PUSH | WIDGET_YESBUTTON);}
+  ;
+
+checkbox
+  : CHECKBOX attr ECHECKBOX {
+		token_store(PUSH | WIDGET_CHECKBOX);
+	}
+  | PART_CHECKBOX tagattr '>' attr ECHECKBOX {
+		//token_store_with_tag_attributes(PUSH | WIDGET_CHECKBOX, $2);
+                token_store_attr(PUSH | WIDGET_CHECKBOX, $2);
+	}
+  | CHECKBOX attr CHECKBOX  {
+		yyerror("</checkbox> expected instead of <checkbox>.");
+	}
+  ;
+
+radiobutton
+  : RADIO attr ERADIO    {
+	   	token_store(PUSH | WIDGET_RADIOBUTTON);
+           }
+  | PART_RADIO tagattr '>' attr ERADIO {
+                token_store_attr(PUSH | WIDGET_RADIOBUTTON, $2);
+	   }
+  | RADIO attr RADIO  {
+		yyerror("</radiobutton> expected instead of <radiobutton>.");
+           }
+  ;
+
+progressbar
+  : PROGRESSBAR attr EPROGRESSBAR {
+	   	token_store(PUSH | WIDGET_PROGRESSBAR);
+           }
+  | PART_PROGRESSBAR tagattr '>' attr EPROGRESSBAR {
+                token_store_attr(PUSH | WIDGET_PROGRESSBAR, $2);
+	   }
+  | PROGRESSBAR attr PROGRESSBAR  {
+		yyerror("</progressbar> expected instead of <progressbar>.");
+           }
+  ;
+
+list
+  : LIST attr ELIST {
+		token_store(PUSH | WIDGET_LIST); 
+	}
+  | PART_LIST tagattr '>' attr ELIST {
+		token_store_attr(PUSH | WIDGET_LIST, $2); 
+    	}
+  | LIST attr LIST   {
+    		yyerror("</list> expected instead of <list>.");
+	}
+  ;
+
+table
+  : TABLE attr ETABLE {
+		token_store(PUSH | WIDGET_TABLE); 
+	}
+  | PART_TABLE tagattr '>' attr ETABLE {
+		token_store_attr(PUSH | WIDGET_TABLE, $2); 
+    	}
+  | TABLE attr TABLE   {
+    		yyerror("</table> expected instead of <table>.");
+	}
+  ;
+
+combobox
+  : COMBOBOX attr ECOMBOBOX                  {
+    		token_store(PUSH | WIDGET_COMBOBOX);
+	}
+  | PART_COMBOBOX tagattr '>' attr ECOMBOBOX {
+    		token_store_attr(PUSH | WIDGET_COMBOBOX, $2);
+	}                                 
+  ;
+
+gvim
+  : GVIM attr EGVIM             {token_store(PUSH | WIDGET_GVIM);}
+  ;
+
+pixmap
+  : PIXMAP attr EPIXMAP       {token_store(PUSH | WIDGET_PIXMAP);}
+  | PART_PIXMAP tagattr '>' attr EPIXMAP {
+    		token_store_attr(PUSH | WIDGET_PIXMAP, $2);
+	}
+  ;
+
+	/**************************************************************
+	 * Thunor: Newly supported widgets.
+	 * Don't forget to add them to the widget list above and
+	 * to create a token for them towards the top of this file.
+	 * The WIDGET_*s are defined in automaton.h.
+	 **************************************************************/
+
+menubar
+  : MENUBAR EMENUBAR {
+		yyerror("The menubar widget requires at least one menu widget.");
+	}
+  | MENUBAR menu attr EMENUBAR {
+		token_store(PUSH | WIDGET_MENUBAR);
+	}
+  | menu MENUBAR menu attr EMENUBAR {
+		token_store(PUSH | WIDGET_MENUBAR);
+		token_store(SUM);
+	}
+  | PART_MENUBAR tagattr '>' menu attr EMENUBAR {
+		token_store_attr(PUSH | WIDGET_MENUBAR, $2);
+	}
+  | menu PART_MENUBAR tagattr '>' menu attr EMENUBAR {
+		token_store_attr(PUSH | WIDGET_MENUBAR, $3);
+		token_store(SUM);
+	}
+  ;
+
+menuwlist
+  : menu
+  | menuitem
+  | menuitemseparator
+  ;
+
+menu
+  : MENU EMENU {
+		yyerror("The menu widget requires at least one menuitem widget.");
+	}
+  | MENU menuwlist attr EMENU {
+		token_store(PUSH | WIDGET_MENU);
+	}
+  | menuwlist MENU menuwlist attr EMENU {
+		token_store(PUSH | WIDGET_MENU);
+		token_store(SUM);
+	}
+  | PART_MENU tagattr '>' menuwlist attr EMENU {
+		token_store_attr(PUSH | WIDGET_MENU, $2);
+	}
+  | menuwlist PART_MENU tagattr '>' menuwlist attr EMENU {
+		token_store_attr(PUSH | WIDGET_MENU, $3);
+		token_store(SUM);
+	}
+  ;
+
+menuitem
+  : MENUITEM attr EMENUITEM {
+		token_store(PUSH | WIDGET_MENUITEM);
+	}
+  | menuwlist MENUITEM attr EMENUITEM {
+		token_store(PUSH | WIDGET_MENUITEM);
+		token_store(SUM);
+	}
+  | PART_MENUITEM tagattr '>' attr EMENUITEM {
+		token_store_attr(PUSH | WIDGET_MENUITEM, $2);
+	}
+  | menuwlist PART_MENUITEM tagattr '>' attr EMENUITEM {
+		token_store_attr(PUSH | WIDGET_MENUITEM, $3);
+		token_store(SUM);
+	}
+  ;
+
+menuitemseparator
+  : MENUITEMSEPARATOR EMENUITEMSEPARATOR {
+		token_store(PUSH | WIDGET_MENUITEMSEPARATOR);
+	}
+  | menuwlist MENUITEMSEPARATOR EMENUITEMSEPARATOR {
+		token_store(PUSH | WIDGET_MENUITEMSEPARATOR);
+		token_store(SUM);
+	}
+  ;
+
+hseparator
+  : HSEPARATOR EHSEPARATOR {
+		token_store(PUSH | WIDGET_HSEPARATOR);
+	}
+  | PART_HSEPARATOR tagattr '>' EHSEPARATOR {
+		token_store_attr(PUSH | WIDGET_HSEPARATOR, $2);
+	}
+  ;
+
+vseparator
+  : VSEPARATOR EVSEPARATOR {
+		token_store(PUSH | WIDGET_VSEPARATOR);
+	}
+  | PART_VSEPARATOR tagattr '>' EVSEPARATOR {
+		token_store_attr(PUSH | WIDGET_VSEPARATOR, $2);
+	}
+  ;
+
+comboboxtext
+  : COMBOBOXTEXT attr ECOMBOBOXTEXT {
+		token_store(PUSH | WIDGET_COMBOBOXTEXT);
+	}
+  | PART_COMBOBOXTEXT tagattr '>' attr ECOMBOBOXTEXT {
+		token_store_attr(PUSH | WIDGET_COMBOBOXTEXT, $2);
+	}
+  ;
+
+comboboxentry
+  : COMBOBOXENTRY attr ECOMBOBOXENTRY {
+		token_store(PUSH | WIDGET_COMBOBOXENTRY);
+	}
+  | PART_COMBOBOXENTRY tagattr '>' attr ECOMBOBOXENTRY {
+		token_store_attr(PUSH | WIDGET_COMBOBOXENTRY, $2);
+	}
+  ;
+
+hscale
+  : HSCALE attr EHSCALE {
+		token_store(PUSH | WIDGET_HSCALE);
+	}
+  | PART_HSCALE tagattr '>' attr EHSCALE {
+		token_store_attr(PUSH | WIDGET_HSCALE, $2);
+	}
+  ;
+
+vscale
+  : VSCALE attr EVSCALE {
+		token_store(PUSH | WIDGET_VSCALE);
+	}
+  | PART_VSCALE tagattr '>' attr EVSCALE {
+		token_store_attr(PUSH | WIDGET_VSCALE, $2);
+	}
+  ;
+
+spinbutton
+  : SPINBUTTON attr ESPINBUTTON {
+		token_store(PUSH | WIDGET_SPINBUTTON);
+	}
+  | PART_SPINBUTTON tagattr '>' attr ESPINBUTTON {
+		token_store_attr(PUSH | WIDGET_SPINBUTTON, $2);
+	}
+  ;
+
+timer
+  : TIMER attr ETIMER {
+		token_store(PUSH | WIDGET_TIMER);
+	}
+  | PART_TIMER tagattr '>' attr ETIMER {
+		token_store_attr(PUSH | WIDGET_TIMER, $2);
+	}
+  ;
+
+togglebutton
+  : TOGGLEBUTTON attr ETOGGLEBUTTON {
+		token_store(PUSH | WIDGET_TOGGLEBUTTON);
+	}
+  | PART_TOGGLEBUTTON tagattr '>' attr ETOGGLEBUTTON {
+		token_store_attr(PUSH | WIDGET_TOGGLEBUTTON, $2);
+	}
+  ;
+
+statusbar
+  : STATUSBAR attr ESTATUSBAR {
+		token_store(PUSH | WIDGET_STATUSBAR);
+	}
+  | PART_STATUSBAR tagattr '>' attr ESTATUSBAR {
+		token_store_attr(PUSH | WIDGET_STATUSBAR, $2);
+	}
+  ;
+
+colorbutton
+  : COLORBUTTON attr ECOLORBUTTON {
+		token_store(PUSH | WIDGET_COLORBUTTON);
+	}
+  | PART_COLORBUTTON tagattr '>' attr ECOLORBUTTON {
+		token_store_attr(PUSH | WIDGET_COLORBUTTON, $2);
+	}
+  ;
+
+fontbutton
+  : FONTBUTTON attr EFONTBUTTON {
+		token_store(PUSH | WIDGET_FONTBUTTON);
+	}
+  | PART_FONTBUTTON tagattr '>' attr EFONTBUTTON {
+		token_store_attr(PUSH | WIDGET_FONTBUTTON, $2);
+	}
+  ;
+
+terminal
+  : TERMINAL attr ETERMINAL {
+		token_store(PUSH | WIDGET_TERMINAL);
+	}
+  | PART_TERMINAL tagattr '>' attr ETERMINAL {
+		token_store_attr(PUSH | WIDGET_TERMINAL, $2);
+	}
+  ;
+
+attr
+  :
+  | attr defaultvalue
+  | attr sensitive
+  | attr label
+  | attr width
+  | attr height
+  | attr input
+  | attr output
+  | attr variable
+  | attr action
+  | attr item
+  ;
+
+label
+  :    LABEL STRING ELABEL          {
+		token_store_with_argument( SET | ATTR_LABEL, $2);     }
+  |    LABEL ELABEL                 {
+		/* An empty <label></label> is a legitimate value: it asks for a
+		 * blank label, typically used as a spacer between two widgets.
+		 * A label made only of whitespace lands here too, because the
+		 * lexer drops blanks before the string rule can start. */
+		token_store_with_argument( SET | ATTR_LABEL, "");     }
+  ;
+
+sensitive
+  : SENSITIVE STRING ESENSITIVE       {
+     token_store_with_argument( SET | ATTR_SENSITIVE, $2);  }
+  | SENSITIVE ESENSITIVE              {
+     gtkdialog_error("the <sensitive> element is empty; it requires a value.");  }
+  ; 
+
+defaultvalue
+  : DEFAULT STRING EDEFAULT  {
+     token_store_with_argument( SET | ATTR_DEFAULT, $2);   }
+  | DEFAULT EDEFAULT         {
+     /* An empty <default></default> is a legitimate value: it asks for an
+      * empty initial content, e.g. an entry that starts blank. */
+     token_store_with_argument( SET | ATTR_DEFAULT, "");   }
+  ;
+
+width
+  : WIDTH STRING EWIDTH             {
+     token_store_with_argument( SET | ATTR_WIDTH, $2);    }
+  | WIDTH EWIDTH                    {
+     gtkdialog_error("the <width> element is empty; it requires a value.");    }
+  ;
+
+height
+  : HEIGHT STRING EHEIGHT           {
+     token_store_with_argument( SET | ATTR_HEIGHT, $2);   }
+  | HEIGHT EHEIGHT                  {
+     gtkdialog_error("the <height> element is empty; it requires a value.");   }
+  ;
+
+input
+  : INPUT STRING EINPUT    { 
+		token_store_with_argument(SET|ATTR_INPUT|SUB_ATTR_SHELL,$2);
+	}
+  | PART_INPUT tagattr '>' STRING EINPUT {
+		token_store_with_argument_attr(SET|ATTR_INPUT, $4, $2); 
+	}
+  | INPUTFILE STRING EINPUT  { 
+		token_store_with_argument(SET|ATTR_INPUT|SUB_ATTR_FILE,$2); 
+	}
+  | PART_INPUTFILE tagattr '>' STRING EINPUT {
+		token_store_with_argument_attr(SET|ATTR_INPUT|SUB_ATTR_FILE, $4, $2); 
+	}
+  | PART_INPUTFILE tagattr '>' EINPUT {
+		/* <input file stock="gtk-ok"> and friends: the file name lives in
+		 * the tag attributes, so an empty body is expected here. */
+		token_store_with_argument_attr(SET|ATTR_INPUT|SUB_ATTR_FILE, "", $2); 
+	}
+  | INPUT EINPUT {
+		gtkdialog_error("the <input> element is empty; it requires a command.");
+	}
+  | PART_INPUT tagattr '>' EINPUT {
+		gtkdialog_error("the <input> element is empty; it requires a command.");
+	}
+  | INPUTFILE EINPUT {
+		gtkdialog_error("the <input file> element is empty; it requires a file name.");
+	}
+  ;
+
+output
+  : OUTPUT STRING EOUTPUT {
+	         fprintf( stderr, "<output>: Not implemented.\n" ); 
+	}
+  | OUTPUTFILE STRING EOUTPUT {
+         	token_store_with_argument(SET|ATTR_OUTPUT|SUB_ATTR_FILE,$2);
+	}
+  | OUTPUT EOUTPUT {
+		gtkdialog_error("the <output> element is empty; it requires a value.");
+	}
+  | OUTPUTFILE EOUTPUT {
+		gtkdialog_error("the <output file> element is empty; it requires a file name.");
+	}
+  ;
+
+variable
+  : VARIABLE STRING EVARIABLE { 
+		token_store_with_argument( SET | ATTR_VARIABLE, $2);
+	}
+  | PART_VARIABLE tagattr '>' STRING EVARIABLE {
+		token_store_with_argument_attr(SET | ATTR_VARIABLE, $4, $2);
+	}
+  | VARIABLE EVARIABLE {
+		/* An unnamed variable would leave the widget unreachable from the
+		 * shell side, so this is refused rather than silently accepted. */
+		gtkdialog_error("the <variable> element is empty; it requires a name.");
+	}
+  | PART_VARIABLE tagattr '>' EVARIABLE {
+		gtkdialog_error("the <variable> element is empty; it requires a name.");
+	}
+  ; 
+
+action
+  : ACTION STRING EACTION  { 
+		token_store_with_argument( SET|ATTR_ACTION, $2); 
+	}
+  | PART_ACTION tagattr '>' STRING EACTION {
+		token_store_with_argument_attr(SET | ATTR_ACTION, $4, $2);
+	}
+  | ACTION EACTION {
+		gtkdialog_error("the <action> element is empty; it requires a command.");
+	}
+  | PART_ACTION tagattr '>' EACTION {
+		gtkdialog_error("the <action> element is empty; it requires a command.");
+	}
+  ;
+
+item
+  : ITEM STRING EITEM { 
+		token_store_with_argument( SET | ATTR_ITEM, $2);
+	}
+  | ITEM EITEM {
+		token_store_with_argument( SET | ATTR_ITEM, "");
+    	}
+  | PART_ITEM tagattr '>' STRING EITEM {
+		      token_store_with_argument_attr(SET | ATTR_ITEM, $4, $2);
+                    }
+  | PART_ITEM tagattr '>' EITEM {
+		      /* <item></item> without attributes is already accepted above;
+		       * the attributed form behaves the same way. */
+		      token_store_with_argument_attr(SET | ATTR_ITEM, "", $2);
+                    }
+  ;
+
+tagattr
+  : TAG_ATTR_NAME '=' STRING {
+       		$$ = new_tag_attributeset($1, $3); 
+	}
+  | tagattr TAG_ATTR_NAME '=' STRING { 
+       		$$ = add_tag_attribute($1, $2, $4); 
+	}
+  ;
+
+imperative
+  : COMM assignment '>' ENDCOMM 
+  | SHOW_WIDGETS { 
+		token_store(SHOW);     
+	}
+  | if expression '>' then wlist endif {
+  		instruction_set_jump($4, $6 + 1);
+	}
+  | while expression '>' do wlist ewhile {
+		instruction_set_jump($4, $6 + 1);
+		instruction_set_jump($6 + 1, $1);
+	}
+  ;
+
+assignment
+  : EMB_VARIABLE ':' '=' expression {
+		token_store_with_argument(IMASSG | VARIABLE_NAME, $1); 
+	}
+  ;
+
+expression
+  : EMB_VARIABLE {
+		token_store_with_argument(IMPUSH | VARIABLE_NAME, $1); 
+	}
+  | EMB_NUMBER {
+		token_store_with_argument(IMPUSH | CONST_NUMBER, $1); 
+  	}
+  | expression '+' expression {
+  		token_store(IMPUSH | OP_ADD);
+	}
+  | expression '-' expression {
+  		token_store(IMPUSH | OP_SUBST);
+	}
+  | expression '*' expression {
+  		token_store(IMPUSH | OP_MULT);
+	}
+  | expression '/' expression {
+  		token_store(IMPUSH | OP_DIV);
+	}
+  | expression '=' expression {
+  		token_store(IMPUSH | REL_EQ);
+	}
+  | expression '!' '=' expression {
+  		token_store(IMPUSH | REL_NE);
+	}
+  ;
+
+
+if: IF 
+  ;
+
+then
+  :     { 
+		token_store(IFNGOTO); 
+		$$ = instruction_get_pc();
+	}
+  ;
+
+endif
+  : ENDIF  { $$ = instruction_get_pc(); }
+  ;
+
+while
+  : WHILE { $$ = instruction_get_pc(); }
+  ;
+
+ewhile
+  : EWHILE {
+		token_store(GOTO); 
+		$$ = instruction_get_pc();
+	}
+  ;
+
+do
+  : { 
+		token_store(IFNGOTO); 
+		$$ = instruction_get_pc();
+    }
+  ;
+
+%%
+
+extern gboolean option_print_ir;
+
+int gtkdialog_wrap(void)
+{
+	#ifdef DEBUG
+	g_message("%s(): Start", __func__);
+	#endif
+	return 1;
+}
+
+int gtkdialog_error(char *c)
+{
+	g_printerr("%s: Error in line %d, near token '%s': %s\n", PACKAGE, linenumber, Token, c);
+	exit(EXIT_FAILURE);
+}
+
+void yyerror_simple(char *c)
+{
+	g_printerr("%s: Error: %s\n", PACKAGE, c);
+	exit(EXIT_FAILURE);
+}
+
+int yywarning(char *c){
+	#ifdef DEBUG
+		g_warning("Warning: %s.", c);
+	#endif
+	if (!option_no_warning)
+		g_warning("%s: Warning: %s.", PACKAGE, c);
+	return option_no_warning;
+}
+

@@ -1,0 +1,10 @@
+<!-- SPDX-License-Identifier: CC0-1.0 -->
+<!-- DESC: Conteneur frame avec titre -->
+<window title="Test 06">
+  <vbox>
+    <frame label="Section">
+      <text><label>Contenu du frame</label></text>
+    </frame>
+    <button ok></button>
+  </vbox>
+</window>

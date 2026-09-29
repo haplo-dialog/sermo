@@ -1,0 +1,11 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: grid : flot sur 3 colonnes, derniere rangee incomplete, aucun enfant perdu -->
+<window><vbox>
+<grid columns="3">
+<entry><variable>A</variable><default>a1</default></entry>
+<entry><variable>B</variable><default>b2</default></entry>
+<checkbox><label>C</label><variable>C</variable><default>true</default></checkbox>
+<entry><variable>D</variable><default>d4</default></entry>
+<checkbox><label>E</label><variable>E</variable><default>false</default></checkbox>
+</grid>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

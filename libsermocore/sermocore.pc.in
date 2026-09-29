@@ -1,0 +1,12 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}
+libdir=${prefix}/@SERMOCORE_LIBDIR@
+includedir=${prefix}/include/sermo
+# 1 = cœur compilé avec VTE : le backend gtk3 ou gtk4 doit l'être aussi.
+vte=@SERMOCORE_VTE_PC@
+
+Name: sermocore
+Description: Cœur syntaxique + exécution durcie de sermo, sans toolkit
+Version: @SERMOCORE_VERSION@
+Libs: -L${libdir} -lsermocore
+Cflags: -I${includedir}

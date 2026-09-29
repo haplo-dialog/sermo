@@ -1,0 +1,18 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: flowbox/overlay/revealer : trois tags qui ne marchaient que sur gtk4 ; les enfants survivent et exportent -->
+<window><vbox>
+<flowbox max-children-per-line="2" selection-mode="none">
+<entry><variable>F1</variable><default>un</default></entry>
+<entry><variable>F2</variable><default>deux</default></entry>
+<variable>FB</variable>
+</flowbox>
+<overlay>
+<entry><variable>O1</variable><default>fond</default></entry>
+<entry><variable>O2</variable><default>dessus</default></entry>
+<variable>OV</variable>
+</overlay>
+<revealer reveal="true">
+<entry><variable>R1</variable><default>visible</default></entry>
+<variable>RV</variable>
+</revealer>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

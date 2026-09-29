@@ -1,0 +1,7 @@
+Name: sermo
+Link: /usr/bin/sermo
+Alternative: /usr/bin/gtk4sermo
+Dependents:
+  /usr/share/man/man1/sermo.1.gz sermo.1.gz /usr/share/man/man1/gtk4sermo.1.gz
+  /usr/share/info/sermo.info.gz sermo.info.gz /usr/share/info/gtk4sermo.info.gz
+Priority: 45

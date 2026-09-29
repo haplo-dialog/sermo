@@ -1,0 +1,286 @@
+sermo, User-facing announcements
+================================
+
+This file summarises changes from the user's point of view.
+For the full technical history, see CHANGELOG.en.md.
+
+──────────────────────────────────────────────────
+Version 2.7.3
+──────────────────────────────────────────────────
+
+First published 2.x release. Versions 2.0.0 to 2.7.2 stayed internal. If
+you come from 1.x, also read 2.7.2 below and MIGRATION.en.md.
+
+Patch release: what an <input> reads now has a limit.
+
+- Each <input>, command or file, reads at most 16 MiB. Beyond that, reading
+  stops, and a warning goes to standard error. The SERMO_INPUT_MAX
+  environment variable changes the limit, in bytes; 0 removes it. Until now,
+  an endless command such as "yes" made the dialog grow until memory ran out.
+- The progress bar is not capped: it follows its command to the end. In gtk3
+  and gtk4, it no longer grows on a fast command, and no longer brings the
+  dialog down when SERMO_ALLOWED_CMDS refuses its command.
+- In gtk3 and gtk4, <edit> no longer brings the program down on a very large
+  file.
+
+──────────────────────────────────────────────────
+Version 2.7.2
+──────────────────────────────────────────────────
+
+Stayed internal, like versions 2.0.0 to 2.7.1: the first published 2.x
+release is 2.7.3.
+
+If you come from 1.x, what changes for you (details in MIGRATION.en.md):
+
+- The packages are renamed: sermo-backend-gtk3, -gtk4, -qt6 and sermo-gtkdialog
+  replace gtk3sermo, gtk4sermo, qt6sermo and gtksermo.
+  "apt install ./sermo-backend-gtk3_2.7.2-3_amd64.deb" removes the 1.x package
+  it replaces. The commands keep their names.
+- HAPLO_ALLOWED_CMDS and HAPLO_NO_SHELL_FALLBACK become SERMO_ALLOWED_CMDS and
+  SERMO_NO_SHELL_FALLBACK. The old names are still read, with a warning.
+- SERMO_ALLOWED_CMDS compares paths: listing "echo" no longer allows "/bin/echo"
+  when PATH finds /usr/bin/echo.
+- Four more ports (fltk1sermo, efl1sermo, sdl3sermo, ncursessermo) and a "sermo"
+  command that points to one of the installed ports.
+- Building goes through CMake and requires VTE (gtk3, gtk4) and gtk-layer-shell
+  (gtk3). The Arch, Gentoo, RPM and Slackware recipes are no longer provided.
+
+Compared with 2.7.1, internal:
+
+A fix release. It repairs what windows actually SHOW: until now nothing checked
+that — the benches read the values a dialog returns, never its picture.
+
+What changes for you:
+
+- Every port finally says its own name. "qt6sermo --version" used to answer
+  "sermocore version 2.7.1"; it now answers "qt6sermo version 2.7.2". Word
+  positions do not move: a script reading the 3rd word for the version keeps
+  working.
+
+- Dialogs lay out correctly on qt6 and sdl3. A column meant to expand stayed
+  tiny, a bottom band could fail to appear at all, and on sdl3 a 560x420 window
+  could come out three times too tall and empty.
+
+- The progress bar: the manual claimed a value between 0.0 and 1.0. That is
+  WRONG, and its example produced an empty bar. A bar expects a PERCENTAGE,
+  0 to 100: write "echo 75", not "echo 0.75".
+
+- Building from source now installs the result: "make install" lays down the
+  binary, its manual page and its icons for all seven ports. Six of them had no
+  install rules at all.
+
+- The user manual and the developer manual now exist in English.
+
+Two things to know, written down plainly after measurement:
+
+- The two execution guards (SERMO_ALLOWED_CMDS and SERMO_NO_SHELL_FALLBACK) do
+  NOT cover <terminal>. That widget opens a /bin/sh through VTE, outside the
+  core: a dialog containing one hands out a shell, even with both variables
+  set. Do not deploy such a dialog where you believe those variables define the
+  boundary. See SECURITY.en.md. In the same vein, --include sends every command
+  through /bin/sh -c, so it runs nothing at all once a command list is set.
+- Closing the window with the cross returns no value: the whole output is
+  EXIT="abort". The values are printed only when the dialog ends through a
+  button (an EXIT: action). The manual promised the opposite.
+
+The user manual has been reworked: six syntaxes it gave as examples were
+refused by the parser (among them <okbutton/>, which does not exist: it is
+<button ok></button>). All 54 of its XML examples now pass.
+
+Windows finally carry the project icon: the HD logo, shipped by the packages at
+the eight theme sizes (16 to 256 px). No icon was installed until now, except for
+qt6. The ncurses port writes "HD" in its top frame instead: a terminal cannot
+carry an icon. It no longer announces itself as the SDL 3 port.
+
+──────────────────────────────────────────────────
+Version 2.7.1
+──────────────────────────────────────────────────
+
+An internal release. Compared with 2.7.0:
+
+The terminal and Wayland anchoring are back, and <input> reads what it is given
+everywhere.
+
+- <terminal> opens a real terminal again with gtk3sermo and gtk4sermo: it had
+  been missing since 2.0.0, without a single message.
+- gtk3sermo anchors its windows under Wayland again (the layer, edge, dist and
+  reserve attributes of <window>), with a compositor that allows it.
+- <input> and <input file> fill entry, text, edit, comboboxtext, list, tree and
+  table on all seven ports, with the same values, and the command runs once. On
+  qt6, fltk1, efl1, sdl3 and ncurses, some of these widgets read nothing, or ran
+  the command twice.
+- sdl3sermo no longer crashes on a <table> without <label>.
+- <chooser> no longer aborts qt6sermo, fltk1sermo, efl1sermo, sdl3sermo and
+  ncursessermo: a dialog containing one did not open at all. On those ports it
+  becomes a button that opens the toolkit's file selector; gtk3sermo and
+  gtk4sermo keep the in-window selector.
+- Debian packages: sermo-backend-gtk3, -gtk4, -qt6, -fltk1, -efl1, -sdl3,
+  -ncurses, sermo-gtkdialog and sermo-core-dev. The 1.x packages (gtk3sermo,
+  gtk4sermo, qt6sermo, gtksermo) move to 2.x with a plain upgrade.
+- <combobox> is no longer filled by <input> on qt6, fltk1 and efl1: gtk3 never
+  did it. Use <comboboxtext>.
+- To build gtk3 and gtk4: libvte-2.91-dev, libvte-2.91-gtk4-dev and
+  libgtk-layer-shell-dev.
+
+──────────────────────────────────────────────────
+Version 2.7.0
+──────────────────────────────────────────────────
+
+The progress bar moves on all seven ports, and gtk3sermo and gtk4sermo load
+interfaces designed with Glade again.
+
+- <progressbar> follows its command on qt6, fltk1, efl1, sdl3 and ncurses as on
+  gtk3 and gtk4: the bar moves line by line, and the action set for 100 runs.
+- --glade-xml=FILE loads a GtkBuilder (Glade) interface file with gtk3sermo and
+  gtk4sermo; the other ports refuse the option and say so.
+- --include=functions.sh works with a relative path: under /bin/sh it loaded
+  nothing.
+- A <frame> shows all its children on fltk1, efl1, sdl3 and ncurses, not only
+  the first.
+
+──────────────────────────────────────────────────
+Version 2.6.8
+──────────────────────────────────────────────────
+
+Benches that said OK without checking anything no longer do.
+
+- sdl3 and ncurses: clicking the font chooser closed the window. Fixed.
+- Several test benches answered OK without checking anything: they now fail
+  when they verify nothing.
+- To contribute: ci/construire.sh and ci/bancs.sh build the seven ports and run
+  every bench, exactly like the repository's automatic verification.
+- --glade-xml has no effect in this edition (no Glade library exists for
+  GTK 3 or 4); the man pages said otherwise.
+- The EFL development package is libefl-all-dev.
+
+──────────────────────────────────────────────────
+Version 2.6.7
+──────────────────────────────────────────────────
+
+Protections that were announced now really apply.
+
+- FORTIFY_SOURCE did not work in the core, which was built without
+  optimisation: it now does.
+- SERMO_ALLOWED_CMDS can no longer be bypassed by a program of the same name
+  placed elsewhere. Beware: a command written with a path must now be listed
+  under that path, or be the one PATH finds.
+- The 1.x names, HAPLO_ALLOWED_CMDS and HAPLO_NO_SHELL_FALLBACK, are read again.
+- In a terminal (ncurses), the password shows as stars, text fields can finally
+  be filled, and the OK button closes the dialog.
+- --version shows the right number.
+
+──────────────────────────────────────────────────
+Version 2.6.6
+──────────────────────────────────────────────────
+
+Nothing new on screen. 586 source files announced a version in their header that
+was no longer the right one - and eighty of them even carried the product's
+former name.
+
+The number is not updated, it is removed: a source file has no reason to carry
+one.
+
+──────────────────────────────────────────────────
+Version 2.6.5
+──────────────────────────────────────────────────
+
+On fltk1, opening an expander scrambled the window: the label below climbed on
+top of the title and the content spilled out of its frame. Fixed - neighbouring
+widgets are pushed down, and the window grows with them.
+
+The open-state arrow is back too: the port used a symbol that does not exist in
+FLTK, so nothing was drawn.
+
+──────────────────────────────────────────────────
+Version 2.6.4
+──────────────────────────────────────────────────
+
+On fltk1, opening an expander ERASED its title: only the arrow was left. Fixed -
+the title now survives every open and close.
+
+<expander> also enters the manual, where it was missing entirely: the state it
+exports (true or false), the expanded= attribute that opens it at startup, and
+the two ways of writing its title. The reference served to AI tools said the
+opposite of what the parser does; it is corrected.
+
+⚠ Still on fltk1, opening an expander scrambles the layout of the neighbouring
+widgets. That is not repaired.
+
+──────────────────────────────────────────────────
+Version 2.6.3
+──────────────────────────────────────────────────
+
+<expander> now opens and collapses as it should on all seven ports. The
+expanded="true" attribute was read by NONE of the five non-GTK ports: two of
+them always collapsed, the other three always opened.
+
+An expander with no attribute is collapsed - that is the reference's rule, and
+it now holds everywhere. The three ports that read <default> were answering a
+syntax that exists nowhere else.
+
+──────────────────────────────────────────────────
+Version 2.6.2
+──────────────────────────────────────────────────
+
+<frame> now renders its title, on all seven ports. A script reading a frame's
+variable received an empty string everywhere except on gtk3 and gtk4 - and
+nothing flagged it.
+
+The defect surfaced while writing the two bench cases the language's largest
+containers were missing, <frame> and <notebook>: both shipped everywhere,
+neither measured. <notebook> was already correct.
+
+──────────────────────────────────────────────────
+Version 2.6.1
+──────────────────────────────────────────────────
+
+Nothing new on screen. One core function was redeclared by hand in four ports
+(gtk3, gtk4, qt6, fltk1), with a type different from the one in its header. The
+compiler only complained about one of them; the defect was in all four. They
+now include the header, as efl1 already did. What you see on screen does not
+change.
+
+The roadmap no longer announces a "web" backend. The door stays open to other
+rendering engines - it is the door the ncurses port came through - but the
+product announces only the seven ports it ships.
+
+──────────────────────────────────────────────────
+Version 2.6.0
+──────────────────────────────────────────────────
+
+Three more tags, on all seven ports.
+
+<flowbox> lays its children along a line, then wraps to the next. <overlay>
+stacks them: the first is the background, the following ones float above it -
+the only container in the language that superimposes. <revealer> shows or hides
+its child.
+
+The limits are stated, not left unsaid. gtk3 and gtk4 genuinely reflow as the
+window shrinks; the other ports use fixed columns, and only gtk3 and gtk4 know
+which child is selected. The <revealer> animation exists on gtk3 and gtk4 only:
+elsewhere the port shows or hides, without a transition. A terminal does not
+superimpose, so ncurses draws the background then the layers one below the
+other, each preceded by a marker.
+
+These three tags had been accepted for a long time but produced NOTHING outside
+gtk4: a script using them got a silently truncated window, without a word of
+warning.
+
+──────────────────────────────────────────────────
+Version 2.5.0
+──────────────────────────────────────────────────
+
+The same XML script renders an equivalent interface on SEVEN backends: gtk3,
+gtk4, qt6, fltk1, efl1, sdl3 and ncurses (in the terminal). You write your
+dialog once; you then choose where it shows up.
+
+Each backend installs on its own and pulls in only its own graphical library.
+The parsing and execution core is shared by the seven ports; gtk4 keeps a
+variant of it adapted to GTK 4.
+
+The language has 62 widget types. For layout, <grid> aligns the columns of a
+form and <paned> splits the space between two areas with a draggable handle.
+For structure, <toolbar>, <stack>, <wizard> and <menubutton>.
+
+Your gtkdialog scripts keep working: the sermo-gtkdialog package provides the
+gtkdialog command.

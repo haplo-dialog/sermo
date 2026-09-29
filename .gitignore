@@ -1,0 +1,57 @@
+# Artefacts de build — cœur (toutes variantes) et backends
+_build/
+_build_*/
+_install/
+_install_*/
+*.o
+*.a
+*.so
+
+# Répertoires/artefacts CMake et autotools (ne jamais suivre : ils contiennent
+# des chemins absolus propres à la machine de build)
+obj-*/
+CMakeFiles/
+CMakeCache.txt
+compile_commands.json
+sermo-backend-*/src/Makefile
+
+# Lexer/parser générés (Flex/Bison)
+gtkdialog_lexer.c
+gtkdialog_parser.c
+gtkdialog_*.h
+
+# Documentation engendrée : le manuel Texinfo et les pages de manuel viennent
+# de leur .in (doc/sermo.texi.in, doc/sermo.1.in, */src/*sermo.1.in), substitué
+# à la construction. Ni les .info ni les pages produites ne se versionnent.
+*.info
+*.html
+
+# Paquets Debian : résultats de packaging/construire-paquets.sh, et produits de
+# dpkg-buildpackage si l'on construit directement dans l'arbre.
+packaging/sortie/
+debian/construit/
+debian/etage/
+debian/.debhelper/
+debian/tmp/
+debian/sermo-*/
+debian/*sermo/
+debian/debhelper-build-stamp
+debian/files
+debian/*.substvars
+debian/*.debhelper.log
+
+# Artefact runtime Dear ImGui (sdl3)
+imgui.ini
+
+# Images de travail lourdes (visuels générés, hors dépôt) — la marque versionnée
+# est dans icon/ (source maître). Ne pas suivre les JPEG de travail.
+assets/
+
+# Binaires/liens compilés laissés dans src/ (artefacts — le build va dans _build/).
+sermo-backend-*/src/*sermo
+sermo-backend-*/src/gtkdialog
+sermo-backend-*/src/gtk3dialog
+
+# Journaux de ci/construire.sh et ci/bancs.sh
+_journaux/
+

@@ -1,0 +1,110 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# .gitlab-ci.yml — intégration continue de sermo.
+#
+# Deux scripts du dépôt, rien de plus :
+#   ci/construire.sh  le cœur (trois variantes) et les sept backends ;
+#   ci/bancs.sh       tests unitaires, XML, comportement, gardes (durcissement,
+#                     FORTIFY du cœur, liste de commandes, échappement, clic,
+#                     mot de passe en terminal…), ouverture réelle des
+#                     exemples, contrôle de façade de l'arbre, et les bancs de
+#                     sermoman-mcp.
+# Tout ce que vérifie la CI se rejoue chez soi avec ces deux commandes.
+#
+# Cette recette a un jumeau : .github/workflows/bancs.yml. sermo vit sur deux
+# forges, et une contribution arrivant par l'autre ne doit pas passer sans
+# contrôle. Ce qui change ici change là-bas.
+#
+# Un seul job : construire et éprouver dans le même conteneur évite d'installer
+# deux fois les dépendances. Les minutes des exécuteurs partagés sont comptées :
+# un pipeline pour une demande de fusion, une étiquette, ou une poussée qui
+# touche du code, des bancs ou cette recette — pas pour une correction de
+# documentation.
+
+workflow:
+  rules:
+    - if: $CI_COMMIT_TAG
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+    - if: $CI_COMMIT_BRANCH
+      changes:
+        - libsermocore/**/*
+        - sermo-backend-*/**/*
+        - contract/**/*
+        - tests/**/*
+        - ci/**/*
+        - sermoman-mcp/**/*
+        - examples/**/*
+        - VERSION
+        - .gitlab-ci.yml
+
+variables:
+  DEBIAN_FRONTEND: noninteractive
+
+bancs:
+  image: debian:testing
+  interruptible: true
+  timeout: 2h
+  before_script:
+    - apt-get update -qq
+    - apt-get install -y --no-install-recommends $(grep -v '^#' ci/dependances.txt)
+    # le dépôt est extrait par un autre utilisateur que celui du job : sans ça,
+    # git refuse de le lire et le contrôle de façade échouerait pour rien
+    - git config --global --add safe.directory "$CI_PROJECT_DIR"
+    - sed -i 's/^# *fr_FR.UTF-8/fr_FR.UTF-8/' /etc/locale.gen && locale-gen
+    # les bancs tournent sous une locale à virgule décimale : c'est là que les
+    # nombres mal lus (atof, strtod) se trahissent ; sous C, ils passeraient
+    - export LANG=fr_FR.UTF-8
+  script:
+    - bash ci/construire.sh
+    - bash ci/bancs.sh
+  artifacts:
+    when: always
+    expire_in: 1 week
+    paths:
+      - _journaux/
+
+# ── Paquets Debian ───────────────────────────────────────────────────────────
+# Sur étiquette seulement, et à la demande. Construit les .deb dans une Debian
+# testing vierge et les dépose en artefacts, avec le rapport lintian. Ne signe
+# rien, ne pousse rien, ne publie nulle part : la mise en ligne reste un geste
+# manuel, décidé. Jumeau : .github/workflows/paquets.yml.
+#
+# packaging/construire-paquets.sh va plus loin (installation, purge, mise à jour
+# depuis la 1.x) mais lance ses propres conteneurs : il se joue à la main.
+paquets:
+  image: debian:testing
+  interruptible: true
+  timeout: 90m
+  rules:
+    - if: $CI_COMMIT_TAG
+    - when: manual
+      allow_failure: true
+  before_script:
+    - apt-get update -qq
+    # apt-get build-dep a besoin des sources : l'image ne les active pas.
+    # Les deux formats sont gérés, deb822 (actuel) et sources.list (ancien).
+    - |
+      if [ -f /etc/apt/sources.list.d/debian.sources ]; then
+        sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/debian.sources
+      fi
+      if [ -f /etc/apt/sources.list ]; then
+        sed -n 's/^deb /deb-src /p' /etc/apt/sources.list >> /etc/apt/sources.list
+      fi
+    - apt-get update -qq
+    - apt-get install -y --no-install-recommends build-essential devscripts lintian git
+    - git config --global --add safe.directory "$CI_PROJECT_DIR"
+    - apt-get build-dep -y --no-install-recommends .
+  script:
+    # -us -uc : rien n'est signé ici. La signature se fait hors CI, avec une clé
+    # qui n'a pas à exister sur une forge.
+    - dpkg-buildpackage -us -uc
+    # Le .changes et les paquets sortent dans le répertoire PARENT.
+    - mkdir -p paquets
+    - mv ../*.deb ../*.changes ../*.buildinfo ../*.dsc ../*.tar.* paquets/ 2>/dev/null || true
+    - lintian --fail-on error paquets/*.changes
+  artifacts:
+    when: always
+    expire_in: 2 weeks
+    paths:
+      - paquets/

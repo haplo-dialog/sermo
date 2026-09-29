@@ -1,0 +1,8 @@
+<!-- SPDX-License-Identifier: CC0-1.0 -->
+<!-- DESC: Calendrier -->
+<window title="Test 23" width-request="400" height-request="300">
+  <vbox>
+    <calendar><variable>DATE</variable></calendar>
+    <button ok></button>
+  </vbox>
+</window>

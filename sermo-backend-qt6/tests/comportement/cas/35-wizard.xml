@@ -1,0 +1,9 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: wizard : suite d etapes ; les etapes survivent, l index de l etape sort en variable -->
+<window><vbox>
+<wizard>
+<entry><variable>E0</variable><default>etape un</default></entry>
+<entry><variable>E1</variable><default>etape deux</default></entry>
+<variable>ETAPE</variable>
+</wizard>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

@@ -1,0 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: table sans <label> (donc sans en-têtes), seule dans sa fenêtre : la 1re cellule ressort ; sdl3sermo plantait (en-têtes NULL déréférencés au rendu) -->
+<window><vbox>
+<table><variable>TA</variable><item>1|2</item><item>3|4</item></table>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

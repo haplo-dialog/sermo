@@ -1,0 +1,3 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: tree (etalon gtk3sermo) -->
+<window><vbox><tree><variable>TR</variable><item>a</item><item>b</item></tree><timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

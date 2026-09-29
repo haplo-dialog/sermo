@@ -1,0 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: chooser : le dialogue s'ouvre et se ferme normalement ; sans choix, la variable est vide (ports sans GTK : il avortait, « ASSERT FAILED: widget != NULL ») -->
+<window><vbox>
+<chooser><variable>CH</variable></chooser>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

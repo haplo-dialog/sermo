@@ -1,0 +1,10 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: digits= decide des decimales exportees ; progressbar n exporte rien ; point decimal quelle que soit la locale -->
+<window><vbox>
+<hscale range-min="0" range-max="10"><variable>H0</variable><default>2.5</default></hscale>
+<hscale range-min="0" range-max="10" digits="2"><variable>H2</variable><default>2.5</default></hscale>
+<vscale range-min="0" range-max="10" digits="1"><variable>V1</variable><default>3.5</default></vscale>
+<spinbutton range-min="0" range-max="10"><variable>S0</variable><default>4.25</default></spinbutton>
+<spinbutton range-min="0" range-max="10" digits="2"><variable>S2</variable><default>4.25</default></spinbutton>
+<progressbar><variable>PB</variable><default>50</default></progressbar>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

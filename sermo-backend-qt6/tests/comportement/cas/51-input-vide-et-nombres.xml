@@ -1,0 +1,9 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: <input> : une ligne vide est un élément de comboboxtext (l'étalon la garde et la sélectionne) ; spinbutton, hscale, vscale et levelbar lisent aussi <input file> -->
+<window><vbox>
+<comboboxtext><variable>CBT_VIDE</variable><input>printf "\nun\n"</input></comboboxtext>
+<spinbutton range-min="0" range-max="10"><variable>SP</variable><input file>donnees/sept.txt</input></spinbutton>
+<hscale range-min="0" range-max="10"><variable>HS</variable><input file>donnees/sept.txt</input></hscale>
+<vscale range-min="0" range-max="10"><variable>VS</variable><input file>donnees/sept.txt</input></vscale>
+<levelbar><variable>LB</variable><input file>donnees/niveau.txt</input></levelbar>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

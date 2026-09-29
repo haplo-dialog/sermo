@@ -1,0 +1,13 @@
+#!/usr/bin/gtk3sermo -f 
+
+<window>
+	<vbox>
+		<button>
+			<label>Xterm</label>
+			<action>xterm&</action>
+		</button>
+		<button>
+			<label>Exit</label>
+		</button>
+	</vbox>
+</window>

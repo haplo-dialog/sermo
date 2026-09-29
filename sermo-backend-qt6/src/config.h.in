@@ -1,0 +1,35 @@
+/* config.h.in — modèle de configuration du port Qt 6.
+ *
+ * ⚠️ NE PAS créer de config.h à la main : il est ENGENDRÉ par CMake depuis ce
+ * modèle, dans le répertoire de construction. Une version écrite à la main
+ * était ignorée par git : elle existait sur le poste d'origine et NULLE PART
+ * ailleurs, si bien que le port ne se construisait pas depuis un dépôt propre
+ * — panne restée invisible tant que personne n'avait compilé ailleurs.
+ *
+ * Les ports GTK obtiennent l'équivalent par autotools (AC_CONFIG_HEADERS).
+ * Ici la version vient de project(... VERSION ...) : plus rien à resynchroniser.
+ *
+ * qt6sermo — haplo-dialog — Licence : GPL-2.0-or-later
+ */
+#ifndef QT6SERMO_CONFIG_H
+#define QT6SERMO_CONFIG_H
+
+/* Détails de construction */
+#define BUILD_DETAILS "@PROJECT_NAME@ @PROJECT_VERSION@ (haplo-dialog)"
+
+#define PACKAGE           "@PROJECT_NAME@"
+#define PACKAGE_BUGREPORT "devel@haplo-dialog.fr"
+#define PACKAGE_NAME      "@PROJECT_NAME@"
+#define PACKAGE_STRING    "@PROJECT_NAME@ @PROJECT_VERSION@"
+#define PACKAGE_TARNAME   "@PROJECT_NAME@"
+#define PACKAGE_URL       "https://haplo-dialog.fr"
+#define PACKAGE_VERSION   "@PROJECT_VERSION@"
+#define VERSION           "@PROJECT_VERSION@"
+
+/* Le port Qt 6 pose ses widgets directement sur des QWidget : ni GtkBuilder,
+ * ni VTE (le terminal passe par QTermWidget), ni enveloppe glib d'inotify. */
+#define HAVE_GLADE_LIB     0
+#define HAVE_VTE           0
+#define HAVE_SYS_INOTIFY_H 0
+
+#endif /* QT6SERMO_CONFIG_H */

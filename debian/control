@@ -1,0 +1,204 @@
+Source: sermo
+Section: utils
+Maintainer: s.cage <devel@haplo-dialog.fr>
+Build-Depends: debhelper-compat (= 14),
+               bison,
+               check <!nocheck>,
+               cmake,
+               flex,
+               libefl-all-dev,
+               libfltk1.4-dev,
+               libgdk-pixbuf-2.0-dev,
+               libgl-dev,
+               libglib2.0-dev,
+               libgtk-3-dev,
+               libgtk-4-dev,
+               libgtk-layer-shell-dev,
+               libncurses-dev,
+               libpng-dev,
+               libsdl3-dev,
+               libvte-2.91-dev,
+               libvte-2.91-gtk4-dev,
+               libx11-dev,
+               pkgconf,
+               qt6-base-dev,
+               texinfo,
+Standards-Version: 4.7.4
+Homepage: https://gitlab.com/haplo-dialog/sermo
+Vcs-Browser: https://gitlab.com/haplo-dialog/sermo
+Vcs-Git: https://gitlab.com/haplo-dialog/sermo.git
+
+Package: sermo-core-dev
+Section: libdevel
+Architecture: any
+Depends: ${misc:Depends}
+Description: sermo dialog engine - static core library and headers
+ sermo builds native windows from an XML description, so that a shell script
+ can show a real graphical interface without any toolkit knowledge. It succeeds
+ gtkdialog and keeps its XML language. One hardened core parses the description
+ and runs the actions; each backend draws it with one toolkit.
+ .
+ This package contains the core, libsermocore, as a static library, with its
+ headers and its pkg-config file, for building a backend. It uses no graphical
+ toolkit. The backends packaged here already embed the core and do not need it.
+
+Package: sermo-backend-gtk3
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Provides: sermo-backend
+Breaks: gtk3sermo (<< 2.0~)
+Replaces: gtk3sermo (<< 2.0~)
+Description: sermo dialog boxes for shell scripts - GTK 3 backend
+ sermo builds native windows from an XML description, so that a shell script
+ can show a real graphical interface without any toolkit knowledge. It succeeds
+ gtkdialog and keeps its XML language. One hardened core parses the description
+ and runs the actions; each backend draws it with one toolkit.
+ .
+ This package provides gtk3sermo, the GTK 3 backend, the reference port of
+ sermo. It also offers the sermo command through update-alternatives.
+
+Package: sermo-backend-gtk4
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Provides: sermo-backend
+Breaks: gtk4sermo (<< 2.0~)
+Replaces: gtk4sermo (<< 2.0~)
+Description: sermo dialog boxes for shell scripts - GTK 4 backend
+ sermo builds native windows from an XML description, so that a shell script
+ can show a real graphical interface without any toolkit knowledge. It succeeds
+ gtkdialog and keeps its XML language. One hardened core parses the description
+ and runs the actions; each backend draws it with one toolkit.
+ .
+ This package provides gtk4sermo, the GTK 4 backend. It also offers the sermo
+ command through update-alternatives.
+
+Package: sermo-backend-qt6
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Provides: sermo-backend
+Breaks: qt6sermo (<< 2.0~)
+Replaces: qt6sermo (<< 2.0~)
+Description: sermo dialog boxes for shell scripts - Qt 6 backend
+ sermo builds native windows from an XML description, so that a shell script
+ can show a real graphical interface without any toolkit knowledge. It succeeds
+ gtkdialog and keeps its XML language. One hardened core parses the description
+ and runs the actions; each backend draws it with one toolkit.
+ .
+ This package provides qt6sermo, the Qt 6 backend. It also offers the sermo
+ command through update-alternatives.
+
+Package: sermo-backend-fltk1
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Provides: sermo-backend
+Description: sermo dialog boxes for shell scripts - FLTK 1.4 backend
+ sermo builds native windows from an XML description, so that a shell script
+ can show a real graphical interface without any toolkit knowledge. It succeeds
+ gtkdialog and keeps its XML language. One hardened core parses the description
+ and runs the actions; each backend draws it with one toolkit.
+ .
+ This package provides fltk1sermo, the FLTK 1.4 backend. It also offers the
+ sermo command through update-alternatives.
+
+Package: sermo-backend-efl1
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Provides: sermo-backend
+Description: sermo dialog boxes for shell scripts - EFL (Enlightenment) backend
+ sermo builds native windows from an XML description, so that a shell script
+ can show a real graphical interface without any toolkit knowledge. It succeeds
+ gtkdialog and keeps its XML language. One hardened core parses the description
+ and runs the actions; each backend draws it with one toolkit.
+ .
+ This package provides efl1sermo, the EFL backend (Elementary widgets). It also
+ offers the sermo command through update-alternatives.
+
+Package: sermo-backend-sdl3
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Provides: sermo-backend
+Description: sermo dialog boxes for shell scripts - SDL 3 backend
+ sermo builds native windows from an XML description, so that a shell script
+ can show a real graphical interface without any toolkit knowledge. It succeeds
+ gtkdialog and keeps its XML language. One hardened core parses the description
+ and runs the actions; each backend draws it with one toolkit.
+ .
+ This package provides sdl3sermo, the SDL 3 backend, drawn with Dear ImGui. It
+ also offers the sermo command through update-alternatives.
+
+Package: sermo-backend-ncurses
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Provides: sermo-backend
+Description: sermo dialog boxes for shell scripts - terminal (ncurses) backend
+ sermo builds native windows from an XML description, so that a shell script
+ can show a real graphical interface without any toolkit knowledge. It succeeds
+ gtkdialog and keeps its XML language. One hardened core parses the description
+ and runs the actions; each backend draws it with one toolkit.
+ .
+ This package provides ncursessermo, the terminal backend, for machines without
+ a display. It also offers the sermo command through update-alternatives.
+
+Package: sermo-doc
+Section: doc
+Architecture: all
+Multi-Arch: foreign
+Depends: ${misc:Depends}
+Description: sermo dialog boxes for shell scripts - manual and common documentation
+ sermo opens a dialog box described in XML from a shell script, and returns the
+ values entered. The same script runs on seven toolkits.
+ .
+ This package carries the Texinfo manual ("info sermo-doc") and the common
+ documentation — copyright and Debian changelog — that the architecture
+ independent packages of this source link to instead of each carrying their own
+ copy. Those files are identical in every binary package, and a transitional
+ package holds nothing else.
+
+Package: sermo-gtkdialog
+Architecture: all
+Depends: ${misc:Depends}, sermo-doc (= ${source:Version}), sermo-backend-gtk3 (>= ${source:Version})
+Provides: gtkdialog
+Conflicts: gtk3dialog, gtkdialog, haplo-dialog
+Breaks: gtksermo (<< 2.0~)
+Replaces: gtk3dialog, gtkdialog, gtksermo (<< 2.0~), haplo-dialog
+Description: sermo dialog boxes for shell scripts - gtkdialog command
+ sermo builds native windows from an XML description, so that a shell script
+ can show a real graphical interface without any toolkit knowledge. It succeeds
+ gtkdialog and keeps its XML language. One hardened core parses the description
+ and runs the actions; each backend draws it with one toolkit.
+ .
+ This package makes /usr/bin/gtkdialog a link to gtk3sermo, so that scripts
+ calling gtkdialog run unchanged. It replaces the original gtkdialog and the
+ gtk3dialog package, which install the same command.
+
+Package: gtk3sermo
+Section: oldlibs
+Architecture: all
+Depends: ${misc:Depends}, sermo-doc (= ${source:Version}), sermo-backend-gtk3 (>= ${source:Version})
+Description: transitional package - use sermo-backend-gtk3
+ The 1.x package gtk3sermo has become sermo-backend-gtk3, in the modular
+ edition of sermo 2. This transitional package can safely be removed.
+
+Package: gtk4sermo
+Section: oldlibs
+Architecture: all
+Depends: ${misc:Depends}, sermo-doc (= ${source:Version}), sermo-backend-gtk4 (>= ${source:Version})
+Description: transitional package - use sermo-backend-gtk4
+ The 1.x package gtk4sermo has become sermo-backend-gtk4, in the modular
+ edition of sermo 2. This transitional package can safely be removed.
+
+Package: qt6sermo
+Section: oldlibs
+Architecture: all
+Depends: ${misc:Depends}, sermo-doc (= ${source:Version}), sermo-backend-qt6 (>= ${source:Version})
+Description: transitional package - use sermo-backend-qt6
+ The 1.x package qt6sermo has become sermo-backend-qt6, in the modular edition
+ of sermo 2. This transitional package can safely be removed.
+
+Package: gtksermo
+Section: oldlibs
+Architecture: all
+Depends: ${misc:Depends}, sermo-doc (= ${source:Version}), sermo-gtkdialog (>= ${source:Version})
+Description: transitional package - use sermo-gtkdialog
+ The 1.x package gtksermo has become sermo-gtkdialog, in the modular edition of
+ sermo 2. This transitional package can safely be removed.

@@ -1,0 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: list remplie par <input file>, seule dans sa fenêtre : sa 1re rangée ressort -->
+<window><vbox>
+<list><variable>LI</variable><input file>donnees/deux-lignes.txt</input></list>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

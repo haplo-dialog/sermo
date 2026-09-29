@@ -1,0 +1,11 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: progressbar : la barre lit sa commande ligne par ligne et, arrivée à 100, déclenche son action (ici exit) ; sans cela le dialogue ne se ferme pas ; nommée, la barre exporte une valeur vide (étalon gtk3) -->
+<window><vbox>
+<entry><variable>TEMOIN</variable><default>vu</default></entry>
+<progressbar>
+<variable>PB</variable>
+<label>debut</label>
+<input>echo 10; echo etape; echo 50; echo 100</input>
+<action function="exit">fin</action>
+</progressbar>
+</vbox></window>

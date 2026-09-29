@@ -1,0 +1,44 @@
+/* SPDX-License-Identifier: GPL-2.0-or-later */
+/*
+ * Copyright (C) 2026 S. Cage
+ * haplo-dialog <devel@haplo-dialog.fr>
+ */
+/* config.h.in — modèle de configuration du port ncursessermo.
+ *
+ * ⚠️ NE PAS créer de config.h à la main : il est ENGENDRÉ par CMake depuis ce
+ * modèle, dans le répertoire de construction. La copie écrite à la main qu'il
+ * remplace portait la version en dur, avec la consigne de la « garder en
+ * accord » avec CMakeLists.txt — une resynchronisation que rien ne vérifiait.
+ *
+ * La version vient de project(... VERSION ...), qui la lit dans le fichier
+ * VERSION à la racine du dépôt : plus rien à resynchroniser.
+ *
+ * ncursessermo — haplo-dialog — Licence : GPL-2.0-or-later
+ */
+#ifndef NCURSESSERMO_CONFIG_H
+#define NCURSESSERMO_CONFIG_H
+
+/* Détails de construction */
+#define BUILD_DETAILS "@PROJECT_NAME@ @PROJECT_VERSION@ (haplo-dialog)"
+
+#define PACKAGE           "@PROJECT_NAME@"
+#define PACKAGE_BUGREPORT "devel@haplo-dialog.fr"
+#define PACKAGE_NAME      "@PROJECT_NAME@"
+#define PACKAGE_STRING    "@PROJECT_NAME@ @PROJECT_VERSION@"
+#define PACKAGE_TARNAME   "@PROJECT_NAME@"
+#define PACKAGE_URL       "https://haplo-dialog.fr"
+#define PACKAGE_VERSION   "@PROJECT_VERSION@"
+#define VERSION           "@PROJECT_VERSION@"
+
+/* Le port ncurses dessine ses widgets dans un terminal (ncursesw) : ni
+ * GtkBuilder/glade, ni widget terminal VTE, ni surveillance de fichiers par
+ * inotify de glib. HAVE_GLADE_LIB est aussi posé (à l'identique) par
+ * ncurses-compat.h, inclus de force : on le garde pour éviter une
+ * redéfinition. */
+#ifndef HAVE_GLADE_LIB
+#  define HAVE_GLADE_LIB 0
+#endif
+#define HAVE_VTE           0
+#define HAVE_SYS_INOTIFY_H 0
+
+#endif /* NCURSESSERMO_CONFIG_H */

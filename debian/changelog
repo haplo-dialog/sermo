@@ -1,0 +1,145 @@
+sermo (2.7.3-1) unstable; urgency=medium
+
+  * Nouvelle version amont 2.7.3 : une limite de taille pour ce que lit un
+    <input>.
+  * Chaque <input>, commande ou fichier, lit au plus 16 Mio. Au-delà, la
+    lecture s'arrête et un avertissement part sur la sortie d'erreur.
+    SERMO_INPUT_MAX change la limite, en octets ; 0 la retire.
+  * gtk3, gtk4 : la barre de progression ne grossit plus sur une commande
+    rapide, et ne fait plus tomber le dialogue quand SERMO_ALLOWED_CMDS
+    refuse sa commande.
+  * gtk3, gtk4 : <edit> ne lit plus un fichier d'un seul tenant ; un
+    fichier de 8 Go faisait tomber le programme.
+  * fltk1, efl1 : <input file> est lu sous la même limite.
+
+ -- s.cage <devel@haplo-dialog.fr>  Thu, 24 Sep 2026 22:21:03 +0200
+
+sermo (2.7.2-3) unstable; urgency=medium
+
+  * Documentation seule : le code ne change pas.
+  * L'entrée 2.7.2-1 cite désormais les dix correctifs faits après la
+    2.7.1 : l'icône des fenêtres, le nom des ports ncurses et sdl3, --help,
+    system-tools, le manuel, SECURITY.md, les safe_exec.h et sermoman-mcp.
+  * Les pages de manuel de gtk3sermo et gtk4sermo prennent leur numéro dans
+    VERSION jusque dans leur commentaire de tête, qui disait encore 2.7.1.
+  * Les documents disent que la 2.7.2 est la première version 2.x publiée,
+    et les commandes d'installation citent les paquets de cette révision.
+
+ -- s.cage <devel@haplo-dialog.fr>  Mon, 21 Sep 2026 10:48:29 +0200
+
+sermo (2.7.2-2) unstable; urgency=medium
+
+  * Les paquets maigrissent de 15 % : 2 011 ko livrés deviennent 1 695 ko.
+    Le code amont ne change pas — c'est une révision Debian.
+  * Le changelog amont n'est plus livré. debhelper installait CHANGELOG.md
+    dans chacun des treize paquets : 51 ko en clair, 19,8 ko gzippés, et
+    déjà compressé donc il traversait la compression du .deb sans maigrir.
+    Soit 251 ko sur l'ensemble, 13 % du poids livré, pour un fichier
+    identique treize fois. Il reste dans le dépôt et sur le site.
+  * Nouveau paquet sermo-doc : il porte le manuel Texinfo et la
+    documentation commune — copyright et changelog Debian. Les cinq paquets
+    indépendants de l'architecture y rattachent leur répertoire de
+    documentation au lieu d'en porter chacun une copie. Un paquet de
+    transition ne contenait rien d'autre que ça : gtk3sermo passe de 32 ko à
+    1,2 ko, soit 96 %.
+  * Les huit paquets dépendants de l'architecture gardent leur copyright :
+    --link-doc ne franchit pas la frontière « all » / « any », debhelper
+    refuse la combinaison depuis le niveau 10. Pour eux le gain vient du
+    changelog retiré : de 10 % (qt6) à 15 % (ncurses, cœur).
+  * Entrée de changelog re-habillée à 76 colonnes : dix-huit avertissements
+    lintian « debian-changelog-line-too-long » tombent.
+
+ -- s.cage <devel@haplo-dialog.fr>  Sun, 20 Sep 2026 18:26:50 +0200
+
+sermo (2.7.2-1) unstable; urgency=medium
+
+  * Chaque port dit son nom dans --version. La ligne est imprimée par le
+    cœur, compilé une fois : il ne connaissait que son propre nom, et les
+    sept binaires répondaient « sermocore version 2.7.1 sermo/libsermocore
+    ». Deux symboles faibles, remplis par contract/sermo_port_id.c, laissent
+    chaque port se nommer ; un backend qui ne les remplit pas se lie quand
+    même et retombe sur l'ancienne ligne — le contrat n'est pas rompu. La
+    POSITION des mots ne bouge pas : la version reste le 3e, que des
+    exemples livrés lisent par rang.
+  * sdl3 : le rendu hors écran ne s'emballe plus. Sa boucle de chauffe
+    redimensionnait la fenêtre à chaque frame, douze fois, alors que la
+    boucle vivante ne le fait qu'une. Un dialogue demandant 560x420 sortait
+    en 560x1530, vide sur les deux tiers.
+  * sdl3 : un enfant extensible laisse la place à ses frères. Dans un hbox,
+    le premier prenait toute la largeur et ses frères disparaissaient ; dans
+    une vbox, il prenait toute la hauteur et le bandeau bas comme la rangée
+    de boutons étaient dessinés sous le bord de la fenêtre.
+  * qt6 : le facteur d'étirement n'était noté nulle part.
+    qt6_layout_register() existait sans être appelée : la table restait
+    vide, les boîtes concluaient qu'aucun enfant n'était extensible et
+    posaient leur ressort de calage à droite. Tout un dialogue s'en trouvait
+    tassé contre le bord droit.
+  * qt6 : --render-png montre la bonne fenêtre, à la bonne taille.
+    adjustSize() écrasait default-width/default-height (500x320 rendus en
+    200x142), et la fenêtre choisie pouvait être une liste déroulante
+    ouverte — image de 2x2 pixels, 4 essais sur 6.
+  * La barre de progression attend un pourcentage de 0 à 100. Le manuel
+    annonçait « entre 0.0 et 1.0 » et son exemple écrivait « echo 0.75 »,
+    qui rend une barre vide sur tous les ports.
+  * Les fenêtres ont enfin une icône. debian/rules n'en installait aucune :
+    seul qt6 en livrait une, en 32 px, par son propre CMakeLists. Les six
+    ports graphiques livrent le logo HD aux huit tailles du thème hicolor
+    (16 à 256 px), engendré depuis icon/haplo-dialog-hd.svg.
+  * Le port ncurses s'annonçait comme le port SDL 3 : une fenêtre sans titre
+    affichait sdl3sermo dans son filet, et ses avertissements portaient
+    [sdl3dialog]. Un terminal ne pouvant pas porter d'icône, le filet du
+    haut écrit désormais « HD » avant le titre.
+  * --help renvoyait les sept ports vers « info qt6sermo » : la chaîne était
+    figée dans le cœur. Elle nomme désormais le port qui tourne.
+  * sdl3sermo se nommait sdl3dialog dans ses avertissements et dans le titre
+    par défaut de sa fenêtre.
+  * examples/system-tools lançait gtk3sermo en dur et ignorait son premier
+    argument : il prend désormais le port en argument, ou le premier des
+    sept qu'il trouve.
+  * Le manuel enseignait six syntaxes que l'analyseur refuse, dont
+    <okbutton/>, qui s'écrit <button ok></button>. Ses 54 blocs XML passent
+    désormais le --print-ir du binaire livré.
+  * Le manuel promettait les valeurs quand l'utilisateur ferme la fenêtre.
+    Fermée par la croix, elle rend EXIT="abort", sans aucune variable.
+  * SECURITY.md ne citait que <linkbutton> comme échappatoire aux deux
+    garde-fous. <terminal> ouvre un /bin/sh par VTE, hors de
+    SERMO_ALLOWED_CMDS et de SERMO_NO_SHELL_FALLBACK ; --include fait passer
+    toute commande par /bin/sh -c.
+  * Quatre safe_exec.h (fltk1, efl1, sdl3, ncurses) annonçaient encore « no
+    /bin/sh -c, no shell injection » deux lignes après avoir décrit le
+    repli.
+  * sermoman-mcp/data/architecture.md annonçait 9 paquets au lieu de 13, et
+    sermo-core-dev dépendant de libc6 alors que son .deb n'a pas de champ
+    Depends.
+  * VERSION à la racine devient la seule source du numéro : les huit projets
+    CMake le lisent, les config.h de ncurses et sdl3 sont engendrés au lieu
+    d'être tenus à la main, et les pages de manuel sont substituées.
+  * Règles install() pour les six backends qui n'en avaient pas : binaire,
+    page de manuel et icônes s'installent aussi depuis les sources, comme le
+    paquet les pose.
+  * Nouveaux bancs : garde_version.sh, garde_identite_port.sh,
+    garde_taille_fenetre.sh (le premier qui regarde la fenêtre, et non les
+    valeurs exportées) et garde_liens_langue.sh. Manuels utilisateur et
+    développeur traduits en anglais.
+
+ -- s.cage <devel@haplo-dialog.fr>  Sun, 20 Sep 2026 14:16:04 +0200
+
+sermo (2.7.1-1) unstable; urgency=medium
+
+  * Première publication de l'édition modulaire en paquet source Debian :
+    le cœur libsermocore et sept backends (gtk3, gtk4, qt6, fltk1, efl1, sdl3,
+    ncurses), un paquet binaire par port, construits par debhelper.
+  * Remplace les paquets 1.x gtk3sermo, gtk4sermo, qt6sermo et gtksermo, qui
+    deviennent des paquets de transition vers sermo-backend-gtk3,
+    sermo-backend-gtk4, sermo-backend-qt6 et sermo-gtkdialog.
+  * debian/copyright au format DEP-5, produit depuis l'arbre suivi par
+    packaging/copyright-dep5.py.
+  * Dépendances calculées par dpkg-shlibdeps ; aucun RUNPATH ; chemins de
+    construction retirés des binaires (-ffile-prefix-map).
+  * Build-Depends : libvte-2.91-dev, libvte-2.91-gtk4-dev et
+    libgtk-layer-shell-dev — <terminal> (gtk3, gtk4) et l'ancrage Wayland (gtk3)
+    sont de nouveau compilés.
+  * L'archive amont n'emporte pas debian/ ; debian/upstream/metadata ; bloc
+    FSFAP pour les métadonnées AppStream de qt6.
+
+ -- s.cage <devel@haplo-dialog.fr>  Thu, 17 Sep 2026 05:22:14 +0200

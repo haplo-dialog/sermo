@@ -1,0 +1,123 @@
+#!/usr/bin/make -f
+# SPDX-License-Identifier: GPL-2.0-or-later
+# debian/rules — sermo 2 : trois variantes du cœur, sept backends, un paquet
+# par port. Chaque backend lie statiquement sa variante du cœur :
+#   gtk3 → GLib, gtk4 → GTK 4, les cinq autres → neutre (sans toolkit).
+
+# Le projet compile avec -D_FORTIFY_SOURCE=3 ; celui de dpkg (=2) le
+# redéfinirait. Tout le reste du durcissement Debian s'applique.
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all,-fortify
+
+include /usr/share/dpkg/architecture.mk
+include /usr/share/dpkg/pkg-info.mk
+
+B := $(CURDIR)/debian/construit
+S := $(CURDIR)/debian/etage
+PORTS := gtk3 gtk4 qt6 fltk1 efl1 sdl3 ncurses
+LIBDIR := lib/$(DEB_HOST_MULTIARCH)
+
+%:
+	dh $@ --buildsystem=cmake
+
+# Rien à configurer d'avance : un backend ne se configure qu'une fois sa
+# variante du cœur construite et installée dans l'étage $(S).
+override_dh_auto_configure:
+
+override_dh_auto_build:
+	# Chaque variante du cœur s'installe dans l'étage, préfixe compris : son
+	# sermocore.pc y désigne alors ses propres en-têtes, sans toucher aux
+	# bibliothèques du système (PKG_CONFIG_SYSROOT_DIR les déplaçait toutes).
+	set -e; for v in neutre glib gtk4; do \
+	    case $$v in glib) o=-DSERMOCORE_GLIB=ON ;; gtk4) o=-DSERMOCORE_GTK4=ON ;; *) o= ;; esac; \
+	    dh_auto_configure --sourcedirectory=libsermocore --builddirectory=$(B)/coeur-$$v -- $$o -DCMAKE_INSTALL_PREFIX=$(S)/$$v; \
+	    dh_auto_build --sourcedirectory=libsermocore --builddirectory=$(B)/coeur-$$v; \
+	    cmake --install $(B)/coeur-$$v; \
+	done
+	set -e; for p in $(PORTS); do \
+	    case $$p in gtk3) v=glib ;; gtk4) v=gtk4 ;; *) v=neutre ;; esac; \
+	    export PKG_CONFIG_PATH=$(S)/$$v/lib/pkgconfig; \
+	    dh_auto_configure --sourcedirectory=sermo-backend-$$p --builddirectory=$(B)/$$p -- -DCMAKE_SKIP_RPATH=ON; \
+	    dh_auto_build --sourcedirectory=sermo-backend-$$p --builddirectory=$(B)/$$p; \
+	done
+	# Le cœur distribué (sermo-core-dev) : variante neutre, préfixe /usr,
+	# bibliothèque et sermocore.pc dans le répertoire multiarch.
+	dh_auto_configure --sourcedirectory=libsermocore --builddirectory=$(B)/coeur-paquet -- -DSERMOCORE_LIBDIR=$(LIBDIR)
+	dh_auto_build --sourcedirectory=libsermocore --builddirectory=$(B)/coeur-paquet
+	# Le manuel Texinfo et la page générique portent le numéro de version :
+	# ils sont substitués depuis leur .in, comme les pages de gtk3 et gtk4.
+	sed 's/@PACKAGE_VERSION@/$(DEB_VERSION_UPSTREAM)/' doc/sermo.texi.in > $(B)/sermo.texi
+	makeinfo --no-split -o $(B)/sermo.info $(B)/sermo.texi
+	sed 's/@PACKAGE_VERSION@/$(DEB_VERSION_UPSTREAM)/' doc/sermo.1.in > $(B)/sermo.1
+
+# Sans affichage : tests unitaires du cœur, et banc XML (--print-ir) sur les
+# sept binaires. Les bancs graphiques tournent dans ci/bancs.sh.
+override_dh_auto_test:
+ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
+	env -u DISPLAY -u WAYLAND_DISPLAY bash tests/run_unit_tests.sh
+	set -e; for p in $(PORTS); do \
+	    env -u DISPLAY -u WAYLAND_DISPLAY TIMEOUT=20 bash tests/xml/run_tests.sh $(B)/$$p/$${p}sermo; \
+	done
+endif
+
+override_dh_auto_install:
+	# Le cœur neutre est le seul distribué (sermo-core-dev).
+	dh_auto_install --sourcedirectory=libsermocore --builddirectory=$(B)/coeur-paquet --destdir=debian/sermo-core-dev
+	# qt6 a ses règles : binaire, page de manuel, icône, lanceur, AppStream.
+	dh_auto_install --sourcedirectory=sermo-backend-qt6 --builddirectory=$(B)/qt6 --destdir=debian/sermo-backend-qt6
+	set -e; for p in gtk3 gtk4 fltk1 efl1 sdl3 ncurses; do \
+	    install -D -m 0755 $(B)/$$p/$${p}sermo debian/sermo-backend-$$p/usr/bin/$${p}sermo; \
+	done
+	# Pages de manuel : propres à gtk3 et gtk4 ; la page générique pour les autres.
+	set -e; for p in gtk3 gtk4; do \
+	    sed 's/@PACKAGE_VERSION@/$(DEB_VERSION_UPSTREAM)/' sermo-backend-$$p/src/$${p}sermo.1.in > $(B)/$${p}sermo.1; \
+	    install -D -m 0644 $(B)/$${p}sermo.1 debian/sermo-backend-$$p/usr/share/man/man1/$${p}sermo.1; \
+	done
+	set -e; for p in fltk1 efl1 sdl3 ncurses; do \
+	    install -D -m 0644 $(B)/sermo.1 debian/sermo-backend-$$p/usr/share/man/man1/$${p}sermo.1; \
+	done
+	# Icônes d'application : le logo HD, à toutes les tailles du thème hicolor.
+	# Sans cette règle, seul qt6 en livrait une (son CMakeLists), et les fenêtres
+	# des cinq autres ports n'avaient pas d'icône dans leur barre de titre.
+	set -e; for p in gtk3 gtk4 qt6 fltk1 efl1 sdl3; do \
+	    for i in sermo-backend-$$p/data/icons/hicolor/*/apps/$${p}sermo.png; do \
+	        install -D -m 0644 $$i debian/sermo-backend-$$p/usr/share/icons/hicolor/$$(basename $$(dirname $$(dirname $$i)))/apps/$${p}sermo.png; \
+	    done; \
+	done
+	# Le manuel Texinfo, sous le nom du port : « info sermo » suit l'alternative.
+	set -e; for p in $(PORTS); do \
+	    install -D -m 0644 $(B)/sermo.info debian/sermo-backend-$$p/usr/share/info/$${p}sermo.info; \
+	done
+	# Et une fois sous son nom générique, dans le paquet de documentation.
+	install -D -m 0644 $(B)/sermo.info debian/sermo-doc/usr/share/info/sermo-doc.info
+
+# Le changelog amont n'est PAS livré. debhelper installe CHANGELOG.md dans
+# chacun des treize paquets ; il pèse 51 ko en clair, et 19,8 ko une fois
+# gzippé — déjà compressé, donc il traverse la compression du .deb sans
+# maigrir. Mesuré le 2026-09-20 : 251 ko sur l'ensemble, 13 % du poids livré,
+# pour un fichier identique treize fois. Il reste dans le dépôt et sur le site.
+# Conséquence assumée : lintian émet « no-upstream-changelog », un
+# avertissement (paquet non natif), pas une erreur.
+# Les paquets indépendants de l'architecture partagent UN répertoire de
+# documentation. Chacun portait sinon les mêmes 48 ko — copyright et changelog
+# identiques au bit près dans les treize paquets — et un paquet de transition
+# ne contient RIEN D'AUTRE que ça : mesuré le 2026-09-20, gtk3sermo pèse 32 ko
+# dont zéro binaire.
+#
+# ⚠️ --link-doc ne franchit pas la frontière « all » / « any » : debhelper
+# refuse activement la combinaison depuis le niveau de compatibilité 10. Les
+# huit paquets « any » (le cœur et les sept backends) gardent donc leur propre
+# copyright ; pour eux, le gain vient du changelog amont retiré ci-dessus.
+override_dh_installdocs:
+	dh_installdocs -psermo-doc
+	dh_installdocs -Nsermo-doc -Nsermo-core-dev -Nsermo-backend-gtk3 \
+	  -Nsermo-backend-gtk4 -Nsermo-backend-qt6 -Nsermo-backend-fltk1 \
+	  -Nsermo-backend-efl1 -Nsermo-backend-sdl3 -Nsermo-backend-ncurses \
+	  --link-doc=sermo-doc
+	dh_installdocs -psermo-core-dev -psermo-backend-gtk3 -psermo-backend-gtk4 \
+	  -psermo-backend-qt6 -psermo-backend-fltk1 -psermo-backend-efl1 \
+	  -psermo-backend-sdl3 -psermo-backend-ncurses
+
+override_dh_installchangelogs:
+	dh_installchangelogs -XCHANGELOG
+
+override_dh_auto_clean:

@@ -1,0 +1,991 @@
+SERMO-XML(5)                 Format de fichier sermo                 SERMO-XML(5)
+
+NOM
+     sermo-xml - syntaxe XML des dialogues sermo
+
+DESCRIPTION
+     sermo lit une description d'interface graphique écrite dans un dialecte
+     XML et affiche la fenêtre correspondante. Il est fait pour être appelé
+     depuis un script (shell, Python, Perl…) : le script décrit la fenêtre en
+     XML, sermo l'affiche, et à la fermeture il rend les valeurs saisies.
+
+     UN SEUL CŒUR, SEPT BACKENDS
+          sermo est bâti autour d'un cœur unique et durci, libsermocore
+          (analyse Flex/Bison + exécution des commandes). Ce cœur ne dépend
+          d'aucune boîte à outils graphique. Le rendu est confié à un backend
+          par toolkit :
+
+               gtk3     gtk4     qt6     fltk1     efl1     sdl3     ncurses
+
+          Le cœur parle aux backends par un contrat interne (sermo_be_*). La
+          SYNTAXE XML ET LE COMPORTEMENT OBSERVABLE SONT IDENTIQUES sur les
+          sept backends : le même script rend une interface équivalente
+          partout. ncurses est le backend terminal (le plus léger, sans
+          serveur graphique).
+
+     La commande « sermo » (/usr/bin/sermo) est un lien géré par
+     update-alternatives(1) : elle résout vers le backend choisi par défaut.
+     On peut aussi appeler un backend précis : gtk3sermo, gtk4sermo, qt6sermo,
+     fltk1sermo, efl1sermo, sdl3sermo, ncursessermo.
+
+     La syntaxe descend de gtkdialog 0.8.3 (Pere Laszlo, 2003-2011). Le paquet
+     du backend GTK 3 fournit le paquet virtuel « gtkdialog », si bien que les
+     vieux scripts qui appellent gtkdialog(1) continuent de fonctionner.
+
+
+STRUCTURE GÉNÉRALE
+         <window title="Titre" width-request="400" height-request="200">
+           <vbox>
+             <text><label>Bonjour !</label></text>
+             <entry><variable>MON_CHAMP</variable></entry>
+             <button ok></button>
+           </vbox>
+         </window>
+
+     Chaque dialogue a un unique élément racine <window> (plusieurs <window>
+     peuvent se suivre dans la même description : voir FENÊTRES MULTIPLES). Les
+     widgets sont imbriqués dans des conteneurs (<hbox>, <vbox>, <frame>…).
+
+
+MODES D'ENTRÉE
+     La description XML est fournie de trois façons :
+
+         echo '<window>...</window>' | sermo --stdin
+         export MON_DIALOG='<window>...</window>' ; sermo --program=MON_DIALOG
+         sermo --file=mon_interface.xml
+
+     Sans --program, --file ni --stdin, sermo lit la variable MAIN_DIALOG.
+
+
+OPTIONS
+     -v, --version
+            Affiche la version et quitte.
+
+     -d, --debug
+            Mode débogage : chaque caractère lu est renvoyé sur la sortie
+            standard à mesure qu'il alimente l'analyseur.
+
+     -p VAR, --program=VAR
+            Lit la description dans la variable d'environnement VAR.
+
+     -f FICHIER, --file=FICHIER
+            Lit la description dans FICHIER.
+
+     -s, --stdin
+            Lit la description sur l'entrée standard.
+
+     --do=CMD
+            Après la fermeture du dialogue, exécute la commande shell CMD. Les
+            valeurs des widgets sont d'abord exportées en variables
+            d'environnement : CMD les lit directement, sans jamais les relire
+            comme du code. C'EST LA VOIE SÛRE pour agir sur une valeur saisie.
+
+     -i FICHIER, --include=FICHIER
+            Rend les fonctions et variables shell de FICHIER disponibles dans
+            chaque <action>. Chaque commande d'action devient « . FICHIER;
+            commande », donc FICHIER est sourcé à neuf dans le sous-shell de
+            chaque action. Seule --do échappe à ce préfixe. Un chemin relatif
+            part du dossier où le programme a été lancé.
+
+     -g FICHIER, --glade-xml=FICHIER
+            gtk3sermo et gtk4sermo SEULEMENT. Construit le dialogue depuis un
+            fichier d'interface GtkBuilder (le format de Glade), écrit pour la
+            version de GTK du port (GTK 4 ne lit pas les fichiers GTK 3). La
+            fenêtre est l'objet que --program désigne (MAIN_WINDOW par défaut) ;
+            chaque widget à identifiant devient une variable de ce nom. Un
+            gestionnaire de signal est une action sermo (commande, exit:…) ; sur
+            « realize », sa sortie remplit le widget. Les cinq autres ports
+            refusent l'option (code 1).
+
+     -w, --no-warning
+            Supprime les avertissements non fatals.
+
+     -G GEOMETRIE, --geometry=GEOMETRIE
+            Position et taille initiales de la fenêtre, [LxH][+X+Y] à la
+            convention X11 (ex. 800x600+0+0).
+
+     -c, --center
+            Centre toutes les fenêtres à l'écran.
+
+     --print-ir
+            Analyse la description, imprime la représentation interne, puis
+            quitte SANS afficher de fenêtre. Utile pour déboguer le XML et pour
+            un test sans écran (y compris sur ncurses).
+
+     --render-png FICHIER.png
+            Rend l'interface en image, hors écran, sans ouvrir de fenêtre
+            (capture déterministe pour la doc ou un test visuel). Disponible
+            sur les six backends graphiques (gtk3, gtk4, qt6, fltk1, efl1,
+            sdl3), et la taille demandee par default-width/default-height
+            est respectee sur les six. ncurses reste un affichage terminal :
+            pas d'image ;
+            aperçu texte via --print-ir.
+
+     --space-expand=ETAT
+            Valeur par défaut de l'état d'empaquetage « expand » (true/false)
+            pour tous les widgets.
+
+     --space-fill=ETAT
+            Valeur par défaut de l'état d'empaquetage « fill » (true/false)
+            pour tous les widgets.
+
+
+ATTRIBUTS COMMUNS
+     Ces attributs valent sur la plupart des widgets :
+
+     width-request=N
+            Largeur minimale en pixels.
+
+     height-request=N
+            Hauteur minimale en pixels.
+
+     visible=true|false
+            Visibilité initiale (défaut : true).
+
+     sensitive=true|false
+            Interactivité (défaut : true). Un widget non sensible est grisé.
+
+     tooltip-text=texte
+            Infobulle affichée au survol.
+
+     space-expand=true|false, space-fill=true|false
+            État d'empaquetage du widget dans sa boîte (prend la place libre /
+            remplit la place prise). Les défauts se règlent globalement par
+            --space-expand et --space-fill.
+
+     scrollable=true|false
+            IL N'EXISTE PAS de balise <scrolledwindow>. Le défilement est un
+            ATTRIBUT posé sur le widget : le cœur l'enveloppe alors dans une
+            zone défilante à sa création. Ex. : <tree scrollable="true">.
+
+
+SOUS-ÉLÉMENTS COMMUNS
+     <label>texte</label>
+            Texte affiché ou étiquette du widget. Une étiquette vide sert
+            d'espaceur : <text><label></label></text>.
+
+     <variable>NOM</variable>
+            Nom de la variable exportée à la fermeture (et repère du widget
+            pour les actions REFRESH:NOM, ENABLE:NOM…).
+
+     <default>valeur</default>
+            Valeur initiale du widget.
+
+     <input>commande</input>
+            Commande shell dont la SORTIE alimente le widget. Relancée à chaque
+            REFRESH sur ce widget.
+
+     <input file>/chemin</input>
+            Alimente le widget depuis le CONTENU d'un fichier. « file » est un
+            attribut NU, sans valeur.
+
+     <action>ACTION:arg</action>
+            Déclenchée par une interaction (clic, changement…). Un mot-clé
+            reconnu (voir ACTIONS) ; sinon, exécutée comme commande shell.
+
+     <item>texte</item>
+            Une entrée d'une liste (<combobox>, <comboboxtext>, <list>,
+            <tree>, <table>). Répéter la balise pour chaque entrée.
+
+     <width>N</width> et <height>N</height>
+            Taille en pixels, forme sous-élément de width-request /
+            height-request.
+
+     <separator>  (synonyme de <menuitemseparator>, hérité de gtkdialog)
+            Séparateur. Comme TOUTE balise sermo, elle s'écrit ouverte puis
+            fermée — <separator></separator> ; la forme auto-fermante
+            <separator/> n'est PAS reconnue par l'analyseur.
+
+     <radio>...</radio>
+            Synonyme exact de <radiobutton>, hérité de gtkdialog.
+
+
+WIDGETS —— RÉFÉRENCE COMPLÈTE
+
+   Fenêtre principale
+     <window>
+            Fenêtre principale du dialogue.
+            Attributs : title, width-request, height-request, resizable,
+            icon-name, decorated. Ancrage Wayland (backend GTK 3) : layer,
+            edge, dist, reserve. Décoration côté client : headerbar.
+
+                <window title="Réglages" width-request="400"
+                        height-request="200" resizable="true"
+                        icon-name="dialog-information">
+                  <vbox>
+                    <text><label>Fenêtre principale</label></text>
+                    <button ok></button>
+                  </vbox>
+                </window>
+
+   Conteneurs
+     <vbox>
+            Empile les enfants de haut en bas.
+            Attributs : spacing, homogeneous, space-expand, space-fill.
+
+     <hbox>
+            Aligne les enfants de gauche à droite. Mêmes attributs que <vbox>.
+
+                <vbox>
+                  <hbox>
+                    <vbox><text><label>Col 1</label></text></vbox>
+                    <vbox><text><label>Col 2</label></text></vbox>
+                  </hbox>
+                  <button ok></button>
+                </vbox>
+
+     <frame>
+            Conteneur avec bordure et titre. Le titre est un ATTRIBUT label=,
+            PAS un sous-élément.
+            ⚠ <frame><label>Titre</label> est une erreur d'analyse.
+
+                <frame label="Section">
+                  <text><label>Contenu du cadre</label></text>
+                </frame>
+
+     <notebook>
+            Onglets. Chaque enfant direct est une page.
+            Attribut : tab-labels (titres séparés par « | »). La forme
+            labels="…" est acceptée mais dépréciée. Aussi : show-tabs,
+            show-border.
+
+                <notebook tab-labels="Général|Avancé">
+                  <vbox><text><label>Page 1</label></text></vbox>
+                  <vbox><text><label>Page 2</label></text></vbox>
+                </notebook>
+
+     <expander>
+            Section repliable. Exporte son etat : true si ouverte, false sinon.
+            Attributs : label, expanded (true/yes/1 ouvre ; ABSENT = replie).
+            Le titre s'ecrit au choix label="..." OU <label>...</label>.
+            ⚠ L'element <label> se place APRES le contenu, avec les autres
+            attributs : la grammaire est <expander> contenu, puis attributs.
+            Place avant, l'analyseur le refuse. <expander Titre> n'existe pas.
+
+                <expander label="Détails" expanded="true">
+                  <text><label>Contenu masqué</label></text>
+                  <variable>OUVERT</variable>
+                </expander>
+
+     <aspectframe>
+            Maintient le ratio largeur/hauteur de son enfant.
+            Attributs : ratio (ex. 1.333), obey-child.
+
+     <eventbox>
+            Conteneur invisible qui capte les événements souris pour un enfant
+            qui n'en reçoit pas de lui-même.
+
+
+   Boutons et contrôles booléens
+     <button>
+            Bouton cliquable.
+            Forme longue : <button><label>Texte</label><action>…</action></button>
+            Formes courtes (attribut nu) : <button ok>, <button cancel>,
+            <button help>, <button yes>, <button no>. Les boutons ok/cancel
+            portent les libellés et raccourcis standard et rendent EXIT=OK /
+            EXIT=Cancel.
+
+                <hbox>
+                  <button><label>Valider</label><action>EXIT:valide</action></button>
+                  <button cancel></button>
+                </hbox>
+
+     <checkbox>
+            Case à cocher. Exporte true ou false.
+
+                <checkbox><label>Option</label><variable>OPT</variable></checkbox>
+
+     <radiobutton>  (synonyme : <radio>)
+            Bouton radio. Un même groupe partage une seule <variable> ; le
+            bouton coché au départ porte la valeur true (via <default>).
+
+                <vbox>
+                  <radiobutton><label>Choix 1</label><variable>R</variable><default>true</default></radiobutton>
+                  <radiobutton><label>Choix 2</label><variable>R</variable></radiobutton>
+                </vbox>
+
+     <togglebutton>
+            Bouton à état enfoncé/relâché. Exporte true ou false.
+
+                <togglebutton><label>Activer</label><variable>ETAT</variable></togglebutton>
+
+     <switch>
+            Interrupteur on/off. Exporte true ou false.
+
+                <switch><label>Mode sombre</label><variable>DARK</variable></switch>
+
+     <linkbutton>
+            Bouton qui ouvre une URL dans le navigateur par défaut.
+            Sous-éléments : <label> (texte), <default> ou <input> (l'URI).
+
+                <linkbutton><label>Site</label><default>https://haplo-dialog.fr</default><variable>LIEN</variable></linkbutton>
+
+
+   Saisie de texte
+     <entry>
+            Champ mono-ligne.
+            Attributs : editable. Sous-éléments : <variable>, <default>,
+            <action signal="activate"> (touche Entrée), <action signal="changed">.
+
+                <entry><variable>NOM</variable><default>Dupont</default></entry>
+
+     <password>
+            Champ masqué (●●●●). Même comportement que <entry>.
+
+                <password><variable>MDP</variable></password>
+
+     <searchentry>
+            Champ de recherche avec icône loupe.
+
+                <searchentry><variable>TERME</variable><default>haplo</default></searchentry>
+
+     <edit>
+            Zone de texte multi-lignes.
+            Attributs : editable, wrap-mode (ex. word).
+
+                <edit editable="true" wrap-mode="word">
+                  <variable>CONTENU</variable>
+                  <default>Texte modifiable sur plusieurs lignes</default>
+                </edit>
+
+
+   Affichage de texte
+     <text>
+            Étiquette statique ou dynamique.
+            Attribut : use-markup (true pour balises <b>, <i>…).
+            Sous-éléments : <label>, ou <variable>+<input> pour un texte
+            rafraîchissable par REFRESH.
+
+                <text><variable>HORLOGE</variable><input>date '+%H:%M:%S'</input></text>
+
+     <statusbar>
+            Barre d'état en bas de fenêtre.
+
+                <statusbar><variable>STATUT</variable><default>Prêt</default></statusbar>
+
+     <infobar>
+            Bandeau d'information coloré.
+            Attribut : message-type (info|warning|error|question).
+
+                <infobar message-type="warning"><label>Vérifiez vos données</label></infobar>
+
+
+   Listes et sélection
+     <comboboxtext>
+            Liste déroulante, texte seul (la plus simple).
+            Sous-éléments : <item> par entrée, <default> pour la sélection
+            initiale.
+
+                <comboboxtext>
+                  <variable>CHOIX</variable>
+                  <item>Option A</item>
+                  <item>Option B</item>
+                </comboboxtext>
+
+     <combobox>
+            Liste déroulante. Sous-éléments : <item>.
+
+                <combobox>
+                  <variable>COMBO</variable>
+                  <item>Debian</item>
+                  <item>Arch</item>
+                </combobox>
+
+     <comboboxentry>
+            Variante de <combobox> dont le champ est ÉDITABLE : on peut saisir
+            une valeur absente de la liste. Nom hérité de gtkdialog.
+
+     <list>
+            Liste à défilement, sélection simple.
+            Sous-éléments : <item>.
+
+                <list>
+                  <variable>SEL</variable>
+                  <item>Debian</item>
+                  <item>Fedora</item>
+                </list>
+
+     <tree>
+            Liste à plusieurs colonnes (séparées par « | »), avec icône de rang
+            optionnelle. Ce n'est PAS un arbre Parent/Enfant.
+            Attributs : exported-column (indice de la colonne exportée),
+            rules-hint (rayures), stock-id (icône par défaut). En-têtes : un
+            <label> « Col1|Col2 ». Lignes : soit des <item> « v1|v2 » (icône
+            propre via stock-id), soit la sortie d'un <input> (colonne d'icône
+            désignée par icon-column).
+
+                <tree>
+                  <label>Périphérique|Dossier|Fichier</label>
+                  <variable>ARBRE</variable>
+                  <item stock-id="gtk-floppy">Disquette|/floppy/|ak.tex</item>
+                  <item stock-id="gtk-cdrom">CD-ROM|/cdrom/|</item>
+                </tree>
+
+     <table>
+            Grille de données. En-têtes = un <label> unique, colonnes séparées
+            par « | » ; chaque ligne est un <item> au même format.
+            ⚠ <column-header> est une erreur d'analyse.
+
+                <table>
+                  <label>Nom|Taille</label>
+                  <item>fichier.txt|12 ko</item>
+                  <variable>SEL</variable>
+                </table>
+
+
+   Valeurs numériques
+     <spinbutton>
+            Sélecteur numérique avec boutons +/-.
+            Attributs : range-min, range-max, range-step, digits. La valeur de
+            départ se donne par <default> ou <input>.
+
+                <spinbutton range-min="1" range-max="10" range-step="1">
+                  <variable>NUM</variable><default>5</default>
+                </spinbutton>
+
+     <hscale>
+            Glissière horizontale.
+            Attributs : range-min, range-max, range-step, draw-value.
+
+                <hscale range-min="0" range-max="100"><input>echo 50</input><variable>H</variable></hscale>
+
+     <vscale>
+            Glissière verticale. Mêmes attributs que <hscale>.
+
+                <vscale range-min="0" range-max="100"><input>echo 50</input><variable>V</variable></vscale>
+
+     <levelbar>
+            Jauge de niveau (lecture seule).
+            Attributs : range-min, range-max, mode (continuous|discrete).
+
+                <levelbar range-min="0" range-max="100" mode="discrete">
+                  <variable>NIVEAU</variable><input>echo 60</input>
+                </levelbar>
+
+
+   Progression et activité
+     <progressbar>
+            Barre de progression. Elle avance en lisant des nombres (0 à 100,
+            en pourcents) sur la sortie de son <input> ; un <label> donne le
+            texte affiché. Le mot « 100 » (ou la fin de l'<input>) la remplit.
+
+                <progressbar>
+                  <label>Traitement en cours…</label>
+                  <input>for i in $(seq 0 10 100); do echo $i; sleep 0.3; done</input>
+                  <action function="exit">Terminé</action>
+                </progressbar>
+
+     <spinner>
+            Roue d'activité animée (avancement inconnu).
+            Attribut : active (true|false).
+
+                <spinner></spinner>
+
+     <pulse>
+            Barre de progression en mode indéterminé : elle bat sans connaître
+            l'avancement. Pour un pourcentage, voir <progressbar>.
+            Attributs : text, show-text.
+
+
+   Date et heure
+     <calendar>
+            Sélecteur de date graphique. Exporte la date au format ISO 8601
+            AAAA-MM-JJ.
+
+                <calendar><variable>DATE</variable><default>2026-05-21</default></calendar>
+
+
+   Médias et dessin
+     <pixmap>
+            Affichage d'image. Le chemin est le CONTENU d'un <input>, « file »
+            étant un attribut NU.
+            ⚠ <pixmap><filename>…</filename> est une erreur d'analyse.
+
+                <pixmap><input file>/usr/share/pixmaps/debian-logo.png</input></pixmap>
+
+            Icône du thème, forme « stock » :
+
+                <pixmap><input file stock="gtk-info"></input></pixmap>
+
+     <image>
+            Image depuis un fichier ou le thème d'icônes. Contrairement à
+            <pixmap>, accepte une taille explicite.
+            Attributs : file, icon-name, icon-size, width, height.
+
+     <drawingarea>
+            Zone de dessin personnalisée.
+
+                <drawingarea width-request="200" height-request="120"><variable>CANEVAS</variable></drawingarea>
+
+     <colorbutton>
+            Sélecteur de couleur. Exporte une couleur (#RRGGBB ou
+            rgba(r,g,b,a)).
+
+                <colorbutton><variable>COULEUR</variable><default>#ff6600</default></colorbutton>
+
+     <fontbutton>
+            Sélecteur de police. Exporte le nom de la police.
+
+                <fontbutton><variable>POLICE</variable><default>Sans 12</default></fontbutton>
+
+
+   Menus
+     <menubar>
+            Barre de menus. Contient des <menu>.
+
+     <menu>
+            Menu déroulant. Le titre est l'ATTRIBUT label=. Contient des
+            <menuitem> et des <menuitemseparator>.
+
+     <menuitem>
+            Entrée de menu. Attributs : label, accel (ex. ctrl-o), stock.
+            Sous-élément : <action>.
+
+     <menuitemseparator>  (synonyme : <separator>)
+            Ligne de séparation dans un menu.
+
+                <menubar>
+                  <menu label="Fichier">
+                    <menuitem label="Ouvrir" accel="ctrl-o"></menuitem>
+                    <menuitemseparator></menuitemseparator>
+                    <menuitem label="Quitter"><action>EXIT:0</action></menuitem>
+                  </menu>
+                </menubar>
+
+
+   Terminal et séparateurs
+     <terminal>
+            Terminal interactif embarqué. NÉCESSITE VTE : disponible sur les
+            backends GTK seulement. Sous-élément : <input> (commande initiale).
+
+     <hseparator>  et  <vseparator>
+            Séparateurs horizontal / vertical. Toujours écrire la balise
+            fermante, par exemple <hseparator></hseparator>.
+
+                <hbox>
+                  <text><label>Gauche</label></text>
+                  <vseparator></vseparator>
+                  <text><label>Droite</label></text>
+                </hbox>
+
+
+   Choix de fichier
+     <filechooser>
+            Bouton qui ouvre un sélecteur de fichier. La valeur exportée est le
+            chemin choisi (absolu).
+            Attribut : action (open, save, select-folder, create-folder).
+
+                <filechooser action="select-folder">
+                  <label>Choisir un dossier</label>
+                  <variable>DOSSIER</variable>
+                </filechooser>
+
+
+   Widgets avancés (reconnus partout par l'analyseur ; rendu complet sur
+   gtk3/gtk4, dégradé ou ignoré sur les backends légers)
+     <chooser>
+            Sélecteur de fichier EMBARQUÉ dans la fenêtre — à distinguer de
+            <filechooser>, qui est un bouton ouvrant un dialogue. Exporte le
+            chemin choisi ; <default> fixe le dossier de départ.
+            Sur les ports sans GTK (qt6, fltk1, efl1, sdl3, ncurses), il n'y a
+            pas de sélecteur embarqué : <chooser> y devient un <filechooser>,
+            c'est-à-dire un bouton qui ouvre le dialogue du toolkit. La variable
+            exporte alors le fichier choisi, et <default> en est la valeur de
+            départ.
+
+                <chooser>
+                  <variable>FICHIER</variable>
+                  <default>/tmp/</default>
+                </chooser>
+
+     <flowbox>
+            Des enfants qui se rangent TOUT SEULS : autant par ligne que la
+            largeur en permet, le reste passe à la ligne. Là où <grid> fixe
+            le nombre de colonnes, celui-ci s'adapte à la place. Présent sur
+            tous les backends.
+            Attributs : min-children-per-line, max-children-per-line,
+            column-spacing, row-spacing, selection-mode (none par défaut |
+            single | browse | multiple).
+            Variable : l'index de l'enfant sélectionné, vide s'il n'y en a pas.
+            ⚠️ Le reflux réel n'existe que sur gtk3/gtk4 ; les autres ports
+            rangent en N colonnes fixes, et seuls gtk3/gtk4 savent
+            sélectionner (ailleurs la variable reste vide).
+
+                <flowbox min-children-per-line="2" column-spacing="6">
+                  <button><label>Un</label><action>echo 1</action></button>
+                  <button><label>Deux</label><action>echo 2</action></button>
+                  <variable>CHOISI</variable>
+                </flowbox>
+
+     <overlay>
+            Des enfants EMPILÉS : le premier est le fond, les suivants
+            flottent par-dessus (badge, indicateur, bouton posé sur une
+            image). Le seul conteneur du langage qui superpose. Présent sur
+            tous les backends. Variable : chaîne vide, c'est un conteneur.
+            ⚠️ Un TERMINAL ne superpose pas : ncurses dessine le fond puis
+            les couches l'une sous l'autre, précédées d'un repère.
+
+                <overlay>
+                  <pixmap><input file>fond.png</input></pixmap>
+                  <text><label>Par-dessus</label></text>
+                </overlay>
+
+     <revealer>
+            Un enfant qui apparaît et disparaît. Présent sur tous les
+            backends.
+            Attributs : transition (none | crossfade | slide-left |
+            slide-right | slide-up | slide-down, défaut slide-down),
+            duration (millisecondes), reveal (true pour démarrer visible).
+            Variable : « true » ou « false ».
+            ⚠️ L'animation n'existe que sur gtk3/gtk4 ; ailleurs le port
+            montre ou cache, et transition= est accepté puis ignoré.
+
+                <revealer reveal="true">
+                  <text><label>Me voici</label></text>
+                  <variable>VISIBLE</variable>
+                </revealer>
+
+     <stack>
+            Pile de pages dont une seule est visible à la fois, SANS onglets
+            visibles — c'est le script qui décide de la page affichée. Présent
+            sur tous les backends. Chaque enfant direct est une page.
+            Variable : l'index de la page visible (0 pour la première).
+
+     <gvim>
+            Embarque un éditeur gVim dans la fenêtre (famille GTK).
+
+
+   Disposition et navigation
+     <grid>
+            Range ses enfants EN FLOT : ordre du document, retour à la ligne
+            tous les « columns » enfants. Les colonnes sont alignées d'une
+            rangée à l'autre — ce qu'un empilement de <hbox> dans une <vbox>
+            ne sait pas faire. Ce n'est PAS <table>, qui est la liste à
+            colonnes héritée de gtkdialog.
+            Attributs : columns (sans lui, une seule colonne et un
+            avertissement), row-spacing, column-spacing, homogeneous.
+            Par enfant : space-expand, space-fill.
+
+                <grid columns="2" row-spacing="4" column-spacing="8">
+                  <text><label>Nom</label></text>
+                  <entry><variable>NOM</variable></entry>
+                  <text><label>Courriel</label></text>
+                  <entry><variable>MEL</variable></entry>
+                </grid>
+
+     <paned>
+            Deux zones et une poignée que l'UTILISATEUR déplace. <hbox> fige
+            le partage à l'écriture du script ; <paned> le laisse bouger.
+            EXACTEMENT deux enfants : un troisième est refusé avec un message,
+            jamais ignoré en silence.
+            Attributs : orientation (horizontal par défaut — deux zones côte à
+            côte ; vertical — l'une au-dessus de l'autre), position (position
+            initiale, en pixels ou en %), resizable="false" (poignée figée).
+
+                <paned orientation="horizontal" position="35%">
+                  <list><variable>FICHIERS</variable><item>a.txt</item></list>
+                  <edit><variable>CONTENU</variable></edit>
+                </paned>
+
+     <toolbar>
+            Une rangée qui SE DIT barre d'outils : le thème lui donne son fond
+            et ses espacements. Elle contient ce qu'on veut — boutons, cases,
+            champs.
+            Attributs : orientation (horizontal par défaut | vertical),
+            spacing. Variable : chaîne vide, c'est un conteneur.
+
+                <toolbar spacing="6">
+                  <button><label>Ouvrir</label><action>echo ouvrir</action></button>
+                  <checkbox><label>Gras</label><variable>GRAS</variable></checkbox>
+                </toolbar>
+
+     <wizard>
+            Une suite d'étapes : chaque enfant est une étape, et le tag
+            fabrique lui-même la navigation (Précédent, Suivant, Terminer).
+            « Terminer » joue l'<action> du wizard ; il ne FERME rien de
+            lui-même — c'est au script de décider (un <button ok> fait ça).
+            Variable : l'index de l'étape courante.
+
+                <wizard>
+                  <vbox><text><label>Étape 1</label></text></vbox>
+                  <vbox><text><label>Étape 2</label></text></vbox>
+                  <variable>ETAPE</variable>
+                  <action>echo termine</action>
+                </wizard>
+
+     <menubutton>
+            Un menu LÀ OÙ ON EST, pas seulement en haut de fenêtre comme
+            <menubar>. Ses enfants sont des <menuitem> ordinaires.
+            Attribut : label (le texte du bouton).
+            Variable : le libellé du dernier élément choisi, vide avant tout
+            choix.
+            ⚠️ L'ORDRE COMPTE : les <menuitem> d'abord, puis <label> et
+            <variable> — comme pour <eventbox>.
+
+                <menubutton>
+                  <menuitem><label>Copier</label><action>echo copier</action></menuitem>
+                  <menuitem><label>Coller</label><action>echo coller</action></menuitem>
+                  <label>Actions</label>
+                  <variable>CHOIX</variable>
+                </menubutton>
+
+
+   Contrôle du flux
+     <timer>
+            Déclencheur temporel : exécute son <action> à chaque tick.
+            Attributs : interval (période, défaut 1 ; en SECONDES, sauf si
+            milliseconds="true"), milliseconds ("true" pour compter en
+            millisecondes — défaut 1000), visible.
+
+                <timer interval="2">
+                  <action>REFRESH:HORLOGE</action>
+                </timer>
+
+            Précision en millisecondes :
+
+                <timer milliseconds="true" interval="500" visible="false">
+                  <action>EXIT:0</action>
+                </timer>
+
+
+ACTIONS
+     Une <action> reconnaît les mots-clés suivants (préfixe : cible) :
+
+     EXIT:valeur
+            Ferme la fenêtre et exporte EXIT=valeur.
+
+     CLOSEWINDOW:NOM
+            Ferme la fenêtre contenant le widget nommé. Le préfixe est bien
+            « closewindow » : un préfixe INCONNU n'est pas signalé, il part au
+            shell comme commande ordinaire.
+
+     LAUNCH:NOM
+            Ouvre une autre fenêtre, identifiée par son attribut name=.
+
+     REFRESH:NOM
+            Relance l'<input> du widget nommé.
+
+     SAVE:NOM
+            Sauvegarde l'état du widget nommé.
+
+     CLEAR:NOM
+            Vide le contenu du widget nommé.
+
+     APPEND:NOM
+            Ajoute du contenu au widget nommé.
+
+     FILESELECT:NOM
+            Ouvre un sélecteur de fichier alimentant la variable nommée.
+
+     ENABLE:NOM / DISABLE:NOM
+            (Dés)active le widget nommé.
+
+     SHOW:NOM / HIDE:NOM
+            (In)visibilise le widget nommé.
+
+     GRABFOCUS:NOM
+            Donne le focus clavier au widget nommé.
+
+     PRESENTWINDOW:NOM
+            Met la fenêtre nommée au premier plan.
+
+     Toute action non reconnue comme mot-clé est exécutée comme commande shell
+     (voir SÉCURITÉ).
+
+
+SIGNAUX
+     Par défaut, <action> réagit au signal principal du widget (clic pour un
+     bouton). Pour un autre signal, poser l'attribut signal= :
+
+         <entry>
+           <action signal="activate">EXIT:ok</action>       <!-- touche Entrée -->
+           <action signal="changed">REFRESH:APERCU</action>  <!-- à chaque frappe -->
+         </entry>
+
+     Signaux courants : activate, changed, clicked, toggled, value-changed,
+     cursor-changed, select-row.
+
+
+ACTIONS CONDITIONNELLES
+     Une action peut être gardée par un test :
+
+         <button>
+           <label>Selon l'état</label>
+           <action condition="command_is_true(test $CASE = 1)">REFRESH:A</action>
+           <action condition="command_is_false(test $CASE = 1)">REFRESH:B</action>
+         </button>
+
+
+FENÊTRES MULTIPLES
+     Une description peut contenir plusieurs <window>, chacune avec un attribut
+     name=. LAUNCH:NOM ouvre une fenêtre ; closewindow:NOM la ferme. Une
+     fenêtre secondaire démarre souvent cachée (visible="false").
+
+         <window title="Principal" name="PRINCIPALE">
+           <vbox>
+             <button><label>Réglages</label><action>LAUNCH:REGLAGES</action></button>
+             <button><label>Quitter</label><action>EXIT:quitte</action></button>
+           </vbox>
+         </window>
+         <window title="Réglages" name="REGLAGES" visible="false">
+           <vbox>
+             <text><label>Fenêtre de réglages</label></text>
+             <button><label>Fermer</label><action>closewindow:REGLAGES</action></button>
+           </vbox>
+         </window>
+
+
+VARIABLES DE SORTIE
+     Quand une action produit une sortie (EXIT, REFRESH…), sermo imprime sur la
+     sortie standard la valeur de chaque widget nommé, sous la forme :
+
+         NOM="valeur"
+
+     Ces lignes échappent les quatre caractères que le shell développe entre
+     guillemets doubles ( \  "  $  et l'accent grave ), pour qu'un eval du
+     script appelant ne les exécute pas.
+
+         eval "$(sermo --program=DIALOG)"
+         echo "Nom saisi : $NOM"
+
+     ATTENTION : la valeur d'un champ est tapée par la personne qui SE SERT du
+     dialogue, pas forcément celle qui l'a écrit. Si cela compte, préférer
+     --do : les valeurs arrivent par l'environnement et ne sont jamais relues
+     comme du code.
+
+         sermo --program=DIALOG --do='[ "$EXIT" = "OK" ] && echo "Bonjour $NOM"'
+
+
+SÉCURITÉ
+     MODÈLE DE CONFIANCE
+            Le script XML vient de l'auteur du dialogue, qui a déjà le droit de
+            lancer des commandes. Ce n'est PAS un bac à sable : une <action> ou
+            un <input> exécute ce qu'on y écrit.
+
+     COMMENT LES COMMANDES SONT EXÉCUTÉES
+            Si la commande ne contient AUCUN métacaractère shell, elle est
+            lancée directement par exec(), sans shell — l'injection est alors
+            impossible. Sinon, repli journalisé sur /bin/sh -c, qui rend la
+            pleine puissance du shell ET la pleine surface d'injection.
+
+     DEUX VERROUS, À POSER SOI-MÊME
+            SERMO_NO_SHELL_FALLBACK=1
+                   Refuse le repli /bin/sh -c et échoue proprement. Les
+                   commandes sans métacaractère continuent de passer par
+                   exec().
+
+            SERMO_ALLOWED_CMDS=cmd1,cmd2,...
+                   Liste blanche : un nom seul (et le chemin où le PATH le
+                   trouve) ou un chemin exact ; un homonyme posé ailleurs est
+                   refusé. Anciens noms HAPLO_… encore lus. Non posée par
+                   défaut. Prévue pour déployer un dialogue dans un contexte
+                   moins fiable (kiosque, session invité). Tant qu'elle est
+                   posée, le repli /bin/sh -c est REFUSÉ aussi.
+
+     TAILLE DE CE QUE LIT UN <input> (2.7.3)
+            Au plus 16 Mio par <input>, commande ou fichier. Au-delà, la
+            lecture s'arrête comme sur une fin de fichier, et un avertissement
+            part sur la sortie d'erreur. SERMO_INPUT_MAX change la limite (en
+            octets ; 0 la retire). La barre de progression n'est pas
+            plafonnée : elle ne garde qu'une ligne à la fois.
+
+     LA VALEUR D'UN WIDGET N'EST PAS DE CONFIANCE
+            Ne jamais la passer à eval ni la concaténer dans une <action>. La
+            voie sûre pour agir dessus est --do.
+
+
+ENVIRONNEMENT
+     SERMO_DARK
+            Force la variante sombre (valeur vraie) ou claire, sinon sermo suit
+            le thème du système.
+
+     GTK_THEME
+            Force le thème GTK sur les backends GTK (ex. GTK_THEME=Adwaita:dark).
+
+     SERMO_INPUT_MAX
+            Voir SÉCURITÉ. Octets lus au plus par <input> (16 Mio ; 0 = sans
+            limite).
+
+     SERMO_NO_SHELL_FALLBACK
+            Voir SÉCURITÉ. Refuse le repli /bin/sh -c.
+
+     SERMO_ALLOWED_CMDS
+            Voir SÉCURITÉ. Liste blanche de commandes autorisées.
+
+     GTKDIALOG_PIXMAP_PATH
+            Répertoires (séparés par « : ») où chercher une image non trouvée
+            au chemin donné dans le XML.
+
+     MAIN_DIALOG
+            Variable source lue quand ni --program, ni --file, ni --stdin n'est
+            donné.
+
+
+EXEMPLE COMPLET
+         #!/bin/sh
+         export FORMULAIRE='
+         <window title="Inscription" width-request="380" height-request="260">
+           <vbox spacing="8">
+             <frame label="Vos informations">
+               <vbox>
+                 <hbox>
+                   <text><label>Nom :</label></text>
+                   <entry><variable>NOM</variable><default>Dupont</default></entry>
+                 </hbox>
+                 <hbox>
+                   <text><label>Mot de passe :</label></text>
+                   <password><variable>MDP</variable></password>
+                 </hbox>
+                 <checkbox><label>Accepter les conditions</label><variable>CGU</variable></checkbox>
+               </vbox>
+             </frame>
+             <hbox>
+               <button ok></button>
+               <button cancel></button>
+             </hbox>
+           </vbox>
+         </window>'
+
+         sermo --program=FORMULAIRE --do='
+             if [ "$EXIT" = "OK" ] && [ "$CGU" = "true" ] && [ -n "$NOM" ]; then
+                 echo "Inscription de $NOM —— CGU acceptées"
+             else
+                 echo "Inscription annulée ou CGU refusées"
+             fi'
+
+
+DÉPANNAGE
+     « Cannot open display »
+            Session sans serviteur graphique. Exporter DISPLAY=:0, ou utiliser
+            ssh -X, ou choisir le backend terminal ncurses.
+
+     Quel backend derrière « sermo » ?
+            Celui choisi par update-alternatives. Pour forcer, appeler le
+            binaire du backend : gtk3sermo, gtk4sermo, qt6sermo, fltk1sermo,
+            efl1sermo, sdl3sermo.
+
+     <terminal> ne s'affiche pas
+            Il nécessite VTE et n'existe que sur les backends GTK. Vérifier :
+            pkg-config --modversion vte-2.91.
+
+     Vérifier le parse sans afficher de fenêtre
+            sermo --program=VAR --print-ir
+
+
+VOIR AUSSI
+     gtkdialog(1), zenity(1), yad(1)
+     Manuel complet : info sermo
+     En ligne : https://haplo-dialog.fr
+
+
+AUTEURS
+     Pere László (auteur original de gtkdialog, 2003-2007).
+     Thunor (2011-2012).
+     sermo (projet haplo-dialog), 2026 — devel@haplo-dialog.fr
+
+
+LICENCE
+     Documentation sous licence GPL-2.0-or-later.
+     Logiciel sous licence GPL-2.0-or-later.
+
+sermo 2.7.3                        2026-09                          SERMO-XML(5)

@@ -1,0 +1,38 @@
+#!/bin/sh
+# SPDX-License-Identifier: CC0-1.0
+# Exemple : <tree> — Arbre hiérarchique
+# Port : qt6sermo (Qt6 >= 6.2.0)
+# Motif « --do » : le dialogue rappelle CE script pour agir — les valeurs des
+# widgets lui arrivent par l'environnement, jamais par une ligne rejouée au
+# shell. (L'ancien « eval $(...) » évaluait la sortie du dialogue : c'est le
+# geste que la famille sermo déconseille.)
+
+GTKDIALOG=${GTKDIALOG:-qt6sermo}
+SOI=$(readlink -f "$0")
+
+if [ "${1-}" = --do ]; then
+    case "${2-}" in
+        afficher)
+            echo "NODE=${NODE}"
+        ;;
+    esac
+    exit 0
+fi
+
+export MAIN_DIALOG='
+<window title="Arbre qt6sermo" width-request="350" height-request="300">
+  <vbox>
+    <tree>
+      <label>Élément|Détail</label>
+      <variable>NODE</variable>
+      <item>Racine|dossier</item>
+      <item>Enfant 1|fichier</item>
+      <item>Enfant 2|fichier</item>
+    </tree>
+    <button ok>
+      <action>'"$SOI"' --do afficher</action>
+      <action>EXIT:ok</action>
+    </button>
+  </vbox>
+</window>'
+"$GTKDIALOG" --program=MAIN_DIALOG

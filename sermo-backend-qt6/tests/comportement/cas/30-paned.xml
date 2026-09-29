@@ -1,0 +1,8 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: paned : deux zones, la poignee ; les deux enfants survivent et exportent -->
+<window><vbox>
+<paned orientation="horizontal" position="30%">
+<entry><variable>GAUCHE</variable><default>liste</default></entry>
+<edit><variable>DROITE</variable><default>contenu</default></edit>
+</paned>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

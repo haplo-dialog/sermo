@@ -1,0 +1,14 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: expander : l'état ouvert/fermé est exporté, et l'enfant survit dans les deux cas (étalon gtk3) -->
+<window><vbox>
+<expander expanded="true">
+<vbox><entry><variable>E1</variable><default>visible</default></entry></vbox>
+<label>Ouvert</label>
+<variable>EX1</variable>
+</expander>
+<expander expanded="false">
+<vbox><entry><variable>E2</variable><default>replie</default></entry></vbox>
+<label>Ferme</label>
+<variable>EX2</variable>
+</expander>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

@@ -1,0 +1,72 @@
+qt6sermo — 1.0.0
+================
+
+Troisième port de la famille sermo : le même langage XML que gtk3sermo et
+gtk4sermo, rendu par Qt 6. Un utilitaire C/C++ qui construit de vraies fenêtres
+natives depuis un script shell — ou depuis n'importe quel langage interprété.
+
+S'installe à côté de gtk3sermo (GTK 3) et gtk4sermo (GTK 4), sans conflit :
+chaque port a son propre binaire.
+
+  Projet      : haplo-dialog
+  Binaire     : /usr/bin/qt6sermo
+  Qt          : >= 6.2.0
+  QTermWidget : qtermwidget6 (optionnel, pour <terminal>)
+  Licence     : GPL-2.0-or-later
+  Contact     : devel@haplo-dialog.fr
+  Site        : https://haplo-dialog.fr
+  Dépôt       : https://gitlab.com/haplo-dialog/sermo
+
+Pourquoi un port Qt 6 ?
+-----------------------
+  - Il sort la famille de GTK : le même XML, une autre bibliothèque graphique.
+    C'est ce qui prouve que la description est indépendante du moteur de rendu.
+  - Intégration native aux bureaux Qt (KDE Plasma), thème compris.
+  - Wayland comme X11.
+
+Différences avec le port de référence gtk3sermo
+----------------------------------------------
+  - Bibliothèque : Qt 6 (au lieu de GTK 3)
+  - Construction : CMake (au lieu d'autotools) — le MOC de Qt l'impose
+  - Compatibilité : couche src/qt6-compat.h, incluse d'office
+  - Terminal : QTermWidget si présent, sinon zone de texte en lecture seule
+  - Ancrage Wayland (layer-shell) : non porté ; il n'existe que sur gtk3sermo
+
+Dépendances (Debian et dérivées)
+--------------------------------
+  qt6-base-dev (>= 6.2.0)
+  cmake (>= 3.20)
+  flex bison pkg-config g++
+  qtermwidget6-dev   (optionnel — active <terminal>)
+  libglib2.0-dev     (optionnel — seulement pour les tests unitaires du cœur)
+
+Compilation
+-----------
+  cmake -B build -DCMAKE_BUILD_TYPE=Release
+  cmake --build build -j$(nproc)
+  sudo cmake --install build     # installe /usr/bin/qt6sermo
+
+Ce qui est vérifié, et comment
+------------------------------
+  - Suite XML partagée : 55/55. Elle lance --print-ir, qui ANALYSE le XML sans
+    ouvrir de fenêtre — utile, mais elle ne dit rien du comportement.
+  - Banc de comportement : 24/24, dans tests/comportement/. Celui-là lance
+    vraiment le dialogue sous Xvfb et compare CHAQUE valeur rendue au shell à
+    celle que rend gtk3sermo, le port de référence. C'est lui qui fait foi :
+    c'est ainsi qu'on a trouvé un <edit> dont la commande <input> n'était jamais
+    exécutée, alors que la suite XML était verte.
+  - 47 fichiers de widgets.
+  - Les deux suites sont rejouées par l'intégration continue à chaque poussée.
+
+Sécurité
+--------
+  Même durcissement que les autres ports : pas de system(), une couche
+  safe_exec avec repli shell journalisé et refusable (SERMO_NO_SHELL_FALLBACK),
+  liste blanche facultative SERMO_ALLOWED_CMDS, et l'option --do pour n'avoir
+  jamais à passer les valeurs du dialogue à eval.
+
+Origine
+-------
+  Descendant de gtkdialog, créé par Pere László (2003-2013) et continué par
+  Thunor (2011-2012), sous la même licence que l'original. Voir AUTHORS et
+  COPYING.

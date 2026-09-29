@@ -1,0 +1,3 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: colorbutton (etalon gtk3sermo) -->
+<window><vbox><colorbutton><variable>CL</variable><default>#ff0000</default></colorbutton><timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

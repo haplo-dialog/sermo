@@ -1,0 +1,74 @@
+sermo (édition modulaire), Liste des auteurs et contributeurs
+=============================================================
+
+Projet : sermo — édition modulaire (cœur libsermocore + backends de rendu)
+Site   : https://haplo-dialog.fr
+Email  : devel@haplo-dialog.fr
+
+──────────────────────────────────────────────────
+Auteur principal
+──────────────────────────────────────────────────
+
+S. Cage — haplo-dialog <devel@haplo-dialog.fr>
+  - Cœur libsermocore (analyse + exécution durcie, sans toolkit)
+  - Sept backends de rendu : gtk3, gtk4, qt6, fltk1, efl1, sdl3, ncurses
+  - Packaging séparé, contrat de frontière cœur↔backend
+
+──────────────────────────────────────────────────
+Lignée sermo
+──────────────────────────────────────────────────
+
+L'édition modulaire reprend la lignée sermo (43+ widgets, durcissement
+safe_system, échappement de sortie, lexer/parser unifié sur l'étalon gtk3sermo).
+
+──────────────────────────────────────────────────
+Upstream original, gtkdialog
+──────────────────────────────────────────────────
+
+sermo est un fork de gtkdialog. Les notices de copyright de l'amont sont
+conservées dans chaque fichier qui en descend (voir LICENCES.md).
+
+Pere László <pipas@linux.pte.hu>
+  - Auteur original de gtkdialog (copyright 2003-2007)
+
+Thunor <thunorsif@hotmail.com>
+  - Mainteneur de gtkdialog 0.8.x, jusqu'à la 0.8.3 (copyright 2011-2012)
+
+Kiss Gábor <gabor@gamma.ttk.pte.hu>
+  - Documentation de gtkdialog
+
+Correctifs de gtkdialog (d'après son fichier AUTHORS) :
+  Moose On The Loose <kensmith1313666@gmail.com>, Patriot,
+  Fabio Tranchitella <kobold@debian.org>, Luca Falavigna <dktrkranz@ubuntu.com>,
+  Szabo Viktor <wyck@freemail.hu>, Csaszar-Csutoras Peter <spy@c2.hu>
+
+──────────────────────────────────────────────────
+Portage GTK3 tiers, BunsenLabs / Puppy Linux
+──────────────────────────────────────────────────
+
+Dima Krasner <dima@dimakrasner.com>
+  - Support Wayland layer-shell dans le fork BunsenLabs (2021)
+
+Mick Amadio <01micko@gmail.com>
+  - Support Wayland layer-shell (2021-2024)
+
+──────────────────────────────────────────────────
+Code tiers embarqué (backend sdl3)
+──────────────────────────────────────────────────
+
+Omar Cornut
+  - Dear ImGui (MIT)
+
+Sean Barrett
+  - Bibliothèques stb, modifiées par Dear ImGui (MIT ou domaine public)
+
+Tristan Grimmer, Disco Hello
+  - Polices ProggyClean et ProggyForever (MIT)
+
+──────────────────────────────────────────────────
+Assistance IA
+──────────────────────────────────────────────────
+
+Une partie du code, de la documentation et des tests a été écrite avec
+l'assistance d'un modèle de langage (Claude, Anthropic), sous la direction
+et la relecture du mainteneur. C'est dit ici, une fois pour toutes.

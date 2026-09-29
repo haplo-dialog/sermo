@@ -1,0 +1,3 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: switch (etalon gtk3sermo) -->
+<window><vbox><switch><variable>SW</variable><default>true</default></switch><timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

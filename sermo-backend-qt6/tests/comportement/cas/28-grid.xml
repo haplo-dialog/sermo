@@ -1,0 +1,8 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: grid : deux colonnes, les enfants survivent et exportent leurs valeurs -->
+<window><vbox>
+<grid columns="2" row-spacing="4" column-spacing="8">
+<text><label>Nom</label></text><entry><variable>NOM</variable><default>Jean</default></entry>
+<text><label>Ville</label></text><entry><variable>VILLE</variable><default>Lyon</default></entry>
+</grid>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

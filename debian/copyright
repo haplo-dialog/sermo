@@ -1,0 +1,626 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: sermo
+Upstream-Contact: s.cage <devel@haplo-dialog.fr>
+Source: https://gitlab.com/haplo-dialog/sermo
+Comment: sermo descend de gtkdialog 0.8.3, écrit par László Pere (2003-2007) et
+ repris par Thunor (2011-2012), sous GPL-2+. Les fichiers repris de l'amont
+ conservent leur copyright d'origine ; la provenance mesurée, port par port, est
+ dans LICENCES.md. Ce fichier est produit depuis l'arbre suivi par git : chaque
+ liste de fichiers est exacte.
+
+Files: *
+Copyright: 2026 S. Cage <devel@haplo-dialog.fr>
+License: GPL-2+
+
+Files: doc/sermo.1.in
+       doc/sermo.texi.in
+       libsermocore/include/actions.h
+       libsermocore/include/attributes.h
+       libsermocore/include/automaton.h
+       libsermocore/include/glade_support.h
+       libsermocore/include/gtk3d.h
+       libsermocore/include/macros.h
+       libsermocore/include/printing.h
+       libsermocore/include/signals.h
+       libsermocore/include/stack.h
+       libsermocore/include/stringman.h
+       libsermocore/include/tag_attributes.h
+       libsermocore/include/variables.h
+       libsermocore/include/widgets.h
+       libsermocore/src-gtk4/actions.c
+       libsermocore/src-gtk4/actions.h
+       libsermocore/src-gtk4/attributes.c
+       libsermocore/src-gtk4/attributes.h
+       libsermocore/src-gtk4/automaton.c
+       libsermocore/src-gtk4/automaton.h
+       libsermocore/src-gtk4/glade_support.h
+       libsermocore/src-gtk4/gtkdialog.c
+       libsermocore/src-gtk4/gtkdialog.h
+       libsermocore/src-gtk4/macros.h
+       libsermocore/src-gtk4/printing.h
+       libsermocore/src-gtk4/signals.c
+       libsermocore/src-gtk4/signals.h
+       libsermocore/src-gtk4/stack.c
+       libsermocore/src-gtk4/stack.h
+       libsermocore/src-gtk4/stringman.c
+       libsermocore/src-gtk4/stringman.h
+       libsermocore/src-gtk4/tag_attributes.c
+       libsermocore/src-gtk4/tag_attributes.h
+       libsermocore/src-gtk4/variables.c
+       libsermocore/src-gtk4/variables.h
+       libsermocore/src-gtk4/widget_button.h
+       libsermocore/src-gtk4/widget_calendar.h
+       libsermocore/src-gtk4/widget_checkbox.h
+       libsermocore/src-gtk4/widget_colorbutton.h
+       libsermocore/src-gtk4/widget_combobox.h
+       libsermocore/src-gtk4/widget_comboboxtext.h
+       libsermocore/src-gtk4/widget_edit.h
+       libsermocore/src-gtk4/widget_entry.h
+       libsermocore/src-gtk4/widget_eventbox.h
+       libsermocore/src-gtk4/widget_expander.h
+       libsermocore/src-gtk4/widget_filechooser.h
+       libsermocore/src-gtk4/widget_fontbutton.h
+       libsermocore/src-gtk4/widget_frame.h
+       libsermocore/src-gtk4/widget_hbox.h
+       libsermocore/src-gtk4/widget_hscale.h
+       libsermocore/src-gtk4/widget_hseparator.h
+       libsermocore/src-gtk4/widget_linkbutton.h
+       libsermocore/src-gtk4/widget_list.h
+       libsermocore/src-gtk4/widget_menubar.h
+       libsermocore/src-gtk4/widget_menuitem.h
+       libsermocore/src-gtk4/widget_notebook.h
+       libsermocore/src-gtk4/widget_pixmap.h
+       libsermocore/src-gtk4/widget_progressbar.h
+       libsermocore/src-gtk4/widget_radiobutton.h
+       libsermocore/src-gtk4/widget_spinbutton.h
+       libsermocore/src-gtk4/widget_statusbar.h
+       libsermocore/src-gtk4/widget_switch.h
+       libsermocore/src-gtk4/widget_table.h
+       libsermocore/src-gtk4/widget_terminal.h
+       libsermocore/src-gtk4/widget_text.h
+       libsermocore/src-gtk4/widget_timer.h
+       libsermocore/src-gtk4/widget_tree.h
+       libsermocore/src-gtk4/widget_vbox.h
+       libsermocore/src-gtk4/widget_window.h
+       libsermocore/src-gtk4/widgets.h
+       libsermocore/src/actions.c
+       libsermocore/src/attributes.c
+       libsermocore/src/automaton.c
+       libsermocore/src/gtkdialog.c
+       libsermocore/src/gtkdialog_lexer.l
+       libsermocore/src/gtkdialog_parser.y
+       libsermocore/src/signals.c
+       libsermocore/src/stack.c
+       libsermocore/src/stringman.c
+       libsermocore/src/tag_attributes.c
+       libsermocore/src/variables.c
+       sermo-backend-efl1/src/actions.h
+       sermo-backend-efl1/src/attributes.h
+       sermo-backend-efl1/src/automaton.h
+       sermo-backend-efl1/src/gtkdialog.h
+       sermo-backend-efl1/src/macros.h
+       sermo-backend-efl1/src/signals.h
+       sermo-backend-efl1/src/stack.h
+       sermo-backend-efl1/src/stringman.h
+       sermo-backend-efl1/src/variables.h
+       sermo-backend-efl1/src/widgets.h
+       sermo-backend-fltk1/src/actions.h
+       sermo-backend-fltk1/src/attributes.h
+       sermo-backend-fltk1/src/automaton.h
+       sermo-backend-fltk1/src/gtkdialog.h
+       sermo-backend-fltk1/src/macros.h
+       sermo-backend-fltk1/src/signals.h
+       sermo-backend-fltk1/src/stack.h
+       sermo-backend-fltk1/src/stringman.h
+       sermo-backend-fltk1/src/tag_attributes.h
+       sermo-backend-fltk1/src/variables.h
+       sermo-backend-fltk1/src/widgets.h
+       sermo-backend-gtk3/src/actions.h
+       sermo-backend-gtk3/src/attributes.h
+       sermo-backend-gtk3/src/automaton.h
+       sermo-backend-gtk3/src/glade_support.c
+       sermo-backend-gtk3/src/glade_support.h
+       sermo-backend-gtk3/src/gtk3d.h
+       sermo-backend-gtk3/src/gtk3sermo.1.in
+       sermo-backend-gtk3/src/haplo-dialog-xml.5.in
+       sermo-backend-gtk3/src/macros.h
+       sermo-backend-gtk3/src/printing.c
+       sermo-backend-gtk3/src/printing.h
+       sermo-backend-gtk3/src/signals.h
+       sermo-backend-gtk3/src/stack.h
+       sermo-backend-gtk3/src/stringman.h
+       sermo-backend-gtk3/src/tag_attributes.h
+       sermo-backend-gtk3/src/tag_set_property.c
+       sermo-backend-gtk3/src/variables.h
+       sermo-backend-gtk3/src/widget_button.c
+       sermo-backend-gtk3/src/widget_button.h
+       sermo-backend-gtk3/src/widget_calendar.c
+       sermo-backend-gtk3/src/widget_calendar.h
+       sermo-backend-gtk3/src/widget_checkbox.c
+       sermo-backend-gtk3/src/widget_checkbox.h
+       sermo-backend-gtk3/src/widget_colorbutton.c
+       sermo-backend-gtk3/src/widget_colorbutton.h
+       sermo-backend-gtk3/src/widget_combobox.c
+       sermo-backend-gtk3/src/widget_combobox.h
+       sermo-backend-gtk3/src/widget_comboboxtext.c
+       sermo-backend-gtk3/src/widget_comboboxtext.h
+       sermo-backend-gtk3/src/widget_edit.c
+       sermo-backend-gtk3/src/widget_edit.h
+       sermo-backend-gtk3/src/widget_entry.c
+       sermo-backend-gtk3/src/widget_entry.h
+       sermo-backend-gtk3/src/widget_eventbox.c
+       sermo-backend-gtk3/src/widget_eventbox.h
+       sermo-backend-gtk3/src/widget_expander.c
+       sermo-backend-gtk3/src/widget_expander.h
+       sermo-backend-gtk3/src/widget_filechooser.c
+       sermo-backend-gtk3/src/widget_filechooser.h
+       sermo-backend-gtk3/src/widget_fontbutton.c
+       sermo-backend-gtk3/src/widget_fontbutton.h
+       sermo-backend-gtk3/src/widget_frame.c
+       sermo-backend-gtk3/src/widget_frame.h
+       sermo-backend-gtk3/src/widget_hbox.c
+       sermo-backend-gtk3/src/widget_hbox.h
+       sermo-backend-gtk3/src/widget_hscale.c
+       sermo-backend-gtk3/src/widget_hscale.h
+       sermo-backend-gtk3/src/widget_hseparator.c
+       sermo-backend-gtk3/src/widget_hseparator.h
+       sermo-backend-gtk3/src/widget_infobar.c
+       sermo-backend-gtk3/src/widget_linkbutton.c
+       sermo-backend-gtk3/src/widget_linkbutton.h
+       sermo-backend-gtk3/src/widget_list.c
+       sermo-backend-gtk3/src/widget_list.h
+       sermo-backend-gtk3/src/widget_menubar.c
+       sermo-backend-gtk3/src/widget_menubar.h
+       sermo-backend-gtk3/src/widget_menuitem.c
+       sermo-backend-gtk3/src/widget_menuitem.h
+       sermo-backend-gtk3/src/widget_notebook.c
+       sermo-backend-gtk3/src/widget_notebook.h
+       sermo-backend-gtk3/src/widget_pixmap.c
+       sermo-backend-gtk3/src/widget_pixmap.h
+       sermo-backend-gtk3/src/widget_progressbar.c
+       sermo-backend-gtk3/src/widget_progressbar.h
+       sermo-backend-gtk3/src/widget_radiobutton.c
+       sermo-backend-gtk3/src/widget_radiobutton.h
+       sermo-backend-gtk3/src/widget_searchentry.c
+       sermo-backend-gtk3/src/widget_spinbutton.c
+       sermo-backend-gtk3/src/widget_spinbutton.h
+       sermo-backend-gtk3/src/widget_statusbar.c
+       sermo-backend-gtk3/src/widget_statusbar.h
+       sermo-backend-gtk3/src/widget_switch.c
+       sermo-backend-gtk3/src/widget_switch.h
+       sermo-backend-gtk3/src/widget_table.c
+       sermo-backend-gtk3/src/widget_table.h
+       sermo-backend-gtk3/src/widget_terminal.c
+       sermo-backend-gtk3/src/widget_terminal.h
+       sermo-backend-gtk3/src/widget_text.c
+       sermo-backend-gtk3/src/widget_text.h
+       sermo-backend-gtk3/src/widget_timer.c
+       sermo-backend-gtk3/src/widget_timer.h
+       sermo-backend-gtk3/src/widget_tree.c
+       sermo-backend-gtk3/src/widget_tree.h
+       sermo-backend-gtk3/src/widget_vbox.c
+       sermo-backend-gtk3/src/widget_vbox.h
+       sermo-backend-gtk3/src/widget_vscale.h
+       sermo-backend-gtk3/src/widget_vseparator.h
+       sermo-backend-gtk3/src/widget_window.h
+       sermo-backend-gtk3/src/widgets.c
+       sermo-backend-gtk3/src/widgets.h
+       sermo-backend-gtk4/src/glade_support.c
+       sermo-backend-gtk4/src/glade_support.h
+       sermo-backend-gtk4/src/gtk4sermo-xml.5.in
+       sermo-backend-gtk4/src/gtk4sermo.1.in
+       sermo-backend-gtk4/src/gtkdialog.h
+       sermo-backend-gtk4/src/macros.h
+       sermo-backend-gtk4/src/printing.c
+       sermo-backend-gtk4/src/printing.h
+       sermo-backend-gtk4/src/tag_attributes.h
+       sermo-backend-gtk4/src/tag_set_property.c
+       sermo-backend-gtk4/src/widget_button.c
+       sermo-backend-gtk4/src/widget_button.h
+       sermo-backend-gtk4/src/widget_calendar.c
+       sermo-backend-gtk4/src/widget_calendar.h
+       sermo-backend-gtk4/src/widget_checkbox.c
+       sermo-backend-gtk4/src/widget_checkbox.h
+       sermo-backend-gtk4/src/widget_colorbutton.c
+       sermo-backend-gtk4/src/widget_colorbutton.h
+       sermo-backend-gtk4/src/widget_combobox.c
+       sermo-backend-gtk4/src/widget_combobox.h
+       sermo-backend-gtk4/src/widget_comboboxtext.c
+       sermo-backend-gtk4/src/widget_comboboxtext.h
+       sermo-backend-gtk4/src/widget_edit.c
+       sermo-backend-gtk4/src/widget_edit.h
+       sermo-backend-gtk4/src/widget_entry.c
+       sermo-backend-gtk4/src/widget_entry.h
+       sermo-backend-gtk4/src/widget_eventbox.c
+       sermo-backend-gtk4/src/widget_eventbox.h
+       sermo-backend-gtk4/src/widget_expander.c
+       sermo-backend-gtk4/src/widget_expander.h
+       sermo-backend-gtk4/src/widget_filechooser.c
+       sermo-backend-gtk4/src/widget_filechooser.h
+       sermo-backend-gtk4/src/widget_fontbutton.c
+       sermo-backend-gtk4/src/widget_fontbutton.h
+       sermo-backend-gtk4/src/widget_frame.c
+       sermo-backend-gtk4/src/widget_frame.h
+       sermo-backend-gtk4/src/widget_hbox.c
+       sermo-backend-gtk4/src/widget_hbox.h
+       sermo-backend-gtk4/src/widget_hscale.c
+       sermo-backend-gtk4/src/widget_hscale.h
+       sermo-backend-gtk4/src/widget_hseparator.c
+       sermo-backend-gtk4/src/widget_hseparator.h
+       sermo-backend-gtk4/src/widget_infobar.c
+       sermo-backend-gtk4/src/widget_linkbutton.c
+       sermo-backend-gtk4/src/widget_linkbutton.h
+       sermo-backend-gtk4/src/widget_list.c
+       sermo-backend-gtk4/src/widget_list.h
+       sermo-backend-gtk4/src/widget_menubar.h
+       sermo-backend-gtk4/src/widget_menuitem.h
+       sermo-backend-gtk4/src/widget_notebook.c
+       sermo-backend-gtk4/src/widget_notebook.h
+       sermo-backend-gtk4/src/widget_pixmap.c
+       sermo-backend-gtk4/src/widget_pixmap.h
+       sermo-backend-gtk4/src/widget_progressbar.c
+       sermo-backend-gtk4/src/widget_progressbar.h
+       sermo-backend-gtk4/src/widget_radiobutton.c
+       sermo-backend-gtk4/src/widget_radiobutton.h
+       sermo-backend-gtk4/src/widget_searchentry.c
+       sermo-backend-gtk4/src/widget_spinbutton.c
+       sermo-backend-gtk4/src/widget_spinbutton.h
+       sermo-backend-gtk4/src/widget_statusbar.c
+       sermo-backend-gtk4/src/widget_statusbar.h
+       sermo-backend-gtk4/src/widget_switch.c
+       sermo-backend-gtk4/src/widget_switch.h
+       sermo-backend-gtk4/src/widget_table.h
+       sermo-backend-gtk4/src/widget_terminal.c
+       sermo-backend-gtk4/src/widget_terminal.h
+       sermo-backend-gtk4/src/widget_text.c
+       sermo-backend-gtk4/src/widget_text.h
+       sermo-backend-gtk4/src/widget_timer.c
+       sermo-backend-gtk4/src/widget_timer.h
+       sermo-backend-gtk4/src/widget_tree.c
+       sermo-backend-gtk4/src/widget_tree.h
+       sermo-backend-gtk4/src/widget_vbox.c
+       sermo-backend-gtk4/src/widget_vbox.h
+       sermo-backend-gtk4/src/widget_window.c
+       sermo-backend-gtk4/src/widget_window.h
+       sermo-backend-gtk4/src/widgets.c
+       sermo-backend-gtk4/src/widgets.h
+       sermo-backend-ncurses/src/actions.h
+       sermo-backend-ncurses/src/attributes.h
+       sermo-backend-ncurses/src/automaton.h
+       sermo-backend-ncurses/src/gtkdialog.h
+       sermo-backend-ncurses/src/macros.h
+       sermo-backend-ncurses/src/signals.h
+       sermo-backend-ncurses/src/stack.h
+       sermo-backend-ncurses/src/stringman.h
+       sermo-backend-ncurses/src/tag_attributes.h
+       sermo-backend-ncurses/src/variables.h
+       sermo-backend-ncurses/src/widgets.h
+       sermo-backend-qt6/src/actions.h
+       sermo-backend-qt6/src/attributes.h
+       sermo-backend-qt6/src/automaton.h
+       sermo-backend-qt6/src/gtk3d.h
+       sermo-backend-qt6/src/macros.h
+       sermo-backend-qt6/src/qt6sermo.1.in
+       sermo-backend-qt6/src/signals.h
+       sermo-backend-qt6/src/stack.h
+       sermo-backend-qt6/src/stringman.h
+       sermo-backend-qt6/src/tag_attributes.h
+       sermo-backend-qt6/src/variables.h
+       sermo-backend-qt6/src/widgets.h
+       sermo-backend-sdl3/src/actions.h
+       sermo-backend-sdl3/src/attributes.h
+       sermo-backend-sdl3/src/automaton.h
+       sermo-backend-sdl3/src/glade_support.c
+       sermo-backend-sdl3/src/glade_support.h
+       sermo-backend-sdl3/src/gtkdialog.h
+       sermo-backend-sdl3/src/macros.h
+       sermo-backend-sdl3/src/signals.h
+       sermo-backend-sdl3/src/stack.h
+       sermo-backend-sdl3/src/stringman.h
+       sermo-backend-sdl3/src/tag_attributes.h
+       sermo-backend-sdl3/src/variables.h
+       sermo-backend-sdl3/src/widgets.h
+Copyright: 2003-2007 László Pere <pipas@linux.pte.hu>
+           2011-2012 Thunor <thunorsif@hotmail.com>
+           2026 S. Cage <devel@haplo-dialog.fr>
+License: GPL-2+
+Comment: Fichiers du cœur, des backends et de la documentation qui portent la notice de
+ gtkdialog : lexer et parser, en-têtes du cœur, widgets GTK portés vers GTK 3
+ et GTK 4, manuels.
+
+Files: sermo-backend-gtk3/src/widget_window.c
+Copyright: 2003-2007 László Pere <pipas@linux.pte.hu>
+           2011-2012 Thunor <thunorsif@hotmail.com>
+           2021 Dima Krasner <dima@dimakrasner.com>
+           2021-2024 Mick Amadio <01micko@gmail.com>
+           2026 S. Cage <devel@haplo-dialog.fr>
+License: GPL-2+
+Comment: L'ancrage Wayland (layer-shell) vient de la lignée BunsenLabs / Puppy Linux.
+
+Files: examples/*
+       sermoman-mcp/data/examples/*
+Copyright: 2003-2007 László Pere <pipas@linux.pte.hu>
+           2011-2013 Thunor <thunorsif@hotmail.com>
+           2026 S. Cage <devel@haplo-dialog.fr>
+License: GPL-2+
+Comment: 188 des 213 fichiers de examples/ existent dans gtkdialog 0.8.3 (73 à
+ l'identique) ; pfeme, pfontview et playmusic sont des applications de Thunor.
+ sermoman-mcp/data/examples/ en garde des copies.
+
+Files: examples/showcase/01-formulaire.sh
+       examples/showcase/02-conteneurs.sh
+       examples/showcase/03-onglets.sh
+       examples/showcase/04-indicateurs.sh
+       examples/showcase/05-boutons-icones.sh
+       examples/system-tools/system-tools.sh
+       sermo-backend-qt6/examples/button/demo.sh
+       sermo-backend-qt6/examples/checkbox/demo.sh
+       sermo-backend-qt6/examples/colorbutton/demo.sh
+       sermo-backend-qt6/examples/combobox/demo.sh
+       sermo-backend-qt6/examples/comboboxtext/demo.sh
+       sermo-backend-qt6/examples/edit/demo.sh
+       sermo-backend-qt6/examples/entry/demo.sh
+       sermo-backend-qt6/examples/expander/demo.sh
+       sermo-backend-qt6/examples/fontbutton/demo.sh
+       sermo-backend-qt6/examples/frame/demo.sh
+       sermo-backend-qt6/examples/hbox/demo.sh
+       sermo-backend-qt6/examples/hscale/demo.sh
+       sermo-backend-qt6/examples/hseparator/demo.sh
+       sermo-backend-qt6/examples/list/demo.sh
+       sermo-backend-qt6/examples/menubar/demo.sh
+       sermo-backend-qt6/examples/menuitem/demo.sh
+       sermo-backend-qt6/examples/notebook/demo.sh
+       sermo-backend-qt6/examples/pixmap/demo.sh
+       sermo-backend-qt6/examples/progressbar/demo.sh
+       sermo-backend-qt6/examples/radiobutton/demo.sh
+       sermo-backend-qt6/examples/spinbutton/demo.sh
+       sermo-backend-qt6/examples/statusbar/demo.sh
+       sermo-backend-qt6/examples/table/demo.sh
+       sermo-backend-qt6/examples/terminal/demo.sh
+       sermo-backend-qt6/examples/text/demo.sh
+       sermo-backend-qt6/examples/timer/demo.sh
+       sermo-backend-qt6/examples/togglebutton/demo.sh
+       sermo-backend-qt6/examples/tree/demo.sh
+       sermo-backend-qt6/examples/vbox/demo.sh
+       sermo-backend-qt6/examples/vscale/demo.sh
+       sermo-backend-qt6/examples/vseparator/demo.sh
+       sermo-backend-qt6/examples/window/demo.sh
+       sermoman-mcp/data/examples/showcase/01-formulaire.sh
+       sermoman-mcp/data/examples/showcase/02-conteneurs.sh
+       sermoman-mcp/data/examples/showcase/03-onglets.sh
+       sermoman-mcp/data/examples/showcase/04-indicateurs.sh
+       sermoman-mcp/data/examples/showcase/05-boutons-icones.sh
+       sermoman-mcp/data/examples/system-tools/system-tools.sh
+       tests/xml/01_window_minimal.xml
+       tests/xml/02_button_simple.xml
+       tests/xml/03_entry_variable.xml
+       tests/xml/04_checkbox.xml
+       tests/xml/05_hbox_vbox.xml
+       tests/xml/06_frame.xml
+       tests/xml/07_comboboxtext.xml
+       tests/xml/08_radiobutton.xml
+       tests/xml/09_progressbar.xml
+       tests/xml/10_scales.xml
+       tests/xml/11_spinbutton.xml
+       tests/xml/12_notebook.xml
+       tests/xml/13_switch.xml
+       tests/xml/14_password.xml
+       tests/xml/15_calendar.xml
+       tests/xml/16_expander.xml
+       tests/xml/17_button_ok_cancel.xml
+       tests/xml/18_form_complete.xml
+       tests/xml/19_infobar.xml
+       tests/xml/20_spinner.xml
+       tests/xml/21_searchentry.xml
+       tests/xml/22_switch.xml
+       tests/xml/23_calendar.xml
+       tests/xml/24_colorbutton.xml
+       tests/xml/25_fontbutton.xml
+       tests/xml/26_infobar.xml
+       tests/xml/27_tree.xml
+       tests/xml/28_table.xml
+       tests/xml/29_menubar.xml
+       tests/xml/30_statusbar.xml
+       tests/xml/31_togglebutton.xml
+       tests/xml/32_timer.xml
+       tests/xml/33_pixmap.xml
+       tests/xml/34_edit_multiline.xml
+       tests/xml/35_list_selection.xml
+       tests/xml/36_vseparator.xml
+       tests/xml/37_infobar_types.xml
+       tests/xml/38_notebook_multipage.xml
+       tests/xml/39_action_refresh.xml
+       tests/xml/40_action_enable_disable.xml
+       tests/xml/41_action_show_hide.xml
+       tests/xml/42_action_clear.xml
+       tests/xml/43_nested_frames.xml
+       tests/xml/44_spinbutton_digits.xml
+       tests/xml/45_combobox_items.xml
+       tests/xml/46_radiobutton_group.xml
+       tests/xml/47_progressbar_text.xml
+       tests/xml/48_vscale.xml
+       tests/xml/49_window_attributes.xml
+       tests/xml/50_full_complex_form.xml
+       tests/xml/51_levelbar.xml
+       tests/xml/52_drawingarea.xml
+       tests/xml/53_label_vide.xml
+       tests/xml/54_window_layer_shell.xml
+       tests/xml/55_window_headerbar.xml
+Copyright: 2026 S. Cage <devel@haplo-dialog.fr>
+License: CC0-1.0
+Comment: Cas de test XML, démos qt6 et exemples écrits pour sermo, qui le déclarent
+ dans leur en-tête SPDX.
+
+Files: sermo-backend-qt6/data/fr.haplo_dialog.qt6sermo.metainfo.xml
+Copyright: 2026 S. Cage <devel@haplo-dialog.fr>
+License: FSFAP
+Comment: Métadonnées AppStream : AppStream demande une licence permissive pour elles,
+ déclarée dans le fichier (metadata_license).
+
+Files: examples/button/no.svg
+       examples/button/yes.svg
+       examples/togglebutton/false.svg
+       examples/togglebutton/true.svg
+       sermoman-mcp/data/examples/togglebutton/false.svg
+       sermoman-mcp/data/examples/togglebutton/true.svg
+       examples/pfeme/default.png
+       examples/pfeme/pfeme48.png
+Copyright: les auteurs du jeu d'icônes elementary
+License: GPL-2
+Comment: Icônes reprises de gtkdialog ; licence jointe à côté d'elles
+ (COPYING-elementary-icons). Attribution : examples/pfeme/ChangeLog.
+
+Files: examples/pfeme/profile.png
+       examples/pfeme/profileselected.png
+       examples/pfeme/profileselectedvisible.png
+       examples/pfeme/profilevisible.png
+Copyright: les auteurs du jeu d'icônes Nuvola
+           les auteurs du jeu d'icônes Fast Forward
+           2011-2013 Thunor <thunorsif@hotmail.com>
+License: GPL-2 and LGPL-2.1
+Comment: Images de boutons composées par Thunor : manette du jeu Nuvola (LGPL-2.1),
+ coche du jeu Fast Forward (GPL-2) — examples/pfeme/ChangeLog, 30 décembre 2012.
+ Licences jointes : examples/pfeme/COPYING-nuvola-icons et
+ examples/pfeme/COPYING-fast-forward-icons.
+
+Files: contract/*
+Copyright: 2026 S. Cage <devel@haplo-dialog.fr>
+License: Expat
+Comment: Le contrat de frontière entre le cœur et les backends est volontairement
+ sous licence permissive.
+
+Files: sermo-backend-sdl3/src/imgui/*
+Copyright: 2014-2026 Omar Cornut
+License: Expat
+Comment: Dear ImGui 1.92.9 WIP, compilé dans sdl3sermo.
+
+Files: sermo-backend-sdl3/src/imgui/imgui_draw.cpp
+Copyright: 2014-2026 Omar Cornut
+           2004-2005, 2019, 2023 Tristan Grimmer
+           2026 Disco Hello
+           Agency for Cultural Affairs, Government of Japan
+           Ministry of Justice, Government of Japan
+License: Expat and CC-BY-4.0
+Comment: Contient les polices ProggyClean (Tristan Grimmer) et ProggyForever (Disco
+ Hello, Tristan Grimmer), sous licence MIT, et une table des points de code
+ des kanji Joyo et Jinmeiyo tirée des listes officielles de l'Agence pour
+ les affaires culturelles et du ministère de la Justice du Japon, sous CC BY
+ 4.0 (table générée par https://github.com/vaiorabbit/everyday_use_kanji).
+
+Files: sermo-backend-sdl3/src/imgui/imstb_rectpack.h
+       sermo-backend-sdl3/src/imgui/imstb_textedit.h
+       sermo-backend-sdl3/src/imgui/imstb_truetype.h
+Copyright: 2017 Sean Barrett
+License: Expat or public-domain
+Comment: Bibliothèques stb modifiées par Dear ImGui ; au choix, MIT ou domaine public
+ (fin de chaque fichier).
+
+Files: sermo-backend-sdl3/src/imgui/backends/imgui_impl_opengl3_loader.h
+Copyright: 2013-2020 The Khronos Group Inc.
+           2014-2026 Omar Cornut
+License: public-domain and Expat
+Comment: Chargeur OpenGL produit par gl3w (domaine public) ; définitions reprises des
+ en-têtes Khronos (MIT).
+
+Files: debian/*
+Copyright: 2026 S. Cage <devel@haplo-dialog.fr>
+License: GPL-2+
+
+License: GPL-2+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ .
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ You should have received a copy of the GNU General Public License
+ along with this program. If not, see <https://www.gnu.org/licenses/>.
+ .
+ On Debian systems, the complete text of the GNU General Public License
+ version 2 can be found in "/usr/share/common-licenses/GPL-2".
+
+License: GPL-2
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; version 2 of the License.
+ .
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ .
+ On Debian systems, the complete text of the GNU General Public License
+ version 2 can be found in "/usr/share/common-licenses/GPL-2".
+
+License: LGPL-2.1
+ This library is free software; you can redistribute it and/or
+ modify it under the terms of the GNU Lesser General Public
+ License as published by the Free Software Foundation; version 2.1
+ of the License.
+ .
+ This library is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ Lesser General Public License for more details.
+ .
+ On Debian systems, the complete text of the GNU Lesser General Public
+ License version 2.1 can be found in "/usr/share/common-licenses/LGPL-2.1".
+
+License: Expat
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+ .
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+ .
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ SOFTWARE.
+
+License: CC0-1.0
+ To the extent possible under law, the author(s) have dedicated all copyright
+ and related and neighboring rights to this software to the public domain
+ worldwide. This software is distributed without any warranty.
+ .
+ On Debian systems, the complete text of the CC0 1.0 Universal license can be
+ found in "/usr/share/common-licenses/CC0-1.0".
+
+License: FSFAP
+ Copying and distribution of this file, with or without modification, are
+ permitted in any medium without royalty provided the copyright notice and
+ this notice are preserved. This file is offered as-is, without any warranty.
+
+License: CC-BY-4.0
+ This work is licensed under the Creative Commons Attribution 4.0 International
+ License. To view a copy of this license, visit
+ https://creativecommons.org/licenses/by/4.0/legalcode or send a letter to
+ Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
+ .
+ On Debian systems, the complete text of the Creative Commons Attribution 4.0
+ International license can be found in "/usr/share/common-licenses/CC-BY-4.0".
+
+License: public-domain
+ This is free and unencumbered software released into the public domain.
+ .
+ Anyone is free to copy, modify, publish, use, compile, sell, or distribute
+ this software, either in source code form or as a compiled binary, for any
+ purpose, commercial or non-commercial, and by any means.
+ .
+ In jurisdictions that recognize copyright laws, the author or authors of this
+ software dedicate any and all copyright interest in the software to the public
+ domain. We make this dedication for the benefit of the public at large and to
+ the detriment of our heirs and successors. We intend this dedication to be an
+ overt act of relinquishment in perpetuity of all present and future rights to
+ this software under copyright law.

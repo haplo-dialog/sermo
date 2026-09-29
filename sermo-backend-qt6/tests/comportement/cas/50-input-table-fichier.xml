@@ -1,0 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: table remplie par <input file>, seule dans sa fenêtre : la 1re cellule de la 1re rangée ressort -->
+<window><vbox>
+<table><label>A|B</label><variable>TA</variable><input file>donnees/table.txt</input></table>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

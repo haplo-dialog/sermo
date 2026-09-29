@@ -1,0 +1,11 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: <input> de comboboxtext, combobox et edit, par commande et par fichier : la directive est décodée (jamais « Command:… » envoyé au shell), chaque commande ne s'exécute qu'une fois (EXEC) ; comboboxtext sélectionne le 1er élément ou son <default>, combobox n'implémente pas <input> (étalon), edit garde tout le texte. list, tree et table ont leurs cas à part (45-50) : chez l'étalon, leur 1re rangée ne ressort que s'ils ont le focus, donc seuls dans leur fenêtre -->
+<window><vbox>
+<comboboxtext><variable>CBT_CMD</variable><input>echo x >> n-cbt; printf "un\ndeux\n"</input></comboboxtext>
+<comboboxtext><variable>CBT_FIC</variable><input file>donnees/deux-lignes.txt</input></comboboxtext>
+<comboboxtext><variable>CBT_DEF</variable><default>deux</default><input>printf "un\ndeux\n"</input></comboboxtext>
+<combobox><variable>CB_CMD</variable><input>echo x >> n-cb; printf "un\ndeux\n"</input></combobox>
+<edit><variable>ED_CMD</variable><input>echo x >> n-ed; echo texte</input></edit>
+<edit><variable>ED_FIC</variable><input file>donnees/une-ligne.txt</input></edit>
+<text><variable>EXEC</variable><input>for f in cbt cb ed; do printf "%s=%s " $f $(cat n-$f 2>/dev/null | wc -l); done</input></text>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

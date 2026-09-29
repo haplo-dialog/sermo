@@ -1,0 +1,45 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Paquets Debian testing nécessaires pour construire les sept backends et jouer
+# tous les bancs (ci/construire.sh, ci/bancs.sh). Noms vérifiés avec apt-cache
+# le 2026-09-16. Une ligne par paquet ; # commente.
+build-essential
+cmake
+flex
+bison
+pkg-config
+git
+ca-certificates
+file
+libglib2.0-dev
+libgtk-3-dev
+# <terminal> de gtk3 et gtk4 (VTE) et ancrage Wayland de gtk3 : sans eux la
+# construction S'ARRÊTE (sauf -DSERMOCORE_VTE=OFF / -DSERMO_LAYER_SHELL=OFF).
+# De la 2.0 à la 2.7.0 ils étaient « optionnels » et jamais compilés.
+libvte-2.91-dev
+libvte-2.91-gtk4-dev
+libgtk-layer-shell-dev
+libgtk-4-dev
+qt6-base-dev
+libfltk1.4-dev
+libefl-all-dev
+libsdl3-dev
+libgl-dev
+libx11-dev
+libpng-dev
+libgdk-pixbuf-2.0-dev
+libncurses-dev
+# bancs
+xvfb
+xauth
+xdotool
+# xwininfo : la garde d'échappement clique en coordonnées client
+x11-utils
+# EFL ne dessine rien sans gestionnaire de fenêtres : les gardes graphiques
+# démarrent xfwm4 s'il est là, sinon le port efl1 y échoue (fenêtre noire)
+xfwm4
+check
+python3
+locales
+fonts-dejavu-core
+adwaita-icon-theme
+dbus-x11

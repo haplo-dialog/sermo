@@ -1,0 +1,82 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# .github/workflows/bancs.yml — intégration continue de sermo sur GitHub.
+#
+# Ce fichier est le jumeau de .gitlab-ci.yml : mêmes deux commandes, même image,
+# même locale, mêmes journaux en artefacts. sermo vit sur deux forges ; jusqu'ici
+# seule GitLab éprouvait les contributions, et une demande arrivant par GitHub
+# ne déclenchait rien du tout. Les deux recettes doivent rester alignées : ce qui
+# change dans l'une change dans l'autre.
+#
+# Tout ce que vérifie cette recette se rejoue chez soi :
+#   bash ci/construire.sh   le cœur (trois variantes) et les sept backends ;
+#   bash ci/bancs.sh        tests unitaires, XML, comportement, gardes.
+
+name: bancs
+
+on:
+  push:
+    paths:
+      - 'libsermocore/**'
+      - 'sermo-backend-*/**'
+      - 'contract/**'
+      - 'tests/**'
+      - 'ci/**'
+      - 'sermoman-mcp/**'
+      - 'examples/**'
+      - 'VERSION'
+      - '.github/workflows/bancs.yml'
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bancs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    container: debian:testing
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      # Les bancs tournent sous une locale à virgule décimale : c'est là que les
+      # nombres mal lus (atof, strtod) se trahissent ; sous C, ils passeraient.
+      LANG: fr_FR.UTF-8
+    steps:
+      # git AVANT le checkout : l'image Debian ne l'a pas, et sans lui l'action
+      # retombe sur un téléchargement d'archive — le dépôt n'aurait alors pas
+      # d'historique, et les bancs qui appellent « git ls-files » ne verraient
+      # aucun fichier. Ils rendraient « 0 vérifié » sans rien dire.
+      - name: git pour le checkout
+        run: |
+          apt-get update -qq
+          apt-get install -y --no-install-recommends git ca-certificates
+
+      - uses: actions/checkout@v4
+
+      - name: dépendances
+        run: apt-get install -y --no-install-recommends $(grep -v '^#' ci/dependances.txt)
+
+      - name: locale française
+        run: |
+          sed -i 's/^# *fr_FR.UTF-8/fr_FR.UTF-8/' /etc/locale.gen
+          locale-gen
+
+      # Le dépôt est extrait par un autre utilisateur que celui du job : sans ça,
+      # git refuse de le lire et les bancs qui l'interrogent échoueraient pour rien.
+      - name: dépôt lisible par git
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: construire
+        run: bash ci/construire.sh
+
+      - name: bancs
+        run: bash ci/bancs.sh
+
+      - name: journaux
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: journaux
+          path: _journaux/
+          retention-days: 7
+          if-no-files-found: warn
