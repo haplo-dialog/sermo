@@ -71,7 +71,7 @@ argument_pour() {
     esac
 }
 
-OK=0; CRASH=0; SYNTAX=0; NOWIN=0; RESERVE=0; DETAIL=()
+OK=0; CRASH=0; SYNTAX=0; NOWIN=0; RESERVE=0; REFAITS=0; DETAIL=()
 # Attente MAXIMALE d'une fenêtre, en secondes (l'écran est interrogé toutes les
 # 0,1 s : un exemple qui marche n'attend pas plus). 3 s donnaient des « aucune
 # fenêtre » sans défaut dès que le poste était chargé : mesuré le 2026-09-17 sur
@@ -104,10 +104,22 @@ DELAY="${EXAMPLE_DELAY:-10}"
 # fil (/proc), pile de chaque fil si gdb est là, fin de la sortie du programme.
 # Sur la CI de GitLab, un exemple efl1 sur 54, jamais le même, ne s'ouvrait pas
 # même en 30 s ; jamais reproduit ailleurs.
+#
+# 2026-09-30 (suite) — le relevé a montré la vraie cause : qt6 arrêté en 200 ms,
+# « could not connect to display :100 ». xvfb-run -a tient l'écran pour bon dès
+# que le processus Xvfb vit, sans vérifier qu'il accepte les connexions ; quand
+# les écrans s'enchaînent vite, le programme part parfois face à un écran
+# injoignable, et s'arrête — ce n'était ni efl1 ni qt6. probe attend donc que
+# l'écran réponde (xdpyinfo, 5 s au plus) avant de lancer l'exemple, et rend
+# NODISPLAY sinon ; le programme qui dit ne pas joindre l'écran rend NODISPLAY
+# aussi. Dans les deux cas l'essai est refait UNE fois avec un écran neuf, et le
+# banc le dit : c'est l'outil qui a manqué, pas le programme.
 probe() {
     local script="$1" log="$2" arg="${3:-}"
     xvfb-run -a --server-args="-screen 0 800x600x24" bash -c '
         cd "$(dirname "$0")" || exit 1
+        for j in $(seq 1 50); do xdpyinfo >/dev/null 2>&1 && break; sleep 0.1; done
+        xdpyinfo >/dev/null 2>&1 || { echo NODISPLAY; exit 0; }
         if [ -n "$2" ]; then setsid "$0" "$2" >"$1" 2>&1 & else setsid "$0" >"$1" 2>&1 & fi
         pid=$!
         for i in $(seq 1 '"$DELAY"'0); do
@@ -119,6 +131,11 @@ probe() {
             sleep 0.1
         done
         [ -f "$1.vu" ] || cp "$1" "$1.vu"
+        # Aucune fenêtre, programme arrêté faute de joindre l écran : NODISPLAY.
+        if [ ! -f "$1.fen" ] && ! kill -0 -- -$pid 2>/dev/null &&
+           grep -qiE "could not connect to display|cannot open display|can.t open display|unable to open display" "$1"; then
+            cp "$1" "$1.ecran"; echo NODISPLAY
+        fi
         # Aucune fenêtre, programme arrêté : son code et la fin de sa sortie.
         if [ ! -f "$1.fen" ] && ! kill -0 -- -$pid 2>/dev/null; then
             wait $pid 2>/dev/null; rc=$?
@@ -188,8 +205,17 @@ for dir in $(find "$EXAMPLES" -maxdepth 1 -mindepth 1 -type d | sort); do
     log="$(mktemp)"
     : > "$SERMO_CODES"
     saw="$(probe "$script" "$log" "$(argument_pour "$name")")"
+    refait=""
+    if [[ "$saw" == *NODISPLAY* ]]; then
+        # Écran virtuel injoignable : essai refait une fois, écran neuf.
+        refait=" (écran virtuel injoignable au 1er essai : refait)"
+        rm -f "$log.vu" "$log.fen" "$log.diag" "$log.ecran"; : > "$log"; : > "$SERMO_CODES"
+        saw="$(probe "$script" "$log" "$(argument_pour "$name")")"
+        [[ "$saw" == *NODISPLAY* ]] && refait=" (écran virtuel injoignable DEUX fois)"
+    fi
+    saw="${saw//NODISPLAY/}"; saw="${saw//$'\n'/}"
     out="$(cat "$log.vu" 2>/dev/null)"
-    diag="$(cat "$log.diag" 2>/dev/null)"; rm -f "$log" "$log.vu" "$log.fen" "$log.diag"
+    diag="$(cat "$log.diag" 2>/dev/null)"; rm -f "$log" "$log.vu" "$log.fen" "$log.diag" "$log.ecran"
 
     if   grep -qiE 'assertion failed|Bail out|Segmentation|Unknown widget type' <<<"$out"; then
         v=CRASH;  CRASH=$((CRASH+1)); DETAIL+=("$name : $(grep -oiE 'Unknown widget type|assertion failed[^)]*|Segmentation[a-z ]*' <<<"$out" | head -1)")
@@ -200,7 +226,8 @@ for dir in $(find "$EXAMPLES" -maxdepth 1 -mindepth 1 -type d | sort); do
     else
         v=NOWIN;  NOWIN=$((NOWIN+1)); DETAIL+=("$name : aucune fenêtre en ${DELAY}s")
     fi
-    printf '  %-16s %s\n' "$name" "$v"
+    printf '  %-16s %s%s\n' "$name" "$v" "$refait"
+    [[ -n "$refait" ]] && REFAITS=$((REFAITS+1))
     if [[ "$v" == NOWIN && -n "$diag" ]]; then
         sed 's/^/      │ /' <<<"$diag"
     fi
@@ -211,6 +238,7 @@ echo
 echo "  ================================================"
 printf '  %s exemples : %s OK · %s CRASH · %s SYNTAX · %s sans fenêtre\n' \
        "$TOTAL" "$OK" "$CRASH" "$SYNTAX" "$NOWIN"
+[[ $REFAITS -gt 0 ]] && printf '  (%s essai(s) refait(s) : écran virtuel injoignable, pas le programme)\n' "$REFAITS"
 [[ $RESERVE -gt 0 ]] && printf '  (%s exemple(s) réservé(s) à d’autres ports, non joué(s))\n' "$RESERVE"
 echo "  ================================================"
 if [[ ${#DETAIL[@]} -gt 0 ]]; then

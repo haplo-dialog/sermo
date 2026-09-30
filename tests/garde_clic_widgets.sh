@@ -35,10 +35,16 @@ TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 echec=0; joues=0
 
 # GSK_RENDERER=cairo : sans lui GTK 4 échoue sur EGL sous Xvfb et n'ouvre rien.
+# Écran virtuel injoignable (xvfb-run -a tient l'écran pour bon dès que Xvfb
+# vit ; vu le 2026-09-30, voir tests/run_examples.sh) : clic attend que l'écran
+# réponde avant de lancer le port, et rend NODISPLAY s'il ne répond pas ou si le
+# port dit ne pas le joindre ; essai() refait alors la mesure une fois.
 clic() {
 	LC_ALL=fr_FR.UTF-8 GSK_RENDERER=cairo \
 	xvfb-run -a -s '-screen 0 800x600x24' timeout $((DELAI + 33)) sh -c '
-		"$1" --file="$2" >/dev/null 2>&1 &
+		for j in $(seq 1 50); do xdpyinfo >/dev/null 2>&1 && break; sleep 0.1; done
+		xdpyinfo >/dev/null 2>&1 || { echo NODISPLAY; exit 0; }
+		"$1" --file="$2" >"$3" 2>&1 &
 		pid=$!
 		for i in $(seq 1 $(('"$DELAI"' * 5))); do
 			# --name ne lit pas un titre posé en UTF8_STRING (sdl3) : la fenêtre
@@ -49,6 +55,10 @@ clic() {
 			kill -0 $pid 2>/dev/null || break
 			sleep 0.2
 		done
+		if [ -z "$WID" ] && ! kill -0 $pid 2>/dev/null &&
+		   grep -qiE "could not connect to display|cannot open display|can.t open display|unable to open display" "$3"; then
+			echo NODISPLAY; exit 0
+		fi
 		[ -z "$WID" ] && { kill $pid 2>/dev/null; echo NOWIN; exit 0; }
 		eval $(xdotool getwindowgeometry --shell $WID)
 		xdotool mousemove $((X + 40)) $((Y + 22)) click 1; sleep 1
@@ -57,16 +67,22 @@ clic() {
 			kill $pid 2>/dev/null; wait $pid 2>/dev/null; echo VIVANT
 		else
 			wait $pid 2>/dev/null; echo "MORT rc=$?"
-		fi' _ "$BIN" "$1" 2>/dev/null
+		fi' _ "$BIN" "$1" "$TMP/sortie" 2>/dev/null
 }
 
 essai() {
 	nom="$1"; corps="$2"
 	printf '<window title="CLIC"><vbox>%s</vbox></window>\n' "$corps" > "$TMP/w.xml"
 	r="$(clic "$TMP/w.xml")"
+	refait=""
+	if [ "$r" = NODISPLAY ]; then
+		refait=" (écran virtuel injoignable au 1er essai : refait)"
+		r="$(clic "$TMP/w.xml")"
+	fi
 	joues=$((joues + 1))
 	case "$r" in
-		VIVANT)  echo "  ✔ $nom" ;;
+		VIVANT)  echo "  ✔ $nom$refait" ;;
+		NODISPLAY) echo "  ✘ $nom : écran virtuel injoignable DEUX fois — la mesure n'a pas eu lieu" >&2; echec=$((echec + 1)) ;;
 		NOWIN)   echo "  ✘ $nom : aucune fenêtre — la mesure n'a pas eu lieu" >&2; echec=$((echec + 1)) ;;
 		*)       echo "  ✘ $nom : le processus est mort au clic ($r)" >&2; echec=$((echec + 1)) ;;
 	esac

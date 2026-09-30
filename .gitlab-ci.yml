@@ -45,13 +45,6 @@ bancs:
   image: debian:testing
   interruptible: true
   timeout: 2h
-  variables:
-    # Attente maximale d'une fenêtre. Sur deux cœurs en conteneur, une fenêtre
-    # efl1 s'ouvre en 0,3 s (médiane), 1,5 s au plus (54 exemples, 2026-09-30) ;
-    # sur les exécuteurs partagés de GitLab, certaines ont dépassé 10 s, jamais
-    # les mêmes d'une passe à l'autre. Parade, pas cause démontrée.
-    EXAMPLE_DELAY: "30"
-    CLIC_DELAY: "30"
   before_script:
     - apt-get update -qq
     - apt-get install -y --no-install-recommends $(grep -v '^#' ci/dependances.txt)

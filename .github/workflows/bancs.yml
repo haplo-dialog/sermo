@@ -69,12 +69,7 @@ jobs:
       - name: construire
         run: bash ci/construire.sh
 
-      # Attente maximale d'une fenêtre : voir .gitlab-ci.yml (parade aux
-      # exécuteurs partagés lents, pas cause démontrée).
       - name: bancs
-        env:
-          EXAMPLE_DELAY: "30"
-          CLIC_DELAY: "30"
         run: bash ci/bancs.sh
 
       - name: journaux

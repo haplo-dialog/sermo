@@ -7,13 +7,12 @@ empaquetage séparé prouvé. Reste ci-dessous.
 
 Trouvé le 2026-09-16 par les bancs réparés (`ci/bancs.sh`), **ouvert** :
 
-- [ ] **efl1 s'arrête parfois sans ouvrir sa fenêtre** (connu, non expliqué, vu le
-      2026-09-30) : un exemple sur 54, jamais le même, dans le banc des exemples réels —
-      sur la CI de GitLab à chaque passe, une fois sur le poste. Pas de la lenteur (30 s
-      n'y font rien ; 1,5 s au plus ailleurs), pas `efreetd`. Jamais refait à la demande :
-      60 lancements directs, quatre passes complètes (216 exemples) verts.
-      `tests/run_examples.sh` relève désormais le code du binaire, sa sortie, et, s'il
-      tourne encore, l'état de chaque fil et sa pile : lire le journal de la prochaine fois.
+- [ ] **Écran virtuel parfois injoignable dans les bancs** (vu le 2026-09-30) : `xvfb-run -a`
+      tient l'écran pour bon dès que Xvfb vit ; le port lancé trop tôt s'arrête
+      (« could not connect to display », qt6 en 200 ms sur la CI de GitLab). Pris d'abord
+      pour un défaut d'efl1. `run_examples.sh` et `garde_clic_widgets.sh` attendent que
+      l'écran réponde et refont l'essai une fois, en le disant (« refait »). Si un journal
+      montre « injoignable DEUX fois » : lancer Xvfb soi-même (`-displayfd`).
 - [ ] **Faux « syntax error » à l'arrêt, avec `--program`** : efl1 arrêté par
       SIGTERM (et il sort alors en code 1), qt6 privé de son serveur X,
       écrivent `Error in line N, near token '<window>': syntax error` — le cœur
