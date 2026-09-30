@@ -3,9 +3,38 @@
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/).
 Versionnage : voir [VERSIONING.md](VERSIONING.md).
 
-La **2.7.3 est la première version 2.x publiée**. Les versions précédentes,
+La **2.7.3 est la première version 2.x publiée** ; la 2.7.4 la suit. Les versions précédentes,
 résumées ci-dessous jusqu'à la 2.5.0, sont restées internes. Pour passer de la
 1.x à la 2.x : [MIGRATION.md](MIGRATION.md).
+
+## [2.7.4] — 2026-09-30
+
+Version CORRECTIF. Un `<calendar>` de gtk4 pouvait poser le mauvais mois, selon
+le jour où le dialogue s'ouvrait.
+
+### Corrigé
+
+- **gtk4 — un `<calendar>` posait le mauvais mois les jours 29 à 31.** Un
+  `<default>` 2000-02-29 rendait 2000-09-29 le 30 septembre. Le calendrier part
+  de la date du jour, puis reçoit l'année, le mois et le jour, un par un : parti
+  du 30 septembre, il passait par le 30 février 2000, que GTK refuse sans rien
+  dire, et le mois restait septembre. Selon le jour courant et la date demandée,
+  les fins de mois et le 29 février étaient touchés ; la remise à la date du jour
+  aussi. Le jour 1, qui existe dans tous les mois, est désormais posé d'abord.
+  Les six autres ports étaient justes. Vu le 2026-09-30 par la CI de GitLab : le
+  banc de comportement était vert la veille, le 29.
+
+### Ajouté
+
+- **Une garde du calendrier** (`tests/garde_calendrier_date_du_jour.sh`), jouée
+  sur les sept ports : elle fixe la date du jour du binaire (`faketime`) au
+  31 janvier, au 30 septembre et, en témoin, au 15 juin. Sur la 2.7.3, gtk4 y est
+  rouge les deux jours pièges.
+- **CI : trois paquets qui manquaient** à `ci/dependances.txt` : `imagemagick`
+  (la garde de taille de fenêtre lit la capture avec `identify`),
+  `libevas1-engines-x` (seulement « recommandé » : sans lui, EFL ne crée aucune
+  fenêtre) et `faketime`. Le poste de travail les avait ; la CI, jamais jouée
+  avant la publication, était rouge sur 13 bancs.
 
 ## [2.7.3] — 2026-09-24
 

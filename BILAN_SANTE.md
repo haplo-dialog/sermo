@@ -1,6 +1,6 @@
-# Bilan de santé — sermo (édition modulaire) 2.7.3
+# Bilan de santé — sermo (édition modulaire) 2.7.4
 
-## État vérifié — 2026-09-24
+## État vérifié — 2026-09-30
 
 > **Ce que valent ces chiffres.** Ce ne sont pas des notes d'auto-évaluation :
 > ce sont des **comptes de bancs rejouables**. Chaque ligne ci-dessous se
@@ -9,9 +9,9 @@
 > dit explicitement.
 
 Tout ce qui suit sort de **deux commandes**, jouées sur un clone neuf limité à
-deux cœurs (la taille d'un exécuteur partagé de CI). Le 2026-09-24, elles ont
+deux cœurs (la taille d'un exécuteur partagé de CI). Le 2026-09-30, elles ont
 tourné par `packaging/bancs-sur-paquets.sh` (`SERMO_TASKSET=0,1`) : les sept
-binaires mesurés sont ceux des paquets 2.7.3-1, pas ceux de l'arbre :
+binaires mesurés sont ceux des paquets 2.7.4-1, pas ceux de l'arbre :
 
 ```sh
 bash ci/construire.sh     # cœur ×3 variantes, sept backends
@@ -57,8 +57,17 @@ bash ci/bancs.sh          # tous les bancs ; un journal par banc dans _journaux/
 | En-têtes de poste · façade de l'arbre | ✅ |
 | Lectures d'`<input>` plafonnées (`garde_lecture_input.sh`) | ✅ 15 ouvertures de fichier en lecture, toutes nommées et hors `<input>` ; un témoin planté est vu |
 | `sermoman-mcp` : la documentation servie dit vrai | ✅ 7/7 contrôles contre le code, dont la limite des `<input>` ; exemples documentés joués sur les sept ports, 0 échec |
-| Bancs sur les binaires des paquets (`packaging/bancs-sur-paquets.sh`) | ✅ 2.7.3-1 : sept binaires livrés en place, symboles de débogage trouvés ×7 ; 130/132 verts à la 1re passe, sur deux cœurs, en 20 min environ ; les 2 autres (une fenêtre en retard : exemples de gtk4, clic d'efl1) verts rejoués seuls |
+| Calendrier, quel que soit le jour (`garde_calendrier_date_du_jour.sh`) | ✅ sept ports : date du jour du binaire fixée (`faketime`) au 31 janvier, au 30 septembre et au 15 juin ; 29 février et fins de mois posés chaque jour. Sur la 2.7.3, gtk4 y est rouge les deux jours pièges |
+| Bancs sur les binaires des paquets (`packaging/bancs-sur-paquets.sh`) | ✅ 2.7.4-1 : sept binaires livrés en place, symboles de débogage trouvés ×7 ; 138/139 verts à la 1re passe, sur deux cœurs ; le dernier (clic d'efl1 : la fenêtre du calendrier en retard, pas un plantage) vert rejoué seul, trois fois sur trois |
+| CI dans une Debian testing vierge (`.gitlab-ci.yml`, rejouée en conteneur) | ✅ 139/139 le 2026-09-30, sur l'arbre ; la CI de GitLab était rouge sur 13 bancs faute de trois paquets dans `ci/dependances.txt` (voir CHANGELOG 2.7.4) |
 | Ancrage Wayland de gtk3 (`garde_layer_shell.sh`) | ✅ lié à libgtk-layer-shell ; sous un sway sans écran, `layer="top"` donne une surface de couche, le témoin une fenêtre ordinaire (niveau non joué en root, où sway refuse de tourner) |
+
+### Ce que la 2.7.4 ferme
+
+Un `<calendar>` de gtk4 posait le mauvais mois selon le jour où le dialogue
+s'ouvrait : le 30 septembre, un `<default>` 2000-02-29 rendait 2000-09-29. Vu le
+2026-09-30 par la CI de GitLab (le banc de comportement était vert la veille, le
+29) ; la garde du calendrier le voit désormais n'importe quel jour.
 
 ### Ce que la 2.7.3 ferme
 
@@ -177,12 +186,11 @@ que GTK 4 fait diverger (`gtk_main`/`gtk_socket`/modèle d'évènements retirés
 
 sermo remplit son objet : **le même XML, le même comportement, sur sept
 toolkits, depuis un cœur unique et durci**, avec des paquets légers et disjoints.
-Le 2026-09-24, `ci/bancs.sh` a joué ses 132 bancs sur les binaires des paquets
-2.7.3-1, sur deux cœurs : XML 55 et comportement 53 sur les sept backends,
-terminal et ancrage Wayland vérifiés, sources sans fin arrêtées à la limite,
-documentation servie conforme au code ; 130 verts d'une traite, les 2 autres
-(fenêtres en retard sous la charge ordinaire du poste) verts une fois rejoués
-seuls.
+Le 2026-09-30, `ci/bancs.sh` a joué ses 139 bancs sur les binaires des paquets
+2.7.4-1, sur deux cœurs : XML 55 et comportement 53 sur les sept backends,
+calendrier juste quel que soit le jour, terminal et ancrage Wayland vérifiés,
+sources sans fin arrêtées à la limite, documentation servie conforme au code ;
+138 verts d'une traite, le dernier (une fenêtre en retard) vert rejoué seul.
 Les paquets Debian se construisent, s'installent, se purgent et remplacent la 1.x
 dans une Debian testing vierge. Reste la dette architecturale de la Phase 3, sans
 impact fonctionnel, et les points ouverts du TODO.

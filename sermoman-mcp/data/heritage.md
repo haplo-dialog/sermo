@@ -319,7 +319,7 @@ la lignée sermo.
 - **MINEUR** — nouvelles capacités rétro-compatibles (widget, action, backend).
 - **CORRECTIF** — corrections sans changement d'interface.
 
-**Version courante : `2.7.3`, première version 2.x publiée.** La ligne 2.x s'est
+**Version courante : `2.7.4` ; la première version 2.x publiée a été la `2.7.3`.** La ligne 2.x s'est
 ouverte sur `2.0.0`, première édition modulaire, restée interne, dont le bump MAJEUR reflétait le changement du contrat de frontière cœur↔backend
 (`sermo_backend.h`, ponts `sermo_be_*`) ; le langage XML, lui, reste
 rétro-compatible avec gtkdialog / sermo 1.x.
@@ -328,7 +328,7 @@ Le cœur (`libsermocore`) et les backends **partagent le numéro de version** ta
 qu'ils sont livrés ensemble. Le contrat de frontière `sermo_backend.h` est le
 point de compatibilité : un changement incompatible impose un bump MAJEUR, car un
 backend ancien ne se lierait plus au cœur. `sermocore.pc` porte la version
-(`Version: 2.7.3`) ; un backend peut exiger une version minimale du cœur via
+(`Version: 2.7.4`) ; un backend peut exiger une version minimale du cœur via
 `pkg_check_modules(SERMOCORE REQUIRED sermocore>=X.Y)`.
 
 **Compatibilité des scripts.** Les scripts XML écrits pour gtkdialog / sermo

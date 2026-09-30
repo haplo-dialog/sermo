@@ -5,6 +5,17 @@ This file summarises changes from the user's point of view.
 For the full technical history, see CHANGELOG.en.md.
 
 ──────────────────────────────────────────────────
+Version 2.7.4
+──────────────────────────────────────────────────
+
+Patch release.
+
+- In gtk4, a <calendar> could set the wrong month depending on the day
+  the dialog was opened: on 30 September, a <default> of 2000-02-29 gave
+  2000-09-29. Month ends and 29 February were affected. It is fixed; the
+  other ports were right.
+
+──────────────────────────────────────────────────
 Version 2.7.3
 ──────────────────────────────────────────────────
 

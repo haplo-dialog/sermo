@@ -43,3 +43,12 @@ locales
 fonts-dejavu-core
 adwaita-icon-theme
 dbus-x11
+# Trois paquets qui manquaient à la CI (vu le 2026-09-30, 13 bancs rouges sur
+# GitLab alors que le poste, qui les avait, était vert) :
+# identify (ImageMagick) lit la capture de la garde de taille de fenêtre
+imagemagick
+# le moteur X11 d'EFL n'est que « recommandé » par libevas1 : sans lui, aucune
+# fenêtre efl1 (assertion, rc=134)
+libevas1-engines-x
+# la garde du calendrier fixe la date du jour du binaire
+faketime

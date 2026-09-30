@@ -27,12 +27,12 @@ par fichier dans [LICENCES.md](LICENCES.md).
 
 ## État du projet
 
-- Version **2.7.3**. sermo est tenu par **un seul mainteneur**, S. Cage. Il n'y a
+- Version **2.7.4**. sermo est tenu par **un seul mainteneur**, S. Cage. Il n'y a
   pas d'équipe derrière : une réponse peut prendre du temps.
 - Une partie du code, de la documentation et des tests a été écrite avec l'aide
   d'une IA (Claude, d'Anthropic), sous la direction et la relecture du mainteneur
   ([AUTHORS](AUTHORS)).
-- **Ce qui est vérifié** : 132 bancs (analyse XML, valeurs exportées, sécurité,
+- **Ce qui est vérifié** : 139 bancs (analyse XML, valeurs exportées, sécurité,
   clics, ouverture des exemples réels) sur les sept ports, rejoués aussi sur les
   binaires extraits des paquets Debian. Chaque chiffre se rejoue par une
   commande : [BILAN_SANTE.md](BILAN_SANTE.md).
@@ -94,17 +94,17 @@ ncurses a été ajouté sans changer une ligne du cœur. Architecture :
 ## Installer
 
 Il n'y a pas de dépôt apt. Les paquets Debian sont joints à la publication
-[**v2.7.3**](https://gitlab.com/haplo-dialog/sermo/-/releases/v2.7.3), avec leurs
+[**v2.7.4**](https://gitlab.com/haplo-dialog/sermo/-/releases/v2.7.4), avec leurs
 sommes de contrôle : on télécharge, on vérifie, on installe.
 
 ```sh
-U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/2.7.3
-for f in sermo-backend-gtk3_2.7.3-1_amd64.deb sermo-gtkdialog_2.7.3-1_all.deb SHA256SUMS; do
+U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/2.7.4
+for f in sermo-backend-gtk3_2.7.4-1_amd64.deb sermo-gtkdialog_2.7.4-1_all.deb SHA256SUMS; do
     curl -fLO "$U/$f"
 done
 sha256sum --ignore-missing -c SHA256SUMS
-sudo apt install ./sermo-backend-gtk3_2.7.3-1_amd64.deb \
-                 ./sermo-gtkdialog_2.7.3-1_all.deb
+sudo apt install ./sermo-backend-gtk3_2.7.4-1_amd64.deb \
+                 ./sermo-gtkdialog_2.7.4-1_all.deb
 ```
 
 Pour un autre port, remplacez `gtk3` par `gtk4`, `qt6`, `fltk1`, `efl1`, `sdl3` ou

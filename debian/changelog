@@ -1,3 +1,12 @@
+sermo (2.7.4-1) unstable; urgency=medium
+
+  * Nouvelle version amont 2.7.4 : correctif du <calendar> de gtk4.
+  * gtk4 : un <calendar> pouvait poser le mauvais mois selon le jour où le
+    dialogue s'ouvrait (le 30 septembre, un <default> 2000-02-29 rendait
+    2000-09-29). Le jour 1 est posé avant l'année et le mois.
+
+ -- s.cage <devel@haplo-dialog.fr>  Wed, 30 Sep 2026 11:21:54 +0200
+
 sermo (2.7.3-1) unstable; urgency=medium
 
   * Nouvelle version amont 2.7.3 : une limite de taille pour ce que lit un

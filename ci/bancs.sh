@@ -104,6 +104,7 @@ for p in "${PORTS[@]}"; do
         ncurses) ;;
         *) banc "$p taille de fenêtre" bash tests/garde_taille_fenetre.sh "$b" ;;
     esac
+    banc "$p calendrier" bash tests/garde_calendrier_date_du_jour.sh "$b"
     banc "$p durcissement" bash tests/garde_durcissement.sh "$b"
     banc "$p allowed_cmds" bash tests/garde_allowed_cmds.sh "$b"
     banc "$p source sans fin" bash tests/garde_input_sans_fin.sh "$b"

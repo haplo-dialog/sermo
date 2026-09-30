@@ -72,6 +72,17 @@ static void widget_calendar_input_by_items(variable *var);
  * Setting a date from a "YYYY-MM-DD" string requires parsing.
  */
 
+/* Helper: pose une date (month 0-base). Chaque propriete year/month/day est
+ * posee a part, et GTK refuse SANS RIEN DIRE celle qui donnerait une date
+ * impossible : parti du 30 septembre, « 2000-02-29 » passait par le 30 fevrier
+ * 2000, le mois etait refuse et le calendrier rendait 2000-09-29 (vu le
+ * 2026-09-30). Le jour 1 existe dans tous les mois : on le pose d'abord. */
+static void calendar_set_ymd(GObject *calendar, gint year, gint month0, gint day)
+{
+	g_object_set(calendar, "day", 1, NULL);
+	g_object_set(calendar, "year", year, "month", month0, "day", day, NULL);
+}
+
 /* Helper: set calendar date from "YYYY-MM-DD" string */
 static void calendar_set_date_from_string(GtkCalendar *calendar,
 	const gchar *datestr)
@@ -82,11 +93,8 @@ static void calendar_set_date_from_string(GtkCalendar *calendar,
 		 * sure — select_day est deprecie en 4.20 et l'ancien chemin
 		 * (select_day(guint), signature GTK3) compilait en silence sans
 		 * rien poser : le banc voyait la date du jour. "month" est 0-base. */
-		g_object_set(G_OBJECT(calendar),
-			"year",  year,
-			"month", CLAMP(month, 1, 12) - 1,
-			"day",   CLAMP(day, 1, 31),
-			NULL);
+		calendar_set_ymd(G_OBJECT(calendar), year,
+			CLAMP(month, 1, 12) - 1, CLAMP(day, 1, 31));
 	}
 }
 
@@ -108,11 +116,8 @@ void widget_calendar_clear(variable *var)
 	tm_now = localtime(&now);
 	/* GTK4 : proprietes year/month/day — l'ancien appel select_day(guint)
 	 * castait un entier en GDateTime* (comportement indefini silencieux) */
-	g_object_set(G_OBJECT(var->Widget),
-		"year",  tm_now->tm_year + 1900,
-		"month", tm_now->tm_mon,
-		"day",   tm_now->tm_mday,
-		NULL);
+	calendar_set_ymd(G_OBJECT(var->Widget), tm_now->tm_year + 1900,
+		tm_now->tm_mon, tm_now->tm_mday);
 
 #ifdef DEBUG_TRANSITS
 	fprintf(stderr, "%s(): Exiting.\n", __func__);

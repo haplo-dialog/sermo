@@ -3,9 +3,37 @@
 Format inspired by [Keep a Changelog](https://keepachangelog.com/).
 Versioning: see [VERSIONING.en.md](VERSIONING.en.md).
 
-**2.7.3 is the first published 2.x release.** The previous versions, summarised
+**2.7.3 is the first published 2.x release**; 2.7.4 follows it. The previous versions, summarised
 below down to 2.5.0, stayed internal. To move from 1.x to 2.x:
 [MIGRATION.en.md](MIGRATION.en.md).
+
+## [2.7.4] — 2026-09-30
+
+PATCH release. A gtk4 `<calendar>` could set the wrong month, depending on the
+day the dialog was opened.
+
+### Fixed
+
+- **gtk4 — a `<calendar>` set the wrong month on days 29 to 31.** A `<default>`
+  of 2000-02-29 gave 2000-09-29 on 30 September. The calendar starts from today,
+  then receives the year, the month and the day, one at a time: starting from
+  30 September, it went through 30 February 2000, which GTK silently refuses, and
+  the month stayed September. Depending on the current day and the requested
+  date, month ends and 29 February were affected; so was the reset to today. Day
+  1, which exists in every month, is now set first. The six other ports were
+  right. Seen on 2026-09-30 by the GitLab CI: the behaviour test was green the
+  day before, on the 29th.
+
+### Added
+
+- **A calendar guard** (`tests/garde_calendrier_date_du_jour.sh`), run on the
+  seven ports: it sets the binary's current date (`faketime`) to 31 January,
+  30 September and, as a control, 15 June. On 2.7.3, gtk4 fails on both trap
+  days.
+- **CI: three missing packages** in `ci/dependances.txt`: `imagemagick` (the
+  window-size guard reads the capture with `identify`), `libevas1-engines-x`
+  (only "recommended": without it, EFL creates no window) and `faketime`. The
+  workstation had them; the CI, never run before publication, failed 13 tests.
 
 ## [2.7.3] — 2026-09-24
 

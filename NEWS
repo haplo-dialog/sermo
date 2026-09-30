@@ -5,6 +5,17 @@ Ce fichier resume les changements du point de vue de l'utilisateur.
 Pour l'historique technique complet, voir CHANGELOG.md.
 
 ──────────────────────────────────────────────────
+Version 2.7.4
+──────────────────────────────────────────────────
+
+Version corrective.
+
+- En gtk4, un <calendar> pouvait poser le mauvais mois selon le jour ou
+  le dialogue s'ouvrait : le 30 septembre, un <default> 2000-02-29
+  rendait 2000-09-29. Les fins de mois et le 29 fevrier etaient touches.
+  C'est corrige ; les autres ports etaient justes.
+
+──────────────────────────────────────────────────
 Version 2.7.3
 ──────────────────────────────────────────────────
 
