@@ -52,3 +52,6 @@ imagemagick
 libevas1-engines-x
 # la garde du calendrier fixe la date du jour du binaire
 faketime
+# gdb : quand un exemple n'ouvre pas de fenêtre, run_examples.sh relève la pile
+# de chaque fil avant de l'arrêter (blocage efl1 vu seulement sur la CI de GitLab)
+gdb

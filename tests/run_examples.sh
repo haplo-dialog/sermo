@@ -46,8 +46,11 @@ SHIM="$(mktemp -d)"; trap 'rm -rf "$SHIM"' EXIT
 for n in gtkdialog gtkdialog4 gtksermo sermo \
          gtk3sermo gtk4sermo qt6sermo fltk1sermo efl1sermo sdl3sermo ncursessermo \
          gtk3dialog qt6dialog fltk1dialog efl1dialog sdl3dialog; do
-    printf '#!/bin/sh\nexec "%s" "$@"\n' "$BIN" > "$SHIM/$n"; chmod +x "$SHIM/$n"
+    # Le relais note le code de retour du BINAIRE (le script d'exemple, lui,
+    # continue après et finit souvent en 0) : lu par le relevé de probe.
+    printf '#!/bin/sh\n"%s" "$@"\nrc=$?\necho "$rc" >> "%s/codes"\nexit $rc\n' "$BIN" "$SHIM" > "$SHIM/$n"; chmod +x "$SHIM/$n"
 done
+export SERMO_CODES="$SHIM/codes"
 export PATH="$SHIM:$PATH"
 # Le nom du port testé, pour les exemples qui en dépendent : les exemples glade
 # choisissent leur fichier GtkBuilder (GTK 3 ou GTK 4) d'après GTKDIALOG.
@@ -94,6 +97,13 @@ DELAY="${EXAMPLE_DELAY:-10}"
 #    y écrivent un faux « syntax error »). Il porte désormais sur la sortie
 #    relevée à l'apparition de la fenêtre, ou juste avant l'arrêt s'il n'en est
 #    venu aucune (<journal>.vu) : sur le démarrage, que ce banc mesure.
+#
+# 2026-09-30 — aucune fenêtre alors que le programme tourne encore : avant de
+# l'arrêter, probe relève ce qu'il attend (<journal>.diag, imprimé sous la ligne
+# NOWIN) : s'il s'est arrêté, son code et sa sortie ; sinon fenêtres présentes même invisibles, état et canal d'attente de chaque
+# fil (/proc), pile de chaque fil si gdb est là, fin de la sortie du programme.
+# Sur la CI de GitLab, un exemple efl1 sur 54, jamais le même, ne s'ouvrait pas
+# même en 30 s ; jamais reproduit ailleurs.
 probe() {
     local script="$1" log="$2" arg="${3:-}"
     xvfb-run -a --server-args="-screen 0 800x600x24" bash -c '
@@ -103,12 +113,40 @@ probe() {
         for i in $(seq 1 '"$DELAY"'0); do
             if [ -n "$(xdotool search --onlyvisible --name . 2>/dev/null)" ] ||
                [ -n "$(xdotool search --onlyvisible --class . 2>/dev/null)" ]; then
-                cp "$1" "$1.vu"; echo WINDOW; break
+                cp "$1" "$1.vu"; : > "$1.fen"; echo WINDOW; break
             fi
             kill -0 -- -$pid 2>/dev/null || break
             sleep 0.1
         done
         [ -f "$1.vu" ] || cp "$1" "$1.vu"
+        # Aucune fenêtre, programme arrêté : son code et la fin de sa sortie.
+        if [ ! -f "$1.fen" ] && ! kill -0 -- -$pid 2>/dev/null; then
+            wait $pid 2>/dev/null; rc=$?
+            { echo "arrêté SANS fenêtre au bout de ${i}00 ms ; code du script $rc, du binaire : $(tr "\n" " " < "$SERMO_CODES" 2>/dev/null)(vide = jamais sorti) ; sortie (fin) :"
+              tail -n 25 "$1" | sed "s/^/    /"; } > "$1.diag" 2>&1
+        fi
+        # Aucune fenêtre, programme vivant : diagnostic (voir au-dessus de probe).
+        if [ ! -f "$1.fen" ] && kill -0 -- -$pid 2>/dev/null; then
+            {
+                echo "fenêtres de l'\''écran (xwininfo) :"
+                xwininfo -root -children 2>&1 | sed -n "1,15p"
+                for s in /proc/[0-9]*/stat; do
+                    p=${s#/proc/}; p=${p%/stat}
+                    [ "$(cut -d" " -f5 "$s" 2>/dev/null)" = "$pid" ] || continue
+                    echo "processus $p : $(tr "\0" " " < /proc/$p/cmdline 2>/dev/null | cut -c1-120)"
+                    grep -E "^(State|Threads)" /proc/$p/status 2>/dev/null | sed "s/^/    /"
+                    for t in /proc/$p/task/*; do
+                        echo "    fil $(basename $t) $(cat $t/comm 2>/dev/null) : attend $(cat $t/wchan 2>/dev/null), appel $(cut -d" " -f1 $t/syscall 2>/dev/null)"
+                    done
+                    if command -v gdb >/dev/null 2>&1; then
+                        timeout 30 gdb -p "$p" -batch -ex "thread apply all bt 25" 2>&1 \
+                            | grep -E "^(Thread|#)|ptrace|ttach|ermi" | sed "s/^/    /" | head -120
+                    fi
+                done
+                echo "sortie du programme (fin) :"
+                tail -n 25 "$1" | sed "s/^/    /"
+            } > "$1.diag" 2>&1
+        fi
         kill -TERM -- -$pid 2>/dev/null
         for i in $(seq 1 20); do kill -0 -- -$pid 2>/dev/null || break; sleep 0.1; done
         kill -KILL -- -$pid 2>/dev/null
@@ -148,8 +186,10 @@ for dir in $(find "$EXAMPLES" -maxdepth 1 -mindepth 1 -type d | sort); do
     fi
 
     log="$(mktemp)"
+    : > "$SERMO_CODES"
     saw="$(probe "$script" "$log" "$(argument_pour "$name")")"
-    out="$(cat "$log.vu" 2>/dev/null)"; rm -f "$log" "$log.vu"
+    out="$(cat "$log.vu" 2>/dev/null)"
+    diag="$(cat "$log.diag" 2>/dev/null)"; rm -f "$log" "$log.vu" "$log.fen" "$log.diag"
 
     if   grep -qiE 'assertion failed|Bail out|Segmentation|Unknown widget type' <<<"$out"; then
         v=CRASH;  CRASH=$((CRASH+1)); DETAIL+=("$name : $(grep -oiE 'Unknown widget type|assertion failed[^)]*|Segmentation[a-z ]*' <<<"$out" | head -1)")
@@ -161,6 +201,9 @@ for dir in $(find "$EXAMPLES" -maxdepth 1 -mindepth 1 -type d | sort); do
         v=NOWIN;  NOWIN=$((NOWIN+1)); DETAIL+=("$name : aucune fenêtre en ${DELAY}s")
     fi
     printf '  %-16s %s\n' "$name" "$v"
+    if [[ "$v" == NOWIN && -n "$diag" ]]; then
+        sed 's/^/      │ /' <<<"$diag"
+    fi
 done
 
 TOTAL=$((OK+CRASH+SYNTAX+NOWIN))
