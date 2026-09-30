@@ -63,6 +63,14 @@ jobs:
 
       # -us -uc : rien n'est signé ici. La signature se fait hors CI, avec une
       # clé qui n'a pas à exister sur une forge.
+      # Format 3.0 (quilt) : dpkg-source exige l'archive amont à côté de l'arbre ;
+      # sans elle, la tâche échouait avant de construire (vu sur v2.7.3 et v2.7.4).
+      # Même contenu que packaging/construire-paquets.sh : l'arbre sans debian/ ni .git.
+      - name: archive amont
+        run: |
+          AMONT=$(dpkg-parsechangelog -S Version | sed 's/-[^-]*$//')
+          tar --exclude=./debian --exclude=./.git --exclude=./paquets \
+              --transform "s,^\.,sermo-$AMONT," -cJf "../sermo_${AMONT}.orig.tar.xz" .
       - name: construire
         run: dpkg-buildpackage -us -uc
 

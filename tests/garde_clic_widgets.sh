@@ -27,16 +27,20 @@ for t in xvfb-run xdotool timeout; do
 	command -v "$t" >/dev/null || { echo "outil manquant : $t" >&2; exit 2; }
 done
 
+# Attente maximale de la fenêtre, en secondes (sondée toutes les 0,2 s). La CI
+# la relève : ses exécuteurs partagés sont parfois beaucoup plus lents.
+DELAI="${CLIC_DELAY:-12}"
+
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
 echec=0; joues=0
 
 # GSK_RENDERER=cairo : sans lui GTK 4 échoue sur EGL sous Xvfb et n'ouvre rien.
 clic() {
 	LC_ALL=fr_FR.UTF-8 GSK_RENDERER=cairo \
-	xvfb-run -a -s '-screen 0 800x600x24' timeout 45 sh -c '
+	xvfb-run -a -s '-screen 0 800x600x24' timeout $((DELAI + 33)) sh -c '
 		"$1" --file="$2" >/dev/null 2>&1 &
 		pid=$!
-		for i in $(seq 1 60); do
+		for i in $(seq 1 $(('"$DELAI"' * 5))); do
 			# --name ne lit pas un titre posé en UTF8_STRING (sdl3) : la fenêtre
 			# existait, la garde disait « aucune fenêtre ». On cherche aussi par classe.
 			WID=$(xdotool search --onlyvisible --name CLIC 2>/dev/null | head -1)
