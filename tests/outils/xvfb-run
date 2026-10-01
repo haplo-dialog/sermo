@@ -1,0 +1,69 @@
+#!/bin/bash
+# SPDX-License-Identifier: GPL-2.0-or-later
+# tests/outils/xvfb-run — remplaçant de xvfb-run pour les bancs (ci/bancs.sh le
+# place devant le vrai dans le PATH). Mêmes options que celles qu'emploient les
+# bancs : -a / --auto-servernum (sans effet : le numéro est toujours libre),
+# -s ARGS / --server-args=ARGS / --server-args ARGS, puis la commande.
+#
+# POURQUOI
+#
+# Le 2026-09-30, sur la CI de GitLab, un port sur 139 bancs s'arrêtait de temps
+# en temps faute d'écran : « cannot open display: :100 » — 100 ms après que
+# l'écran avait répondu à xdpyinfo, deux fois de suite pour le même exemple.
+# xvfb-run -a choisit son numéro d'après les verrous de /tmp, tient l'écran pour
+# bon dès que Xvfb vit, et à la fin tue Xvfb sans attendre qu'il soit éteint.
+# La cause exacte n'a pas été reproduite (lenteur, efreetd, socket effacée :
+# trois hypothèses réfutées). Ce lanceur retire les trois points fragiles :
+#   1. Xvfb -displayfd choisit lui-même un numéro libre, et ne l'écrit qu'une
+#      fois prêt à accepter les connexions ;
+#   2. la commande ne part qu'après ce numéro ;
+#   3. à la fin — y compris quand le banc est interrompu (timeout) — Xvfb est
+#      arrêté et ATTENDU : aucun serveur ne survit à son essai.
+#
+# Codes : celui de la commande · 1 = Xvfb n'a pas démarré (le dit sur stderr)
+
+set -u
+ARGS="-screen 0 1280x1024x24"          # le défaut de xvfb-run
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -a|--auto-servernum) shift ;;
+        -s|--server-args) ARGS="$2"; shift 2 ;;
+        --server-args=*) ARGS="${1#--server-args=}"; shift ;;
+        --) shift; break ;;
+        -*) echo "xvfb-run (bancs) : option non prise en charge : $1" >&2; exit 2 ;;
+        *) break ;;
+    esac
+done
+[ $# -gt 0 ] || { echo "usage : xvfb-run [-a] [-s ARGS] commande…" >&2; exit 2; }
+
+T=$(mktemp -d) || exit 1
+XPID=""
+fin() {
+    if [ -n "$XPID" ]; then
+        kill -TERM "$XPID" 2>/dev/null
+        for i in $(seq 1 50); do kill -0 "$XPID" 2>/dev/null || break; sleep 0.1; done
+        kill -KILL "$XPID" 2>/dev/null
+        wait "$XPID" 2>/dev/null
+    fi
+    rm -rf "$T"
+}
+trap fin EXIT
+trap 'exit 143' TERM
+trap 'exit 130' INT
+
+# shellcheck disable=SC2086  # ARGS se découpe en arguments, comme dans xvfb-run
+Xvfb -displayfd 3 $ARGS -nolisten tcp 3>"$T/num" >"$T/xvfb.log" 2>&1 &
+XPID=$!
+for i in $(seq 1 100); do
+    [ -s "$T/num" ] && break
+    kill -0 "$XPID" 2>/dev/null || break
+    sleep 0.05
+done
+N=$(tr -dc '0-9' < "$T/num")
+if [ -z "$N" ]; then
+    echo "xvfb-run (bancs) : Xvfb n'a pas démarré :" >&2
+    tail -n 5 "$T/xvfb.log" >&2
+    exit 1
+fi
+
+DISPLAY=":$N" "$@"

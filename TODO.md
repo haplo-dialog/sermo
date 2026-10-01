@@ -11,8 +11,11 @@ Trouvé le 2026-09-16 par les bancs réparés (`ci/bancs.sh`), **ouvert** :
       tient l'écran pour bon dès que Xvfb vit ; le port lancé trop tôt s'arrête
       (« could not connect to display », qt6 en 200 ms sur la CI de GitLab). Pris d'abord
       pour un défaut d'efl1. `run_examples.sh` et `garde_clic_widgets.sh` attendent que
-      l'écran réponde et refont l'essai une fois, en le disant (« refait »). Si un journal
-      montre « injoignable DEUX fois » : lancer Xvfb soi-même (`-displayfd`).
+      l'écran réponde et refont l'essai une fois, en le disant (« refait »). Vu ensuite sur
+      GitLab : 3 refaits sur gtk3, dont un injoignable DEUX fois. Depuis le 2026-10-01,
+      `ci/bancs.sh` passe par `tests/outils/xvfb-run` (Xvfb `-displayfd`, éteint et attendu).
+      Cause exacte jamais reproduite : fermer ce point quand plusieurs pipelines
+      seront verts sans « refait ».
 - [ ] **Faux « syntax error » à l'arrêt, avec `--program`** : efl1 arrêté par
       SIGTERM (et il sort alors en code 1), qt6 privé de son serveur X,
       écrivent `Error in line N, near token '<window>': syntax error` — le cœur

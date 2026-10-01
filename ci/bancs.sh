@@ -19,6 +19,10 @@
 
 set -uo pipefail
 RACINE=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+# Les bancs graphiques appellent xvfb-run : tests/outils/xvfb-run passe devant le
+# vrai (écran choisi et attendu par Xvfb lui-même, éteint et attendu à la fin) —
+# voir l'en-tête du lanceur, et le 2026-09-30 dans tests/run_examples.sh.
+export PATH="$RACINE/tests/outils:$PATH"
 cd "$RACINE" || exit 1
 J="${SERMO_JOURNAUX:-$RACINE/_journaux}/bancs"
 DELAI="${SERMO_BANC_DELAI:-1800}"   # secondes par banc : un banc figé ne doit pas manger le job
