@@ -11,7 +11,7 @@ sermo suit un **versionnage sémantique** `MAJEUR.MINEUR.CORRECTIF` :
 
 ## Version courante
 
-`2.7.4`. La **première version 2.x publiée** a été la `2.7.3`. Ce que chaque version apporte :
+`2.7.5`. La **première version 2.x publiée** a été la `2.7.3`. Ce que chaque version apporte :
 [CHANGELOG.md](CHANGELOG.md).
 
 La ligne 2.x a commencé à `2.0.0`, version restée interne, comme toutes les
@@ -57,11 +57,11 @@ voyait pas à la compilation, le binaire sortait en annonçant un numéro faux.
   qu'ils sont livrés ensemble. Un changement incompatible du contrat
   `sermo-contract.h` impose un bump MAJEUR, car un backend plus ancien ne se lierait
   plus au cœur.
-- `sermocore.pc` porte la version (`Version: 2.7.4`) : un backend construit à part
+- `sermocore.pc` porte la version (`Version: 2.7.5`) : un backend construit à part
   peut exiger un cœur minimal avec
   `pkg_check_modules(SERMOCORE REQUIRED sermocore>=2.7)`.
-- Les paquets Debian ajoutent une révision : `2.7.4-1` est la première
-  construction Debian de la 2.7.4.
+- Les paquets Debian ajoutent une révision : `2.7.5-1` est la première
+  construction Debian de la 2.7.5.
 
 ## Compatibilité des scripts
 

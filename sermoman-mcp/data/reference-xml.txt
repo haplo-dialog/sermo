@@ -988,4 +988,4 @@ LICENCE
      Documentation sous licence GPL-2.0-or-later.
      Logiciel sous licence GPL-2.0-or-later.
 
-sermo 2.7.4                        2026-09                          SERMO-XML(5)
+sermo 2.7.5                        2026-09                          SERMO-XML(5)

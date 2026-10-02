@@ -21,7 +21,7 @@ bas.
 | Variables de sécurité | `HAPLO_ALLOWED_CMDS`, `HAPLO_NO_SHELL_FALLBACK` | `SERMO_ALLOWED_CMDS`, `SERMO_NO_SHELL_FALLBACK` (les anciens noms sont encore lus) |
 | Sources | un dossier par port (`gtk3sermo/gtk3sermo_1.1.4/`…) | `libsermocore/` et `sermo-backend-<port>/`, construits par CMake |
 | Recettes Arch, Gentoo, RPM, Slackware | fournies | retirées : seul `debian/` est maintenu |
-| Version | une par port | une pour tout (2.7.4) |
+| Version | une par port | une pour tout (2.7.5) |
 
 ## Mettre à jour les paquets Debian
 
@@ -32,11 +32,11 @@ le [README](README.md#installer), puis installez ceux des ports que vous utilise
 apt retire lui-même les paquets 1.x qu'ils remplacent :
 
 ```sh
-sudo apt install ./sermo-backend-gtk3_2.7.4-1_amd64.deb ./sermo-gtkdialog_2.7.4-1_all.deb
+sudo apt install ./sermo-backend-gtk3_2.7.5-1_amd64.deb ./sermo-gtkdialog_2.7.5-1_all.deb
 ```
 
-Ajoutez `./sermo-backend-gtk4_2.7.4-1_amd64.deb` ou
-`./sermo-backend-qt6_2.7.4-1_amd64.deb` si vous aviez `gtk4sermo` ou `qt6sermo`.
+Ajoutez `./sermo-backend-gtk4_2.7.5-1_amd64.deb` ou
+`./sermo-backend-qt6_2.7.5-1_amd64.deb` si vous aviez `gtk4sermo` ou `qt6sermo`.
 
 Éprouvé le 2026-09-17 dans un conteneur Debian testing vierge, sans réseau :
 `gtk3sermo`, `gtk4sermo`, `gtksermo` 1.1.4-2 et `qt6sermo` 1.0.2-2 installés, puis

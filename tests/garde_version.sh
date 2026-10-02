@@ -76,6 +76,57 @@ SERVIE=$(printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{
 [ "$SERVIE" = "$ATTENDUE" ] || \
     signale "sermoman-mcp : version servie ${SERVIE:-<illisible>}, attendu $ATTENDUE"
 
+# 7. Les documents qui disent quelle version installer, ou laquelle est la
+#    version courante, suivent VERSION. La 2.7.5 est sortie avec un README qui
+#    faisait encore télécharger et installer la 2.7.4 — la version même qu'elle
+#    corrigeait : rien ne reliait ces lignes au fichier VERSION.
+#    Chaque motif ne vise QUE la version courante. Les numéros historiques
+#    (première version publiée, paquets des captures, mesures) s'écrivent sous
+#    d'autres formes et ne sont pas vus. Une nouvelle forme de « version
+#    courante » dans ces documents doit être ajoutée ici.
+#    Chaque document doit fournir au moins une mention : un document réécrit
+#    dont aucun motif ne trouverait plus rien rendrait sinon un vert muet.
+V='[0-9]+\.[0-9]+\.[0-9]+'
+DOCS_COURANTE=(README.md README.en.md MIGRATION.md MIGRATION.en.md
+               PACKAGING.md PACKAGING.en.md VERSIONING.md VERSIONING.en.md
+               MANUEL_UTILISATEUR.md MANUEL_UTILISATEUR.en.md
+               sermoman-mcp/data/heritage.md sermoman-mcp/data/reference-xml.txt)
+MOTIFS_COURANTE=(
+    "releases/v$V"                                   # lien vers la release
+    "\[\*\*v$V\*\*\]"                                # texte de ce lien
+    "generic/sermo/$V"                               # registre de paquets
+    "_$V-[0-9]+_"                                    # nom d'un .deb à installer
+    "Version \*\*$V\*\*"                             # README : ligne d'état
+    "\*\*Version ?:\*\* $V"                          # en-tête du manuel
+    "Version courante : \`$V\`"                      # heritage.md
+    "\`Version: $V\`"                                # champ de sermocore.pc
+    "(une pour tout|one for everything) \($V\)"      # MIGRATION : tableau
+    "^\`$V\`\."                                      # VERSIONING : version courante
+    "\`$V-[0-9]+\` est la première"                  # VERSIONING : révision Debian,
+    "construction Debian de la $V"                   #   phrase française sur 2 lignes
+    "\`$V-[0-9]+\` is the first Debian build of $V"  #   et anglaise sur une seule
+    "^sermo $V "                                     # pied de la page de manuel rendue
+)
+ARGS_COURANTE=()
+for m in "${MOTIFS_COURANTE[@]}"; do ARGS_COURANTE+=(-e "$m"); done
+for f in "${DOCS_COURANTE[@]}"; do
+    if [ ! -f "$f" ]; then
+        signale "$f : absent — le retirer de DOCS_COURANTE, ou le rétablir"
+        continue
+    fi
+    TROUVES=$(grep -naoE "${ARGS_COURANTE[@]}" "$f")
+    if [ -z "$TROUVES" ]; then
+        signale "$f : aucune mention de la version courante — motifs à revoir"
+        continue
+    fi
+    while IFS= read -r t; do
+        for n in $(printf '%s\n' "${t#*:}" | grep -oE "$V"); do
+            [ "$n" = "$ATTENDUE" ] || \
+                signale "$f:${t%%:*} : « ${t#*:} » désigne $n, attendu $ATTENDUE"
+        done
+    done <<< "$TROUVES"
+done
+
 if [ "$ecarts" -gt 0 ]; then
     echo "ECHEC : $ecarts écart(s) au fichier VERSION ($ATTENDUE) :" >&2
     exit 1
