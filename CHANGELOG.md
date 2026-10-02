@@ -3,9 +3,33 @@
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/).
 Versionnage : voir [VERSIONING.md](VERSIONING.md).
 
-La **2.7.3 est la première version 2.x publiée** ; la 2.7.4 la suit. Les versions précédentes,
-résumées ci-dessous jusqu'à la 2.5.0, sont restées internes. Pour passer de la
+La **2.7.3 est la première version 2.x publiée** ; les 2.7.4 et 2.7.5 la suivent. Les versions
+précédentes, résumées ci-dessous jusqu'à la 2.5.0, sont restées internes. Pour passer de la
 1.x à la 2.x : [MIGRATION.md](MIGRATION.md).
+
+## [2.7.5] — 2026-10-01
+
+Version CORRECTIF de sécurité. Débordement de tas dans `linecutter()`, hérité de
+gtkdialog.
+
+### Sécurité
+
+- **`linecutter()` débordait au-delà de 127 séparateurs (CWE-787).** Cette
+  fonction découpe les valeurs séparées par `|` : colonnes de `<table>` et
+  `<tree>`, `<colorbutton>`, entre autres. Elle réservait 128 cases et ne
+  vérifiait jamais cette limite ; une valeur de 127 séparateurs ou plus écrivait
+  hors du tableau. Ce contenu peut venir d'une commande ou d'un fichier, donc de
+  données que l'auteur du script ne maîtrise pas toujours — c'est ce qui en fait
+  un risque de sécurité, pas seulement un défaut. Le tableau s'agrandit
+  désormais au besoin. Corrigé dans les **deux** copies du cœur
+  (`libsermocore/src` et `libsermocore/src-gtk4`).
+
+### Tests
+
+- Test unitaire de non-régression (`linecutter` sur 200 champs), vérifié **rouge
+  sur l'ancien code** sous AddressSanitizer puis vert sur le correctif.
+- `run_unit_tests.sh` éprouve désormais `stringman` sur les deux copies du cœur,
+  comme il le fait déjà pour `safe_exec`.
 
 ## [2.7.4] — 2026-09-30
 

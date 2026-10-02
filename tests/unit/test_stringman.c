@@ -226,6 +226,38 @@ START_TEST(test_linecutter_un_seul_champ)
 }
 END_TEST
 
+START_TEST(test_linecutter_borne_depassee)
+{
+	/* Regression du debordement de tas (CWE-787) : l'original reservait 128
+	 * cases et n'en verifiait jamais la limite. Une valeur avec beaucoup de
+	 * separateurs — ici 200 champs, bien au-dela de 128 — ecrivait hors du
+	 * tableau. Ce cas construit une telle valeur et verifie que le decoupage
+	 * est complet et correct. Sans le correctif, il deborde (detecte par
+	 * AddressSanitizer, ou plantage).
+	 *
+	 * Le separateur est espace les 10 champs par un "x" pour que la boucle de
+	 * remplacement de separateur (qui lit chaque champ) ait de la matiere. */
+	const int   champs = 200;
+	GString    *entree = g_string_new(NULL);
+	int         i;
+
+	for (i = 0; i < champs; i++) {
+		if (i > 0) g_string_append_c(entree, '|');
+		g_string_append_printf(entree, "c%d", i);
+	}
+
+	list_t *l = linecutter(g_string_free(entree, FALSE), '|');
+
+	ck_assert_ptr_nonnull(l);
+	ck_assert_int_eq(l->n_lines, champs);
+	ck_assert_str_eq(l->line[0], "c0");
+	ck_assert_str_eq(l->line[champs - 1], "c199");
+	/* Contrat conserve : une case NULL ferme le tableau apres le dernier champ. */
+	ck_assert_ptr_null(l->line[l->n_lines]);
+	list_t_free(l);
+}
+END_TEST
+
 /* =========================================================================
  * Suite 6 — str_default_name
  * ========================================================================= */
@@ -282,6 +314,7 @@ stringman_suite(void)
 	tc = tcase_create("linecutter");
 	tcase_add_test(tc, test_linecutter_decoupe_sur_le_separateur);
 	tcase_add_test(tc, test_linecutter_un_seul_champ);
+	tcase_add_test(tc, test_linecutter_borne_depassee);
 	suite_add_tcase(s, tc);
 
 	tc = tcase_create("str_default_name");

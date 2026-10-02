@@ -1,3 +1,19 @@
+sermo (2.7.5-1) unstable; urgency=high
+
+  * Nouvelle version amont 2.7.5 : correctif de sécurité, débordement de tas
+    dans linecutter().
+  * linecutter() découpe les valeurs séparées par « | » (colonnes de <table> et
+    <tree>, <colorbutton>, etc.). Il réservait 128 cases et ne vérifiait jamais
+    cette limite : une valeur de 127 séparateurs ou plus écrivait hors du
+    tableau (CWE-787). Ce contenu peut venir d'une commande ou d'un fichier,
+    donc de données que l'auteur du script ne maîtrise pas toujours. Le tableau
+    s'agrandit désormais au besoin. Hérité de gtkdialog ; corrigé dans les deux
+    copies du cœur (libsermocore/src et libsermocore/src-gtk4).
+  * tests : test unitaire de non-régression (linecutter sur 200 champs), et
+    run_unit_tests.sh éprouve stringman sur les deux copies du cœur.
+
+ -- s.cage <devel@haplo-dialog.fr>  Thu, 01 Oct 2026 16:24:14 +0200
+
 sermo (2.7.4-1) unstable; urgency=medium
 
   * Nouvelle version amont 2.7.4 : correctif du <calendar> de gtk4.

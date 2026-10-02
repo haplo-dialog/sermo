@@ -10,7 +10,7 @@
  * du cœur, imposée à la compilation. La valeur ci-dessous ne sert qu'aux
  * programmes qui incluent cet en-tête sans passer par ce build. */
 #ifndef PACKAGE_VERSION
-#define PACKAGE_VERSION "2.7.4"
+#define PACKAGE_VERSION "2.7.5"
 #endif
 #ifndef VERSION
 #define VERSION PACKAGE_VERSION

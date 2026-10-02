@@ -478,16 +478,28 @@ list_t *linecutter(char *str, int fs)
 	parts = g_malloc(sizeof(list_t));
 	parts->n_lines = 1;
 	parts->maxlines = 128;
-	parts->line = g_malloc(sizeof(char *) * 128);
+	parts->line = g_malloc(sizeof(char *) * parts->maxlines);
 
 	/* Thunor: These need to be nullified because some functions may
 	 * require more parts than were found and they will expect NULL */
-	for (n = 0; n < 128; n++) parts->line[n] = NULL;
+	for (n = 0; n < parts->maxlines; n++) parts->line[n] = NULL;
 
 	parts->line[0] = str;
 	
 	for(n = 0; n <= strlen(str); ++n){
 		if (str[n] == fs){
+			/* Correctif debordement (CWE-787) : l'original ecrivait sans
+			 * jamais comparer a maxlines ; des 127 separateurs il debordait
+			 * du tableau de 128 cases. On l'agrandit au besoin, en gardant
+			 * toujours une case libre pour le NULL final de line[n_lines]. */
+			if (parts->n_lines + 1 >= parts->maxlines){
+				int ancien = parts->maxlines;
+				parts->maxlines *= 2;
+				parts->line = g_realloc(parts->line,
+					sizeof(char *) * parts->maxlines);
+				for (q = ancien; q < parts->maxlines; ++q)
+					parts->line[q] = NULL;
+			}
 			/* g_strdup et non strdup : list_t_free libere par g_free,
 			 * et melanger les deux allocateurs est indefini. */
 			parts->line[parts->n_lines] = g_strdup(str + n + 1);

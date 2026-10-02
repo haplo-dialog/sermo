@@ -5,6 +5,17 @@ Ce fichier resume les changements du point de vue de l'utilisateur.
 Pour l'historique technique complet, voir CHANGELOG.md.
 
 ──────────────────────────────────────────────────
+Version 2.7.5
+──────────────────────────────────────────────────
+
+Version corrective de sécurité.
+
+* Un <table> ou un <tree> dont une ligne contenait beaucoup de « | »
+  (127 ou plus) pouvait faire écrire sermo hors de sa mémoire. C'est
+  corrigé. Quand ce contenu venait d'une commande ou d'un fichier
+  extérieur, c'était un risque de sécurité.
+
+──────────────────────────────────────────────────
 Version 2.7.4
 ──────────────────────────────────────────────────
 

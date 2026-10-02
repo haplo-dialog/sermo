@@ -5,6 +5,17 @@ This file summarises changes from the user's point of view.
 For the full technical history, see CHANGELOG.en.md.
 
 ──────────────────────────────────────────────────
+Version 2.7.5
+──────────────────────────────────────────────────
+
+Security patch release.
+
+- A <table> or a <tree> whose row held many "|" characters (127 or
+  more) could make sermo write outside its memory. This is fixed. When
+  that content came from a command or an external file, it was a
+  security risk.
+
+──────────────────────────────────────────────────
 Version 2.7.4
 ──────────────────────────────────────────────────
 

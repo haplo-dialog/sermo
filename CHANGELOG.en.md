@@ -3,9 +3,32 @@
 Format inspired by [Keep a Changelog](https://keepachangelog.com/).
 Versioning: see [VERSIONING.en.md](VERSIONING.en.md).
 
-**2.7.3 is the first published 2.x release**; 2.7.4 follows it. The previous versions, summarised
-below down to 2.5.0, stayed internal. To move from 1.x to 2.x:
+**2.7.3 is the first published 2.x release**; 2.7.4 and 2.7.5 follow it. The previous versions,
+summarised below down to 2.5.0, stayed internal. To move from 1.x to 2.x:
 [MIGRATION.en.md](MIGRATION.en.md).
+
+## [2.7.5] — 2026-10-01
+
+Security PATCH release. Heap buffer overflow in `linecutter()`, inherited from
+gtkdialog.
+
+### Security
+
+- **`linecutter()` overflowed beyond 127 separators (CWE-787).** This function
+  splits `|`-separated values: `<table>` and `<tree>` columns, `<colorbutton>`,
+  among others. It allocated 128 slots and never checked that limit; a value with
+  127 separators or more wrote past the array. That content can come from a
+  command or a file, hence from data the script author does not always control —
+  which is what makes it a security risk, not merely a defect. The array now
+  grows as needed. Fixed in **both** copies of the core (`libsermocore/src` and
+  `libsermocore/src-gtk4`).
+
+### Tests
+
+- Regression unit test (`linecutter` over 200 fields), verified **red on the old
+  code** under AddressSanitizer, then green on the fix.
+- `run_unit_tests.sh` now exercises `stringman` against both copies of the core,
+  as it already does for `safe_exec`.
 
 ## [2.7.4] — 2026-09-30
 
