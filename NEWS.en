@@ -5,6 +5,29 @@ This file summarises changes from the user's point of view.
 For the full technical history, see CHANGELOG.en.md.
 
 ──────────────────────────────────────────────────
+Version 2.7.7
+──────────────────────────────────────────────────
+
+Patch release.
+
+* A progress bar whose command printed a line starting with a NUL byte made
+  sermo read one byte outside its memory. Fixed (gtk3 and gtk4 ports).
+
+* gtk4 port: two windows open at the same time with the same variable no
+  longer overwrite each other silently, and a widget's default value is
+  visible to a neighbouring widget's command — as in gtk3.
+
+──────────────────────────────────────────────────
+Version 2.7.6
+──────────────────────────────────────────────────
+
+Security patch release.
+
+* With a list of allowed commands (SERMO_ALLOWED_CMDS), a script could still
+  get code loaded by naming a variable LD_PRELOAD. Fixed: such variables are
+  no longer passed to the command.
+
+──────────────────────────────────────────────────
 Version 2.7.5
 ──────────────────────────────────────────────────
 

@@ -2,7 +2,7 @@
 
 [Français](MANUEL_UTILISATEUR.md)
 
-**Version:** 2.7.5
+**Version:** 2.7.7
 **Licence:** GPL-2.0-or-later | **Distributor:** haplo-dialog (devel@haplo-dialog.fr)
 
 ---

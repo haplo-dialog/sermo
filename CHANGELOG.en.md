@@ -3,9 +3,69 @@
 Format inspired by [Keep a Changelog](https://keepachangelog.com/).
 Versioning: see [VERSIONING.en.md](VERSIONING.en.md).
 
-**2.7.3 is the first published 2.x release**; 2.7.4 and 2.7.5 follow it. The previous versions,
+**2.7.3 is the first published 2.x release**; 2.7.4, 2.7.5 and 2.7.7 follow it (2.7.6 was only delivered as packages; its content is published with 2.7.7). The previous versions,
 summarised below down to 2.5.0, stayed internal. To move from 1.x to 2.x:
 [MIGRATION.en.md](MIGRATION.en.md).
+
+## [2.7.7] — 2026-10-04
+
+PATCH release. An out-of-bounds read in the progress bar, and three fixes the
+GTK4 core did not have yet.
+
+### Security
+
+- **Progress bar (gtk3, gtk4): out-of-bounds read.** The thread reading the
+  `<input>` of a `<progressbar>` stripped the trailing newline without checking
+  that the line was not empty. A line starting with a NUL byte made it read one
+  byte before the buffer, and write it if that byte was a newline. This content
+  comes from a command, hence from data the script author does not always
+  control. Measured under AddressSanitizer on both ports
+  (`stack-buffer-overflow`, `READ of size 1`); a guard closes the defect.
+
+### Fixed
+
+- **GTK4: two windows open at the same time with the same variable.** The second
+  one took over the first one's variable and silently overwrote it: on exit, the
+  variable carried the value of the wrong window. It is now stored as
+  `NAME__W<id>`, with a warning — which gtk3 already did.
+- **GTK4: a widget's `<default>` value was not visible to a neighbour's first
+  `<input>`.** An `<input>` command reading `$A` found an empty variable where
+  gtk3 found the default value of `A`.
+- **GTK4: `g_setenv()` replaces `putenv()`** when exporting a variable (memory
+  leak, and an environment entry pointing to a heap string).
+
+These three fixes existed in `libsermocore/src`; they were missing from the
+`libsermocore/src-gtk4` copy.
+
+### Tests
+
+- `tests/garde_progressbar_ligne_vide.sh`: static check with a witness (on an
+  ordinary binary, reading one stack byte goes unnoticed).
+- `tests/garde_fenetres_homonymes.sh` (gtk3, gtk4) and behaviour case
+  `54-defaut-vu-par-input`, green on all seven ports. All three are red on the
+  old code.
+
+## [2.7.6] — 2026-10-03
+
+Security PATCH release. Bypass of the `SERMO_ALLOWED_CMDS` allowlist through the
+environment.
+
+### Security
+
+- **A widget variable named `LD_PRELOAD` got past the allowlist.** A script could
+  name a variable `LD_PRELOAD` (or `LD_LIBRARY_PATH`, `LD_AUDIT`…); its value was
+  exported, then inherited by the allowed command, which then loaded arbitrary
+  code. When the allowlist is active, every `LD_*` variable is now removed from
+  the command's environment and `PATH` is pinned to `/usr/bin:/bin`. Without an
+  allowlist, nothing changes.
+
+### Internal
+
+- **Single source, first step.** The `WIDGET_*` enumeration lives in one header
+  (`libsermocore/include/widget_types.h`) instead of being copied into every
+  port, and five core files (`safe_exec`, `stack`, `attributes`, `stringman`,
+  `actions`) no longer have a GTK4 copy: the GTK4 variant builds them from
+  `libsermocore/src`. No behaviour change expected.
 
 ## [2.7.5] — 2026-10-01
 

@@ -1,3 +1,36 @@
+sermo (2.7.7-1) unstable; urgency=medium
+
+  * Barre de progression (gtk3, gtk4) : lecture hors tampon. Une ligne
+    d'<input> commençant par un octet nul faisait lire — et, si l'octet lu
+    valait un saut de ligne, écrire — un octet avant le tampon de lecture.
+    Mesuré sous AddressSanitizer (stack-buffer-overflow, READ of size 1) ;
+    une garde « length >= 0 » ferme le défaut.
+  * Cœur GTK4 (libsermocore/src-gtk4) : trois correctifs que le port gtk3
+    avait déjà. Deux fenêtres ouvertes en même temps avec la même variable
+    ne s'écrasent plus en silence (la seconde est rangée sous NOM__W<id>) ;
+    la valeur <default> d'un widget est visible du premier <input> d'un
+    voisin ; g_setenv() remplace putenv() à l'export d'une variable.
+  * Bancs : garde_progressbar_ligne_vide.sh, garde_fenetres_homonymes.sh, et
+    un 54e cas de comportement (54-defaut-vu-par-input), vert sur les sept
+    ports.
+
+ -- s.cage <devel@haplo-dialog.fr>  Sun, 04 Oct 2026 11:26:05 +0200
+
+sermo (2.7.6-1) unstable; urgency=high
+
+  * Correctif de sécurité : contournement de la liste blanche
+    SERMO_ALLOWED_CMDS par l'environnement. Un script pouvait nommer une
+    variable de widget LD_PRELOAD (ou LD_LIBRARY_PATH, LD_AUDIT…) ; sa valeur
+    était exportée puis héritée par la commande autorisée, qui chargeait alors
+    du code arbitraire — la liste blanche était franchie quelle que soit la
+    commande permise. Prouvé sur le binaire réel (ncursessermo 2.7.5).
+  * _build_child_env() (libsermocore/src/safe_exec.c) purge désormais toute
+    variable LD_* et fige un PATH sûr (/usr/bin:/bin) quand la liste blanche
+    est active ; la commande autorisée s'exécute donc dans un environnement
+    sain. Sans liste blanche, le comportement est inchangé.
+
+ -- s.cage <devel@haplo-dialog.fr>  Sat, 03 Oct 2026 16:33:28 +0200
+
 sermo (2.7.5-1) unstable; urgency=high
 
   * Nouvelle version amont 2.7.5 : correctif de sécurité, débordement de tas

@@ -3,9 +3,71 @@
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/).
 Versionnage : voir [VERSIONING.md](VERSIONING.md).
 
-La **2.7.3 est la première version 2.x publiée** ; les 2.7.4 et 2.7.5 la suivent. Les versions
+La **2.7.3 est la première version 2.x publiée** ; les 2.7.4, 2.7.5 et 2.7.7 la suivent (la 2.7.6 n'a été livrée qu'en paquets ; son contenu est publié avec la 2.7.7). Les versions
 précédentes, résumées ci-dessous jusqu'à la 2.5.0, sont restées internes. Pour passer de la
 1.x à la 2.x : [MIGRATION.md](MIGRATION.md).
+
+## [2.7.7] — 2026-10-04
+
+Version CORRECTIF. Une lecture hors tampon dans la barre de progression, et trois
+correctifs que le cœur GTK4 n'avait pas encore.
+
+### Sécurité
+
+- **Barre de progression (gtk3, gtk4) : lecture hors tampon.** Le thread qui lit
+  l'`<input>` d'une `<progressbar>` retirait le saut de ligne final sans vérifier
+  que la ligne n'était pas vide. Une ligne commençant par un octet nul faisait
+  lire un octet avant le tampon, et l'écrire si cet octet valait un saut de
+  ligne. Ce contenu vient d'une commande, donc de données que l'auteur du script
+  ne maîtrise pas toujours. Mesuré sous AddressSanitizer sur les deux ports
+  (`stack-buffer-overflow`, `READ of size 1`) ; une garde ferme le défaut.
+
+### Corrigé
+
+- **GTK4 : deux fenêtres ouvertes en même temps avec la même variable.** La
+  seconde reprenait la variable de la première et l'écrasait en silence : à la
+  sortie, la variable portait la valeur de la mauvaise fenêtre. Elle est
+  désormais rangée sous `NOM__W<id>`, avec un avertissement — ce que gtk3 faisait
+  déjà.
+- **GTK4 : la valeur `<default>` d'un widget n'était pas visible du premier
+  `<input>` d'un voisin.** Une commande d'`<input>` qui lisait `$A` trouvait une
+  variable vide là où gtk3 trouvait la valeur par défaut de `A`.
+- **GTK4 : `g_setenv()` remplace `putenv()`** à l'export d'une variable (fuite
+  mémoire, et entrée d'environnement pointant sur une chaîne du tas).
+
+Ces trois correctifs existaient dans `libsermocore/src` ; ils manquaient dans la
+copie `libsermocore/src-gtk4`.
+
+### Tests
+
+- `tests/garde_progressbar_ligne_vide.sh` : banc statique avec témoin (sur un
+  binaire ordinaire, la lecture d'un octet de pile ne se voit pas).
+- `tests/garde_fenetres_homonymes.sh` (gtk3, gtk4) et cas de comportement
+  `54-defaut-vu-par-input`, vert sur les sept ports. Les trois bancs sont rouges
+  sur l'ancien code.
+
+## [2.7.6] — 2026-10-03
+
+Version CORRECTIF de sécurité. Contournement de la liste blanche
+`SERMO_ALLOWED_CMDS` par l'environnement.
+
+### Sécurité
+
+- **Une variable de widget nommée `LD_PRELOAD` franchissait la liste blanche.**
+  Un script pouvait nommer une variable `LD_PRELOAD` (ou `LD_LIBRARY_PATH`,
+  `LD_AUDIT`…) ; sa valeur était exportée, puis héritée par la commande
+  autorisée, qui chargeait alors du code arbitraire. Quand la liste blanche est
+  active, toute variable `LD_*` est désormais retirée de l'environnement de la
+  commande et `PATH` est figé à `/usr/bin:/bin`. Sans liste blanche, rien ne
+  change.
+
+### Interne
+
+- **Source unique, première étape.** L'énumération `WIDGET_*` vit dans un seul
+  en-tête (`libsermocore/include/widget_types.h`) au lieu d'être recopiée dans
+  chaque port, et cinq fichiers du cœur (`safe_exec`, `stack`, `attributes`,
+  `stringman`, `actions`) n'ont plus de copie GTK4 : la variante GTK4 les
+  compile depuis `libsermocore/src`. Aucun changement de comportement attendu.
 
 ## [2.7.5] — 2026-10-01
 

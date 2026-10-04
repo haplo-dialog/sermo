@@ -268,14 +268,55 @@ variable *variables_new_with_widget(AttributeSet *Attr,
 
 	name = attributeset_get_first(&element, Attr, ATTR_VARIABLE);
 
-	/* 
-	 ** If the variable exists we simply returns without making a 
-	 ** a warning.
+	/*
+	 * Retrieve or create the backing variable node.
+	 *
+	 * T9 fix — duplicate window names:
+	 *   When the same dialog XML is opened a second time while the first
+	 *   instance is still live, both instances share the same widget names.
+	 *   The old code silently overwrote the first window's Widget pointer,
+	 *   leaving it with a dangling reference and producing unpredictable
+	 *   behaviour (crashes, wrong-widget refreshes, …).
+	 *
+	 *   Detection: variable already exists AND its Widget is non-NULL
+	 *   (i.e. the owning window is still open) AND it belongs to a
+	 *   different window_id than the one being constructed now.
+	 *
+	 *   Cure: register the new window's widget under a suffixed name
+	 *   "<NAME>__W<window_id>" (or "<NAME>__W<window_id>_N" if that too
+	 *   is already taken).  This keeps the first window's variable intact
+	 *   and makes the collision visible in the shell output.
+	 *
+	 *   autonamed variables are exempt: each invocation of str_default_name()
+	 *   produces a unique counter-based slot, so there is never a true
+	 *   collision among them.
 	 */
 	if (!variables_is_avail_by_name(name)) {
 		var = variables_new(name);
 	} else {
 		var = variables_get_by_name(name);
+
+		if (!autonamed && var->Widget != NULL &&
+		    var->window_id != window_id) {
+			/* Build a unique suffixed name for this window's copy. */
+			gchar unique[NAMELEN + 1];
+			int   n = 2;
+
+			g_snprintf(unique, sizeof(unique),
+				   "%s__W%d", name, window_id);
+			while (variables_is_avail_by_name(unique))
+				g_snprintf(unique, sizeof(unique),
+					   "%s__W%d_%d", name, window_id, n++);
+
+			g_warning("%s(): variable \"%s\" is already owned by "
+				  "window_id=%d (Widget=%p); registering duplicate "
+				  "as \"%s\" for window_id=%d to avoid silent clobber.",
+				  __func__, name,
+				  var->window_id, (void *)var->Widget,
+				  unique, window_id);
+
+			var = variables_new(unique);
+		}
 	}
 
 	g_assert(var != NULL);
@@ -790,6 +831,17 @@ variable *variables_refresh(const char *name)
 		return NULL;
 
 	g_assert(var->Attributes != NULL);
+
+	/* T11 fix — widget init order:
+	 * Export the current values of ALL widgets as environment variables
+	 * before running this widget's <input> command.  Without this, an
+	 * <input> command that references a sibling widget's variable finds
+	 * the environment empty (or stale) during the initial show pass,
+	 * causing the widget to display wrong data.
+	 *
+	 * This mirrors what action_shellcommand() and CommandRefresh already
+	 * do before invoking user commands (see actions.c). */
+	variables_export_all();
 
 	/* Get initialised state of widget */
 	if (g_object_get_data(G_OBJECT(var->Widget), "_initialised") != NULL)
@@ -1571,6 +1623,53 @@ void variables_initialize_all(void)
 }
 
 /***********************************************************************
+ * T11 fix — seed env with <default> values before widget_show_all()  *
+ *                                                                     *
+ * Walks the BST and, for every named widget that declares a <default> *
+ * attribute, exports the default string into the process environment  *
+ * with g_setenv(…, FALSE) so that it does NOT overwrite a value that  *
+ * a preceding widget's refresh pass has already placed there.         *
+ *                                                                     *
+ * Called from run_program() (automaton.c) BEFORE widget_show_all().   *
+ * This ensures that when the first wave of show-signal handlers fires  *
+ * and each widget runs its <input> command, sibling widgets' defaults  *
+ * are already visible in the child process environment.               *
+ ***********************************************************************/
+
+static void _variables_seed_defaults(variable *actual)
+{
+	GList       *element;
+	const gchar *defval;
+
+	if (actual == NULL)
+		actual = root;
+	if (actual == NULL)
+		return;
+
+	if (actual->left != NULL)
+		_variables_seed_defaults(actual->left);
+
+	if (actual->Widget != NULL && !actual->autonamed &&
+	    actual->Attributes != NULL) {
+		if (attributeset_is_avail(actual->Attributes, ATTR_DEFAULT)) {
+			defval = attributeset_get_first(&element,
+						       actual->Attributes,
+						       ATTR_DEFAULT);
+			if (defval != NULL)
+				g_setenv(actual->Name, defval, FALSE);
+		}
+	}
+
+	if (actual->right != NULL)
+		_variables_seed_defaults(actual->right);
+}
+
+void variables_seed_defaults(void)
+{
+	_variables_seed_defaults(NULL);
+}
+
+/***********************************************************************
  *                                                                     *
  ***********************************************************************/
 static void _variables_initialize(variable *actual)
@@ -1685,10 +1784,10 @@ static void _variables_export(variable *actual)
 					   actual->row, 0, &value);
 		} */
 
-		if (value != NULL) {
-			line = g_strdup_printf("%s=%s", actual->Name, value);
-			putenv(line);
-		}
+		/* Export the active element value into the environment.
+		 * g_setenv() handles memory safely (copies both name and value). */
+		if (value != NULL)
+			g_setenv(actual->Name, value, TRUE);
 
 		/* Thunor: I've disabled this for performance reasons. Zigbert was
 		 * experiencing terrible table performance which I've tested too.

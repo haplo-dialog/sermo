@@ -1,0 +1,6 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: la valeur <default> d un widget est dans l environnement du premier <input> d un voisin declare apres lui -->
+<window><vbox>
+<entry><variable>A</variable><default>bonjour</default></entry>
+<entry><variable>B</variable><input>sh donnees/voir-a.sh</input></entry>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

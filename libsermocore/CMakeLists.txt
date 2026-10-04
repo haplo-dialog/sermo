@@ -56,12 +56,20 @@ BISON_TARGET(SermoParser src/gtkdialog_parser.y ${CMAKE_CURRENT_BINARY_DIR}/gtkd
 ADD_FLEX_BISON_DEPENDENCY(SermoLexer SermoParser)
 
 if(SERMOCORE_GTK4)
-  # Fichiers cœur GTK4 vendorés (src-gtk4/) + gtk4-compat.c + icon-theme unifié.
+  # Fichiers cœur encore PROPRES à GTK4 (vraies différences d'API GTK3/GTK4,
+  # fusion sous #ifdef à venir — étape 3b) + gtk4-compat.c.
   set(CORE_SRC
-    ${GTK4SRC}/gtkdialog.c ${GTK4SRC}/safe_exec.c ${GTK4SRC}/variables.c
-    ${GTK4SRC}/stack.c ${GTK4SRC}/automaton.c ${GTK4SRC}/attributes.c
-    ${GTK4SRC}/signals.c ${GTK4SRC}/stringman.c ${GTK4SRC}/actions.c
-    ${GTK4SRC}/tag_attributes.c ${GTK4SRC}/gtk4-compat.c
+    ${GTK4SRC}/gtkdialog.c ${GTK4SRC}/variables.c ${GTK4SRC}/automaton.c
+    ${GTK4SRC}/signals.c ${GTK4SRC}/tag_attributes.c
+    ${GTK4SRC}/gtk4-compat.c
+    # Fichiers cœur à SOURCE UNIQUE (src/), valables pour toutes les variantes :
+    # l'écart gtk3d.h↔gtkdialog.h est ponté par le shim src-gtk4/gtk3d.h, et la
+    # journalisation g_* est disponible en GTK4. (étapes 3a-3b)
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/actions.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/safe_exec.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/stack.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/attributes.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/stringman.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/sermo_icon_theme.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/sermo_input.c
     ${FLEX_SermoLexer_OUTPUTS} ${BISON_SermoParser_OUTPUTS})

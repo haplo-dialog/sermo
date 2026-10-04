@@ -452,8 +452,10 @@ static gpointer widget_progressbar_thread_entry(progr_descr *descr)
 	gboolean  gone;
 
 	while (fgets(oneline, 512, descr->pipe) != NULL) {
+		/* Une ligne qui commence par un octet nul a une longueur de zéro :
+		 * sans la garde, on lirait oneline[-1], hors du tampon. */
 		length = (gint)strlen(oneline) - 1;
-		if (oneline[length] == '\n')
+		if (length >= 0 && oneline[length] == '\n')
 			oneline[length] = '\0';
 
 		ival = strtol(oneline, &end, 0);

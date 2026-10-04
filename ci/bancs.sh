@@ -75,6 +75,7 @@ for d in libsermocore/src libsermocore/src-gtk4 libsermocore/include contract se
 done
 for p in gtk3 gtk4; do
     banc "thread progressbar $p" bash tests/garde_progressbar_thread.sh "sermo-backend-$p/src/widget_progressbar.c"
+    banc "ligne vide progressbar $p" bash tests/garde_progressbar_ligne_vide.sh "sermo-backend-$p/src/widget_progressbar.c"
 done
 banc "en-têtes de poste" bash tests/garde_pas_de_poste.sh "$RACINE"
 banc "lectures d'<input> plafonnées" bash tests/garde_lecture_input.sh "$RACINE"
@@ -118,6 +119,11 @@ for p in "${PORTS[@]}"; do
     banc "$p glade" bash tests/garde_glade.sh "$b"
     banc "$p terminal" bash tests/garde_terminal.sh "$b"
     [ "$p" = gtk3 ] && banc "$p layer-shell" bash tests/garde_layer_shell.sh "$b"
+    # Fenêtres homonymes : gtk3 et gtk4 seulement. L'étalon est ce que rend gtk3 ;
+    # les cinq autres ports ouvrent une seconde fenêtre autrement (mesuré le
+    # 2026-10-04 : valeur de NOM__W2 différente, sortie vide ou dialogue figé) —
+    # un écart de parité à part, que ce banc ne prétend pas juger.
+    case "$p" in gtk3|gtk4) banc "$p fenêtres homonymes" sh tests/garde_fenetres_homonymes.sh "$b" ;; esac
     if [ "$p" = ncurses ]; then
         banc "$p mot de passe" bash tests/garde_ncurses_mot_de_passe.sh "$b"
     else

@@ -236,6 +236,7 @@ static gchar **_build_child_env(void)
 {
     gchar **src = g_get_environ();
     GPtrArray *out = g_ptr_array_new();
+    gboolean allowlist = _allowlist_is_active();
     guint i;
 
     for (i = 0; src && src[i]; i++) {
@@ -247,6 +248,20 @@ static gchar **_build_child_env(void)
         if (g_str_has_prefix(entry, "DIALOG="))
             continue;
 
+        /* Security fix (allowlist bypass): under the allowlist the dialog may be
+         * hostile, yet a widget variable named LD_PRELOAD / LD_LIBRARY_PATH /
+         * LD_AUDIT (any LD_*) is exported into our environment and would be
+         * inherited here, loading attacker code into an otherwise-allowed command
+         * and defeating the allowlist. Strip every LD_* variable, and drop PATH so
+         * a sanitized one is pinned below (the bare-name allowlist check does not
+         * resolve PATH, so a poisoned PATH could otherwise substitute the binary). */
+        if (allowlist) {
+            if (g_str_has_prefix(entry, "LD_"))
+                continue;
+            if (g_str_has_prefix(entry, "PATH="))
+                continue;
+        }
+
         /* Drop any pathologically large variable defensively. */
         value_len = eq ? strlen(eq + 1) : 0;
         if (value_len > MAX_INHERITED_VALUE)
@@ -254,6 +269,9 @@ static gchar **_build_child_env(void)
 
         g_ptr_array_add(out, g_strdup(entry));
     }
+    /* Under the allowlist, pin a known-good PATH for the bare-name lookup. */
+    if (allowlist)
+        g_ptr_array_add(out, g_strdup("PATH=/usr/bin:/bin"));
     g_ptr_array_add(out, NULL);
     g_strfreev(src);
 

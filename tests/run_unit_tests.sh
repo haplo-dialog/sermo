@@ -3,14 +3,13 @@
 # run_unit_tests.sh — tests unitaires du cœur, sans affichage.
 #
 # Compile et exécute :
-#  - tests/unit/test_safe_exec.c contre CHAQUE copie de safe_exec.c du cœur :
-#    libsermocore/src et libsermocore/src-gtk4. Deux sources, deux épreuves :
-#    un correctif qui manquerait à la copie GTK 4 se verrait ici ;
+#  - tests/unit/test_safe_exec.c contre libsermocore/src/safe_exec.c. Depuis
+#    l'étape 3a de la source unique, safe_exec.c n'a plus qu'UNE copie (la
+#    variante GTK4 le compile aussi depuis src/) ;
 #  - tests/unit/test_sermo_input.c : la limite des <input> (2.7.3), contre
 #    libsermocore/src/sermo_input.c ;
-#  - tests/unit/test_stringman.c contre CHAQUE copie de stringman.c (src et
-#    src-gtk4, libcheck) : même raison que safe_exec — le correctif du
-#    débordement de linecutter() doit tenir dans les deux copies.
+#  - tests/unit/test_stringman.c contre libsermocore/src/stringman.c (libcheck) :
+#    source unique elle aussi depuis l'étape 3a.
 #
 # ⛔ Ne dit jamais OK sans avoir exécuté. La version précédente visait des
 # dossiers de la 1.x disparus, sautait tout en silence et affichait « OK ».
@@ -37,19 +36,21 @@ lancer() {  # lancer <nom> <binaire>
     if [ "$rc" -eq 0 ]; then printf 'OK     %s\n\n' "$1"; else printf 'ÉCHEC  %s (rc=%s)\n\n' "$1" "$rc"; echecs=$((echecs + 1)); fi
 }
 
-for copie in src src-gtk4; do
-    dossier="$RACINE/libsermocore/$copie"
-    [ -f "$dossier/safe_exec.c" ] || { echo "ÉCHEC : $dossier/safe_exec.c introuvable" >&2; echecs=$((echecs + 1)); continue; }
-    bin="$TMP/test_safe_exec_$copie"
-    # La copie GTK 4 a son propre safe_exec.h : son dossier passe en premier.
+# safe_exec.c est à SOURCE UNIQUE (src/) depuis l'étape 3a : la variante GTK4 le
+# compile aussi depuis src/. Une seule copie à éprouver.
+dossier="$RACINE/libsermocore/src"
+if [ ! -f "$dossier/safe_exec.c" ]; then
+    echo "ÉCHEC : $dossier/safe_exec.c introuvable" >&2; echecs=$((echecs + 1))
+else
+    bin="$TMP/test_safe_exec"
     if gcc -D_GNU_SOURCE $(pkg-config --cflags glib-2.0) -I"$dossier" -I"$RACINE/libsermocore/include" \
            "$ICI/unit/test_safe_exec.c" "$dossier/safe_exec.c" "$RACINE/libsermocore/src/sermo_input.c" \
            $(pkg-config --libs glib-2.0) -o "$bin" 2>"$TMP/cc.log"; then
-        lancer "safe_exec ($copie)" "$bin"
+        lancer "safe_exec" "$bin"
     else
-        echo "ÉCHEC DE COMPILATION : safe_exec ($copie)"; cat "$TMP/cc.log"; echecs=$((echecs + 1))
+        echo "ÉCHEC DE COMPILATION : safe_exec"; cat "$TMP/cc.log"; echecs=$((echecs + 1))
     fi
-done
+fi
 
 bin="$TMP/test_sermo_input"
 if gcc -D_GNU_SOURCE $(pkg-config --cflags glib-2.0) -I"$RACINE/libsermocore/include" \
@@ -61,19 +62,16 @@ else
 fi
 
 if pkg-config --exists check gtk+-3.0; then
-    for copie in src src-gtk4; do
-        dossier="$RACINE/libsermocore/$copie"
-        [ -f "$dossier/stringman.c" ] || { echo "ÉCHEC : $dossier/stringman.c introuvable" >&2; echecs=$((echecs + 1)); continue; }
-        bin="$TMP/test_stringman_$copie"
-        # La copie GTK 4 a ses propres en-têtes : son dossier passe en premier.
-        if gcc -D_GNU_SOURCE $(pkg-config --cflags glib-2.0 gtk+-3.0 check) -I"$dossier" -I"$RACINE/libsermocore/include" \
-               "$ICI/unit/test_stringman.c" "$dossier/stringman.c" \
-               $(pkg-config --libs glib-2.0 gtk+-3.0 check) -o "$bin" 2>"$TMP/cc.log"; then
-            CK_FORK=no lancer "stringman ($copie)" "$bin"
-        else
-            echo "ÉCHEC DE COMPILATION : stringman ($copie)"; cat "$TMP/cc.log"; echecs=$((echecs + 1))
-        fi
-    done
+    # stringman.c est à SOURCE UNIQUE (src/) depuis l'étape 3a : une seule copie.
+    dossier="$RACINE/libsermocore/src"
+    bin="$TMP/test_stringman"
+    if gcc -D_GNU_SOURCE $(pkg-config --cflags glib-2.0 gtk+-3.0 check) -I"$dossier" -I"$RACINE/libsermocore/include" \
+           "$ICI/unit/test_stringman.c" "$dossier/stringman.c" \
+           $(pkg-config --libs glib-2.0 gtk+-3.0 check) -o "$bin" 2>"$TMP/cc.log"; then
+        CK_FORK=no lancer "stringman" "$bin"
+    else
+        echo "ÉCHEC DE COMPILATION : stringman"; cat "$TMP/cc.log"; echecs=$((echecs + 1))
+    fi
 else
     echo "outil manquant : libcheck ou gtk+-3.0 (check, libgtk-3-dev) — test_stringman NON joué" >&2
     exit 2

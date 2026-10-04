@@ -535,6 +535,16 @@ void run_program()
 	 * the stack which is a window.
 	 */
 	s = pop();
+	/* T11 fix — Part 2: seed the process environment with each widget's
+	 * declared <default> value BEFORE showing any widget.  The show
+	 * signal triggers <input> commands via variables_refresh(); without
+	 * this pre-seed, those commands find the environment empty and cannot
+	 * reference sibling widgets' default values.
+	 *
+	 * g_setenv is called with overwrite=FALSE so that any value already
+	 * placed there by a parent shell is preserved. */
+	variables_seed_defaults();
+
 	//gtk_widget_show_all(s.widgets[0]);	Redundant: done manually.
 	widget_show_all();
 

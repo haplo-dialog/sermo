@@ -20,7 +20,7 @@ the way to compile. The few behaviours that change are listed below.
 | Security variables | `HAPLO_ALLOWED_CMDS`, `HAPLO_NO_SHELL_FALLBACK` | `SERMO_ALLOWED_CMDS`, `SERMO_NO_SHELL_FALLBACK` (the old names are still read) |
 | Sources | one directory per port (`gtk3sermo/gtk3sermo_1.1.4/`…) | `libsermocore/` and `sermo-backend-<port>/`, built with CMake |
 | Arch, Gentoo, RPM, Slackware recipes | provided | removed: only `debian/` is maintained |
-| Version | one per port | one for everything (2.7.5) |
+| Version | one per port | one for everything (2.7.7) |
 
 ## Upgrading the Debian packages
 
@@ -31,11 +31,11 @@ Download and check the 2.x packages attached to the release, as the
 apt removes the 1.x packages they replace by itself:
 
 ```sh
-sudo apt install ./sermo-backend-gtk3_2.7.5-1_amd64.deb ./sermo-gtkdialog_2.7.5-1_all.deb
+sudo apt install ./sermo-backend-gtk3_2.7.7-1_amd64.deb ./sermo-gtkdialog_2.7.7-1_all.deb
 ```
 
-Add `./sermo-backend-gtk4_2.7.5-1_amd64.deb` or
-`./sermo-backend-qt6_2.7.5-1_amd64.deb` if you had `gtk4sermo` or `qt6sermo`.
+Add `./sermo-backend-gtk4_2.7.7-1_amd64.deb` or
+`./sermo-backend-qt6_2.7.7-1_amd64.deb` if you had `gtk4sermo` or `qt6sermo`.
 
 Tested on 2026-09-17 in a clean Debian testing container, without network:
 `gtk3sermo`, `gtk4sermo`, `gtksermo` 1.1.4-2 and `qt6sermo` 1.0.2-2 installed, then

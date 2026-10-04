@@ -1,0 +1,4 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<window><vbox>
+<entry><variable>NOM</variable><default>deux</default></entry>
+</vbox><variable>SECONDE</variable></window>

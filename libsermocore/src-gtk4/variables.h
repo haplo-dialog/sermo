@@ -72,6 +72,7 @@ gint variables_count_widgets(void);
 void variables_drop_by_window_id(variable *actual, gint window_id);
 variable *find_variable_by_widget(GtkWidget *widget);
 void variables_initialize_all(void);
+void variables_seed_defaults(void);
 void variables_export_all(void);
 void print_variables(variable *actual);
 int append_fromto_variable(const char *from, const char *to);

@@ -5,6 +5,30 @@ Ce fichier resume les changements du point de vue de l'utilisateur.
 Pour l'historique technique complet, voir CHANGELOG.md.
 
 ──────────────────────────────────────────────────
+Version 2.7.7
+──────────────────────────────────────────────────
+
+Version corrective.
+
+* Une barre de progression dont la commande émettait une ligne commençant
+  par un octet nul faisait lire sermo un octet hors de sa mémoire. C'est
+  corrigé (ports gtk3 et gtk4).
+
+* Port gtk4 : deux fenêtres ouvertes en même temps avec la même variable
+  ne s'écrasent plus en silence, et la valeur par défaut d'un widget est
+  bien visible de la commande d'un widget voisin — comme en gtk3.
+
+──────────────────────────────────────────────────
+Version 2.7.6
+──────────────────────────────────────────────────
+
+Version corrective de sécurité.
+
+* Avec une liste de commandes autorisées (SERMO_ALLOWED_CMDS), un script
+  pouvait encore faire charger du code en nommant une variable LD_PRELOAD.
+  C'est corrigé : ces variables ne sont plus transmises à la commande.
+
+──────────────────────────────────────────────────
 Version 2.7.5
 ──────────────────────────────────────────────────
 
