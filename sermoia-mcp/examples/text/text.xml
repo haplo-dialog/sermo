@@ -1,0 +1,10 @@
+<window title="Affichage de texte" width-request="360">
+  <vbox spacing="8">
+    <text use-markup="true">
+      <label>&lt;b&gt;Bonjour&lt;/b&gt; — ceci est un texte statique.</label>
+    </text>
+    <hbox>
+      <button ok></button>
+    </hbox>
+  </vbox>
+</window>

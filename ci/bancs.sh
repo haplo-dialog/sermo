@@ -5,7 +5,7 @@
 # Même script pour la CI et pour chacun : un banc qui ne tourne qu'en CI finit
 # par mentir sans que personne le voie, un banc qui ne tourne que chez soi aussi.
 #
-# Usage : ci/bancs.sh [port …]      (défaut : les sept)
+# Usage : ci/bancs.sh [port …]      (défaut : les neuf)
 # Variables :
 #   SERMO_JOURNAUX           dossier des journaux (défaut : _journaux/)
 #   SERMO_BANC_PUBLICATION=1 contrôle AVANT PUBLICATION, chez le mainteneur :
@@ -31,7 +31,7 @@ mkdir -p "$J"
 # leur propre Xvfb ; sans ça, sur un poste de travail, des fenêtres s'ouvriraient
 # sur l'écran de la session et la mesure ne serait plus celle de la CI.
 unset DISPLAY WAYLAND_DISPLAY
-TOUS=(gtk3 gtk4 qt6 fltk1 efl1 sdl3 ncurses)
+TOUS=(gtk3 gtk4 qt6 fltk1 efl1 sdl3 lvgl ncurses html)
 PORTS=("$@"); PARTIEL=1; [ ${#PORTS[@]} -gt 0 ] || { PORTS=("${TOUS[@]}"); PARTIEL=0; }
 echecs=0; joues=0
 
@@ -105,8 +105,9 @@ for p in "${PORTS[@]}"; do
     # Taille de fenêtre : tous les ports graphiques. ncurses est un terminal,
     # il n'a pas de fenêtre à dimensionner. qt6 en était écarté le temps que
     # son --render-png cesse d'ignorer la taille demandée — c'est réglé.
+    # html est un exportateur : il écrit une page, il n'ouvre aucune fenêtre.
     case "$p" in
-        ncurses) ;;
+        ncurses|html) ;;
         *) banc "$p taille de fenêtre" bash tests/garde_taille_fenetre.sh "$b" ;;
     esac
     banc "$p calendrier" bash tests/garde_calendrier_date_du_jour.sh "$b"
@@ -126,6 +127,10 @@ for p in "${PORTS[@]}"; do
     case "$p" in gtk3|gtk4) banc "$p fenêtres homonymes" sh tests/garde_fenetres_homonymes.sh "$b" ;; esac
     if [ "$p" = ncurses ]; then
         banc "$p mot de passe" bash tests/garde_ncurses_mot_de_passe.sh "$b"
+        banc "$p sortie capturée" bash tests/garde_ncurses_sortie_capturee.sh "$b"
+    elif [ "$p" = html ]; then
+        # Ni clic ni fenêtre à détecter (xdotool) : seule la sortie compte.
+        banc "$p échappement" bash tests/garde_echappement_sortie.sh "$b"
     else
         banc "$p échappement" bash tests/garde_echappement_sortie.sh "$b"
         banc "$p clic widgets" bash tests/garde_clic_widgets.sh "$b"
@@ -137,10 +142,11 @@ echo "── Transverses"
 if [ "$PARTIEL" -eq 1 ]; then
     banc "comportement (ports construits)" env SERMO_PORTS_OPTIONNELS=1 bash tests/comportement/run_all.sh
 else
-    banc "comportement (sept ports)" bash tests/comportement/run_all.sh
+    banc "comportement (tous les ports)" bash tests/comportement/run_all.sh
 fi
 banc "sermoman-mcp : vérité" env SERMO_SRC="$RACINE" bash sermoman-mcp/tests/verifie-verite.sh
 banc "sermoman-mcp : exemples" env SERMO_SRC="$RACINE" SERMO_PORTS_REQUIS="${PORTS[*]/%/sermo}" bash sermoman-mcp/tests/verifie-exemples.sh
+banc "sermoia-mcp : schéma, exemples, protocole" env SERMO_BIN="$RACINE/sermo-backend-${PORTS[0]}/_build/${PORTS[0]}sermo" bash sermoia-mcp/tests/verifie.sh
 
 echo
 echo "Bancs : $joues joué(s), $echecs en échec. Journaux : $J"

@@ -1,0 +1,16 @@
+<window title="Choisir un fichier" width-request="380" height-request="170">
+  <vbox>
+    <text><label>Ouvre le sélecteur puis valide.</label></text>
+    <hbox>
+      <text><label>Fichier :</label></text>
+      <filechooser action="open">
+        <label>Parcourir…</label>
+        <variable>FICHIER</variable>
+      </filechooser>
+    </hbox>
+    <hbox>
+      <button ok></button>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

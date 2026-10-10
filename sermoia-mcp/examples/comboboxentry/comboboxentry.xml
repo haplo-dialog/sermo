@@ -1,0 +1,13 @@
+<window title="Liste éditable" width-request="320">
+  <vbox spacing="8">
+    <text><label>Choisissez ou saisissez une ville :</label></text>
+    <comboboxentry>
+      <variable>VILLE</variable>
+      <default>Paris</default>
+      <item>Paris</item>
+      <item>Lyon</item>
+      <item>Marseille</item>
+    </comboboxentry>
+    <button ok></button>
+  </vbox>
+</window>

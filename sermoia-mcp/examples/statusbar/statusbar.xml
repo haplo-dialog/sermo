@@ -1,0 +1,7 @@
+<window title="Barre d'état" width-request="340" height-request="160">
+  <vbox spacing="8">
+    <text><label>Le texte d'état apparaît en bas de la fenêtre.</label></text>
+    <button ok></button>
+    <statusbar><variable>STATUT</variable><default>Prêt</default></statusbar>
+  </vbox>
+</window>

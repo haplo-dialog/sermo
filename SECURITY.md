@@ -4,9 +4,9 @@
 
 sermo exécute des commandes shell décrites dans un script XML. Sa sécurité tient
 à **où** cette exécution se fait et **comment** elle est bornée. L'essentiel se
-fait dans le **cœur** `libsermocore`, commun aux sept backends : `safe_exec.c`
-existe en deux copies, `src/` (six ports) et `src-gtk4/` (gtk4), qui ne diffèrent
-que par trois lignes de commentaire ; les tests unitaires jouent les deux.
+fait dans le **cœur** `libsermocore`, commun aux neuf backends : `safe_exec.c`
+n'existe qu'en un exemplaire (`libsermocore/src/safe_exec.c`), compilé dans les
+trois variantes du cœur.
 
 Deux chemins échappent au cœur, et c'est là que sont les limites : le
 `<terminal>` de gtk3 et gtk4, et le `<linkbutton>` — voir
@@ -51,7 +51,7 @@ lit) :
 
 Une commande coupée ainsi reçoit `SIGPIPE` à sa prochaine écriture : `yes`
 s'arrête de lui-même. La limite est posée dans le cœur
-(`libsermocore/src/sermo_input.c`) et vaut pour les sept backends.
+(`libsermocore/src/sermo_input.c`) et vaut pour les neuf backends.
 
 - **`SERMO_INPUT_MAX`** — la limite, en octets. `0` la retire. Une valeur qui
   n'est pas un nombre d'octets (`16M`, `-1`) est signalée, et la limite par
@@ -64,15 +64,15 @@ s'arrête de lui-même. La limite est posée dans le cœur
 Jusqu'à la 2.7.2, rien ne bornait cette lecture. Branché sur `yes`, gtk3sermo
 dépassait 700 Mo en 7 secondes, et ncurses finissait sur une erreur de
 segmentation (mesuré le 2026-09-17). Vérifié par
-`tests/garde_input_sans_fin.sh` (sept ports, avec un témoin sans limite) et
+`tests/garde_input_sans_fin.sh` (sur chaque port, avec un témoin sans limite) et
 `tests/unit/test_sermo_input.c`.
 
 ## Bornage optionnel de l'exécution (deux variables d'environnement)
 
 Deux garde-fous, **éteints par défaut**, permettent de déployer un dialogue dans
 un contexte moins fiable (kiosque, session invité) sans changer le script. Ils
-sont lus dans le cœur (`safe_exec.c`, ses deux copies) et valent donc pour les
-sept backends :
+sont lus dans le cœur (`safe_exec.c`) et valent donc pour les
+neuf backends :
 
 - **`SERMO_NO_SHELL_FALLBACK`** — quand elle est posée (à n'importe quelle
   valeur), le repli `/bin/sh -c` (utilisé pour les commandes contenant des

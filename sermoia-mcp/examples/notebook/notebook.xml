@@ -1,0 +1,22 @@
+<window title="Onglets" width-request="360" height-request="220">
+  <vbox spacing="8">
+    <notebook tab-labels="Général|Réseau|Avancé">
+      <vbox>
+        <text><label>Réglages généraux</label></text>
+        <entry><variable>NOM_HOTE</variable><default>machine</default></entry>
+      </vbox>
+      <vbox>
+        <text><label>Réglages réseau</label></text>
+        <checkbox><label>Activer le pare-feu</label><variable>PARE_FEU</variable><default>true</default></checkbox>
+      </vbox>
+      <vbox>
+        <text><label>Réglages avancés</label></text>
+        <switch><label>Mode expert</label><variable>EXPERT</variable></switch>
+      </vbox>
+    </notebook>
+    <hbox>
+      <button ok></button>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

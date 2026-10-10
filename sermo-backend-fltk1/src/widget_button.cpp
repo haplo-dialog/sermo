@@ -28,6 +28,7 @@
 #include "signals.h"
 #include "tag_attributes.h"
 #include "widget_button.h"
+#include "jouer_actions.h"
 #include "sermo_icon_theme.h"
 #include <FL/Fl_Shared_Image.H>
 #include "safe_exec.h"
@@ -43,14 +44,8 @@
 static void button_cb(Fl_Widget *w, void *data)
 {
     AttributeSet *Attr = (AttributeSet *)data;
-    GList *element = NULL;
-    gchar *fn;
-    if (!Attr) return;
-    fn = attributeset_get_first(&element, Attr, ATTR_ACTION);
-    while (fn) {
-        if (*fn) execute_action((GtkWidget *)w, fn, NULL);
-        fn = attributeset_get_next(&element, Attr, ATTR_ACTION);
-    }
+    /* chacune avec sa fonction (attribut function=) : voir jouer_actions.h */
+    jouer_actions((GtkWidget *)w, Attr, "clicked", "toggled");
 }
 
 /* Sémantique gtkdialog des boutons de sortie (<button ok> etc.) : imprimer

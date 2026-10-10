@@ -1,0 +1,16 @@
+<window title="Barre de menus" width-request="360" height-request="180">
+  <vbox spacing="8">
+    <menubar>
+      <menu label="Fichier">
+        <menuitem label="Ouvrir" accel="ctrl-o"></menuitem>
+        <menuitemseparator></menuitemseparator>
+        <menuitem label="Quitter"><action>EXIT:0</action></menuitem>
+      </menu>
+      <menu label="Aide">
+        <menuitem label="À propos"><action>EXIT:apropos</action></menuitem>
+      </menu>
+    </menubar>
+    <text><label>Une barre de menus avec deux menus.</label></text>
+    <button ok></button>
+  </vbox>
+</window>

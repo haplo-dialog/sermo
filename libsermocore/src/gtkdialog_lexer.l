@@ -688,7 +688,7 @@ gchar *Token;
 
 	/* ⛔ Ici vivait une SECONDE règle « <stack> », renvoyant STACK (héritée des
 	 * conteneurs GTK4 remontés au cœur). Elle est retirée : depuis la 2.5.0,
-	 * <stack> est le tag COMMUN aux sept ports (jeton STACKPAGES, plus haut
+	 * <stack> est le tag COMMUN à tous les ports (jeton STACKPAGES, plus haut
 	 * dans ce fichier). Deux règles pour le même motif, c'est la première qui
 	 * gagne — l'autre devenait du code mort silencieux.
 	 *

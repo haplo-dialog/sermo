@@ -1,0 +1,13 @@
+<window title="Sélecteur de fichier intégré" width-request="480" height-request="360">
+  <vbox>
+    <text><label>Choisis un fichier dans la liste puis valide.</label></text>
+    <chooser>
+      <variable>FICHIER</variable>
+      <default>/tmp/</default>
+    </chooser>
+    <hbox>
+      <button ok></button>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

@@ -1,0 +1,16 @@
+<window title="Options" width-request="320" height-request="200">
+  <vbox spacing="8">
+    <text><label>Choisissez les options à activer :</label></text>
+    <frame label="Options">
+      <vbox>
+        <checkbox><label>Notifications</label><variable>OPT_NOTIFS</variable><default>true</default></checkbox>
+        <checkbox><label>Mise à jour automatique</label><variable>OPT_MAJ</variable></checkbox>
+        <checkbox><label>Mode sombre</label><variable>OPT_SOMBRE</variable></checkbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button><label>Appliquer</label><action>EXIT:0</action></button>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

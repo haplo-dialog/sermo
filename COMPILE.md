@@ -13,7 +13,9 @@ Par backend, les `-dev` de sa toolkit — voir [DEPENDENCIES.md](DEPENDENCIES.md
 Exemples : `libgtk-3-dev libvte-2.91-dev libgtk-layer-shell-dev` (gtk3),
 `libgtk-4-dev libvte-2.91-gtk4-dev` (gtk4), `qt6-base-dev` (qt6),
 `libfltk1.4-dev` (fltk1), `libefl-all-dev` (efl1), `libsdl3-dev` (sdl3),
-`libncurses-dev` (ncurses). Sans VTE, les variantes GTK du cœur refusent de se
+`libx11-dev libpng-dev libwayland-dev libxkbcommon-dev wayland-protocols` (lvgl,
+dont la bibliothèque LVGL est embarquée), `libncurses-dev` (ncurses) ; html n'en
+demande aucune. Sans VTE, les variantes GTK du cœur refusent de se
 construire (le widget `<terminal>` manquerait sans bruit) ; `-DSERMOCORE_VTE=OFF`
 l'accepte explicitement. De même pour l'ancrage Wayland de gtk3 :
 `-DSERMO_LAYER_SHELL=OFF`.
@@ -22,7 +24,7 @@ l'accepte explicitement. De même pour l'ancrage Wayland de gtk3 :
 sudo apt install flex bison cmake gcc pkg-config
 ```
 
-Liste complète, pour construire les sept backends **et** jouer tous les bancs,
+Liste complète, pour construire les neuf backends **et** jouer tous les bancs,
 telle que la CI l'installe : [`ci/dependances.txt`](ci/dependances.txt).
 
 ## 2. Compiler le cœur
@@ -33,7 +35,7 @@ Choisissez **une** variante selon le backend visé (voir
 ```bash
 cd libsermocore
 
-# Variante neutre (qt6 / fltk1 / efl1 / sdl3 / ncurses) — défaut, sans toolkit
+# Variante neutre (qt6 / fltk1 / efl1 / sdl3 / lvgl / ncurses / html) — défaut, sans toolkit
 cmake -S . -B _build -DCMAKE_INSTALL_PREFIX=$PWD/_install
 make -C _build && make -C _build install
 
@@ -73,7 +75,7 @@ Correspondance variante ↔ backend :
 
 | Backend | Variante du cœur | `PKG_CONFIG_PATH` |
 |---|---|---|
-| qt6, fltk1, efl1, sdl3, ncurses | neutre | `_install` |
+| qt6, fltk1, efl1, sdl3, lvgl, ncurses, html | neutre | `_install` |
 | gtk3 | `SERMOCORE_GLIB` | `_install_gtk` |
 | gtk4 | `SERMOCORE_GTK4` | `_install_gtk4` |
 
@@ -82,7 +84,8 @@ Correspondance variante ↔ backend :
 Chaque backend a ses règles d'installation : le binaire, sa page de manuel
 substituée à la bonne version, et l'icône d'application aux huit tailles du
 thème hicolor. gtk3 et gtk4 posent en plus leur page de section 5 (le format
-XML) ; ncurses n'a pas d'icône — un terminal n'en porte pas.
+XML) ; ncurses n'a pas d'icône — un terminal n'en porte pas —, et lvgl et html
+n'en livrent pas non plus.
 
 ```bash
 cmake -S sermo-backend-gtk3 -B sermo-backend-gtk3/_build \
@@ -90,7 +93,7 @@ cmake -S sermo-backend-gtk3 -B sermo-backend-gtk3/_build \
 make -C sermo-backend-gtk3/_build && make -C sermo-backend-gtk3/_build install
 ```
 
-Les ports sans page propre (fltk1, efl1, sdl3, ncurses) reçoivent la page
+Les ports sans page propre (fltk1, efl1, sdl3, lvgl, ncurses, html) reçoivent la page
 générique `doc/sermo.1.in` sous leur propre nom, exactement comme le fait
 `debian/rules` : les deux chemins livrent la même chose.
 
@@ -133,6 +136,6 @@ bash packaging/construire-paquets.sh    # dans une Debian testing vierge (Docker
 ```
 
 Ou directement sur une Debian testing : `sudo apt build-dep ./` puis
-`dpkg-buildpackage -us -uc -b`. Treize paquets : `sermo-core-dev`, les sept
-`sermo-backend-*`, `sermo-gtkdialog` et quatre paquets de transition depuis la
-1.x. Voir [PACKAGING.md](PACKAGING.md).
+`dpkg-buildpackage -us -uc -b`. Seize paquets : `sermo-core-dev`, les neuf
+`sermo-backend-*`, `sermo-doc`, `sermo-gtkdialog` et quatre paquets de transition
+depuis la 1.x. Voir [PACKAGING.md](PACKAGING.md).

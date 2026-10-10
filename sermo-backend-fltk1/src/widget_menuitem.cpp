@@ -16,6 +16,7 @@
 #include "tag_attributes.h"
 #include "stack.h"
 #include "widget_menuitem.h"
+#include "jouer_actions.h"
 #include "sermo_menu_model.h"
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Group.H>
@@ -41,7 +42,11 @@ GtkWidget *widget_menuitem_create(AttributeSet *Attr, tag_attr *attr, gint Type)
             if (tv && *tv) c->item.label = tv;
         }
         gchar *cmd = attributeset_get_first(&el, Attr, ATTR_ACTION);
-        if (cmd && *cmd) c->item.cmd = cmd;
+        if (cmd && *cmd) {
+            /* avec sa fonction (attribut function=) : voir jouer_actions.h */
+            char *complet = action_avec_fonction(&el, Attr, cmd);
+            if (complet) { c->item.cmd = complet; free(complet); }
+        }
     }
     if (attr) {
         const char *icon = get_tag_attribute(attr, "icon");

@@ -1,0 +1,13 @@
+<window title="Table de données" width-request="360" height-request="240">
+  <vbox>
+    <text><label>Sélectionnez une ligne :</label></text>
+    <table scrollable="true">
+      <label>Nom|Taille</label>
+      <variable>FICHIER</variable>
+      <item>rapport.txt|12 ko</item>
+      <item>image.png|340 ko</item>
+      <item>archive.zip|2 Mo</item>
+    </table>
+    <button ok></button>
+  </vbox>
+</window>

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="sermoia">
+  <title>sermoia — la boucle IA : apprendre, générer, vérifier, corriger</title>
+  <defs>
+    <linearGradient id="sermoia-g" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#89b4fa"/>
+      <stop offset=".55" stop-color="#cba6f7"/>
+      <stop offset="1" stop-color="#94e2d5"/>
+    </linearGradient>
+  </defs>
+  <!-- Réseau de neurones : l'intelligence qui génère les dialogues sermo -->
+  <g fill="none" stroke="url(#sermoia-g)" stroke-width="1.7" stroke-linecap="round" opacity="0.85">
+    <path d="M16 22 L32 15 M16 22 L32 32 M16 22 L32 49"/>
+    <path d="M16 42 L32 15 M16 42 L32 32 M16 42 L32 49"/>
+    <path d="M32 15 L48 22 M32 32 L48 22 M32 49 L48 22"/>
+    <path d="M32 15 L48 42 M32 32 L48 42 M32 49 L48 42"/>
+  </g>
+  <g fill="url(#sermoia-g)">
+    <circle cx="16" cy="22" r="3"/><circle cx="16" cy="42" r="3"/>
+    <circle cx="32" cy="15" r="3"/><circle cx="32" cy="32" r="3.4"/><circle cx="32" cy="49" r="3"/>
+    <circle cx="48" cy="22" r="3"/><circle cx="48" cy="42" r="3"/>
+  </g>
+</svg>

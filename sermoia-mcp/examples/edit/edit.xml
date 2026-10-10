@@ -1,0 +1,13 @@
+<window title="Zone de texte" width-request="420" height-request="240">
+  <vbox spacing="8">
+    <text><label>Votre message :</label></text>
+    <edit editable="true" wrap-mode="word">
+      <variable>MESSAGE</variable>
+      <default>Texte modifiable sur plusieurs lignes.</default>
+    </edit>
+    <hbox>
+      <button ok></button>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

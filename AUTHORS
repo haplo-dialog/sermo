@@ -11,7 +11,7 @@ Auteur principal
 
 S. Cage — haplo-dialog <devel@haplo-dialog.fr>
   - Cœur libsermocore (analyse + exécution durcie, sans toolkit)
-  - Sept backends de rendu : gtk3, gtk4, qt6, fltk1, efl1, sdl3, ncurses
+  - Neuf backends de rendu : gtk3, gtk4, qt6, fltk1, efl1, sdl3, lvgl, ncurses, html
   - Packaging séparé, contrat de frontière cœur↔backend
 
 ──────────────────────────────────────────────────

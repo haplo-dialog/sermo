@@ -1,0 +1,6 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: <list> : la forme a attribut <action function="Refresh"> est jouee a la selection par defaut, comme les trousses de contrib l ecrivent -->
+<window><vbox>
+<list><variable>L</variable><item>un</item><item>deux</item><action function="Refresh">CPT</action></list>
+<entry><variable>CPT</variable><input>sh donnees/compteur.sh</input></entry>
+<timer interval="1" visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

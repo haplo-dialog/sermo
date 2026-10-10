@@ -26,13 +26,13 @@ TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT
 # même XML. On en essaie plusieurs quand ils sont là, pour couvrir large.
 BINS="${SERMO_BINS:-}"
 if [ -z "$BINS" ]; then
-    for b in gtk3 gtk4 qt6 fltk1 efl1 sdl3 ncurses; do
+    for b in gtk3 gtk4 qt6 fltk1 efl1 sdl3 ncurses html lvgl; do
         p="$ROOT/sermo-backend-$b/_build/${b}sermo"
         [ -x "$p" ] && BINS="$BINS $p"
     done
     # Repli : binaires installés sur le PATH.
     if [ -z "$BINS" ]; then
-        for b in gtk3sermo gtk4sermo qt6sermo fltk1sermo efl1sermo sdl3sermo ncursessermo; do
+        for b in gtk3sermo gtk4sermo qt6sermo fltk1sermo efl1sermo sdl3sermo ncursessermo htmlsermo; do
             command -v "$b" >/dev/null 2>&1 && BINS="$BINS $b"
         done
     fi

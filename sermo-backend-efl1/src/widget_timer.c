@@ -19,6 +19,7 @@
 #include "widgets.h"
 #include "tag_attributes.h"
 #include "widget_timer.h"
+#include "jouer_actions.h"
 #include "safe_exec.h"
 #include "actions.h"
 #include <string.h>
@@ -39,14 +40,8 @@ static Eina_Bool _timer_cb(void *data)
     /* TOUTES les actions, via le repartiteur du coeur (exit:, refresh:,
      * shell...) — safe_system direct traitait « exit:fin » comme une
      * commande et le dialogue ne se fermait jamais. */
-    if (td->Attr) {
-        GList *el = NULL;
-        gchar *fn = attributeset_get_first(&el, td->Attr, ATTR_ACTION);
-        while (fn) {
-            if (*fn) execute_action((GtkWidget *)td->placeholder, fn, NULL);
-            fn = attributeset_get_next(&el, td->Attr, ATTR_ACTION);
-        }
-    }
+    /* … chacune avec sa fonction (attribut function=) : voir jouer_actions.h */
+    jouer_actions((GtkWidget *)td->placeholder, td->Attr, "tick", NULL);
     return ECORE_CALLBACK_RENEW;
 }
 

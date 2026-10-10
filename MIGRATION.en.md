@@ -15,12 +15,12 @@ the way to compile. The few behaviours that change are listed below.
 
 | | 1.x | 2.x |
 |---|---|---|
-| Packages | `gtk3sermo`, `gtk4sermo`, `qt6sermo`, `gtksermo` | `sermo-backend-gtk3`, `-gtk4`, `-qt6`, `-fltk1`, `-efl1`, `-sdl3`, `-ncurses`, `sermo-gtkdialog`, `sermo-core-dev` |
-| Commands | `gtk3sermo`, `gtk4sermo`, `qt6sermo`, `gtkdialog` | the same, plus `fltk1sermo`, `efl1sermo`, `sdl3sermo`, `ncursessermo` and `sermo` |
+| Packages | `gtk3sermo`, `gtk4sermo`, `qt6sermo`, `gtksermo` | `sermo-backend-gtk3`, `-gtk4`, `-qt6`, `-fltk1`, `-efl1`, `-sdl3`, `-lvgl`, `-ncurses`, `-html`, `sermo-gtkdialog`, `sermo-core-dev` |
+| Commands | `gtk3sermo`, `gtk4sermo`, `qt6sermo`, `gtkdialog` | the same, plus `fltk1sermo`, `efl1sermo`, `sdl3sermo`, `lvglsermo`, `ncursessermo`, `htmlsermo` and `sermo` |
 | Security variables | `HAPLO_ALLOWED_CMDS`, `HAPLO_NO_SHELL_FALLBACK` | `SERMO_ALLOWED_CMDS`, `SERMO_NO_SHELL_FALLBACK` (the old names are still read) |
 | Sources | one directory per port (`gtk3sermo/gtk3sermo_1.1.4/`…) | `libsermocore/` and `sermo-backend-<port>/`, built with CMake |
 | Arch, Gentoo, RPM, Slackware recipes | provided | removed: only `debian/` is maintained |
-| Version | one per port | one for everything (2.7.7) |
+| Version | one per port | one for everything (2.8.0) |
 
 ## Upgrading the Debian packages
 
@@ -31,11 +31,11 @@ Download and check the 2.x packages attached to the release, as the
 apt removes the 1.x packages they replace by itself:
 
 ```sh
-sudo apt install ./sermo-backend-gtk3_2.7.7-1_amd64.deb ./sermo-gtkdialog_2.7.7-1_all.deb
+sudo apt install ./sermo-backend-gtk3_2.8.0-1_amd64.deb ./sermo-gtkdialog_2.8.0-1_all.deb
 ```
 
-Add `./sermo-backend-gtk4_2.7.7-1_amd64.deb` or
-`./sermo-backend-qt6_2.7.7-1_amd64.deb` if you had `gtk4sermo` or `qt6sermo`.
+Add `./sermo-backend-gtk4_2.8.0-1_amd64.deb` or
+`./sermo-backend-qt6_2.8.0-1_amd64.deb` if you had `gtk4sermo` or `qt6sermo`.
 
 Tested on 2026-09-17 in a clean Debian testing container, without network:
 `gtk3sermo`, `gtk4sermo`, `gtksermo` 1.1.4-2 and `qt6sermo` 1.0.2-2 installed, then
@@ -115,7 +115,7 @@ The gaps that remain between ports are listed in [TODO.md](TODO.md) (French only
 
 1.x was built inside each port's directory. 2.x is built in two steps: the
 `libsermocore` core, in the variant that suits the port, then the port against
-that core. `bash ci/construire.sh` does both for the seven ports. See
+that core. `bash ci/construire.sh` does both for the nine ports. See
 [COMPILE.en.md](COMPILE.en.md).
 
 Two dependencies are now **required**: VTE for gtk3 and gtk4 (`libvte-2.91-dev`,

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 # libsermocore — cœur syntaxique + exécution durcie de sermo.
 # UNE source unifiée, plusieurs variantes de build :
-#   - neutre (défaut)   : shim + stubs, aucun toolkit → qt6/fltk1/efl1/sdl3.
+#   - neutre (défaut)   : shim + stubs, aucun toolkit → qt6/fltk1/efl1/sdl3/lvgl/ncurses/html.
 #   - SERMOCORE_GLIB=ON : vraie GLib/GTK3 (ABI native)  → gtk3.
 #   - SERMOCORE_GTK4=ON : variante GTK4 « voie (b) » — fichiers cœur RÉÉCRITS pour
 #     GTK4, VENDORÉS dans src-gtk4/ (plus aucune dépendance externe).
@@ -82,7 +82,7 @@ else()
     ${FLEX_SermoLexer_OUTPUTS} ${BISON_SermoParser_OUTPUTS})
   if(NOT SERMOCORE_GLIB)
     # Barre de progression lue au fil de l'eau, pour les ports sans GTK
-    # (qt6, fltk1, efl1, sdl3, ncurses) ; gtk3 garde son fil de lecture.
+    # (qt6, fltk1, efl1, sdl3, lvgl, ncurses, html) ; gtk3 garde son fil de lecture.
     list(APPEND CORE_SRC src/sermo_progress.c)
   endif()
 endif()

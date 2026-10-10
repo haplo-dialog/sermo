@@ -1,0 +1,16 @@
+<window title="Choix d'une distribution" width-request="320" height-request="260">
+  <vbox spacing="8">
+    <text><label>Sélectionnez une distribution :</label></text>
+    <list scrollable="true">
+      <variable>DISTRIBUTION</variable>
+      <item>Debian</item>
+      <item>Fedora</item>
+      <item>Arch</item>
+      <item>openSUSE</item>
+    </list>
+    <hbox>
+      <button><label>Choisir</label><action>EXIT:0</action></button>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

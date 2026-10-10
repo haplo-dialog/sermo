@@ -8,10 +8,11 @@ Aujourd'hui, sermo n'est **plus** un binaire unique par toolkit. Il est découp�
 en deux morceaux :
 
 - **un cœur unique**, `libsermocore`, qui lit le XML et pilote la logique ;
-- **sept backends de rendu**, un par boîte à outils graphique, qui dessinent les
-  widgets.
+- **neuf backends de rendu** : huit dessinent les widgets, chacun avec sa boîte
+  à outils (ncurses en terminal) ; le neuvième, html, écrit le dialogue en page
+  HTML.
 
-Le même XML rend le **même comportement** sur les sept backends (parité mesurée
+Le même XML rend le **même comportement** sur chaque backend (parité mesurée
 contre l'étalon `gtk3sermo`).
 
 ```
@@ -29,7 +30,8 @@ contre l'étalon `gtk3sermo`).
         ┌───────▼──────────▼───────┐
         │  sermo-backend-<toolkit> │  ← widgets natifs + boucle
         │  gtk3 gtk4 qt6 fltk1     │     d'évènements du toolkit
-        │  efl1 sdl3 ncurses       │
+        │  efl1 sdl3 lvgl ncurses  │
+        │  html                    │
         └──────────────────────────┘
 ```
 
@@ -59,7 +61,7 @@ grammaire Flex/Bison.
 
 ---
 
-## 2. Les sept backends de rendu
+## 2. Les neuf backends de rendu
 
 Chaque backend construit les widgets natifs de sa boîte à outils et tient sa
 boucle d'évènements. Un backend ne dépend **que** de sa propre toolkit.
@@ -72,10 +74,12 @@ boucle d'évènements. Un backend ne dépend **que** de sa propre toolkit.
 | `sermo-backend-fltk1` | `fltk1sermo` | FLTK 1.4 (C++) | Installation légère : ne tire ni GTK ni Qt. Cœur neutre. |
 | `sermo-backend-efl1` | `efl1sermo` | EFL / Elementary (C) | **Thème sombre par défaut** (sinon suit le thème système). `default-width/height` traités comme minimums. Cœur neutre. |
 | `sermo-backend-sdl3` | `sdl3sermo` | SDL 3 + Dear ImGui (C) | Rendu immédiat via Dear ImGui (vendorisé). Cœur neutre. |
-| `sermo-backend-ncurses` | `ncursessermo` | ncursesw — **terminal** (C) | Le plus léger. Rendu en mode texte : **images et icônes occultées** (pas de rendu graphique). Cœur neutre. |
+| `sermo-backend-lvgl` | `lvglsermo` | LVGL 9.6 (C), embarqué | Pour bornes et écrans embarqués : fenêtre Wayland ou X11, framebuffer sur demande (`SERMO_LVGL_FBDEV`). LVGL vit dans `tiers/lvgl/` (MIT). Cœur neutre. |
+| `sermo-backend-ncurses` | `ncursessermo` | ncursesw — **terminal** (C) | Rendu en mode texte : **images et icônes occultées** (pas de rendu graphique). Cœur neutre. |
+| `sermo-backend-html` | `htmlsermo` | aucun — **page HTML** (C) | **Exportateur**, n'ouvre pas de fenêtre : écrit le dialogue en page HTML autonome (CSS embarqué, sans JavaScript par défaut) dans `SERMO_HTML_OUT` (défaut `sermo-output.html`). `SERMO_HTML_MODE=serve` sert la page en local et renvoie les valeurs saisies. Aucune bibliothèque graphique. Cœur neutre. |
 
 **Familles.** gtk3 et gtk4 sont des familles GObject (introspection GLib). Les
-cinq autres (qt6, fltk1, efl1, sdl3, ncurses) sont **neutres** : ils
+sept autres (qt6, fltk1, efl1, sdl3, lvgl, ncurses, html) sont **neutres** : ils
 réimplémentent le pont d'attributs sans GObject. Le parsing numérique des backends neutres est
 forcé en **locale-C** (`g_ascii_strtod` réel via `strtod_l`) pour ne pas dépendre
 de la virgule décimale locale.
@@ -116,7 +120,7 @@ variantes, depuis une source largement unifiée (option CMake) :
 
 | Variante | Option CMake | Sert | Détail |
 |---|---|---|---|
-| **neutre** (défaut) | — | qt6, fltk1, efl1, sdl3, ncurses | Types via *shim*, en-têtes toolkit remplacés par des stubs vides. Aucune dépendance graphique. |
+| **neutre** (défaut) | — | qt6, fltk1, efl1, sdl3, lvgl, ncurses, html | Types via *shim*, en-têtes toolkit remplacés par des stubs vides. Aucune dépendance graphique. |
 | **glib / gtk3** | `-DSERMOCORE_GLIB=ON` | gtk3 | Vraie GLib/GTK 3 (ABI native des structs), pour l'introspection GObject de la famille GTK. |
 | **gtk4** | `-DSERMOCORE_GTK4=ON` | gtk4 | Fichiers cœur réécrits pour GTK 4 (plus de `gtk_main`/`gtk_socket`). |
 
@@ -128,7 +132,7 @@ pointant `PKG_CONFIG_PATH` sur le préfixe d'install voulu (neutre / gtk3 / gtk4
 
 ---
 
-## 5. Packaging — 13 paquets .deb
+## 5. Packaging — 16 paquets .deb
 
 sermo produit des paquets **séparés** : un cœur de développement, un backend par
 toolkit, et un paquet de compatibilité.
@@ -142,15 +146,19 @@ toolkit, et un paquet de compatibilité.
 | `sermo-backend-fltk1` | binaire `fltk1sermo` | sa toolkit FLTK |
 | `sermo-backend-efl1` | binaire `efl1sermo` | Enlightenment / Elementary |
 | `sermo-backend-sdl3` | binaire `sdl3sermo` | SDL 3 |
+| `sermo-backend-lvgl` | binaire `lvglsermo` (LVGL embarqué) | X11, Wayland, xkbcommon, libpng |
 | `sermo-backend-ncurses` | binaire `ncursessermo` | ncursesw (terminal) |
+| `sermo-backend-html` | binaire `htmlsermo` | aucune bibliothèque graphique |
+| `sermo-doc` | manuel Texinfo et documentation commune | rien |
 | `sermo-gtkdialog` | lien `/usr/bin/gtkdialog → gtk3sermo` | `sermo-backend-gtk3` |
 | `gtk3sermo` | vide — transition depuis la 1.x | `sermo-backend-gtk3` |
 | `gtk4sermo` | vide — transition depuis la 1.x | `sermo-backend-gtk4` |
 | `qt6sermo` | vide — transition depuis la 1.x | `sermo-backend-qt6` |
 | `gtksermo` | vide — transition depuis la 1.x | `sermo-gtkdialog` |
 
-Soit **13 paquets** : `sermo-core-dev` + 7 backends + `sermo-gtkdialog` + 4
-paquets de transition depuis la 1.x, plus un `-dbgsym` par backend.
+Soit **16 paquets** : `sermo-core-dev` + 9 backends + `sermo-doc` +
+`sermo-gtkdialog` + 4 paquets de transition depuis la 1.x, plus un `-dbgsym` par
+backend.
 
 **Le cœur est lié statiquement** dans chaque backend (`.a`). `ldd` d'un backend ne
 montre donc **aucun** `libsermocore` : le moteur est embarqué. Un backend ne
@@ -160,7 +168,8 @@ uniquement (pour compiler un nouveau backend). Les dépendances runtime sont
 
 **Alias `sermo`.** Chaque backend s'enregistre dans `update-alternatives` pour
 `/usr/bin/sermo` (priorités gtk3=50, gtk4=45, qt6=40, fltk1=30, efl1=20, sdl3=10,
-ncurses=5) : gtk3 est le défaut.
+lvgl=8, ncurses=5, html=1) : gtk3 est le défaut, et html ne répond que s'il est
+seul installé.
 
 **Pont `gtkdialog`.** La commande `gtkdialog` (scripts historiques) vit dans le
 paquet séparé `sermo-gtkdialog` : `Provides`/`Conflicts`/`Replaces: gtkdialog`
@@ -178,8 +187,8 @@ Aucune étape n'avance avec un banc rouge. Trois portes gardent chaque backend
   sans affichage. Attendu : **55 PASS**.
 - **Comportement** — `tests/comportement/` (aussi via `run_all.sh`) : les valeurs
   exportées (`VAR="valeur"`) doivent être **identiques** à celles de l'étalon
-  `gtk3sermo`. Attendu : **53/53**. Chaque cas se ferme seul, par un `<timer>`
-  déclenchant `exit:fin` ou (cas 41-42) par une barre de progression arrivée à 100 ; ncurses joue ce banc en mode **batch headless**.
+  `gtk3sermo`. Attendu : **61/61**. Chaque cas se ferme seul, par un `<timer>`
+  déclenchant `exit:fin` ou (cas 41-42) par une barre de progression arrivée à 100 ; ncurses joue ce banc en mode **batch headless**, html en écrivant sa page vers `/dev/null`.
 - **Garde** — jeu de scripts `tests/garde_*.sh` : durcissement du binaire,
   échappement de la sortie (les valeurs à risque ne repassent pas par le shell),
   fonctions interdites, allowlist de commandes, absence d'en-tête de poste, etc.
@@ -187,14 +196,14 @@ Aucune étape n'avance avec un banc rouge. Trois portes gardent chaque backend
 `tests/run_examples.sh` rejoue en plus les exemples de démonstration. Le corpus
 de comportement vit dans `sermo-backend-qt6/tests/comportement/cas/` ; le lanceur
 générique `tests/comportement/run.sh <binaire>` le joue sur **n'importe quel**
-backend, et `ci/bancs.sh` enchaîne tous les bancs sur les sept.
+backend, et `ci/bancs.sh` enchaîne tous les bancs sur les neuf.
 
 ---
 
 ## Ce qu'il faut retenir pour écrire un dialogue
 
-- Le **langage XML est unique** et identique sur les sept backends : un script
-  correct rend partout, aux nuances de rendu près.
+- Le **langage XML est unique** et identique sur les neuf backends : un script
+  correct rend partout, aux nuances de rendu près (html l'écrit en page HTML).
 - Le **ncurses** est en terminal : pas d'image ni d'icône — prévoir un dialogue
   qui reste lisible en texte pur.
 - L'**efl1** est sombre par défaut.

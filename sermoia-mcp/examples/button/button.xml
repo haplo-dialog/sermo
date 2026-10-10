@@ -1,0 +1,9 @@
+<window title="Bouton" width-request="300" height-request="140">
+  <vbox spacing="8">
+    <text><label>Cliquez sur un bouton pour agir.</label></text>
+    <hbox>
+      <button><label>Valider</label><action>EXIT:valide</action></button>
+      <button><label>Fermer</label><action>EXIT:0</action></button>
+    </hbox>
+  </vbox>
+</window>

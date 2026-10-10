@@ -24,7 +24,9 @@ carries no `Depends` field (static library, nothing to load at runtime).
 | fltk1 | `libfltk1.4-dev` |
 | efl1 | `libefl-all-dev` (Enlightenment/Elementary) |
 | sdl3 | `libsdl3-dev` |
+| lvgl | `libx11-dev`, `libpng-dev`, `libwayland-dev`, `libxkbcommon-dev`, `wayland-protocols` (LVGL itself is embedded in `sermo-backend-lvgl/tiers/lvgl/`) |
 | ncurses | `libncurses-dev` (provides `ncursesw.pc`) |
+| html | none |
 
 ## Backends — runtime dependencies
 
@@ -41,7 +43,9 @@ per backend:
 | fltk1 | `libfltk1.4`, `libfltk-images1.4` |
 | efl1 | `libelementary1`, `libevas1`, `libecore*`, `libedje1`… |
 | sdl3 | `libsdl3-0` |
+| lvgl | `libx11-6`, `libwayland-client0`, `libwayland-cursor0`, `libxkbcommon0`, `libpng16-16t64` (LVGL is linked into the binary) |
 | ncurses | `libncursesw6`, `libtinfo6` |
+| html | none, apart from `libc6` |
 
 All of them include `libc6` and the usual X11/Wayland/fontconfig libraries. The
 complete list is recomputed on every package build

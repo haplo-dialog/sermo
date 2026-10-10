@@ -1,0 +1,21 @@
+<window title="Section repliable" width-request="340" height-request="200">
+  <vbox spacing="8">
+    <text><label>Options principales</label></text>
+    <checkbox><label>Activer le service</label><variable>ACTIF</variable><default>true</default></checkbox>
+    <expander label="Options avancées" expanded="false">
+      <vbox>
+        <hbox>
+          <text><label>Délai (s) :</label></text>
+          <spinbutton range-min="1" range-max="60" range-step="1">
+            <variable>DELAI</variable><default>10</default>
+          </spinbutton>
+        </hbox>
+        <checkbox><label>Journalisation détaillée</label><variable>VERBOSE</variable></checkbox>
+      </vbox>
+    </expander>
+    <hbox>
+      <button ok></button>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

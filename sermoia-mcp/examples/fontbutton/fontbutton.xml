@@ -1,0 +1,13 @@
+<window title="Choisir une police" width-request="360" height-request="160">
+  <vbox>
+    <text><label>Sélectionne une police puis valide.</label></text>
+    <hbox>
+      <text><label>Police :</label></text>
+      <fontbutton><variable>POLICE</variable><default>Sans 12</default></fontbutton>
+    </hbox>
+    <hbox>
+      <button ok></button>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

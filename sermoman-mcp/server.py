@@ -4,8 +4,8 @@
 # de sermo à un assistant IA.
 #
 # sermo est une boîte à dialogues pilotée par XML (lignée gtkdialog) : un cœur
-# unique « libsermocore » et sept backends de rendu (gtk3, gtk4, qt6, fltk1,
-# efl1, sdl3, ncurses). Ce serveur donne à l'assistant une connaissance précise
+# unique « libsermocore » et neuf backends de rendu (gtk3, gtk4, qt6, fltk1,
+# efl1, sdl3, lvgl, ncurses, html). Ce serveur donne à l'assistant une connaissance précise
 # de la syntaxe XML, de l'architecture, de l'histoire et de l'écosystème du
 # projet, pour qu'il aide à écrire des dialogues corrects sans inventer de balise.
 #
@@ -157,7 +157,7 @@ REPORT = (
     "Décrivez :\n"
     "  1. la version (sortie de `sermo --version`, ou celle du backend : "
     "`gtk3sermo --version`, `qt6sermo --version`, etc.) ;\n"
-    "  2. le backend utilisé (gtk3, gtk4, qt6, fltk1, efl1, sdl3 ou ncurses) ;\n"
+    "  2. le backend utilisé (gtk3, gtk4, qt6, fltk1, efl1, sdl3, lvgl, ncurses ou html) ;\n"
     "  3. le script XML minimal qui reproduit le problème ;\n"
     "  4. le comportement attendu et le comportement observé.\n"
     "Ce serveur ne publie rien lui-même : il vous aide seulement à préparer un "
@@ -168,7 +168,7 @@ TOOLS = [
     {
         "name": "sermo_reference",
         "description": "Référence complète de la syntaxe XML de sermo (widgets, "
-                       "attributs communs, sous-éléments), commune aux sept "
+                       "attributs communs, sous-éléments), commune aux neuf "
                        "backends.",
         "inputSchema": {"type": "object", "properties": {}},
     },
@@ -180,7 +180,7 @@ TOOLS = [
     },
     {
         "name": "sermo_architecture",
-        "description": "Architecture modulaire : le cœur libsermocore, les sept "
+        "description": "Architecture modulaire : le cœur libsermocore, les neuf "
                        "backends, le contrat cœur↔backend (sermo_be_*), les "
                        "variantes de build, le packagage et les bancs de test.",
         "inputSchema": {"type": "object", "properties": {}},

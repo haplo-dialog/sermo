@@ -1,0 +1,10 @@
+<window title="Information" width-request="360" height-request="140">
+  <vbox spacing="10">
+    <infobar message-type="info">
+      <label>L'opération s'est terminée avec succès.</label>
+    </infobar>
+    <hbox>
+      <button><label>Fermer</label><action>EXIT:0</action></button>
+    </hbox>
+  </vbox>
+</window>

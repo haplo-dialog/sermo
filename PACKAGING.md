@@ -19,11 +19,13 @@ testing vierge.
 | `sermo-backend-fltk1` | binaire `fltk1sermo`, page de manuel, manuel Texinfo | FLTK 1.4 |
 | `sermo-backend-efl1` | binaire `efl1sermo`, page de manuel, manuel Texinfo | Enlightenment/Elementary |
 | `sermo-backend-sdl3` | binaire `sdl3sermo`, page de manuel, manuel Texinfo | SDL 3 |
+| `sermo-backend-lvgl` | binaire `lvglsermo` (LVGL embarqué), page de manuel, manuel Texinfo | X11, Wayland, xkbcommon, libpng |
 | `sermo-backend-ncurses` | binaire `ncursessermo`, page de manuel, manuel Texinfo | ncursesw (terminal) |
+| `sermo-backend-html` | binaire `htmlsermo` (export en page HTML), page de manuel, manuel Texinfo | aucune bibliothèque graphique |
 | `sermo-gtkdialog` | commande `gtkdialog` et page `gtkdialog(1)`, liens vers gtk3sermo | `sermo-backend-gtk3` |
 | `gtk3sermo`, `gtk4sermo`, `qt6sermo`, `gtksermo` | paquets de transition, vides | le paquet 2.x qui les remplace, et `sermo-doc` |
 
-Soit **14 paquets**, plus un paquet `-dbgsym` (symboles de débogage) par backend.
+Soit **16 paquets**, plus un paquet `-dbgsym` (symboles de débogage) par backend.
 Les dépendances sont calculées par `dh_shlibdeps` à partir des bibliothèques
 réellement liées : elles ne sont ni devinées ni recopiées à la main.
 
@@ -42,7 +44,7 @@ rattachent leur `/usr/share/doc` à celui de `sermo-doc` par un lien
 symbolique. Un paquet de transition ne contenait rien d'autre que ça :
 `gtk3sermo` est passé de 32 ko à **1,2 ko**.
 
-⚠️ Les huit paquets dépendants de l'architecture **gardent leur `copyright`**,
+⚠️ Les dix paquets dépendants de l'architecture **gardent leur `copyright`**,
 comme la politique l'exige : `--link-doc` ne franchit pas la frontière
 « all » / « any », et `debhelper` refuse activement la combinaison depuis le
 niveau de compatibilité 10 (CAVEAT 2 de `dh_installdocs`).
@@ -84,15 +86,17 @@ boucle d'évènements) ; elle rendra ce découpage `.so` + runtime possible et
 supprimera la duplication.
 
 Trois variantes du cœur servent à la construction : neutre (qt6, fltk1, efl1,
-sdl3, ncurses), GLib (gtk3) et GTK 4 (gtk4). Seule la variante neutre est livrée
+sdl3, lvgl, ncurses, html), GLib (gtk3) et GTK 4 (gtk4). Seule la variante neutre est livrée
 dans `sermo-core-dev`.
 
 ## Alias `sermo`
 
 Chaque backend s'enregistre dans `update-alternatives` pour `/usr/bin/sermo`
 (`debian/sermo-backend-<t>.alternatives`, posé par `dh_installalternatives`).
-Priorités : gtk3=50, gtk4=45, qt6=40, fltk1=30, efl1=20, sdl3=10, ncurses=5 ; le
-backend GTK 3 est donc le défaut quand plusieurs sont installés. La page
+Priorités : gtk3=50, gtk4=45, qt6=40, fltk1=30, efl1=20, sdl3=10, lvgl=8,
+ncurses=5, html=1 ; le backend GTK 3 est donc le défaut quand plusieurs sont
+installés, et html, qui n'ouvre pas de fenêtre, ne répond à « sermo » que s'il
+est seul installé. La page
 `sermo(1)` et le manuel Texinfo `sermo` suivent le même choix.
 
 ```sh
@@ -125,7 +129,7 @@ La 1.x était livrée sous les noms `gtk3sermo`, `gtk4sermo`, `qt6sermo` et
 voulus depuis leurs fichiers retire les paquets 1.x qu'ils remplacent :
 
 ```sh
-sudo apt install ./sermo-backend-gtk3_2.7.7-1_amd64.deb ./sermo-gtkdialog_2.7.7-1_all.deb
+sudo apt install ./sermo-backend-gtk3_2.8.0-1_amd64.deb ./sermo-gtkdialog_2.8.0-1_all.deb
 ```
 
 Éprouvé le 2026-09-17 dans un conteneur Debian testing vierge, sans réseau, depuis
@@ -189,7 +193,7 @@ SERMO_TASKSET=0,1 bash packaging/bancs-sur-paquets.sh packaging/sortie/paquets <
 ```
 
 Le script clone le commit, construit l'arbre (les bancs du cœur en ont besoin),
-remplace les sept binaires de l'arbre par ceux extraits des `.deb` (sommes SHA-256
+remplace les neuf binaires de l'arbre par ceux extraits des `.deb` (sommes SHA-256
 comparées), vérifie que chaque binaire trouve ses symboles dans son paquet
 `-dbgsym`, puis joue `ci/bancs.sh` tel quel. `SERMO_TASKSET` limite la mesure à des
 cœurs donnés, comme une CI partagée : n'y lancer rien d'autre pendant ce temps, les
@@ -202,7 +206,7 @@ sudo apt build-dep ./
 dpkg-buildpackage -us -uc -b
 ```
 
-`debian/rules` construit les trois variantes du cœur, les sept backends, et
+`debian/rules` construit les trois variantes du cœur, les neuf backends, et
 rejoue pendant la construction les tests unitaires et le banc XML sur chaque
 binaire (`DEB_BUILD_OPTIONS=nocheck` les saute). Les paquets arrivent dans le
 dossier parent.
@@ -218,9 +222,9 @@ détaillée dans [LICENCES.md](LICENCES.md).
 ## Installer et désinstaller
 
 ```sh
-sudo apt install ./sermo-backend-gtk3_2.7.7-1_amd64.deb      # GTK 3
-sudo apt install ./sermo-gtkdialog_2.7.7-1_all.deb           # + la commande gtkdialog
-sudo apt install ./sermo-core-dev_2.7.7-1_amd64.deb          # pour compiler un backend
+sudo apt install ./sermo-backend-gtk3_2.8.0-1_amd64.deb      # GTK 3
+sudo apt install ./sermo-gtkdialog_2.8.0-1_all.deb           # + la commande gtkdialog
+sudo apt install ./sermo-core-dev_2.8.0-1_amd64.deb          # pour compiler un backend
 
 sudo apt purge sermo-gtkdialog sermo-backend-gtk3            # tout retirer
 ```

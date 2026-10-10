@@ -25,7 +25,9 @@ l'exécution).
 | fltk1 | `libfltk1.4-dev` |
 | efl1 | `libefl-all-dev` (Enlightenment/Elementary) |
 | sdl3 | `libsdl3-dev` |
+| lvgl | `libx11-dev`, `libpng-dev`, `libwayland-dev`, `libxkbcommon-dev`, `wayland-protocols` (LVGL lui-même est embarqué dans `sermo-backend-lvgl/tiers/lvgl/`) |
 | ncurses | `libncurses-dev` (fournit `ncursesw.pc`) |
+| html | aucun |
 
 ## Backends — dépendances d'exécution
 
@@ -41,7 +43,9 @@ paquet (voir [PACKAGING.md](PACKAGING.md)), donc toujours exactes et
 | fltk1 | `libfltk1.4`, `libfltk-images1.4` |
 | efl1 | `libelementary1`, `libevas1`, `libecore*`, `libedje1`… |
 | sdl3 | `libsdl3-0` |
+| lvgl | `libx11-6`, `libwayland-client0`, `libwayland-cursor0`, `libxkbcommon0`, `libpng16-16t64` (LVGL est lié dans le binaire) |
 | ncurses | `libncursesw6`, `libtinfo6` |
+| html | aucune, hors `libc6` |
 
 Toutes incluent `libc6` et les X11/Wayland/fontconfig usuels. La liste complète
 est recalculée à chaque construction des paquets (`packaging/construire-paquets.sh`,

@@ -1,0 +1,17 @@
+<window title="Choix d'un fuseau" width-request="320" height-request="150">
+  <vbox spacing="8">
+    <text><label>Sélectionnez votre fuseau horaire :</label></text>
+    <combobox>
+      <variable>FUSEAU</variable>
+      <default>Europe/Paris</default>
+      <item>Europe/Paris</item>
+      <item>Europe/Londres</item>
+      <item>Amérique/New York</item>
+      <item>Asie/Tokyo</item>
+    </combobox>
+    <hbox>
+      <button ok></button>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

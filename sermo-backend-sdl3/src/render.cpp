@@ -54,10 +54,40 @@ extern "C" {
 #include "actions.h"
 #include "attributes.h"
 #include "sermo_progress.h"
+#include "jouer_actions.h"
 /* machinerie de sortie (actions.c), jamais declaree en en-tete */
 void action_exitprogram(GtkWidget *widget, char *string);
 /* --render-png FILE : chemin du PNG a produire (option globale, gtkdialog.c). */
 extern char *option_render_png;
+}
+
+/* Joue les actions d'un nœud : toutes, chacune avec sa fonction, quand le
+ * créateur a gardé le jeu d'attributs ; sinon l'unique commande du nœud. */
+static void declencher(WidgetNode *n, const char *signal1, const char *signal2)
+{
+    if (!n) return;
+    if (n->actions_attr)
+        jouer_actions((GtkWidget *)n, (AttributeSet *)n->actions_attr, signal1, signal2);
+    else if (n->action && *n->action)
+        execute_action((GtkWidget *)n, n->action, NULL);
+}
+
+/* <list> : joue ses actions (signal « selection-changed » de l'étalon). Seule
+ * une vraie <list> garde son jeu d'actions ; un <tree> (WT_LIST aussi) non. */
+static void liste_selection_changee(WidgetNode *n)
+{
+    if (n && n->type == WT_LIST && n->actions_attr)
+        declencher(n, "selection-changed", "row-selected");
+}
+
+/* La sélection posée au chargement est jouée une fois, l'arbre entier
+ * construit : les variables que l'action vise existent alors. */
+static void listes_chargees(WidgetNode *n)
+{
+    if (!n) return;
+    if (n->type == WT_LIST && n->state.list.selected_index >= 0)
+        liste_selection_changee(n);
+    for (int i = 0; i < n->child_count; i++) listes_chargees(n->children[i]);
 }
 
 #include <png.h>
@@ -429,10 +459,10 @@ static void render_widget(WidgetNode *node)
         (void)bpos;
         if (clicked) {
             if (node->action && *node->action) {
-                /* type NULL : le prefixe (exit:, refresh:...) est dans la
-                 * commande elle-meme — "clicked" court-circuitait le
-                 * repartiteur (type inconnu = rien execute). */
-                execute_action((GtkWidget *)node, node->action, NULL);
+                /* La fonction vient du prefixe (exit:, refresh:...) ou de
+                 * l'attribut function= de la balise ; le SIGNAL, lui, n'est
+                 * jamais un type ("clicked" passe en type n'executait rien). */
+                declencher(node, "clicked", NULL);
             } else if (!(node->var_name && strcmp(node->var_name, "__fontbutton__") == 0)) {
                 /* ⛔ <fontbutton> est construit comme un bouton (widget_fontbutton.c)
                  * portant la marque __fontbutton__ : sans ce test, un clic dessus
@@ -622,10 +652,12 @@ static void render_widget(WidgetNode *node)
             for (int i = 0; i < node->state.list.item_count; i++) {
                 bool sel = (i == node->state.list.selected_index);
                 if (ImGui::Selectable(node->state.list.items[i], sel)) {
+                    bool change = (node->state.list.selected_index != i);
                     node->state.list.selected_index = i;
                     if (node->var_name)
                         set_widget_env_var(node->var_name,
                                           node->state.list.items[i]);
+                    if (change) liste_selection_changee(node);
                 }
             }
             ImGui::EndListBox();
@@ -951,7 +983,7 @@ static void render_widget(WidgetNode *node)
         g_in_hbox = prev;
         if (node->action && node->action[0] &&
             ImGui::IsItemClicked(ImGuiMouseButton_Left))
-            execute_action((GtkWidget *)node, node->action, NULL);
+            declencher(node, "button-press-event", NULL);
         break;
     }
 
@@ -1074,7 +1106,7 @@ static void render_widget(WidgetNode *node)
                 if (l[0] && ImGui::Selectable(l)) {
                     snprintf(node->state.entry.buf, sizeof(node->state.entry.buf), "%s", l);
                     if (it->action && it->action[0])
-                        execute_action((GtkWidget *) it, it->action, NULL);
+                        declencher(it, "activate", NULL);
                 }
             }
             ImGui::EndPopup();
@@ -1103,15 +1135,8 @@ static void render_widget(WidgetNode *node)
         if (ImGui::Button(ids) && cur < node->child_count - 1)
             node->state.notebook.current_tab = cur + 1;
         ImGui::SameLine();
-        if (ImGui::Button(idf) && node->actions_attr) {
-            AttributeSet *aa = (AttributeSet *) node->actions_attr;
-            GList *el = NULL;
-            gchar *cmd = attributeset_get_first(&el, aa, ATTR_ACTION);
-            while (cmd) {
-                if (*cmd) execute_action((GtkWidget *) node, cmd, NULL);
-                cmd = attributeset_get_next(&el, aa, ATTR_ACTION);
-            }
-        }
+        if (ImGui::Button(idf) && node->actions_attr)
+            declencher(node, NULL, NULL);
         ImGui::SameLine();
         ImGui::Text("etape %d/%d", cur + 1, node->child_count);
         break;
@@ -1427,18 +1452,8 @@ static void render_widget(WidgetNode *node)
             node->state.scale.value = now + interval;
         } else if (now >= node->state.scale.value) {
             node->state.scale.value = now + interval;
-            if (node->actions_attr) {
-                /* TOUTES les actions du timer, via le repartiteur */
-                AttributeSet *aa = (AttributeSet *)node->actions_attr;
-                GList *el = NULL;
-                gchar *fn = attributeset_get_first(&el, aa, ATTR_ACTION);
-                while (fn) {
-                    if (*fn) execute_action((GtkWidget *)node, fn, NULL);
-                    fn = attributeset_get_next(&el, aa, ATTR_ACTION);
-                }
-            } else if (node->action && *node->action) {
-                execute_action((GtkWidget *)node, node->action, NULL);
-            }
+            /* TOUTES les actions du timer, chacune avec sa fonction */
+            declencher(node, "tick", NULL);
         }
         break;
     }
@@ -1554,7 +1569,7 @@ static void render_widget(WidgetNode *node)
             }
             if (ImGui::MenuItem(ml)) {
                 if (node->action)
-                    execute_action((GtkWidget *)node, node->action, NULL);
+                    declencher(node, "activate", NULL);
             }
         }
         break;
@@ -1902,6 +1917,7 @@ int render_loop(WidgetNode *root, const char *title, int win_w, int win_h)
     }
 
     /* ── Boucle principale ─────────────────────────────────────────────── */
+    listes_chargees(root);   /* un « exit:… » peut sortir ici, via le cœur */
     bool running = true;
     while (running) {
         SDL_Event ev;

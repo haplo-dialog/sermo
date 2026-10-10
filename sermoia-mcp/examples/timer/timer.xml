@@ -1,0 +1,10 @@
+<window title="Minuteur" width-request="320" height-request="160">
+  <vbox spacing="8">
+    <text><label>Horloge rafraîchie chaque seconde par le timer :</label></text>
+    <text><variable>HORLOGE</variable><input>date '+%H:%M:%S'</input></text>
+    <timer interval="1">
+      <action>REFRESH:HORLOGE</action>
+    </timer>
+    <button ok></button>
+  </vbox>
+</window>

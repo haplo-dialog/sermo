@@ -1,0 +1,7 @@
+<window title="Interrupteur" width-request="300" height-request="140">
+  <vbox spacing="8">
+    <text><label>Basculez l'interrupteur, puis validez.</label></text>
+    <switch><label>Mode sombre</label><variable>SOMBRE</variable><default>false</default></switch>
+    <button ok></button>
+  </vbox>
+</window>

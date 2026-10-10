@@ -1,0 +1,11 @@
+<window title="Lien" width-request="320" height-request="160">
+  <vbox spacing="8">
+    <text><label>Un bouton qui ouvre une adresse web :</label></text>
+    <linkbutton>
+      <label>Site du projet</label>
+      <default>https://haplo-dialog.fr</default>
+      <variable>LIEN</variable>
+    </linkbutton>
+    <button ok></button>
+  </vbox>
+</window>

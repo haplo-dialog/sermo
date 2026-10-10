@@ -3,9 +3,50 @@
 Format inspired by [Keep a Changelog](https://keepachangelog.com/).
 Versioning: see [VERSIONING.en.md](VERSIONING.en.md).
 
-**2.7.3 is the first published 2.x release**; 2.7.4, 2.7.5 and 2.7.7 follow it (2.7.6 was only delivered as packages; its content is published with 2.7.7). The previous versions,
-summarised below down to 2.5.0, stayed internal. To move from 1.x to 2.x:
-[MIGRATION.en.md](MIGRATION.en.md).
+**2.7.3 is the first published 2.x release**; 2.7.4, 2.7.5, 2.7.7 and 2.8.0 follow it (2.7.6 was only delivered as packages; its content is published with 2.7.7). Versions 2.0.0 to 2.7.2 stayed
+internal; they are described below to keep track of what changed since 1.x. To
+move from 1.x to 2.x: [MIGRATION.en.md](MIGRATION.en.md).
+
+## [2.8.0] — 2026-10-10
+
+MINOR release. Two more ports — nine in all —, a second MCP server, package
+recipes for six other systems, and the history of gtkdialog.
+
+### Added
+
+- **`htmlsermo`, the HTML port.** It writes the dialog into a standalone HTML
+  page (embedded CSS, no external file; no JavaScript, except the `interactive`
+  mode, which composes the result inside the page) instead of opening a
+  window: `SERMO_HTML_OUT` picks the file (default `sermo-output.html`).
+  `SERMO_HTML_MODE=serve` serves the page on the loopback and returns the entered
+  values, like a real dialog window. No graphics library: it installs on a
+  machine without a display. Package `sermo-backend-html`; `sermo` alternative at
+  priority 1, it only takes it when installed alone.
+- **`lvglsermo`, the LVGL port.** LVGL v9.6.0, embedded (not in Debian), MIT.
+  Wayland or X11; framebuffer and evdev input on request only
+  (`SERMO_LVGL_FBDEV`, `SERMO_LVGL_EVDEV`). Package `sermo-backend-lvgl`;
+  priority 8.
+- **`sermoia-mcp`**, a second MCP server, next to `sermoman-mcp` which serves the
+  manual: it lets an AI write, check and see a dialog (`sermo_schema`,
+  `sermo_check`, `sermo_run`, `sermo_render`, `sermo_examples`, `sermo_vote`).
+  Its schema is checked against the parser's tags; it is not packaged. Test:
+  `sermoia-mcp/tests/verifie.sh`.
+- **Recipes beyond Debian** (`packaging/autres-os/`): Arch, RPM, Gentoo,
+  Slackware, Alpine and NixOS, on a single build sequence (`construire-os.sh`).
+- **`HISTOIRE.en.md`**: the history of gtkdialog, from László Pere to today,
+  with sources.
+
+### Fixed
+
+- **Attributions**: `gtk3sermo`'s Wayland anchoring was written in gtkdialog at
+  woof-CE (Puppy Linux), not at BunsenLabs; Thunor maintained gtkdialog from 2011
+  to 2013; 0.8.3 dates from January 2013.
+- **SECURITY.en.md** said `safe_exec.c` came in two copies: there is only one.
+
+### Measured
+
+- `htmlsermo` and `lvglsermo`: behaviour test 61/61, XML test 55/55. The guards
+  that click or measure a window do not apply to html.
 
 ## [2.7.7] — 2026-10-04
 
@@ -284,7 +325,7 @@ icon, and ports that did not give their own name.
 - `tests/garde_version.sh`, `tests/garde_identite_port.sh`,
   `tests/garde_liens_langue.sh`.
 
-## [2.7.1] — 2026-09-17
+## [2.7.1] — 2026-09-17 — The terminal, Wayland anchoring and `<input>` keep their word
 
 PATCH release: features the documentation promised, and that 1.x had, were
 missing from 2.x without a word. Found while preparing the Debian packages, by
@@ -435,7 +476,7 @@ comparing the dependencies of the 1.x and 2.x packages, then measured.
   green: each red was a different example whose window was not open yet after 3 s
   (gtk4 `pfontview`; qt6 `list`, efl1 `togglebutton`), green in the other passes.
 
-## [2.7.0] — 2026-09-16
+## [2.7.0] — 2026-09-16 — Glade is back, and the progress bar moves everywhere
 
 MINOR release: one capability (`--glade-xml` on gtk3 and gtk4) and four defects
 fixed, all found by the benches repaired in 2.6.8.
@@ -511,7 +552,7 @@ fixed, all found by the benches repaired in 2.6.8.
   sdl3 and ncurses. PNG rendering of a frame with three children on fltk1 and
   efl1: one child before, three after.
 
-## [2.6.8] — 2026-09-16
+## [2.6.8] — 2026-09-16 — Benches that no longer say green by mistake
 
 PATCH release: a click defect, benches that said OK without checking, and the
 automatic verification at the root of the repository.
@@ -592,7 +633,7 @@ automatic verification at the root of the repository.
   "syntax error"; CET notes are set at link time, but neither glibc nor the
   toolkits of Debian testing carry them.
 
-## [2.6.7] — 2026-09-16
+## [2.6.7] — 2026-09-16 — Promised protections, made real
 
 PATCH release: four security defects, two terminal defects, and the clean-up
 that comes before publication.
@@ -660,7 +701,7 @@ that comes before publication.
   Xvfb without OpenGL) and `garde_fonctions_interdites.sh` run outside its scope on
   `libsermocore/include` (deliberate `strtod` in the compatibility layer).
 
-## [2.6.6] — 2026-09-15
+## [2.6.6] — 2026-09-15 — Five hundred and eighty-six dated headers
 
 PATCH release: no code change. **586 source files** stop announcing a version in
 their header.
@@ -687,7 +728,7 @@ their header.
 - The three core variants and the seven backends rebuild; behaviour **7 ports ×
   40 cases** green; `garde_spdx` green on the nine source directories.
 
-## [2.6.5] — 2026-09-15
+## [2.6.5] — 2026-09-15 — Three defects stacked under one click
 
 PATCH release: on `fltk1`, opening an `<expander>` scrambled the whole window.
 Three stacked defects, all invisible to the bench.
@@ -725,7 +766,7 @@ Three stacked defects, all invisible to the bench.
   product's former name and a dead version. The 2.1.0 clean-up handled 216 and
   left those behind.
 
-## [2.6.4] — 2026-09-15
+## [2.6.4] — 2026-09-15 — The title the click erased
 
 PATCH release: two debts settled on `<expander>` — the title a click erased on
 `fltk1`, and documentation that did not exist.
@@ -759,7 +800,7 @@ PATCH release: two debts settled on `<expander>` — the title a click erased on
   overlap and the content spills out of the frame. Seen on capture, not fixed
   here: that is a parent-layout question, not a label one.
 
-## [2.6.3] — 2026-09-15
+## [2.6.3] — 2026-09-15 — The expander born on the wrong side
 
 PATCH release: `<expander>` was born in the wrong state on the five neutral
 ports — and the two halves were wrong in opposite directions.
@@ -793,7 +834,7 @@ ports — and the two halves were wrong in opposite directions.
   nor its `expanded=` attribute, nor the value it exports. A tag shipped on seven
   ports that the documentation ignores is the same documentation hole in another shape.
 
-## [2.6.2] — 2026-09-15
+## [2.6.2] — 2026-09-15 — The frame that kept its title quiet
 
 PATCH release: `<frame>` finally exports its title on the five neutral ports. The
 defect surfaced while writing the bench cases that the language's two largest
@@ -826,7 +867,7 @@ containers were missing.
 - Behaviour **7 ports × 39 cases** green, 0 discrepancy; XML **55/55** on all
   seven; hardening, SPDX and forbidden functions green on the five ports touched.
 
-## [2.6.1] — 2026-09-15
+## [2.6.1] — 2026-09-15 — What the changelog had forgotten
 
 PATCH release: nothing new in the language. One faulty declaration repaired in
 four ports, a version number that lied in nineteen places, and dead weight taken
@@ -845,6 +886,9 @@ kit.
   `efl1` already did so: its pattern is the one adopted. No call used the return
   value and the arguments passed are compatible: observable behaviour is
   unchanged, the undefined behaviour is gone.
+  ⚠️ **The fix has been in the tree since the 14th**, before the 2.6.0 entry
+  itself — it had simply never been written down. It is written here: a fix that
+  cannot be found in the changelog does not exist for whoever reads it later.
 
 - ⛔ **The version number was wrong in nineteen places**, three of which **ship
   with the package**: `sermocore.pc` announced `Version: 2.0.0` — a backend
@@ -896,7 +940,7 @@ kit.
   37 cases** green, 0 discrepancy; XML **55/55** on all seven; hardening green on
   the seven binaries.
 
-## [2.6.0] — 2026-09-14
+## [2.6.0] — 2026-09-14 — The flow, the overlay and the curtain
 
 MINOR release: **three more tags** — `<flowbox>`, `<overlay>`, `<revealer>` — on
 the seven ports. No change to the core↔backend contract.
@@ -949,36 +993,367 @@ not look at the screen. These two only surfaced on capture, playing two
   on `stdout`, the very channel where sermo writes `VAR="value"`. A `Dummy()`
   closes the stack cleanly.
 
-## [2.5.0] — 2026-09-14
+## [2.5.0] — 2026-09-14 — Four more tags
 
-First entry of this line. `sermo` is a **modular** edition: one shared core,
-`libsermocore`, which parses the XML and executes, plus **rendering backends**
-with disjoint dependencies — installing one pulls in only its own toolkit.
+MINOR release: **four new tags** — `<toolbar>`, `<stack>`, `<wizard>`,
+`<menubutton>` — on the seven ports.
 
-### The language
+### Added
+- **`<toolbar>`**: a row that calls itself a toolbar. ⚠️ No `GtkToolbar`: GTK 4
+  **removed** it and GTK 3 deprecates it — a `GtkBox` with the CSS class
+  “toolbar” gives the same rendering, the same code on both sides, and no
+  condemned API. No `elm_toolbar` either: it arranges ITEMS, not arbitrary
+  widgets.
+- **`<stack>`**: N pages, one visible — `<notebook>` without the tabs. `page=`
+  picks the initial step, `switcher="true"` adds a row of buttons. Export: the
+  index of the visible page.
+- **`<wizard>`**: a sequence of steps with Previous / Next / Finish.
+  ⚠️ **Composed, not borrowed**: GTK 4 removed `GtkAssistant`, and `QWizard` is
+  a **window**, not a container. Each port assembles it with ITS own page
+  mechanism. “Finish” plays the tag's `<action>` and closes nothing by itself.
+- **`<menubutton>`**: a menu WHERE YOU ARE, not only at the top of the window.
+  Its children are ordinary `<menuitem>`. Export: the label of the last item
+  chosen.
+- **Four behaviour bench cases** (33 to 36): corpus 32 → **36 cases**.
 
-62 widget types, including the layout containers `<grid>` (column alignment) and
-`<paned>` (two areas and a handle), and the structural tags `<toolbar>`,
-`<stack>`, `<wizard>`, `<menubutton>`.
+### Fixed
+- ⛔ **Name collision with the gtk4 port.** It ALREADY had a `widget_stack.c` —
+  a native `GtkStack` exporting the page NAME — and the new tag overwrote it
+  before anyone noticed. Restored; the common tag is now called
+  `widget_stackpages_*` in all seven ports.
+- ⛔ **Two `<stack>` rules in the lexer.** The old one was shadowed by
+  the new one — two rules for the same pattern, the first one wins. Removed,
+  with the reason written on the spot.
+- **`<menubutton>` did not show on gtk3**: `gtk_container_add()` on a
+  `GtkMenuButton` adds nothing (it already has its child, the arrow).
+  `set_label` is the right door.
+- **gtk3's `<wizard>` stayed invisible**: a `GtkStack` only picks a page among
+  the children that are **shown**, and the core only shows the tree at the end.
+  Found on capture, not at the bench — the export itself was correct.
 
-The same XML renders an equivalent interface on **seven backends**: `gtk3`,
-`gtk4`, `qt6`, `fltk1`, `efl1`, `sdl3` and `ncurses` (terminal). Exported values
-(`NAME="value"`) are identical everywhere — that is the product's invariant, and
-it is measured, not merely claimed.
+### What this brought to light
+- ⚠️ **`<stack>` already existed**… but only worked on gtk4: on the six other
+  ports the neutral core had no `case` at all — the tag parsed and produced
+  **nothing**. `<flowbox>`, `<overlay>` and `<revealer>` were found to be in
+  that same state (see 2.6.0).
 
-### What guards it
+## [2.4.0] — 2026-09-14 — One number, one spelling
 
-Three replayable test benches: XML (55 cases), behaviour (36 cases replayed on
-all seven backends against the `gtk3sermo` reference), and hardening guards. No
-release ships with a red bench.
+MINOR release: the **export behaviour changes** for four tags — `<hscale>`,
+`<vscale>`, `<spinbutton>` and `<progressbar>` — on the seven ports. No new tag.
+It is the direct sequel to 2.3.1: the same disease, the rest of the family.
 
-### Security
+### Changed — what a script used to receive, and what it receives now
+- **The number is written with a DOT, everywhere and always.** The reference
+  port wrote through `g_snprintf("%.2f")`, which follows the locale: under
+  `fr_FR` an `<hscale digits="2">` rendered “2,50”, under `LC_ALL=C` “2.50”.
+  Same binary, same script, two outputs. Now `g_ascii_formatd` — verified under
+  `fr_FR`, `C` and `de_DE`.
+- **`digits=` decides the decimals, on all seven ports.** The reference already
+  honoured it; the six others ignored it. Measured before the fix on
+  `<hscale digits="2"><default>2.5</default>`: the reference rendered “2,50”;
+  `qt6`, `efl1`, `sdl3` and `ncurses` rendered “2”; `fltk1` rendered “2,5”.
+- **`<progressbar>` exports NOTHING**, like the reference — it is a display, not
+  an input. Five ports rendered “50”.
+- **`<spinbutton>` without `digits=` renders an integer.** `qt6` started from TWO
+  decimals by default (“4.25” instead of “4”); the neutral ports rendered “%g”,
+  which ignores the attribute.
 
-Hardened shell execution (`safe_system`/`safe_popen`, no shell outside
-metacharacters, output escaping), binaries built with the available mitigations.
-See [SECURITY.en.md](SECURITY.en.md).
+### Fixed
+- **`qt6` lost the decimal part at creation**: `QSlider` only knows integers, and
+  the port called `setValue((int)value)`. The axis is now scaled by 10^digits —
+  `digits=` finally has an effect on screen too. ⚠️ Rounding follows
+  `nearbyint`, not “+0.5”: `printf` rounds to even (“%.0f” of 2.5 gives 2), and
+  the reference does the same.
+- ⛔ **`fltk1`: two distinct `SermoScale` types.** The core routes `<vscale>` to
+  `widget_hscale_create` but its export to `widget_vscale_envvar_construct`: the
+  object is created in one translation unit and read back in another. With a
+  class defined in the anonymous namespace of EACH file, the `dynamic_cast`
+  failed **silently** and the decimals were lost (`<vscale digits="1">` rendered
+  “4” for 3.5). The type now lives in a shared header, `sermo_scale.h`.
+- **`efl1`** stored its value without decimals: `digits` now travels inside the
+  Evas object's data — it must follow the OBJECT, since creation and export live
+  in two different files.
 
-### Compatibility
+### Added
+- **One behaviour bench case** (32-echelles-decimales): corpus 31 → **32 cases**.
+  It pins the six values together, with and without `digits=`.
 
-Scripts written for `gtkdialog` keep working; the `sermo-gtkdialog` package
-provides the `gtkdialog` command.
+## [2.3.1] — 2026-09-14 — The value that depended on the machine
+
+PATCH release: no new tag. `<levelbar>` and `<drawingarea>` rendered a different
+value from one port to the next — and the reference port itself changed its
+answer depending on the machine's LOCALE.
+
+### Fixed
+- **The reference exported a locale-dependent number.**
+  `g_strdup_printf("%g", 0.5)` writes “0,5” under `fr_FR` and “0.5” under
+  `LC_ALL=C`: same binary, same script, two outputs. A shell script comparing
+  “0.5” no longer recognised anything depending on the machine. `g_ascii_formatd`
+  everywhere — the rule of `g_ascii_strtod` applied to **writing**. Verified
+  under `fr_FR`, `C` and `de_DE`: the output no longer moves.
+- **`<levelbar>` was mute on four ports** (`qt6`, `efl1`, `sdl3`, `ncurses`): the
+  widgets were ported, but the export dispatcher never called them — they fell
+  into the `default:`. `efl1` even carried a note saying it was intentional; that
+  was honest, and wrong as a policy.
+- **`<levelbar>` rendered anything at all elsewhere**: `fltk1` truncated to the
+  integer (“0” for 0.5) *and* read the value with `atof`, which returns ZERO
+  under a French locale; `qt6` exported its bar's internal **fraction** (0.005)
+  instead of the value written in the script; `efl1` rendered “0.500” where the
+  reference renders “0.5”.
+- **`<drawingarea>` was chatty**: `gtk4` rendered its dimensions (“40:20”),
+  `sdl3` and `ncurses` rendered “canvas”. The reference renders an empty string.
+- ⛔ **`<progressbar>` made the fltk1 port ABORT** when it had no tag attribute
+  at all: `get_tag_attribute()` asserts that `attr` is not NULL. The most
+  ordinary tag there is, and the program stopped.
+- **Sixteen more `atof` in fltk1** (`hscale`, `vscale`, `spinbutton`,
+  `progressbar`, `timer`): the same locale trap, replaced by `g_ascii_strtod`.
+
+### Changed
+- ⚠️ **The forbidden-functions guard was not looking at C++.** It walked `*.c`
+  and `*.h` only — yet `qt6` and `fltk1` have their ENTIRE widget layer in
+  `.cpp`. It announced “no forbidden call” without having opened the files. It
+  now takes `*.cpp`, `*.cc` and `*.hpp` — and it immediately found the sixteen
+  `atof` above.
+- **One behaviour bench case** (31-levelbar-drawingarea): corpus 30 → **31
+  cases**.
+
+## [2.3.0] — 2026-09-14 — The handle
+
+MINOR release: **one new tag**, `<paned>`, backward compatible. Both
+planned containers are delivered.
+
+### Added
+- **`<paned>`, on the seven ports.** Two areas and a handle the **user** drags:
+  `<hbox>` freezes the split when the script is written, `<paned>` lets it move.
+  Attributes: `orientation` (horizontal by default | vertical), `position`
+  (pixels or `%`), `resizable`.
+  ⚠️ **Exactly two children**; a third is **refused with a message**, never
+  swallowed in silence — that was `<eventbox>`'s defect.
+- Per port: `GtkPaned` (gtk3, gtk4), `QSplitter` (qt6), `Fl_Tile` (fltk1),
+  `elm_panes` (efl1), a draggable handle built from an `InvisibleButton` (sdl3),
+  an arrow-key movable boundary (ncurses).
+- **One behaviour bench case** (30-paned): corpus 29 → **30 cases**.
+
+### Fixed
+- ⛔ **The content of an `<edit>` was read at the wrong place in the union**, on
+  the `ncurses` port: `state.text.content` is a HEAP POINTER, `state.entry.buf` a
+  1,024-byte array **at the same location**. Reading `entry.buf` returned the
+  pointer's bytes then read past them until the first zero — a **read
+  overflow**. Measured: `value="\xef\xbf\xbdjU"` instead of the text. Worse,
+  typing WROTE into `entry.buf`, overwriting the pointer (a leak, then a
+  `free()` on a fabricated pointer). Reading and writing now both go through
+  `state.text`.
+
+## [2.2.0] — 2026-09-13 — A grid, at last
+
+MINOR release: **one new tag**, `<grid>`, backward compatible — no existing
+script changes its rendering.
+
+### Added
+- **`<grid columns="N">`, on the seven ports.** Children are laid out in flow
+  (document order, wrapping every N) and the columns are **aligned from one row
+  to the next**. Until now the language had 62 widget types and **two** layout
+  containers: a form was written by stacking `<hbox>` inside a `<vbox>`, and each
+  row sized itself on its own. Attributes: `columns`, `row-spacing`,
+  `column-spacing`, `homogeneous`; `space-expand`/`space-fill` per child.
+  ⚠️ `<grid>` is not `<table>`: `<table>` is the column list of data inherited
+  from gtkdialog.
+- Per port: `gtk_grid_attach` (gtk3, gtk4), `QGridLayout` (qt6), `Fl_Grid`
+  (fltk1, new in FLTK 1.4), hand-aligned boxes (efl1), `ImGui::BeginTable`
+  (sdl3), equal-width columns (ncurses).
+- **Two behaviour bench cases** (28-grid, 29-grid-flot): corpus 27 → **29
+  cases**. Written BEFORE the code, with `.attendu` files produced by the gtk3
+  reference.
+
+### Fixed
+- **fltk1 swapped `<levelbar>` and `<drawingarea>`.** Its local copy of
+  `automaton.h` gave 0xBE to DRAWINGAREA and 0xBF to LEVELBAR — the opposite of
+  the core, which creates widgets with ITS values. Measured: the reference
+  renders `LB="0,5" DA=""`, fltk1 rendered `LB="" DA="0"`, both values crossed.
+  Same family as the two-enum bug of the GTK4 variant (fixed on 2026-09-09).
+  ⛔ A local copy of `automaton.h` NEVER renumbers.
+- **Installing the GTK4 variant's headers silently skipped files.**
+  `file(INSTALL)` compares TIMESTAMPS, not content: since `include/` was
+  installed just before with the same names, an older `automaton.h` from
+  `src-gtk4/` was ignored — and the gtk4 backend compiled against the
+  reference's enum. Observed symptoms: `<filechooser>` rendered a date,
+  `<password>` rendered “1”, `<calendar>` rendered empty. The core's
+  `CMakeLists.txt` now deletes by name the headers that `src-gtk4/` is going to
+  provide.
+
+## [2.1.1] — 2026-09-13 — The tags that were pretending
+
+PATCH release: no new tag, no XML language change — what was advertised is now
+**made true**. Three backends carried a `widget_stubs.c` file: the tag was
+accepted, printed a warning, and did nothing. Two more (`qt6`, `fltk1`) had no
+stub file but the same hole, **invisible for lack of a bench case**. Three test
+cases were added (25-eventbox, 26-linkbutton, 27-pulse): they measured the gap
+before the fix, and they guard it after.
+
+> Note: this English changelog has no 2.1.0 entry — the mirror lags behind the
+> French one, which is the master. See [CHANGELOG.md](CHANGELOG.md).
+
+### Fixed
+- **`<eventbox>` dropped its content.** On `efl1`, `sdl3` and `ncurses` the
+  stub never popped the stack: the wrapped child simply vanished. On `fltk1`
+  only the FIRST child was kept, crushed to 100 x 30 — a wrapped `<frame>` went
+  off screen. All four ports now wrap their content like a `<vbox>`.
+- **`<linkbutton>` did not export its URI.** Five ports out of seven returned
+  `LB=""` where the gtk3 reference returns the address: three through stubs,
+  `qt6` by exporting the displayed LABEL instead of the URI (and reading it
+  from `<input>` instead of `<default>`), `fltk1` by never reading the URI and
+  doing nothing on click.
+- **`<pulse>` did not export `pulse`.** Same count: five ports returned an empty
+  string. `qt6` routed its export to the `<spinner>` one; `fltk1` only drew a
+  label, with no bar.
+- **`<image>` exported an empty string** on `efl1`, `sdl3` and `ncurses`: the
+  export dispatcher short-circuited the real widget, which existed. It now
+  returns the **icon name**, like the gtk3 reference.
+
+### Added
+- **`<filechooser>` really picks a file.** `sdl3` opens the **system native
+  picker** through `SDL_ShowOpenFileDialog` / `SDL_ShowSaveFileDialog` /
+  `SDL_ShowOpenFolderDialog` (XDG portal under Wayland) — SDL 3.2 API, no added
+  dependency. `efl1` opens `elm_fileselector_button`. `ncurses` opens a real
+  **in-terminal file browser** (arrows, `..`, `h` for hidden files, Esc to give
+  up). Tag attribute `action`: `open` (default), `save`, `select-folder`.
+- **`<pulse>` animates** everywhere: `elm_progressbar` pulse mode (efl1),
+  `ImGui::ProgressBar` with a negative fraction (sdl3), a hand-drawn block going
+  back and forth (fltk1, ncurses).
+- **`<linkbutton>` really opens the link**: `SDL_OpenURL` (sdl3), `xdg-open`
+  spawned **without a shell** (fork + execlp, URI as `argv[1]`) for `ncurses`,
+  `efl1` and `fltk1` —
+  a query URL commonly contains `&`, and going through `/bin/sh` would reopen an
+  injection. A URI starting with `-` is refused.
+- **Three behaviour bench cases** (25 to 27): the corpus grows from 24 to
+  **27 cases**, replayed on all seven ports.
+
+### Removed
+- The `widget_stubs.c` files of the three backends that had one. The `<menu>`
+  creator, which lived there without being a stub, moves to `widget_menubar.c`.
+
+## [2.1.0] — 2026-09-12 — The house put in order
+
+MINOR release: backward-compatible additions, no change to the core↔backend
+contract nor to the XML language.
+
+### Added
+- `contract/`: the `sermo-contract.h` header (MIT) is **in the repository**.
+
+### Fixed
+- **A clone did not build.** Six backends included `sermo-contract.h` from
+  `../../sermo-contract`, a neighbouring repository absent from any clone. Fixed
+  by bringing the header in; its MIT licence is reproduced in
+  `contract/LICENSE.MIT`.
+- **`qt6` relieved of 9,198 dead lines**: nine upstream engine sources sitting in
+  its `src/` and **never compiled** (the core comes from `libsermocore`). It now
+  matches the level of its neighbours.
+- **Three NUL bytes** in `dialog_state.h` files made those headers binary as far
+  as git was concerned — no readable diff. Removed.
+- File headers: 216 introduced themselves under a name that was not theirs
+  (`sdl3dialog 1.0.0`, `SDL3/ImGui` inside the ncurses port…). A trace of the
+  path they were built along, corrected.
+
+### Ownership and provenance
+- **602 files** carried a licence without saying who they belonged to. They now
+  carry a copyright. **Zero orphans** across the five non-GTK ports.
+- **Provenance measured**, no longer merely asserted: a file-by-file comparison
+  against the upstream `gtkdialog 0.8.3` archive (GTK2 only, which is why the
+  rendering layer of the five non-GTK ports is necessarily new). Table in
+  `LICENCES.md`.
+- `gtk3` has a **second upstream** on record: the Wayland `layer-shell` anchoring
+  comes from the lineage taken up after Pere — copyrights Dima Krasner and Mick
+  Amadio, preserved.
+
+## [2.0.0] — 2026-09-09 — Modular edition
+
+First version of the modular edition (not published). It is meant to replace the
+monolithic 1.x lineage. The MAJOR bump reflects the **change of the core↔backend
+boundary contract** (`sermo_backend.h`): a backend from the monolithic lineage no
+longer links against the new core. The **XML language stays backward-compatible**:
+gtkdialog / sermo 1.x scripts stay valid.
+
+### Added
+- **7th backend `ncurses`** (terminal, the lightest): TUI, headless path,
+  behaviour parity 24/24 + XML 55/55; `SERMO_NCURSES_THEME`
+  (light|dark|blue|grey) setting and image/icon suppression.
+- **Light/dark theme per backend**, driven by `SERMO_DARK`
+  (`sermo_desktop_is_dark()` in the core).
+- `tests/run_examples.sh` bench: actually opens the 210 examples against a given
+  binary (beyond parsing and the 24 behaviour cases).
+
+### Changed
+- **Phase 3**: the core↔backend contract is renamed `qt6_*` →
+  **`sermo_be_*`** (the core no longer names any toolkit; loop =
+  `sermo_be_run_loop`).
+- **Version unified to 2.0.0** for the core and the seven backends shipped
+  together.
+
+## [1.1.1] — Modularisation (Phase 1)
+
+The modular edition splits monolithic sermo into a single **core**
+(`libsermocore`) and autonomous **rendering backends**, one per toolkit. The XML
+language and observable behaviour stay identical to sermo 1.1.x.
+
+### Added
+
+- **`libsermocore`**: syntactic core (Flex/Bison lexer/parser) + hardened
+  execution (`safe_system`/`safe_popen`), variables, actions, automaton — with
+  **no graphical dependency** in the neutral variant.
+- **Three core build variants** from a largely unified source: neutral (shim +
+  stubs, for qt6/fltk1/efl1/sdl3/ncurses), `SERMOCORE_GLIB` (real GLib/GTK 3),
+  `SERMOCORE_GTK4` (gtk4sermo's rewritten core files).
+- **Seven backends** consuming the core via pkg-config (`sermocore.pc`).
+- **Frontier contract** `sermo_backend.h`: hook `sermo_backend_toolkit_init()`
+  replacing the hard-coded `gtk_init`.
+- **Separate packaging**: `sermo-core-dev` (static + headers + `.pc`, depends on
+  libc6 only) plus one `sermo-backend-<t>` per toolkit with **disjoint**
+  dependencies (derived from `ldd` → `dpkg -S`). `sermo` alias via
+  `update-alternatives`; the `gtkdialog` command ships in a separate
+  `sermo-gtkdialog` package (link → gtk3sermo; Conflicts/Replaces/Provides
+  `gtkdialog, gtk3dialog, haplo-dialog` to avoid a file clash with the original
+  gtkdialog and BunsenLabs' `gtk3dialog`).
+
+### Changed
+
+- The GObject attribute bridge moves out of the core into each backend
+  (`tag_set_property.c`).
+- `main()` now lives in the core and calls the backend's init hook.
+
+### Fixed
+
+- **efl1**: footer clipping (fixed window) → default width/height treated as
+  **minimums**, the window grows to content.
+- **efl1**: `calendar` returned the date off by one day (broken `elm_calendar`
+  `time_t` round-trip across DST) → canonical date kept outside that round-trip.
+  efl1 back to 24/24.
+- **gtk4**: 3 value discrepancies (`05-filechooser`→date, `11-infobar`→type,
+  `13-password`→`1`) caused by **two distinct `WIDGET_*` enums** in the
+  `SERMOCORE_GTK4` variant (the generated parser saw the reference `automaton.h`
+  while gtk4sermo's core files saw their own; the 0xB4–0xC3 block is reordered).
+  `GTK4SRC` put first on the include path → a single enum. gtk4 back to 24/24.
+- **qt6**: missing button icons under bare Xvfb → `sermo_icon_lookup` fallback.
+- **System theme**: shared `sermo_desktop_is_dark()` detection; each port follows
+  the current system theme. efl1 stays dark by default.
+
+### Port status (Phase 1)
+
+All seven ports at full parity (24/24) — six in GUI, ncurses in a terminal
+(behaviour bench replayed headless in batch mode). gtk4 runs on the dedicated
+`SERMOCORE_GTK4` variant (GTK 4 dropped `gtk_main`/`gtk_socket`/the old event
+model). See [BILAN_SANTE.md](BILAN_SANTE.md) (French only).
+
+### Coming
+
+- **Part 3**: generalise the `qt6_*` bridges to `sermo_be_*`, move the
+  event loop into the backend. Enables reuniting gtk4 on the unified source, a
+  clean shared `.so`, then process isolation (IPC).
+
+---
+
+## Upstream history
+
+This modular edition continues the **sermo** lineage (itself from **gtkdialog**,
+GPL-2.0-or-later). The monolithic sermo version history is kept in the original
+sermo repositories. This modular edition restarts from functional level 1.1.1.

@@ -112,7 +112,8 @@ des @strong{backends de rendu} autonomes, un par bibliothèque graphique, qui ne
 font que @emph{dessiner} ce que le cœur décrit.
 @end itemize
 
-Le même script XML rend une interface équivalente sur les sept backends :
+Le même script XML rend une interface équivalente sur les neuf backends ;
+@command{htmlsermo} l'écrit en page HTML au lieu de l'afficher :
 
 @multitable @columnfractions .34 .30 .36
 @headitem Backend @tab Toolkit @tab Binaire
@@ -122,7 +123,9 @@ Le même script XML rend une interface équivalente sur les sept backends :
 @item @code{sermo-backend-fltk1} @tab FLTK 1.4   @tab @command{fltk1sermo}
 @item @code{sermo-backend-efl1}  @tab EFL/Elementary @tab @command{efl1sermo}
 @item @code{sermo-backend-sdl3}  @tab SDL 3      @tab @command{sdl3sermo}
+@item @code{sermo-backend-lvgl}  @tab LVGL 9.6 (embarqué) @tab @command{lvglsermo}
 @item @code{sermo-backend-ncurses} @tab ncursesw (terminal) @tab @command{ncursessermo}
+@item @code{sermo-backend-html}  @tab aucun (page HTML) @tab @command{htmlsermo}
 @end multitable
 
 @command{sermo} désigne le backend choisi par défaut (@command{update-alternatives}).

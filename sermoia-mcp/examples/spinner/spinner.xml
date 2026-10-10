@@ -1,0 +1,7 @@
+<window title="Roue d'activité" width-request="320">
+  <vbox spacing="8">
+    <text><label>Traitement en cours…</label></text>
+    <spinner active="true"></spinner>
+    <button><label>Fermer</label><action>EXIT:0</action></button>
+  </vbox>
+</window>

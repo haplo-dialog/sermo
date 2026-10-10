@@ -1,6 +1,6 @@
 # TODO — sermo
 
-État : Phase 1 (modularisation) terminée — sept backends sur `libsermocore`,
+État : Phase 1 (modularisation) terminée — neuf backends sur `libsermocore`,
 empaquetage séparé prouvé. Reste ci-dessous.
 
 ## Court terme

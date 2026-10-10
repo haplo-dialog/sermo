@@ -1,0 +1,9 @@
+<window title="Confirmation" width-request="320" height-request="120">
+  <vbox spacing="10">
+    <text><label>Voulez-vous continuer ?</label></text>
+    <hbox>
+      <button><label>Oui</label><action>EXIT:oui</action></button>
+      <button><label>Non</label><action>EXIT:non</action></button>
+    </hbox>
+  </vbox>
+</window>

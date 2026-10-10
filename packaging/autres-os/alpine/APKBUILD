@@ -1,0 +1,103 @@
+# Maintainer: s.cage <devel@haplo-dialog.fr>
+# SPDX-License-Identifier: GPL-2.0-or-later
+#
+# sermo — le paquet principal porte le manuel ; le cœur et chaque backend sont des
+# sous-paquets. La construction est celle de packaging/autres-os/construire-os.sh.
+#
+# ⚠️ Écrit sans Alpine sous la main : la suite des gestes de construction est
+# rejouée (packaging/autres-os/README.md), pas les noms de paquets Alpine ni le
+# comportement de abuild (page de manuel hors -doc). Sans efl1 ni fltk1 : EFL
+# n'est pas dans Alpine, et sa FLTK est en 1.3 (sans Fl_Flex, que fltk1sermo demande).
+pkgname=sermo
+pkgver=2.7.7
+pkgrel=0
+pkgdesc="Dialog boxes for shell scripts, described in XML (gtkdialog successor)"
+url="https://gitlab.com/haplo-dialog/sermo"
+arch="all"
+license="GPL-2.0-or-later"
+makedepends="cmake samurai flex bison pkgconf texinfo gtk+3.0-dev vte3-dev gtk-layer-shell-dev gtk4.0-dev qt6-qtbase-dev sdl3-dev libx11-dev libpng-dev wayland-dev libxkbcommon-dev wayland-protocols ncurses-dev"
+subpackages="$pkgname-core-dev:core_dev $pkgname-backend-gtk3:backend_gtk3 $pkgname-backend-gtk4:backend_gtk4 $pkgname-backend-qt6:backend_qt6 $pkgname-backend-sdl3:backend_sdl3 $pkgname-backend-lvgl:backend_lvgl $pkgname-backend-ncurses:backend_ncurses $pkgname-backend-html:backend_html"
+source="$pkgname-$pkgver.tar.gz::https://gitlab.com/haplo-dialog/sermo/-/archive/v$pkgver/sermo-v$pkgver.tar.gz"
+builddir="$srcdir/sermo-v$pkgver"
+options="!check"   # le banc XML demande le binaire de chaque port : voir ci/bancs.sh
+
+_ports="gtk3 gtk4 qt6 sdl3 lvgl ncurses html"
+
+build() {
+	# shellcheck disable=SC2086
+	sh packaging/autres-os/construire-os.sh construire . "$srcdir/construit" $_ports
+}
+
+package() {
+	for p in $_ports; do
+		sh packaging/autres-os/construire-os.sh installer . "$srcdir/construit" "$p" "$pkgdir" /usr
+	done
+	sh packaging/autres-os/construire-os.sh coeur-dev . "$srcdir/construit" "$pkgdir" /usr lib
+	sh packaging/autres-os/construire-os.sh manuel . "$srcdir/construit" "$pkgdir" /usr
+	install -Dm644 COPYING "$pkgdir"/usr/share/licenses/$pkgname/COPYING
+	# abuild refuse les pages de manuel non compressées (mesuré, alpine:edge).
+	find "$pkgdir"/usr/share/man -type f -name '*.[1-9]' -exec gzip -9n {} +
+}
+
+core_dev() {
+	pkgdesc="sermo dialog engine - static core library and headers"
+	amove usr/include/sermo usr/lib/libsermocore.a usr/lib/pkgconfig/sermocore.pc
+}
+
+backend_gtk3() {
+	pkgdesc="sermo dialog boxes for shell scripts - GTK 3 backend (gtkdialog-compatible command)"
+	depends="gtk+3.0 vte3 gtk-layer-shell"
+	provides="sermo-backend"
+	provider_priority=50
+	amove usr/bin/gtk3sermo usr/share/man/man1/gtk3sermo.1.gz usr/share/man/man5/haplo-dialog-xml.5.gz usr/share/icons/hicolor/*/apps/gtk3sermo.png
+}
+
+backend_gtk4() {
+	pkgdesc="sermo dialog boxes for shell scripts - GTK 4 backend"
+	depends="gtk4.0 vte3-gtk4"
+	provides="sermo-backend"
+	provider_priority=45
+	amove usr/bin/gtk4sermo usr/share/man/man1/gtk4sermo.1.gz usr/share/man/man5/gtk4sermo-xml.5.gz usr/share/icons/hicolor/*/apps/gtk4sermo.png
+}
+
+backend_qt6() {
+	pkgdesc="sermo dialog boxes for shell scripts - Qt 6 backend"
+	depends="qt6-qtbase"
+	provides="sermo-backend"
+	provider_priority=40
+	amove usr/bin/qt6sermo usr/share/man/man1/qt6sermo.1.gz usr/share/applications/qt6sermo.desktop usr/share/metainfo/fr.haplo_dialog.qt6sermo.metainfo.xml usr/share/icons/hicolor/*/apps/qt6sermo.png
+}
+
+backend_sdl3() {
+	pkgdesc="sermo dialog boxes for shell scripts - SDL 3 backend, drawn with Dear ImGui"
+	depends="sdl3"
+	provides="sermo-backend"
+	provider_priority=10
+	amove usr/bin/sdl3sermo usr/share/man/man1/sdl3sermo.1.gz usr/share/icons/hicolor/*/apps/sdl3sermo.png
+}
+
+backend_lvgl() {
+	pkgdesc="sermo dialog boxes for shell scripts - LVGL backend for kiosks and embedded screens (LVGL embedded)"
+	depends=""
+	provides="sermo-backend"
+	provider_priority=8
+	amove usr/bin/lvglsermo usr/share/man/man1/lvglsermo.1.gz
+}
+
+backend_ncurses() {
+	pkgdesc="sermo dialog boxes for shell scripts - terminal (ncurses) backend, for machines without a display"
+	depends="ncurses"
+	provides="sermo-backend"
+	provider_priority=5
+	amove usr/bin/ncursessermo usr/share/man/man1/ncursessermo.1.gz
+}
+
+backend_html() {
+	pkgdesc="sermo dialog boxes for shell scripts - static HTML export backend (writes a page instead of a window)"
+	depends=""
+	provides="sermo-backend"
+	provider_priority=1
+	amove usr/bin/htmlsermo usr/share/man/man1/htmlsermo.1.gz
+}
+
+sha512sums="SKIP"   # posée à la publication de l'étiquette

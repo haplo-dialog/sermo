@@ -2,7 +2,7 @@
 
 [Français](MANUEL_UTILISATEUR.md)
 
-**Version:** 2.7.7
+**Version:** 2.8.0
 **Licence:** GPL-2.0-or-later | **Distributor:** haplo-dialog (devel@haplo-dialog.fr)
 
 ---
@@ -33,8 +33,9 @@ displays it. When the dialog ends **through a button**, the values entered are
 returned on standard output as shell variables.
 
 **This manual describes the XML language**, which is **identical across sermo's
-seven backends** (gtk3, gtk4, qt6, fltk1, efl1, sdl3, ncurses): the same script
-renders an equivalent interface everywhere. In this document `sermo` means the
+nine backends** (gtk3, gtk4, qt6, fltk1, efl1, sdl3, lvgl, ncurses, html): the
+same script renders an equivalent interface everywhere; html writes it as an
+HTML page instead of displaying it. In this document `sermo` means the
 backend selected by default on your system (`update-alternatives`), but you can
 also call a specific backend (`gtk3sermo`, `qt6sermo`…).
 
@@ -162,13 +163,14 @@ deterministic capture for documentation, a thumbnail or a visual test:
 sermo --render-png output.png --file=my_interface.xml
 ```
 
-Off-screen rendering is available on **all six graphical backends** (`gtk3`,
+Off-screen rendering is available on **six graphical backends** (`gtk3`,
 `gtk4`, `qt6`, `fltk1`, `efl1`, `sdl3`) — `gtk3`/`gtk4`/`fltk1` through a virtual
 display (xvfb) where the backend writes the PNG itself, `qt6`/`efl1`/`sdl3`
-through their offscreen platform. `ncurses` stays a **terminal** display (no
-image; text preview through `--print-ir`).
+through their offscreen platform. `lvgl` has the option too: it draws the image
+without opening a window. `ncurses` stays a **terminal** display (no image; text
+preview through `--print-ir`), and `html` writes a page, not an image.
 
-The size asked for through `default-width`/`default-height` is honoured on all
+The size asked for through `default-width`/`default-height` is honoured on these
 six. Up to 2.7.1, `qt6` ignored it and sometimes produced a 2×2 pixel image when
 the window held a drop-down list — `tests/garde_taille_fenetre.sh` now checks
 this on every graphical port.
@@ -610,7 +612,7 @@ Variable: `true` when on, `false` otherwise.
 For a folder: `<filechooser action="select-folder">`.
 
 The `<chooser>` tag, on the other hand, embeds the picker INSIDE the window (GTK
-3 and GTK 4). On the five other ports it becomes a `<filechooser>`: a button
+3 and GTK 4). On the other ports it becomes a `<filechooser>`: a button
 opening the toolkit's dialog.
 Variable: absolute path of the selected file/folder.
 

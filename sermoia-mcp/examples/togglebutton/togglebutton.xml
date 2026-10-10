@@ -1,0 +1,7 @@
+<window title="Bouton bascule" width-request="300" height-request="140">
+  <vbox spacing="8">
+    <text><label>Enfoncez le bouton, puis validez.</label></text>
+    <togglebutton><label>Activer</label><variable>ETAT</variable><default>false</default></togglebutton>
+    <button ok></button>
+  </vbox>
+</window>

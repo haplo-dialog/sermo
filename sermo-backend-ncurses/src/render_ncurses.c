@@ -11,12 +11,17 @@
  * dessine l'arbre et (b) route le clavier vers execute_action() du cœur.
  *
  * Deux chemins :
- *  - HEADLESS (pas de tty, ou SERMO_NCURSES_BATCH=1) : n'ouvre pas ncurses ;
- *    exécute la logique (timers → actions ; un « exit:… » fait exporter et
- *    sortir le cœur). Sert au scripting ET aux bancs (sans terminal).
- *  - INTERACTIF (tty) : moteur de disposition récursif (vbox empile, hbox aligne,
- *    frame encadre, notebook onglets) + rendu riche des widgets, navigation
- *    Tab/flèches, activation Entrée/Espace.
+ *  - HEADLESS (entrée standard qui n'est pas un terminal, ou
+ *    SERMO_NCURSES_BATCH=1) : n'ouvre pas ncurses ; exécute la logique
+ *    (timers → actions ; un « exit:… » fait exporter et sortir le cœur).
+ *    Sert aux bancs et aux lancements sans personne au clavier (cron, tube).
+ *  - INTERACTIF (quelqu'un au clavier) : moteur de disposition récursif (vbox
+ *    empile, hbox aligne, frame encadre, notebook onglets) + rendu riche des
+ *    widgets, navigation Tab/flèches, activation Entrée/Espace.
+ *    L'écran va sur la sortie standard si c'est un terminal, sinon sur le
+ *    terminal de contrôle (/dev/tty) : `eval "$(ncursessermo …)"` capture la
+ *    sortie, et c'est justement là qu'un dialogue doit s'ouvrir. Les variables,
+ *    elles, partent toujours sur la sortie standard.
  */
 #include <ncurses.h>
 #include <dirent.h>
@@ -36,6 +41,7 @@
 #include "tag_attributes.h"
 #include "sermo_open_uri.h"
 #include "sermo_progress.h"
+#include "jouer_actions.h"
 
 /* Fourni par le cœur (actions.c), non exporté par ses en-têtes — comme dans sdl3. */
 void action_exitprogram(GtkWidget *widget, char *string);
@@ -43,20 +49,41 @@ void action_exitprogram(GtkWidget *widget, char *string);
 /* ═══════════════════════════════════════════════════════════════════════════
  *  Déclenchement des <timer> + export (partagé headless/interactif)
  * ═══════════════════════════════════════════════════════════════════════════ */
+/* Joue les actions d'un nœud : toutes, chacune avec sa fonction, quand le
+ * créateur a gardé le jeu d'attributs ; sinon l'unique commande du nœud. */
+static void declencher(WidgetNode *n, const char *signal1, const char *signal2)
+{
+    if (!n) return;
+    if (n->actions_attr)
+        jouer_actions((GtkWidget *)n, (AttributeSet *)n->actions_attr, signal1, signal2);
+    else if (n->action && *n->action)
+        execute_action((GtkWidget *)n, n->action, NULL);
+}
+
+/* <list> : joue ses actions (signal « selection-changed » de l'étalon). Seule
+ * une vraie <list> garde son jeu d'actions ; un <tree> (WT_LIST aussi) non. */
+static void liste_selection_changee(WidgetNode *n)
+{
+    if (n && n->type == WT_LIST && n->actions_attr)
+        declencher(n, "selection-changed", "row-selected");
+}
+
+/* La sélection posée au chargement est jouée une fois, l'arbre entier
+ * construit : les variables que l'action vise existent alors. Avec ou sans
+ * écran, avant toute minuterie. */
+static void listes_chargees(WidgetNode *n)
+{
+    if (!n) return;
+    if (n->type == WT_LIST && n->state.list.selected_index >= 0)
+        liste_selection_changee(n);
+    for (int i = 0; i < n->child_count; i++) listes_chargees(n->children[i]);
+}
+
 static void fire_timers(WidgetNode *node)
 {
     if (!node) return;
-    if (node->type == WT_TIMER) {
-        if (node->actions_attr) {
-            AttributeSet *aa = (AttributeSet *)node->actions_attr;
-            GList *el = NULL;
-            gchar *fn = attributeset_get_first(&el, aa, ATTR_ACTION);
-            while (fn) { if (*fn) execute_action((GtkWidget *)node, fn, NULL);
-                        fn = attributeset_get_next(&el, aa, ATTR_ACTION); }
-        } else if (node->action && *node->action) {
-            execute_action((GtkWidget *)node, node->action, NULL);
-        }
-    }
+    if (node->type == WT_TIMER)
+        declencher(node, "tick", NULL);
     for (int i = 0; i < node->child_count; i++) fire_timers(node->children[i]);
 }
 
@@ -738,11 +765,51 @@ static void pulse_avance(WidgetNode *n)
     for (int i = 0; i < n->child_count; i++) pulse_avance(n->children[i]);
 }
 
-static int run_interactive(WidgetNode *root, const char *title)
+/* ─── Ouverture et fermeture de l'écran ────────────────────────────────────
+ * L'écran se dessine sur la sortie standard quand c'est un terminal. Sinon
+ * (sortie capturée par $(…), envoyée dans un fichier ou un tube) il se dessine
+ * sur le terminal de contrôle : la capture ne reçoit que les variables.
+ * newterm() et non initscr() : initscr() écrit toujours sur la sortie standard,
+ * et arrête le programme s'il ne peut pas ouvrir le terminal. */
+static FILE *g_tty;          /* /dev/tty, quand la sortie standard est prise */
+static int   g_ecran;        /* 1 dès que ncurses tient un terminal */
+
+static void ecran_modes(void)
 {
-    initscr(); cbreak(); noecho(); keypad(stdscr, TRUE); curs_set(0);
+    cbreak(); noecho(); keypad(stdscr, TRUE); curs_set(0);
     st_apply_theme();
     timeout(100);
+}
+
+/* Rend le terminal à la sortie du programme. Le cœur sort par exit() dès qu'une
+ * action « exit:… » est jouée (minuterie, case à cocher, menu…) : sans cela le
+ * terminal restait sans écho ni mode ligne après le dialogue. */
+static void ecran_fermer(void)
+{
+    if (g_ecran && !isendwin()) endwin();
+}
+
+/* Rend 1 si l'écran est ouvert, 0 s'il n'y a pas de terminal où dessiner. */
+static int ecran_ouvrir(void)
+{
+    FILE *sortie = stdout;
+    if (!isatty(STDOUT_FILENO)) {
+        g_tty = fopen("/dev/tty", "w");
+        if (!g_tty) return 0;
+        sortie = g_tty;
+    }
+    if (!newterm(NULL, sortie, stdin)) {
+        if (g_tty) { fclose(g_tty); g_tty = NULL; }
+        return 0;
+    }
+    g_ecran = 1;
+    atexit(ecran_fermer);
+    ecran_modes();
+    return 1;
+}
+
+static int run_interactive(WidgetNode *root, const char *title)
+{
     g_focus_idx = 0;
 
     for (;;) {
@@ -774,8 +841,8 @@ static int run_interactive(WidgetNode *root, const char *title)
             case WT_BUTTON:
                 if (n->action && *n->action) {
                     endwin();
-                    execute_action((GtkWidget *)n, n->action, NULL);   /* exit:… peut sortir ici */
-                    initscr(); cbreak(); noecho(); keypad(stdscr, TRUE); curs_set(0); st_apply_theme(); timeout(100);
+                    declencher(n, "clicked", NULL);   /* exit:… peut sortir ici */
+                    ecran_modes();   /* le prochain refresh() reprend l'écran */
                 } else if (!(n->var_name && strcmp(n->var_name, "__fontbutton__") == 0)) {
                     /* <fontbutton> est construit comme un bouton marqué __fontbutton__
                      * (widget_fontbutton.c) : il ne doit pas fermer le dialogue. */
@@ -790,7 +857,7 @@ static int run_interactive(WidgetNode *root, const char *title)
                 break;
             case WT_CHECKBOX: case WT_TOGGLEBUTTON: case WT_SWITCH: case WT_RADIOBUTTON:
                 n->state.toggle.active = !n->state.toggle.active;
-                if (n->action && *n->action) execute_action((GtkWidget *)n, n->action, NULL);
+                if (n->action && *n->action) declencher(n, "toggled", "clicked");
                 break;
             case WT_ENTRY: case WT_EDIT: case WT_PASSWORD:
                 edit_field(n); break;
@@ -807,17 +874,17 @@ static int run_interactive(WidgetNode *root, const char *title)
                     snprintf(n->state.entry.buf, sizeof(n->state.entry.buf), "%s",
                              choisi->label ? choisi->label : "");
                     if (choisi->action && *choisi->action)
-                        execute_action((GtkWidget *)choisi, choisi->action, NULL);
+                        declencher(choisi, "activate", NULL);
                 }
                 break;
             }
             case WT_LINKBUTTON:
                 sermo_open_uri(n->state.entry.buf);
-                if (n->action && *n->action) execute_action((GtkWidget *)n, n->action, NULL);
+                if (n->action && *n->action) declencher(n, NULL, NULL);
                 break;
             case WT_FILECHOOSER:
                 browse_file(n);
-                if (n->action && *n->action) execute_action((GtkWidget *)n, n->action, NULL);
+                if (n->action && *n->action) declencher(n, NULL, NULL);
                 break;
             case WT_SEARCHENTRY: {
                 char buf[256] = {0};
@@ -826,13 +893,17 @@ static int run_interactive(WidgetNode *root, const char *title)
                 getnstr(buf, sizeof(buf) - 1);
                 timeout(100); noecho(); curs_set(0);
                 snprintf(n->state.list.filter, sizeof(n->state.list.filter), "%s", buf);
-                if (n->action && *n->action) execute_action((GtkWidget *)n, n->action, NULL);
+                if (n->action && *n->action) declencher(n, NULL, NULL);
                 break;
             }
             case WT_LIST: case WT_COMBOBOX:
-                if (n->state.list.item_count > 0)
+                if (n->state.list.item_count > 0) {
+                    int avant = n->state.list.selected_index;
                     n->state.list.selected_index =
                         (n->state.list.selected_index + 1) % n->state.list.item_count;
+                    if (n->state.list.selected_index != avant)
+                        liste_selection_changee(n);   /* WT_LIST seulement */
+                }
                 break;
             case WT_SPINBUTTON:
                 n->state.spin.value += 1;
@@ -894,7 +965,13 @@ int render_loop(WidgetNode *root, const char *title, int win_w, int win_h)
 {
     (void)win_w; (void)win_h;
     if (!root) return 0;
-    int headless = getenv("SERMO_NCURSES_BATCH")
-                || !isatty(STDIN_FILENO) || !isatty(STDOUT_FILENO);
-    return headless ? run_headless(root) : run_interactive(root, title);
+    /* Sans écran : sur demande, ou quand personne ne peut taper (entrée
+     * standard qui n'est pas un terminal), ou faute de terminal où dessiner.
+     * Une sortie standard capturée ne suffit PAS à renoncer à l'écran. */
+    if (getenv("SERMO_NCURSES_BATCH") || !isatty(STDIN_FILENO) || !ecran_ouvrir()) {
+        listes_chargees(root);   /* un « exit:… » peut sortir ici, via le cœur */
+        return run_headless(root);
+    }
+    listes_chargees(root);       /* l'écran ouvert : une sortie le rend propre */
+    return run_interactive(root, title);
 }

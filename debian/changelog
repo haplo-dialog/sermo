@@ -1,3 +1,24 @@
+sermo (2.8.0-1) unstable; urgency=medium
+
+  * Deux ports de plus, neuf en tout :
+    - sermo-backend-html : htmlsermo écrit le dialogue en page HTML autonome
+      (CSS embarqué, sans JavaScript par défaut) au lieu d'ouvrir une
+      fenêtre ; un mode micro-serveur local renvoie les valeurs saisies.
+      Aucune bibliothèque graphique. Alternative « sermo » à la priorité 1 :
+      il ne la prend que seul installé ;
+    - sermo-backend-lvgl : lvglsermo dessine avec LVGL v9.6.0 (embarqué, MIT),
+      en Wayland ou X11, ou sur un framebuffer à la demande. Priorité 8.
+  * Banc de comportement 61/61 et banc XML 55/55 sur les deux nouveaux ports.
+  * Serveur MCP sermoia (dépôt, non empaqueté) : écrire, vérifier et voir un
+    dialogue ; à côté de sermoman, qui sert le manuel.
+  * Recettes hors Debian (packaging/autres-os/) : Arch, RPM, Gentoo,
+    Slackware, Alpine, NixOS.
+  * Histoire de gtkdialog (HISTOIRE.md) ; attributions corrigées : l'ancrage
+    Wayland de gtk3sermo a été écrit dans woof-CE (Puppy Linux), pas chez
+    BunsenLabs.
+
+ -- s.cage <devel@haplo-dialog.fr>  Sat, 10 Oct 2026 16:55:48 +0200
+
 sermo (2.7.7-1) unstable; urgency=medium
 
   * Barre de progression (gtk3, gtk4) : lecture hors tampon. Une ligne

@@ -1,0 +1,17 @@
+<window title="Cadre" width-request="340" height-request="180">
+  <vbox spacing="8">
+    <frame label="Vos informations">
+      <vbox>
+        <hbox>
+          <text><label>Nom :</label></text>
+          <entry><variable>NOM</variable><default>Dupont</default></entry>
+        </hbox>
+        <checkbox><label>Recevoir les notifications</label><variable>NOTIFS</variable></checkbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button ok></button>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

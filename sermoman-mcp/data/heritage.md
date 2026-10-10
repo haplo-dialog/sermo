@@ -29,7 +29,7 @@ comme « un binaire par toolkit ». Il est **séparé en deux parties** :
 
 Le cœur parle aux backends par un **contrat de frontière** (`sermo_backend.h`,
 hooks `sermo_be_*`). Le même script XML rend une interface équivalente sur les
-sept backends.
+neuf backends.
 
 ### Ce qui est hérité
 
@@ -52,8 +52,8 @@ sept backends.
 ### Ce qui a changé
 
 - **GTK 2 → toolkits multiples.** Là où l'origine ne connaissait que GTK, sermo
-  rend le même XML sur sept moteurs : gtk3, gtk4, qt6, fltk1, efl1, sdl3 et
-  ncurses (terminal).
+  rend le même XML sur neuf moteurs : gtk3, gtk4, qt6, fltk1, efl1, sdl3, lvgl,
+  ncurses (terminal) et html (export en page HTML).
 - **Binaire unique → cœur + backends.** L'analyse et l'exécution vivent une
   seule fois dans `libsermocore` ; chaque backend ne porte que le dessin.
 - **Durcissement de l'exécution.** `safe_system` / `safe_popen` remplacent
@@ -61,7 +61,7 @@ sept backends.
   **sans shell**. La sortie est échappée. Ce durcissement est arrivé dans la
   lignée monolithique et conservé.
 
-### Les sept backends
+### Les neuf backends
 
 | Backend | Toolkit | Binaire |
 |---|---|---|
@@ -71,30 +71,34 @@ sept backends.
 | `sermo-backend-fltk1` | FLTK 1.4 | `fltk1sermo` |
 | `sermo-backend-efl1` | Enlightenment / Elementary | `efl1sermo` |
 | `sermo-backend-sdl3` | SDL 3 + Dear ImGui | `sdl3sermo` |
+| `sermo-backend-lvgl` | LVGL 9.6, embarqué | `lvglsermo` |
 | `sermo-backend-ncurses` | ncurses (terminal) | `ncursessermo` |
+| `sermo-backend-html` | aucun : page HTML autonome | `htmlsermo` |
 
-**gtk3** est l'**étalon** : c'est son comportement que les six autres doivent
+**gtk3** est l'**étalon** : c'est son comportement que les huit autres doivent
 reproduire.
 
 ### Trois variantes de build du cœur
 
 Le cœur se construit en trois formes, depuis une source largement unifiée :
 
-- **neutre** (défaut, sans toolkit) — sert qt6, fltk1, efl1, sdl3 et ncurses ;
+- **neutre** (défaut, sans toolkit) — sert qt6, fltk1, efl1, sdl3, lvgl, ncurses
+  et html ;
 - **`SERMOCORE_GLIB`** — vraie GLib/GTK 3, pour le backend gtk3 ;
 - **`SERMOCORE_GTK4`** — fichiers cœur réécrits pour gtk4 (GTK 4 a retiré
   `gtk_main`, `gtk_socket` et l'ancien modèle d'évènements).
 
-### Packaging — 13 paquets .deb
+### Packaging — 16 paquets .deb
 
-Le dossier `debian/` (debhelper) produit **13 paquets .deb** aux dépendances
+Le dossier `debian/` (debhelper) produit **16 paquets .deb** aux dépendances
 **disjointes** (calculées par `dh_shlibdeps`) ; `packaging/construire-paquets.sh`
 les construit et les éprouve dans une Debian testing vierge :
 
 - `sermo-core-dev` — le cœur statique + en-têtes + `sermocore.pc` (ne dépend que
   de libc6) ;
-- **sept** `sermo-backend-<t>` — un par toolkit, chacun ne tirant que **sa**
-  bibliothèque graphique ;
+- **neuf** `sermo-backend-<t>` — un par port, chacun ne tirant que **sa**
+  bibliothèque graphique (html n'en tire aucune) ;
+- `sermo-doc` — le manuel Texinfo et la documentation commune ;
 - `sermo-gtkdialog` — paquet **séparé et optionnel** posant la commande
   historique `gtkdialog` (lien → `gtk3sermo`). Il déclare
   `Conflicts`/`Replaces`/`Provides` sur `gtkdialog`, `gtk3dialog`, `haplo-dialog`
@@ -261,8 +265,8 @@ TIMEOUT=5 bash tests/xml/run_tests.sh <BIN>              # 55 PASS
 bash tests/comportement/run.sh <BIN>                     # 53 au vert (étalon gtk3, headless)
 xvfb-run -a bash tests/garde_clic_widgets.sh <BIN>       # 17 widgets, aucun plantage
 
-# le comportement sur LES SEPT backends d'un coup :
-bash tests/comportement/run_all.sh                       # tableau 7/7
+# le comportement sur LES NEUF backends d'un coup :
+bash tests/comportement/run_all.sh                       # un tableau par backend
 ```
 
 ### Ce qui est acquis
@@ -319,7 +323,7 @@ la lignée sermo.
 - **MINEUR** — nouvelles capacités rétro-compatibles (widget, action, backend).
 - **CORRECTIF** — corrections sans changement d'interface.
 
-**Version courante : `2.7.7` ; la première version 2.x publiée a été la `2.7.3`.** La ligne 2.x s'est
+**Version courante : `2.8.0` ; la première version 2.x publiée a été la `2.7.3`.** La ligne 2.x s'est
 ouverte sur `2.0.0`, première édition modulaire, restée interne, dont le bump MAJEUR reflétait le changement du contrat de frontière cœur↔backend
 (`sermo_backend.h`, ponts `sermo_be_*`) ; le langage XML, lui, reste
 rétro-compatible avec gtkdialog / sermo 1.x.
@@ -328,7 +332,7 @@ Le cœur (`libsermocore`) et les backends **partagent le numéro de version** ta
 qu'ils sont livrés ensemble. Le contrat de frontière `sermo_backend.h` est le
 point de compatibilité : un changement incompatible impose un bump MAJEUR, car un
 backend ancien ne se lierait plus au cœur. `sermocore.pc` porte la version
-(`Version: 2.7.7`) ; un backend peut exiger une version minimale du cœur via
+(`Version: 2.8.0`) ; un backend peut exiger une version minimale du cœur via
 `pkg_check_modules(SERMOCORE REQUIRED sermocore>=X.Y)`.
 
 **Compatibilité des scripts.** Les scripts XML écrits pour gtkdialog / sermo

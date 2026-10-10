@@ -1,13 +1,13 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-2.0-or-later
-# run_all.sh — rejoue le banc de COMPORTEMENT sur les sept backends de rendu et
+# run_all.sh — rejoue le banc de COMPORTEMENT sur les neuf backends de rendu et
 # rend un tableau récapitulatif. Rend la parité rejouable partout, plus
 # seulement sur qt6.
 #
 # Chaque backend est joué par run.sh (même corpus, étalon gtk3sermo) dans son
 # environnement headless. Binaire attendu : sermo-backend-<t>/_build/<t>sermo.
 #
-# Codes : 0 = les sept backends sont à parité · 1 = au moins un écart, ou un
+# Codes : 0 = les neuf backends sont à parité · 1 = au moins un écart, ou un
 #         backend absent · 77 = aucun binaire trouvé.
 # Un backend non construit est un ÉCHEC, sauf SERMO_PORTS_OPTIONNELS=1 : un
 # « tableau 7/7 » qui n'en jouait que cinq restait vert.
@@ -16,7 +16,7 @@ ICI=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 RACINE=$(CDPATH= cd -- "$ICI/../.." && pwd)
 RUN="$ICI/run.sh"
 
-BACKENDS="gtk3 gtk4 qt6 fltk1 efl1 sdl3 ncurses"
+BACKENDS="gtk3 gtk4 qt6 fltk1 efl1 sdl3 lvgl ncurses html"
 joues=0; kos=0; absents=0
 printf '%-10s %s\n' "backend" "résultat"
 printf '%-10s %s\n' "-------" "--------"

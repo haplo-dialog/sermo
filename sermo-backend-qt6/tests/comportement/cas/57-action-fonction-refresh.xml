@@ -1,0 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: action a attribut : function="refresh" rejoue l <input>, comme refresh: -->
+<window><vbox>
+<entry><variable>CPT</variable><input>sh donnees/compteur.sh</input></entry>
+<timer visible="false"><variable>_T</variable><action function="refresh">CPT</action><action>exit:fin</action></timer></vbox></window>

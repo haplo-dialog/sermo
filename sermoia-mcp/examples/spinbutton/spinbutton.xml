@@ -1,0 +1,10 @@
+<window title="Sélecteur numérique" width-request="320">
+  <vbox spacing="8">
+    <text><label>Nombre de copies :</label></text>
+    <spinbutton range-min="1" range-max="99" range-step="1">
+      <variable>COPIES</variable>
+      <default>1</default>
+    </spinbutton>
+    <button ok></button>
+  </vbox>
+</window>

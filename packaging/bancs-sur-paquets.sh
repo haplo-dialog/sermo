@@ -47,7 +47,7 @@ if [ -n "${SERMO_TASKSET:-}" ]; then
     command -v taskset >/dev/null || { echo "outil manquant : taskset" >&2; exit 2; }
     TS=(taskset -c "$SERMO_TASKSET")
 fi
-PORTS=(gtk3 gtk4 qt6 fltk1 efl1 sdl3 ncurses)
+PORTS=(gtk3 gtk4 qt6 fltk1 efl1 sdl3 lvgl ncurses html)
 VERIF="${SERMO_VERIF:-$RACINE/packaging/sortie/verif-paquets}"
 EXTRAIT=$(mktemp -d); trap 'rm -rf "$EXTRAIT"' EXIT
 

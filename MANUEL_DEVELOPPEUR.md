@@ -39,7 +39,8 @@ d'un nouveau backend, et les bancs de non-régression.
         ┌───────▼──────────▼───────┐
         │   sermo-backend-<toolkit> │  ← widgets natifs + boucle
         │   (gtk3/gtk4/qt6/fltk/    │     d'évènements du toolkit
-        │    efl/sdl3/ncurses)     │
+        │    efl/sdl3/lvgl/        │
+        │    ncurses/html)         │
         └──────────────────────────┘
 ```
 
@@ -64,7 +65,7 @@ Le cœur se compile depuis **une source largement unifiée** en trois variantes
 
 | Variante | Option CMake | Familles | Détail |
 |---|---|---|---|
-| **neutre** (défaut) | — | qt6, fltk1, efl1, sdl3, ncurses | Types via un **shim** (`sermocore-shim.h`) ; en-têtes toolkit remplacés par des **stubs** vides (`include/_shim/`). Aucune dépendance graphique. |
+| **neutre** (défaut) | — | qt6, fltk1, efl1, sdl3, lvgl, ncurses, html | Types via un **shim** (`sermocore-shim.h`) ; en-têtes toolkit remplacés par des **stubs** vides (`include/_shim/`). Aucune dépendance graphique. |
 | **glib/gtk3** | `-DSERMOCORE_GLIB=ON` | gtk3 | Vraie GLib/GTK 3 (ABI native des structs `GList`, `GtkWidget`…), pour l'introspection GObject utilisée par la famille GTK. |
 | **gtk4** | `-DSERMOCORE_GTK4=ON` | gtk4 | Fichiers cœur **réécrits pour GTK 4**, **vendorés dans `libsermocore/src-gtk4/`** (5 fichiers : `automaton.c`, `variables.c`, `signals.c`, `actions.c`, `gtkdialog.c` + le shim `gtk4-compat.c`) : GTK 4 a retiré `gtk_main`, `gtk_socket`, l'ancien modèle d'évènements. Aucune dépendance externe. Voir §9. |
 
@@ -121,7 +122,7 @@ frontière IR (§9).
 Un backend `sermo-backend-<toolkit>` contient :
 
 - `widget_*.c` **ou** `widget_*.cpp` — un fichier par widget, qui crée le widget
-  natif et le connecte. L'extension suit la famille : `.c` pour gtk3/gtk4/efl1/sdl3/ncurses,
+  natif et le connecte. L'extension suit la famille : `.c` pour gtk3/gtk4/efl1/sdl3/lvgl/ncurses/html,
   `.cpp` pour les backends C++ (qt6, fltk1).
 - `widgets.c`/`widgets.cpp` — la glue de rendu (`widget_show_all`, `widget_get_text_value`…).
 - `tag_set_property.c` — le bridge d'attributs, version du toolkit (GObject pour
@@ -176,13 +177,14 @@ l'étalon gtk3sermo. Chaque cas se ferme seul : par un `<timer>` déclenchant
 ### Tous les bancs d'un coup — la CI
 
 `ci/construire.sh` construit les variantes utiles du cœur puis les backends
-demandés (défaut : les sept) ; `ci/bancs.sh` enchaîne **tous** les bancs : tests
+demandés (défaut : les neuf) ; `ci/bancs.sh` enchaîne **tous** les bancs : tests
 unitaires du cœur, gardes sur les sources (SPDX, fonctions interdites, thread de
 la barre de progression, en-têtes de poste, FORTIFY du cœur), puis pour chaque
 backend le XML, le durcissement, `SERMO_ALLOWED_CMDS`, les sources sans fin
 (`garde_input_sans_fin.sh`), `--do`, la limite de widgets, l'échappement, le clic et l'ouverture réelle des exemples de
-`examples/` (le mot de passe masqué pour ncurses), le comportement sur les sept,
-et les deux bancs de `sermoman-mcp`. La CI
+`examples/` (le mot de passe masqué pour ncurses ; ni clic ni exemples pour html,
+qui n'ouvre pas de fenêtre), le comportement sur tous les ports construits,
+les deux bancs de `sermoman-mcp` et celui de `sermoia-mcp`. La CI
 (`.gitlab-ci.yml`) n'appelle que ces deux scripts, dans une Debian testing munie
 de `ci/dependances.txt` : ce qu'elle voit se rejoue à l'identique.
 

@@ -78,7 +78,7 @@ La CI du dépôt ne fait rien d'autre que lancer deux scripts. Chez vous, sur un
 Debian testing avec les paquets de [`ci/dependances.txt`](ci/dependances.txt) :
 
 ```sh
-bash ci/construire.sh      # le cœur et les sept backends (ou quelques-uns : ci/construire.sh qt6 ncurses)
+bash ci/construire.sh      # le cœur et les neuf backends (ou quelques-uns : ci/construire.sh qt6 ncurses)
 bash ci/bancs.sh           # tous les bancs ; un journal par banc dans _journaux/
 ```
 

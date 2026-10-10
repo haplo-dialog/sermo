@@ -1,0 +1,13 @@
+<window title="Authentification" width-request="360" height-request="150">
+  <vbox spacing="8">
+    <text><label>Saisissez votre mot de passe :</label></text>
+    <hbox>
+      <text><label>Mot de passe :</label></text>
+      <password><variable>MOT_DE_PASSE</variable></password>
+    </hbox>
+    <hbox>
+      <button><label>Valider</label><action>EXIT:0</action></button>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

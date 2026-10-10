@@ -1,0 +1,142 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Copyright (C) 2026 S. Cage
+# haplo-dialog <devel@haplo-dialog.fr>
+# Maintainer: s.cage <devel@haplo-dialog.fr>
+#
+# sermo — onze paquets issus d'une seule source : le cœur (sermo-core-dev), le
+# manuel (sermo-doc) et un paquet par backend. Chaque backend ne tire que sa
+# pile graphique. La construction est celle de packaging/autres-os/construire-os.sh,
+# la même pour toutes les distributions.
+#
+# ⚠️ Écrite sans Arch sous la main : la suite des gestes de construction est
+# rejouée (packaging/autres-os/README.md), pas les noms de paquets Arch.
+# La somme du source est posée à la publication de l'étiquette.
+
+pkgbase=sermo
+pkgname=(sermo-core-dev sermo-doc
+         sermo-backend-gtk3
+         sermo-backend-gtk4
+         sermo-backend-qt6
+         sermo-backend-fltk1
+         sermo-backend-efl1
+         sermo-backend-sdl3
+         sermo-backend-lvgl
+         sermo-backend-ncurses
+         sermo-backend-html)
+pkgver=2.7.7
+pkgrel=1
+pkgdesc="Dialog boxes for shell scripts, described in XML (gtkdialog successor)"
+arch=(x86_64 aarch64)
+url="https://gitlab.com/haplo-dialog/sermo"
+license=(GPL-2.0-or-later)
+makedepends=(cmake flex bison pkgconf texinfo
+             gtk3 vte3 gtk-layer-shell gtk4 vte4 qt6-base fltk efl sdl3
+             libx11 libpng wayland libxkbcommon wayland-protocols ncurses)
+# Le projet pose lui-même -D_FORTIFY_SOURCE=3, PIE, RELRO, CET : pas de LTO par-dessus.
+options=(!lto)
+source=("$pkgbase-$pkgver.tar.gz::https://gitlab.com/haplo-dialog/sermo/-/archive/v$pkgver/sermo-v$pkgver.tar.gz")
+sha256sums=('SKIP')
+
+_ports=(gtk3 gtk4 qt6 fltk1 efl1 sdl3 lvgl ncurses html)
+
+build() {
+  cd "$srcdir/sermo-v$pkgver"
+  sh packaging/autres-os/construire-os.sh construire . "$srcdir/construit" "${_ports[@]}"
+}
+
+package_sermo-core-dev() {
+  pkgdesc="sermo dialog engine - static core library and headers"
+  depends=()
+  cd "$srcdir/sermo-v$pkgver"
+  sh packaging/autres-os/construire-os.sh coeur-dev . "$srcdir/construit" "$pkgdir" /usr lib
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+}
+
+package_sermo-doc() {
+  pkgdesc="sermo manual (Texinfo) and common documentation"
+  depends=()
+  cd "$srcdir/sermo-v$pkgver"
+  sh packaging/autres-os/construire-os.sh manuel . "$srcdir/construit" "$pkgdir" /usr
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+}
+
+package_sermo-backend-gtk3() {
+  pkgdesc="sermo dialog boxes for shell scripts - GTK 3 backend (gtkdialog-compatible command)"
+  depends=(gtk3 vte3 gtk-layer-shell)
+  provides=(sermo-backend)
+  cd "$srcdir/sermo-v$pkgver"
+  sh packaging/autres-os/construire-os.sh installer . "$srcdir/construit" gtk3 "$pkgdir" /usr
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+}
+
+package_sermo-backend-gtk4() {
+  pkgdesc="sermo dialog boxes for shell scripts - GTK 4 backend"
+  depends=(gtk4 vte4)
+  provides=(sermo-backend)
+  cd "$srcdir/sermo-v$pkgver"
+  sh packaging/autres-os/construire-os.sh installer . "$srcdir/construit" gtk4 "$pkgdir" /usr
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+}
+
+package_sermo-backend-qt6() {
+  pkgdesc="sermo dialog boxes for shell scripts - Qt 6 backend"
+  depends=(qt6-base)
+  provides=(sermo-backend)
+  cd "$srcdir/sermo-v$pkgver"
+  sh packaging/autres-os/construire-os.sh installer . "$srcdir/construit" qt6 "$pkgdir" /usr
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+}
+
+package_sermo-backend-fltk1() {
+  pkgdesc="sermo dialog boxes for shell scripts - FLTK 1.4 backend"
+  depends=(fltk)
+  provides=(sermo-backend)
+  cd "$srcdir/sermo-v$pkgver"
+  sh packaging/autres-os/construire-os.sh installer . "$srcdir/construit" fltk1 "$pkgdir" /usr
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+}
+
+package_sermo-backend-efl1() {
+  pkgdesc="sermo dialog boxes for shell scripts - EFL (Elementary) backend"
+  depends=(efl)
+  provides=(sermo-backend)
+  cd "$srcdir/sermo-v$pkgver"
+  sh packaging/autres-os/construire-os.sh installer . "$srcdir/construit" efl1 "$pkgdir" /usr
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+}
+
+package_sermo-backend-sdl3() {
+  pkgdesc="sermo dialog boxes for shell scripts - SDL 3 backend, drawn with Dear ImGui"
+  depends=(sdl3)
+  provides=(sermo-backend)
+  cd "$srcdir/sermo-v$pkgver"
+  sh packaging/autres-os/construire-os.sh installer . "$srcdir/construit" sdl3 "$pkgdir" /usr
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+}
+
+package_sermo-backend-lvgl() {
+  pkgdesc="sermo dialog boxes for shell scripts - LVGL backend for kiosks and embedded screens (LVGL embedded)"
+  depends=(libx11 libpng wayland libxkbcommon)
+  provides=(sermo-backend)
+  cd "$srcdir/sermo-v$pkgver"
+  sh packaging/autres-os/construire-os.sh installer . "$srcdir/construit" lvgl "$pkgdir" /usr
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+}
+
+package_sermo-backend-ncurses() {
+  pkgdesc="sermo dialog boxes for shell scripts - terminal (ncurses) backend, for machines without a display"
+  depends=(ncurses)
+  provides=(sermo-backend)
+  cd "$srcdir/sermo-v$pkgver"
+  sh packaging/autres-os/construire-os.sh installer . "$srcdir/construit" ncurses "$pkgdir" /usr
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+}
+
+package_sermo-backend-html() {
+  pkgdesc="sermo dialog boxes for shell scripts - static HTML export backend (writes a page instead of a window)"
+  depends=()
+  provides=(sermo-backend)
+  cd "$srcdir/sermo-v$pkgver"
+  sh packaging/autres-os/construire-os.sh installer . "$srcdir/construit" html "$pkgdir" /usr
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/$pkgname/COPYING"
+}

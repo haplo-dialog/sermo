@@ -16,6 +16,7 @@
 #include "widgets.h"
 #include "tag_attributes.h"
 #include "widget_menuitem.h"
+#include "jouer_actions.h"
 #include "efl_menu_model.h"
 #include <string.h>
 #include <stdlib.h>
@@ -31,7 +32,8 @@ GtkWidget *widget_menuitem_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         if (lbl && *lbl) mi->label = strdup(lbl);
         el = NULL;
         gchar *cmd = attributeset_get_first(&el, Attr, ATTR_ACTION);
-        if (cmd && *cmd) mi->cmd = strdup(cmd);
+        /* avec sa fonction (attribut function=) : voir jouer_actions.h */
+        if (cmd && *cmd) mi->cmd = action_avec_fonction(&el, Attr, cmd);
     }
     if (!mi->label && attr) {
         const char *tv = get_tag_attribute(attr, "label");

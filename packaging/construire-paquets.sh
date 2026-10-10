@@ -147,11 +147,11 @@ apt-get install -y -q $debs
 echo "· installés :"
 dpkg-query -W -f '  ${Package} ${Version}\n' | grep -E 'sermo|gtkdialog'
 [ -z "$(dpkg --audit)" ] || { echo "ÉCHEC : dpkg --audit signale des paquets à moitié installés"; dpkg --audit; exit 1; }
-for b in gtk3sermo gtk4sermo qt6sermo fltk1sermo efl1sermo sdl3sermo ncursessermo; do
+for b in gtk3sermo gtk4sermo qt6sermo fltk1sermo efl1sermo sdl3sermo lvglsermo ncursessermo htmlsermo; do
     if ldd "/usr/bin/$b" | grep -q 'not found'; then
         echo "ÉCHEC : $b, bibliothèque introuvable"; ldd "/usr/bin/$b" | grep 'not found'; exit 1
     fi
-    v=$(env QT_QPA_PLATFORM=offscreen SDL_VIDEODRIVER=offscreen ELM_ENGINE=buffer SERMO_NCURSES_BATCH=1 \
+    v=$(env QT_QPA_PLATFORM=offscreen SDL_VIDEODRIVER=offscreen ELM_ENGINE=buffer SERMO_NCURSES_BATCH=1 SERMO_LVGL_BATCH=1 SERMO_HTML_OUT=/dev/null \
         timeout 20 "/usr/bin/$b" --version 2>/dev/null | head -1)
     case "$v" in
         *"$AMONT"*) echo "· $b : $v" ;;
@@ -163,6 +163,19 @@ done
 [ "$(readlink -f /usr/share/info/sermo.info.gz)" = /usr/share/info/gtk3sermo.info.gz ] || { echo "ÉCHEC : le manuel Texinfo sermo ne suit pas l'alternative"; exit 1; }
 [ "$(readlink -f /usr/bin/gtkdialog)" = /usr/bin/gtk3sermo ] || { echo "ÉCHEC : gtkdialog ne mène pas à gtk3sermo"; exit 1; }
 echo "· alternative sermo → gtk3sermo (man et info suivent) ; gtkdialog → gtk3sermo"
+# htmlsermo est l'exportateur : il doit être OFFERT par l'alternative, mais ne
+# jamais la gagner devant un backend qui ouvre une fenêtre (priorité 1).
+if ! update-alternatives --query sermo | grep -A3 '^Alternative: /usr/bin/htmlsermo$' | grep -qx 'Priority: 1'; then
+    echo "ÉCHEC : htmlsermo n'est pas offert par l'alternative sermo à la priorité 1"; exit 1
+fi
+echo "· htmlsermo offert par l'alternative sermo, priorité 1 (ne gagne jamais)"
+dialogue_html='<window><vbox><entry><variable>E</variable><default>paquet</default></entry><timer visible="false"><variable>T</variable><action>exit:fin</action></timer></vbox></window>'
+page=$(mktemp)
+if ! MAIN_DIALOG="$dialogue_html" SERMO_HTML_OUT="$page" timeout 20 htmlsermo --program=MAIN_DIALOG </dev/null 2>/dev/null | grep -qx 'E="paquet"' || ! grep -q '<html' "$page"; then
+    echo "ÉCHEC : htmlsermo n'a pas exporté E=\"paquet\" ni écrit sa page"; exit 1
+fi
+rm -f "$page"
+echo "· export HTML : page écrite, E=\"paquet\" exporté"
 dialogue='<window><vbox><entry><variable>E</variable><default>paquet</default></entry><timer visible="false"><variable>T</variable><action>exit:fin</action></timer></vbox></window>'
 if ! MAIN_DIALOG="$dialogue" SERMO_NCURSES_BATCH=1 timeout 20 ncursessermo --program=MAIN_DIALOG </dev/null 2>/dev/null | grep -qx 'E="paquet"'; then
     echo "ÉCHEC : le dialogue en terminal n'a pas exporté E=\"paquet\""; exit 1

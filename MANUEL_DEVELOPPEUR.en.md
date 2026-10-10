@@ -39,7 +39,8 @@ variants, adding a new backend, and the regression benches.
         ┌───────▼──────────▼───────┐
         │  sermo-backend-<toolkit> │  ← native widgets + the toolkit's
         │   (gtk3/gtk4/qt6/fltk/   │     event loop
-        │    efl/sdl3/ncurses)     │
+        │    efl/sdl3/lvgl/        │
+        │    ncurses/html)         │
         └──────────────────────────┘
 ```
 
@@ -64,7 +65,7 @@ option), because toolkit families do not share an ABI:
 
 | Variant | CMake option | Families | Detail |
 |---|---|---|---|
-| **neutral** (default) | — | qt6, fltk1, efl1, sdl3, ncurses | Types through a **shim** (`sermocore-shim.h`); toolkit headers replaced by empty **stubs** (`include/_shim/`). No graphical dependency. |
+| **neutral** (default) | — | qt6, fltk1, efl1, sdl3, lvgl, ncurses, html | Types through a **shim** (`sermocore-shim.h`); toolkit headers replaced by empty **stubs** (`include/_shim/`). No graphical dependency. |
 | **glib/gtk3** | `-DSERMOCORE_GLIB=ON` | gtk3 | Real GLib/GTK 3 (native ABI of the `GList`, `GtkWidget`… structs), for the GObject introspection the GTK family uses. |
 | **gtk4** | `-DSERMOCORE_GTK4=ON` | gtk4 | Core files **rewritten for GTK 4**, **vendored in `libsermocore/src-gtk4/`** (5 files: `automaton.c`, `variables.c`, `signals.c`, `actions.c`, `gtkdialog.c` plus the `gtk4-compat.c` shim): GTK 4 removed `gtk_main`, `gtk_socket`, and the old event model. No external dependency. See §9. |
 
@@ -121,7 +122,7 @@ A `sermo-backend-<toolkit>` contains:
 
 - `widget_*.c` **or** `widget_*.cpp` — one file per widget, creating the native
   widget and connecting it. The extension follows the family: `.c` for
-  gtk3/gtk4/efl1/sdl3/ncurses, `.cpp` for the C++ backends (qt6, fltk1).
+  gtk3/gtk4/efl1/sdl3/lvgl/ncurses/html, `.cpp` for the C++ backends (qt6, fltk1).
 - `widgets.c`/`widgets.cpp` — the rendering glue (`widget_show_all`,
   `widget_get_text_value`…).
 - `tag_set_property.c` — the attribute bridge, in the toolkit's own terms
@@ -180,13 +181,14 @@ gtk3sermo reference. Each case closes by itself: through a `<timer>` firing
 ### Every bench at once — the CI
 
 `ci/construire.sh` builds the useful core variants then the requested backends
-(default: all seven); `ci/bancs.sh` chains **every** bench: core unit tests,
+(default: all nine); `ci/bancs.sh` chains **every** bench: core unit tests,
 source guards (SPDX, forbidden functions, progress-bar thread, workstation
 headers, core FORTIFY), then for each backend the XML, the hardening,
 `SERMO_ALLOWED_CMDS`, endless sources (`garde_input_sans_fin.sh`), `--do`, the
 widget limit, escaping, clicking and the real
-opening of the `examples/` scripts (the masked password for ncurses), the
-behaviour on all seven, and the two `sermoman-mcp` benches. The CI
+opening of the `examples/` scripts (the masked password for ncurses; neither
+clicks nor examples for html, which opens no window), the behaviour on every
+built port, the two `sermoman-mcp` benches and the `sermoia-mcp` one. The CI
 (`.gitlab-ci.yml`, and its twin `.github/workflows/bancs.yml`) calls nothing but
 these two scripts, in a Debian testing fitted with `ci/dependances.txt`: what it
 sees replays identically.

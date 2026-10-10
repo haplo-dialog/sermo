@@ -31,7 +31,9 @@
 #include "tag_attributes.h"
 #include "widget_list.h"
 #include "safe_exec.h"
+#include "jouer_actions.h"
 
+#include <FL/Fl.H>
 #include <FL/Fl_Multi_Browser.H>
 #include <FL/Fl_Select_Browser.H>
 #include <string.h>
@@ -61,6 +63,33 @@ static void list_select_default(Fl_Browser *br, AttributeSet *Attr)
 
     if (!multi && br->size() > 0 && br->value() <= 0)
         br->select(1);
+}
+
+/* Actions : jouées à chaque changement de sélection, comme le signal
+ * « selection-changed » de l'étalon. Une sélection posée par le programme
+ * (select()) n'appelle pas le rappel ; celle du chargement est jouée une fois
+ * par liste_chargee(), différée à la boucle : le cœur appelle
+ * widget_list_refresh() juste après la création, et les variables que
+ * l'action vise ne sont pas encore construites. */
+static bool liste_a_selection(Fl_Browser *br)
+{
+    for (int i = 1; i <= br->size(); i++)
+        if (br->selected(i)) return true;
+    return false;
+}
+
+/* Un clic sous la dernière rangée vide la sélection de Fl_Browser ; une
+ * GtkListBox, elle, garde la sienne et ne joue rien : pas d'action alors. */
+static void liste_cb(Fl_Widget *w, void *data)
+{
+    if (!liste_a_selection((Fl_Browser *)w)) return;
+    jouer_actions((GtkWidget *)w, (AttributeSet *)data, "selection-changed", "row-selected");
+}
+
+static void liste_chargee(void *data)
+{
+    Fl_Browser *br = (Fl_Browser *)data;
+    liste_cb(br, br->user_data());
 }
 
 GtkWidget *widget_list_create(AttributeSet *Attr, tag_attr *attr, gint Type)
@@ -98,6 +127,11 @@ GtkWidget *widget_list_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 
     list_select_default(br, Attr);
 
+    if (Attr) {
+        br->callback(liste_cb, (void *)Attr);
+        br->when(FL_WHEN_CHANGED);
+        Fl::add_timeout(0.0, liste_chargee, br);
+    }
     return (GtkWidget *)br;
 }
 

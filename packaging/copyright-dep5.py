@@ -113,6 +113,55 @@ sortie.append(bloc(['sermo-backend-sdl3/src/imgui/backends/imgui_impl_opengl3_lo
     ['2013-2020 The Khronos Group Inc.', '2014-2026 Omar Cornut'], 'public-domain and Expat',
     ['Chargeur OpenGL produit par gl3w (domaine public) ; définitions reprises des',
      'en-têtes Khronos (MIT).']))
+
+# ── LVGL embarqué (sermo-backend-lvgl/tiers/lvgl) ───────────────────────────
+# LVGL est sous licence MIT ; certaines de ses bibliothèques internes ont la leur
+# (COPYRIGHTS.md). Chacune est nommée ici avec le texte de SON fichier de
+# licence, copié tel quel : le texte d'une licence « BSD-2-clause » varie par
+# son avis de copyright, d'où des noms propres à chaque bibliothèque.
+LV = 'sermo-backend-lvgl/tiers/lvgl/'
+LVL = LV + 'src/libs/'
+sortie.append(bloc([LV + '*'], ['2025 LVGL Kft'], 'Expat',
+    ['LVGL v9.6.0, embarqué sans retouche (PROVENANCE). Les bibliothèques tierces',
+     "qu'il contient ont les licences ci-dessous ; seules celles que lv_conf.h",
+     'active sont compilées dans lvglsermo (TinyTTF et la bibliothèque C).']))
+LICENCES_LVGL = []   # (nom, fichier) — texte repris tel quel
+def lv(chemins, copyright, licence, fichier=None, commentaire=None):
+    sortie.append(bloc([LVL + c if not c.startswith('sermo-') else c for c in chemins], copyright, licence, commentaire))
+    if fichier:
+        LICENCES_LVGL.append((licence, fichier))
+lv(['barcode/*'], ['2013 LKC Technologies, Inc.'], 'BSD-2-clause-barcode', LVL + 'barcode/LICENSE.txt')
+lv(['frogfs/*'], ['les auteurs de FrogFS (Jeff Kent)'], 'MPL-2.0')
+lv(['FT800-FT813/*'], ['2016-2024 Rudolph Riedel'], 'Expat')
+lv(['gif/*'], ['2020 BitBank Software, Inc.'], 'Apache-2.0')
+lv(['lodepng/*'], ['2005-2023 Lode Vandevenne'], 'Zlib-lodepng', LVL + 'lodepng/LICENSE.txt')
+lv(['lz4/*'], ['2011-2023 Yann Collet'], 'BSD-2-clause-lz4', LVL + 'lz4/LICENSE.txt')
+lv(['nanovg/*'], ['2013 Mikko Mononen'], 'Zlib-nanovg', LVL + 'nanovg/LICENSE.txt')
+lv(['qrcode/*'], ['Project Nayuki'], 'Expat')
+lv(['thorvg/*'], ['2020-2025 les auteurs de ThorVG'], 'Expat',
+   commentaire=['rapidjson/ (inclus dans ThorVG) est sous MIT, et BSD-3-Clause pour son',
+                'assistant msinttypes ; non compilé ici (LV_USE_THORVG vaut 0).'])
+lv(['tiny_ttf/*'], ['2017 Sean Barrett'], 'Expat or public-domain',
+   commentaire=['TinyTTF, issu de stb_truetype : au choix, MIT ou domaine public (Unlicense).'])
+lv(['tjpgd/*'], ['2021 ChaN'], 'TJpgDec', LVL + 'tjpgd/tjpgd.c',
+   commentaire=['Non compilé ici (LV_USE_TJPGD vaut 0). Le texte est la notice de tjpgd.c.'])
+lv(['vg_lite_driver/*'], ['2012-2023 Vivante Corporation'], 'MIT-Vivante', LVL + 'vg_lite_driver/LICENSE.txt',
+   commentaire=['Pilote matériel VeriSilicon/Vivante, non compilé ici.'])
+lv(['freetype/LiberationSans-Regular.ttf', 'freetype/LiberationSans-LICENSE.txt'],
+   ['2010 Google Corporation', '2012 Red Hat, Inc.'], 'OFL-1.1-LiberationSans', LVL + 'freetype/LiberationSans-LICENSE.txt',
+   commentaire=['Police de démonstration livrée avec les interfaces FreeType de LVGL ;',
+                'non utilisée par lvglsermo (LV_USE_FREETYPE vaut 0).'])
+lv(['freetype/ftmodule.h', 'freetype/ftoption.h', 'freetype/freetype-LICENSE.txt'],
+   ['les auteurs de FreeType'], 'FTL or GPL-2+',
+   commentaire=["Interfaces FreeType ; FreeType lui-même n'est pas dans LVGL."])
+LICENCES_LVGL.append(('FTL', LVL + 'freetype/freetype-LICENSE.txt'))
+sortie.append(bloc([LV + 'src/stdlib/builtin/lv_tlsf.c', LV + 'src/stdlib/builtin/lv_tlsf.h', LV + 'src/stdlib/builtin/lv_tlsf_private.h'],
+    ['2006-2016 Matthew Conte'], 'BSD-3-clause-tlsf',
+    ["Allocateur TLSF ; texte : LICENSE_TLSF.txt à côté. Non compilé ici (la",
+     'bibliothèque C fournit malloc).']))
+LICENCES_LVGL.append(('BSD-3-clause-tlsf', LV + 'src/stdlib/builtin/LICENSE_TLSF.txt'))
+sortie.append(bloc([LV + 'src/stdlib/builtin/lv_sprintf_builtin.c'], ['2014-2019 Marco Paland'], 'Expat',
+    ['Formatage printf embarqué ; texte : LICENSE_SPRINTF.txt à côté.']))
 sortie.append(bloc(['debian/*'], [CAGE], 'GPL-2+'))
 
 sortie.append('''License: GPL-2+
@@ -214,5 +263,27 @@ sortie.append('''License: public-domain
  overt act of relinquishment in perpetuity of all present and future rights to
  this software under copyright law.
 ''')
+
+def paragraphe(nom, fichier, commun=None):
+    t = open(f'{R}/{fichier}', encoding='utf-8', errors='replace').read().strip('\n').split('\n')
+    corps = [(' ' + l.rstrip()) if l.strip() else ' .' for l in t]
+    return 'License: ' + nom + '\n' + '\n'.join(corps) + '\n'
+for nom, fichier in LICENCES_LVGL:
+    sortie.append(paragraphe(nom, fichier))
+sortie.append("""License: MPL-2.0
+ This Source Code Form is subject to the terms of the Mozilla Public License,
+ v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ obtain one at https://mozilla.org/MPL/2.0/.
+ .
+ On Debian systems, the complete text of the Mozilla Public License version 2.0
+ can be found in "/usr/share/common-licenses/MPL-2.0".
+""")
+sortie.append("""License: Apache-2.0
+ Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ use this file except in compliance with the License.
+ .
+ On Debian systems, the complete text of the Apache License version 2.0 can be
+ found in "/usr/share/common-licenses/Apache-2.0".
+""")
 open(f'{R}/debian/copyright','w',encoding='utf-8').write('\n'.join(sortie))
 print('debian/copyright écrit :', len(FICHIERS), 'fichiers suivis ;', len(sources_amont()), 'sources à notice amont ;', len(cc0()), 'fichiers CC0')

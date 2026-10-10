@@ -1,0 +1,20 @@
+<window title="Formulaire de contact" width-request="380" height-request="220">
+  <vbox spacing="8">
+    <frame label="Vos coordonnées">
+      <vbox spacing="6">
+        <hbox>
+          <text><label>Nom :</label></text>
+          <entry><variable>NOM</variable></entry>
+        </hbox>
+        <hbox>
+          <text><label>Courriel :</label></text>
+          <entry><variable>COURRIEL</variable></entry>
+        </hbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button><label>Valider</label><action>EXIT:valider</action></button>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

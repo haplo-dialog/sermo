@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <unistd.h>      /* unlink, rmdir : musl ne les tire d'aucun autre en-tête */
 #include <glib.h>
 #include "safe_exec.h"
 

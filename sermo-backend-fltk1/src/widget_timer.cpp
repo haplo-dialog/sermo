@@ -32,6 +32,7 @@
 #include "widgets.h"
 #include "tag_attributes.h"
 #include "widget_timer.h"
+#include "jouer_actions.h"
 #include "safe_exec.h"
 #include "actions.h"
 
@@ -55,14 +56,8 @@ static void timer_cb(void *data)
     /* TOUTES les actions, via le répartiteur du cœur (exit:, refresh:,
      * commande shell…) — safe_system direct traitait « exit:fin » comme
      * une commande et le dialogue ne se fermait jamais. */
-    if (td->Attr) {
-        GList *element = NULL;
-        gchar *fn = attributeset_get_first(&element, td->Attr, ATTR_ACTION);
-        while (fn) {
-            if (*fn) execute_action((GtkWidget *)td->widget, fn, NULL);
-            fn = attributeset_get_next(&element, td->Attr, ATTR_ACTION);
-        }
-    }
+    /* … chacune avec sa fonction (attribut function=) : voir jouer_actions.h */
+    jouer_actions((GtkWidget *)td->widget, td->Attr, "tick", NULL);
 
     /* Replanifier */
     Fl::add_timeout(td->interval, timer_cb, data);

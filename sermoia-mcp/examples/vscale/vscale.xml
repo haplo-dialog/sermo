@@ -1,0 +1,10 @@
+<window title="Glissiere verticale" height-request="240">
+  <vbox spacing="8">
+    <text><label>Reglez la valeur, puis validez :</label></text>
+    <vscale range-min="0" range-max="100" range-step="1" draw-value="true">
+      <variable>VALEUR</variable>
+      <default>50</default>
+    </vscale>
+    <button ok></button>
+  </vbox>
+</window>

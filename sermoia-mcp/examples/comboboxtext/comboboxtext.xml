@@ -1,0 +1,13 @@
+<window title="Liste texte" width-request="320">
+  <vbox spacing="8">
+    <text><label>Choisissez une couleur :</label></text>
+    <comboboxtext>
+      <variable>COULEUR</variable>
+      <default>Vert</default>
+      <item>Rouge</item>
+      <item>Vert</item>
+      <item>Bleu</item>
+    </comboboxtext>
+    <button ok></button>
+  </vbox>
+</window>

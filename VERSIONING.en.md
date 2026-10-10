@@ -12,7 +12,7 @@ sermo follows **semantic versioning**, `MAJOR.MINOR.PATCH`:
 
 ## Current version
 
-`2.7.7`. The **first published 2.x release** was `2.7.3`. What each version brings:
+`2.8.0`. The **first published 2.x release** was `2.7.3`. What each version brings:
 [CHANGELOG.en.md](CHANGELOG.en.md).
 
 The 2.x line started at `2.0.0`, a version that stayed internal, like every
@@ -25,12 +25,12 @@ sermo 1.x stay valid. The behaviours that changed are listed in
 ## 1.x
 
 In 1.x, each port had its own number: gtk3sermo and gtk4sermo 1.1.4, qt6sermo
-1.0.2. 2.x gives a single number to the core and the seven ports.
+1.0.2. 2.x gives a single number to the core and every port.
 
 ## Where the number lives — one place only
 
-The **`VERSION`** file at the repository root is the single source. All eight
-CMake projects (the core and the seven backends) read it before `project(...)`:
+The **`VERSION`** file at the repository root is the single source. All eleven
+CMake projects (the core, the nine backends and `sermoia-mcp`) read it before `project(...)`:
 
 ```cmake
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/../VERSION" SERMO_VERSION)
@@ -55,14 +55,14 @@ time, the binary simply shipped announcing a wrong number.
 
 ## Core, backends and packages
 
-- The core (`libsermocore`) and the seven backends carry the **same number** as
+- The core (`libsermocore`) and the nine backends carry the **same number** as
   long as they are shipped together. An incompatible change to the
   `sermo-contract.h` contract requires a MAJOR bump, because an older backend
   would no longer link against the core.
-- `sermocore.pc` carries the version (`Version: 2.7.7`): a backend built
+- `sermocore.pc` carries the version (`Version: 2.8.0`): a backend built
   separately can require a minimum core with
   `pkg_check_modules(SERMOCORE REQUIRED sermocore>=2.7)`.
-- Debian packages add a revision: `2.7.7-1` is the first Debian build of 2.7.7.
+- Debian packages add a revision: `2.8.0-1` is the first Debian build of 2.8.0.
 
 ## Script compatibility
 

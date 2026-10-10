@@ -1,0 +1,9 @@
+<window title="Boutons radio" width-request="300" height-request="170">
+  <vbox spacing="8">
+    <text><label>Choisissez une seule option.</label></text>
+    <radiobutton><label>Choix 1</label><variable>CHOIX</variable><default>true</default></radiobutton>
+    <radiobutton><label>Choix 2</label><variable>CHOIX</variable></radiobutton>
+    <radiobutton><label>Choix 3</label><variable>CHOIX</variable></radiobutton>
+    <button ok></button>
+  </vbox>
+</window>

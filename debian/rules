@@ -1,8 +1,8 @@
 #!/usr/bin/make -f
 # SPDX-License-Identifier: GPL-2.0-or-later
-# debian/rules — sermo 2 : trois variantes du cœur, sept backends, un paquet
+# debian/rules — sermo 2 : trois variantes du cœur, neuf backends, un paquet
 # par port. Chaque backend lie statiquement sa variante du cœur :
-#   gtk3 → GLib, gtk4 → GTK 4, les cinq autres → neutre (sans toolkit).
+#   gtk3 → GLib, gtk4 → GTK 4, les sept autres → neutre (sans toolkit).
 
 # Le projet compile avec -D_FORTIFY_SOURCE=3 ; celui de dpkg (=2) le
 # redéfinirait. Tout le reste du durcissement Debian s'applique.
@@ -13,7 +13,7 @@ include /usr/share/dpkg/pkg-info.mk
 
 B := $(CURDIR)/debian/construit
 S := $(CURDIR)/debian/etage
-PORTS := gtk3 gtk4 qt6 fltk1 efl1 sdl3 ncurses
+PORTS := gtk3 gtk4 qt6 fltk1 efl1 sdl3 lvgl ncurses html
 LIBDIR := lib/$(DEB_HOST_MULTIARCH)
 
 %:
@@ -50,7 +50,7 @@ override_dh_auto_build:
 	sed 's/@PACKAGE_VERSION@/$(DEB_VERSION_UPSTREAM)/' doc/sermo.1.in > $(B)/sermo.1
 
 # Sans affichage : tests unitaires du cœur, et banc XML (--print-ir) sur les
-# sept binaires. Les bancs graphiques tournent dans ci/bancs.sh.
+# neuf binaires. Les bancs graphiques tournent dans ci/bancs.sh.
 override_dh_auto_test:
 ifeq (,$(filter nocheck,$(DEB_BUILD_OPTIONS)))
 	env -u DISPLAY -u WAYLAND_DISPLAY bash tests/run_unit_tests.sh
@@ -64,7 +64,7 @@ override_dh_auto_install:
 	dh_auto_install --sourcedirectory=libsermocore --builddirectory=$(B)/coeur-paquet --destdir=debian/sermo-core-dev
 	# qt6 a ses règles : binaire, page de manuel, icône, lanceur, AppStream.
 	dh_auto_install --sourcedirectory=sermo-backend-qt6 --builddirectory=$(B)/qt6 --destdir=debian/sermo-backend-qt6
-	set -e; for p in gtk3 gtk4 fltk1 efl1 sdl3 ncurses; do \
+	set -e; for p in gtk3 gtk4 fltk1 efl1 sdl3 lvgl ncurses html; do \
 	    install -D -m 0755 $(B)/$$p/$${p}sermo debian/sermo-backend-$$p/usr/bin/$${p}sermo; \
 	done
 	# Pages de manuel : propres à gtk3 et gtk4 ; la page générique pour les autres.
@@ -72,12 +72,13 @@ override_dh_auto_install:
 	    sed 's/@PACKAGE_VERSION@/$(DEB_VERSION_UPSTREAM)/' sermo-backend-$$p/src/$${p}sermo.1.in > $(B)/$${p}sermo.1; \
 	    install -D -m 0644 $(B)/$${p}sermo.1 debian/sermo-backend-$$p/usr/share/man/man1/$${p}sermo.1; \
 	done
-	set -e; for p in fltk1 efl1 sdl3 ncurses; do \
+	set -e; for p in fltk1 efl1 sdl3 lvgl ncurses html; do \
 	    install -D -m 0644 $(B)/sermo.1 debian/sermo-backend-$$p/usr/share/man/man1/$${p}sermo.1; \
 	done
 	# Icônes d'application : le logo HD, à toutes les tailles du thème hicolor.
 	# Sans cette règle, seul qt6 en livrait une (son CMakeLists), et les fenêtres
 	# des cinq autres ports n'avaient pas d'icône dans leur barre de titre.
+	# (lvgl, ncurses et html : pas d'icône livrée.)
 	set -e; for p in gtk3 gtk4 qt6 fltk1 efl1 sdl3; do \
 	    for i in sermo-backend-$$p/data/icons/hicolor/*/apps/$${p}sermo.png; do \
 	        install -D -m 0644 $$i debian/sermo-backend-$$p/usr/share/icons/hicolor/$$(basename $$(dirname $$(dirname $$i)))/apps/$${p}sermo.png; \
@@ -105,17 +106,18 @@ override_dh_auto_install:
 #
 # ⚠️ --link-doc ne franchit pas la frontière « all » / « any » : debhelper
 # refuse activement la combinaison depuis le niveau de compatibilité 10. Les
-# huit paquets « any » (le cœur et les sept backends) gardent donc leur propre
+# dix paquets « any » (le cœur et les neuf backends) gardent donc leur propre
 # copyright ; pour eux, le gain vient du changelog amont retiré ci-dessus.
 override_dh_installdocs:
 	dh_installdocs -psermo-doc
 	dh_installdocs -Nsermo-doc -Nsermo-core-dev -Nsermo-backend-gtk3 \
 	  -Nsermo-backend-gtk4 -Nsermo-backend-qt6 -Nsermo-backend-fltk1 \
-	  -Nsermo-backend-efl1 -Nsermo-backend-sdl3 -Nsermo-backend-ncurses \
-	  --link-doc=sermo-doc
+	  -Nsermo-backend-efl1 -Nsermo-backend-sdl3 -Nsermo-backend-lvgl \
+	  -Nsermo-backend-ncurses -Nsermo-backend-html --link-doc=sermo-doc
 	dh_installdocs -psermo-core-dev -psermo-backend-gtk3 -psermo-backend-gtk4 \
 	  -psermo-backend-qt6 -psermo-backend-fltk1 -psermo-backend-efl1 \
-	  -psermo-backend-sdl3 -psermo-backend-ncurses
+	  -psermo-backend-sdl3 -psermo-backend-lvgl -psermo-backend-ncurses \
+	  -psermo-backend-html
 
 override_dh_installchangelogs:
 	dh_installchangelogs -XCHANGELOG

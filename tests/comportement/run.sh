@@ -8,7 +8,7 @@
 # mesuré. Ce runner joue le MÊME corpus (les .attendu = l'étalon gtk3sermo) sur
 # le binaire qu'on lui donne, en posant l'environnement HEADLESS propre à chaque
 # toolkit. La promesse « écrit une fois, tourne partout » se vérifie alors sur
-# les sept ports, pas sur un seul.
+# chaque port, pas sur un seul.
 #
 # L'ÉTALON reste les valeurs de gtk3sermo. On ne « corrige » jamais un .attendu
 # vers ce qu'un backend rend aujourd'hui : on répare le backend.
@@ -45,6 +45,7 @@ case "$base" in
     sdl3sermo|sdl3dialog)     ENV_PRE="SDL_VIDEODRIVER=offscreen" ;;
     efl1sermo|efl1dialog)     ENV_PRE="ELM_ENGINE=buffer" ;;
     ncursessermo)             ENV_PRE="SERMO_NCURSES_BATCH=1" ;;
+    htmlsermo)                ENV_PRE="SERMO_HTML_OUT=/dev/null" ;;   # exporteur : pas de session ; la page part vers /dev/null
     *)                        ENV_PRE="GSK_RENDERER=cairo GTK_A11Y=none" ; USE_XVFB=1 ;;
 esac
 if [ "$USE_XVFB" -eq 1 ]; then

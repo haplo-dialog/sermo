@@ -1,0 +1,13 @@
+<window title="Liste déroulante" width-request="320">
+  <vbox spacing="8">
+    <text><label>Choisissez une distribution :</label></text>
+    <combobox>
+      <variable>DISTRIB</variable>
+      <default>Debian</default>
+      <item>Debian</item>
+      <item>Fedora</item>
+      <item>Arch</item>
+    </combobox>
+    <button ok></button>
+  </vbox>
+</window>

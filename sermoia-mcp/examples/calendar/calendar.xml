@@ -1,0 +1,10 @@
+<window title="Selecteur de date" width-request="320">
+  <vbox spacing="8">
+    <text><label>Choisissez une date, puis validez :</label></text>
+    <calendar>
+      <variable>DATE</variable>
+      <default>2026-05-21</default>
+    </calendar>
+    <button ok></button>
+  </vbox>
+</window>

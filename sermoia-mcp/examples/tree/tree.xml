@@ -1,0 +1,13 @@
+<window title="Arbre multi-colonnes" width-request="400" height-request="260">
+  <vbox>
+    <text><label>Sélectionnez un support :</label></text>
+    <tree scrollable="true">
+      <label>Périphérique|Dossier|Fichier</label>
+      <variable>SUPPORT</variable>
+      <item stock-id="gtk-floppy">Disquette|/floppy/|notes.txt</item>
+      <item stock-id="gtk-cdrom">CD-ROM|/cdrom/|</item>
+      <item stock-id="gtk-harddisk">Disque|/mnt/|donnees.csv</item>
+    </tree>
+    <button ok></button>
+  </vbox>
+</window>

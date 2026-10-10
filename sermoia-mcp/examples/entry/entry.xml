@@ -1,0 +1,13 @@
+<window title="Champ de saisie" width-request="360">
+  <vbox spacing="8">
+    <text><label>Votre nom :</label></text>
+    <entry>
+      <variable>NOM</variable>
+      <default>Dupont</default>
+    </entry>
+    <hbox>
+      <button ok></button>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

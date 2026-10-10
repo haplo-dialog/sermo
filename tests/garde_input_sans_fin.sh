@@ -23,8 +23,8 @@
 #     `echo 50; sleep 5` (qui dure, pour être relevé). Elle n'est pas plafonnée : elle ne garde qu'une ligne à la
 #     fois, et doit pouvoir suivre une longue copie jusqu'au bout.
 #     ncurses sans écran lit chaque barre jusqu'au bout AVANT les minuteries
-#     (render_ncurses.c, run_headless) : une barre sans fin y bloque par
-#     construction. On l'y arrête après 4 s, et on ne juge que sa mémoire ;
+#     (render_ncurses.c, run_headless), et html de même (sermo_backend_html.c,
+#     sermo_be_run_loop) : une barre sans fin y bloque par construction. On l'y arrête après 4 s, et on ne juge que sa mémoire ;
 #  4. une barre dont la commande est refusée par SERMO_ALLOWED_CMDS laisse le
 #     dialogue vivre et se fermer.
 #
@@ -115,9 +115,11 @@ barre() { printf '<window><vbox><progressbar><variable>PB</variable><input>%s</i
 lancer "$(barre 'echo 50; sleep 5')"
 rc_fin=$RC; pic_fin=$PIC
 rc_attendu=0
-if [ "$(basename -- "$BIN")" = ncursessermo ]; then
-    DELAI=4; rc_attendu=124   # bloque par construction, voir l'en-tête
-fi
+case "$(basename -- "$BIN")" in
+    ncursessermo|htmlsermo)
+        DELAI=4; rc_attendu=124   # bloque par construction, voir l'en-tête
+        ;;
+esac
 lancer "$(barre 'yes 50')"
 rc_sans_fin=$RC; pic_sans_fin=$PIC
 DELAI=40

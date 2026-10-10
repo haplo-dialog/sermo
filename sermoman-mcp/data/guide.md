@@ -34,7 +34,7 @@ sermo descend de **gtkdialog** (László Pere, GPL-2.0+). L'édition actuelle es
 - **Les backends** — un par bibliothèque graphique. Ils ne font que **dessiner**
   ce que le cœur décrit, à travers un contrat `sermo_be_*`.
 
-Il y a **sept backends** :
+Il y a **neuf backends** :
 
 | Backend | Toolkit | Binaire |
 |---|---|---|
@@ -44,10 +44,16 @@ Il y a **sept backends** :
 | `sermo-backend-fltk1`| FLTK 1.4 | `fltk1sermo` |
 | `sermo-backend-efl1` | Enlightenment/Elementary | `efl1sermo` |
 | `sermo-backend-sdl3` | SDL 3 + Dear ImGui | `sdl3sermo` |
+| `sermo-backend-lvgl` | LVGL 9.6, embarqué (Wayland, X11 ou framebuffer) | `lvglsermo` |
 | `sermo-backend-ncurses` | ncurses (terminal) | `ncursessermo` |
+| `sermo-backend-html` | aucun : page HTML autonome | `htmlsermo` |
 
-Le **même script XML** rend une interface équivalente sur les sept : six en
-graphique, `ncurses` en terminal (le plus léger, sans serveur d'affichage).
+Le **même script XML** rend une interface équivalente sur les neuf : sept en
+graphique, `ncurses` en terminal (sans serveur d'affichage), et `html`, qui
+n'affiche rien : il écrit le dialogue en page HTML (CSS embarqué, sans
+JavaScript) dans `SERMO_HTML_OUT` (défaut `sermo-output.html`) ; avec
+`SERMO_HTML_MODE=serve`, un micro-serveur local sert la page et renvoie les
+valeurs saisies.
 
 ### À quoi ça sert
 
@@ -62,6 +68,8 @@ la logique dans le shell : les deux restent séparés.
 - **Bureau Qt / KDE** → `qt6`.
 - **Installation minimale, sans GTK ni Qt** → `fltk1`.
 - **Aucun serveur graphique (SSH, serveur, console)** → `ncurses`.
+- **Borne, écran embarqué, framebuffer** → `lvgl`.
+- **Une page HTML plutôt qu'une fenêtre** → `html`.
 - `efl1` et `sdl3` existent aussi ; chaque backend ne tire que **sa** pile
   graphique, jamais celle des autres.
 
@@ -112,7 +120,9 @@ sudo apt install flex bison cmake gcc pkg-config
 **Par backend**, ajouter les `-dev` de sa toolkit : `libgtk-3-dev`,
 `libvte-2.91-dev` et `libgtk-layer-shell-dev` (gtk3), `libgtk-4-dev` et
 `libvte-2.91-gtk4-dev` (gtk4), `qt6-base-dev` (qt6), `libfltk1.4-dev` (fltk1),
-`libefl-all-dev` (efl1), `libsdl3-dev` (sdl3), `libncurses-dev` (ncurses). Sans
+`libefl-all-dev` (efl1), `libsdl3-dev` (sdl3), `libx11-dev`, `libpng-dev`,
+`libwayland-dev`, `libxkbcommon-dev` et `wayland-protocols` (lvgl, LVGL étant
+embarqué), `libncurses-dev` (ncurses) ; html n'en demande aucun. Sans
 VTE ou sans gtk-layer-shell, la construction de gtk3/gtk4 s'arrête plutôt que de
 produire un binaire privé de `<terminal>` ou de l'ancrage Wayland ; les options
 `-DSERMOCORE_VTE=OFF` et `-DSERMO_LAYER_SHELL=OFF` y renoncent explicitement.
@@ -121,12 +131,12 @@ Le cœur a **trois variantes de build** ; on en choisit **une** selon le backend
 
 | Backend | Variante du cœur | Option cmake |
 |---|---|---|
-| qt6, fltk1, efl1, sdl3, ncurses | neutre (défaut, sans toolkit) | — |
+| qt6, fltk1, efl1, sdl3, lvgl, ncurses, html | neutre (défaut, sans toolkit) | — |
 | gtk3 | GLib | `-DSERMOCORE_GLIB=ON` |
 | gtk4 | GTK 4 | `-DSERMOCORE_GTK4=ON` |
 
 ```sh
-# 1. le cœur (exemple : variante neutre, pour qt6/fltk1/efl1/sdl3/ncurses)
+# 1. le cœur (exemple : variante neutre, pour qt6/fltk1/efl1/sdl3/lvgl/ncurses/html)
 cd libsermocore
 cmake -S . -B _build -DCMAKE_INSTALL_PREFIX=$PWD/_install
 make -C _build && make -C _build install
@@ -145,8 +155,9 @@ dédiée).
 
 Tout est détaillé dans `COMPILE.md` et `DEPENDENCIES.md`. Les paquets `.deb` se
 construisent avec `bash packaging/construire-paquets.sh`, dans une Debian testing
-vierge : `sermo-core-dev`, les 7 `sermo-backend-*`, `sermo-gtkdialog` et quatre
-paquets de transition depuis la 1.x, soit **13 paquets** (voir `PACKAGING.md`).
+vierge : `sermo-core-dev`, les 9 `sermo-backend-*`, `sermo-doc`, `sermo-gtkdialog`
+et quatre paquets de transition depuis la 1.x, soit **16 paquets** (voir
+`PACKAGING.md`).
 
 ---
 
@@ -203,9 +214,9 @@ et la version : `sermo --version` + backend). Détail complet dans `SECURITY.md`
 
 **GPL-2.0-or-later.** sermo descend de **gtkdialog 0.8.3** (László Pere), sous
 GNU GPL version 2 « ou toute version ultérieure ». Le cœur `libsermocore` et les
-sept backends sont sous cette même licence ; les fichiers C et C++ portent
+neuf backends sont sous cette même licence ; les fichiers C et C++ portent
 l'en-tête `SPDX-License-Identifier: GPL-2.0-or-later`. Exceptions (contrat MIT,
-Dear ImGui MIT dans sdl3, tests et quelques exemples en CC0) : voir `LICENCES.md`.
+Dear ImGui MIT dans sdl3, LVGL MIT dans lvgl, tests et quelques exemples en CC0) : voir `LICENCES.md`.
 
 Les backends se lient à leur toolkit et à ses dépendances, sous leurs propres
 licences. Certaines, chargées indirectement, sont sous LGPL-3 ou Apache-2.0 : le

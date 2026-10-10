@@ -1,0 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: action a attribut : son texte est l argument de la fonction, jamais une commande envoyee au shell -->
+<window><vbox>
+<entry><variable>CPT</variable><input>sh donnees/compteur.sh</input></entry>
+<timer visible="false"><variable>_T</variable><action function="refresh">sh donnees/compteur.sh</action><action>refresh:CPT</action><action>exit:fin</action></timer></vbox></window>

@@ -14,6 +14,11 @@ string(STRIP "${SERMO_VERSION}" SERMO_VERSION)
 
 project(ncursessermo VERSION ${SERMO_VERSION} LANGUAGES C)
 
+# Le lien se fait en -pie : le code doit être compilé en -fPIE. Debian le fait par
+# défaut, pas toutes les distributions (Slackware 15 : « relocation R_X86_64_32 …
+# recompile with -fPIE », mesuré le 2026-10-10).
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 # config.h est ENGENDRÉ ici, pas versionné : la copie écrite à la main portait
 # la version en dur, avec la consigne de la « garder en accord » avec
 # CMakeLists.txt. Elle suit désormais project(... VERSION ...), donc VERSION.

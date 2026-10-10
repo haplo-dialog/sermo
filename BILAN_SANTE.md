@@ -1,6 +1,39 @@
-# Bilan de santé — sermo (édition modulaire) 2.7.4
+# Bilan de santé — sermo (édition modulaire)
 
-## État vérifié — 2026-09-30
+## 2.8.0 — mesuré le 2026-10-10
+
+Les **deux mêmes commandes** que ci-dessous, sur les **neuf** ports, jouées sur
+l'arbre de construction (pas encore sur les binaires des paquets 2.8.0-1) :
+
+```sh
+bash ci/construire.sh     # cœur ×3 variantes, neuf backends, sermoia-mcp
+bash ci/bancs.sh          # 176 bancs : 176 verts, 0 en échec
+```
+
+| Backend | XML (55) | Comportement (61) | Durcissement (8) | Commandes permises · sources sans fin · `--do` · limite de widgets | `--include` | `--glade-xml` | `<terminal>` | Échappement (4) | Clic (17) | Exemples réels |
+|---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| gtk3 (étalon) | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ chargé | ✅ VTE | ✅ | ✅ | ✅ 55/55 |
+| gtk4  | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ chargé | ✅ VTE | ✅ | ✅ | ✅ 55/55 |
+| qt6   | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ refusé | ✅ non promis | ✅ | ✅ | ✅ 54/54 |
+| fltk1 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ refusé | ✅ non promis | ✅ | ✅ | ✅ 54/54 |
+| efl1  | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ refusé | ✅ non promis | ✅ | ✅ | ✅ 54/54 |
+| sdl3  | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ refusé | ✅ non promis | ✅ | ✅ | ✅ 54/54 |
+| lvgl  | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ refusé | ✅ non promis | ✅ | ✅ | ✅ 54/54 |
+| ncurses | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ refusé | ✅ non promis | — terminal | — | — |
+| html  | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ refusé | ✅ non promis | ✅ | — | — |
+
+- **Comportement** : 61 cas, les neuf ports à parité avec l'étalon gtk3sermo.
+- **ncurses** joue ses deux gardes propres (mot de passe masqué dans un vrai
+  pseudo-terminal, sortie capturée) ; **html** n'ouvre pas de fenêtre : ni clic,
+  ni taille de fenêtre, ni exemples sous xdotool.
+- **Transverses** : sources (SPDX, fonctions interdites, en-têtes de poste,
+  lectures d'`<input>`), façade, fortification du cœur, `sermoman-mcp` (vérité,
+  exemples) et `sermoia-mcp` (schéma, exemples, protocole) : tous verts.
+
+Les sections qui suivent sont l'**édition 2.7.4** (sept ports, binaires des
+paquets 2.7.4-1) : elles gardent leurs chiffres et leurs renvois.
+
+## État vérifié — 2.7.4, 2026-09-30
 
 > **Ce que valent ces chiffres.** Ce ne sont pas des notes d'auto-évaluation :
 > ce sont des **comptes de bancs rejouables**. Chaque ligne ci-dessous se

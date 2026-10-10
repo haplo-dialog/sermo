@@ -1,0 +1,102 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Copyright (C) 2026 S. Cage
+# haplo-dialog <devel@haplo-dialog.fr>
+#!/bin/bash
+# sermo.SlackBuild — construit un paquet .txz par backend demandé.
+#
+#   PORTS="gtk3 ncurses html" ./sermo.SlackBuild
+#
+# Ports : gtk3 gtk4 qt6 fltk1 efl1 sdl3 lvgl ncurses html (et « coeur-dev » pour la bibliothèque statique).
+# Défaut : gtk3 ncurses html — les seuls dont les bibliothèques sont dans
+# Slackware 15.0 ; qt6, sdl3, efl1 et fltk1 (1.4) demandent -current ou SlackBuilds.org.
+# Le résultat est déposé dans $OUTPUT (défaut : /tmp). Les répertoires de travail
+# sont neufs (mktemp) : le script n'efface rien.
+#
+# ⚠️ Écrit sans Slackware sous la main : la suite des gestes de construction est
+# rejouée (packaging/autres-os/README.md), pas les paquets de la distribution.
+# Pas de mécanisme « alternatives » : chaque backend livre /usr/bin/<port>sermo.
+
+cd "$(dirname "$0")" || exit 1
+CWD=$(pwd)
+VERSION=${VERSION:-2.7.7}
+BUILD=${BUILD:-1}
+TAG=${TAG:-_SBo}
+PKGTYPE=${PKGTYPE:-txz}
+PORTS=${PORTS:-gtk3 ncurses html}
+SRCDIR=${SRCDIR:-$CWD/../../..}
+
+if [ -z "$ARCH" ]; then
+  case "$(uname -m)" in
+    i?86)   ARCH=i586 ;;
+    arm*)   ARCH=arm ;;
+    *)      ARCH=$(uname -m) ;;
+  esac
+fi
+OUTPUT=${OUTPUT:-/tmp}
+if [ "$ARCH" = "x86_64" ]; then LIBDIRSUFFIX="64"; else LIBDIRSUFFIX=""; fi
+
+set -e
+mkdir -p "$OUTPUT"
+WORK=$(mktemp -d "${TMP:-/tmp}/sermo.XXXXXX")
+BUILDDIR=$WORK/construit
+
+# Le cœur et les ports (« coeur-dev » est à part).
+ports=""
+for p in $PORTS; do [ "$p" = coeur-dev ] || ports="$ports $p"; done
+if [ -n "$ports" ]; then
+  # shellcheck disable=SC2086
+  sh "$SRCDIR/packaging/autres-os/construire-os.sh" construire "$SRCDIR" "$BUILDDIR" $ports
+fi
+
+slack_desc() {  # paquet, description courte, détail
+  {
+    echo "# HOW TO EDIT THIS FILE:"
+    echo "# The \"handy ruler\" below makes it easier to edit a package description."
+    echo "# Line up the first '|' above the ':' following the base package name, and"
+    echo "# the '|' on the right side marks the last column you can put a character in."
+    echo "# You must make exactly 11 lines for the formatting to be correct."
+    echo "# It's also customary to leave one space after the ':' except on otherwise blank lines."
+    echo
+    printf '%*s|-----handy-ruler------------------------------------------------------|\n' "${#1}" ""
+    echo "$1: $1 ($2)"
+    echo "$1:"
+    echo "$1: $3"
+    echo "$1:"
+    echo "$1: sermo builds native windows from an XML description, so that a shell"
+    echo "$1: script can show a real graphical interface without any toolkit"
+    echo "$1: knowledge. It succeeds gtkdialog and keeps its XML language."
+    echo "$1:"
+    echo "$1: https://gitlab.com/haplo-dialog/sermo"
+    echo "$1:"
+    echo "$1:"
+  }
+}
+
+empaqueter() {  # nom-du-paquet, répertoire, description courte, détail
+  mkdir -p "$2/install" "$2/usr/doc/$1-$VERSION"
+  install -m 0644 "$SRCDIR/COPYING" "$2/usr/doc/$1-$VERSION/COPYING"
+  slack_desc "$1" "$3" "$4" > "$2/install/slack-desc"
+  ( cd "$2" && "${MAKEPKG:-/sbin/makepkg}" -l y -c n "$OUTPUT/$1-$VERSION-$ARCH-$BUILD$TAG.$PKGTYPE" )
+}
+
+for p in $PORTS; do
+  PKG=$(mktemp -d "$WORK/pkg-$p.XXXXXX")
+  case "$p" in
+    coeur-dev)
+      sh "$SRCDIR/packaging/autres-os/construire-os.sh" coeur-dev "$SRCDIR" "$BUILDDIR" "$PKG" /usr "lib$LIBDIRSUFFIX"
+      empaqueter sermo-core-dev "$PKG" "static core library" "The core library and headers."
+      ;;
+    *)
+      sh "$SRCDIR/packaging/autres-os/construire-os.sh" installer "$SRCDIR" "$BUILDDIR" "$p" "$PKG" /usr
+      # Slackware range les pages de manuel dans /usr/man, compressées.
+      if [ -d "$PKG/usr/share/man" ]; then
+        mkdir -p "$PKG/usr/man"
+        cp -a "$PKG/usr/share/man/." "$PKG/usr/man/"
+        find "$PKG/usr/man" -type f -exec gzip -9 {} +
+      fi
+      strip --strip-unneeded "$PKG/usr/bin/${p}sermo" 2>/dev/null || true
+      empaqueter "sermo-backend-$p" "$PKG" "backend $p" "The $p backend."
+      ;;
+  esac
+done
+echo "Paquets déposés dans $OUTPUT (travail : $WORK, à supprimer à la main)"

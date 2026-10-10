@@ -1,0 +1,9 @@
+<window title="Bandeau d'information" width-request="360" height-request="160">
+  <vbox spacing="8">
+    <infobar message-type="warning">
+      <label>Vérifiez vos données avant de continuer.</label>
+    </infobar>
+    <text><label>Le bandeau coloré signale un avertissement.</label></text>
+    <button ok></button>
+  </vbox>
+</window>

@@ -45,9 +45,13 @@ called directly:
 .BR fltk1sermo ,
 .BR efl1sermo ,
 .BR sdl3sermo ,
-.BR ncursessermo .
+.BR lvglsermo ,
+.BR ncursessermo ,
+.BR htmlsermo .
 The XML language and observable behaviour are identical across backends: the
 same script renders an equivalent interface on each toolkit.
+.B htmlsermo
+opens no window: it writes the dialog as a standalone HTML page.
 .PP
 The GUI description can be supplied from an environment variable
 .RB ( \-\-program ),

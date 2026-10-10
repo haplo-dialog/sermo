@@ -9,7 +9,7 @@
  * Licence : GPL-2.0-or-later
  *
  * Fl_Wizard porte le nom mais ne fabrique AUCUNE navigation : c'est une pile
- * de pages. Les trois boutons sont donc ajoutés ici, comme sur les six autres
+ * de pages. Les trois boutons sont donc ajoutés ici, comme sur les autres
  * ports. Le type de pile vient de l'en-tête partagé (leçon des échelles).
  */
 #ifndef _GNU_SOURCE
@@ -22,6 +22,7 @@
 #include "widgets.h"
 #include "tag_attributes.h"
 #include "widget_wizard.h"
+#include "jouer_actions.h"
 #include "sermo_stack_pages.h"
 #include <FL/Fl.H>
 #include <FL/Fl_Flex.H>
@@ -45,14 +46,7 @@ static void wiz_suivant(Fl_Widget *, void *d)
 }
 static void wiz_terminer(Fl_Widget *b, void *d)
 {
-    AttributeSet *Attr = (AttributeSet *) d;
-    if (!Attr) return;
-    GList *el = NULL;
-    gchar *cmd = attributeset_get_first(&el, Attr, ATTR_ACTION);
-    while (cmd) {
-        if (*cmd) execute_action((GtkWidget *) b, cmd, NULL);
-        cmd = attributeset_get_next(&el, Attr, ATTR_ACTION);
-    }
+    jouer_actions((GtkWidget *) b, (AttributeSet *) d, NULL, NULL);
 }
 
 GtkWidget *widget_wizard_create(AttributeSet *Attr, tag_attr *attr, gint Type)

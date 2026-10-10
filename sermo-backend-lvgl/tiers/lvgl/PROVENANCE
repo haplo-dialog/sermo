@@ -1,0 +1,30 @@
+LVGL embarqué dans lvglsermo
+============================
+
+Origine      : https://github.com/lvgl/lvgl
+Version      : v9.6.0 (publiée le 2026-09-16)
+Commit       : 80ca777e37a2b176770726a02e07a6fb79ef0b39
+               (le même selon l'API GitHub et selon « git rev-parse HEAD »
+               d'un clone --depth 1 --branch v9.6.0)
+Archive      : https://github.com/lvgl/lvgl/archive/refs/tags/v9.6.0.tar.gz
+               68 357 301 octets
+               SHA-256 ec5493fdea5d927f271b6962fbb998d94fa0bf1ef609bb90344ab7dac5d3120c
+Copié le     : 2026-10-06
+Licence      : MIT (LICENCE.txt) ; parties tierces : COPYRIGHTS.md
+
+Gardé, SANS RETOUCHE (diff -r contre le clone : aucune différence) :
+  src/  include/  lvgl.h  lvgl_private.h  lv_version.h  lv_conf_template.h
+  LICENCE.txt  COPYRIGHTS.md
+
+Laissé dehors : tests/ demos/ examples/ docs/ scripts/ env_support/ zephyr/
+  configs/ libs/ sbom/ et les fichiers de construction d'origine.
+
+Désactivé par le réglage (../../lv_conf.h), donc absent du binaire :
+  src/drivers/opengles/glad/ et src/osal/lv_cmsis_rtos2.* (Apache-2.0),
+  src/libs/gif/ (Apache-2.0), src/libs/vg_lite_driver/ (MIT/GPL, matériel).
+  Ils restent dans l'arbre : lvgl_private.h les inclut sans condition.
+
+Mettre à jour = remplacer src/ et include/ par ceux d'une autre version
+ENTIÈRE, refaire ce fichier (commit, empreinte, date), comparer
+le nouveau lv_conf_template.h à l'ancien et reporter les écarts
+dans ../../lv_conf.h, rejouer le corpus.

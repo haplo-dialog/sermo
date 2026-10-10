@@ -55,3 +55,5 @@ sermo-backend-*/src/gtk3dialog
 # Journaux de ci/construire.sh et ci/bancs.sh
 _journaux/
 
+# Dossier de travail de SC sur le dessin : jamais publié.
+sermo-design/

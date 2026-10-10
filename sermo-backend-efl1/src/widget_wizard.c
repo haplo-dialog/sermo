@@ -25,6 +25,7 @@
 #include "stack.h"
 #include "actions.h"
 #include "widget_wizard.h"
+#include "jouer_actions.h"
 #include <stdlib.h>
 #include <stdint.h>
 
@@ -59,16 +60,8 @@ static void wiz_suivant(void *data, Evas_Object *o, void *ev)
 }
 static void wiz_terminer(void *data, Evas_Object *o, void *ev)
 {
-    AttributeSet *Attr = (AttributeSet *) data;
-    GList *el = NULL;
-    gchar *cmd;
     (void) ev;
-    if (!Attr) return;
-    cmd = attributeset_get_first(&el, Attr, ATTR_ACTION);
-    while (cmd) {
-        if (*cmd) execute_action((GtkWidget *) o, cmd, NULL);
-        cmd = attributeset_get_next(&el, Attr, ATTR_ACTION);
-    }
+    jouer_actions((GtkWidget *) o, (AttributeSet *) data, NULL, NULL);
 }
 
 GtkWidget *widget_wizard_create(AttributeSet *Attr, tag_attr *attr, gint Type)

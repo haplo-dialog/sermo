@@ -9,24 +9,24 @@ DESCRIPTION
      depuis un script (shell, Python, Perl…) : le script décrit la fenêtre en
      XML, sermo l'affiche, et à la fermeture il rend les valeurs saisies.
 
-     UN SEUL CŒUR, SEPT BACKENDS
+     UN SEUL CŒUR, NEUF BACKENDS
           sermo est bâti autour d'un cœur unique et durci, libsermocore
           (analyse Flex/Bison + exécution des commandes). Ce cœur ne dépend
           d'aucune boîte à outils graphique. Le rendu est confié à un backend
           par toolkit :
 
-               gtk3     gtk4     qt6     fltk1     efl1     sdl3     ncurses
+               gtk3   gtk4   qt6   fltk1   efl1   sdl3   lvgl   ncurses   html
 
           Le cœur parle aux backends par un contrat interne (sermo_be_*). La
           SYNTAXE XML ET LE COMPORTEMENT OBSERVABLE SONT IDENTIQUES sur les
-          sept backends : le même script rend une interface équivalente
-          partout. ncurses est le backend terminal (le plus léger, sans
-          serveur graphique).
+          neuf backends : le même script rend une interface équivalente
+          partout. ncurses est le backend terminal (sans serveur graphique) ;
+          html n'ouvre pas de fenêtre, il écrit le dialogue en page HTML.
 
      La commande « sermo » (/usr/bin/sermo) est un lien géré par
      update-alternatives(1) : elle résout vers le backend choisi par défaut.
      On peut aussi appeler un backend précis : gtk3sermo, gtk4sermo, qt6sermo,
-     fltk1sermo, efl1sermo, sdl3sermo, ncursessermo.
+     fltk1sermo, efl1sermo, sdl3sermo, lvglsermo, ncursessermo, htmlsermo.
 
      La syntaxe descend de gtkdialog 0.8.3 (Pere Laszlo 2003-2007, puis Thunor
      2011-2013 ; voir HISTOIRE.md). Le paquet du backend GTK 3 fournit le
@@ -95,7 +95,7 @@ OPTIONS
             fenêtre est l'objet que --program désigne (MAIN_WINDOW par défaut) ;
             chaque widget à identifiant devient une variable de ce nom. Un
             gestionnaire de signal est une action sermo (commande, exit:…) ; sur
-            « realize », sa sortie remplit le widget. Les cinq autres ports
+            « realize », sa sortie remplit le widget. Les autres ports
             refusent l'option (code 1).
 
      -w, --no-warning
@@ -116,11 +116,11 @@ OPTIONS
      --render-png FICHIER.png
             Rend l'interface en image, hors écran, sans ouvrir de fenêtre
             (capture déterministe pour la doc ou un test visuel). Disponible
-            sur les six backends graphiques (gtk3, gtk4, qt6, fltk1, efl1,
+            sur six backends graphiques (gtk3, gtk4, qt6, fltk1, efl1,
             sdl3), et la taille demandee par default-width/default-height
-            est respectee sur les six. ncurses reste un affichage terminal :
-            pas d'image ;
-            aperçu texte via --print-ir.
+            est respectee sur ces six ; lvgl a aussi l'option. ncurses reste
+            un affichage terminal : pas d'image ;
+            aperçu texte via --print-ir. html écrit une page, pas une image.
 
      --space-expand=ETAT
             Valeur par défaut de l'état d'empaquetage « expand » (true/false)
@@ -588,7 +588,7 @@ WIDGETS —— RÉFÉRENCE COMPLÈTE
             Sélecteur de fichier EMBARQUÉ dans la fenêtre — à distinguer de
             <filechooser>, qui est un bouton ouvrant un dialogue. Exporte le
             chemin choisi ; <default> fixe le dossier de départ.
-            Sur les ports sans GTK (qt6, fltk1, efl1, sdl3, ncurses), il n'y a
+            Sur les ports sans GTK (qt6, fltk1, efl1, sdl3, lvgl, ncurses, html), il n'y a
             pas de sélecteur embarqué : <chooser> y devient un <filechooser>,
             c'est-à-dire un bouton qui ouvre le dialogue du toolkit. La variable
             exporte alors le fichier choisi, et <default> en est la valeur de
@@ -989,4 +989,4 @@ LICENCE
      Documentation sous licence GPL-2.0-or-later.
      Logiciel sous licence GPL-2.0-or-later.
 
-sermo 2.7.7                        2026-09                          SERMO-XML(5)
+sermo 2.8.0                        2026-10                          SERMO-XML(5)

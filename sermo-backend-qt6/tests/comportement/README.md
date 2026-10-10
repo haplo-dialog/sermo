@@ -11,7 +11,7 @@ la promesse « écrit une fois, tourne sur GTK ou Qt ».
 ```sh
 # le lanceur générique joue ce corpus sur N'IMPORTE QUEL backend :
 bash tests/comportement/run.sh sermo-backend-qt6/_build/qt6sermo
-bash tests/comportement/run_all.sh          # les sept backends
+bash tests/comportement/run_all.sh          # les neuf backends
 # ce lanceur-ci, historique, reste utilisable : QT6_BIN=<binaire> ./run.sh
 ```
 
@@ -27,6 +27,39 @@ partout = parité.
 ⛔ **Ne jamais** « corriger » un `.attendu` vers ce que qt6 rend aujourd'hui pour
 faire taire un échec : ce serait consacrer le bug. On répare le port, pas
 l'étalon.
+
+## Ajout du 2026-10-04 : l'action `refresh` (cas 55 et 56) — 56 cas
+
+Aucun cas ne jouait une action `refresh`. Les cas 55 (`<entry>`) et 56 (`<edit>`)
+branchent l'`<input>` sur `donnees/compteur.sh`, qui rend 1 au premier appel et 2
+au second ; un `<timer>` invisible joue `refresh:` puis `exit:`. Un port qui
+ignore `refresh` rend 1 et le cas rougit (vérifié : le même cas sans l'action
+rend `CPT="1"` sur gtk3sermo et ncursessermo). Étalons écrits par un passage de
+gtk3sermo ; les sept backends 2.7.7 rendent les mêmes valeurs sur les 56 cas.
+
+La valeur d'un `<edit>` rempli par une commande garde le saut de ligne final de
+cette commande : l'étalon du cas 56 tient donc sur deux lignes, et le banc n'en
+retient que la première (`STATUT="2`).
+
+## Ajout du 2026-10-04 : l'écriture à attribut des actions (cas 57 à 59) — 59 cas
+
+Une action s'écrit `<action>refresh:NOM</action>` ou
+`<action function="refresh">NOM</action>`. Les ports fltk1, efl1, sdl3 et ncurses
+appelaient le cœur sans lui passer la fonction : la seconde écriture y était
+ignorée, et son texte — un nom de widget — partait au shell comme une commande.
+Trois endroits de qt6 (menus, assistant) avaient le même défaut. Aucun cas ne
+jouait cette écriture.
+
+- 57 : `function="refresh"` rejoue l'`<input>` (rendait 1 au lieu de 2) ;
+- 58 : `function="exit"` ferme le dialogue (il restait ouvert) ;
+- 59 : le texte d'une action à attribut n'est jamais exécuté (le compteur le
+  prouve : 2, et non 3).
+
+Rouges sur les quatre ports avant le correctif, verts sur les sept après.
+Le correctif tient dans `src/jouer_actions.h`, repris dans chaque port concerné :
+toutes les actions du widget, chacune avec sa fonction (`function=`, sinon
+`type=`). Les ports ncurses et sdl3 ne jouaient que la première action d'un
+bouton ; ils les jouent toutes.
 
 ## État au 2026-09-17 : 53 cas, parité sur les sept backends
 
@@ -71,5 +104,5 @@ par `<input>`).
 ⚠️ **À back-porter** : ces cas vivent dans l'arbre qt6 ; les rapatrier dans le
 banc partagé gtk3sermo (public) pour qu'ils soient une spec commune aux ports.
 
-Câblage CI : le banc tourne dans la CI du dépôt (`ci/bancs.sh`), sur les sept
+Câblage CI : le banc tourne dans la CI du dépôt (`ci/bancs.sh`), sur les neuf
 backends.

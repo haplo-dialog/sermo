@@ -1403,7 +1403,13 @@ void widget_signal_executor(GtkWidget *widget, AttributeSet *Attr,
 /* GtkCList removed in GTK3 — replaced by GtkTreeView */
 /* GtkWidget--->GtkContainer--->GtkListBox (replaces GtkList in GTK3) */
 			} else if (GTK_IS_LIST_BOX(widget)) {
-				if (strcasecmp(signal_name, "row-selected") == 0) {
+				/* La liste annonce « selection-changed » (widget_list.c,
+				 * hp_list_row_selected) : c'est ce signal qu'une action sans
+				 * attribut signal doit suivre. « row-selected » n'arrivait
+				 * jamais ici : une <action> simple sur une <list> ne partait pas
+				 * (mesuré le 2026-10-05, gtk3 et gtk4, trois clics, zéro action). */
+				if (strcasecmp(signal_name, "selection-changed") == 0 ||
+					strcasecmp(signal_name, "row-selected") == 0) {
 					execute = widget_signal_executor_eval_condition(condition);
 				}
 /* GtkWidget--->GtkContainer--->GtkTreeView */

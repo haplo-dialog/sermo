@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
-# Paquets Debian testing nécessaires pour construire les sept backends et jouer
+# Paquets Debian testing nécessaires pour construire les neuf backends et jouer
 # tous les bancs (ci/construire.sh, ci/bancs.sh). Noms vérifiés avec apt-cache
 # le 2026-09-16. Une ligne par paquet ; # commente.
 build-essential
@@ -28,6 +28,12 @@ libx11-dev
 libpng-dev
 libgdk-pixbuf-2.0-dev
 libncurses-dev
+# lvgl : en-têtes de protocole Wayland engendrés à la construction
+libwayland-dev
+libxkbcommon-dev
+wayland-protocols
+# serveur MCP sermoia
+libjson-glib-dev
 # bancs
 xvfb
 xauth

@@ -9,8 +9,9 @@ lignée **gtkdialog 0.8.3** (László Pere, GPL-2.0+). Un même XML, dans une
 variable shell, un fichier ou stdin, devient une fenêtre ; à la fermeture, les
 widgets nommés émettent leurs valeurs sur stdout sous la forme `NOM="valeur"`.
 
-Le **même XML** rend sur **sept backends** : `gtk3`, `gtk4`, `qt6`, `fltk1`,
-`efl1`, `sdl3` et `ncurses` (terminal). Ils partagent un cœur commun : l'analyse
+Le **même XML** rend sur **neuf backends** : `gtk3`, `gtk4`, `qt6`, `fltk1`,
+`efl1`, `sdl3`, `lvgl`, `ncurses` (terminal) et `html` (qui écrit une page HTML
+au lieu d'ouvrir une fenêtre). Ils partagent un cœur commun : l'analyse
 et l'exécution durcie sont mutualisées, seul le **rendu** est propre à chaque
 backend. Le binaire par défaut est choisi par `update-alternatives` sous le nom
 `sermo`.
@@ -64,11 +65,13 @@ rien afficher : code de retour 0 = la syntaxe passe. C'est le contrôle le moins
 cher, à faire systématiquement.
 
 `sermo --render-png out.png --file=X` rend le dialogue en **image PNG** sans
-écran réel — de quoi **regarder** ce qui a été produit. Le rendu existe pour les
+écran réel — de quoi **regarder** ce qui a été produit. Le rendu existe pour
 **six** backends graphiques (gtk3, gtk4, qt6, fltk1, efl1, sdl3) : offscreen pour
 qt6/efl1/sdl3, sous xvfb pour gtk3/gtk4/fltk1. La taille demandée par
-`default-width`/`default-height` est respectée sur les six. Le backend terminal
-`ncurses` n'a pas d'image ; pour lui, `--print-ir` tient lieu d'aperçu.
+`default-width`/`default-height` est respectée sur ces six. `lvgl` a aussi
+l'option, et dessine l'image sans ouvrir de fenêtre. Le backend terminal
+`ncurses` n'a pas d'image ; pour lui, `--print-ir` tient lieu d'aperçu. `html`
+écrit une page, pas une image.
 
 ### Deux principes
 
@@ -175,7 +178,7 @@ Le pire qu'il puisse faire, c'est donner une réponse de documentation.
 |---|---|
 | `sermo_reference` | la référence complète de la syntaxe XML (widgets, attributs, sous-éléments) |
 | `sermo_guide` | le guide de prise en main (installation, compatibilité gtkdialog, sécurité, licences) |
-| `sermo_architecture` | l'architecture modulaire : le cœur, les sept backends, le contrat cœur↔backend, le packaging, les bancs |
+| `sermo_architecture` | l'architecture modulaire : le cœur, les neuf backends, le contrat cœur↔backend, le packaging, les bancs |
 | `sermo_heritage` | la vie de sermo : lignée, historique des versions, feuille de route, bilan de santé |
 | `sermo_ecosystem` | ce fichier : quel outil pour quoi |
 | `sermo_search` | recherche plein texte dans la documentation |

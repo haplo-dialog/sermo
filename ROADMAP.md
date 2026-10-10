@@ -37,7 +37,8 @@
 ## Phase 4 — Écosystème
 
 - [ ] Cloisonnement de processus (IPC) : shell confiné au cœur.
-- [ ] Backends supplémentaires via le contrat de frontière.
+- [ ] Backends supplémentaires via le contrat de frontière. *(2.8.0 : lvgl et html, sur le
+      cœur neutre.)*
 - [ ] Publication produit (dépôt apt, site).
 
 > La progression est **gardée par les trois bancs** (XML 55 · comportement 53 ·

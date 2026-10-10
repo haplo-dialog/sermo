@@ -7,7 +7,7 @@
  * haplo-dialog <devel@haplo-dialog.fr>
  *
  * La limite est posée sur le FLUX, par un flux « cookie » de la glibc
- * (fopencookie) : les lecteurs existants des sept ports — fgets, getline,
+ * (fopencookie) : les lecteurs existants de chaque port — fgets, getline,
  * fread, fgetc — lisent comme avant, sans rien savoir de la limite.
  *
  * La lecture passe par read() sur le descripteur, pas par fread() sur le flux
@@ -16,7 +16,7 @@
  * comme avant.
  *
  * C POSIX, sans GLib hormis g_warning() : la variante NEUTRE du cœur (qt6,
- * fltk1, efl1, sdl3, ncurses) ne lie pas la GLib, elle n'en imite qu'une
+ * fltk1, efl1, sdl3, lvgl, ncurses, html) ne lie pas la GLib, elle n'en imite qu'une
  * poignée de noms (include/sermocore-shim.h), dont g_warning().
  */
 

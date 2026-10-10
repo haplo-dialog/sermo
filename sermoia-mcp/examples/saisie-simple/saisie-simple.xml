@@ -1,0 +1,9 @@
+<window title="Saisie" width-request="320" height-request="120">
+  <vbox spacing="8">
+    <text><label>Votre réponse :</label></text>
+    <entry><variable>REPONSE</variable></entry>
+    <hbox>
+      <button ok></button>
+    </hbox>
+  </vbox>
+</window>

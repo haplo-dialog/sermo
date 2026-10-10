@@ -1,0 +1,15 @@
+<window title="Ratio maintenu" width-request="360" height-request="280">
+  <vbox spacing="8">
+    <text><label>Le cadre ci-dessous garde un ratio 4:3</label></text>
+    <aspectframe ratio="1.333" obey-child="false">
+      <vbox>
+        <text><label>Zone d'aperçu</label></text>
+        <checkbox><label>Afficher la grille</label><variable>GRILLE</variable></checkbox>
+      </vbox>
+    </aspectframe>
+    <hbox>
+      <button ok></button>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

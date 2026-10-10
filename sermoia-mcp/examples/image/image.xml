@@ -1,0 +1,7 @@
+<window title="Image" width-request="300" height-request="200">
+  <vbox spacing="8">
+    <text><label>Une image depuis le thème d'icônes :</label></text>
+    <image icon-name="dialog-information" icon-size="6"></image>
+    <button ok></button>
+  </vbox>
+</window>

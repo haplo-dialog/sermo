@@ -2,7 +2,7 @@
 
 [English](MANUEL_UTILISATEUR.en.md)
 
-**Version :** 2.7.7
+**Version :** 2.8.0
 **Licence :** GPL-2.0-or-later | **Distributeur :** haplo-dialog (devel@haplo-dialog.fr)
 
 ---
@@ -32,9 +32,10 @@ Le principe est simple : vous décrivez votre interface en **XML**, et sermo
 l'affiche. Quand le dialogue se termine **par un bouton**, les valeurs saisies
 sont renvoyées sur la sortie standard sous forme de variables shell.
 
-**Ce manuel décrit le langage XML**, qui est **identique sur les sept backends**
-de sermo (gtk3, gtk4, qt6, fltk1, efl1, sdl3, ncurses) : le même script rend une
-interface équivalente partout. `sermo` désigne dans ce document le backend
+**Ce manuel décrit le langage XML**, qui est **identique sur les neuf backends**
+de sermo (gtk3, gtk4, qt6, fltk1, efl1, sdl3, lvgl, ncurses, html) : le même script
+rend une interface équivalente partout ; html, lui, l'écrit en page HTML au lieu
+de l'afficher. `sermo` désigne dans ce document le backend
 sélectionné par défaut sur votre système (`update-alternatives`), mais vous
 pouvez aussi appeler un backend précis (`gtk3sermo`, `qt6sermo`…).
 
@@ -164,13 +165,14 @@ déterministe pour la documentation, une vignette ou un test visuel :
 sermo --render-png sortie.png --file=mon_interface.xml
 ```
 
-Le rendu hors écran est disponible sur **les six backends graphiques** (`gtk3`,
+Le rendu hors écran est disponible sur **six backends graphiques** (`gtk3`,
 `gtk4`, `qt6`, `fltk1`, `efl1`, `sdl3`) — `gtk3`/`gtk4`/`fltk1` via un display
 virtuel (xvfb) où le backend écrit lui-même le PNG, `qt6`/`efl1`/`sdl3` via leur
-plateforme offscreen. `ncurses` reste un affichage **terminal** (pas d'image ;
-aperçu texte via `--print-ir`).
+plateforme offscreen. `lvgl` a aussi l'option : il dessine l'image sans ouvrir
+de fenêtre. `ncurses` reste un affichage **terminal** (pas d'image ;
+aperçu texte via `--print-ir`), et `html` écrit une page, pas une image.
 
-La taille demandée par `default-width`/`default-height` est respectée sur les
+La taille demandée par `default-width`/`default-height` est respectée sur ces
 six. Jusqu'à la 2.7.1, `qt6` l'ignorait et sortait parfois une image de 2×2
 pixels quand la fenêtre contenait une liste déroulante — `tests/garde_taille_fenetre.sh`
 le vérifie désormais sur chaque port graphique.
@@ -610,7 +612,7 @@ Variable : `true` quand activé, `false` sinon.
 Pour un dossier : `<filechooser action="select-folder">`.
 
 Le tag `<chooser>`, lui, embarque le sélecteur DANS la fenêtre (GTK 3 et GTK 4).
-Sur les cinq autres ports, il devient un `<filechooser>` : un bouton qui ouvre le
+Sur les autres ports, il devient un `<filechooser>` : un bouton qui ouvre le
 dialogue du toolkit.
 Variable : chemin absolu du fichier/dossier sélectionné.
 

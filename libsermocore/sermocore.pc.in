@@ -8,5 +8,7 @@ vte=@SERMOCORE_VTE_PC@
 Name: sermocore
 Description: Cœur syntaxique + exécution durcie de sermo, sans toolkit
 Version: @SERMOCORE_VERSION@
-Libs: -L${libdir} -lsermocore
+# -lpthread : sermo_input.c appelle pthread_once. glibc 2.34 et plus l'ont dans la
+# libc, pas les plus anciennes (Slackware 15, glibc 2.33 : référence indéfinie).
+Libs: -L${libdir} -lsermocore -lpthread
 Cflags: -I${includedir}

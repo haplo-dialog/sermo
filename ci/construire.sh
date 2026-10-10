@@ -6,15 +6,15 @@
 # n'importe qui peut le rejouer chez soi, sans rien d'autre qu'une Debian
 # testing et les paquets de ci/dependances.txt.
 #
-# Usage : ci/construire.sh [port …]        (défaut : les sept)
-#         ports : gtk3 gtk4 qt6 fltk1 efl1 sdl3 ncurses
+# Usage : ci/construire.sh [port …]        (défaut : les neuf)
+#         ports : gtk3 gtk4 qt6 fltk1 efl1 sdl3 lvgl ncurses html
 # Journaux : $SERMO_JOURNAUX (défaut : _journaux/), un fichier par cible.
 # Codes : 0 = tout est construit · 1 = au moins une cible a échoué
 
 set -uo pipefail
 RACINE=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 J="${SERMO_JOURNAUX:-$RACINE/_journaux}"
-PORTS=("$@"); [ ${#PORTS[@]} -gt 0 ] || PORTS=(gtk3 gtk4 qt6 fltk1 efl1 sdl3 ncurses)
+PORTS=("$@"); [ ${#PORTS[@]} -gt 0 ] || PORTS=(gtk3 gtk4 qt6 fltk1 efl1 sdl3 lvgl ncurses html)
 N=$(nproc 2>/dev/null || echo 2)
 mkdir -p "$J"
 unset PKG_CONFIG_PATH
@@ -58,13 +58,24 @@ for p in "${PORTS[@]}"; do
          && PKG_CONFIG_PATH="$RACINE/libsermocore/$i/lib/pkgconfig" cmake --build "$RACINE/sermo-backend-$p/_build" -j"$N"; } > "$journal" 2>&1 \
        && [ -x "$RACINE/sermo-backend-$p/_build/${p}sermo" ]; then
         printf 'OK     %-8s (%s avertissement(s)) — %s\n' "$p" "$(grep -c 'warning:' "$journal")" \
-               "$(env -u DISPLAY QT_QPA_PLATFORM=offscreen SDL_VIDEODRIVER=offscreen ELM_ENGINE=buffer SERMO_NCURSES_BATCH=1 \
+               "$(env -u DISPLAY QT_QPA_PLATFORM=offscreen SDL_VIDEODRIVER=offscreen ELM_ENGINE=buffer SERMO_NCURSES_BATCH=1 SERMO_HTML_OUT=/dev/null \
                   timeout 10 "$RACINE/sermo-backend-$p/_build/${p}sermo" --version 2>/dev/null | grep -m1 version)"
     else
         printf 'ÉCHEC  %-8s — voir %s\n' "$p" "$journal"; tail -20 "$journal"
         echecs=$((echecs + 1))
     fi
 done
+
+# Le serveur MCP sermoia (C, GLib) : construit avec les ports, joué par ci/bancs.sh.
+journal="$J/sermoia-mcp.log"
+if { cmake -S "$RACINE/sermoia-mcp" -B "$RACINE/sermoia-mcp/_build" \
+     && cmake --build "$RACINE/sermoia-mcp/_build" -j"$N"; } > "$journal" 2>&1 \
+   && [ -x "$RACINE/sermoia-mcp/_build/sermoia-mcp" ]; then
+    printf 'OK     %-8s (%s avertissement(s))\n' sermoia "$(grep -c 'warning:' "$journal")"
+else
+    printf 'ÉCHEC  %-8s — voir %s\n' sermoia "$journal"; tail -20 "$journal"
+    echecs=$((echecs + 1))
+fi
 
 [ "$echecs" -eq 0 ] || { echo "ÉCHEC : $echecs cible(s)."; exit 1; }
 echo "Construction : tout est construit."

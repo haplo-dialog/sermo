@@ -1,0 +1,13 @@
+<window title="Choisir une couleur" width-request="360" height-request="160">
+  <vbox>
+    <text><label>Sélectionne une couleur puis valide.</label></text>
+    <hbox>
+      <text><label>Couleur :</label></text>
+      <colorbutton><variable>COULEUR</variable><default>#ff6600</default></colorbutton>
+    </hbox>
+    <hbox>
+      <button ok></button>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

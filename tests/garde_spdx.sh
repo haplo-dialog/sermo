@@ -12,8 +12,9 @@
 # ISO-8859-1, et grep sans -a les prend pour du binaire, donc les SAUTE en silence.
 #
 # Exclus : les fichiers PRODUITS par flex et bison (ils n'existent que dans un
-# arbre compilé) et le code tiers embarqué (dossier imgui/, Dear ImGui, sous sa
-# propre licence MIT déclarée dans LICENCES.md).
+# arbre compilé) et le code tiers embarqué, sous sa propre licence déclarée dans
+# LICENCES.md : dossier imgui/ (Dear ImGui, MIT) et dossier tiers/ (LVGL, MIT ;
+# provenance dans sermo-backend-lvgl/tiers/lvgl/PROVENANCE).
 #
 # Usage : garde_spdx.sh <dossier>
 SRCDIR="${1:?usage: garde_spdx.sh /chemin/vers/dossier}"
@@ -29,9 +30,9 @@ genere() {
 # qui ne l'a pas fait. Hors dépôt (le témoin), on parcourt le disque.
 lister() {
     if git -C "$1" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-        (cd "$1" && git ls-files -z -- '*.c' '*.h' '*.cc' '*.cpp' '*.hpp' '*.l' '*.y' ':!:*imgui/*')
+        (cd "$1" && git ls-files -z -- '*.c' '*.h' '*.cc' '*.cpp' '*.hpp' '*.l' '*.y' ':!:*imgui/*' ':!:*tiers/*')
     else
-        (cd "$1" && find . -type d -name imgui -prune -o -type f \( -name '*.c' -o -name '*.h' -o -name '*.cc' \
+        (cd "$1" && find . -type d \( -name imgui -o -name tiers \) -prune -o -type f \( -name '*.c' -o -name '*.h' -o -name '*.cc' \
             -o -name '*.cpp' -o -name '*.hpp' -o -name '*.l' -o -name '*.y' \) -printf '%P\0')
     fi
 }

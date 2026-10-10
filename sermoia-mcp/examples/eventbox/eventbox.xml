@@ -1,0 +1,12 @@
+<window title="Zone d'événements" width-request="340" height-request="180">
+  <vbox spacing="8">
+    <text><label>Survolez la zone ci-dessous</label></text>
+    <eventbox tooltip-text="Cette zone capte les événements souris">
+      <text><label>Zone captant la souris</label></text>
+    </eventbox>
+    <hbox>
+      <button ok></button>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

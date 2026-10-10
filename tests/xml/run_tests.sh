@@ -38,7 +38,7 @@ info() { printf "${BLUE}────${NC}  %s\n" "$*"; }
 # qu'on vient de construire — et le banc aurait dit vert sur le mauvais programme.
 # Pour tester un binaire installé, donner son chemin (ex. /usr/bin/gtk3sermo).
 RACINE="$(cd "$SCRIPT_DIR/../.." && pwd)"
-PORTS="gtk3 gtk4 qt6 fltk1 efl1 sdl3 ncurses"
+PORTS="gtk3 gtk4 qt6 fltk1 efl1 sdl3 lvgl ncurses html"
 
 trouver_binaire() {
     case "$1" in */*) [ -x "$1" ] && { echo "$1"; return 0; }; return 1 ;; esac
@@ -49,7 +49,7 @@ trouver_binaire() {
 }
 
 if [ "$BINARY" = "all" ]; then
-    # Les SEPT ports. Un port absent est un échec, sauf SERMO_PORTS_OPTIONNELS=1 :
+    # Les NEUF ports. Un port absent est un échec, sauf SERMO_PORTS_OPTIONNELS=1 :
     # « tous les ports disponibles » avait laissé passer une suite qui n'en testait
     # que deux.
     absents=0

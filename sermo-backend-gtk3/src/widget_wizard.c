@@ -11,7 +11,7 @@
  * ⚠️ COMPOSÉ, pas emprunté : GTK 4 a RETIRÉ GtkAssistant (aucun
  * gtkassistant.h dans /usr/include/gtk-4.0). Un assistant, ici, c'est un
  * GtkStack plus trois boutons — le même montage des deux côtés, et le même
- * comportement que sur les cinq autres ports.
+ * comportement que sur les autres ports.
  *
  * « Terminer » joue l'<action> du wizard ; il ne ferme rien de lui-même.
  */

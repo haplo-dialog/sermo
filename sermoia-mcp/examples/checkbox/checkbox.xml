@@ -1,0 +1,7 @@
+<window title="Case a cocher" width-request="300" height-request="140">
+  <vbox spacing="8">
+    <text><label>Cochez l'option, puis validez.</label></text>
+    <checkbox><label>Activer l'option</label><variable>OPTION</variable><default>false</default></checkbox>
+    <button ok></button>
+  </vbox>
+</window>

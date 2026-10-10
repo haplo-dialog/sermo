@@ -78,7 +78,7 @@ The repository CI does nothing but run two scripts. At home, on Debian testing
 with the packages listed in [`ci/dependances.txt`](ci/dependances.txt):
 
 ```sh
-bash ci/construire.sh      # the core and the seven backends (or a few: ci/construire.sh qt6 ncurses)
+bash ci/construire.sh      # the core and the nine backends (or a few: ci/construire.sh qt6 ncurses)
 bash ci/bancs.sh           # every bench; one log per bench in _journaux/
 ```
 

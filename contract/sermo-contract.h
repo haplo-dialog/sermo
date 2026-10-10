@@ -38,7 +38,7 @@
 
 /* Types de base — le contrat n'inclut PAS <glib.h>. Il déclare le minimum,
  * compatible ABI à la fois avec la vraie GLib (famille GTK) et avec les shims des
- * backends neutres (qt6/sdl3/ncurses/fltk1/efl1), qui définissent les mêmes.
+ * backends neutres (qt6/sdl3/ncurses/fltk1/efl1/lvgl/html), qui définissent les mêmes.
  * `GList` reste INCOMPLÈTE ici (usage par pointeur uniquement) : GLib ou le shim
  * en fournit la définition. Ces typedefs identiques sont ré-déclarables (gnu11). */
 typedef char          gchar;

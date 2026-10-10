@@ -44,7 +44,7 @@ done
 # à tester, via le PATH.
 SHIM="$(mktemp -d)"; trap 'rm -rf "$SHIM"' EXIT
 for n in gtkdialog gtkdialog4 gtksermo sermo \
-         gtk3sermo gtk4sermo qt6sermo fltk1sermo efl1sermo sdl3sermo ncursessermo \
+         gtk3sermo gtk4sermo qt6sermo fltk1sermo efl1sermo sdl3sermo ncursessermo lvglsermo \
          gtk3dialog qt6dialog fltk1dialog efl1dialog sdl3dialog; do
     # Le relais note le code de retour du BINAIRE (le script d'exemple, lui,
     # continue après et finit souvent en 0) : lu par le relevé de probe.

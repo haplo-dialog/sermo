@@ -34,7 +34,8 @@
 ## Phase 4 — Ecosystem
 
 - [ ] Process isolation (IPC): the shell confined to the core.
-- [ ] Additional backends via the frontier contract.
+- [ ] Additional backends via the frontier contract. *(2.8.0: lvgl and html, on the
+      neutral core.)*
 - [ ] Product publication (apt repository, website).
 
 > Progress is **guarded by the three benches** (XML 55 · behaviour 53 · guards):

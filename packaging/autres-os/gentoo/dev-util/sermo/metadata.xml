@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>devel@haplo-dialog.fr</email>
+		<name>s.cage</name>
+	</maintainer>
+	<use>
+		<flag name="gtk3">Build gtk3sermo, the GTK 3 backend (gtkdialog-compatible)</flag>
+		<flag name="gtk4">Build gtk4sermo, the GTK 4 backend</flag>
+		<flag name="qt6">Build qt6sermo, the Qt 6 backend</flag>
+		<flag name="fltk">Build fltk1sermo, the FLTK 1.4 backend</flag>
+		<flag name="efl">Build efl1sermo, the EFL backend</flag>
+		<flag name="sdl">Build sdl3sermo, the SDL 3 backend</flag>
+		<flag name="lvgl">Build lvglsermo, the LVGL backend for kiosks (LVGL is embedded)</flag>
+		<flag name="ncurses">Build ncursessermo, the terminal backend</flag>
+		<flag name="html">Build htmlsermo, which writes an HTML page instead of a window</flag>
+	</use>
+	<upstream>
+		<remote-id type="gitlab">haplo-dialog/sermo</remote-id>
+	</upstream>
+</pkgmetadata>

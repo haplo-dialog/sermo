@@ -4,9 +4,9 @@
 
 sermo runs shell commands described in an XML script. Its security rests on
 **where** that execution happens and **how** it is bounded. Most of it happens in
-the **core**, `libsermocore`, shared by the seven backends: `safe_exec.c` exists
-in two copies, `src/` (six ports) and `src-gtk4/` (gtk4), which differ only by
-three comment lines; the unit tests exercise both.
+the **core**, `libsermocore`, shared by the nine backends: `safe_exec.c` exists
+in a single copy (`libsermocore/src/safe_exec.c`), compiled into all three core
+variants.
 
 Two paths escape the core, and that is where the limits are: the `<terminal>` of
 gtk3 and gtk4, and the `<linkbutton>` — see
@@ -47,7 +47,7 @@ standard error, never to standard output (which an `eval` reads):
 
 A command cut off this way gets `SIGPIPE` on its next write: `yes` stops by
 itself. The limit is set in the core (`libsermocore/src/sermo_input.c`) and
-applies to all seven backends.
+applies to all nine backends.
 
 - **`SERMO_INPUT_MAX`** — the limit, in bytes. `0` removes it. A value that is
   not a number of bytes (`16M`, `-1`) is reported, and the default limit
@@ -58,14 +58,14 @@ applies to all seven backends.
 
 Up to 2.7.2, nothing bounded this read. Fed by `yes`, gtk3sermo went past
 700 MB in 7 seconds, and ncurses ended on a segmentation fault (measured on
-2026-09-17). Checked by `tests/garde_input_sans_fin.sh` (seven ports, with an
+2026-09-17). Checked by `tests/garde_input_sans_fin.sh` (on every port, with an
 unlimited control run) and `tests/unit/test_sermo_input.c`.
 
 ## Optional execution bounding (two environment variables)
 
 Two guards, **off by default**, let you deploy a dialog into a less-trusted
 context (a kiosk, a guest session) without changing the script. Both are read in
-the core (`safe_exec.c`, both copies) and therefore apply to all seven
+the core (`safe_exec.c`) and therefore apply to all nine
 backends:
 
 - **`SERMO_NO_SHELL_FALLBACK`** — when set (to any value), the `/bin/sh -c`

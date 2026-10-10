@@ -10,7 +10,7 @@
  *
  * ⚠️ PAS QWizard : c'est une FENÊTRE (QDialog), pas un conteneur qu'on pose
  * dans une <vbox>. L'assistant est donc composé — QStackedWidget plus trois
- * boutons — exactement comme sur les six autres ports.
+ * boutons — exactement comme sur les autres ports.
  */
 #include "qt6-compat.h"
 #include "gtk3d.h"
@@ -20,6 +20,7 @@
 #include "tag_attributes.h"
 #include "stack.h"
 #include "widget_wizard.h"
+#include "jouer_actions.h"
 #include <QtWidgets/QStackedWidget>
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QVBoxLayout>
@@ -65,13 +66,7 @@ GtkWidget *widget_wizard_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         pile->setCurrentIndex(i); });
     /* « Terminer » joue l'<action> du wizard ; il ne ferme rien de lui-même. */
     QObject::connect(fin, &QPushButton::clicked, fin, [Attr, fin]() {
-        if (!Attr) return;
-        GList *el = nullptr;
-        gchar *cmd = attributeset_get_first(&el, Attr, ATTR_ACTION);
-        while (cmd) {
-            if (*cmd) execute_action((GtkWidget *) fin, cmd, nullptr);
-            cmd = attributeset_get_next(&el, Attr, ATTR_ACTION);
-        } });
+        jouer_actions((GtkWidget *) fin, Attr, nullptr, nullptr); });
 
     vertic->addWidget(pile);
     vertic->addWidget(barre);

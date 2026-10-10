@@ -11,7 +11,7 @@ sermo suit un **versionnage sémantique** `MAJEUR.MINEUR.CORRECTIF` :
 
 ## Version courante
 
-`2.7.7`. La **première version 2.x publiée** a été la `2.7.3`. Ce que chaque version apporte :
+`2.8.0`. La **première version 2.x publiée** a été la `2.7.3`. Ce que chaque version apporte :
 [CHANGELOG.md](CHANGELOG.md).
 
 La ligne 2.x a commencé à `2.0.0`, version restée interne, comme toutes les
@@ -24,12 +24,12 @@ restent valides. Les comportements qui ont changé sont listés dans
 ## La 1.x
 
 En 1.x, chaque port avait son numéro : gtk3sermo et gtk4sermo 1.1.4, qt6sermo
-1.0.2. La 2.x donne un seul numéro au cœur et aux sept ports.
+1.0.2. La 2.x donne un seul numéro au cœur et à tous les ports.
 
 ## Où le numéro est écrit — un seul endroit
 
-Le fichier **`VERSION`**, à la racine, est la seule source. Les huit projets
-CMake (le cœur et les sept backends) le lisent avant `project(...)` :
+Le fichier **`VERSION`**, à la racine, est la seule source. Les onze projets
+CMake (le cœur, les neuf backends et `sermoia-mcp`) le lisent avant `project(...)` :
 
 ```cmake
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/../VERSION" SERMO_VERSION)
@@ -53,15 +53,15 @@ voyait pas à la compilation, le binaire sortait en annonçant un numéro faux.
 
 ## Cœur, backends et paquets
 
-- Le cœur (`libsermocore`) et les sept backends portent le **même numéro** tant
+- Le cœur (`libsermocore`) et les neuf backends portent le **même numéro** tant
   qu'ils sont livrés ensemble. Un changement incompatible du contrat
   `sermo-contract.h` impose un bump MAJEUR, car un backend plus ancien ne se lierait
   plus au cœur.
-- `sermocore.pc` porte la version (`Version: 2.7.7`) : un backend construit à part
+- `sermocore.pc` porte la version (`Version: 2.8.0`) : un backend construit à part
   peut exiger un cœur minimal avec
   `pkg_check_modules(SERMOCORE REQUIRED sermocore>=2.7)`.
-- Les paquets Debian ajoutent une révision : `2.7.7-1` est la première
-  construction Debian de la 2.7.7.
+- Les paquets Debian ajoutent une révision : `2.8.0-1` est la première
+  construction Debian de la 2.8.0.
 
 ## Compatibilité des scripts
 

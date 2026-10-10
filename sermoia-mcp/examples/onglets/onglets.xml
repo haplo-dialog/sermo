@@ -1,0 +1,36 @@
+<window title="Préférences" width-request="380" height-request="240">
+  <vbox spacing="8">
+    <notebook tab-labels="Identité|Réseau|Affichage">
+      <vbox spacing="6">
+        <hbox>
+          <text><label>Nom :</label></text>
+          <entry><variable>NOM</variable></entry>
+        </hbox>
+        <hbox>
+          <text><label>Courriel :</label></text>
+          <entry><variable>COURRIEL</variable></entry>
+        </hbox>
+      </vbox>
+      <vbox spacing="6">
+        <hbox>
+          <text><label>Serveur :</label></text>
+          <entry><variable>SERVEUR</variable><default>localhost</default></entry>
+        </hbox>
+        <hbox>
+          <text><label>Port :</label></text>
+          <spinbutton range-min="1" range-max="65535" range-step="1">
+            <variable>PORT</variable><default>8080</default>
+          </spinbutton>
+        </hbox>
+      </vbox>
+      <vbox spacing="6">
+        <switch><label>Mode sombre</label><variable>MODE_SOMBRE</variable></switch>
+        <checkbox><label>Afficher la barre d'état</label><variable>BARRE_ETAT</variable></checkbox>
+      </vbox>
+    </notebook>
+    <hbox>
+      <button ok></button>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

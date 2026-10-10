@@ -35,6 +35,7 @@
 #include "stack.h"
 #include "actions.h"
 #include "widget_menuitem.h"
+#include "jouer_actions.h"
 #include "widget_menubar.h"   /* déclaration C de widget_menu_create */
 
 #include <QtWidgets/QMenu>
@@ -88,8 +89,14 @@ GtkWidget *widget_menuitem_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     if (Attr) {
         GList *element = nullptr;
         gchar *cmd = attributeset_get_first(&element, Attr, ATTR_ACTION);
-        if (cmd && *cmd)
-            holder->setProperty("menuitem_action", QString::fromUtf8(cmd));
+        if (cmd && *cmd) {
+            /* avec sa fonction (attribut function=) : voir jouer_actions.h */
+            char *complet = action_avec_fonction(&element, Attr, cmd);
+            if (complet) {
+                holder->setProperty("menuitem_action", QString::fromUtf8(complet));
+                free(complet);
+            }
+        }
     }
 
     /* checkbox="true|false" / radiobutton="true|false" : item cochable, la

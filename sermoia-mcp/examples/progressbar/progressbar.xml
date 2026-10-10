@@ -1,0 +1,10 @@
+<window title="Barre de progression" width-request="360">
+  <vbox spacing="8">
+    <text><label>Avancement du traitement :</label></text>
+    <progressbar>
+      <label>Traitement en cours...</label>
+      <input>for i in $(seq 0 20 100); do echo $i; sleep 0.2; done</input>
+    </progressbar>
+    <button ok></button>
+  </vbox>
+</window>

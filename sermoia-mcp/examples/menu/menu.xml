@@ -1,0 +1,14 @@
+<window title="Menu" width-request="320" height-request="160">
+  <vbox spacing="8">
+    <menubar>
+      <menu label="Action">
+        <menuitem label="Choix A"><action>EXIT:A</action></menuitem>
+        <menuitem label="Choix B"><action>EXIT:B</action></menuitem>
+        <menuitemseparator></menuitemseparator>
+        <menuitem label="Quitter"><action>EXIT:0</action></menuitem>
+      </menu>
+    </menubar>
+    <text><label>Ouvrez le menu « Action » et choisissez une entrée.</label></text>
+    <button ok></button>
+  </vbox>
+</window>

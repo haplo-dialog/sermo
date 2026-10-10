@@ -46,8 +46,10 @@ GtkWidget *widget_menuitem_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     if (Attr) {
         GList *el = NULL;
         gchar *act = attributeset_get_first(&el, Attr, ATTR_ACTION);
-        if (act && *act)
+        if (act && *act) {
             node->action = strdup(act);
+            node->actions_attr = (void *)Attr;   /* voir jouer_actions.h */
+        }
     }
 
     /* Icône de thème (parité gtk3) : stock → icon/icon-name/image-icon →

@@ -4,9 +4,9 @@
 
 **GPL-2.0-or-later** — sermo descend de **gtkdialog**, placé sous
 GNU General Public License version 2 « ou toute version ultérieure ». Le cœur
-`libsermocore`, les sept backends, `sermoman-mcp` et la documentation (manuels,
-pages de manuel, Texinfo) sont sous cette même licence. Aucune exception propre
-au projet.
+`libsermocore`, les neuf backends, `sermoman-mcp`, `sermoia-mcp` et la
+documentation (manuels, pages de manuel, Texinfo) sont sous cette même licence.
+Aucune exception propre au projet.
 
 Les fichiers C et C++ portent un identifiant SPDX :
 
@@ -27,8 +27,12 @@ relève de la licence du projet, sauf s'il figure dans le tableau ci-dessous.
 | Polices ProggyClean et ProggyForever, compilées dans `imgui/imgui_draw.cpp` | MIT | Tristan Grimmer ; Disco Hello |
 | Table des kanji Joyo et Jinmeiyo (points de code), compilée dans `imgui/imgui_draw.cpp` | CC-BY-4.0 (attribution dans le fichier) | Agence pour les affaires culturelles et ministère de la Justice du Japon (listes officielles) |
 | `imgui/backends/imgui_impl_opengl3_loader.h` — chargeur OpenGL | domaine public et MIT (en-têtes Khronos) | The Khronos Group |
+| `sermo-backend-lvgl/tiers/lvgl/` — **LVGL v9.6.0**, compilé dans `lvglsermo` (provenance : `tiers/lvgl/PROVENANCE`) | MIT (`tiers/lvgl/LICENCE.txt`) ; parties tierces : `tiers/lvgl/COPYRIGHTS.md` | LVGL Kft |
+| `sermo-backend-lvgl/lv_conf.h` — réglage de LVGL, tiré du modèle d'origine | MIT | LVGL Kft ; S. Cage |
+| `tiers/lvgl/src/libs/tiny_ttf/` — lecteur de police TrueType (stb_truetype), compilé dans `lvglsermo` | MIT ou Unlicense, au choix | Sean Barrett ; codewitch-honey-crisis (tiny_ttf) |
+| Police Montserrat 14 et symboles Font Awesome 5 Free, compilés dans `tiers/lvgl/src/font/lv_font_montserrat_14.c` | OFL-1.1 | Julieta Ulanovsky ; Fonticons, Inc. |
 | `sermo-backend-qt6/data/fr.haplo_dialog.qt6sermo.metainfo.xml` — métadonnées AppStream (AppStream demande une licence permissive) | FSFAP | S. Cage |
-| `tests/xml/*.xml`, `sermo-backend-qt6/examples/*/demo.sh`, et les exemples écrits pour sermo qui le déclarent dans leur en-tête (`examples/showcase/`, `examples/system-tools/`) | CC0-1.0 | — |
+| `tests/xml/*.xml`, `sermo-backend-qt6/examples/*/demo.sh`, et les exemples écrits pour sermo qui le déclarent dans leur en-tête (`examples/showcase/`, `examples/system-tools/`), et `contrib/trousses/` | CC0-1.0 | — |
 | Icônes des exemples `button`, `togglebutton`, `pfeme` (héritées de gtkdialog) | GPL-2 ou LGPL-2.1 : voir le fichier `COPYING-*-icons` posé à côté | projets elementary, fast-forward, nuvola |
 
 ## Provenance — de quoi sermo descend exactement
@@ -44,19 +48,24 @@ Ce point n'est pas anecdotique. Il détermine ce qui, dans ce dépôt, vient de
 l'amont et ce qui a été écrit ici — parce qu'on ne transpose pas du code GTK2
 vers Qt6, SDL3, EFL, FLTK ou un terminal : les appels n'existent pas.
 
-Comparaison fichier par fichier contre l'archive d'amont (lignes significatives :
-ni vides, ni accolades, ni commentaires, ni `#include` ; « hérité » = au moins la
-moitié des lignes du fichier se retrouvent à l'identique dans gtkdialog 0.8.3) :
+Comparaison fichier par fichier contre l'archive d'amont, mesurée le 2026-10-10
+sur la 2.8.0 (lignes significatives : ni vides, ni accolades, ni commentaires, ni
+directives du préprocesseur ; « hérité » = au moins la moitié des lignes du
+fichier se retrouvent à l'identique dans le fichier de même nom de gtkdialog
+0.8.3). La mesure se rejoue : `tests/mesure_provenance.py`, qui donne aussi
+l'empreinte de l'archive.
 
 | Backend | Hérités | Réécrits | Neufs | Total |
 |---|---|---|---|---|
-| `gtk3` | 72 | 2 | 34 | 108 |
-| `gtk4` | 64 | 4 | 50 | 118 |
-| `qt6` | 9 | 63 | 42 | 114 |
-| `sdl3` | 10 | 64 | 45 | 119 |
-| `ncurses` | 9 | 63 | 42 | 114 |
-| `efl1` | 8 | 61 | 43 | 112 |
-| `fltk1` | 8 | 63 | 46 | 117 |
+| `gtk3` | 72 | 2 | 52 | 126 |
+| `gtk4` | 64 | 4 | 61 | 129 |
+| `qt6` | 9 | 63 | 60 | 132 |
+| `sdl3` | 10 | 65 | 65 | 140 |
+| `lvgl` | 9 | 64 | 63 | 136 |
+| `ncurses` | 9 | 64 | 63 | 136 |
+| `efl1` | 8 | 62 | 64 | 134 |
+| `fltk1` | 8 | 63 | 67 | 138 |
+| `html` | 9 | 64 | 65 | 138 |
 
 - **`gtk3` et `gtk4` sont des portages** des widgets GTK2 de l'amont. Leurs
   en-têtes le disent : `(GTK3 port, security)`, `(GTK4 port)`.
@@ -68,9 +77,9 @@ moitié des lignes du fichier se retrouvent à l'identique dans gtkdialog 0.8.3)
   `dist`, `reserve`. Copyrights conservés :
   **Dima Krasner** (2021) et **Mick Amadio** (2021-2024). La bibliothèque
   `gtk-layer-shell` elle-même est une dépendance système, pas du code embarqué.
-  **Les six autres ports n'ont pas cette fonction** et n'ont donc pas ce second
+  **Les huit autres ports n'ont pas cette fonction** et n'ont donc pas ce second
   amont.
-- **Les cinq autres portent une couche de rendu neuve.** Ce qu'ils héritent encore,
+- **Les sept autres portent une couche de rendu neuve.** Ce qu'ils héritent encore,
   ce sont les en-têtes du cœur — `actions.h`, `attributes.h`, `automaton.h`,
   `signals.h`, `stack.h`, `stringman.h`, `tag_attributes.h`, `variables.h`,
   `widgets.h`, `macros.h`, `gtkdialog.h`.
@@ -90,14 +99,15 @@ la moindre des choses envers un travail sur lequel celui-ci s'appuie.
 
 ## Portée
 
-- `libsermocore` (cœur), `sermo-backend-*` (backends), `sermoman-mcp` :
+- `libsermocore` (cœur), `sermo-backend-*` (backends), `sermoman-mcp`, `sermoia-mcp` :
   GPL-2.0-or-later, sauf les fichiers du tableau ci-dessus.
 - Le lexer/parser générés (Flex/Bison) suivent la licence du projet ; les
   squelettes Flex/Bison bénéficient de leurs exceptions habituelles.
 
 ## Bibliothèques liées
 
-Chaque backend se lie à sa boîte à outils (GTK, Qt, FLTK, EFL, SDL, ncurses) et
+Chaque backend se lie à sa boîte à outils (GTK, Qt, FLTK, EFL, SDL, ncurses ;
+LVGL est compilé dans `lvglsermo`, html n'en a pas) et
 aux dépendances de celle-ci, sous leurs propres licences : LGPL, MIT/X11, BSD,
 zlib… Qt 6 est proposé sous LGPL-3 ou GPL-2.
 
@@ -111,5 +121,7 @@ compatibilité usuelle de la FSF ; ce n'est pas un avis juridique.
 
 - GPL-2 : fichier `COPYING` à la racine du dépôt, ou
   <https://www.gnu.org/licenses/old-licenses/gpl-2.0.html>.
-- MIT : `contract/LICENSE.MIT` et `sermo-backend-sdl3/src/imgui/LICENSE.txt`.
+- MIT : `contract/LICENSE.MIT`, `sermo-backend-sdl3/src/imgui/LICENSE.txt` et
+  `sermo-backend-lvgl/tiers/lvgl/LICENCE.txt`.
+- OFL-1.1 : <https://openfontlicense.org>.
 - CC BY 4.0 : <https://creativecommons.org/licenses/by/4.0/legalcode>.

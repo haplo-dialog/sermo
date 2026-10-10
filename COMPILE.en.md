@@ -14,7 +14,9 @@ Per backend, the `-dev` packages of its toolkit — see
 `libgtk-3-dev libvte-2.91-dev libgtk-layer-shell-dev` (gtk3),
 `libgtk-4-dev libvte-2.91-gtk4-dev` (gtk4), `qt6-base-dev` (qt6),
 `libfltk1.4-dev` (fltk1), `libefl-all-dev` (efl1), `libsdl3-dev` (sdl3),
-`libncurses-dev` (ncurses). Without VTE, the GTK variants of the core refuse to
+`libx11-dev libpng-dev libwayland-dev libxkbcommon-dev wayland-protocols` (lvgl,
+whose LVGL library is embedded), `libncurses-dev` (ncurses); html needs none.
+Without VTE, the GTK variants of the core refuse to
 build (the `<terminal>` widget would be missing without a word);
 `-DSERMOCORE_VTE=OFF` accepts that explicitly. Likewise for gtk3's Wayland
 anchoring: `-DSERMO_LAYER_SHELL=OFF`.
@@ -23,7 +25,7 @@ anchoring: `-DSERMO_LAYER_SHELL=OFF`.
 sudo apt install flex bison cmake gcc pkg-config
 ```
 
-The complete list, to build the seven backends **and** run every bench, as the
+The complete list, to build the nine backends **and** run every bench, as the
 CI installs it: [`ci/dependances.txt`](ci/dependances.txt).
 
 ## 2. Compiling the core
@@ -34,7 +36,7 @@ Pick **one** variant for the target backend (see
 ```bash
 cd libsermocore
 
-# Neutral variant (qt6 / fltk1 / efl1 / sdl3 / ncurses) — default, no toolkit
+# Neutral variant (qt6 / fltk1 / efl1 / sdl3 / lvgl / ncurses / html) — default, no toolkit
 cmake -S . -B _build -DCMAKE_INSTALL_PREFIX=$PWD/_install
 make -C _build && make -C _build install
 
@@ -74,7 +76,7 @@ Variant ↔ backend mapping:
 
 | Backend | Core variant | `PKG_CONFIG_PATH` |
 |---|---|---|
-| qt6, fltk1, efl1, sdl3, ncurses | neutral | `_install` |
+| qt6, fltk1, efl1, sdl3, lvgl, ncurses, html | neutral | `_install` |
 | gtk3 | `SERMOCORE_GLIB` | `_install_gtk` |
 | gtk4 | `SERMOCORE_GTK4` | `_install_gtk4` |
 
@@ -83,7 +85,8 @@ Variant ↔ backend mapping:
 Each backend now carries its own install rules: the binary, its manual page
 substituted with the right version, and the application icon at all eight
 hicolor theme sizes. gtk3 and gtk4 also install their section 5 page (the XML
-format); ncurses has no icon — a terminal cannot carry one.
+format); ncurses has no icon — a terminal cannot carry one — and lvgl and html
+do not ship one either.
 
 ```bash
 cmake -S sermo-backend-gtk3 -B sermo-backend-gtk3/_build \
@@ -91,7 +94,7 @@ cmake -S sermo-backend-gtk3 -B sermo-backend-gtk3/_build \
 make -C sermo-backend-gtk3/_build && make -C sermo-backend-gtk3/_build install
 ```
 
-Ports without a page of their own (fltk1, efl1, sdl3, ncurses) get the generic
+Ports without a page of their own (fltk1, efl1, sdl3, lvgl, ncurses, html) get the generic
 `doc/sermo.1.in` under their own name, exactly as `debian/rules` does: both
 paths ship the same thing.
 
@@ -136,6 +139,7 @@ bash packaging/construire-paquets.sh    # in a clean Debian testing system (Dock
 ```
 
 Or directly on Debian testing: `sudo apt build-dep ./` then
-`dpkg-buildpackage -us -uc -b`. Thirteen packages: `sermo-core-dev`, the seven
-`sermo-backend-*`, `sermo-gtkdialog` and four transitional packages from 1.x. See
+`dpkg-buildpackage -us -uc -b`. Sixteen packages: `sermo-core-dev`, the nine
+`sermo-backend-*`, `sermo-doc`, `sermo-gtkdialog` and four transitional packages
+from 1.x. See
 [PACKAGING.en.md](PACKAGING.en.md).

@@ -61,7 +61,11 @@ GtkWidget *widget_button_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     }
 
     WidgetNode *node = widget_node_new(WT_BUTTON, NULL, label);
-    if (action) node->action = strdup(action);
+    if (action) {
+        node->action = strdup(action);
+        /* toutes les actions, avec leur fonction : voir jouer_actions.h */
+        node->actions_attr = (void *)Attr;
+    }
 
     /* <input file icon="nom"> / stock="nom" : icone du theme, 20 px (etalon) */
     if (Attr) {

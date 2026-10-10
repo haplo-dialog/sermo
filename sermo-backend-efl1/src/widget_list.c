@@ -20,6 +20,7 @@
 #include "tag_attributes.h"
 #include "widget_list.h"
 #include "safe_exec.h"
+#include "jouer_actions.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -69,6 +70,23 @@ static void _list_sel(void *data, Evas_Object *obj, void *event_info)
         free(cur);
         evas_object_data_set(obj, "selected", strdup(txt));
     }
+    /* Actions : jouées à chaque sélection, comme le signal « selection-changed »
+     * de l'étalon. */
+    if (data)
+        jouer_actions((GtkWidget *)obj, (AttributeSet *)data, "selection-changed", "row-selected");
+}
+
+/* La sélection du chargement (première rangée, ou la première ligne de
+ * <input>) n'est qu'une donnée posée sur la liste : elle est jouée une fois ici,
+ * différée à la boucle — le cœur appelle widget_list_refresh() juste après la
+ * création, et les variables que l'action vise ne sont pas encore construites. */
+static void _list_chargee(void *data)
+{
+    Evas_Object *gl = (Evas_Object *)data;
+    const char *sel = (const char *)evas_object_data_get(gl, "selected");
+    AttributeSet *Attr = (AttributeSet *)evas_object_data_get(gl, "sermo-attr");
+    if (Attr && sel && *sel)
+        jouer_actions((GtkWidget *)gl, Attr, "selection-changed", "row-selected");
 }
 
 GtkWidget *widget_list_create(AttributeSet *Attr, tag_attr *attr, gint Type)
@@ -77,7 +95,11 @@ GtkWidget *widget_list_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     Evas_Object *gl = elm_genlist_add(parent ? parent : elm_win_add(NULL,"tmp",ELM_WIN_BASIC));
     elm_genlist_multi_select_set(gl, EINA_TRUE);
     evas_object_data_set(gl, "selected", strdup(""));
-    evas_object_smart_callback_add(gl, "selected", _list_sel, NULL);
+    evas_object_smart_callback_add(gl, "selected", _list_sel, Attr);
+    if (Attr) {
+        evas_object_data_set(gl, "sermo-attr", Attr);
+        ecore_job_add(_list_chargee, gl);
+    }
 
     Elm_Genlist_Item_Class *itc = _get_item_class();
 

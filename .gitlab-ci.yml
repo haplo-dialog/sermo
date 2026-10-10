@@ -2,7 +2,7 @@
 # .gitlab-ci.yml — intégration continue de sermo.
 #
 # Deux scripts du dépôt, rien de plus :
-#   ci/construire.sh  le cœur (trois variantes) et les sept backends ;
+#   ci/construire.sh  le cœur (trois variantes) et les neuf backends ;
 #   ci/bancs.sh       tests unitaires, XML, comportement, gardes (durcissement,
 #                     FORTIFY du cœur, liste de commandes, échappement, clic,
 #                     mot de passe en terminal…), ouverture réelle des

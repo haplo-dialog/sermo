@@ -13,7 +13,7 @@
  *
  * ⚠️ COMPOSÉ, pas emprunté : GTK 4 a retiré GtkAssistant et QWizard est une
  * FENÊTRE, pas un conteneur. Chaque port l'assemble avec SON mécanisme de
- * pages : c'est le seul montage qui tienne sur les sept.
+ * pages : c'est le seul montage qui tienne sur tous les ports.
  *
  * « Terminer » joue l'<action> du wizard, s'il en porte une ; il ne ferme rien
  * de lui-même — c'est au script de décider (un <button ok> fait ça très bien).

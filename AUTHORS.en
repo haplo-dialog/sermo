@@ -11,7 +11,7 @@ Main author
 
 S. Cage — haplo-dialog <devel@haplo-dialog.fr>
   - libsermocore core (parsing + hardened execution, no toolkit)
-  - Seven rendering backends: gtk3, gtk4, qt6, fltk1, efl1, sdl3, ncurses
+  - Nine rendering backends: gtk3, gtk4, qt6, fltk1, efl1, sdl3, lvgl, ncurses, html
   - Separate packaging, core↔backend boundary contract
 
 ──────────────────────────────────────────────────

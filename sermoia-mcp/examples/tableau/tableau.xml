@@ -1,0 +1,17 @@
+<window title="Liste des paquets" width-request="420" height-request="280">
+  <vbox spacing="8">
+    <text><label>Sélectionnez un paquet :</label></text>
+    <table scrollable="true">
+      <label>Nom|Version|Taille</label>
+      <variable>PAQUET</variable>
+      <item>coreutils|9.4|6,2 Mo</item>
+      <item>bash|5.2|1,8 Mo</item>
+      <item>libc6|2.38|12,4 Mo</item>
+      <item>gtk3|3.24|24,1 Mo</item>
+    </table>
+    <hbox>
+      <button ok></button>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

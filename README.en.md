@@ -2,10 +2,11 @@
 
 **sermo** opens a dialog box described in **XML** from a shell script, then
 writes the values the user entered to its output (`NAME="Jane"`). The same
-script runs on seven graphical libraries: GTK 3, GTK 4, Qt 6, FLTK, EFL, SDL 3,
-and ncurses in a terminal.
+script runs on eight graphical libraries: GTK 3, GTK 4, Qt 6, FLTK, EFL, SDL 3,
+LVGL, and ncurses in a terminal. A ninth port, html, opens nothing: it writes
+the dialog as an HTML page.
 
-![The same form rendered by the seven ports](doc/captures/formulaire-sept-ports.png)
+![The same form rendered by the nine ports](doc/captures/formulaire-neuf-ports.png)
 
 *The same script, [`examples/showcase/01-formulaire.sh`](examples/showcase/01-formulaire.sh),
 rendered by the binaries of the 2.7.1-1 packages. efl1 keeps its dark theme even
@@ -22,22 +23,22 @@ continues at Puppy Linux: <https://github.com/puppylinux-woof-CE/gtkdialog>. Who
 did what, when, and where the other descendants stand (gtk3dialog, gtkdialog3):
 [HISTOIRE.en.md](HISTOIRE.en.md).
 
-sermo keeps gtkdialog's XML language and parser. It replaces GTK 2 with seven
+sermo keeps gtkdialog's XML language and parser. It replaces GTK 2 with nine
 rendering layers around a shared core, and puts bounds on command execution.
 What comes from upstream and what was written here is counted file by file in
 [LICENCES.en.md](LICENCES.en.md).
 
 ## Project status
 
-- Version **2.7.7**. sermo has **a single maintainer**, S. Cage. There is no team
+- Version **2.8.0**. sermo has **a single maintainer**, S. Cage. There is no team
   behind it: an answer may take time.
 - Part of the code, documentation and tests was written with the help of an AI
   (Claude, by Anthropic), directed and reviewed by the maintainer
   ([AUTHORS.en](AUTHORS.en)).
-- **What is verified**: 139 benches (XML parsing, exported values, security,
-  clicks, opening the real examples) on all seven ports, also replayed on the
-  binaries extracted from the Debian packages. Every figure can be replayed with
-  a command: [BILAN_SANTE.md](BILAN_SANTE.md) (French only).
+- **What is verified**: 176 benches (XML parsing, exported values, security,
+  clicks, opening the real examples, MCP servers) on the nine ports, all green
+  on 2026-10-10. Every figure can be replayed with a command:
+  [BILAN_SANTE.md](BILAN_SANTE.md) (French only).
 - **Known gaps**: the ports without GTK still differ from gtk3sermo on a few
   points (`auto-refresh`, initial selection in lists, `<terminal>`…). They are
   listed in [TODO.md](TODO.md) (French only).
@@ -62,7 +63,8 @@ export MAIN_DIALOG='
 sermo --program=MAIN_DIALOG
 ```
 
-After typing "Jane" and clicking OK, the output is:
+After typing "Jane" and clicking OK, the output is the same on every port that
+displays the dialog:
 
 ```
 NAME="Jane"
@@ -73,7 +75,7 @@ A script reads these lines with `eval "$(sermo --program=MAIN_DIALOG)"`: the
 values are escaped for that purpose. When someone other than the script's author
 fills in the dialog, prefer `--do` ([SECURITY.en.md](SECURITY.en.md)).
 
-## The seven ports
+## The nine ports
 
 | Port | Library | Command | Package |
 |---|---|---|---|
@@ -83,9 +85,15 @@ fills in the dialog, prefer `--do` ([SECURITY.en.md](SECURITY.en.md)).
 | fltk1 | FLTK 1.4 | `fltk1sermo` | `sermo-backend-fltk1` |
 | efl1 | EFL (Enlightenment) | `efl1sermo` | `sermo-backend-efl1` |
 | sdl3 | SDL 3 and Dear ImGui | `sdl3sermo` | `sermo-backend-sdl3` |
+| lvgl | LVGL 9.6, embedded (Wayland, X11 or framebuffer) | `lvglsermo` | `sermo-backend-lvgl` |
 | ncurses | ncurses, in a terminal | `ncursessermo` | `sermo-backend-ncurses` |
+| html | none: a standalone HTML page | `htmlsermo` | `sermo-backend-html` |
 
-- **gtk3sermo is the reference**: the six other ports are measured against it.
+- **gtk3sermo is the reference**: the eight other ports are measured against it.
+- **html is an exporter**: it opens no window, it writes the dialog as one HTML
+  page (embedded CSS, no JavaScript by default) into the file named by `SERMO_HTML_OUT`
+  (default `sermo-output.html`). With `SERMO_HTML_MODE=serve`, a local
+  micro-server serves the page and returns the values entered.
 - Only gtk3 and gtk4 have `<terminal>` (VTE) and `--glade-xml`; only gtk3 has
   Wayland anchoring (`layer-shell`).
 - Each package pulls in its own library only: `sermo-backend-fltk1` installs
@@ -99,21 +107,21 @@ without changing a single line of the core. Architecture:
 ## Install
 
 There is no apt repository. The Debian packages are attached to the
-[**v2.7.7**](https://gitlab.com/haplo-dialog/sermo/-/releases/v2.7.7) release,
+[**v2.8.0**](https://gitlab.com/haplo-dialog/sermo/-/releases/v2.8.0) release,
 with their checksums: download, check, install.
 
 ```sh
-U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/2.7.7
-for f in sermo-backend-gtk3_2.7.7-1_amd64.deb sermo-gtkdialog_2.7.7-1_all.deb SHA256SUMS; do
+U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/2.8.0
+for f in sermo-backend-gtk3_2.8.0-1_amd64.deb sermo-gtkdialog_2.8.0-1_all.deb SHA256SUMS; do
     curl -fLO "$U/$f"
 done
 sha256sum --ignore-missing -c SHA256SUMS
-sudo apt install ./sermo-backend-gtk3_2.7.7-1_amd64.deb \
-                 ./sermo-gtkdialog_2.7.7-1_all.deb
+sudo apt install ./sermo-backend-gtk3_2.8.0-1_amd64.deb \
+                 ./sermo-gtkdialog_2.8.0-1_all.deb
 ```
 
-For another port, replace `gtk3` with `gtk4`, `qt6`, `fltk1`, `efl1`, `sdl3` or
-`ncurses`. The packages are built on **Debian testing (amd64)** and require its
+For another port, replace `gtk3` with `gtk4`, `qt6`, `fltk1`, `efl1`, `sdl3`,
+`lvgl`, `ncurses` or `html`. The packages are built on **Debian testing (amd64)** and require its
 library versions (Qt ≥ 6.10.2 for qt6, glibc ≥ 2.43 for sdl3…). Elsewhere,
 compile from source.
 

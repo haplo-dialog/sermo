@@ -1,0 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: action refresh : l <input> d une <entry> est rejoue et la nouvelle valeur ressort -->
+<window><vbox>
+<entry><variable>CPT</variable><input>sh donnees/compteur.sh</input></entry>
+<timer visible="false"><variable>_T</variable><action>refresh:CPT</action><action>exit:fin</action></timer></vbox></window>

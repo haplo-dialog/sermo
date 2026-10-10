@@ -1,8 +1,30 @@
 sermo, Annonces pour les utilisateurs
 =====================================
 
-Ce fichier resume les changements du point de vue de l'utilisateur.
+Ce fichier résume les changements du point de vue de l'utilisateur.
 Pour l'historique technique complet, voir CHANGELOG.md.
+
+──────────────────────────────────────────────────
+Version 2.8.0
+──────────────────────────────────────────────────
+
+Version mineure : neuf ports au lieu de sept.
+
+* htmlsermo écrit le dialogue dans une page HTML autonome au lieu
+  d'ouvrir une fenêtre ; il ne demande aucune bibliothèque graphique.
+  Avec SERMO_HTML_MODE=serve, la page est servie en local et renvoie les
+  valeurs saisies.
+
+* lvglsermo dessine avec LVGL : Wayland, X11, ou un framebuffer sur
+  demande — pour les bornes et les écrans sans bureau.
+
+* sermoia-mcp, un second serveur MCP, aide une IA à écrire, vérifier et
+  voir un dialogue.
+
+* Des recettes de paquets pour Arch, Fedora (RPM), Gentoo, Slackware,
+  Alpine et NixOS, dans packaging/autres-os/.
+
+* HISTOIRE.md raconte l'histoire de gtkdialog et de ses mainteneurs.
 
 ──────────────────────────────────────────────────
 Version 2.7.7
@@ -324,21 +346,127 @@ en dehors de gtk4 : un script qui les employait obtenait une fenetre
 silencieusement amputee, sans un mot d'erreur.
 
 ──────────────────────────────────────────────────
-Version 2.5.0
+Version 2.5.0, Quatre balises de plus
 ──────────────────────────────────────────────────
 
-Le meme script XML rend une interface equivalente sur SEPT backends : gtk3,
-gtk4, qt6, fltk1, efl1, sdl3 et ncurses (dans le terminal). Vous ecrivez votre
-dialogue une fois ; vous choisissez ensuite ou il s'affiche.
+<toolbar> range des boutons en une rangee qui se dit barre d'outils.
+<stack> montre N pages dont une seule a la fois, sans les onglets d'un
+<notebook> ; un attribut suffit a ajouter les boutons de navigation.
+<wizard> enchaine des etapes avec Precedent, Suivant et Terminer.
+<menubutton> pose un menu la ou vous etes, et pas seulement en haut de la
+fenetre.
 
-Chaque backend s'installe seul et ne tire que sa propre bibliotheque
-graphique. Le coeur d'analyse et d'execution, lui, est commun aux sept ports ;
-gtk4 en garde une variante adaptee a GTK 4.
+Les quatre marchent sur les sept ports. Aucun n'est emprunte tel quel a une
+boite a outils : GTK 4 a retire l'assistant et la barre d'outils, et le
+QWizard de Qt est une fenetre, pas un element qu'on pose dans une boite. Ils
+sont donc COMPOSES, de la meme facon partout, pour que le meme script donne la
+meme chose.
 
-Le langage compte 62 types de widgets. Pour la mise en page, <grid> aligne les
-colonnes d'un formulaire et <paned> partage l'espace entre deux zones avec une
-poignee deplacable. Pour la structure, <toolbar>, <stack>, <wizard> et
-<menubutton>.
+──────────────────────────────────────────────────
+Version 2.4.0, Un nombre, une ecriture
+──────────────────────────────────────────────────
 
-Vos scripts gtkdialog continuent de fonctionner : le paquet sermo-gtkdialog
-fournit la commande gtkdialog.
+Le nombre qu'un script recoit ne depend plus ni de la langue de la machine ni
+du port. Il s'ecrit avec un POINT, toujours : sous une locale francaise,
+<hscale digits="2"> rendait « 2,50 » — un script qui compare « 2.50 » ne
+reconnaissait plus rien.
+
+L'attribut digits= est maintenant respecte par les sept ports : quatre d'entre
+eux rendaient « 2 » la ou l'etalon rendait « 2,50 ». Et <progressbar>
+n'exporte plus rien du tout, comme l'etalon : c'est un afficheur, pas une
+saisie.
+
+Si vous compariez des valeurs a la main pour rattraper ces ecarts, vous pouvez
+arreter.
+
+──────────────────────────────────────────────────
+Version 2.3.1, La valeur qui dependait de la machine
+──────────────────────────────────────────────────
+
+<levelbar> ne rendait rien sur quatre ports, et n'importe quoi sur les autres.
+<drawingarea> bavardait : un port rendait ses dimensions, deux autres le mot
+« canvas », alors que la reference ne rend rien.
+
+Plus grave et plus discret : la valeur ecrite dependait de la LANGUE de la
+machine. Le meme script, sur le meme binaire, rendait « 0,5 » ici et « 0.5 »
+la. C'est repare a l'ecriture comme a la lecture.
+
+Corrige aussi : un <progressbar> sans aucun attribut faisait s'arreter le port
+FLTK. Le tag le plus banal qui soit.
+
+──────────────────────────────────────────────────
+Version 2.3.0, La poignee
+──────────────────────────────────────────────────
+
+<paned> partage la fenetre en deux zones separees par une poignee que VOUS
+deplacez. Une <hbox> fige le partage au moment ou le script est ecrit ; un
+<paned> le laisse bouger. Attributs : orientation, position (en pixels ou en
+pourcentage), resizable.
+
+Exactement deux enfants. Un troisieme est refuse avec un message : il n'est
+jamais avale en silence.
+
+Sur les sept ports, y compris en terminal, ou la frontiere se deplace aux
+fleches.
+
+──────────────────────────────────────────────────
+Version 2.2.0, Une grille, enfin
+──────────────────────────────────────────────────
+
+<grid columns="N"> range les enfants en flot — dans l'ordre du script, avec un
+retour a la ligne tous les N — et ALIGNE les colonnes d'une rangee a l'autre.
+
+Jusqu'ici le langage comptait 62 types de widgets et seulement DEUX conteneurs
+de disposition, <hbox> et <vbox> : un formulaire a deux colonnes s'ecrivait en
+empilant des <hbox>, et chaque rangee se reglait toute seule. Les etiquettes ne
+tombaient jamais en face les unes des autres.
+
+Attention : <grid> n'est pas <table>. <table>, c'est la liste a colonnes de
+donnees heritee de gtkdialog.
+
+──────────────────────────────────────────────────
+Version 2.1.1, Les tags qui faisaient semblant
+──────────────────────────────────────────────────
+
+Cinq balises etaient acceptees sans rien faire, selon le port : <eventbox>
+perdait son enfant, <linkbutton> et <pulse> rendaient une valeur vide, <image>
+etait court-circuitee, et <filechooser> reprenait sa valeur par defaut sans
+jamais rien laisser CHOISIR.
+
+Elles fonctionnent maintenant partout. Le <filechooser> ouvre le selecteur
+natif du systeme la ou la boite a outils en fournit un.
+
+Aucune de ces balises n'etait mesuree par un banc : c'est pour cela que le
+defaut a tenu si longtemps. Elles le sont desormais.
+
+──────────────────────────────────────────────────
+Version 2.1.0, La maison mise en ordre
+──────────────────────────────────────────────────
+
+Rien de neuf a l'ecran : cette version remet la maison en ordre. qt6 perd
+9 198 lignes qui ne servaient a rien, un clone du depot compile enfin sans
+rien chercher a cote, et chaque fichier dit desormais a qui il appartient.
+
+──────────────────────────────────────────────────
+Version 2.0.0, Modularisation
+──────────────────────────────────────────────────
+
+sermo se sépare en deux : un cœur commun et un backend par bibliothèque
+graphique. Concrètement, vous installez le backend de votre choix
+(« sermo-backend-gtk3 », « -fltk1 », « -qt6 »…) : chaque backend est autonome
+(le cœur y est lié statiquement), il n'y a rien d'autre à installer.
+
+Le grand avantage : la légèreté. Installer le backend FLTK ne tire plus ni GTK
+ni Qt — chaque backend ne dépend que de sa propre boîte à outils. Sur une machine
+minimale, c'est quelques dépendances au lieu de dizaines.
+
+Le même script XML donne la même interface sur les sept backends (gtk3, gtk4,
+qt6, fltk1, efl1, sdl3 et ncurses — ce dernier, en terminal, est le plus léger).
+L'alias « sermo » pointe le backend par défaut ; les scripts qui appellent
+« gtkdialog » continuent de fonctionner grâce au paquet optionnel
+« sermo-gtkdialog » (backend GTK 3).
+
+Chaque backend suit désormais le thème de votre système (clair ou sombre).
+
+Les sept backends rendent exactement les mêmes valeurs que le port de référence
+(24 cas sur 24). Les derniers écarts du backend GTK 4 ont été corrigés.

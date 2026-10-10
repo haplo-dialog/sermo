@@ -25,9 +25,11 @@
 #include "tag_attributes.h"
 #include "widget_list.h"
 #include "safe_exec.h"
+#include "jouer_actions.h"
 
 #include <QtWidgets/QListWidget>
 #include <QtCore/Qt>
+#include <QtCore/QMetaObject>
 
 #include <string.h>
 #include <stdlib.h>
@@ -69,6 +71,22 @@ GtkWidget *widget_list_create(AttributeSet *Attr, tag_attr *attr, gint Type)
      * selectionne, selectionner le premier item. */
     if (lw->selectedItems().isEmpty() && lw->count() > 0)
         lw->setCurrentRow(0);
+
+    /* Actions : jouées à chaque changement de sélection, comme le signal
+     * « selection-changed » de l'étalon — y compris la sélection posée au
+     * chargement. Différé à la boucle : le cœur appelle widget_list_refresh()
+     * juste après la création, et les variables que l'action vise ne sont pas
+     * encore construites. Le signal n'est branché qu'ensuite, sinon la
+     * sélection de chargement serait jouée deux fois. */
+    if (Attr) {
+        QMetaObject::invokeMethod(lw, [lw, Attr]() {
+            if (!lw->selectedItems().isEmpty())
+                jouer_actions((GtkWidget *)lw, Attr, "selection-changed", "row-selected");
+            QObject::connect(lw, &QListWidget::itemSelectionChanged, lw, [lw, Attr]() {
+                jouer_actions((GtkWidget *)lw, Attr, "selection-changed", "row-selected");
+            });
+        }, Qt::QueuedConnection);
+    }
     return (GtkWidget *)lw;
 }
 

@@ -8,7 +8,7 @@
 # change dans l'une change dans l'autre.
 #
 # Tout ce que vérifie cette recette se rejoue chez soi :
-#   bash ci/construire.sh   le cœur (trois variantes) et les sept backends ;
+#   bash ci/construire.sh   le cœur (trois variantes) et les neuf backends ;
 #   bash ci/bancs.sh        tests unitaires, XML, comportement, gardes.
 
 name: bancs

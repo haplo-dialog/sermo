@@ -47,7 +47,10 @@ GtkWidget *widget_drawingarea_create(AttributeSet *Attr, tag_attr *attr, gint Ty
         if (h) node->state.drawing.height = (float)g_ascii_strtod(h, NULL);
         el = NULL;
         gchar *act = attributeset_get_first(&el, Attr, ATTR_ACTION);
-        if (act && *act) node->action = strdup(act);
+        if (act && *act) {
+            node->action = strdup(act);
+            node->actions_attr = (void *)Attr;   /* voir jouer_actions.h */
+        }
     }
 
     node->width  = (int)node->state.drawing.width;

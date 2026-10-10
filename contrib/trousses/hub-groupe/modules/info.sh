@@ -1,0 +1,1 @@
+../../hub-simple/modules/info.sh

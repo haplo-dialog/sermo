@@ -1,0 +1,7 @@
+Name: sermo
+Link: /usr/bin/sermo
+Alternative: /usr/bin/htmlsermo
+Dependents:
+  /usr/share/man/man1/sermo.1.gz sermo.1.gz /usr/share/man/man1/htmlsermo.1.gz
+  /usr/share/info/sermo.info.gz sermo.info.gz /usr/share/info/htmlsermo.info.gz
+Priority: 1

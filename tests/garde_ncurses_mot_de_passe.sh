@@ -48,7 +48,7 @@ def scenario(balise):
     xml = ('<window title="garde"><vbox><%s><variable>CHAMP</variable></%s>'
            '<button ok></button></vbox></window>' % (balise, balise))
     # <button ok> sans action : il doit fermer le dialogue (EXIT="OK"), comme
-    # dans gtkdialog et les six autres backends.
+    # dans gtkdialog et les autres backends.
     pid, fd = pty.fork()
     if pid == 0:
         env = dict(os.environ, TERM="xterm", LANG="C.UTF-8", LINES="24", COLUMNS="80", DIALOG=xml)

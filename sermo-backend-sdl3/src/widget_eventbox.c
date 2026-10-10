@@ -45,7 +45,10 @@ GtkWidget *widget_eventbox_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     if (Attr) {
         GList *el = NULL;
         gchar *act = attributeset_get_first(&el, Attr, ATTR_ACTION);
-        if (act && *act) node->action = strdup(act);
+        if (act && *act) {
+            node->action = strdup(act);
+            node->actions_attr = (void *)Attr;   /* voir jouer_actions.h */
+        }
     }
     return (GtkWidget *) node;
 }

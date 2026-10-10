@@ -19,10 +19,13 @@ Build-Depends: debhelper-compat (= 14),
                libsdl3-dev,
                libvte-2.91-dev,
                libvte-2.91-gtk4-dev,
+               libwayland-dev,
                libx11-dev,
+               libxkbcommon-dev,
                pkgconf,
                qt6-base-dev,
                texinfo,
+               wayland-protocols,
 Standards-Version: 4.7.4
 Homepage: https://gitlab.com/haplo-dialog/sermo
 Vcs-Browser: https://gitlab.com/haplo-dialog/sermo
@@ -126,6 +129,21 @@ Description: sermo dialog boxes for shell scripts - SDL 3 backend
  This package provides sdl3sermo, the SDL 3 backend, drawn with Dear ImGui. It
  also offers the sermo command through update-alternatives.
 
+Package: sermo-backend-lvgl
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Provides: sermo-backend
+Description: sermo dialog boxes for shell scripts - LVGL backend
+ sermo builds native windows from an XML description, so that a shell script
+ can show a real graphical interface without any toolkit knowledge. It succeeds
+ gtkdialog and keeps its XML language. One hardened core parses the description
+ and runs the actions; each backend draws it with one toolkit.
+ .
+ This package provides lvglsermo, the backend for kiosks and embedded screens,
+ drawn with LVGL (embedded in the package, not an external library). It opens a
+ Wayland or X11 window, or draws on a framebuffer console when asked to. It also
+ offers the sermo command through update-alternatives.
+
 Package: sermo-backend-ncurses
 Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}
@@ -139,6 +157,23 @@ Description: sermo dialog boxes for shell scripts - terminal (ncurses) backend
  This package provides ncursessermo, the terminal backend, for machines without
  a display. It also offers the sermo command through update-alternatives.
 
+Package: sermo-backend-html
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Provides: sermo-backend
+Description: sermo dialog boxes for shell scripts - static HTML export backend
+ sermo builds native windows from an XML description, so that a shell script
+ can show a real graphical interface without any toolkit knowledge. It succeeds
+ gtkdialog and keeps its XML language. One hardened core parses the description
+ and runs the actions; each backend draws it with one toolkit.
+ .
+ This package provides htmlsermo, which writes the dialog as one standalone
+ HTML page (embedded CSS, no external file, no JavaScript by default) instead
+ of opening a window; a local one-shot server mode returns the entered values.
+ It needs no graphics library. It also offers the sermo command through
+ update-alternatives, at the lowest priority: it only answers when no windowed
+ backend is installed.
+
 Package: sermo-doc
 Section: doc
 Architecture: all
@@ -146,7 +181,8 @@ Multi-Arch: foreign
 Depends: ${misc:Depends}
 Description: sermo dialog boxes for shell scripts - manual and common documentation
  sermo opens a dialog box described in XML from a shell script, and returns the
- values entered. The same script runs on seven toolkits.
+ values entered. The same script runs on eight toolkits, or is written out
+ as an HTML page.
  .
  This package carries the Texinfo manual ("info sermo-doc") and the common
  documentation — copyright and Debian changelog — that the architecture

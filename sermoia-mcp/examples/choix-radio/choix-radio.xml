@@ -1,0 +1,16 @@
+<window title="Choix unique" width-request="320" height-request="200">
+  <vbox spacing="8">
+    <text><label>Sélectionnez un profil :</label></text>
+    <frame label="Profil">
+      <vbox>
+        <radiobutton><label>Débutant</label><variable>PROFIL</variable><default>true</default></radiobutton>
+        <radiobutton><label>Intermédiaire</label><variable>PROFIL</variable></radiobutton>
+        <radiobutton><label>Expert</label><variable>PROFIL</variable></radiobutton>
+      </vbox>
+    </frame>
+    <hbox>
+      <button ok></button>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

@@ -22,6 +22,7 @@
 #include "widgets.h"
 #include "tag_attributes.h"
 #include "widget_button.h"
+#include "jouer_actions.h"
 #include "widget_togglebutton.h"
 #include "safe_exec.h"
 #include "actions.h"
@@ -37,16 +38,9 @@ extern void action_exitprogram(GtkWidget *widget, char *string);
  * version passait la PREMIERE action brute a safe_system. */
 static void _button_clicked(void *data, Evas_Object *obj, void *event_info)
 {
-    AttributeSet *Attr = (AttributeSet *)data;
-    GList *el = NULL;
-    gchar *fn;
     (void)event_info;
-    if (!Attr) return;
-    fn = attributeset_get_first(&el, Attr, ATTR_ACTION);
-    while (fn) {
-        if (*fn) execute_action((GtkWidget *)obj, fn, NULL);
-        fn = attributeset_get_next(&el, Attr, ATTR_ACTION);
-    }
+    /* toutes les actions, chacune avec sa fonction : voir jouer_actions.h */
+    jouer_actions((GtkWidget *)obj, (AttributeSet *)data, "clicked", "toggled");
 }
 
 /* Sortie par defaut : variables + EXIT="<valeur>", puis exit. */

@@ -10,6 +10,11 @@ string(STRIP "${SERMO_VERSION}" SERMO_VERSION)
 
 project(gtk3sermo VERSION ${SERMO_VERSION} LANGUAGES C)
 
+# Le lien se fait en -pie : le code doit être compilé en -fPIE. Debian le fait par
+# défaut, pas toutes les distributions (Slackware 15 : « relocation R_X86_64_32 …
+# recompile with -fPIE », mesuré le 2026-10-10).
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 # FORTIFY_SOURCE n'agit qu'avec l'optimisation : sans type de build, CMake ne
 # passe aucun -O et la protection promise par SECURITY.md reste lettre morte.
 # Même règle que qt6, sdl3 et ncurses. Vérifié par tests/garde_fortify_coeur.sh

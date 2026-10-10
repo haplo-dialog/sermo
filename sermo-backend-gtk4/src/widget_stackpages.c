@@ -15,7 +15,7 @@
  * ⚠️ NE PAS CONFONDRE avec widget_stack.c de ce port : celui-là est le GtkStack
  * natif de gtk4sermo, qui exporte le NOM de la page et n'a AUCUN jeton dans le
  * lexer (inatteignable depuis le XML, comme revealer/flowbox/overlay). Le tag
- * <stack>, commun aux sept ports, c'est CE fichier-ci.
+ * <stack>, commun à tous les ports, c'est CE fichier-ci.
  */
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE

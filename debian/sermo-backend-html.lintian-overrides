@@ -1,0 +1,3 @@
+# Pas d'envoi dans l'archive Debian : aucun bogue ITP à fermer. sermo est
+# distribué par le dépôt de son projet (https://gitlab.com/haplo-dialog/sermo).
+initial-upload-closes-no-bugs

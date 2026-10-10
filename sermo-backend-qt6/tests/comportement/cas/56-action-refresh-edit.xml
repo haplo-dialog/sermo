@@ -1,0 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: action refresh : l <input> d un <edit> est rejoue et la nouvelle valeur ressort -->
+<window><vbox>
+<edit><variable>STATUT</variable><input>sh donnees/compteur.sh</input></edit>
+<timer visible="false"><variable>_T</variable><action>refresh:STATUT</action><action>exit:fin</action></timer></vbox></window>

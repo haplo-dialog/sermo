@@ -28,21 +28,14 @@
 #include "stack.h"
 #include "actions.h"
 #include "widget_eventbox.h"
+#include "jouer_actions.h"
 #include <stdlib.h>
 
 /* Toutes les <action> de la zone, via le répartiteur du cœur. */
 static void _eventbox_clic(void *data, Evas *e, Evas_Object *obj, void *ev)
 {
-    AttributeSet *Attr = (AttributeSet *) data;
-    GList *el = NULL;
-    gchar *fn;
     (void) e; (void) ev;
-    if (!Attr) return;
-    fn = attributeset_get_first(&el, Attr, ATTR_ACTION);
-    while (fn) {
-        if (*fn) execute_action((GtkWidget *) obj, fn, NULL);
-        fn = attributeset_get_next(&el, Attr, ATTR_ACTION);
-    }
+    jouer_actions((GtkWidget *) obj, (AttributeSet *) data, "button-press-event", NULL);
 }
 
 GtkWidget *widget_eventbox_create(AttributeSet *Attr, tag_attr *attr, gint Type)

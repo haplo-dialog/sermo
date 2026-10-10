@@ -1,0 +1,17 @@
+<window title="Points de montage" width-request="440" height-request="300">
+  <vbox spacing="8">
+    <text><label>Sélectionnez un support :</label></text>
+    <tree scrollable="true" rules-hint="true">
+      <label>Support|Point de montage|Système de fichiers</label>
+      <variable>SUPPORT</variable>
+      <item stock-id="gtk-harddisk">Disque système|/|ext4</item>
+      <item stock-id="gtk-directory">Données|/home|ext4</item>
+      <item stock-id="gtk-cdrom">CD-ROM|/media/cdrom|iso9660</item>
+      <item stock-id="gtk-floppy">Clé USB|/media/usb|vfat</item>
+    </tree>
+    <hbox>
+      <button ok></button>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

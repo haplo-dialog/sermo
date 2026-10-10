@@ -65,6 +65,12 @@ typedef enum {
 	CommandStop              = 21
 } CommandType;
 
+/* Ces fonctions vivent dans le cœur, écrit en C : un fichier C++ de ce port
+ * doit les voir sous leur nom C (même garde que libsermocore/include). */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef G_OS_WIN32
 ssize_t getline(char **lineptr, size_t *n, FILE *stream);
 #endif
@@ -110,6 +116,10 @@ list_t *linecutter(char *str, int fs );
 void list_t_free(list_t *ptr);
 char *str_default_name (int itype);
 gint strnatcmp(gchar *c1, gchar *c2, gint sensitive);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

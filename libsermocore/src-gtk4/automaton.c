@@ -1331,7 +1331,7 @@ instruction_execute_push(
 			/* ⚠️ Le <stack> NATIF de gtk4sermo (GtkStack, exporte le NOM de la
 			 * page). Il n'a aucun jeton dans le lexer : inatteignable depuis le
 			 * XML, comme REVEALER/FLOWBOX/OVERLAY. À ne pas confondre avec
-			 * WIDGET_STACK_PAGES, le <stack>, commun aux sept ports. */
+			 * WIDGET_STACK_PAGES, le <stack>, commun à tous les ports. */
 			Widget = widget_stack_create(Attr, tag_attributes, Widget_Type);
 			push_widget(Widget, Widget_Type);
 			break;

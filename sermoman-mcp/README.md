@@ -6,7 +6,7 @@ assistant IA.**
 Ce petit serveur [MCP](https://modelcontextprotocol.io) donne à un assistant IA
 (Claude, ou tout autre client compatible) une connaissance précise et à jour de
 **sermo** : la syntaxe XML des dialogues, l'architecture modulaire (le cœur
-`libsermocore` et les sept backends de rendu), l'histoire du projet et son
+`libsermocore` et les neuf backends de rendu), l'histoire du projet et son
 écosystème d'outils. Votre assistant peut alors vous aider à écrire des
 dialogues corrects, sans inventer de balise.
 
@@ -55,9 +55,9 @@ Redémarrez votre client : l'assistant dispose alors des outils ci-dessous.
 
 | Outil | Ce qu'il donne |
 |-------|----------------|
-| `sermo_reference` | La référence complète de la syntaxe XML (widgets, attributs, sous-éléments), commune aux sept backends. |
+| `sermo_reference` | La référence complète de la syntaxe XML (widgets, attributs, sous-éléments), commune aux neuf backends. |
 | `sermo_guide` | Le guide de prise en main (le cœur et les backends, installation, compatibilité gtkdialog, sécurité, licences). |
-| `sermo_architecture` | L'architecture modulaire : `libsermocore`, les sept backends, le contrat cœur↔backend, les variantes de build, le packaging, les bancs. |
+| `sermo_architecture` | L'architecture modulaire : `libsermocore`, les neuf backends, le contrat cœur↔backend, les variantes de build, le packaging, les bancs. |
 | `sermo_heritage` | La vie de sermo : lignée gtkdialog → haplo-dialog → sermo, historique des versions, feuille de route, bilan de santé. |
 | `sermo_ecosystem` | Les outils autour de sermo (sermoman-mcp, le binaire et ses options de vérification) : quel outil pour quoi. |
 | `sermo_search` | Recherche plein texte dans toute la documentation embarquée. |

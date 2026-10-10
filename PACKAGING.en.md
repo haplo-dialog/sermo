@@ -19,11 +19,13 @@ Debian testing system.
 | `sermo-backend-fltk1` | `fltk1sermo` binary, man page, Texinfo manual | FLTK 1.4 |
 | `sermo-backend-efl1` | `efl1sermo` binary, man page, Texinfo manual | Enlightenment/Elementary |
 | `sermo-backend-sdl3` | `sdl3sermo` binary, man page, Texinfo manual | SDL 3 |
+| `sermo-backend-lvgl` | `lvglsermo` binary (LVGL embedded), man page, Texinfo manual | X11, Wayland, xkbcommon, libpng |
 | `sermo-backend-ncurses` | `ncursessermo` binary, man page, Texinfo manual | ncursesw (terminal) |
+| `sermo-backend-html` | `htmlsermo` binary (export as an HTML page), man page, Texinfo manual | no graphics library |
 | `sermo-gtkdialog` | the `gtkdialog` command and the `gtkdialog(1)` page, links to gtk3sermo | `sermo-backend-gtk3` |
 | `gtk3sermo`, `gtk4sermo`, `qt6sermo`, `gtksermo` | transitional packages, empty | the 2.x package that replaces them, and `sermo-doc` |
 
-That is **14 packages**, plus one `-dbgsym` package (debug symbols) per backend.
+That is **16 packages**, plus one `-dbgsym` package (debug symbols) per backend.
 The dependencies are computed by `dh_shlibdeps` from the libraries actually
 linked: they are neither guessed nor copied by hand.
 
@@ -42,7 +44,7 @@ attach their `/usr/share/doc` to `sermo-doc`'s through a symlink. A
 transitional package held nothing else: `gtk3sermo` went from 32 kB to
 **1.2 kB**.
 
-⚠️ The eight architecture dependent packages **keep their own `copyright`**, as
+⚠️ The ten architecture dependent packages **keep their own `copyright`**, as
 policy requires: `--link-doc` does not cross the "all" / "any" boundary, and
 `debhelper` actively rejects the combination since compatibility level 10
 (CAVEAT 2 of `dh_installdocs`).
@@ -82,15 +84,17 @@ loop); it will make the `.so` + run-time split possible and remove the
 duplication.
 
 Three variants of the core are used for the build: neutral (qt6, fltk1, efl1,
-sdl3, ncurses), GLib (gtk3) and GTK 4 (gtk4). Only the neutral variant ships in
+sdl3, lvgl, ncurses, html), GLib (gtk3) and GTK 4 (gtk4). Only the neutral variant ships in
 `sermo-core-dev`.
 
 ## The `sermo` alias
 
 Each backend registers with `update-alternatives` for `/usr/bin/sermo`
 (`debian/sermo-backend-<t>.alternatives`, installed by `dh_installalternatives`).
-Priorities: gtk3=50, gtk4=45, qt6=40, fltk1=30, efl1=20, sdl3=10, ncurses=5; the
-GTK 3 backend is therefore the default when several are installed. The `sermo(1)`
+Priorities: gtk3=50, gtk4=45, qt6=40, fltk1=30, efl1=20, sdl3=10, lvgl=8,
+ncurses=5, html=1; the GTK 3 backend is therefore the default when several are
+installed, and html, which opens no window, only answers to "sermo" when it is
+the only one installed. The `sermo(1)`
 page and the `sermo` Texinfo manual follow the same choice.
 
 ```sh
@@ -123,7 +127,7 @@ as `.deb` files attached to the release. Installing the wanted 2.x packages from
 their files removes the 1.x packages they replace:
 
 ```sh
-sudo apt install ./sermo-backend-gtk3_2.7.7-1_amd64.deb ./sermo-gtkdialog_2.7.7-1_all.deb
+sudo apt install ./sermo-backend-gtk3_2.8.0-1_amd64.deb ./sermo-gtkdialog_2.8.0-1_all.deb
 ```
 
 Tested on 2026-09-17 in a clean Debian testing container, without network,
@@ -187,7 +191,7 @@ SERMO_TASKSET=0,1 bash packaging/bancs-sur-paquets.sh packaging/sortie/paquets <
 ```
 
 The script clones the commit, builds the tree (the core benches need it),
-replaces the tree's seven binaries with those extracted from the `.deb` files
+replaces the tree's nine binaries with those extracted from the `.deb` files
 (SHA-256 sums compared), checks that each binary finds its symbols in its
 `-dbgsym` package, then runs `ci/bancs.sh` unchanged. `SERMO_TASKSET` restricts
 the measurement to given CPU cores, like a shared CI runner: run nothing else on
@@ -201,7 +205,7 @@ sudo apt build-dep ./
 dpkg-buildpackage -us -uc -b
 ```
 
-`debian/rules` builds the three core variants and the seven backends, and during
+`debian/rules` builds the three core variants and the nine backends, and during
 the build replays the unit tests and the XML bench on every binary
 (`DEB_BUILD_OPTIONS=nocheck` skips them). The packages land in the parent
 directory.
@@ -217,9 +221,9 @@ upstream…). Provenance, port by port, is detailed in
 ## Installing and uninstalling
 
 ```sh
-sudo apt install ./sermo-backend-gtk3_2.7.7-1_amd64.deb      # GTK 3
-sudo apt install ./sermo-gtkdialog_2.7.7-1_all.deb           # + the gtkdialog command
-sudo apt install ./sermo-core-dev_2.7.7-1_amd64.deb          # to build a backend
+sudo apt install ./sermo-backend-gtk3_2.8.0-1_amd64.deb      # GTK 3
+sudo apt install ./sermo-gtkdialog_2.8.0-1_all.deb           # + the gtkdialog command
+sudo apt install ./sermo-core-dev_2.8.0-1_amd64.deb          # to build a backend
 
 sudo apt purge sermo-gtkdialog sermo-backend-gtk3            # remove everything
 ```

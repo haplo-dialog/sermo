@@ -49,6 +49,11 @@ GtkWidget *widget_list_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         if ((v = get_tag_attribute(attr, "variable")) && *v)
             node->var_name = strdup(v);
     }
+    /* Les actions sont jouées par le rendu à chaque changement de sélection
+     * (et une fois pour celle du chargement), comme « selection-changed » de
+     * l'étalon. <tree> fabrique aussi un WT_LIST, mais sans ce jeu : ses
+     * actions suivent un autre signal. */
+    node->actions_attr = (void *)Attr;
 
     return (GtkWidget *)node;
 }

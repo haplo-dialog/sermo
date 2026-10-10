@@ -13,7 +13,7 @@
  * sait pas faire : les colonnes sont ALIGNÉES d'une rangée à l'autre.
  *
  * Ce port est l'ÉTALON : c'est lui qui fabrique les .attendu du banc de
- * comportement. Les six autres se règlent sur ce qu'il rend.
+ * comportement. Les autres ports se règlent sur ce qu'il rend.
  *
  * Attributs de balise :
  *   columns="N"           nombre de colonnes (défaut 1, avec avertissement)

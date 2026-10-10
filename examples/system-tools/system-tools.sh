@@ -930,14 +930,14 @@ XMLEOF
 
 # ── Vérification des dépendances ────────────────────────────────────────────
 
-# Le binaire : premier argument, sinon le premier des sept ports trouvé dans le
+# Le binaire : premier argument, sinon le premier port à fenêtre (ou ncurses) trouvé dans le
 # PATH, sinon l'alias « sermo » posé par update-alternatives. Le script codait
 # « gtk3sermo » en dur : il ne démarrait pas là où un autre port était installé.
 choisir_dialogue() {
     if [ -n "${1:-}" ] && command -v "$1" &>/dev/null; then DIALOG="$1"; return 0; fi
     local d
     for d in sermo gtk3sermo gtk4sermo qt6sermo fltk1sermo efl1sermo sdl3sermo \
-             ncursessermo gtkdialog; do
+             lvglsermo ncursessermo gtkdialog; do
         if command -v "$d" &>/dev/null; then DIALOG="$d"; return 0; fi
     done
     return 1
@@ -964,7 +964,7 @@ identite_port() {
 
 check_deps() {
     local missing=()
-    choisir_dialogue "${DIALOG_DEMANDE:-}" || missing+=("sermo (un des sept ports)")
+    choisir_dialogue "${DIALOG_DEMANDE:-}" || missing+=("sermo (un de ses ports)")
     command -v pkexec &>/dev/null || missing+=("pkexec")
     [ -n "$TERMINAL" ] || missing+=("un terminal graphique")
     [ -n "$EDITEUR" ]  || missing+=("un editeur graphique")

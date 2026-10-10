@@ -1,0 +1,13 @@
+<window title="Recherche" width-request="360">
+  <vbox spacing="8">
+    <text><label>Terme à rechercher :</label></text>
+    <searchentry>
+      <variable>TERME</variable>
+      <default>haplo</default>
+    </searchentry>
+    <hbox>
+      <button ok></button>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

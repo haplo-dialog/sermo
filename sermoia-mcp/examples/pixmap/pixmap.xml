@@ -1,0 +1,7 @@
+<window title="Pixmap" width-request="300" height-request="200">
+  <vbox spacing="8">
+    <text><label>Une icône « stock » affichée par pixmap :</label></text>
+    <pixmap><input file stock="gtk-info"></input></pixmap>
+    <button ok></button>
+  </vbox>
+</window>

@@ -40,6 +40,12 @@ declare -A PERMIS=(
     ['libsermocore/src/sermo_input.c|return sermo_input_wrap(fopen(chemin, "r"), chemin);']=1
     # fltk1 : les réglages de thème du bureau (clair ou sombre).
     ['sermo-backend-fltk1/src/fltk-compat.cpp|FILE *f = fopen(path.c_str(), "r");']=1
+    # html : trois lectures qui ne sont pas un <input> — le nonce du micro-serveur
+    # (NONCE_BYTES octets de /dev/urandom), la feuille de style SERMO_HTML_CSS
+    # (refusée au-delà de CSS_MAX_BYTES) et l'image à embarquer (refusée au-delà
+    # de SERMO_HTML_IMG_MAX). Chacune est bornée AVANT d'être lue.
+    ['sermo-backend-html/src/serve_http.c|FILE *f = fopen("/dev/urandom", "rb");']=1
+    ['sermo-backend-html/src/render_html.c|FILE *f = fopen(path, "rb");']=2
 )
 
 MOTIF='\bfopen[[:space:]]*\(.*"r|\bfdopen[[:space:]]*\(.*"r|\bopen[[:space:]]*\(.*O_RDONLY|g_file_get_contents|g_file_load_contents|g_mapped_file_new|std::ifstream|QIODevice::ReadOnly'

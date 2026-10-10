@@ -5,6 +5,28 @@ This file summarises changes from the user's point of view.
 For the full technical history, see CHANGELOG.en.md.
 
 ──────────────────────────────────────────────────
+Version 2.8.0
+──────────────────────────────────────────────────
+
+Minor release: nine ports instead of seven.
+
+* htmlsermo writes the dialog into a standalone HTML page instead of
+  opening a window; it needs no graphics library. With
+  SERMO_HTML_MODE=serve, the page is served locally and returns the
+  entered values.
+
+* lvglsermo draws with LVGL: Wayland, X11, or a framebuffer on request —
+  for kiosks and screens without a desktop.
+
+* sermoia-mcp, a second MCP server, helps an AI write, check and see a
+  dialog.
+
+* Package recipes for Arch, Fedora (RPM), Gentoo, Slackware, Alpine and
+  NixOS, in packaging/autres-os/.
+
+* HISTOIRE.en.md tells the history of gtkdialog and its maintainers.
+
+──────────────────────────────────────────────────
 Version 2.7.7
 ──────────────────────────────────────────────────
 
@@ -312,20 +334,122 @@ gtk4: a script using them got a silently truncated window, without a word of
 warning.
 
 ──────────────────────────────────────────────────
-Version 2.5.0
+Version 2.5.0, Four more tags
 ──────────────────────────────────────────────────
 
-The same XML script renders an equivalent interface on SEVEN backends: gtk3,
-gtk4, qt6, fltk1, efl1, sdl3 and ncurses (in the terminal). You write your
-dialog once; you then choose where it shows up.
+<toolbar> arranges buttons in a row that calls itself a toolbar. <stack> shows
+N pages, one at a time, without a <notebook>'s tabs; one attribute is enough to
+add the navigation buttons. <wizard> chains steps together with Previous, Next
+and Finish. <menubutton> puts a menu where you are, not only at the top of the
+window.
 
-Each backend installs on its own and pulls in only its own graphical library.
-The parsing and execution core is shared by the seven ports; gtk4 keeps a
-variant of it adapted to GTK 4.
+All four work on the seven ports. None of them is borrowed as-is from a
+toolkit: GTK 4 removed both the assistant and the toolbar, and Qt's QWizard is
+a window, not something you place inside a box. They are therefore COMPOSED,
+the same way everywhere, so that the same script gives the same result.
 
-The language has 62 widget types. For layout, <grid> aligns the columns of a
-form and <paned> splits the space between two areas with a draggable handle.
-For structure, <toolbar>, <stack>, <wizard> and <menubutton>.
+──────────────────────────────────────────────────
+Version 2.4.0, One number, one spelling
+──────────────────────────────────────────────────
 
-Your gtkdialog scripts keep working: the sermo-gtkdialog package provides the
-gtkdialog command.
+The number a script receives no longer depends on the machine's language, nor
+on the port. It is written with a DOT, always: under a French locale,
+<hscale digits="2"> used to render "2,50" - a script comparing "2.50"
+recognised nothing any more.
+
+The digits= attribute is now honoured by all seven ports: four of them rendered
+"2" where the reference rendered "2,50". And <progressbar> no longer exports
+anything at all, like the reference: it is a display, not an input.
+
+If you were comparing values by hand to work around those discrepancies, you
+can stop.
+
+──────────────────────────────────────────────────
+Version 2.3.1, The value that depended on the machine
+──────────────────────────────────────────────────
+
+<levelbar> rendered nothing on four ports, and anything at all on the others.
+<drawingarea> was chatty: one port rendered its dimensions, two others the word
+"canvas", where the reference renders nothing.
+
+Worse and quieter: the value written depended on the machine's LANGUAGE. The
+same script, on the same binary, rendered "0,5" here and "0.5" there. That is
+repaired for writing as well as for reading.
+
+Also fixed: a <progressbar> with no attribute at all made the FLTK port stop.
+The most ordinary tag there is.
+
+──────────────────────────────────────────────────
+Version 2.3.0, The handle
+──────────────────────────────────────────────────
+
+<paned> splits the window into two areas separated by a handle YOU drag. An
+<hbox> freezes the split when the script is written; a <paned> lets it move.
+Attributes: orientation, position (in pixels or as a percentage), resizable.
+
+Exactly two children. A third one is refused with a message: it is never
+swallowed in silence.
+
+On all seven ports, including in the terminal, where the boundary moves with
+the arrow keys.
+
+──────────────────────────────────────────────────
+Version 2.2.0, A grid, at last
+──────────────────────────────────────────────────
+
+<grid columns="N"> lays children out in flow - in script order, wrapping every
+N - and ALIGNS the columns from one row to the next.
+
+Until now the language had 62 widget types and only TWO layout containers,
+<hbox> and <vbox>: a two-column form was written by stacking <hbox>, and each
+row sized itself on its own. The labels never lined up with one another.
+
+Careful: <grid> is not <table>. <table> is the column list of data inherited
+from gtkdialog.
+
+──────────────────────────────────────────────────
+Version 2.1.1, The tags that were pretending
+──────────────────────────────────────────────────
+
+Five tags were accepted while doing nothing, depending on the port: <eventbox>
+lost its child, <linkbutton> and <pulse> returned an empty value, <image> was
+short-circuited, and <filechooser> returned its default value without ever
+letting anything be CHOSEN.
+
+They now work everywhere. The <filechooser> opens the system's native selector
+wherever the toolkit provides one.
+
+None of those tags was measured by a bench: that is why the defect lasted so
+long. They are measured now.
+
+──────────────────────────────────────────────────
+Version 2.1.0, The house put in order
+──────────────────────────────────────────────────
+
+Nothing new on screen: this version puts the house in order. qt6 sheds 9,198
+lines that served no purpose, a clone of the repository finally builds without
+looking for anything next to it, and every file now says who it belongs to.
+
+──────────────────────────────────────────────────
+Version 2.0.0, Modularisation
+──────────────────────────────────────────────────
+
+sermo splits into two parts: a shared core and one backend per graphical
+library. In practice you install the backend of your choice
+(“sermo-backend-gtk3”, “-fltk1”, “-qt6”…): each backend is self-contained
+(the core is statically linked in), there is nothing else to install.
+
+The main benefit is lightness. Installing the FLTK backend no longer pulls in
+GTK or Qt — each backend depends only on its own toolkit. On a minimal machine,
+that means a handful of dependencies instead of dozens.
+
+The same XML script gives the same interface on all seven backends (gtk3, gtk4,
+qt6, fltk1, efl1, sdl3 and ncurses — the last one, in the terminal, is the
+lightest). The “sermo” alias points at the default backend; scripts that call
+“gtkdialog” keep working thanks to the optional “sermo-gtkdialog” package (GTK 3
+backend).
+
+Each backend now follows your system theme (light or dark).
+
+All seven backends render exactly the same values as the reference port
+(24 cases out of 24). The last GTK 4 discrepancies have been fixed.
