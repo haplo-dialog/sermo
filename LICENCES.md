@@ -35,8 +35,10 @@ relève de la licence du projet, sauf s'il figure dans le tableau ci-dessous.
 
 sermo part de **gtkdialog 0.8.3** (`PACKAGE_VERSION='0.8.3'`, déclaré par le
 paquet), écrit par **Pere László** et repris par **Thunor** à partir de 2011.
-L'amont demande `gtk+-2.0` et **uniquement** cela : il n'a jamais eu d'autre
-couche de rendu que GTK2.
+Cette archive, publiée le 6 janvier 2013, demande `gtk+-2.0` et **uniquement**
+cela : elle n'a pas d'autre couche de rendu que GTK2 (le GTK 3 expérimental de
+Thunor, ajouté ensuite dans svn, n'a jamais été publié en archive). L'histoire
+complète de gtkdialog et de ses descendants est dans [HISTOIRE.md](HISTOIRE.md).
 
 Ce point n'est pas anecdotique. Il détermine ce qui, dans ce dépôt, vient de
 l'amont et ce qui a été écrit ici — parce qu'on ne transpose pas du code GTK2
@@ -59,8 +61,9 @@ moitié des lignes du fichier se retrouvent à l'identique dans gtkdialog 0.8.3)
 - **`gtk3` et `gtk4` sont des portages** des widgets GTK2 de l'amont. Leurs
   en-têtes le disent : `(GTK3 port, security)`, `(GTK4 port)`.
 - **`gtk3` a un SECOND amont.** L'ancrage Wayland (`layer-shell`) ne vient pas de
-  gtkdialog 0.8.3, qui date de 2012 : il vient de la lignée reprise plus tard
-  (BunsenLabs / Puppy Linux). Une trentaine de lignes dans
+  gtkdialog 0.8.3, publié en janvier 2013 : il a été écrit en 2021 dans la
+  lignée reprise par Puppy Linux (woof-CE), puis repris dans gtk3dialog
+  (01micko), que BunsenLabs empaquette — c'est de là que sermo l'a porté. Une trentaine de lignes dans
   `sermo-backend-gtk3/src/widget_window.c` et les attributs XML `layer`, `edge`,
   `dist`, `reserve`. Copyrights conservés :
   **Dima Krasner** (2021) et **Mick Amadio** (2021-2024). La bibliothèque

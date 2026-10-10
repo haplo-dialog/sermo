@@ -68,7 +68,7 @@ sortie.append(bloc(sources_amont(), [LASZLO, THUNOR_CODE, CAGE], 'GPL-2+',
      'et GTK 4, manuels.']))
 sortie.append(bloc(['sermo-backend-gtk3/src/widget_window.c'],
     [LASZLO, THUNOR_CODE, '2021 Dima Krasner <dima@dimakrasner.com>', '2021-2024 Mick Amadio <01micko@gmail.com>', CAGE], 'GPL-2+',
-    ["L'ancrage Wayland (layer-shell) vient de la lignée BunsenLabs / Puppy Linux."]))
+    ["L'ancrage Wayland (layer-shell) vient de la lignée woof-CE (Puppy Linux), par gtk3dialog."]))
 sortie.append(bloc(['examples/*', 'sermoman-mcp/data/examples/*'], [LASZLO, THUNOR_EX, CAGE], 'GPL-2+',
     ['188 des 213 fichiers de examples/ existent dans gtkdialog 0.8.3 (73 à',
      "l'identique) ; pfeme, pfontview et playmusic sont des applications de Thunor.",

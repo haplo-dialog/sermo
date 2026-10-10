@@ -335,7 +335,7 @@ Copyright: 2003-2007 László Pere <pipas@linux.pte.hu>
            2021-2024 Mick Amadio <01micko@gmail.com>
            2026 S. Cage <devel@haplo-dialog.fr>
 License: GPL-2+
-Comment: L'ancrage Wayland (layer-shell) vient de la lignée BunsenLabs / Puppy Linux.
+Comment: L'ancrage Wayland (layer-shell) vient de la lignée woof-CE (Puppy Linux), par gtk3dialog.
 
 Files: examples/*
        sermoman-mcp/data/examples/*

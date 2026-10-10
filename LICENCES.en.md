@@ -34,8 +34,10 @@ project license, unless it is listed in the table below.
 
 sermo starts from **gtkdialog 0.8.3** (`PACKAGE_VERSION='0.8.3'`, as declared by
 the package), written by **Pere László** and taken over by **Thunor** from 2011.
-Upstream requires `gtk+-2.0` and **only** that: it never had any rendering layer
-other than GTK2.
+That archive, released on 6 January 2013, requires `gtk+-2.0` and **only** that:
+it has no rendering layer other than GTK2 (Thunor's experimental GTK 3, added to
+svn afterwards, was never released as an archive). The full history of
+gtkdialog and its descendants is in [HISTOIRE.en.md](HISTOIRE.en.md).
 
 This is not a detail. It determines what, in this repository, comes from
 upstream and what was written here — because GTK2 code cannot be carried over to
@@ -58,8 +60,9 @@ of the file's lines are found identical in gtkdialog 0.8.3):
 - **`gtk3` and `gtk4` are ports** of upstream's GTK2 widgets. Their headers say
   so: `(GTK3 port, security)`, `(GTK4 port)`.
 - **`gtk3` has a SECOND upstream.** Wayland anchoring (`layer-shell`) does not
-  come from gtkdialog 0.8.3, which dates from 2012: it comes from the later
-  lineage (BunsenLabs / Puppy Linux). About thirty lines in
+  come from gtkdialog 0.8.3, released in January 2013: it was written in 2021 in
+  the line taken over by Puppy Linux (woof-CE), then carried into gtk3dialog
+  (01micko), which BunsenLabs packages — that is where sermo ported it from. About thirty lines in
   `sermo-backend-gtk3/src/widget_window.c` and the XML attributes `layer`,
   `edge`, `dist`, `reserve`. Copyrights kept: **Dima Krasner** (2021) and
   **Mick Amadio** (2021-2024). The `gtk-layer-shell` library itself is a system

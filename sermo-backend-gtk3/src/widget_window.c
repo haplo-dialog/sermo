@@ -5,7 +5,7 @@
  * Copyright (C) 2003-2007  László Pere <pipas@linux.pte.hu>
  * Copyright (C) 2011-2012  Thunor <thunorsif@hotmail.com>
  * Copyright (C) 2021       Dima Krasner <dima@dimakrasner.com> (layer-shell)
- * Copyright (C) 2021-2024  Mick Amadio <01micko@gmail.com> (layer-shell, BunsenLabs)
+ * Copyright (C) 2021-2024  Mick Amadio <01micko@gmail.com> (layer-shell, woof-CE)
  * Copyright (C) 2026  haplo-dialog <devel@haplo-dialog.fr> (GTK3 port, security)
  * 
  * This program is free software; you can redistribute it and/or modify
@@ -170,10 +170,11 @@ void widget_window_clear(variable *var)
  * wlr-layer-shell, the attributes are ignored and the window is created as
  * an ordinary toplevel.
  *
- * Ported from the BunsenLabs gtk3dialog fork -- layer-shell support there
- * was written by Dima Krasner <dima@dimakrasner.com> (2021) and extended by
- * Mick Amadio <01micko@gmail.com> (2021-2024)
- * (https://github.com/BunsenLabs/gtk3dialog, src/widget_window.c, GPL-2+)
+ * Ported from gtk3dialog as packaged by BunsenLabs
+ * (https://github.com/BunsenLabs/gtk3dialog, src/widget_window.c, GPL-2+).
+ * The layer-shell support was written in woof-CE's gtkdialog by Dima Krasner
+ * <dima@dimakrasner.com> (2021) and extended by Mick Amadio
+ * <01micko@gmail.com> (2021-2024); see HISTOIRE.md.
  * with two corrections to the original:
  *
  *   1. Upstream parsed dist= into a gushort and then range-checked it with

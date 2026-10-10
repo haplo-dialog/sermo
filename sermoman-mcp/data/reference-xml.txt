@@ -28,9 +28,10 @@ DESCRIPTION
      On peut aussi appeler un backend précis : gtk3sermo, gtk4sermo, qt6sermo,
      fltk1sermo, efl1sermo, sdl3sermo, ncursessermo.
 
-     La syntaxe descend de gtkdialog 0.8.3 (Pere Laszlo, 2003-2011). Le paquet
-     du backend GTK 3 fournit le paquet virtuel « gtkdialog », si bien que les
-     vieux scripts qui appellent gtkdialog(1) continuent de fonctionner.
+     La syntaxe descend de gtkdialog 0.8.3 (Pere Laszlo 2003-2007, puis Thunor
+     2011-2013 ; voir HISTOIRE.md). Le paquet du backend GTK 3 fournit le
+     paquet virtuel « gtkdialog », si bien que les vieux scripts qui appellent
+     gtkdialog(1) continuent de fonctionner.
 
 
 STRUCTURE GÉNÉRALE

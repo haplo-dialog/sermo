@@ -16,9 +16,11 @@ when the light theme is requested ([TODO.md](TODO.md) (French only)). The image 
 
 ## Where sermo comes from
 
-sermo is a fork of **gtkdialog 0.8.3**, written by Pere László and then taken
-over by Thunor, under GPL-2.0-or-later. The original line continues here:
-<https://github.com/puppylinux-woof-CE/gtkdialog>.
+sermo is a fork of **gtkdialog 0.8.3**, written by Pere László (2004-2007) and
+then taken over by Thunor (2011-2013), under GPL-2.0-or-later. The original line
+continues at Puppy Linux: <https://github.com/puppylinux-woof-CE/gtkdialog>. Who
+did what, when, and where the other descendants stand (gtk3dialog, gtkdialog3):
+[HISTOIRE.en.md](HISTOIRE.en.md).
 
 sermo keeps gtkdialog's XML language and parser. It replaces GTK 2 with seven
 rendering layers around a shared core, and puts bounds on command execution.

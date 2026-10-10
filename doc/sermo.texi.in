@@ -42,7 +42,7 @@ Debian systems the full text is in @file{/usr/share/common-licenses/GPL-2}.
 @title sermo User Manual
 @subtitle Édition modulaire — version @value{VERSION}
 @subtitle haplo-dialog — @value{UPDATED-MONTH}
-@author László Pere (gtkdialog original), Thunor (2011--2014)
+@author László Pere (gtkdialog original, 2003--2007), Thunor (2011--2013)
 @author haplo-dialog (sermo, 2026)
 @page
 @vskip 0pt plus 1filll
@@ -82,7 +82,7 @@ des interfaces graphiques sans aucune connaissance de la programmation d'une
 boîte à outils graphique.
 
 @command{sermo} est le successeur moderne, durci et maintenu de gtkdialog
-(László Pere, 2003--2007 ; Thunor, 2011--2014). Sa forme actuelle est
+(László Pere, 2003--2007 ; Thunor, 2011--2013). Sa forme actuelle est
 @emph{modulaire} : le programme est séparé en un cœur unique et des backends de
 rendu (voir @ref{Architecture}).
 

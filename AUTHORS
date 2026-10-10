@@ -32,7 +32,8 @@ Pere László <pipas@linux.pte.hu>
   - Auteur original de gtkdialog (copyright 2003-2007)
 
 Thunor <thunorsif@hotmail.com>
-  - Mainteneur de gtkdialog 0.8.x, jusqu'à la 0.8.3 (copyright 2011-2012)
+  - Second mainteneur de gtkdialog, 2011-2013 : séries 0.8.x, jusqu'à la 0.8.3
+    (copyright 2011-2012)
 
 Kiss Gábor <gabor@gamma.ttk.pte.hu>
   - Documentation de gtkdialog
@@ -43,14 +44,18 @@ Correctifs de gtkdialog (d'après son fichier AUTHORS) :
   Szabo Viktor <wyck@freemail.hu>, Csaszar-Csutoras Peter <spy@c2.hu>
 
 ──────────────────────────────────────────────────
-Portage GTK3 tiers, BunsenLabs / Puppy Linux
+Ancrage Wayland (layer-shell), lignée woof-CE / Puppy Linux
 ──────────────────────────────────────────────────
 
-Dima Krasner <dima@dimakrasner.com>
-  - Support Wayland layer-shell dans le fork BunsenLabs (2021)
+Écrit dans gtkdialog chez woof-CE, puis repris dans gtk3dialog (01micko),
+que BunsenLabs empaquette ; sermo l'a porté depuis ce dernier. Histoire
+complète : HISTOIRE.md.
 
-Mick Amadio <01micko@gmail.com>
-  - Support Wayland layer-shell (2021-2024)
+Dima Krasner <dima@dimakrasner.com>
+  - Ancrage Wayland layer-shell dans gtkdialog woof-CE (2021)
+
+Mick Amadio (01micko) <01micko@gmail.com>
+  - Ancrage Wayland layer-shell, suite (2021-2024) ; auteur de gtk3dialog
 
 ──────────────────────────────────────────────────
 Code tiers embarqué (backend sdl3)

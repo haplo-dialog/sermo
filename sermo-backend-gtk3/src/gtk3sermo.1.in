@@ -474,14 +474,14 @@ Online documentation and widget reference:
 .SH BUGS
 Report bugs at <https://haplo-dialog.fr> or <devel@haplo-dialog.fr>.
 .SH AUTHORS
-Pere Laszlo <pipas@linux.pte.hu> (original author, 2003-2011).
+Pere Laszlo <pipas@linux.pte.hu> (original author, 2003-2007).
 .br
-Thunor <thunorsif@hotmail.com> (2011-2014).
+Thunor <thunorsif@hotmail.com> (maintainer, 2011-2013).
 .br
 haplo-dialog <devel@haplo-dialog.fr> (GTK3 port, 2026).
 .SH COPYRIGHT
-Copyright \(co 2003-2011 Pere Laszlo.
-Copyright \(co 2011-2014 Thunor.
+Copyright \(co 2003-2007 Pere Laszlo.
+Copyright \(co 2011-2012 Thunor.
 Copyright \(co 2026 haplo-dialog.
 .PP
 License GPLv2+: GNU GPL version 2 or later

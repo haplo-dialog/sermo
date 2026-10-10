@@ -174,9 +174,10 @@ Ailleurs (X11, ou un compositeur Wayland sans ce protocole, comme GNOME),
 les quatre attributs sont ignorés et la fenêtre s'ouvre normalement : un
 message le signale sur la sortie d'erreur, le script continue.
 .br
-Cet ancrage est porté du fork \fIBunsenLabs gtk3dialog\fR, où il a été écrit
-par Dima Krasner (2021) puis étendu par Mick Amadio (2021\(en2024), sous
-GPL\-2.0\-or\-later. Voir \fBLICENCES.md\fR et \fBdebian/copyright\fR.
+Cet ancrage a été écrit dans gtkdialog chez \fIwoof\-CE\fR (Puppy Linux) par
+Dima Krasner (2021), puis étendu par Mick Amadio (2021\(en2024), sous
+GPL\-2.0\-or\-later ; il est passé dans \fIgtk3dialog\fR (empaqueté par
+BunsenLabs), d'où il est porté ici. Voir \fBLICENCES.md\fR et \fBdebian/copyright\fR.
 .br
 \fBPort GTK\ 3 uniquement\fR : \fBgtk4sermo\fR ne contient aucun code
 layer-shell \(em voir \fBgtk4sermo-xml\fR(5).
