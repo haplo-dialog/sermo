@@ -35,6 +35,12 @@ GtkWidget *widget_infobar_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     snprintf(node->state.infobar.message_type,
              sizeof(node->state.infobar.message_type), "info");
     node->state.infobar.revealed = TRUE;
+    /* message-type="info|warning|question|error" : la teinte du bandeau. */
+    if (attr) {
+        const char *mt = get_tag_attribute(attr, "message-type");
+        if (mt && *mt)
+            snprintf(node->state.infobar.message_type, sizeof(node->state.infobar.message_type), "%s", mt);
+    }
 
     if (Attr) {
         GList *el = NULL;

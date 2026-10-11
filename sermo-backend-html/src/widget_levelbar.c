@@ -36,6 +36,13 @@ GtkWidget *widget_levelbar_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     node->state.levelbar.min   = 0.0;
     node->state.levelbar.max   = 1.0;
     node->state.levelbar.level = 0;
+    /* range-min / range-max (attributs de la balise, comme l'étalon) : ignorés
+     * jusqu'à la 2.8.0, la barre se remplissait dès 1. */
+    if (attr) {
+        const char *v;
+        if ((v = get_tag_attribute(attr, "range-min"))) node->state.levelbar.min = g_ascii_strtod(v, NULL);
+        if ((v = get_tag_attribute(attr, "range-max"))) node->state.levelbar.max = g_ascii_strtod(v, NULL);
+    }
 
     if (Attr) {
         GList *el = NULL;

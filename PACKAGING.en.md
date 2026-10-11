@@ -127,7 +127,7 @@ as `.deb` files attached to the release. Installing the wanted 2.x packages from
 their files removes the 1.x packages they replace:
 
 ```sh
-sudo apt install ./sermo-backend-gtk3_2.8.0-1_amd64.deb ./sermo-gtkdialog_2.8.0-1_all.deb
+sudo apt install ./sermo-backend-gtk3_2.8.1-1_amd64.deb ./sermo-gtkdialog_2.8.1-1_all.deb
 ```
 
 Tested on 2026-09-17 in a clean Debian testing container, without network,
@@ -221,9 +221,9 @@ upstream…). Provenance, port by port, is detailed in
 ## Installing and uninstalling
 
 ```sh
-sudo apt install ./sermo-backend-gtk3_2.8.0-1_amd64.deb      # GTK 3
-sudo apt install ./sermo-gtkdialog_2.8.0-1_all.deb           # + the gtkdialog command
-sudo apt install ./sermo-core-dev_2.8.0-1_amd64.deb          # to build a backend
+sudo apt install ./sermo-backend-gtk3_2.8.1-1_amd64.deb      # GTK 3
+sudo apt install ./sermo-gtkdialog_2.8.1-1_all.deb           # + the gtkdialog command
+sudo apt install ./sermo-core-dev_2.8.1-1_amd64.deb          # to build a backend
 
 sudo apt purge sermo-gtkdialog sermo-backend-gtk3            # remove everything
 ```

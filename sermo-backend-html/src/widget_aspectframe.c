@@ -38,6 +38,12 @@ GtkWidget *widget_aspectframe_create(AttributeSet *Attr, tag_attr *attr, gint Ty
         gchar *lbl = attributeset_get_first(&el, Attr, ATTR_LABEL);
         if (lbl && *lbl) { free(node->label); node->label = strdup(lbl); }
     }
+    /* <aspectframe label="…"> : le titre est un attribut de balise chez
+     * l'étalon (gtk_aspect_frame_new), pas une balise <label>. */
+    if ((!node->label || !node->label[0]) && attr) {
+        const char *v = get_tag_attribute(attr, "label");
+        if (v && *v) { free(node->label); node->label = strdup(v); }
+    }
 
     /* Attacher l'enfant depuis la pile */
     stackelement s;

@@ -30,6 +30,11 @@ GtkWidget *widget_statusbar_create(AttributeSet *Attr, tag_attr *attr, gint Type
         GList *el = NULL;
         gchar *v = attributeset_get_first(&el, Attr, ATTR_LABEL);
         if (v && *v) label = v;
+        /* gtk3sermo pousse <label> puis <default> : le texte montré (et la variable)
+         * est <default> s'il est là. Ignoré jusqu'à la 2.8.0 : barre vide. */
+        el = NULL;
+        v = attributeset_get_first(&el, Attr, ATTR_DEFAULT);
+        if (v && *v) label = v;
     }
     WidgetNode *node = widget_node_new(WT_STATUSBAR, NULL, label);
     return (GtkWidget *)node;

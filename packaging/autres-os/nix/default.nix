@@ -15,7 +15,7 @@
 
 let
   inherit (pkgs) lib stdenv;
-  version = "2.7.7";
+  version = "2.8.1";
   src = lib.cleanSource ../../..;
 
   # Un backend : son nom de port (celui de construire-os.sh), ses entrées, sa

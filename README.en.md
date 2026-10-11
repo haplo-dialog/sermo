@@ -30,7 +30,7 @@ What comes from upstream and what was written here is counted file by file in
 
 ## Project status
 
-- Version **2.8.0**. sermo has **a single maintainer**, S. Cage. There is no team
+- Version **2.8.1**. sermo has **a single maintainer**, S. Cage. There is no team
   behind it: an answer may take time.
 - Part of the code, documentation and tests was written with the help of an AI
   (Claude, by Anthropic), directed and reviewed by the maintainer
@@ -107,17 +107,17 @@ without changing a single line of the core. Architecture:
 ## Install
 
 There is no apt repository. The Debian packages are attached to the
-[**v2.8.0**](https://gitlab.com/haplo-dialog/sermo/-/releases/v2.8.0) release,
+[**v2.8.1**](https://gitlab.com/haplo-dialog/sermo/-/releases/v2.8.1) release,
 with their checksums: download, check, install.
 
 ```sh
-U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/2.8.0
-for f in sermo-backend-gtk3_2.8.0-1_amd64.deb sermo-gtkdialog_2.8.0-1_all.deb SHA256SUMS; do
+U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/2.8.1
+for f in sermo-backend-gtk3_2.8.1-1_amd64.deb sermo-gtkdialog_2.8.1-1_all.deb SHA256SUMS; do
     curl -fLO "$U/$f"
 done
 sha256sum --ignore-missing -c SHA256SUMS
-sudo apt install ./sermo-backend-gtk3_2.8.0-1_amd64.deb \
-                 ./sermo-gtkdialog_2.8.0-1_all.deb
+sudo apt install ./sermo-backend-gtk3_2.8.1-1_amd64.deb \
+                 ./sermo-gtkdialog_2.8.1-1_all.deb
 ```
 
 For another port, replace `gtk3` with `gtk4`, `qt6`, `fltk1`, `efl1`, `sdl3`,

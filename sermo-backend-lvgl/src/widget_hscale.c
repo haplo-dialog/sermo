@@ -19,7 +19,9 @@
 
 GtkWidget *widget_hscale_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
-    WidgetNode *node = widget_node_new(WT_HSCALE, NULL, "");
+    /* <vscale> passe aussi par ici (automaton.c) : son type le dit, le rendu
+     * la dresse. Jusqu'à la 2.8.0, elle sortait couchée. */
+    WidgetNode *node = widget_node_new(Type == WIDGET_VSCALE ? WT_VSCALE : WT_HSCALE, NULL, "");
     node->state.scale.value = 0.0;
     node->state.scale.min   = 0.0;
     node->state.scale.max   = 100.0;

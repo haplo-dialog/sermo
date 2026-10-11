@@ -37,12 +37,14 @@
 #include <X11/Xlibint.h>   /* resource_base/resource_mask : reconnaître NOTRE fenêtre */
 #include <png.h>
 #include <dirent.h>
+#include <langinfo.h>
 #include <limits.h>
 #include <sys/stat.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "render_lvgl.h"
@@ -538,6 +540,19 @@ static void bascule_change(lv_event_t *e)
     WidgetNode *n = (WidgetNode *)lv_event_get_user_data(e);
     lv_obj_t   *o = lv_event_get_target_obj(e);
     gboolean    actif = lv_obj_has_state(o, LV_STATE_CHECKED);
+    /* <radiobutton> : un clic ne décoche pas le bouton choisi, et en choisir un
+     * décoche ses frères de la même boîte — le groupe de l'étalon. LVGL n'a pas
+     * de bouton radio : c'est une case ronde, qui se comportait en case à cocher. */
+    if (n->type == WT_RADIOBUTTON) {
+        if (!actif) { lv_obj_add_state(o, LV_STATE_CHECKED); return; }
+        if (n->parent)
+            for (int i = 0; i < n->parent->child_count; i++) {
+                WidgetNode *f = n->parent->children[i];
+                if (f == n || f->type != WT_RADIOBUTTON || !f->state.toggle.active) continue;
+                f->state.toggle.active = FALSE;
+                if (f->lv) lv_obj_remove_state((lv_obj_t *)f->lv, LV_STATE_CHECKED);
+            }
+    }
     if (actif == n->state.toggle.active) return;
     n->state.toggle.active = actif;
     if (n->action && *n->action) declencher(n, "toggled", "clicked");
@@ -552,6 +567,8 @@ static void champ_change(lv_event_t *e)
         n->state.text.content = strdup(t ? t : "");
         n->state.text.len = (int)strlen(n->state.text.content);
         n->state.text.cap = n->state.text.len + 1;
+    } else if (n->type == WT_SEARCHENTRY) {
+        snprintf(n->state.list.filter, sizeof(n->state.list.filter), "%s", t ? t : "");
     } else {
         snprintf(n->state.entry.buf, sizeof(n->state.entry.buf), "%s", t ? t : "");
     }
@@ -562,6 +579,14 @@ static void liste_clic(lv_event_t *e)
     WidgetNode *n = (WidgetNode *)lv_event_get_user_data(e);
     lv_obj_t   *b = lv_event_get_target_obj(e);
     int         i = (int)(intptr_t)lv_obj_get_user_data(b);
+    /* Une seule ligne choisie : chaque ligne est cochable, on décoche les autres
+     * (jusqu'à la 2.8.0, deux lignes restaient marquées). */
+    lv_obj_t *l = lv_obj_get_parent(b);
+    for (uint32_t k = 0; k < lv_obj_get_child_count(l); k++) {
+        lv_obj_t *r = lv_obj_get_child(l, (int32_t)k);
+        if (r != b) lv_obj_remove_state(r, LV_STATE_CHECKED);
+    }
+    lv_obj_add_state(b, LV_STATE_CHECKED);
     if (i == n->state.list.selected_index) return;
     n->state.list.selected_index = i;
     liste_selection_changee(n);
@@ -624,6 +649,125 @@ static void spin_pas(lv_event_t *e, int sens)
 static void spin_moins(lv_event_t *e) { spin_pas(e, -1); }
 static void spin_plus(lv_event_t *e)  { spin_pas(e, +1); }
 
+/* <expander> : titre et visibilité du corps suivent state.expander.open. */
+static void expander_titre(WidgetNode *n, lv_obj_t *titre, lv_obj_t *corps)
+{
+    char t[512];
+    snprintf(t, sizeof t, "%s  %s", n->state.expander.open ? LV_SYMBOL_DOWN : LV_SYMBOL_RIGHT,
+             n->label ? n->label : "");
+    lv_label_set_text(titre, t);
+    lv_obj_set_hidden(corps, !n->state.expander.open);
+}
+static void expander_clic(lv_event_t *e)
+{
+    WidgetNode *n = (WidgetNode *)lv_event_get_user_data(e);
+    lv_obj_t   *o = (lv_obj_t *)n->lv;
+    n->state.expander.open = !n->state.expander.open;
+    expander_titre(n, lv_obj_get_child(o, 0), lv_obj_get_child(o, 1));
+    if (n->action && *n->action) declencher(n, "activate", NULL);
+}
+
+/* <stack> et <wizard> : seule la page courante (state.notebook.current_tab)
+ * se montre. Jusqu'à la 2.8.0, toutes les pages s'empilaient à l'écran. */
+static void pages_montrer(WidgetNode *n, lv_obj_t *pages)
+{
+    int cur = n->state.notebook.current_tab;
+    if (cur < 0 || cur >= n->child_count) cur = 0;
+    for (int i = 0; i < n->child_count; i++)
+        if (n->children[i]->lv) lv_obj_set_hidden((lv_obj_t *)n->children[i]->lv, i != cur);
+    (void)pages;
+}
+static void pile_choisir(lv_event_t *e)
+{
+    lv_obj_t   *b = lv_event_get_target_obj(e);
+    WidgetNode *n = (WidgetNode *)lv_event_get_user_data(e);
+    n->state.notebook.current_tab = (int)(intptr_t)lv_obj_get_user_data(b);
+    pages_montrer(n, NULL);
+}
+static void assistant_etat(WidgetNode *n)
+{
+    lv_obj_t *o = (lv_obj_t *)n->lv;
+    lv_obj_t *barre = lv_obj_get_child(o, (int32_t)lv_obj_get_child_count(o) - 1);
+    int cur = n->state.notebook.current_tab;
+    char t[64];
+    snprintf(t, sizeof t, "étape %d/%d", cur + 1, n->child_count);
+    lv_label_set_text(lv_obj_get_child(barre, 3), t);
+    if (cur > 0) lv_obj_remove_state(lv_obj_get_child(barre, 0), LV_STATE_DISABLED);
+    else         lv_obj_add_state(lv_obj_get_child(barre, 0), LV_STATE_DISABLED);
+    if (cur < n->child_count - 1) lv_obj_remove_state(lv_obj_get_child(barre, 1), LV_STATE_DISABLED);
+    else                          lv_obj_add_state(lv_obj_get_child(barre, 1), LV_STATE_DISABLED);
+    pages_montrer(n, NULL);
+}
+static void assistant_precedent(lv_event_t *e)
+{
+    WidgetNode *n = (WidgetNode *)lv_event_get_user_data(e);
+    if (n->state.notebook.current_tab > 0) n->state.notebook.current_tab--;
+    assistant_etat(n);
+}
+static void assistant_suivant(lv_event_t *e)
+{
+    WidgetNode *n = (WidgetNode *)lv_event_get_user_data(e);
+    if (n->state.notebook.current_tab < n->child_count - 1) n->state.notebook.current_tab++;
+    assistant_etat(n);
+}
+static void assistant_terminer(lv_event_t *e)
+{
+    WidgetNode *n = (WidgetNode *)lv_event_get_user_data(e);
+    if (n->actions_attr) declencher(n, NULL, NULL);   /* comme sdl3 : les actions du <wizard> */
+}
+
+/* <menubutton> : une liste déroulante qui garde son titre ; un choix retient
+ * le libellé (la variable) et joue l'action du <menuitem>, comme sdl3. */
+static void menu_choisi(lv_event_t *e)
+{
+    WidgetNode *n = (WidgetNode *)lv_event_get_user_data(e);
+    uint32_t    i = lv_dropdown_get_selected(lv_event_get_target_obj(e));
+    int k = 0;
+    for (int c = 0; c < n->child_count; c++) {
+        WidgetNode *it = n->children[c];
+        if (it->type != WT_MENUITEM || !it->label || !it->label[0]) continue;
+        if ((uint32_t)k++ != i) continue;
+        snprintf(n->state.entry.buf, sizeof(n->state.entry.buf), "%s", it->label);
+        if (it->action && it->action[0]) declencher(it, "activate", NULL);
+        break;
+    }
+}
+
+static void calendrier_change(lv_event_t *e)
+{
+    WidgetNode *n = (WidgetNode *)lv_event_get_user_data(e);
+    lv_calendar_date_t d;
+    if (lv_calendar_get_pressed_date(lv_event_get_current_target_obj(e), &d) != LV_RESULT_OK) return;
+    n->state.calendar.year = d.year; n->state.calendar.month = d.month; n->state.calendar.day = d.day;
+    lv_calendar_set_highlighted_dates(lv_event_get_current_target_obj(e), NULL, 0);
+    lv_calendar_set_today_date(lv_event_get_current_target_obj(e), d.year, d.month, d.day);
+    if (n->action && *n->action) declencher(n, "day-selected", NULL);
+}
+
+/* En-tête du calendrier : « ‹ mai 2026 › » dans la langue du poste (strftime) ;
+ * celui de LVGL écrit les mois en anglais. */
+static void calendrier_titre(lv_obj_t *cal, lv_obj_t *titre)
+{
+    const lv_calendar_date_t *m = lv_calendar_get_showed_date(cal);
+    struct tm t = { .tm_year = m->year - 1900, .tm_mon = m->month - 1, .tm_mday = 1 };
+    char buf[64];
+    if (!strftime(buf, sizeof buf, "%B %Y", &t)) snprintf(buf, sizeof buf, "%d/%d", m->month, m->year);
+    lv_label_set_text(titre, buf);
+}
+static void calendrier_mois(lv_event_t *e, int sens)
+{
+    lv_obj_t *barre = lv_obj_get_parent(lv_event_get_target_obj(e));
+    lv_obj_t *cal   = (lv_obj_t *)lv_event_get_user_data(e);
+    const lv_calendar_date_t *m = lv_calendar_get_showed_date(cal);
+    int an = m->year, mois = m->month + sens;
+    if (mois < 1)  { mois = 12; an--; }
+    if (mois > 12) { mois = 1;  an++; }
+    lv_calendar_set_month_shown(cal, (uint32_t)an, (uint32_t)mois);
+    calendrier_titre(cal, lv_obj_get_child(barre, 1));
+}
+static void calendrier_avant(lv_event_t *e) { calendrier_mois(e, -1); }
+static void calendrier_apres(lv_event_t *e) { calendrier_mois(e, +1); }
+
 static void onglet_change(lv_event_t *e)
 {
     WidgetNode *n = (WidgetNode *)lv_event_get_user_data(e);
@@ -675,35 +819,121 @@ static int colonne(const WidgetNode *p)
     }
 }
 
+/* Une colonne a-t-elle une largeur ? Oui si elle remonte jusqu'à la fenêtre par
+ * des colonnes, ou si on lui en donne une. Non dès qu'elle est dans une rangée :
+ * taillée sur son contenu, ses enfants à 100 % tomberaient à 0 px (mesuré :
+ * <hbox><vbox><text> n'affichait pas son texte). */
+static int largeur_connue(const WidgetNode *c)
+{
+    for (; c; c = c->parent) {
+        if (c->type == WT_WINDOW || c->width > 0 || !c->parent) return 1;
+        if (!colonne(c->parent)) return 0;
+    }
+    return 1;
+}
+
 static void construire_enfants(WidgetNode *n, lv_obj_t *o)
 {
     for (int i = 0; i < n->child_count; i++) construire(n->children[i], o);
 }
 
-/* <list> : une colonne de boutons cochables qui défile (lv_list est
- * déprécié en 9.6 au profit de ce montage). */
+/* <list> et <tree> : une colonne de lignes cochables qui défile (lv_list est
+ * déprécié en 9.6 au profit de ce montage). Un <tree> sépare ses colonnes par
+ * « | » : chaque ligne devient une rangée de cellules, sous les en-têtes de
+ * son <label> — jusqu'à la 2.8.0, la ligne brute « a|b|c » s'affichait. */
+static int colonnes_compter(const char *t)
+{
+    int k = 1;
+    for (; t && *t; t++) if (*t == '|') k++;
+    return k;
+}
+static void cellules(lv_obj_t *rangee_o, const char *texte, int cols, const int32_t *large)
+{
+    gchar **c = g_strsplit(texte ? texte : "", "|", cols);
+    int nb = (int)g_strv_length(c);
+    for (int j = 0; j < cols; j++) {
+        lv_obj_t *l = lv_label_create(rangee_o);
+        lv_label_set_text(l, j < nb ? c[j] : "");
+        lv_label_set_long_mode(l, LV_LABEL_LONG_MODE_DOTS);
+        lv_obj_set_width(l, large[j]);
+    }
+    g_strfreev(c);
+}
+/* Largeur d'une colonne d'arbre : son plus long texte (en-tête compris). */
+static void colonnes_mesurer(const WidgetNode *n, int cols, int32_t *large)
+{
+    for (int j = 0; j < cols; j++) large[j] = 24;
+    for (int i = -1; i < n->state.list.item_count; i++) {
+        const char *t = i < 0 ? n->label : n->state.list.items[i];
+        if (!t) continue;
+        gchar **c = g_strsplit(t, "|", cols);
+        for (int j = 0; c[j] && j < cols; j++) {
+            lv_point_t sz;
+            lv_text_get_size(&sz, c[j], g_police, 0, 0, LV_COORD_MAX, LV_TEXT_FLAG_NONE);
+            if (sz.x + 16 > large[j]) large[j] = sz.x + 16;
+        }
+        g_strfreev(c);
+    }
+}
+static int liste_colonnes(const WidgetNode *n)
+{
+    int cols = 1;
+    for (int i = 0; i < n->state.list.item_count; i++) {
+        int k = colonnes_compter(n->state.list.items[i]);
+        if (k > cols) cols = k;
+    }
+    return cols;
+}
+static int liste_entete(const WidgetNode *n)
+{
+    return liste_colonnes(n) > 1 && n->label && strchr(n->label, '|');
+}
 static void construire_liste(WidgetNode *n, lv_obj_t *parent)
 {
+    int cols = liste_colonnes(n);
+    int32_t *large = g_new0(int32_t, cols), total = 0;
+    colonnes_mesurer(n, cols, large);
+    for (int j = 0; j < cols; j++) total += large[j];
     lv_obj_t *l = lv_obj_create(parent);
-    lv_obj_set_size(l, n->width > 0 ? n->width : 220, n->height > 0 ? n->height : 140);
+    lv_obj_set_size(l, n->width > 0 ? n->width : (cols > 1 ? total + 40 : 220),
+                    n->height > 0 ? n->height : 140);
     /* Largeur naturelle : en pour-cent (largeur ou largeur minimale), ce
      * conteneur défilant tombait à 0 px ou n'en tenait pas compte (mesuré). */
     lv_obj_set_flex_flow(l, LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_style_pad_gap(l, 2, 0);
+    lv_obj_set_style_pad_gap(l, 0, 0);
+    lv_obj_set_style_pad_all(l, 4, 0);
     n->lv = l;
+    if (liste_entete(n)) {
+        lv_obj_t *t = boite(l, LV_FLEX_FLOW_ROW);
+        lv_obj_set_style_pad_hor(t, 8, 0);
+        lv_obj_set_style_text_color(t, lv_color_hex(0x555555), 0);   /* gris foncé : 7,5:1 sur blanc */
+        lv_obj_set_style_pad_gap(t, 0, 0);
+        cellules(t, n->label, cols, large);
+    }
     for (int i = 0; i < n->state.list.item_count; i++) {
         lv_obj_t *b = lv_button_create(l);
         lv_obj_set_width(b, lv_pct(100));
-        lv_label_set_text(lv_label_create(b), n->state.list.items[i]);
+        lv_obj_set_flex_flow(b, LV_FLEX_FLOW_ROW);
+        lv_obj_set_style_pad_ver(b, 4, 0);
+        lv_obj_set_style_pad_hor(b, 8, 0);
+        lv_obj_set_style_radius(b, 0, 0);
+        lv_obj_set_style_shadow_width(b, 0, 0);
+        if (cols > 1) cellules(b, n->state.list.items[i], cols, large);
+        else          lv_label_set_text(lv_label_create(b), n->state.list.items[i]);
+        if (cols > 1) lv_obj_set_style_pad_gap(b, 0, 0);
         lv_obj_set_user_data(b, (void *)(intptr_t)i);
         lv_obj_set_checkable(b, true);
-        /* Ligne choisie : bleu nuit #1A3A5C (le thème mettait du rouge, que
-         * rien ne distingue du bleu des autres lignes pour un daltonien) —
-         * elle se lit par la clarté, pas par la teinte. */
+        /* Lignes comme l'étalon : fond blanc, texte noir. Ligne choisie : bleu
+         * nuit #1A3A5C, texte blanc (le thème mettait du rouge, que rien ne
+         * distingue du bleu pour un daltonien) — elle se lit par la clarté. */
+        lv_obj_set_style_bg_color(b, lv_color_white(), 0);
+        lv_obj_set_style_text_color(b, lv_color_black(), 0);
         lv_obj_set_style_bg_color(b, lv_color_hex(0x1A3A5C), LV_STATE_CHECKED);
+        lv_obj_set_style_text_color(b, lv_color_white(), LV_STATE_CHECKED);
         if (i == n->state.list.selected_index) lv_obj_add_state(b, LV_STATE_CHECKED);
         lv_obj_add_event_cb(b, liste_clic, LV_EVENT_CLICKED, n);
     }
+    g_free(large);
 }
 
 /* Fin commune à tous les nœuds : visibilité, pleine largeur, expansion. */
@@ -782,10 +1012,59 @@ static void construire_tableau(WidgetNode *n, lv_obj_t *parent)
     finir(n, t);
 }
 
+/* Texte montré par un <text> : ce que <input>/<default> ont posé, sinon le
+ * <label> — comme l'étalon. Le saut de ligne final de la commande ne se montre
+ * pas (fltk1 l'affichait « ^J »). */
+static void texte_poser(WidgetNode *n, lv_obj_t *o)
+{
+    const char *t = n->label ? n->label : "";
+    if (n->type == WT_TEXT && n->state.text.content && n->state.text.content[0]) t = n->state.text.content;
+    size_t l = strlen(t);
+    while (l > 0 && (t[l - 1] == '\n' || t[l - 1] == '\r')) l--;
+    char *c = g_strndup(t, l);
+    if (strcmp(lv_label_get_text(o), c) != 0) lv_label_set_text(o, c);
+    g_free(c);
+}
+
+/* Une rangée (hbox, barre d'outils…) aligne ses enfants en ligne. */
+static int rangee(const WidgetNode *p)
+{
+    return p && (p->type == WT_HBOX || p->type == WT_TOOLBAR || p->type == WT_FLOWBOX || p->type == WT_GRID);
+}
+
+/* <pixmap>, <image> : un PNG par le décodeur libpng de LVGL (lettre A: =
+ * stdio). Ni SVG ni icône de thème sans fichier PNG : rien n'est dessiné. */
+static lv_obj_t *image_creer(WidgetNode *n, lv_obj_t *parent)
+{
+    const char *f = n->type == WT_IMAGE_W ? n->icon_path : n->label;
+    if (f && g_ascii_strncasecmp(f, "file:", 5) == 0) f += 5;
+    while (f && (*f == ' ' || *f == '\t')) f++;
+    lv_obj_t *o = lv_image_create(parent);
+    struct stat st;
+    /* chemin relatif : au dossier courant, comme l'étalon (fond.png d'<overlay>) */
+    char *abs = (f && *f && g_str_has_suffix(f, ".png")) ? realpath(f, NULL) : NULL;
+    if (abs && stat(abs, &st) == 0 && S_ISREG(st.st_mode)) {
+        char *src = g_strconcat("A:", abs, NULL);
+        lv_image_set_src(o, src);   /* LVGL copie la chaîne */
+        g_free(src);
+        if (n->type == WT_IMAGE_W && n->icon_px > 0) {
+            lv_image_header_t h;
+            if (lv_image_decoder_get_info(lv_image_get_src(o), &h) == LV_RESULT_OK && h.w > 0) {
+                lv_image_set_scale(o, (uint32_t)(256 * n->icon_px / h.w));
+                lv_obj_set_size(o, n->icon_px, n->icon_px * h.h / h.w);
+                lv_image_set_inner_align(o, LV_IMAGE_ALIGN_CENTER);
+            }
+        }
+    }
+    free(abs);
+    return o;
+}
+
 static void construire(WidgetNode *n, lv_obj_t *parent)
 {
     lv_obj_t *o = NULL;
     const char *lbl = n->label ? n->label : "";
+    int boite_n = 0;   /* une boîte : on lui applique width/height-request */
 
     switch (n->type) {
     case WT_WINDOW:
@@ -800,21 +1079,119 @@ static void construire(WidgetNode *n, lv_obj_t *parent)
     case WT_TABLE:
         construire_tableau(n, parent);
         return;
-    case WT_VBOX: case WT_EXPANDER:
-    case WT_EVENTBOX: case WT_STACK: case WT_WIZARD: case WT_REVEALER:
-    case WT_OVERLAY: case WT_ASPECTFRAME: case WT_PANED:
+    case WT_EXPANDER: {
+        /* Un titre (« ▼ » ouvert, « ▶ » fermé) et un corps qui se montre ou se
+         * cache. Jusqu'à la 2.8.0, une simple colonne : ni titre, ni repli. */
         o = boite(parent, LV_FLEX_FLOW_COLUMN);
+        lv_obj_t *titre = lv_label_create(o);
+        lv_obj_set_clickable(titre, true);
+        lv_obj_t *corps = boite(o, LV_FLEX_FLOW_COLUMN);
+        lv_obj_set_width(corps, lv_pct(100));
+        n->lv = o;
+        expander_titre(n, titre, corps);
+        lv_obj_add_event_cb(titre, expander_clic, LV_EVENT_CLICKED, n);
+        construire_enfants(n, corps);
+        break;
+    }
+    case WT_STACK: case WT_WIZARD: {
+        /* Une page à la fois. <stack> à sélecteur (side) : une rangée de
+         * boutons au-dessus ; <wizard> : Précédent / Suivant / Terminer
+         * dessous, comme les autres ports. */
+        o = boite(parent, LV_FLEX_FLOW_COLUMN);
+        boite_n = 1;
+        n->lv = o;
+        if (n->type == WT_STACK && n->state.notebook.side) {
+            lv_obj_t *sel = boite(o, LV_FLEX_FLOW_ROW);
+            for (int i = 0; i < n->child_count; i++) {
+                char num[16];
+                snprintf(num, sizeof num, "%d", i + 1);
+                lv_obj_t *b = lv_button_create(sel);
+                lv_label_set_text(lv_label_create(b), num);
+                lv_obj_set_user_data(b, (void *)(intptr_t)i);
+                lv_obj_add_event_cb(b, pile_choisir, LV_EVENT_CLICKED, n);
+            }
+        }
+        construire_enfants(n, o);
+        if (n->type == WT_WIZARD) {
+            lv_obj_t *barre = boite(o, LV_FLEX_FLOW_ROW);
+            lv_obj_set_flex_align(barre, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+            static const char *noms[3] = { "Précédent", "Suivant", "Terminer" };
+            lv_event_cb_t cbs[3] = { assistant_precedent, assistant_suivant, assistant_terminer };
+            for (int i = 0; i < 3; i++) {
+                lv_obj_t *b = lv_button_create(barre);
+                lv_label_set_text(lv_label_create(b), noms[i]);
+                lv_obj_add_event_cb(b, cbs[i], LV_EVENT_CLICKED, n);
+            }
+            lv_label_create(barre);   /* « étape i/n » */
+            assistant_etat(n);
+        } else {
+            pages_montrer(n, o);
+        }
+        break;
+    }
+    case WT_OVERLAY: {
+        /* Les couches l'une SUR l'autre, centrées : une grille d'une seule
+         * cellule. En colonne, le texte passait sous l'image. */
+        static const int32_t une[] = { LV_GRID_CONTENT, LV_GRID_TEMPLATE_LAST };
+        o = boite(parent, LV_FLEX_FLOW_COLUMN);
+        boite_n = 1;
+        lv_obj_set_grid_dsc_array(o, une, une);
+        construire_enfants(n, o);
+        for (uint32_t i = 0; i < lv_obj_get_child_count(o); i++)
+            lv_obj_set_grid_cell(lv_obj_get_child(o, (int32_t)i), LV_GRID_ALIGN_CENTER, 0, 1,
+                                 LV_GRID_ALIGN_CENTER, 0, 1);
+        break;
+    }
+    case WT_VBOX:
+    case WT_EVENTBOX: case WT_REVEALER:
+    case WT_PANED:
+        o = boite(parent, n->type == WT_PANED && !n->state.paned.vertical
+                          ? LV_FLEX_FLOW_ROW : LV_FLEX_FLOW_COLUMN);
+        boite_n = 1;
         construire_enfants(n, o);
         break;
-    case WT_HBOX: case WT_TOOLBAR: case WT_FLOWBOX: case WT_GRID:
-        o = boite(parent, n->type == WT_FLOWBOX || n->type == WT_GRID
-                          ? LV_FLEX_FLOW_ROW_WRAP : LV_FLEX_FLOW_ROW);
+    case WT_GRID: {
+        /* <grid columns="N"> : des rangées de N cellules, chaque colonne à la
+         * largeur de sa plus large cellule. En flot à la ligne, la 2e rangée
+         * sortait de la fenêtre (mesure faite sans le retour à la ligne). */
+        int nc = n->state.grid.columns > 0 ? n->state.grid.columns : 1;
+        o = boite(parent, LV_FLEX_FLOW_COLUMN);
+        boite_n = 1;
+        lv_obj_set_style_pad_gap(o, n->state.grid.row_spacing, 0);
+        lv_obj_t *r = NULL;
+        for (int i = 0; i < n->child_count; i++) {
+            if (i % nc == 0) {
+                r = boite(o, LV_FLEX_FLOW_ROW);
+                lv_obj_set_style_pad_gap(r, n->state.grid.col_spacing, 0);
+                lv_obj_set_flex_align(r, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+            }
+            construire(n->children[i], r);
+        }
+        /* largeur de colonne = la plus large de ses cellules */
+        lv_obj_update_layout(o);
+        for (int c = 0; c < nc; c++) {
+            int32_t lmax = 0;
+            for (int i = c; i < n->child_count; i += nc)
+                if (n->children[i]->lv) {
+                    int32_t w = lv_obj_get_width((lv_obj_t *)n->children[i]->lv);
+                    if (w > lmax) lmax = w;
+                }
+            for (int i = c; i < n->child_count; i += nc)
+                if (n->children[i]->lv) lv_obj_set_width((lv_obj_t *)n->children[i]->lv, lmax);
+        }
+        break;
+    }
+    case WT_HBOX: case WT_TOOLBAR: case WT_FLOWBOX:
+        o = boite(parent, n->type == WT_FLOWBOX ? LV_FLEX_FLOW_ROW_WRAP : LV_FLEX_FLOW_ROW);
+        boite_n = 1;
         /* Une étiquette se centre sur la hauteur de son champ, comme chez l'étalon. */
         lv_obj_set_flex_align(o, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
         construire_enfants(n, o);
         break;
-    case WT_FRAME: {
+    case WT_FRAME: case WT_ASPECTFRAME: {
+        /* <aspectframe label="…"> se dessine comme un cadre titré. */
         o = lv_obj_create(parent);
+        boite_n = 1;
         lv_obj_set_size(o, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
         lv_obj_set_flex_flow(o, LV_FLEX_FLOW_COLUMN);
         lv_obj_set_scrollable(o, false);
@@ -822,14 +1199,90 @@ static void construire(WidgetNode *n, lv_obj_t *parent)
         construire_enfants(n, o);
         break;
     }
-    case WT_TEXT: case WT_STATUSBAR: case WT_INFOBAR:
+    case WT_TEXT: case WT_STATUSBAR:
+        o = lv_label_create(parent);
+        lv_label_set_text(o, "");
+        texte_poser(n, o);
+        break;
+    case WT_INFOBAR: {
+        /* Bandeau teinté selon message-type, texte noir : le sens se lit aussi
+         * par le texte (contraste ≥ 12:1 sur ces fonds clairs). */
+        const char *mt = n->state.infobar.message_type;
+        uint32_t fond = !strcmp(mt, "error") ? 0xF6D5D5 : !strcmp(mt, "warning") ? 0xF4E7D3
+                      : !strcmp(mt, "question") ? 0xDCE6F4 : 0xE3EEF9;
         o = lv_label_create(parent);
         lv_label_set_text(o, lbl);
+        lv_obj_set_style_bg_opa(o, LV_OPA_COVER, 0);
+        lv_obj_set_style_bg_color(o, lv_color_hex(fond), 0);
+        lv_obj_set_style_text_color(o, lv_color_black(), 0);
+        lv_obj_set_style_pad_all(o, 10, 0);
+        lv_obj_set_style_radius(o, 4, 0);
         break;
-    case WT_BUTTON: case WT_LINKBUTTON: case WT_MENUITEM: case WT_FONTBUTTON:
+    }
+    case WT_LINKBUTTON:
+        /* Un lien souligné, pas un bouton plein : comme l'étalon. Bleu
+         * #1A5FB4 sur fond clair (contraste 6,3:1), souligné pour se lire
+         * sans la couleur. */
+        o = lv_label_create(parent);
+        lv_label_set_text(o, lbl[0] ? lbl : n->state.entry.buf);
+        lv_obj_set_style_text_color(o, lv_color_hex(0x1A5FB4), 0);
+        lv_obj_set_style_text_decor(o, LV_TEXT_DECOR_UNDERLINE, 0);
+        lv_obj_set_clickable(o, true);
+        lv_obj_add_event_cb(o, bouton_clic, LV_EVENT_CLICKED, n);
+        break;
+    case WT_MENUBUTTON: {
+        o = lv_dropdown_create(parent);
+        lv_dropdown_clear_options(o);
+        for (int i = 0; i < n->child_count; i++) {
+            WidgetNode *it = n->children[i];
+            if (it->type == WT_MENUITEM && it->label && it->label[0])
+                lv_dropdown_add_option(o, it->label, LV_DROPDOWN_POS_LAST);
+        }
+        lv_dropdown_set_text(o, lbl[0] ? lbl : "Menu");   /* le titre reste affiché */
+        lv_dropdown_set_selected_highlight(o, false);
+        lv_obj_set_width(o, LV_SIZE_CONTENT);
+        lv_obj_add_event_cb(o, menu_choisi, LV_EVENT_VALUE_CHANGED, n);
+        break;
+    }
+    case WT_CALENDAR: {
+        o = boite(parent, LV_FLEX_FLOW_COLUMN);
+        lv_obj_t *cal = lv_calendar_create(o);
+        lv_obj_set_size(cal, 280, 230);
+        /* noms de jours de la langue du poste, dimanche d'abord (ordre LVGL) */
+        static const char *jours[7];
+        static char jours_buf[7][16];
+        static const nl_item ab[7] = { ABDAY_1, ABDAY_2, ABDAY_3, ABDAY_4, ABDAY_5, ABDAY_6, ABDAY_7 };
+        for (int i = 0; i < 7; i++) {
+            snprintf(jours_buf[i], sizeof jours_buf[i], "%s", nl_langinfo(ab[i]));
+            jours[i] = jours_buf[i];
+        }
+        lv_calendar_set_day_names(cal, jours);
+        lv_calendar_set_today_date(cal, (uint32_t)n->state.calendar.year, (uint32_t)n->state.calendar.month,
+                                   (uint32_t)n->state.calendar.day);
+        lv_calendar_set_month_shown(cal, (uint32_t)n->state.calendar.year, (uint32_t)n->state.calendar.month);
+        lv_obj_t *barre = boite(o, LV_FLEX_FLOW_ROW);
+        lv_obj_set_flex_align(barre, LV_FLEX_ALIGN_SPACE_BETWEEN, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+        lv_obj_set_width(barre, 280);
+        lv_obj_move_to_index(barre, 0);
+        lv_obj_t *av = lv_button_create(barre);
+        lv_label_set_text(lv_label_create(av), LV_SYMBOL_LEFT);
+        calendrier_titre(cal, lv_label_create(barre));
+        lv_obj_t *ap = lv_button_create(barre);
+        lv_label_set_text(lv_label_create(ap), LV_SYMBOL_RIGHT);
+        lv_obj_add_event_cb(av, calendrier_avant, LV_EVENT_CLICKED, cal);
+        lv_obj_add_event_cb(ap, calendrier_apres, LV_EVENT_CLICKED, cal);
+        lv_obj_add_event_cb(cal, calendrier_change, LV_EVENT_VALUE_CHANGED, n);
+        break;
+    }
+    case WT_PIXMAP: case WT_IMAGE_W:
+        o = image_creer(n, parent);
+        break;
+    case WT_BUTTON: case WT_MENUITEM: case WT_FONTBUTTON:
     case WT_COLORBUTTON: case WT_FILECHOOSER: {
         o = lv_button_create(parent);
-        lv_label_set_text(lv_label_create(o), lbl[0] ? lbl : "OK");
+        /* un <chooser> sans libellé montre son dossier, pas « OK » */
+        lv_label_set_text(lv_label_create(o), lbl[0] ? lbl
+                          : n->type == WT_FILECHOOSER ? (n->state.entry.buf[0] ? n->state.entry.buf : "…") : "OK");
         lv_obj_add_event_cb(o, bouton_clic, LV_EVENT_CLICKED, n);
         if (n->type == WT_COLORBUTTON) {
             /* le bouton montre la couleur retenue ; texte clair ou foncé selon
@@ -841,9 +1294,21 @@ static void construire(WidgetNode *n, lv_obj_t *parent)
         }
         break;
     }
-    case WT_CHECKBOX: case WT_RADIOBUTTON: case WT_TOGGLEBUTTON:
+    case WT_TOGGLEBUTTON:
+        /* Un bouton qui reste enfoncé, pas une case à cocher : comme l'étalon.
+         * Enfoncé : bleu nuit #1A3A5C, texte blanc — il se lit par la clarté. */
+        o = lv_button_create(parent);
+        lv_label_set_text(lv_label_create(o), lbl);
+        lv_obj_set_checkable(o, true);
+        lv_obj_set_style_bg_color(o, lv_color_hex(0x1A3A5C), LV_STATE_CHECKED);
+        if (n->state.toggle.active) lv_obj_add_state(o, LV_STATE_CHECKED);
+        lv_obj_add_event_cb(o, bascule_change, LV_EVENT_VALUE_CHANGED, n);
+        break;
+    case WT_CHECKBOX: case WT_RADIOBUTTON:
         o = lv_checkbox_create(parent);
         lv_checkbox_set_text(o, lbl);
+        if (n->type == WT_RADIOBUTTON)   /* rond, comme un bouton radio */
+            lv_obj_set_style_radius(o, LV_RADIUS_CIRCLE, LV_PART_INDICATOR);
         if (n->state.toggle.active) lv_obj_add_state(o, LV_STATE_CHECKED);
         lv_obj_add_event_cb(o, bascule_change, LV_EVENT_VALUE_CHANGED, n);
         break;
@@ -857,7 +1322,10 @@ static void construire(WidgetNode *n, lv_obj_t *parent)
         lv_textarea_set_one_line(o, true);
         lv_obj_set_width(o, n->width > 0 ? n->width : 220);
         if (n->type == WT_PASSWORD) lv_textarea_set_password_mode(o, true);
-        lv_textarea_set_text(o, n->state.entry.buf);
+        /* ⛔ <searchentry> range son texte dans state.list.filter, pas dans
+         * entry.buf : les deux partagent l'union. Écrire entry.buf écrasait
+         * list.items (pointeur) jusqu'à la 2.8.0. */
+        lv_textarea_set_text(o, n->type == WT_SEARCHENTRY ? n->state.list.filter : n->state.entry.buf);
         lv_obj_add_event_cb(o, champ_change, LV_EVENT_VALUE_CHANGED, n);
         break;
     case WT_EDIT:
@@ -882,7 +1350,11 @@ static void construire(WidgetNode *n, lv_obj_t *parent)
     case WT_HSCALE: case WT_VSCALE: {
         double pas = n->state.scale.step > 0 ? n->state.scale.step : 1;
         o = lv_slider_create(parent);
-        lv_obj_set_width(o, 200);
+        if (n->type == WT_VSCALE) {   /* verticale, le maximum en haut comme l'étalon */
+            lv_obj_set_size(o, 16, 120);
+            lv_slider_set_orientation(o, LV_SLIDER_ORIENTATION_VERTICAL);
+        }
+        else                      lv_obj_set_width(o, 200);
         lv_slider_set_range(o, 0, (int32_t)((n->state.scale.max - n->state.scale.min) / pas));
         lv_slider_set_value(o, (int32_t)((n->state.scale.value - n->state.scale.min) / pas), LV_ANIM_OFF);
         lv_obj_add_event_cb(o, glissiere_change, LV_EVENT_VALUE_CHANGED, n);
@@ -914,6 +1386,13 @@ static void construire(WidgetNode *n, lv_obj_t *parent)
         lv_bar_set_range(o, 0, 100);
         if (n->type == WT_PROGRESSBAR)   /* fraction 0..1 du cœur, dès l'ouverture (et dans --render-png) */
             lv_bar_set_value(o, (int32_t)(n->state.progress.value * 100.0 + 0.5), LV_ANIM_OFF);
+        if (n->type == WT_LEVELBAR) {    /* valeur entre min et max ; elle restait vide */
+            double r = n->state.levelbar.max - n->state.levelbar.min;
+            double f = r > 0 ? (n->state.levelbar.value - n->state.levelbar.min) / r : 0;
+            if (f < 0) f = 0;
+            if (f > 1) f = 1;
+            lv_bar_set_value(o, (int32_t)(f * 100.0 + 0.5), LV_ANIM_OFF);
+        }
         break;
     case WT_SPINNER:
         o = lv_spinner_create(parent);
@@ -921,7 +1400,10 @@ static void construire(WidgetNode *n, lv_obj_t *parent)
         break;
     case WT_SEPARATOR:
         o = lv_obj_create(parent);
-        lv_obj_set_size(o, lv_pct(100), 2);
+        /* Dans une rangée, un trait vertical : en pleine largeur, il poussait
+         * ses voisins hors de la fenêtre (« Droite » disparaissait). */
+        if (rangee(n->parent)) lv_obj_set_size(o, 2, 20);
+        else                   lv_obj_set_size(o, lv_pct(100), 2);
         break;
     case WT_TIMER: {
         if (g_mesure) return;
@@ -932,10 +1414,30 @@ static void construire(WidgetNode *n, lv_obj_t *parent)
     default:
         /* Widgets pas encore dessinés : leurs enfants, s'il y en a. */
         o = boite(parent, LV_FLEX_FLOW_COLUMN);
+        boite_n = 1;
         construire_enfants(n, o);
         break;
     }
 
+    /* width-request / height-request d'une boîte. Ignorés jusqu'à la 2.8.0 :
+     * le cœur enveloppe un <edit> dans une vbox de 200 px, qui restait taillée
+     * sur son contenu ; le champ, à 100 % de 0 px, n'était pas dessiné. */
+    if (o && boite_n) {
+        if (n->width > 0) {
+            /* un minimum, comme chez GTK : un enfant de largeur fixe plus large
+             * (un <tree> à colonnes) élargit la boîte au lieu d'être rogné */
+            lv_obj_set_width(o, n->width);
+            lv_obj_update_layout(o);
+            int32_t besoin = 0;
+            for (uint32_t i = 0; i < lv_obj_get_child_count(o); i++) {
+                int32_t w = lv_obj_get_width(lv_obj_get_child(o, (int32_t)i));
+                if (w > besoin) besoin = w;
+            }
+            besoin += lv_obj_get_style_pad_left(o, 0) + lv_obj_get_style_pad_right(o, 0);
+            if (besoin > n->width) lv_obj_set_width(o, besoin);
+        }
+        if (n->height > 0) lv_obj_set_height(o, n->height);
+    }
     finir(n, o);
 }
 
@@ -945,13 +1447,20 @@ static void finir(WidgetNode *n, lv_obj_t *o)
     if (o && n->type == WT_TEXT) lv_obj_set_style_text_align(o, LV_TEXT_ALIGN_CENTER, 0);
     /* Pleine largeur dans une colonne — pas pendant la mesure : une largeur en
      * pour-cent d'une boîte taillée sur son contenu ne se mesure pas. */
-    if (o && g_mesure != 1 && colonne(n->parent) && !(n->width > 0) && n->type != WT_TABLE)
+    /* Un interrupteur garde sa taille, comme chez l'étalon : étiré, il devenait
+     * une longue barre (capture du site, 2026-10-10). */
+    if (o && g_mesure != 1 && colonne(n->parent) && largeur_connue(n->parent)
+        && !(n->width > 0) && n->type != WT_TABLE && n->type != WT_SWITCH && n->type != WT_VSCALE
+        && n->type != WT_MENUBUTTON)
         lv_obj_set_width(o, lv_pct(100));   /* lv_table : une largeur en pour-cent la met à 0 px (mesuré) */
     /* space-expand="true" : l'enfant prend la place restante dans sa boîte,
      * en largeur dans un hbox, en hauteur dans un vbox — et remplit l'autre
      * sens, comme chez l'étalon (space-fill). */
-    if (o && n->expand > 0 && g_mesure != 1) {
-        lv_obj_set_flex_grow(o, 1);
+    if (o && n->expand > 0 && g_mesure != 1 && n->type != WT_VSCALE) {
+        /* Pas de flex-grow pendant la mesure : dans une boîte taillée sur son
+         * contenu, il n'y a rien à prendre et LVGL écrase l'enfant à 0 px (le
+         * formulaire mesurait 80 px de haut et sortait coupé). */
+        if (!g_mesure) lv_obj_set_flex_grow(o, 1);
         if (n->parent && (n->parent->type == WT_HBOX || n->parent->type == WT_TOOLBAR)) {
             /* Remplir la hauteur d'une rangée n'a de sens que si la rangée en a
              * une : taillée sur son contenu, un 100 % devient circulaire et LVGL
@@ -974,15 +1483,19 @@ static void synchroniser(WidgetNode *n)
         else              lv_obj_add_state(o, LV_STATE_DISABLED);
 
         switch (n->type) {
-        case WT_TEXT: case WT_STATUSBAR: case WT_INFOBAR: {
+        case WT_TEXT: case WT_STATUSBAR:
+            texte_poser(n, o);
+            break;
+        case WT_INFOBAR: {
             const char *t = n->label ? n->label : "";
             if (strcmp(lv_label_get_text(o), t) != 0) lv_label_set_text(o, t);
             break;
         }
-        case WT_ENTRY: case WT_PASSWORD: case WT_SEARCHENTRY:
-            if (strcmp(lv_textarea_get_text(o), n->state.entry.buf) != 0)
-                lv_textarea_set_text(o, n->state.entry.buf);
+        case WT_ENTRY: case WT_PASSWORD: case WT_SEARCHENTRY: {
+            const char *t = n->type == WT_SEARCHENTRY ? n->state.list.filter : n->state.entry.buf;
+            if (strcmp(lv_textarea_get_text(o), t) != 0) lv_textarea_set_text(o, t);
             break;
+        }
         case WT_EDIT: {
             const char *t = n->state.text.content ? n->state.text.content : "";
             if (strcmp(lv_textarea_get_text(o), t) != 0) lv_textarea_set_text(o, t);
@@ -1000,7 +1513,7 @@ static void synchroniser(WidgetNode *n)
             lv_bar_set_value(o, (int32_t)(n->state.progress.value * 100.0 + 0.5), LV_ANIM_OFF);
             break;
         case WT_LIST:
-            if ((int)lv_obj_get_child_count(o) != n->state.list.item_count) {
+            if ((int)lv_obj_get_child_count(o) != n->state.list.item_count + liste_entete(n)) {
                 lv_obj_t *parent = lv_obj_get_parent(o);
                 uint32_t  place  = lv_obj_get_index(o);
                 lv_obj_delete(o);
@@ -1012,6 +1525,8 @@ static void synchroniser(WidgetNode *n)
         }
     }
     for (int i = 0; i < n->child_count; i++) synchroniser(n->children[i]);
+    /* après les enfants : leur « visible » vient d'être remis à l'écran */
+    if (o && (n->type == WT_STACK || n->type == WT_WIZARD)) pages_montrer(n, o);
 }
 
 /* ─── Fenêtre X11 : ce que le pilote de LVGL ne fait pas ─────────────────────
@@ -1117,12 +1632,25 @@ static int image_ecrire(const char *chemin)
 }
 
 static void preparer_ecran(WidgetNode *root);
+static void mesurer(WidgetNode *root, int *l, int *h);
 
 static int run_png(WidgetNode *root, int win_w, int win_h)
 {
     lv_init();
-    g_image_l = win_w > 0 ? win_w : 640;
-    g_image_h = win_h > 0 ? win_h : 480;
+    /* Sans taille demandée, l'image prend celle du contenu, comme la fenêtre
+     * (run_window) et comme l'étalon. Elle faisait toujours 640×480 : une case
+     * à cocher tenait dans un coin d'une image vide (captures du site). */
+    /* Une taille demandée (default-width/height) est un point de départ, pas
+     * un plafond : comme GTK, jamais plus petite que le contenu. Le formulaire
+     * du site (480×420) sortait coupé sous ses boutons. */
+    {
+        int l, h;
+        mesurer(root, &l, &h);
+        if (win_w < l) win_w = l;
+        if (win_h < h) win_h = h;
+    }
+    g_image_l = win_w;
+    g_image_h = win_h;
     g_image = calloc((size_t)g_image_l * g_image_h, 4);
     size_t taille = (size_t)g_image_l * g_image_h * 4;
     uint8_t *tampon = malloc(taille);
@@ -1276,11 +1804,11 @@ static int run_fbdev(WidgetNode *root, const char *fb)
 static int run_window(WidgetNode *root, const char *title, int win_w, int win_h)
 {
     lv_init();
-    if (win_w <= 0 || win_h <= 0) {
+    {   /* comme run_png : la taille demandée, jamais sous le contenu */
         int l, h;
         mesurer(root, &l, &h);
-        if (win_w <= 0) win_w = l;
-        if (win_h <= 0) win_h = h;
+        if (win_w < l) win_w = l;
+        if (win_h < h) win_h = h;
     }
     lv_display_t *d = NULL;
     if (veut_wayland()) {

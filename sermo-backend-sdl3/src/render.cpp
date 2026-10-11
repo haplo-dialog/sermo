@@ -578,7 +578,13 @@ static void render_widget(WidgetNode *node)
 
     /* ── TEXT ────────────────────────────────────────────────────────────── */
     case WT_TEXT: {
-        ImGui::TextWrapped("%s", node->label ? node->label : "");
+        /* ce que <input>/<default> ont posé, sinon le <label> ; sans le saut
+         * de ligne final de la commande (l'horloge de l'exemple restait vide) */
+        const char *t = node->label ? node->label : "";
+        if (node->state.text.content && node->state.text.content[0]) t = node->state.text.content;
+        int l = (int)strlen(t);
+        while (l > 0 && (t[l - 1] == '\n' || t[l - 1] == '\r')) l--;
+        ImGui::TextWrapped("%.*s", l, t);
         break;
     }
 
@@ -648,6 +654,51 @@ static void render_widget(WidgetNode *node)
     /* ── LIST ────────────────────────────────────────────────────────────── */
     case WT_LIST: {
         ImVec2 lsz = {sz.x > 0 ? sz.x : 200.0f, sz.y > 0 ? sz.y : 120.0f};
+        /* <tree> (un WT_LIST du cœur) : colonnes « a|b|c » dans une table,
+         * sous les en-têtes du <label>. Jusqu'à la 2.8.0, la ligne brute. */
+        int nc = 1;
+        for (int i = 0; i < node->state.list.item_count; i++) {
+            int k = 1;
+            for (const char *c = node->state.list.items[i]; c && *c; c++) if (*c == '|') k++;
+            if (k > nc) nc = k;
+        }
+        if (nc > 1 && nc <= 64) {
+            if (ImGui::BeginTable(id, nc, ImGuiTableFlags_RowBg | ImGuiTableFlags_ScrollY
+                                          | ImGuiTableFlags_BordersOuter, lsz)) {
+                if (node->label && strchr(node->label, '|')) {
+                    gchar **h = g_strsplit(node->label, "|", nc);
+                    for (int j = 0; j < nc; j++)
+                        ImGui::TableSetupColumn(j < (int)g_strv_length(h) ? h[j] : "");
+                    g_strfreev(h);
+                    ImGui::TableHeadersRow();
+                }
+                for (int i = 0; i < node->state.list.item_count; i++) {
+                    gchar **c = g_strsplit(node->state.list.items[i], "|", nc);
+                    int lc = (int)g_strv_length(c);
+                    ImGui::TableNextRow();
+                    for (int j = 0; j < nc; j++) {
+                        ImGui::TableSetColumnIndex(j);
+                        const char *v = j < lc ? c[j] : "";
+                        if (j == 0) {
+                            char sid[300];
+                            snprintf(sid, sizeof sid, "%s##l%d", v, i);
+                            bool sel = (i == node->state.list.selected_index);
+                            if (ImGui::Selectable(sid, sel, ImGuiSelectableFlags_SpanAllColumns)) {
+                                bool change = (node->state.list.selected_index != i);
+                                node->state.list.selected_index = i;
+                                if (node->var_name) set_widget_env_var(node->var_name, v);
+                                if (change) liste_selection_changee(node);
+                            }
+                        } else {
+                            ImGui::TextUnformatted(v);
+                        }
+                    }
+                    g_strfreev(c);
+                }
+                ImGui::EndTable();
+            }
+            break;
+        }
         if (ImGui::BeginListBox(id, lsz)) {
             for (int i = 0; i < node->state.list.item_count; i++) {
                 bool sel = (i == node->state.list.selected_index);
@@ -1414,7 +1465,12 @@ static void render_widget(WidgetNode *node)
         break;
     }
     case WT_EXPANDER: {
-        if (ImGui::CollapsingHeader(label)) {
+        /* expanded="true" : ouvert au départ, comme l'étalon. CollapsingHeader
+         * démarrait toujours replié (vu sur la capture du site, 2026-10-10). */
+        ImGui::SetNextItemOpen(node->state.expander.open, ImGuiCond_Once);
+        bool ouvert = ImGui::CollapsingHeader(label);
+        node->state.expander.open = ouvert;
+        if (ouvert) {
             for (int i = 0; i < node->child_count; i++)
                 render_widget(node->children[i]);
         }

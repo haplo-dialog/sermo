@@ -1,3 +1,16 @@
+sermo (2.8.1-1) unstable; urgency=medium
+
+  * Version de correction : widgets mal ou pas dessinés, vus sur les
+    captures du site.
+  * <tree> en colonnes, sous ses en-têtes, sur les sept ports neutres.
+  * <statusbar> : <default> l'emporte sur <label> ; <text> montre <input>.
+  * lvgl : <searchentry> n'écrase plus la liste d'un autre widget (union) ;
+    <edit>, <calendar>, images PNG, <togglebutton>, <linkbutton>,
+    <menubutton>, <stack>, <wizard>, <grid>, <overlay> dessinés.
+  * fltk1, qt6, efl1 : --render-png sort en code 0.
+
+ -- s.cage <devel@haplo-dialog.fr>  Sat, 10 Oct 2026 21:41:18 +0200
+
 sermo (2.8.0-1) unstable; urgency=medium
 
   * Deux ports de plus, neuf en tout :

@@ -1,6 +1,30 @@
 # Bilan de santé — sermo (édition modulaire)
 
-## 2.8.0 — mesuré le 2026-10-10
+## 2.8.1 — mesuré le 2026-10-10
+
+Mêmes commandes, sur l'arbre de construction de la 2.8.1 :
+
+- `bash ci/construire.sh` : tout construit. Le changement de version recompile
+  tout, ce qui montre 11 avertissements anciens, dans des fichiers que la 2.8.1
+  ne touche pas (`_POSIX_C_SOURCE` redéfini dans sdl3, lvgl et ncurses ;
+  chaîne constante en `gchar *` dans fltk1 ; `gtk_scrolled_window_add_with_viewport`
+  déprécié dans le cœur GLib).
+- `bash ci/bancs.sh` : 176 bancs, 175 verts au premier passage ; comportement
+  61/61 à parité sur les neuf ports. Le rouge, `sdl3 échappement`, est le garde
+  qui ouvre une vraie fenêtre et clique dedans : il n'a pas trouvé la fenêtre
+  à temps (« aucune ligne VAL= »). Mesuré : le binaire sdl3 de la 2.8.0 rate
+  aussi, 2 passes sur 16 (la 2.8.1 : 1 sur 16). `ci/bancs.sh sdl3`, rejoué
+  seul : 56 bancs, 0 en échec.
+- Rejoué le 2026-10-11, après les corrections de `sermoia-mcp` : 176 bancs, 175
+  verts. Le rouge, `liens de langue`, était un lien de `CHANGELOG.en.md` vers ce
+  bilan (en français) qui ne le disait pas : corrigé, garde vert rejoué seul.
+  `sermoia-mcp` passe ses cinq contrôles (schéma, catalogue, protocole, rendu en
+  image sans commande exécutée, délais) ; quatre mutations du serveur le font
+  chacune échouer.
+- Ce que les bancs ne voyaient pas : les images. La 2.8.1 corrige ce qu'une
+  revue des captures du site, port par port contre gtk3sermo, a montré
+  (voir CHANGELOG.md).
+
 
 Les **deux mêmes commandes** que ci-dessous, sur les **neuf** ports, jouées sur
 l'arbre de construction (pas encore sur les binaires des paquets 2.8.0-1) :

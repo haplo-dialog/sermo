@@ -3,9 +3,86 @@
 Format inspired by [Keep a Changelog](https://keepachangelog.com/).
 Versioning: see [VERSIONING.en.md](VERSIONING.en.md).
 
-**2.7.3 is the first published 2.x release**; 2.7.4, 2.7.5, 2.7.7 and 2.8.0 follow it (2.7.6 was only delivered as packages; its content is published with 2.7.7). Versions 2.0.0 to 2.7.2 stayed
+**2.7.3 is the first published 2.x release**; 2.7.4, 2.7.5, 2.7.7 and 2.8.1 follow it (2.7.6 and 2.8.0 were only delivered as packages; their content is published with the next release). Versions 2.0.0 to 2.7.2 stayed
 internal; they are described below to keep track of what changed since 1.x. To
 move from 1.x to 2.x: [MIGRATION.en.md](MIGRATION.en.md).
+
+## [2.8.1] — 2026-10-10
+
+PATCH release. A review of the website screenshots, port by port against the
+gtk3sermo reference, found widgets drawn wrong or not at all that the tests
+did not see: they read values, not pictures.
+
+### Security
+
+- **lvgl: `<searchentry>` wrote to the wrong place.** Typed text went to
+  `state.entry.buf`, which shares its memory with `state.list.items` (a
+  pointer): it overwrote it. It now goes to `state.list.filter`, as on the
+  other ports.
+- **sermoia-mcp: `sermo_render` ran the XML's commands.** An `<input>` ran
+  during rendering: asking for a preview was enough to launch a command.
+  Rendering now sets `SERMO_ALLOWED_CMDS` to a command that does not exist,
+  which forbids everything (`sh -c` fallback included); the test checks it with
+  a witness file. Only `sermo_run` runs commands, and says so.
+
+### Improved
+
+- **sermoia-mcp**, behaviour:
+  - timeouts on every tool, killing the whole process group (`xvfb-run`
+    included); `sermo_run` takes a `timeout` argument;
+  - `sermo_render` showed text instead of the picture of a small dialog (PNGs
+    under ~800 bytes were discarded): the picture is judged by its header;
+  - `sermo_run` without a display reports the error instead of "no value";
+  - `sermo_check` returns "OK" or "ERREUR" with the parser's message, without
+    the graphics libraries' noise;
+  - `sermo_examples` searches by words ("contact form") in names and contents,
+    ranks by relevance then vote, and gives the catalogue map without argument;
+  - `sermo_vote` refuses a topic outside the catalogue;
+  - protocol: `ping`, correct JSON-RPC error codes, versions 2025-06-18 and
+    2025-03-26, `instructions` field, annotated tools (read-only, destructive);
+  - temporary files in a private directory.
+- **sermoia-mcp**, documentation: README rewritten (each tool with its
+  arguments, answers and errors; recommended loop; security; timeouts;
+  declaring it in Claude Code) and an English `README.en.md`. Test extended to
+  five checks (picture, witness command, timeouts); four code mutations each
+  make it fail.
+
+### Fixed
+
+- **`<tree>` in columns, under its headers, on every neutral port** (qt6,
+  fltk1, efl1, sdl3, lvgl, ncurses, html). The raw "a|b|c" line was shown;
+  fltk1 even read the "/" of a path as a tree level. The exported variable is
+  still the first column, as in the reference.
+- **`<statusbar>`**: `<default>` wins over `<label>`, as in the reference. The
+  bar stayed empty on the seven neutral ports; on qt6 the text was then drawn
+  twice on top of itself.
+- **`<text>`** shows what `<input>` read (lvgl, html, sdl3, ncurses), without
+  the trailing newline (fltk1 showed "^J"); the variable keeps the whole text.
+- **`<expander label="…">`**: the attribute is read by the seven neutral
+  ports; sdl3 honours the open state; ncurses draws the title, which Enter
+  opens and closes.
+- **`<levelbar>`**: `range-min` / `range-max` are read (lvgl, html, ncurses,
+  sdl3).
+- **`--render-png` exits with code 0** on fltk1, qt6 and efl1. The picture was
+  written, but the parser then started again and ended on "syntax error near
+  `<window>`", code 1.
+- **lvgl**, now drawn or redrawn: `<edit>` (invisible), `<calendar>`,
+  `<pixmap>` and `<image>` (PNG), `<togglebutton>` (a pressed button, no longer
+  a check box), `<linkbutton>` (underlined link), `<menubutton>` (drop-down),
+  `<stack>` and `<wizard>` (one page at a time, wizard buttons), `<grid>`
+  (rows), `<overlay>` (stacked layers), `<vscale>` (vertical), `<infobar>`
+  (tinted by `message-type`), `<aspectframe label>`, vertical separator in a
+  row, round and exclusive radio button, a single chosen row in `<list>`. A
+  box's `width-request` is a minimum, and a requested window size no longer
+  shrinks below its content: the 480×420 form was cut under its buttons.
+- **html**: vertical `<vscale>`, `<infobar>` tint, `<aspectframe label>`.
+
+### Measured
+
+- `ci/bancs.sh`: 176 tests, 175 green on the first run; the red one (a guard
+  that did not find its window in time, a test defect that also hits 2.8.0)
+  is green when replayed alone. Behaviour 61/61 at parity on all nine ports.
+  Details: [BILAN_SANTE.md](BILAN_SANTE.md) (French only).
 
 ## [2.8.0] — 2026-10-10
 

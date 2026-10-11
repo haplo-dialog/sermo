@@ -420,9 +420,20 @@ static void render_node(FILE *out, WidgetNode *n, int depth)
         fputs("<hr class=\"sermo-separator\">\n", out);
         return;
 
-    case WT_TEXT: case WT_STATUSBAR:
-        fputs("<p class=\"sermo-text\">", out); html_escape(out, lbl); fputs("</p>\n", out);
+    case WT_TEXT: case WT_STATUSBAR: {
+        /* Un <text> montre ce que <input>/<default> ont posé, sinon son
+         * <label>, comme l'étalon ; sans le saut de ligne final de la commande.
+         * Jusqu'à la 2.8.0, seul le label : l'horloge de l'exemple restait vide. */
+        const char *t = lbl;
+        if (n->type == WT_TEXT && n->state.text.content && n->state.text.content[0]) t = n->state.text.content;
+        size_t l = strlen(t);
+        while (l > 0 && (t[l - 1] == '\n' || t[l - 1] == '\r')) l--;
+        gchar *c = g_strndup(t, l);
+        fprintf(out, "<p class=\"sermo-text%s\">", n->type == WT_STATUSBAR ? " sermo-statusbar" : "");
+        html_escape(out, c); fputs("</p>\n", out);
+        g_free(c);
         return;
+    }
 
     case WT_INFOBAR:
         fprintf(out, "<div class=\"sermo-infobar sermo-infobar-%s\">",
@@ -579,7 +590,8 @@ static void render_node(FILE *out, WidgetNode *n, int depth)
         return;
 
     case WT_HSCALE: case WT_VSCALE:
-        fputs("<label class=\"sermo-field\">", out); html_escape(out, lbl);
+        fprintf(out, "<label class=\"sermo-field%s\">", n->type == WT_VSCALE ? " sermo-vscale" : "");
+        html_escape(out, lbl);
         fprintf(out,
                 " <input type=\"range\" disabled value=\"%g\" min=\"%g\" max=\"%g\" step=\"%g\">"
                 " <output>%g</output></label>\n",
@@ -597,18 +609,64 @@ static void render_node(FILE *out, WidgetNode *n, int depth)
     }
 
     case WT_LIST: case WT_COMBOBOX: {
-        if (*lbl) { fputs("<label class=\"sermo-field\">", out); html_escape(out, lbl); fputs(" ", out); }
+        /* <tree> : colonnes séparées par « | » (le cœur en fait un WT_LIST).
+         * Export : un tableau sous les en-têtes du <label> ; interactif et
+         * servi : la liste de choix, qui renvoie la ligne d'origine (value=)
+         * mais l'affiche colonne par colonne. Jusqu'à la 2.8.0, « a|b|c » brut. */
+        int arbre = 0;
+        for (int i = 0; n->type == WT_LIST && i < n->state.list.item_count; i++)
+            if (n->state.list.items[i] && strchr(n->state.list.items[i], '|')) arbre = 1;
+        if (arbre && html_mode() == MODE_EXPORT) {
+            int cols = 1;
+            for (int i = 0; i < n->state.list.item_count; i++) {
+                int k = 1;
+                for (const char *c = n->state.list.items[i]; c && *c; c++) if (*c == '|') k++;
+                if (k > cols) cols = k;
+            }
+            fputs("<table class=\"sermo-table sermo-tree\">\n", out);
+            if (lbl[0] && strchr(lbl, '|')) {
+                gchar **h = g_strsplit(lbl, "|", cols);
+                fputs("<thead><tr>", out);
+                for (int j = 0; j < cols; j++) {
+                    fputs("<th>", out); html_escape(out, j < (int)g_strv_length(h) ? h[j] : ""); fputs("</th>", out);
+                }
+                fputs("</tr></thead>\n", out);
+                g_strfreev(h);
+            }
+            fputs("<tbody>\n", out);
+            for (int i = 0; i < n->state.list.item_count; i++) {
+                gchar **c = g_strsplit(n->state.list.items[i] ? n->state.list.items[i] : "", "|", cols);
+                fputs(i == n->state.list.selected_index ? "<tr class=\"sermo-choisi\" aria-selected=\"true\">" : "<tr>", out);
+                for (int j = 0; j < cols; j++) {
+                    fputs("<td>", out); html_escape(out, j < (int)g_strv_length(c) ? c[j] : ""); fputs("</td>", out);
+                }
+                fputs("</tr>\n", out);
+                g_strfreev(c);
+            }
+            fputs("</tbody></table>\n", out);
+            return;
+        }
+        if (*lbl && !arbre) { fputs("<label class=\"sermo-field\">", out); html_escape(out, lbl); fputs(" ", out); }
         fprintf(out, "<select class=\"sermo-select\"%s", dis()); fld_name(out, n);
         fprintf(out, " size=\"%d\">\n", n->type == WT_LIST ? 6 : 1);
         for (int i = 0; i < n->state.list.item_count; i++) {
+            const char *it = n->state.list.items && n->state.list.items[i] ? n->state.list.items[i] : "";
             fputs("<option", out);
             if (i == n->state.list.selected_index) fputs(" selected", out);
-            fputs(">", out);
-            html_escape(out, n->state.list.items && n->state.list.items[i] ? n->state.list.items[i] : "");
+            if (arbre) {
+                gchar **c = g_strsplit(it, "|", -1);
+                gchar *vu = g_strjoinv(" · ", c);
+                fputs(" value=\"", out); html_escape(out, it); fputs("\">", out);
+                html_escape(out, vu);
+                g_free(vu); g_strfreev(c);
+            } else {
+                fputs(">", out);
+                html_escape(out, it);
+            }
             fputs("</option>\n", out);
         }
         fputs("</select>", out);
-        if (*lbl) fputs("</label>", out);
+        if (*lbl && !arbre) fputs("</label>", out);
         fputc('\n', out);
         return;
     }
@@ -781,6 +839,16 @@ static void write_style(FILE *out)
         ".sermo-tab{padding:.2rem .6rem;opacity:.6;}\n"
         ".sermo-tab-active{opacity:1;border-bottom:2px solid var(--sermo-accent);}\n"
         ".sermo-infobar{padding:.4rem .7rem;border-radius:4px;background:var(--sermo-border);}\n"
+        /* teinte selon message-type, texte noir : contraste >= 12:1 */
+        ".sermo-infobar-info{background:#e3eef9;color:#000;}"
+        ".sermo-infobar-warning{background:#f4e7d3;color:#000;}"
+        ".sermo-infobar-question{background:#dce6f4;color:#000;}"
+        ".sermo-infobar-error{background:#f6d5d5;color:#000;}\n"
+        ".sermo-tree{width:100%;}\n"
+        ".sermo-tree th{text-align:left;font-weight:normal;opacity:.75;}\n"
+        ".sermo-tree .sermo-choisi td{background:#1a3a5c;color:#fff;}\n"
+        ".sermo-statusbar{border-top:1px solid var(--sermo-border);padding-top:.3rem;}\n"
+        ".sermo-vscale input[type=range]{writing-mode:vertical-lr;direction:rtl;height:8rem;width:auto;}\n"
         ".sermo-table{border-collapse:collapse;}\n"
         ".sermo-table th,.sermo-table td{border:1px solid var(--sermo-border);padding:.3rem .5rem;}\n"
         ".sermo-image{max-width:100%;height:auto;display:block;}"

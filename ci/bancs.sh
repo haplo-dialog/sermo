@@ -146,7 +146,7 @@ else
 fi
 banc "sermoman-mcp : vérité" env SERMO_SRC="$RACINE" bash sermoman-mcp/tests/verifie-verite.sh
 banc "sermoman-mcp : exemples" env SERMO_SRC="$RACINE" SERMO_PORTS_REQUIS="${PORTS[*]/%/sermo}" bash sermoman-mcp/tests/verifie-exemples.sh
-banc "sermoia-mcp : schéma, exemples, protocole" env SERMO_BIN="$RACINE/sermo-backend-${PORTS[0]}/_build/${PORTS[0]}sermo" bash sermoia-mcp/tests/verifie.sh
+banc "sermoia-mcp : schéma, exemples, protocole, rendu, délais" env SERMO_BIN="$RACINE/sermo-backend-${PORTS[0]}/_build/${PORTS[0]}sermo" bash sermoia-mcp/tests/verifie.sh
 
 echo
 echo "Bancs : $joues joué(s), $echecs en échec. Journaux : $J"

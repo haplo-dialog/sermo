@@ -21,17 +21,108 @@
 #include "safe_exec.h"
 #include "widget_tree.h"
 #include <FL/Fl_Tree.H>
+#include <FL/fl_draw.H>
+#include <vector>
+#include <string>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 
-/* <item> : « / » y marque la hiérarchie (extension du port) */
+/* Colonnes « a|b|c » (format de l'étalon) : Fl_Tree n'en a pas. L'arbre
+ * retient la largeur de chaque colonne, et un élément sur mesure dessine ses
+ * cellules. Jusqu'à la 2.8.0, « | » restait dans le texte, et « / » d'un
+ * chemin (« /floppy/ ») ouvrait des niveaux d'arborescence. */
+class SermoTree : public Fl_Tree {
+public:
+    std::vector<int> larg;
+    SermoTree(int x, int y, int w, int h) : Fl_Tree(x, y, w, h) {}
+};
+
+class ColItem : public Fl_Tree_Item {
+public:
+    ColItem(Fl_Tree *t) : Fl_Tree_Item(t) {}
+    int draw_item_content(int render) FL_OVERRIDE {
+        SermoTree *t = (SermoTree *)tree();
+        int X = label_x(), Y = label_y(), W = label_w(), H = label_h();
+        if (render) {
+            if (is_selected()) fl_draw_box(prefs().selectbox(), X, Y, W, H, drawbgcolor());
+            else { fl_color(drawbgcolor()); fl_rectf(X, Y, W, H); }
+        }
+        fl_font(labelfont(), labelsize());
+        const char *l = label() ? label() : "";
+        int x = X, col = 0;
+        while (1) {
+            size_t n = strcspn(l, "|");
+            int w = col < (int)t->larg.size() ? t->larg[col] : (int)fl_width(l, (int)n) + 12;
+            if (render) {
+                fl_color(drawfgcolor());
+                fl_push_clip(x, Y, w - 4, H);
+                std::string cell(l, n);
+                fl_draw(cell.c_str(), x + 2, Y, w - 6, H, FL_ALIGN_LEFT);
+                fl_pop_clip();
+            }
+            x += w;
+            if (!l[n]) break;
+            l += n + 1;
+            col++;
+        }
+        return x;
+    }
+};
+
+static void tree_ajouter(Fl_Tree *tree, const char *texte, int entete)
+{
+    /* add(parent, libellé) : le texte tel quel (« / » n'y ouvre pas de
+     * niveau) ; puis l'élément à colonnes prend sa place (replace(), comme
+     * l'exemple tree-custom-draw-items de FLTK) — ajouté directement à la
+     * racine, l'arbre ne le dessinait pas. */
+    Fl_Tree_Item *it = tree->add(tree->root(), texte);
+    if (!it) return;
+    ColItem *ci = new ColItem(tree);
+    ci->label(texte);
+    it = it->replace(ci);
+    if (it && entete) it->deactivate();   /* les en-têtes ne se choisissent pas */
+}
+
+/* Largeur de chaque colonne : la plus longue cellule, en-tête compris. */
+static void tree_mesurer(Fl_Tree *tree)
+{
+    SermoTree *t = (SermoTree *)tree;
+    t->larg.clear();
+    fl_font(tree->item_labelfont(), tree->item_labelsize());
+    for (Fl_Tree_Item *it = tree->first(); it; it = tree->next(it)) {
+        if (it == tree->root() || !it->label() || !strchr(it->label(), '|')) continue;
+        const char *l = it->label();
+        for (int col = 0;; col++) {
+            size_t n = strcspn(l, "|");
+            int w = (int)fl_width(l, (int)n) + 16;
+            if (col >= (int)t->larg.size()) t->larg.push_back(w);
+            else if (w > t->larg[col]) t->larg[col] = w;
+            if (!l[n]) break;
+            l += n + 1;
+        }
+    }
+}
+
+/* <label>Col1|Col2</label> : une rangée d'en-têtes en tête de l'arbre. */
+static void tree_entete(Fl_Tree *tree, AttributeSet *Attr)
+{
+    GList *el = NULL;
+    gchar *lbl = Attr ? attributeset_get_first(&el, Attr, ATTR_LABEL) : NULL;
+    if (lbl && strchr(lbl, '|')) tree_ajouter(tree, lbl, 1);
+}
+
+/* <item> : « / » y marque la hiérarchie (extension du port) — sauf dans une
+ * ligne à colonnes « a|b|c », où « / » est du texte (un chemin). */
 static void tree_add_items(Fl_Tree *tree, AttributeSet *Attr)
 {
     GList *el = NULL;
     gchar *item = attributeset_get_first(&el, Attr, ATTR_ITEM);
     while (item) {
-        if (*item) tree->add(item);
+        if (*item) {
+            if (strchr(item, '|')) tree_ajouter(tree, item, 0);
+            else                   tree->add(item);
+        }
         item = attributeset_get_next(&el, Attr, ATTR_ITEM);
     }
 }
@@ -42,7 +133,7 @@ static void tree_select_first(Fl_Tree *tree)
 {
     if (tree->first_selected_item()) return;
     Fl_Tree_Item *it = tree->first();
-    if (it == tree->root()) it = tree->next(it);
+    while (it && (it == tree->root() || !it->is_active())) it = tree->next(it);   /* pas l'en-tête */
     if (it) tree->select(it, 0);
 }
 
@@ -61,13 +152,14 @@ GtkWidget *widget_tree_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         if ((v = get_tag_attribute(attr, "width-request")))  ww = atoi(v);
         if ((v = get_tag_attribute(attr, "height-request"))) hh = atoi(v);
     }
-    Fl_Tree *tree = new Fl_Tree(0, 0, ww, hh);
+    Fl_Tree *tree = new SermoTree(0, 0, ww, hh);
     tree->showroot(0);
     tree->selectmode(FL_TREE_SELECT_SINGLE);
 
     /* <input> : dans refresh, que le cœur appelle juste après la création
      * (lu ici aussi, la commande tournait deux fois). */
-    if (Attr) tree_add_items(tree, Attr);
+    if (Attr) { tree_entete(tree, Attr); tree_add_items(tree, Attr); }
+    tree_mesurer(tree);
     tree_select_first(tree);
 
     tree->redraw();
@@ -81,8 +173,10 @@ gchar *widget_tree_envvar_construct(GtkWidget *w)
     /* Premier niveau : le libellé tel quel. item_pathname() y échappe « / »
      * et « \ », et rend "" dès 1022 octets (mesuré, FLTK 1.4.4) : une ligne
      * de <input> ne ressortirait pas telle quelle. */
-    if (sel->parent() == tree->root())
-        return g_strdup(sel->label() ? sel->label() : "");
+    if (sel->parent() == tree->root()) {   /* la 1re colonne, comme l'étalon */
+        const char *l = sel->label() ? sel->label() : "";
+        return g_strndup(l, strcspn(l, "|"));
+    }
     char path[1024] = "";
     tree->item_pathname(path, sizeof(path), sel);
     return g_strdup(path);
@@ -100,13 +194,11 @@ void widget_tree_refresh(variable *v)
     if (lignes && tree->root()) {
         /* Étalon : refresh VIDE l'arbre, puis <input>, puis <item>. */
         tree_empty(tree);
-        for (gchar **l = lignes; *l; l++) {
-            (*l)[strcspn(*l, "|")] = '\0';
-            /* add(parent, libellé) prend le texte tel quel ; add(chemin)
-             * aurait lu « / » comme une hiérarchie. */
-            tree->add(tree->root(), *l);
-        }
+        tree_entete(tree, v->Attributes);
+        /* une ligne entière, colonnes comprises ; « / » y reste du texte */
+        for (gchar **l = lignes; *l; l++) tree_ajouter(tree, *l, 0);
         tree_add_items(tree, v->Attributes);
+        tree_mesurer(tree);
         tree_select_first(tree);
     }
     g_strfreev(lignes);

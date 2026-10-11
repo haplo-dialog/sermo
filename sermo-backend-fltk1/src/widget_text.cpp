@@ -23,8 +23,24 @@
 #include "tag_attributes.h"
 #include "widget_text.h"
 
+#include <string>
 #include <string.h>
 #include <stdlib.h>
+
+/* Une ligne d'Fl_Output affiche un saut de ligne « ^J ». L'écran montre le
+ * texte sans ses sauts de ligne finaux ; la variable garde le texte ENTIER
+ * (règle de l'étalon), retenu ici tant que l'écran n'a pas changé. */
+class TexteOut : public Fl_Output {
+public:
+    std::string entier;
+    TexteOut(int x, int y, int w, int h) : Fl_Output(x, y, w, h, nullptr) {}
+    void poser(const char *t) {
+        entier = t ? t : "";
+        std::string vu = entier;
+        while (!vu.empty() && (vu.back() == '\n' || vu.back() == '\r')) vu.pop_back();
+        value(vu.c_str());
+    }
+};
 
 GtkWidget *widget_text_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
@@ -37,13 +53,13 @@ GtkWidget *widget_text_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         if ((v = get_tag_attribute(attr, "height-request"))) h = atoi(v);
     }
 
-    Fl_Output *out = new Fl_Output(0, 0, w, h, nullptr);
+    TexteOut *out = new TexteOut(0, 0, w, h);
     out->box(FL_NO_BOX);  /* pas de bordure — style label */
 
     /* Label <label>texte</label> */
     if (Attr) {
         gchar *lbl = attributeset_get_first(&element, Attr, ATTR_LABEL);
-        if (lbl && *lbl) out->value(lbl);
+        if (lbl && *lbl) out->poser(lbl);
     }
 
     return (GtkWidget *)out;
@@ -51,8 +67,11 @@ GtkWidget *widget_text_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 
 gchar *widget_text_envvar_construct(GtkWidget *widget)
 {
-    Fl_Output *out = (Fl_Output *)widget;
+    TexteOut *out = (TexteOut *)widget;
     if (!out || !out->value()) return g_strdup("");
+    std::string vu = out->entier;
+    while (!vu.empty() && (vu.back() == '\n' || vu.back() == '\r')) vu.pop_back();
+    if (vu == out->value()) return g_strdup(out->entier.c_str());   /* écran inchangé */
     return g_strdup(out->value());
 }
 
@@ -65,7 +84,7 @@ gchar *widget_text_envvar_all_construct(variable *var)
 void widget_text_clear(variable *var)
 {
     if (!var || !var->Widget) return;
-    ((Fl_Output *)var->Widget)->value("");
+    ((TexteOut *)var->Widget)->poser("");
 }
 
 void widget_text_refresh(variable *var)
@@ -76,7 +95,7 @@ void widget_text_refresh(variable *var)
      * <input>. Le cœur appelle cette fonction juste après la création. */
     gchar *text = widget_input_text(var->Attributes);
     if (text) {
-        ((Fl_Output *)var->Widget)->value(text);
+        ((TexteOut *)var->Widget)->poser(text);
         g_free(text);
     }
     ((Fl_Widget *)var->Widget)->redraw();

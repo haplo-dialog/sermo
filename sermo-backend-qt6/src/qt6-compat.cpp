@@ -277,9 +277,15 @@ int sermo_be_run_loop(void) {
             QApplication::processEvents();
             QApplication::processEvents();
             QPixmap pm = win->grab();
-            pm.save(QString::fromUtf8(option_render_png), "PNG");
+            if (!pm.save(QString::fromUtf8(option_render_png), "PNG")) {
+                fprintf(stderr, "qt6sermo: --render-png : écriture de %s impossible\n", option_render_png);
+                exit(1);
+            }
         }
-        return 0;
+        /* Sortir ici, comme gtk3sermo : rendre la main au cœur relançait
+         * l'analyseur (« syntax error near <window> », code 1). */
+        fflush(stdout);
+        exit(win ? 0 : 1);
     }
     return qt6_app ? qt6_app->exec() : 0;      /* boucle d'événements */
 }

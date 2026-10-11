@@ -140,6 +140,7 @@ static int node_focusable(WidgetType t)
     case WT_HSCALE: case WT_VSCALE: case WT_SEARCHENTRY:
     case WT_LINKBUTTON: case WT_FILECHOOSER: return 1;
     case WT_PANED: case WT_WIZARD: case WT_MENUBUTTON: return 1;
+    case WT_EXPANDER: return 1;
     default: return 0;
     }
 }
@@ -155,6 +156,39 @@ static void draw_bar(int y, int x, int w, double frac, char *out, int outsz)
     bar[k] = '\0';
     snprintf(out, outsz, "[%s]", bar);
     (void)y; (void)x;
+}
+
+/* <tree> (un WT_LIST du cœur) : colonnes « a|b|c » alignées, chaque colonne à
+ * la largeur de sa plus longue cellule (en caractères). Jusqu'à la 2.8.0, la
+ * ligne brute « a|b|c » s'affichait. Rend le nombre de colonnes (1 = liste). */
+static int colonnes_mesurer(const WidgetNode *n, int *larg, int max)
+{
+    int nc = 1;
+    for (int i = -1; i < n->state.list.item_count; i++) {
+        const char *t = i < 0 ? n->label : (n->state.list.items ? n->state.list.items[i] : NULL);
+        if (!t || !strchr(t, '|')) continue;
+        gchar **c = g_strsplit(t, "|", max);
+        for (int j = 0; c[j] && j < max; j++) {
+            int l = (int)g_utf8_strlen(c[j], -1);
+            if (j >= nc) { larg[j] = 0; nc = j + 1; }
+            if (l > larg[j]) larg[j] = l;
+        }
+        g_strfreev(c);
+    }
+    return nc;
+}
+static void colonnes_ecrire(const char *t, const int *larg, int nc, char *out, size_t sz)
+{
+    gchar **c = g_strsplit(t ? t : "", "|", nc);
+    size_t o = 0;
+    out[0] = '\0';
+    for (int j = 0; j < nc && o + 1 < sz; j++) {
+        const char *v = (j < (int)g_strv_length(c)) ? c[j] : "";
+        int l = (int)g_utf8_strlen(v, -1);
+        o += (size_t)snprintf(out + o, sz - o, "%s%*s", v, (j < nc - 1) ? larg[j] - l + 2 : 0, "");
+        if (o >= sz) { out[sz - 1] = '\0'; break; }
+    }
+    g_strfreev(c);
 }
 
 /* Dessine un nœud à (y,x) dans une largeur w ; renvoie le nombre de lignes
@@ -182,7 +216,28 @@ static int draw_node(WidgetNode *n, int y, int x, int w)
         return used;
     }
 
-    case WT_VBOX: case WT_EXPANDER: case WT_EVENTBOX: {
+    case WT_EXPANDER: {
+        /* Un titre « [-] Détails » (ouvert) ou « [+] Détails » (fermé), que
+         * Entrée/Espace ouvre et ferme ; le contenu sous le titre s'il est
+         * ouvert. Jusqu'à la 2.8.0, le titre n'était pas dessiné. */
+        mvprintw(y, x, "[%c] %s", n->state.expander.open ? '-' : '+', lbl);
+        if (g_nfocus < 256) {
+            g_focus[g_nfocus] = (Focusable){ n, y, x, w };
+            if (g_nfocus == g_focus_idx) {
+                attron(A_REVERSE);
+                mvprintw(y, x, "[%c] %s", n->state.expander.open ? '-' : '+', lbl);
+                attroff(A_REVERSE);
+            }
+            g_nfocus++;
+        }
+        int used = 1;
+        if (n->state.expander.open)
+            for (int i = 0; i < n->child_count; i++)
+                used += draw_node(n->children[i], y + used, x + 2, w > 2 ? w - 2 : w);
+        return used;
+    }
+
+    case WT_VBOX: case WT_EVENTBOX: {
         int used = 0;
         for (int i = 0; i < n->child_count; i++)
             used += draw_node(n->children[i], y + used, x, w);
@@ -387,8 +442,16 @@ static int draw_node(WidgetNode *n, int y, int x, int w)
         char line[512];
         int rows = 1;
         switch (n->type) {
-        case WT_TEXT: case WT_STATUSBAR:
-            snprintf(line, sizeof line, "%s", lbl); break;
+        case WT_TEXT: case WT_STATUSBAR: {
+            /* <text> : ce que <input>/<default> ont posé, sinon le <label> ;
+             * sans le saut de ligne final de la commande. */
+            const char *t = lbl;
+            if (n->type == WT_TEXT && n->state.text.content && n->state.text.content[0]) t = n->state.text.content;
+            snprintf(line, sizeof line, "%s", t);
+            size_t l = strlen(line);
+            while (l > 0 && (line[l - 1] == '\n' || line[l - 1] == '\r')) line[--l] = '\0';
+            break;
+        }
         case WT_SEPARATOR:
             mvhline(y, x, ACS_HLINE, w); return 1;
         case WT_BUTTON:
@@ -439,16 +502,27 @@ static int draw_node(WidgetNode *n, int y, int x, int w)
                                  ? n->state.list.items[si] : "";
                 snprintf(line, sizeof line, "%s< %s >", lbl[0] ? lbl : "", it);
             } else {
-                /* liste multi-lignes */
-                mvprintw(y, x, "%s", lbl[0] ? lbl : "");
+                /* liste multi-lignes ; un <tree> à colonnes : en-têtes, puis
+                 * lignes alignées */
+                int larg[16] = {0};
+                int nc = colonnes_mesurer(n, larg, 16);
+                char cell[512];
+                if (nc > 1 && strchr(lbl, '|')) {
+                    colonnes_ecrire(lbl, larg, nc, cell, sizeof cell);
+                    attron(A_BOLD);
+                    mvprintw(y, x + 2, "%s", cell);
+                    attroff(A_BOLD);
+                } else {
+                    mvprintw(y, x, "%s", lbl[0] ? lbl : "");
+                }
                 int base = *lbl ? 1 : 0;
                 int cnt = n->state.list.item_count, shown = cnt < 6 ? cnt : 6;
                 for (int i = 0; i < shown; i++) {
                     int sel = (i == n->state.list.selected_index);
+                    const char *it = n->state.list.items && n->state.list.items[i] ? n->state.list.items[i] : "";
+                    if (nc > 1) { colonnes_ecrire(it, larg, nc, cell, sizeof cell); it = cell; }
                     if (sel) attron(A_REVERSE);
-                    mvprintw(y + base + i, x + 2, "%-*s",
-                             w > 4 ? w - 4 : 1,
-                             n->state.list.items && n->state.list.items[i] ? n->state.list.items[i] : "");
+                    mvprintw(y + base + i, x + 2, "%-*s", w > 4 ? w - 4 : 1, it);
                     if (sel) attroff(A_REVERSE);
                 }
                 rows = base + (shown ? shown : 1);
@@ -854,6 +928,10 @@ static int run_interactive(WidgetNode *root, const char *title)
                         (char *)(n->tooltip ? n->tooltip
                                  : (n->label && n->label[0] ? n->label : "OK")));
                 }
+                break;
+            case WT_EXPANDER:
+                n->state.expander.open = !n->state.expander.open;
+                if (n->action && *n->action) declencher(n, "activate", NULL);
                 break;
             case WT_CHECKBOX: case WT_TOGGLEBUTTON: case WT_SWITCH: case WT_RADIOBUTTON:
                 n->state.toggle.active = !n->state.toggle.active;

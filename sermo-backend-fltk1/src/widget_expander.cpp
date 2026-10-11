@@ -166,6 +166,13 @@ GtkWidget *widget_expander_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     gchar *label = NULL;
     if (Attr)
         label = attributeset_get_first(&element, Attr, ATTR_LABEL);
+    /* Le titre s'écrit aussi en attribut, <expander label="…"> : l'étalon gtk3 le
+     * lit (propriété GtkExpander:label), ce port l'ignorait (mesuré sur les
+     * captures du site, 2026-10-10). */
+    if (attr && (!label || !*label)) {
+        const char *v = get_tag_attribute(attr, "label");
+        if (v && *v) label = (gchar *)v;
+    }
 
     /* Groupe englobant */
     Fl_Group *grp = new Fl_Group(0, 0, w, HEADER_H);

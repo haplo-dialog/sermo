@@ -19,6 +19,8 @@
 #include "efl-compat.h"   /* Evas/Elementary + helpers efl_container_add / efl_scrolled_new */
 #include <Ecore_Evas.h>   /* moteur buffer : ecore_evas_manual_render, *_buffer_pixels_get */
 #include "efl-globals.h"  /* g_efl_main_win */
+#include <stdio.h>
+#include <stdlib.h>
 
 /* efl_container_add et efl_scrolled_new sont des static inline de efl-compat.h. */
 
@@ -95,8 +97,11 @@ static int efl_render_png(const char *path)
 int sermo_be_run_loop(void)
 {
     if (option_render_png && *option_render_png) {
-        (void)efl_render_png(option_render_png);   /* sort sans boucle */
-        return 0;
+        int r = efl_render_png(option_render_png);
+        /* Sortir ici, comme gtk3sermo : rendre la main au cœur relançait
+         * l'analyseur (« syntax error near <window> », code 1). */
+        fflush(stdout);
+        exit(r == 0 ? 0 : 1);
     }
     elm_run();
     return 0;

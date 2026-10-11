@@ -30,6 +30,11 @@ GtkWidget *widget_statusbar_create(AttributeSet *Attr, tag_attr *attr, gint Type
     if (Attr) {
         GList *el = NULL;
         gchar *txt = attributeset_get_first(&el, Attr, ATTR_LABEL);
+        /* gtk3sermo pousse <label> puis <default> : le texte montré (et la variable)
+         * est <default> s'il est là. Ignoré jusqu'à la 2.8.0 : barre vide. */
+        GList *el_def = NULL;
+        gchar *def = attributeset_get_first(&el_def, Attr, ATTR_DEFAULT);
+        if (def && *def) txt = def;
         if (txt && *txt) elm_object_text_set(lbl, txt);
     }
     evas_object_size_hint_weight_set(lbl, EVAS_HINT_EXPAND, 0.0);

@@ -5,6 +5,28 @@ Ce fichier résume les changements du point de vue de l'utilisateur.
 Pour l'historique technique complet, voir CHANGELOG.md.
 
 ──────────────────────────────────────────────────
+Version 2.8.1
+──────────────────────────────────────────────────
+
+Version de correction : des widgets mal dessinés, vus sur les captures
+du site.
+
+* <tree> s'affiche en colonnes, sous ses en-têtes, sur tous les ports
+  (et non plus « a|b|c » sur une ligne).
+
+* <statusbar> montre son <default> ; <text> montre ce que <input> a lu.
+
+* lvglsermo dessine enfin <edit>, <calendar>, les images PNG, les
+  boutons-bascules, les liens, les assistants et les piles page par page.
+  Un champ de recherche n'abîme plus la mémoire du dialogue.
+
+* fltk1sermo, qt6sermo et efl1sermo : --render-png rend le code 0.
+
+* sermoia-mcp : l'aperçu (sermo_render) n'exécute plus aucune commande du
+  dialogue ; chaque outil a un délai ; les exemples se cherchent par une
+  phrase ; documentation refaite, en français et en anglais.
+
+──────────────────────────────────────────────────
 Version 2.8.0
 ──────────────────────────────────────────────────
 

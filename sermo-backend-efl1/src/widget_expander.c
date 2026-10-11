@@ -47,6 +47,10 @@ GtkWidget *widget_expander_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         gchar *lbl = attributeset_get_first(&el, Attr, ATTR_LABEL);
         if (lbl && *lbl) elm_object_text_set(fr, lbl);
     }
+    /* Le titre s'écrit aussi en attribut, <expander label="…"> : l'étalon gtk3 le
+     * lit (propriété GtkExpander:label), ce port l'ignorait (mesuré sur les
+     * captures du site, 2026-10-10). */
+    if (attr) { const char *v = get_tag_attribute(attr, "label"); if (v && *v) elm_object_text_set(fr, v); }
 
     stackelement s = pop();
     if (s.widgets[0]) {

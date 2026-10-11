@@ -9,7 +9,7 @@
  * Licence : GPL-2.0-or-later
  *
  * <statusbar> → QStatusBar
- * Stocke le dernier message via showMessage().
+ * Le texte vit dans un QLabel permanent (propriété labelWidget).
  * Export : dernier texte affiché.
  */
 
@@ -42,9 +42,15 @@ GtkWidget *widget_statusbar_create(AttributeSet *Attr, tag_attr *attr, gint Type
     if (Attr) {
         GList *element = NULL;
         gchar *lbl = attributeset_get_first(&element, Attr, ATTR_LABEL);
+        /* gtk3sermo pousse <label> puis <default> : le texte montré (et la variable)
+         * est <default> s'il est là. Ignoré jusqu'à la 2.8.0 : barre vide. */
+        GList *el_def = NULL;
+        gchar *def = attributeset_get_first(&el_def, Attr, ATTR_DEFAULT);
+        if (def && *def) lbl = def;
         if (lbl && *lbl) {
+            /* Le libellé seul : un showMessage() du même texte s'écrivait
+             * par-dessus (« Prêt » doublé, capture du site 2.8.0). */
             label->setText(QString::fromUtf8(lbl));
-            sb->showMessage(QString::fromUtf8(lbl));
         }
     }
 

@@ -31,6 +31,8 @@ int   fltk_render_png(const char *file);   /* rendu offscreen PNG (fltk-compat.c
 
 /* --render-png FILE : rendu offscreen déterministe, défini dans le cœur
  * (libsermocore/src/gtkdialog.c). En mode rendu on ne lance PAS la boucle. */
+#include <stdio.h>    /* fflush */
+#include <stdlib.h>   /* exit */
 extern char *option_render_png;
 
 /* ─── ABI neutre attendue par le cœur (noms qt6_*) → FLTK ─────────────────── */
@@ -50,7 +52,11 @@ int   sermo_be_run_loop(void)
 {
     if (option_render_png && *option_render_png) {
         fltk_render_png(option_render_png);
-        return 0;
+        /* Sortir ici, comme gtk3sermo : rendre la main au cœur relançait
+         * l'analyseur, qui finissait sur « syntax error near <window> » et
+         * le code 1 — l'image était pourtant écrite. */
+        fflush(stdout);
+        exit(0);
     }
     fltk_run();
     return 0;

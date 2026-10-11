@@ -5,6 +5,27 @@ This file summarises changes from the user's point of view.
 For the full technical history, see CHANGELOG.en.md.
 
 ──────────────────────────────────────────────────
+Version 2.8.1
+──────────────────────────────────────────────────
+
+Patch release: widgets drawn wrong, seen on the website screenshots.
+
+* <tree> is shown in columns, under its headers, on every port (no longer
+  "a|b|c" on one line).
+
+* <statusbar> shows its <default>; <text> shows what <input> read.
+
+* lvglsermo now draws <edit>, <calendar>, PNG images, toggle buttons,
+  links, wizards and stacks one page at a time. A search field no longer
+  damages the dialog's memory.
+
+* fltk1sermo, qt6sermo and efl1sermo: --render-png returns code 0.
+
+* sermoia-mcp: the preview (sermo_render) no longer runs any of the
+  dialog's commands; every tool has a timeout; examples can be searched
+  with a sentence; documentation rewritten, in French and English.
+
+──────────────────────────────────────────────────
 Version 2.8.0
 ──────────────────────────────────────────────────
 

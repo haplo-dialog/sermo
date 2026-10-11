@@ -43,6 +43,13 @@ GtkWidget *widget_tree_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     node->state.list.items        = NULL;
     node->state.list.item_count   = 0;
     node->state.list.selected_index = -1;
+    /* <label>Col1|Col2|…</label> : les en-têtes de colonnes, que le rendu
+     * dessine au-dessus des lignes. */
+    if (Attr) {
+        GList *el = NULL;
+        gchar *lbl = attributeset_get_first(&el, Attr, ATTR_LABEL);
+        if (lbl && *lbl) { free(node->label); node->label = strdup(lbl); }
+    }
     /* <input> et <item> : chargés par widget_tree_refresh(), que le cœur
      * appelle juste après la création — lire <input> ici aussi exécuterait
      * la commande deux fois. */

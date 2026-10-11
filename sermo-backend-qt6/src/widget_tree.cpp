@@ -36,24 +36,29 @@
 /* Une rangée par ligne de <input>, colonnes séparées par « | » — le format de
  * l'étalon gtk3sermo et du manuel. (qt6 lisait « parent|enfant » comme une
  * hiérarchie, format que les autres ports ne connaissent pas.) */
+static void ajouter_rangee(QTreeWidget *tw, const char *texte)
+{
+    QStringList cols = QString::fromUtf8(texte).split('|');
+    if (tw->columnCount() < cols.size()) tw->setColumnCount(cols.size());
+    new QTreeWidgetItem(tw, cols);
+}
+
 static void add_rows_from_input(QTreeWidget *tw, AttributeSet *Attr)
 {
     gchar **lignes = widget_input_lines(Attr);
     if (!lignes) return;
-    for (gchar **ligne = lignes; *ligne; ligne++) {
-        QStringList cols = QString::fromUtf8(*ligne).split('|');
-        if (tw->columnCount() < cols.size()) tw->setColumnCount(cols.size());
-        new QTreeWidgetItem(tw, cols);
-    }
+    for (gchar **ligne = lignes; *ligne; ligne++) ajouter_rangee(tw, *ligne);
     g_strfreev(lignes);
 }
 
+/* <item>a|b|c</item> : des colonnes aussi, comme l'étalon. Jusqu'à la 2.8.0,
+ * la ligne entière restait dans la 1re colonne (capture du site). */
 static void add_rows_from_items(QTreeWidget *tw, AttributeSet *Attr)
 {
     GList *element = NULL;
     gchar *item = attributeset_get_first(&element, Attr, ATTR_ITEM);
     while (item) {
-        if (*item) new QTreeWidgetItem(tw, QStringList(QString::fromUtf8(item)));
+        if (*item) ajouter_rangee(tw, item);
         item = attributeset_get_next(&element, Attr, ATTR_ITEM);
     }
 }
@@ -63,6 +68,19 @@ GtkWidget *widget_tree_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     QTreeWidget *tw = new QTreeWidget();
     tw->setColumnCount(1);
     tw->setHeaderHidden(true);
+    tw->setRootIsDecorated(false);   /* une liste à colonnes, sans flèches de dépliage */
+
+    /* <label>Col1|Col2|…</label> : les en-têtes, comme l'étalon. */
+    if (Attr) {
+        GList *el = NULL;
+        gchar *lbl = attributeset_get_first(&el, Attr, ATTR_LABEL);
+        if (lbl && *lbl) {
+            QStringList h = QString::fromUtf8(lbl).split('|');
+            if (tw->columnCount() < h.size()) tw->setColumnCount(h.size());
+            tw->setHeaderLabels(h);
+            tw->setHeaderHidden(false);
+        }
+    }
 
     /* <input> : lu par widget_tree_refresh(), que le cœur appelle juste après
      * la création — le lire aussi ici exécuterait la commande deux fois. */

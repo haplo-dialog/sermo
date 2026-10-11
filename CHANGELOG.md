@@ -3,9 +3,89 @@
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/).
 Versionnage : voir [VERSIONING.md](VERSIONING.md).
 
-La **2.7.3 est la première version 2.x publiée** ; les 2.7.4, 2.7.5, 2.7.7 et 2.8.0 la suivent (la 2.7.6 n'a été livrée qu'en paquets ; son contenu est publié avec la 2.7.7). Les versions 2.0.0 à 2.7.2 sont
+La **2.7.3 est la première version 2.x publiée** ; les 2.7.4, 2.7.5, 2.7.7 et 2.8.1 la suivent (la 2.7.6 et la 2.8.0 n'ont été livrées qu'en paquets ; leur contenu est publié avec la version suivante). Les versions 2.0.0 à 2.7.2 sont
 restées internes ; elles sont décrites ci-dessous pour garder la trace de ce qui a
 changé depuis la 1.x. Pour passer de la 1.x à la 2.x : [MIGRATION.md](MIGRATION.md).
+
+## [2.8.1] — 2026-10-10
+
+Version CORRECTIF. Une revue des captures du site, port par port contre l'étalon
+gtk3sermo, a trouvé des widgets mal ou pas dessinés que les bancs ne voyaient
+pas : ils lisent les valeurs, pas l'image.
+
+### Sécurité
+
+- **lvgl : `<searchentry>` écrivait au mauvais endroit.** Le texte saisi allait
+  dans `state.entry.buf`, qui partage la même mémoire que `state.list.items`
+  (un pointeur) : il l'écrasait. Il va désormais dans `state.list.filter`,
+  comme sur les autres ports.
+- **sermoia-mcp : `sermo_render` exécutait les commandes du XML.** Un `<input>`
+  s'exécutait pendant le rendu : demander un aperçu suffisait à lancer une
+  commande. Le rendu pose désormais `SERMO_ALLOWED_CMDS` sur une commande qui
+  n'existe pas, ce qui interdit tout (repli `sh -c` compris) ; le banc le vérifie
+  par un fichier témoin. Seul `sermo_run` exécute, et le dit.
+
+### Amélioré
+
+- **sermoia-mcp**, fonctionnement :
+  - délais sur chaque outil, qui tuent tout le groupe de processus (`xvfb-run`
+    compris) ; `sermo_run` prend un argument `timeout` ;
+  - `sermo_render` montrait du texte au lieu de l'image d'un petit dialogue (les
+    PNG de moins de ~800 octets étaient jetés) : l'image est jugée sur son
+    en-tête ;
+  - `sermo_run` sans affichage signale l'erreur au lieu de « aucune valeur » ;
+  - `sermo_check` rend « OK » ou « ERREUR » avec le message de l'analyseur, sans
+    le bruit des bibliothèques graphiques ;
+  - `sermo_examples` cherche par mots (« formulaire de contact ») dans les noms et
+    le contenu, classe par pertinence puis par vote, et donne la carte du
+    catalogue sans argument ;
+  - `sermo_vote` refuse un sujet hors catalogue ;
+  - protocole : `ping`, codes d'erreur JSON-RPC justes, versions 2025-06-18 et
+    2025-03-26, champ `instructions`, outils annotés (lecture seule, destructif) ;
+  - fichiers temporaires dans un dossier privé.
+- **sermoia-mcp**, documentation : README réécrit (chaque outil avec ses
+  arguments, ses réponses et ses erreurs ; boucle conseillée ; sécurité ; délais ;
+  déclaration dans Claude Code) et version anglaise `README.en.md`. Banc étendu à
+  cinq contrôles (rendu en image, témoin de commande, délais) ; quatre mutations
+  du code le font chacune échouer.
+
+### Corrigé
+
+- **`<tree>` en colonnes, sous ses en-têtes, sur tous les ports neutres**
+  (qt6, fltk1, efl1, sdl3, lvgl, ncurses, html). La ligne brute « a|b|c »
+  s'affichait ; fltk1 lisait même le « / » d'un chemin comme un niveau
+  d'arborescence. La variable exportée reste la 1re colonne, comme l'étalon.
+- **`<statusbar>`** : `<default>` l'emporte sur `<label>`, comme l'étalon. La
+  barre restait vide sur les sept ports neutres ; sous qt6, le texte s'écrivait
+  ensuite deux fois l'un sur l'autre.
+- **`<text>`** montre ce que `<input>` a lu (lvgl, html, sdl3, ncurses), sans
+  le saut de ligne final (fltk1 affichait « ^J ») ; la variable garde le texte
+  entier.
+- **`<expander label="…">`** : l'attribut est lu par les sept ports neutres ;
+  sdl3 respecte l'état ouvert ; ncurses dessine le titre, qu'Entrée ouvre et
+  ferme.
+- **`<levelbar>`** : `range-min` / `range-max` lus (lvgl, html, ncurses, sdl3).
+- **`--render-png` sort en code 0** sur fltk1, qt6 et efl1. L'image était
+  écrite, mais l'analyseur repartait ensuite et finissait sur « syntax error
+  near `<window>` », code 1.
+- **lvgl**, dessinés ou redessinés : `<edit>` (invisible), `<calendar>`,
+  `<pixmap>` et `<image>` (PNG), `<togglebutton>` (bouton enfoncé, non plus une
+  case), `<linkbutton>` (lien souligné), `<menubutton>` (liste déroulante),
+  `<stack>` et `<wizard>` (une page à la fois, boutons de l'assistant),
+  `<grid>` (rangées), `<overlay>` (couches superposées), `<vscale>` (verticale),
+  `<infobar>` (teinte selon `message-type`), `<aspectframe label>`, séparateur
+  vertical dans une rangée, bouton radio rond et exclusif, une seule ligne
+  choisie dans `<list>`. `width-request` d'une boîte est un minimum, et une
+  taille de fenêtre demandée ne descend plus sous le contenu : le formulaire
+  480×420 sortait coupé sous ses boutons.
+- **html** : `<vscale>` verticale, teinte de `<infobar>`, `<aspectframe label>`.
+
+### Mesuré
+
+- `ci/bancs.sh` : 176 bancs, 175 verts au premier passage ; le rouge (un garde
+  qui n'a pas trouvé sa fenêtre à temps, défaut du banc qui touche aussi la
+  2.8.0) est vert rejoué seul. Comportement 61/61 à parité sur les neuf ports.
+  Détail : [BILAN_SANTE.md](BILAN_SANTE.md).
 
 ## [2.8.0] — 2026-10-10
 
