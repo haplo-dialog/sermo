@@ -1,0 +1,39 @@
+<!-- Script : examples/metiers/10-securite-informatique/1-perimetre-analyse.sh (dialogue principal) -->
+<window title="Analyse de périmètre" default-width="560">
+  <vbox>
+    <text><label>N'analysez que des réseaux pour lesquels vous avez une autorisation écrite.</label></text>
+    <frame label="Cible">
+      <vbox>
+        <hbox><text><label>Adresse, plage ou nom :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>CIBLE</variable><default>192.168.1.0/24</default></entry></hbox>
+        <hbox><text><label>Adresses à exclure (séparées par des virgules) :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>EXCLURE</variable><default>192.168.1.1</default></entry></hbox>
+      </vbox>
+    </frame>
+    <frame label="Type d'analyse">
+      <vbox>
+        <radiobutton><label>Découverte des machines seulement (-sn)</label><variable>TYPE_DECOUVERTE</variable><default>true</default></radiobutton>
+        <radiobutton><label>Ports TCP ouverts, connexion complète (-sT)</label><variable>TYPE_PORTS</variable></radiobutton>
+        <radiobutton><label>Ports TCP et versions des services (-sT -sV)</label><variable>TYPE_VERSIONS</variable></radiobutton>
+      </vbox>
+    </frame>
+    <frame label="Réglages">
+      <vbox>
+        <hbox><text><label>Ports analysés :</label></text>
+          <comboboxtext><variable>PORTS</variable><default>les 100 plus courants</default>
+            <item>les 100 plus courants</item>
+            <item>les 1000 plus courants</item>
+            <item>tous (1-65535)</item>
+          </comboboxtext></hbox>
+        <hbox><text><label>Rythme (0 discret, 5 agressif) :</label></text>
+          <spinbutton range-min="0" range-max="5" range-step="1"><variable>RYTHME</variable><default>3</default></spinbutton></hbox>
+        <checkbox><label>Ne pas tester la présence avant (-Pn)</label><variable>SANS_PING</variable></checkbox>
+        <checkbox><label>Enregistrer le résultat (-oN)</label><variable>ENREGISTRER</variable><default>true</default></checkbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Préparer l'analyse</label><action>exit:analyser</action></button>
+    </hbox>
+  </vbox>
+</window>

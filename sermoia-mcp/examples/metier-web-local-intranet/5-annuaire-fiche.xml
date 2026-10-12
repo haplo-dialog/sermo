@@ -1,0 +1,18 @@
+<!-- Script : examples/metiers/12-web-local-intranet/5-annuaire.sh (dialogue fiche) -->
+<window title="Camille Martin" default-width="420">
+  <vbox>
+    <frame label="Fiche">
+      <vbox>
+        <text><label>Service : Comptabilité</label></text>
+        <text><label>Poste téléphonique : 214</label></text>
+        <text><label>Courriel : c.martin@exemple.fr</label></text>
+      </vbox>
+    </frame>
+    <hbox><text><label>Objet du courriel :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>OBJET</variable><default>Question</default></entry></hbox>
+    <hbox>
+      <button><label>Fermer</label><action>exit:fermer</action></button>
+      <button><label>Écrire un courriel</label><action>exit:ecrire</action></button>
+    </hbox>
+  </vbox>
+</window>

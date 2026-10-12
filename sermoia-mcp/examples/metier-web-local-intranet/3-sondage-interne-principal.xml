@@ -1,0 +1,37 @@
+<!-- Script : examples/metiers/12-web-local-intranet/3-sondage-interne.sh (dialogue principal) -->
+<window title="Sondage interne" default-width="560">
+  <vbox>
+    <text><label>Sondage anonyme : Organisation du télétravail. Aucun nom n'est enregistré.</label></text>
+    <frame label="1. Votre service">
+      <comboboxtext><variable>SERVICE</variable><default>Technique</default>
+        <item>Accueil</item><item>Comptabilité</item><item>Direction</item>
+        <item>Informatique</item><item>Ressources humaines</item><item>Technique</item>
+      </comboboxtext>
+    </frame>
+    <frame label="2. Satisfaction globale (0 à 10)">
+      <hscale range-min="0" range-max="10" range-step="1" draw-value="true"><variable>NOTE</variable><default>7</default></hscale>
+    </frame>
+    <frame label="3. Jours de télétravail souhaités par semaine">
+      <hbox>
+        <radiobutton><label>Aucun</label><variable>JOURS_0</variable></radiobutton>
+        <radiobutton><label>Un</label><variable>JOURS_1</variable></radiobutton>
+        <radiobutton><label>Deux</label><variable>JOURS_2</variable><default>true</default></radiobutton>
+        <radiobutton><label>Trois ou plus</label><variable>JOURS_3</variable></radiobutton>
+      </hbox>
+    </frame>
+    <frame label="4. Ce qui vous manque (plusieurs choix)">
+      <vbox>
+        <checkbox><label>Un second écran à domicile</label><variable>BESOIN_ECRAN</variable></checkbox>
+        <checkbox><label>Un meilleur accès au réseau interne (VPN)</label><variable>BESOIN_VPN</variable><default>true</default></checkbox>
+        <checkbox><label>Des réunions mieux équipées (son, caméra)</label><variable>BESOIN_REUNION</variable></checkbox>
+      </vbox>
+    </frame>
+    <frame label="5. Remarque libre">
+      <edit height-request="70"><variable>REMARQUE</variable><default></default></edit>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Envoyer mes réponses</label><action>exit:repondre</action></button>
+    </hbox>
+  </vbox>
+</window>

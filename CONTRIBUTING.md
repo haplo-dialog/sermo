@@ -65,12 +65,16 @@ backends touchés :
 
 ```sh
 TIMEOUT=5 bash tests/xml/run_tests.sh <BIN>                       # 55 PASS
-bash tests/comportement/run.sh <BIN>                              # 53 au vert
+bash tests/comportement/run.sh <BIN>                              # 61 au vert
 xvfb-run -a bash tests/garde_echappement_sortie.sh <BIN>          # OK — 4 cas
 ```
 
 Une demande de fusion qui rougit un banc n'est pas fusionnée. Si vous ajoutez une
 capacité, ajoutez le cas de test qui la vérifie.
+
+Pour un port, le test de réussite est aussi
+`bash examples/metiers/verifie.sh --ports "<port>"` : il joue les scripts métier
+et les boîtes à outils sur ce port et compare les valeurs à gtk3sermo.
 
 ### Tout rejouer, comme la CI
 

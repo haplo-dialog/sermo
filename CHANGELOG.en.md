@@ -3,27 +3,60 @@
 Format inspired by [Keep a Changelog](https://keepachangelog.com/).
 Versioning: see [VERSIONING.en.md](VERSIONING.en.md).
 
-**2.7.3 is the first published 2.x release**; 2.7.4, 2.7.5, 2.7.7 and 2.8.1 follow it (2.7.6 and 2.8.0 were only delivered as packages; their content is published with the next release). Versions 2.0.0 to 2.7.2 stayed
+**2.7.3 is the first published 2.x release**; 2.7.4, 2.7.5, 2.7.7 and 2.8.2 follow it (2.7.6, 2.8.0 and 2.8.1 were only delivered as packages; their content is published with the next release). Versions 2.0.0 to 2.7.2 stayed
 internal; they are described below to keep track of what changed since 1.x. To
 move from 1.x to 2.x: [MIGRATION.en.md](MIGRATION.en.md).
 
-## [2.8.1] — 2026-10-10
+## [2.8.2] — 2026-10-11
 
-PATCH release. A review of the website screenshots, port by port against the
-gtk3sermo reference, found widgets drawn wrong or not at all that the tests
-did not see: they read values, not pictures.
+PATCH release. Sixty job scripts and four toolboxes, now the acceptance test of
+the ports, found gaps between the ports and the gtk3sermo reference: they are
+fixed. Both MCP servers become packages.
 
 ### Security
 
-- **lvgl: `<searchentry>` wrote to the wrong place.** Typed text went to
-  `state.entry.buf`, which shares its memory with `state.list.items` (a
-  pointer): it overwrote it. It now goes to `state.list.filter`, as on the
-  other ports.
 - **sermoia-mcp: `sermo_render` ran the XML's commands.** An `<input>` ran
   during rendering: asking for a preview was enough to launch a command.
   Rendering now sets `SERMO_ALLOWED_CMDS` to a command that does not exist,
   which forbids everything (`sh -c` fallback included); the test checks it with
   a witness file. Only `sermo_run` runs commands, and says so.
+
+### Measured
+
+- `ci/bancs.sh`: 177 tests, 174 green on the first run, the three red ones
+  explained and settled; `examples/metiers/verifie.sh`: 104 scripts, 187
+  dialogs, nine ports, 0 gap.
+  Details: [BILAN_SANTE.md](BILAN_SANTE.md) (French only).
+
+### Added
+
+- **Sixty job scripts** (`examples/metiers/`): five per job, for twelve jobs
+  (system administration, development, support, integration, kiosks, workshop,
+  small business and non-profits, teaching, multimedia, security, headless
+  server, local web). Ready to run, safely: by default the command is printed
+  instead of being run (`SERMO_A_BLANC=0` to act). They are also the **ports'
+  acceptance test**: `examples/metiers/verifie.sh` plays each dialog on the
+  nine ports and compares the values with gtk3sermo. Public domain (CC0-1.0).
+- **Four toolboxes** (`examples/boites-a-outils/`): system (display, sound, Wi-Fi,
+  time, keyboard…), server (nginx, certificates, SSH, fail2ban, log rotation,
+  shares…), administrator (groups, permissions, packages, fstab, formatting,
+  sudo…) and user (search, archives, password, reminder, printing…). Each: a
+  launcher and ten tools. Same rules as the job scripts (dry run by default,
+  confirmation before a destructive action, no `sudo` or `pkexec`, checked
+  input); reviewed for security; played by the same bench on the nine ports.
+  Public domain (CC0-1.0).
+- **Signed checksums**: `SHA256SUMS.asc`, with the haplo-dialog key
+  (`devel@haplo-dialog.fr`, fingerprint `66C7 F4AD 7A58 A037 967F 8339 3799 9F99
+  7570 F1ED`, in the README); the public key is on the website.
+- **`sermoia-mcp` and `sermoman-mcp` packages**: both MCP servers install
+  (`/usr/bin/sermoia-mcp`, `/usr/bin/sermoman-mcp`). sermoia finds its
+  installed catalogue, job scripts and toolboxes included; sermoman reports its version once
+  installed. Job scripts and toolboxes ship in `sermo-doc`.
+- **sermoman-mcp: `sermo_scripts`**, the inventory of the 104 scripts (need,
+  wrapped command, suggested port, path), generated from their headers and
+  included in the search; the "truth" test fails when it is out of date.
+  **sermoia-mcp**: the catalogue has 16 topics (12 jobs, 4 boxes) and 187
+  dialogs, and its test fails when it is out of date.
 
 ### Improved
 
@@ -46,6 +79,126 @@ did not see: they read values, not pictures.
   declaring it in Claude Code) and an English `README.en.md`. Test extended to
   five checks (picture, witness command, timeouts); four code mutations each
   make it fail.
+
+### Fixed
+
+- **ncursessermo: the output variables were wiped.** Run on a terminal without
+  capture, it printed `NAME="…"` and `EXIT="…"` while the alternate screen
+  was still open: they vanished with it. The contract gains an optional hook,
+  `sermo_be_before_export()`, called before the export; the ncurses port
+  restores the screen there. The other ports have nothing to provide.
+- **`--do` receives `EXIT`.** The manual shows it (`[ "$EXIT" = "valide" ]`), but
+  only the widgets' variables were exported: `EXIT` arrived empty, and a script
+  could not tell which button had been clicked. It is now exported on every exit
+  (button, close, abort), in the core and in the ports that print `EXIT`
+  themselves. Found by the first job script.
+- **efl1: a field's value came out as markup.** `<entry>`, `<password>` and
+  `<searchentry>` returned "&laquo;" for "«", "&amp;" for "&"; a `<` in a default
+  value was read as a tag. Plain text on write and read, as `<edit>` does.
+- **XML entities decoded** in text and attributes: `&lt;` `&gt;` `&amp;`
+  `&quot;` `&apos;`, `&#NN;` and `&#xHH;`. `<default>a &amp; b</default>` gave
+  "a &amp; b"; it now gives "a & b", as any XML reader does. An unknown entity is
+  left as is; a quoted string is not touched. A script that escapes its values
+  (`&` → `&amp;`) now gets the original value back.
+- **A value written on several lines keeps all its lines** (`<default>`,
+  `<label>`…): only the last line was kept.
+- **First row chosen as in the reference, on all nine ports.** `<list>`, `<tree>`
+  and `<table>` choose their first row only when they are the first widget to
+  take the focus in their window (visible and active); otherwise nothing is
+  chosen. `<default>` chooses the wanted row everywhere, gtk3 and gtk4 included
+  (gtk3 ignored it on `<list>`).
+- **Radio button groups as in the reference, on all nine ports.** The first
+  button of a group is checked when none has `<default>` (gtk4, qt6, fltk1,
+  sdl3, lvgl, ncurses and html checked none); efl1 put every button of the
+  window in a single group. A new container starts a new group.
+- **Boxes laid out like the reference, on all nine ports.** `homogeneous="true"`
+  gives equal cells over the whole length, a child that does not fill its cell
+  being centred in it; `space-expand` / `space-fill` set on a `<vbox>` or an
+  `<hbox>` apply to its children, with gtk3's exact rule (carried from one child
+  to the next, defaults by type); an `<hbox>` packs whatever does not stretch to
+  the right. Before, most ports ignored these settings: columns squeezed to one
+  side, OK/Cancel buttons misplaced, frames not stretched.
+- **Icon button: the icon and the label form one centred group** in the button
+  (gtk3 pushed it right, gtk4 left); `image-position` is honoured everywhere.
+- **Timers**: ncurses fired every `<timer>` on every frame (not at its
+  interval); without a display, ncurses and html fired them in document order
+  instead of shortest first. `milliseconds="true"` is read as a boolean on the
+  four neutral ports.
+- **fltk1: `<spinbutton digits>`** shared one format buffer between all fields:
+  the last one created imposed its decimals on the others.
+- **htmlsermo, `serve` mode**: `--do` receives the values sent by the browser (it
+  received the defaults); `EXIT` is the button's exit (`exit:X` → "X"), no longer
+  its label; a button whose actions do not close the dialog no longer submits
+  the form.
+- **gtk3: `<table>` is no longer sorted on its own.** Its rows were ordered
+  by the first column on opening, even without `auto-sort`: the document order
+  was lost, and the first chosen row differed from the other ports. As in
+  gtkdialog, sorting happens only with `auto-sort` or on a header click.
+- **`<text>` returns the text shown, on the nine ports**, as gtkdialog does: its
+  label ("text" when it has none), then what `<input>` read. The neutral ports
+  returned an empty value, and qt6, efl1, sdl3, lvgl, ncurses and html showed a
+  `<default>`, which `<text>` does not have.
+- **`<tree exported-column="N">` on the nine ports.** Only gtk3 and gtk4
+  returned the requested column; the seven others always returned the first.
+  Found by the "user" toolbox (the folder of a file found).
+- **fltk1: an `<item>` containing "/" became a submenu** (`<comboboxtext>`,
+  `<combobox>`): "Europe/Paris" returned "Paris". Items are added as they
+  are, as `<input>` lines already were. Found by the "system" toolbox (time
+  zone).
+- **htmlsermo: the page has the shape of the window.** The window takes its
+  width (`default-width`, `width-request`) instead of a fixed 640 px; a
+  horizontal box no longer wraps and packs its children from the end, as
+  gtkdialog does; what stretches (`space-expand`, and by default `<entry>`,
+  `<edit>`, `<frame>`) takes the free space; tabs follow `tab-pos` (left, right,
+  bottom); an image takes the requested size (`icon-size`, `<width>`/`<height>`)
+  and keeps its ratio; a text keeps its line breaks and is centred as in GTK; a
+  missing icon leaves an empty space, as gtk3 does. Reported on the website's
+  "A complete system tool" picture.
+- **Theme icons: looked up as GTK does, on the neutral ports.** The person's
+  theme, then Adwaita, then hicolor; for each name, the `-symbolic` variant, then
+  the generic name (`network-wired` → `network`). With no theme set (SSH, empty
+  session), most icons were missing: Adwaita only has the symbolic variant of
+  many of them. htmlsermo tints a symbolic icon with the text colour, as GTK does.
+- **Icons: ports that could show them and did not** (found on the website's
+  gallery): gtk4 showed a broken image in a button (it first asked the theme
+  whether it had the icon, and the answer was always no); qt6 looked up an
+  `<image icon-name>` only through Qt (one in five found) and now uses the core
+  lookup, like its buttons; efl1 recolours symbolic icons in a light colour on
+  its dark theme, where they were nearly invisible; lvgl draws SVG icons
+  (ThorVG, shipped inside LVGL — the port now contains C++) and button icons,
+  and tints a symbolic icon with the text colour. The core gains
+  `sermo_icon_symbolique_teinte()`.
+- **lvgl: tabs and stretched items.** A tab bar on the side takes the width of
+  the longest label (36 px cut "Systeme" into "ystem") and its tabs keep their
+  height, at the top; `tab-pos` right and bottom are read. An item with
+  `space-expand` keeps at least its natural size: in a box sized to its
+  content, LVGL squashed it to 0 px (the "Actions rapides" buttons and the
+  "dmesg" frame of system-tools disappeared). As in gtkdialog, a row packs
+  what does not stretch to the right, `<entry>`, `<edit>` and `<frame>`
+  stretch by default, a column stretching in a row gives its width to its
+  children, and the frames of a tab page fill its height; a bar, a slider or a
+  field keeps its own height.
+- **sermoia-mcp: `sermo_examples` ranks each example** (topic name, file name,
+  content), no longer the whole topic: in a toolbox, "fail2ban" first showed
+  the nginx site and the certificates. The test checks it.
+- **fltk1: a row of columns (icon and label) overflowed** under the next
+  frame: its height was read after the row had reset its children to its own
+  height. Seen on the website's gallery ("Buttons and icons").
+- **gtk3, gtk4: a label that is not valid Pango markup** is shown as plain text,
+  without a warning.
+
+## [2.8.1] — 2026-10-10
+
+PATCH release. A review of the website screenshots, port by port against the
+gtk3sermo reference, found widgets drawn wrong or not at all that the tests
+did not see: they read values, not pictures.
+
+### Security
+
+- **lvgl: `<searchentry>` wrote to the wrong place.** Typed text went to
+  `state.entry.buf`, which shares its memory with `state.list.items` (a
+  pointer): it overwrote it. It now goes to `state.list.filter`, as on the
+  other ports.
 
 ### Fixed
 

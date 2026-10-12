@@ -1,0 +1,11 @@
+<!-- Script : examples/metiers/01-admin-systeme/1-sauvegarde.sh (dialogue confirmation) -->
+<window title="Confirmer la sauvegarde">
+  <vbox>
+    <text><label>Simulation faite : 12 fichiers, 3,4 Mo.</label></text>
+    <text><label>Lancer la sauvegarde pour de vrai ?</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Sauvegarder</label><action>exit:sauvegarder</action></button>
+    </hbox>
+  </vbox>
+</window>

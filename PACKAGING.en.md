@@ -11,7 +11,7 @@ Debian testing system.
 
 | Package | Contents | Depends on |
 |---|---|---|
-| `sermo-doc` | Texinfo manual (`info sermo-doc`) and the common documentation: copyright, Debian changelog | no dependency |
+| `sermo-doc` | Texinfo manual (`info sermo-doc`), the common documentation (copyright, Debian changelog), the sixty job scripts (`examples/metiers`) and the four toolboxes (`examples/boites-a-outils`) | no dependency |
 | `sermo-core-dev` | `libsermocore.a`, headers (`/usr/include/sermo`), `sermocore.pc` | no dependency |
 | `sermo-backend-gtk3` | `gtk3sermo` binary, man page, Texinfo manual | GTK 3, VTE (`<terminal>`), gtk-layer-shell (Wayland anchoring) |
 | `sermo-backend-gtk4` | `gtk4sermo` binary, man page, Texinfo manual | GTK 4, VTE (`<terminal>`) |
@@ -24,8 +24,10 @@ Debian testing system.
 | `sermo-backend-html` | `htmlsermo` binary (export as an HTML page), man page, Texinfo manual | no graphics library |
 | `sermo-gtkdialog` | the `gtkdialog` command and the `gtkdialog(1)` page, links to gtk3sermo | `sermo-backend-gtk3` |
 | `gtk3sermo`, `gtk4sermo`, `qt6sermo`, `gtksermo` | transitional packages, empty | the 2.x package that replaces them, and `sermo-doc` |
+| `sermoia-mcp` | MCP server to write, check and see a dialog; its example catalogue | GLib, json-glib, one sermo port (`sermo-backend-qt6` recommended) |
+| `sermoman-mcp` | MCP server for the manual, read-only | `python3` |
 
-That is **16 packages**, plus one `-dbgsym` package (debug symbols) per backend.
+That is **18 packages**, plus one `-dbgsym` package (debug symbols) per backend and for `sermoia-mcp`.
 The dependencies are computed by `dh_shlibdeps` from the libraries actually
 linked: they are neither guessed nor copied by hand.
 
@@ -44,10 +46,11 @@ attach their `/usr/share/doc` to `sermo-doc`'s through a symlink. A
 transitional package held nothing else: `gtk3sermo` went from 32 kB to
 **1.2 kB**.
 
-⚠️ The ten architecture dependent packages **keep their own `copyright`**, as
-policy requires: `--link-doc` does not cross the "all" / "any" boundary, and
+⚠️ The eleven architecture dependent packages (the core, the nine backends and
+`sermoia-mcp`) **keep their own `copyright`**, as policy requires: `--link-doc` does not cross the "all" / "any" boundary, and
 `debhelper` actively rejects the combination since compatibility level 10
-(CAVEAT 2 of `dh_installdocs`).
+(CAVEAT 2 of `dh_installdocs`). `sermoman-mcp`, which does not depend on
+`sermo-doc`, keeps its own as well.
 
 Measured on 2026-09-20 against packages built in a pristine Debian:
 **2011 kB → 1700 kB, that is −15 %**, lintian 0 errors 0 warnings.
@@ -127,7 +130,7 @@ as `.deb` files attached to the release. Installing the wanted 2.x packages from
 their files removes the 1.x packages they replace:
 
 ```sh
-sudo apt install ./sermo-backend-gtk3_2.8.1-1_amd64.deb ./sermo-gtkdialog_2.8.1-1_all.deb
+sudo apt install ./sermo-backend-gtk3_2.8.2-3_amd64.deb ./sermo-gtkdialog_2.8.2-3_all.deb
 ```
 
 Tested on 2026-09-17 in a clean Debian testing container, without network,
@@ -135,8 +138,8 @@ starting from `gtk3sermo`, `gtk4sermo`, `gtksermo` 1.1.4-2 and `qt6sermo`
 1.0.2-2 (outside `construire-paquets.sh`). The full guide is
 [MIGRATION.en.md](MIGRATION.en.md).
 
-For those who follow an apt repository, these names are also **transitional
-packages**: empty, they depend on the package that replaces them
+For those who serve the packages from an apt repository of their own (there is
+no public apt repository), these names are also **transitional packages**: empty, they depend on the package that replaces them
 (`sermo-backend-gtk3`, `sermo-backend-gtk4`, `sermo-backend-qt6`,
 `sermo-gtkdialog`). The new packages declare `Breaks` and `Replaces` on the old
 ones `(<< 2.0~)`. A plain `apt upgrade` therefore brings in the 2.x backends.
@@ -221,12 +224,33 @@ upstream…). Provenance, port by port, is detailed in
 ## Installing and uninstalling
 
 ```sh
-sudo apt install ./sermo-backend-gtk3_2.8.1-1_amd64.deb      # GTK 3
-sudo apt install ./sermo-gtkdialog_2.8.1-1_all.deb           # + the gtkdialog command
-sudo apt install ./sermo-core-dev_2.8.1-1_amd64.deb          # to build a backend
+sudo apt install ./sermo-backend-gtk3_2.8.2-3_amd64.deb      # GTK 3
+sudo apt install ./sermo-gtkdialog_2.8.2-3_all.deb           # + the gtkdialog command
+sudo apt install ./sermo-core-dev_2.8.2-3_amd64.deb          # to build a backend
 
 sudo apt purge sermo-gtkdialog sermo-backend-gtk3            # remove everything
 ```
 
+### Checking what you downloaded
+
 There is no apt repository: the packages are attached to each release, with
-their checksums (see the [README](README.en.md#install)).
+the `SHA256SUMS` file (one SHA-256 checksum per package) and its detached
+signature `SHA256SUMS.asc`, made with the haplo-dialog key
+(`devel@haplo-dialog.fr`).
+
+```sh
+curl -fLO https://haplo-dialog.fr/cle-haplo-dialog.asc
+gpg --import cle-haplo-dialog.asc
+gpg --verify SHA256SUMS.asc SHA256SUMS
+sha256sum --ignore-missing -c SHA256SUMS
+```
+
+`gpg --verify` must report "Good signature from haplo-dialog <devel@haplo-dialog.fr>"
+and show the fingerprint `66C7 F4AD 7A58 A037 967F  8339 3799 9F99 7570 F1ED`.
+Compare it with the one in the README on GitLab **and** on GitHub: a key
+replaced on the website would not be replaced everywhere at once. The full
+command is in the [README](README.en.md#install).
+
+What is signed is the list of checksums, not each `.deb` one by one: a package
+can be trusted because its checksum is in a list whose signature is good. There
+is no signed apt repository either.

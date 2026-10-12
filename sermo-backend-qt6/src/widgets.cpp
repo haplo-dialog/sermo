@@ -73,6 +73,13 @@
 #include "sermo_input.h"
 
 #include <QtWidgets/QWidget>
+#include <QtWidgets/QBoxLayout>
+#include <QtCore/QVector>
+#include <algorithm>
+#include <QtWidgets/QLayout>
+#include <QtWidgets/QPushButton>
+#include <QtWidgets/QToolButton>
+#include <QtCore/QList>
 
 #include <cstdio>
 #include <cstdlib>
@@ -91,11 +98,17 @@ GList *widget_hide_list = NULL;
 
 namespace {
 
-/* Table associative (facteur d'etirement Qt6) : mémorise, par widget, s'il
-   doit s'étirer dans son QHBoxLayout/QVBoxLayout parent. Statique à ce
-   fichier : rien d'autre dans le backend n'a besoin d'y accéder
-   directement, seulement via qt6_layout_register()/qt6_layout_get_expand(). */
-std::map<QWidget *, bool> qt6_layout_expand_map;
+/* Table associative (étirement Qt6) : mémorise, par widget, ce que SA
+   balise dit de space-expand et space-fill — 1 oui, 0 non, -1 « non dit ».
+   Le « non dit » compte : une boîte gtk3 ne remplace sa valeur courante que
+   si l'enfant en a une (voir qt6_box_construire). Statique à ce fichier :
+   on n'y accède que par qt6_layout_register()/qt6_layout_get_expand() et
+   qt6_box_construire(). */
+struct Qt6Etirement {
+    int expand;
+    int fill;
+};
+std::map<QWidget *, Qt6Etirement> qt6_layout_expand_map;
 
 } // namespace
 
@@ -587,25 +600,31 @@ extern "C" void widget_show_all(void)
 /* Fonctions 8 et 9 — facteur d'étirement de disposition (Qt6)            */
 /* ---------------------------------------------------------------------- */
 
+/* Lit un booléen de balise comme gtk3 : true/yes/1 → 1, toute autre valeur
+ * présente → 0, absent → -1. */
+static int qt6_lire_tristate(tag_attr *attr, const char *nom)
+{
+    if (attr == NULL)
+        return -1;
+    const gchar *value = get_tag_attribute(attr, nom);
+    if (value == NULL)
+        return -1;
+    if (g_ascii_strcasecmp(value, "true") == 0
+        || g_ascii_strcasecmp(value, "yes") == 0
+        || atoi(value) == 1)
+        return 1;
+    return 0;
+}
+
 extern "C" void qt6_layout_register(GtkWidget *widget, tag_attr *attr)
 {
     if (widget == NULL)
         return;
 
-    gboolean expand = FALSE;
-
-    if (attr != NULL) {
-        const gchar *value = get_tag_attribute(attr, "space-expand");
-
-        if (value != NULL
-            && (g_ascii_strcasecmp(value, "true") == 0
-                || g_ascii_strcasecmp(value, "yes") == 0
-                || atoi(value) == 1)) {
-            expand = TRUE;
-        }
-    }
-
-    qt6_layout_expand_map[reinterpret_cast<QWidget *>(widget)] = (expand != FALSE);
+    Qt6Etirement e;
+    e.expand = qt6_lire_tristate(attr, "space-expand");
+    e.fill   = qt6_lire_tristate(attr, "space-fill");
+    qt6_layout_expand_map[reinterpret_cast<QWidget *>(widget)] = e;
 }
 
 extern "C" int qt6_layout_get_expand(GtkWidget *widget)
@@ -613,11 +632,445 @@ extern "C" int qt6_layout_get_expand(GtkWidget *widget)
     if (widget == NULL)
         return 0;
 
-    std::map<QWidget *, bool>::const_iterator it =
+    std::map<QWidget *, Qt6Etirement>::const_iterator it =
         qt6_layout_expand_map.find(reinterpret_cast<QWidget *>(widget));
 
-    if (it != qt6_layout_expand_map.end() && it->second)
+    if (it != qt6_layout_expand_map.end() && it->second.expand == 1)
         return 1;
 
     return 0;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Fonction 10 — construction d'une boîte <hbox>/<vbox> comme gtk3         */
+/* ---------------------------------------------------------------------- */
+
+namespace {
+
+/* homogeneous="true" : chaque enfant VISIBLE reçoit une case de même taille
+ * sur l'axe de la boîte, et les cases couvrent TOUTE la boîte (gtk3 :
+ * GtkBox:homogeneous). Un QBoxLayout ne sait pas le faire : à facteurs égaux,
+ * Qt garde au moins la taille propre de chacun, et la taille naturelle de la
+ * boîte est la SOMME des tailles propres, pas n fois la plus grande. Un
+ * enfant qui ne remplit pas sa case y est centré par son alignement
+ * (QWidgetItem::setGeometry s'en charge). */
+class Qt6CasesEgales : public QLayout
+{
+public:
+    Qt6CasesEgales(QWidget *parent, Qt::Orientation o) : QLayout(parent), m_o(o) {}
+    ~Qt6CasesEgales() override
+    {
+        QLayoutItem *item;
+        while ((item = takeAt(0)) != nullptr)
+            delete item;
+    }
+
+    void addItem(QLayoutItem *item) override { m_items.append(item); }
+    int count() const override { return m_items.size(); }
+    QLayoutItem *itemAt(int i) const override
+    {
+        return (i >= 0 && i < m_items.size()) ? m_items.at(i) : nullptr;
+    }
+    QLayoutItem *takeAt(int i) override
+    {
+        return (i >= 0 && i < m_items.size()) ? m_items.takeAt(i) : nullptr;
+    }
+    Qt::Orientations expandingDirections() const override { return Qt::Orientations(); }
+
+    QSize sizeHint() const override { return calculer(false); }
+    QSize minimumSize() const override { return calculer(true); }
+
+    void setGeometry(const QRect &rect) override
+    {
+        QLayout::setGeometry(rect);
+        QRect r = rect.marginsRemoved(contentsMargins());
+        int n = visibles();
+        if (n == 0)
+            return;
+        int esp   = spacing() > 0 ? spacing() : 0;
+        int total = (m_o == Qt::Horizontal ? r.width() : r.height()) - esp * (n - 1);
+        if (total < 0)
+            total = 0;
+        int base  = total / n;
+        int reste = total % n;
+        int pos   = (m_o == Qt::Horizontal ? r.x() : r.y());
+        int k = 0;
+        for (QLayoutItem *item : m_items) {
+            if (item->isEmpty())
+                continue;
+            /* Le reste de la division va aux premières cases, un pixel
+             * chacune, comme gtk_box_size_allocate. */
+            int taille = base + (k < reste ? 1 : 0);
+            if (m_o == Qt::Horizontal)
+                item->setGeometry(QRect(pos, r.y(), taille, r.height()));
+            else
+                item->setGeometry(QRect(r.x(), pos, r.width(), taille));
+            pos += taille + esp;
+            ++k;
+        }
+    }
+
+private:
+    int visibles() const
+    {
+        int n = 0;
+        for (QLayoutItem *item : m_items)
+            if (!item->isEmpty())
+                ++n;
+        return n;
+    }
+
+    QSize calculer(bool minimum) const
+    {
+        int n = 0, plusGrand = 0, travers = 0;
+        for (QLayoutItem *item : m_items) {
+            if (item->isEmpty())
+                continue;
+            QSize t = minimum ? item->minimumSize() : item->sizeHint();
+            int axe = (m_o == Qt::Horizontal ? t.width() : t.height());
+            int crx = (m_o == Qt::Horizontal ? t.height() : t.width());
+            if (axe > plusGrand) plusGrand = axe;
+            if (crx > travers)   travers   = crx;
+            ++n;
+        }
+        int esp = spacing() > 0 ? spacing() : 0;
+        int axe = n > 0 ? n * plusGrand + esp * (n - 1) : 0;
+        QMargins m = contentsMargins();
+        if (m_o == Qt::Horizontal)
+            return QSize(axe + m.left() + m.right(), travers + m.top() + m.bottom());
+        return QSize(travers + m.left() + m.right(), axe + m.top() + m.bottom());
+    }
+
+    Qt::Orientation      m_o;
+    QList<QLayoutItem *> m_items;
+};
+
+/* Boîte NON homogène, partage EXACT de gtk3 (gtk_box_size_allocate) :
+ *  1. chaque enfant visible reçoit d'abord sa taille minimale ;
+ *  2. le reste monte les enfants vers leur taille naturelle, à parts égales
+ *     en commençant par ceux à qui il manque le moins
+ *     (gtk_distribute_natural_allocation) ;
+ *  3. le surplus restant est divisé à parts ÉGALES entre les enfants étirés
+ *     (le reste de la division, un pixel chacun, aux premiers) ;
+ *  4. un enfant étiré sans fill garde sa taille et est centré dans sa place ;
+ *  5. sans enfant étiré, le surplus reste libre : en TÊTE pour une rangée
+ *     (gtk_box_pack_end → calée à droite), en queue pour une colonne.
+ * Un QBoxLayout, lui, donne des tailles PROPORTIONNELLES au facteur : dans
+ * 03-onglets, notebook et bouton OK étirés coupaient la colonne moitié-moitié
+ * (190/190 px) là où gtk3 donne ~260/100 (naturel + même part du surplus).
+ * Travers : l'enfant reçoit toute la largeur (ou hauteur) ; un widget à taille
+ * bornée y est centré par QWidgetItem::setGeometry. */
+class Qt6BoiteGtk : public QLayout
+{
+public:
+    Qt6BoiteGtk(QWidget *parent, Qt::Orientation o, bool calerFin)
+        : QLayout(parent), m_o(o), m_calerFin(calerFin) {}
+    ~Qt6BoiteGtk() override
+    {
+        QLayoutItem *item;
+        while ((item = takeAt(0)) != nullptr)
+            delete item;
+    }
+
+    void ajouter(QWidget *w, bool etire, bool remplit)
+    {
+        m_etireSuivant   = etire;
+        m_remplitSuivant = remplit;
+        addWidget(w);
+    }
+
+    void addItem(QLayoutItem *item) override
+    {
+        Enfant e;
+        e.item    = item;
+        e.etire   = m_etireSuivant;
+        e.remplit = m_remplitSuivant;
+        m_enfants.append(e);
+        m_etireSuivant = m_remplitSuivant = false;
+    }
+    int count() const override { return m_enfants.size(); }
+    QLayoutItem *itemAt(int i) const override
+    {
+        return (i >= 0 && i < m_enfants.size()) ? m_enfants.at(i).item : nullptr;
+    }
+    QLayoutItem *takeAt(int i) override
+    {
+        if (i < 0 || i >= m_enfants.size())
+            return nullptr;
+        return m_enfants.takeAt(i).item;
+    }
+
+    /* Comme gtk_widget_compute_expand : une boîte qui contient un enfant étiré
+     * demande elle-même à s'étirer sur cet axe ; plus ce que demandent les
+     * enfants (politiques Expanding), comme le faisait le QBoxLayout. */
+    Qt::Orientations expandingDirections() const override
+    {
+        Qt::Orientations d;
+        for (const Enfant &e : m_enfants) {
+            if (e.item->isEmpty())
+                continue;
+            d |= e.item->expandingDirections();
+            if (e.etire)
+                d |= m_o;
+        }
+        return d;
+    }
+
+    QSize sizeHint() const override { return calculer(false); }
+    QSize minimumSize() const override { return calculer(true); }
+
+    void setGeometry(const QRect &rect) override
+    {
+        QLayout::setGeometry(rect);
+        QRect r = rect.marginsRemoved(contentsMargins());
+        bool horiz = (m_o == Qt::Horizontal);
+
+        QList<int> vis;
+        for (int i = 0; i < m_enfants.size(); ++i)
+            if (!m_enfants.at(i).item->isEmpty())
+                vis.append(i);
+        int n = vis.size();
+        if (n == 0)
+            return;
+
+        int esp   = spacing() > 0 ? spacing() : 0;
+        int reste = (horiz ? r.width() : r.height()) - esp * (n - 1);
+
+        QVector<int> taille(n), naturel(n);
+        int nEtires = 0;
+        for (int k = 0; k < n; ++k) {
+            QLayoutItem *it = m_enfants.at(vis[k]).item;
+            int mn = horiz ? it->minimumSize().width() : it->minimumSize().height();
+            int nt = horiz ? it->sizeHint().width()    : it->sizeHint().height();
+            if (nt < mn) nt = mn;
+            taille[k]  = mn;
+            naturel[k] = nt;
+            reste     -= mn;
+            if (m_enfants.at(vis[k]).etire)
+                ++nEtires;
+        }
+
+        /* 2. vers la taille naturelle — gtk_distribute_natural_allocation :
+         * tri par écart croissant, puis part = (reste + i) / (i + 1) en
+         * remontant, plafonnée à l'écart. */
+        if (reste > 0) {
+            QVector<int> ordre(n);
+            for (int k = 0; k < n; ++k) ordre[k] = k;
+            std::stable_sort(ordre.begin(), ordre.end(), [&](int a, int b) {
+                return (naturel[a] - taille[a]) < (naturel[b] - taille[b]);
+            });
+            for (int i = n - 1; reste > 0 && i >= 0; --i) {
+                int k     = ordre[i];
+                int ecart = naturel[k] - taille[k];
+                int part  = (reste + i) / (i + 1);
+                int donne = part < ecart ? part : ecart;
+                taille[k] += donne;
+                reste     -= donne;
+            }
+        }
+        if (reste < 0)
+            reste = 0;
+
+        /* 3. surplus à parts égales entre les étirés. */
+        int base = 0, surplusPixels = 0, libre = reste;
+        if (nEtires > 0) {
+            base          = reste / nEtires;
+            surplusPixels = reste % nEtires;
+            libre         = 0;
+        }
+
+        /* 5. sans étiré, la place libre va en tête (rangée) ou en queue. */
+        int pos = horiz ? r.x() : r.y();
+        if (m_calerFin)
+            pos += libre;
+
+        for (int k = 0; k < n; ++k) {
+            const Enfant &e = m_enfants.at(vis[k]);
+            int place = taille[k];
+            if (e.etire) {
+                place += base;
+                if (surplusPixels > 0) { ++place; --surplusPixels; }
+            }
+            int dim = place, decal = 0;
+            if (e.etire && !e.remplit) {
+                /* 4. garde sa taille, centré dans la place reçue. */
+                dim   = taille[k];
+                decal = (place - dim) / 2;
+            }
+            if (horiz)
+                e.item->setGeometry(QRect(pos + decal, r.y(), dim, r.height()));
+            else
+                e.item->setGeometry(QRect(r.x(), pos + decal, r.width(), dim));
+            pos += place + esp;
+        }
+    }
+
+private:
+    struct Enfant {
+        QLayoutItem *item;
+        bool         etire;
+        bool         remplit;
+    };
+
+    QSize calculer(bool minimum) const
+    {
+        int n = 0, axe = 0, travers = 0;
+        for (const Enfant &e : m_enfants) {
+            if (e.item->isEmpty())
+                continue;
+            QSize t = minimum ? e.item->minimumSize() : e.item->sizeHint();
+            axe += (m_o == Qt::Horizontal ? t.width() : t.height());
+            int c = (m_o == Qt::Horizontal ? t.height() : t.width());
+            if (c > travers) travers = c;
+            ++n;
+        }
+        int esp = spacing() > 0 ? spacing() : 0;
+        if (n > 1) axe += esp * (n - 1);
+        QMargins m = contentsMargins();
+        if (m_o == Qt::Horizontal)
+            return QSize(axe + m.left() + m.right(), travers + m.top() + m.bottom());
+        return QSize(travers + m.left() + m.right(), axe + m.top() + m.bottom());
+    }
+
+    Qt::Orientation m_o;
+    bool            m_calerFin;
+    bool            m_etireSuivant   = false;
+    bool            m_remplitSuivant = false;
+    QList<Enfant>   m_enfants;
+};
+
+/* Un bouton Qt a une hauteur FIXE ; un bouton gtk3 prend toute la place que
+ * sa boîte lui donne (une rangée étirée → des boutons hauts, étalon t2). On
+ * lui permet donc de grandir dans le sens demandé. Seuls les boutons-poussoirs
+ * sont concernés : une barre, un curseur, un champ, une case à cocher gardent
+ * leur hauteur propre, centrés dans leur place. Une taille imposée
+ * (width-request/height-request → taille min/max) reste prioritaire. */
+void qt6_bouton_peut_grandir(QWidget *w, Qt::Orientation o)
+{
+    if (w == nullptr)
+        return;
+    if (qobject_cast<QPushButton *>(w) == nullptr
+        && qobject_cast<QToolButton *>(w) == nullptr)
+        return;
+    QSizePolicy p = w->sizePolicy();
+    if (o == Qt::Vertical && p.verticalPolicy() == QSizePolicy::Fixed)
+        p.setVerticalPolicy(QSizePolicy::Preferred);
+    else if (o == Qt::Horizontal && p.horizontalPolicy() == QSizePolicy::Fixed)
+        p.setHorizontalPolicy(QSizePolicy::Preferred);
+    else
+        return;
+    w->setSizePolicy(p);
+}
+
+} // namespace
+
+/* Construit une <hbox> (horizontal) ou une <vbox> et y range les enfants
+ * dépilés, avec les règles EXACTES de gtk3 (widget_hbox.c / widget_vbox.c) :
+ *
+ *  - valeur courante (expand, fill) = celle de la boîte, sinon celle du
+ *    projet (--space-expand/--space-fill), sinon « non dit » ;
+ *  - parcours des enfants : colonne dans l'ordre, RANGÉE à l'envers ; un
+ *    enfant qui a son propre space-expand/space-fill remplace la valeur
+ *    courante pour lui ET pour les suivants du parcours (jamais remise à zéro
+ *    — l'étalon le fait, c'est voulu) ;
+ *  - valeur « non dit » → défaut du type : colonne edit/frame/fenêtre
+ *    défilante/paned, rangée edit/frame/fenêtre défilante/entry s'étirent ;
+ *  - rangée : gtk_box_pack_end — ce qui ne s'étire pas se cale à DROITE ;
+ *    colonne : gtk_box_pack_start — en haut ;
+ *  - étiré sans fill → centré dans la place reçue ;
+ *  - homogeneous="true" → cases égales sur toute la longueur.
+ *
+ * Traduction Qt : disposition maison Qt6BoiteGtk (partage exact de gtk3 :
+ * naturel + surplus à parts égales entre étirés) ou Qt6CasesEgales
+ * (homogène). */
+QWidget *qt6_box_construire(tag_attr *attr, bool horizontal, int spacing)
+{
+    QWidget *box = new QWidget();
+    qt6_box_ranger(box, attr, horizontal, spacing);
+    return box;
+}
+
+/* Pose sur « box » la disposition gtk3 et y range les enfants dépilés.
+ * attr = balise de la boîte (valeur courante de départ, homogeneous) ; NULL
+ * pour un contenant qui n'a pas de réglage propre — le <frame> : gtk3 part
+ * alors de la valeur du PROJET seule (widget_frame.c). Rend la disposition
+ * (marges 0) pour que l'appelant ajuste marges et espacement. */
+QLayout *qt6_box_ranger(QWidget *box, tag_attr *attr, bool horizontal, int spacing)
+{
+    bool homogene = (qt6_lire_tristate(attr, "homogeneous") == 1);
+    Qt::Orientation axe = horizontal ? Qt::Horizontal : Qt::Vertical;
+
+    Qt6BoiteGtk    *boite = nullptr;
+    Qt6CasesEgales *cases = nullptr;
+    QLayout        *layout;
+    if (homogene) {
+        cases  = new Qt6CasesEgales(box, axe);
+        layout = cases;
+    } else {
+        /* Rangée : pack_end, la place libre va en tête (calage à droite). */
+        boite  = new Qt6BoiteGtk(box, axe, horizontal);
+        layout = boite;
+    }
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(spacing);
+
+    int cur_expand = project_space_expand;
+    int cur_fill   = project_space_fill;
+    int v;
+    if ((v = qt6_lire_tristate(attr, "space-expand")) != -1) cur_expand = v;
+    if ((v = qt6_lire_tristate(attr, "space-fill"))   != -1) cur_fill   = v;
+
+    /* Le parser émet push(new box(pop())) : l'instruction SUM a regroupé TOUS
+     * les enfants frères dans UN seul stackelement. On dépile une fois et on
+     * les ré-parente (sinon chacun devient une fenêtre top-level). */
+    stackelement s = pop();
+    int n_enf = s.nwidgets;
+    if (n_enf > MAXWIDGETS) n_enf = MAXWIDGETS;
+    if (n_enf < 0) n_enf = 0;
+
+    bool etire[MAXWIDGETS];
+    bool remplit[MAXWIDGETS];
+    for (int k = 0; k < n_enf; ++k) {
+        int n = horizontal ? (n_enf - 1 - k) : k;
+        etire[n] = remplit[n] = false;
+        if (!s.widgets[n]) continue;
+
+        std::map<QWidget *, Qt6Etirement>::const_iterator it =
+            qt6_layout_expand_map.find(reinterpret_cast<QWidget *>(s.widgets[n]));
+        if (it != qt6_layout_expand_map.end()) {
+            if (it->second.expand != -1) cur_expand = it->second.expand;
+            if (it->second.fill   != -1) cur_fill   = it->second.fill;
+        }
+
+        int t = s.widgettypes[n];
+        bool defaut = (t == WIDGET_EDIT || t == WIDGET_FRAME || t == WIDGET_SCROLLEDW
+                       || (horizontal ? t == WIDGET_ENTRY : t == WIDGET_PANED));
+        etire[n]   = (cur_expand != -1) ? (cur_expand != 0) : defaut;
+        remplit[n] = (cur_fill   != -1) ? (cur_fill   != 0) : defaut;
+    }
+
+    Qt::Alignment centre = horizontal ? Qt::AlignHCenter : Qt::AlignVCenter;
+    for (int n = 0; n < n_enf; ++n) {
+        if (!s.widgets[n]) continue;
+        QWidget *w = static_cast<QWidget *>(s.widgets[n]);
+
+        /* Travers : gtk3 remplit toujours (une rangée de 120 px donne des
+         * boutons de 120 px). Axe : seulement si l'enfant remplit sa place. */
+        if (horizontal)
+            qt6_bouton_peut_grandir(w, Qt::Vertical);
+        if (remplit[n] && (homogene || etire[n]))
+            qt6_bouton_peut_grandir(w, axe);
+
+        if (homogene) {
+            /* En homogène, gtk3 donne la case à TOUS, étirés ou non : seul
+             * fill décide si l'enfant la remplit ou y est centré. */
+            cases->addWidget(w);
+            if (!remplit[n])
+                cases->setAlignment(w, centre);
+            continue;
+        }
+        boite->ajouter(w, etire[n], remplit[n]);
+    }
+
+    return layout;
 }

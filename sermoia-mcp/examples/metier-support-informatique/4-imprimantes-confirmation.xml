@@ -1,0 +1,11 @@
+<!-- Script : examples/metiers/03-support-informatique/4-imprimantes.sh (dialogue confirmation) -->
+<window title="Confirmer l'annulation">
+  <vbox>
+    <text><label>Annuler le travail Laser-Accueil-118 ?</label></text>
+    <text><label>Le document devra être renvoyé à l'imprimante.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Annuler l'impression</label><action>exit:confirmer</action></button>
+    </hbox>
+  </vbox>
+</window>

@@ -52,7 +52,7 @@ GtkWidget *widget_combobox_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         element = NULL;
         gchar *item = attributeset_get_first(&element, Attr, ATTR_ITEM);
         while (item) {
-            if (*item) ch->add(item);
+            if (*item) sermo_choice_add_literal(ch, item);   /* « a/b » n'est pas un sous-menu */
             item = attributeset_get_next(&element, Attr, ATTR_ITEM);
         }
 

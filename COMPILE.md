@@ -8,6 +8,8 @@ variante qui convient à votre backend), puis le backend lui-même contre ce cœ
 ## 1. Dépendances de compilation
 
 Communes (le cœur) : `flex`, `bison`, `cmake` (≥ 3.16), `gcc`, `pkg-config`.
+Les ports qt6, fltk1, sdl3 et lvgl demandent aussi un compilateur C++ (`g++`) :
+lvgl depuis la 2.8.2, pour ThorVG (le SVG de LVGL).
 
 Par backend, les `-dev` de sa toolkit — voir [DEPENDENCIES.md](DEPENDENCIES.md).
 Exemples : `libgtk-3-dev libvte-2.91-dev libgtk-layer-shell-dev` (gtk3),
@@ -119,7 +121,7 @@ Faites passer **les trois portes** (voir [MANUEL_DEVELOPPEUR.md](MANUEL_DEVELOPP
 ```bash
 BIN=sermo-backend-qt6/_build/qt6sermo
 TIMEOUT=5 bash tests/xml/run_tests.sh "$BIN"                       # 55 PASS
-bash tests/comportement/run.sh "$BIN"                             # 53 au vert
+bash tests/comportement/run.sh "$BIN"                             # 61 au vert
 xvfb-run -a bash tests/garde_echappement_sortie.sh "$BIN"          # OK — 4 cas
 ```
 
@@ -136,6 +138,6 @@ bash packaging/construire-paquets.sh    # dans une Debian testing vierge (Docker
 ```
 
 Ou directement sur une Debian testing : `sudo apt build-dep ./` puis
-`dpkg-buildpackage -us -uc -b`. Seize paquets : `sermo-core-dev`, les neuf
-`sermo-backend-*`, `sermo-doc`, `sermo-gtkdialog` et quatre paquets de transition
-depuis la 1.x. Voir [PACKAGING.md](PACKAGING.md).
+`dpkg-buildpackage -us -uc -b`. Dix-huit paquets : `sermo-core-dev`, les neuf
+`sermo-backend-*`, `sermo-doc`, `sermo-gtkdialog`, les deux serveurs MCP
+(`sermoia-mcp`, `sermoman-mcp`) et quatre paquets de transition depuis la 1.x. Voir [PACKAGING.md](PACKAGING.md).

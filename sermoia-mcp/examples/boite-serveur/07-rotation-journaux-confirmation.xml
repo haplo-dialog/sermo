@@ -1,0 +1,12 @@
+<!-- Script : examples/boites-a-outils/serveur/07-rotation-journaux.sh (dialogue confirmation) -->
+<window title="Règle logrotate" default-width="560">
+  <vbox>
+    <text><label>Fichier : /etc/logrotate.d/appli-stock (nouveau fichier)</label></text>
+    <edit editable="false" height-request="220"><variable>CONTENU</variable><input>printenv APERCU_REGLE</input></edit>
+    <checkbox><label>Essayer aussitôt avec logrotate --debug (rien ne tourne)</label><default>true</default><variable>ESSAYER</variable></checkbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Écrire la règle</label><action>exit:ecrire</action></button>
+    </hbox>
+  </vbox>
+</window>

@@ -1,0 +1,24 @@
+<!-- Script : examples/boites-a-outils/serveur/05-fail2ban.sh (dialogue bannis) -->
+<window title="fail2ban : sshd" default-width="520">
+  <vbox>
+    <text><label>Prison sshd : 3 bannies en ce moment, 41 depuis le démarrage.</label></text>
+    <tree scrollable="true" height-request="140" exported-column="0">
+      <label>Adresse|Prison</label>
+      <variable>CHOISIE</variable>
+<item>203.0.113.17|sshd</item>
+<item>198.51.100.4|sshd</item>
+<item>2001:db8::42|sshd</item>
+    </tree>
+    <hbox><text><label>Adresse (vide = la ligne choisie) :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>ADRESSE</variable></entry></hbox>
+    <vbox>
+      <radiobutton><label>Débannir de cette prison</label><default>true</default><variable>A_DEBANNIR</variable></radiobutton>
+      <radiobutton><label>Débannir de toutes les prisons</label><variable>A_PARTOUT</variable></radiobutton>
+      <radiobutton><label>Bannir dans cette prison</label><variable>A_BANNIR</variable></radiobutton>
+    </vbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Appliquer</label><action>exit:appliquer</action></button>
+    </hbox>
+  </vbox>
+</window>

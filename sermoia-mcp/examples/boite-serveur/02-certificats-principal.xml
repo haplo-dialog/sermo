@@ -1,0 +1,40 @@
+<!-- Script : examples/boites-a-outils/serveur/02-certificats.sh (dialogue principal) -->
+<window title="Certificats TLS (certbot)" default-width="620">
+  <vbox>
+    <notebook tab-labels="Demander|Lister et renouveler">
+      <vbox>
+        <hbox><text><label>Domaines (séparés par une espace) :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>DOMAINES</variable><default>exemple.org www.exemple.org</default></entry></hbox>
+        <hbox><text><label>Adresse pour les avis d'expiration :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>COURRIEL</variable><default>admin@exemple.org</default></entry></hbox>
+        <vbox>
+          <radiobutton><label>Valider par nginx (--nginx)</label><default>true</default><variable>M_NGINX</variable></radiobutton>
+          <radiobutton><label>Valider par un dossier servi (--webroot)</label><variable>M_WEBROOT</variable></radiobutton>
+          <radiobutton><label>Serveur autonome, port 80 libre (--standalone)</label><variable>M_AUTONOME</variable></radiobutton>
+        </vbox>
+        <hbox><text><label>Dossier servi (webroot) :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>WEBROOT</variable><default>/var/www/exemple.org</default></entry></hbox>
+        <checkbox><label>Autorité d'essai (--test-cert), pour ne pas user les quotas</label><default>true</default><variable>ESSAI</variable></checkbox>
+        <checkbox><label>Rediriger HTTP vers HTTPS (--redirect, avec nginx)</label><variable>REDIRIGER</variable></checkbox>
+        <checkbox><label>J'accepte les conditions de Let's Encrypt (--agree-tos)</label><variable>CONDITIONS</variable></checkbox>
+        <button><label>Demander le certificat</label><action>exit:demander</action></button>
+      </vbox>
+      <vbox>
+        <tree scrollable="true" height-request="160" exported-column="0">
+          <label>Certificat|Domaines|Expire le|État</label>
+          <variable>CERTIFICAT</variable>
+<item>exemple.org|exemple.org www.exemple.org|2026-12-14|VALID: 64 days</item>
+<item>api.exemple.org|api.exemple.org|2026-10-30|VALID: 19 days</item>
+<item>ancien.exemple.net|ancien.exemple.net|2026-09-02|EXPIRED</item>
+        </tree>
+        <hbox>
+          <button><label>Renouveler à blanc (--dry-run)</label><action>exit:renouveler</action></button>
+          <button><label>Supprimer le certificat choisi</label><action>exit:supprimer</action></button>
+        </hbox>
+      </vbox>
+    </notebook>
+    <hbox>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

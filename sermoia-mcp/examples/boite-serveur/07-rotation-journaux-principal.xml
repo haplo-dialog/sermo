@@ -1,0 +1,28 @@
+<!-- Script : examples/boites-a-outils/serveur/07-rotation-journaux.sh (dialogue principal) -->
+<window title="Rotation des journaux" default-width="560">
+  <vbox>
+    <hbox><text><label>Nom de la règle :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>NOM</variable><default>appli-stock</default></entry></hbox>
+    <hbox><text><label>Dossier des journaux :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>DOSSIER</variable><default>/srv/appli-stock/journaux</default></entry></hbox>
+    <hbox><text><label>Fichiers visés :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>MOTIF</variable><default>*.log</default></entry></hbox>
+    <hbox><text><label>Fréquence :</label></text>
+      <comboboxtext><variable>FREQUENCE</variable><default>chaque semaine</default>
+        <item>chaque jour</item><item>chaque semaine</item><item>chaque mois</item>
+      </comboboxtext>
+      <text><label>ou dès (Mo) :</label></text>
+      <spinbutton range-min="0" range-max="10240" range-step="10" tooltip-text="0 : pas de seuil de taille"><variable>TAILLE</variable><default>100</default></spinbutton></hbox>
+    <hbox><text><label>Anciens journaux gardés :</label></text>
+      <hscale range-min="1" range-max="52" range-step="1" draw-value="true" space-expand="true" space-fill="true"><variable>GARDER</variable><default>8</default></hscale></hbox>
+    <checkbox><label>Compresser les anciens (en gardant le dernier en clair)</label><default>true</default><variable>COMPRESSER</variable></checkbox>
+    <checkbox><label>Copier puis vider (l'appli garde son fichier ouvert)</label><variable>COPIER</variable></checkbox>
+    <checkbox><label>Ne rien dire si le dossier est vide ou absent</label><default>true</default><variable>TOLERER</variable></checkbox>
+    <hbox><text><label>Propriétaire des nouveaux fichiers :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>PROPRIETE</variable><default>0640 www-data adm</default></entry></hbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Voir la règle</label><action>exit:apercu</action></button>
+    </hbox>
+  </vbox>
+</window>

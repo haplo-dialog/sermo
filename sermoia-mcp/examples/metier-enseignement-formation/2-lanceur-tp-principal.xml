@@ -1,0 +1,31 @@
+<!-- Script : examples/metiers/08-enseignement-formation/2-lanceur-tp.sh (dialogue principal) -->
+<window title="Lanceur de TP" default-width="520">
+  <vbox>
+    <frame label="Travaux pratiques disponibles">
+      <vbox>
+        <list scrollable="true" height-request="150">
+          <variable>TP</variable>
+          <item>TP01-tableur-formules</item>
+          <item>TP02-traitement-de-texte-styles</item>
+          <item>TP03-reseau-adresses-ip</item>
+          <item>TP04-python-boucles</item>
+        </list>
+      </vbox>
+    </frame>
+    <frame label="Que faire ?">
+      <vbox>
+        <radiobutton><label>Copier le TP dans mon espace, puis ouvrir ma copie</label><variable>COPIER</variable><default>true</default></radiobutton>
+        <radiobutton><label>Ouvrir le sujet seulement (lecture)</label><variable>LIRE</variable></radiobutton>
+        <checkbox><label>Ouvrir aussi l'énoncé (enonce.pdf)</label><variable>ENONCE</variable><default>true</default></checkbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <text><label>Mon espace :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>ESPACE</variable><default>/home/utilisateur/Travaux</default></entry>
+    </hbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Commencer le TP</label><action>exit:lancer</action></button>
+    </hbox>
+  </vbox>
+</window>

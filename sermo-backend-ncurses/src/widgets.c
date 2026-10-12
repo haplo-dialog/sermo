@@ -523,7 +523,13 @@ void widget_visibility_list_add(GtkWidget *widget, tag_attr *attr)
 
     if (attr != NULL) {
         char *space_expand = get_tag_attribute(attr, "space-expand");
+        char *space_fill = get_tag_attribute(attr, "space-fill");
         char *visible = get_tag_attribute(attr, "visible");
+
+        if (space_fill != NULL)
+            ((WidgetNode *)widget)->fill =
+                (strcasecmp(space_fill, "true") == 0 || strcasecmp(space_fill, "yes") == 0 ||
+                 atoi(space_fill) == 1) ? 1 : -1;
 
         if (space_expand != NULL) {
             if (strcasecmp(space_expand, "true") == 0 ||

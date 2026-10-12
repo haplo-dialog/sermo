@@ -30,6 +30,10 @@
 #include <string.h>
 #include <stdlib.h>
 
+/* Le bouton coché du groupe ouvert. Le groupe est celui de l'étalon gtk3 : le
+ * cœur le ferme (lastradiowidget = NULL) dès qu'un autre widget est créé. */
+static Fl_Round_Button *coche_du_groupe;
+
 GtkWidget *widget_radiobutton_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
     GList *element = NULL;
@@ -49,12 +53,21 @@ GtkWidget *widget_radiobutton_create(AttributeSet *Attr, tag_attr *attr, gint Ty
     rb->type(FL_RADIO_BUTTON);
     if (label && *label) rb->copy_label(label);
 
-    /* État initial */
+    /* État initial : le premier bouton d'un groupe est coché, comme GTK (un
+     * groupe radio a toujours un choix) ; un <default> plus loin le remplace. */
+    if (lastradiowidget == nullptr) {
+        lastradiowidget = (GtkWidget *)rb;
+        coche_du_groupe = rb;
+        rb->value(1);
+    }
     if (Attr) {
         element = NULL;
         gchar *def = attributeset_get_first(&element, Attr, ATTR_DEFAULT);
-        if (def && (strcasecmp(def, "true") == 0 || strcmp(def, "1") == 0))
+        if (def && (strcasecmp(def, "true") == 0 || strcmp(def, "1") == 0)) {
+            if (coche_du_groupe && coche_du_groupe != rb) coche_du_groupe->value(0);
+            coche_du_groupe = rb;
             rb->value(1);
+        }
     }
 
     return (GtkWidget *)rb;

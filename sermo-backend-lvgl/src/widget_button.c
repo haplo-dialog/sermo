@@ -81,6 +81,14 @@ GtkWidget *widget_button_create(AttributeSet *Attr, tag_attr *attr, gint Type)
                     if (v && atoi(v) > 0) px = atoi(v);
                     node->icon_path = sermo_icon_lookup(icon, px);
                     node->icon_px   = px;
+                    /* image-position, lu comme gtk3sermo (widget_button.c) :
+                     * nom ou GtkPositionType ; à défaut, à gauche */
+                    v = attr ? get_tag_attribute(attr, "image-position") : NULL;
+                    if (v) {
+                        if (strcasecmp(v, "bottom") == 0 || atoi(v) == 3)     node->icone_pos = 3;
+                        else if (strcasecmp(v, "top") == 0 || atoi(v) == 2)   node->icone_pos = 2;
+                        else if (strcasecmp(v, "right") == 0 || atoi(v) == 1) node->icone_pos = 1;
+                    }
                 }
                 break;
             }

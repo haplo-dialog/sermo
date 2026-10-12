@@ -1,0 +1,51 @@
+<!-- Script : examples/boites-a-outils/systeme/05-clavier-langue.sh (dialogue principal) -->
+<window title="Clavier et langue" default-width="560">
+  <vbox>
+    <frame label="Disposition">
+      <vbox>
+        <hbox><text><label>Disposition :</label></text>
+          <comboboxtext><variable>DISPOSITION</variable><default>fr</default>
+            <item>fr</item><item>be</item><item>ch</item><item>ca</item><item>us</item><item>gb</item><item>de</item><item>es</item><item>it</item>
+          </comboboxtext>
+          <text><label>Variante (vide = standard) :</label></text>
+          <entry><variable>VARIANTE</variable><default>latin9</default></entry></hbox>
+        <text><label>Exemples de variantes pour fr : latin9, oss, bepo, afnor, azerty, nodeadkeys, mac.</label></text>
+      </vbox>
+    </frame>
+    <expander label="Options du clavier" expanded="true">
+      <vbox>
+        <checkbox><label>Touche Compose sur Alt Gr droite</label><variable>OPT_1</variable><default>true</default></checkbox>
+        <checkbox><label>Verr. Maj devient Échap</label><variable>OPT_2</variable><default>false</default></checkbox>
+        <checkbox><label>Verr. Maj devient Ctrl</label><variable>OPT_3</variable><default>false</default></checkbox>
+        <checkbox><label>Alt+Maj passe à la disposition suivante</label><variable>OPT_4</variable><default>false</default></checkbox>
+        <checkbox><label>Ctrl+Alt+Retour arrière ferme la session X</label><variable>OPT_5</variable><default>false</default></checkbox>
+      </vbox>
+      <variable>OPTIONS_OUVERTES</variable>
+    </expander>
+    <frame label="Langue du poste (menus, dates, nombres)">
+      <hbox><text><label>Langue :</label></text>
+        <comboboxtext><variable>LANGUE</variable><default>fr_FR.UTF-8</default>
+          <item>de_DE.UTF-8</item>
+          <item>en_GB.UTF-8</item>
+          <item>en_US.UTF-8</item>
+          <item>es_ES.UTF-8</item>
+          <item>fr_BE.UTF-8</item>
+          <item>fr_CA.UTF-8</item>
+          <item>fr_CH.UTF-8</item>
+          <item>fr_FR.UTF-8</item>
+        </comboboxtext></hbox>
+    </frame>
+    <frame label="Portée">
+      <vbox>
+        <radiobutton><label>Cette session seulement (clavier ; la langue n'est pas touchée)</label><default>true</default><variable>PORTEE_SESSION</variable></radiobutton>
+        <radiobutton><label>Tout le poste, durablement (clavier et langue ; droits d'administration)</label><variable>PORTEE_POSTE</variable></radiobutton>
+      </vbox>
+    </frame>
+    <hbox><text><label>Essayez ici après coup :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>ESSAI</variable><default>àéèùç €@#</default></entry></hbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Appliquer</label><action>exit:appliquer</action></button>
+    </hbox>
+  </vbox>
+</window>

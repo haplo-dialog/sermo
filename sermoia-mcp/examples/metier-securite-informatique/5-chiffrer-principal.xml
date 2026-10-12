@@ -1,0 +1,33 @@
+<!-- Script : examples/metiers/10-securite-informatique/5-chiffrer.sh (dialogue principal) -->
+<window title="Chiffrer un fichier" default-width="540">
+  <vbox>
+    <frame label="Fichier">
+      <hbox><text><label>Fichier à chiffrer :</label></text>
+        <entry space-expand="true" space-fill="true"><variable>FICHIER</variable><default>/home/utilisateur/Documents/contrats-2026.tar</default></entry></hbox>
+    </frame>
+    <frame label="Phrase secrète">
+      <vbox>
+        <hbox><text><label>Phrase secrète :</label></text>
+          <password space-expand="true" space-fill="true"><variable>PHRASE</variable></password></hbox>
+        <hbox><text><label>Une seconde fois :</label></text>
+          <password space-expand="true" space-fill="true"><variable>PHRASE2</variable></password></hbox>
+      </vbox>
+    </frame>
+    <frame label="Options">
+      <vbox>
+        <hbox><text><label>Algorithme :</label></text>
+          <comboboxtext><variable>ALGO</variable><default>AES256</default>
+            <item>AES256</item><item>CAMELLIA256</item><item>TWOFISH</item>
+          </comboboxtext></hbox>
+        <hbox><text><label>Compression (0 aucune, 9 maximale) :</label></text>
+          <hscale range-min="0" range-max="9" range-step="1" draw-value="true" space-expand="true" space-fill="true"><variable>COMPRESSION</variable><default>6</default></hscale></hbox>
+        <checkbox><label>Sortie en texte (ASCII, --armor) pour un courriel</label><variable>ARMURE</variable></checkbox>
+        <checkbox><label>Effacer l'original après chiffrement (shred)</label><variable>EFFACER</variable></checkbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Chiffrer</label><action>exit:chiffrer</action></button>
+    </hbox>
+  </vbox>
+</window>

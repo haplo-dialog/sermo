@@ -22,6 +22,7 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
+#include "sermo_focus.h"
 #include "fltk-compat.h"
 #include "gtkdialog.h"
 #include "attributes.h"
@@ -46,6 +47,7 @@ static const int TABLE_COLS_MAX  = 32;
 
 /* ── Données de la table ─────────────────────────────────────────────────── */
 struct TableData {
+    bool focus = false;   /* prend le focus à l'ouverture (sermo_focus.h) */
     std::vector<std::string>               headers;
     std::vector<std::vector<std::string>>  rows;
     int selected_row = -1;
@@ -160,7 +162,9 @@ static void _append_row(TableData *td, const char *line)
  * <item> comme après <input> (TA="1" sur le banc, comme gtk3sermo). */
 static void _select_first_row(TableData *td)
 {
-    if (td->selected_row < 0 && !td->rows.empty())
+    /* seulement si le tableau prend le focus à l'ouverture, comme gtk3sermo
+     * (jusqu'à la 2.8.1 : toujours) */
+    if (td->selected_row < 0 && !td->rows.empty() && td->focus)
         td->selected_row = 0;
 }
 
@@ -198,6 +202,7 @@ extern "C" GtkWidget *widget_table_create(AttributeSet *Attr, tag_attr *attr,
     HaploTable *ht = new HaploTable(0, 0, ww, hh);
     TableData  *td = new TableData();
     ht->td = td;
+    td->focus = sermo_focus_initial("table");
 
     if (Attr) {
         /* Sémantique étalon : <label>A|B</label> = EN-TÊTES ; chaque <item>

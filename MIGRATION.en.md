@@ -4,7 +4,7 @@
 
 1.x shipped three ports, each in its own directory, with its own version and
 package: gtk3sermo and gtk4sermo 1.1.4, qt6sermo 1.0.2, and `gtksermo` for the
-`gtkdialog` command. 2.x brings them together around a shared core, adds four
+`gtkdialog` command. 2.x brings them together around a shared core, adds six
 ports and uses a single version number.
 
 **Your XML scripts stay valid** and **the commands keep their names**. What
@@ -19,8 +19,8 @@ the way to compile. The few behaviours that change are listed below.
 | Commands | `gtk3sermo`, `gtk4sermo`, `qt6sermo`, `gtkdialog` | the same, plus `fltk1sermo`, `efl1sermo`, `sdl3sermo`, `lvglsermo`, `ncursessermo`, `htmlsermo` and `sermo` |
 | Security variables | `HAPLO_ALLOWED_CMDS`, `HAPLO_NO_SHELL_FALLBACK` | `SERMO_ALLOWED_CMDS`, `SERMO_NO_SHELL_FALLBACK` (the old names are still read) |
 | Sources | one directory per port (`gtk3sermo/gtk3sermo_1.1.4/`…) | `libsermocore/` and `sermo-backend-<port>/`, built with CMake |
-| Arch, Gentoo, RPM, Slackware recipes | provided | removed: only `debian/` is maintained |
-| Version | one per port | one for everything (2.8.1) |
+| Arch, Gentoo, RPM, Slackware recipes | provided | rewritten for 2.x in `packaging/autres-os/` (plus Alpine and NixOS); `debian/` remains the reference |
+| Version | one per port | one for everything (2.8.2) |
 
 ## Upgrading the Debian packages
 
@@ -31,11 +31,11 @@ Download and check the 2.x packages attached to the release, as the
 apt removes the 1.x packages they replace by itself:
 
 ```sh
-sudo apt install ./sermo-backend-gtk3_2.8.1-1_amd64.deb ./sermo-gtkdialog_2.8.1-1_all.deb
+sudo apt install ./sermo-backend-gtk3_2.8.2-3_amd64.deb ./sermo-gtkdialog_2.8.2-3_all.deb
 ```
 
-Add `./sermo-backend-gtk4_2.8.1-1_amd64.deb` or
-`./sermo-backend-qt6_2.8.1-1_amd64.deb` if you had `gtk4sermo` or `qt6sermo`.
+Add `./sermo-backend-gtk4_2.8.2-3_amd64.deb` or
+`./sermo-backend-qt6_2.8.2-3_amd64.deb` if you had `gtk4sermo` or `qt6sermo`.
 
 Tested on 2026-09-17 in a clean Debian testing container, without network:
 `gtk3sermo`, `gtk4sermo`, `gtksermo` 1.1.4-2 and `qt6sermo` 1.0.2-2 installed, then
@@ -46,7 +46,8 @@ remove nothing from sermo.
 
 ### From an apt repository
 
-If the 2.x packages reach you through a repository, `sudo apt upgrade` is enough:
+There is no public apt repository. If you serve the 2.x packages from a
+repository of your own, `sudo apt upgrade` is enough:
 the `gtk3sermo`, `gtk4sermo`, `qt6sermo` and `gtksermo` packages move to 2.x,
 empty, and bring in `sermo-backend-gtk3`, `-gtk4`, `-qt6` and `sermo-gtkdialog`.
 
@@ -98,7 +99,7 @@ Measured on gtk3sermo and gtk4sermo, 1.1.4 then 2.7.1:
   apostrophe: 1.1.4 loaded nothing, 2.7.1 loads the file.
 - **`--glade-xml`**: 2.7.1 exports the values of the file's widgets, which 1.1.4
   did not, and a missing file or an unknown window give a clean error (exit code
-  1) instead of an abort (exit code 134). The five other ports refuse the option.
+  1) instead of an abort (exit code 134). The other ports refuse the option.
 
 Measured on qt6sermo 1.0.2 and 2.7.1 (bench cases 43 and 44), 2.7.1 following
 gtk3sermo:
@@ -124,6 +125,8 @@ Without them the build stops instead of producing a binary without `<terminal>`
 or Wayland anchoring. To do without them: `-DSERMOCORE_VTE=OFF`,
 `-DSERMO_LAYER_SHELL=OFF`.
 
-The Arch, Gentoo, RPM and Slackware recipes of 1.x are no longer provided. Anyone
-packaging for another distribution can start from `debian/rules`, which shows the
+The Arch, Gentoo, RPM and Slackware recipes of 1.x are no longer provided.
+2.8.0 brings new ones, for the nine ports, in `packaging/autres-os/` (Arch,
+Fedora, Gentoo, Slackware, Alpine, NixOS); what was checked there is stated in
+`packaging/autres-os/README.md` (French only). `debian/rules` also shows the
 build order.

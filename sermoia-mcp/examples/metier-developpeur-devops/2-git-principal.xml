@@ -1,0 +1,34 @@
+<!-- Script : examples/metiers/02-developpeur-devops/2-git.sh (dialogue principal) -->
+<window title="Git" default-width="560" default-height="460">
+  <vbox>
+    <text><label>Dépôt /home/utilisateur/src/mon-projet · branche actuelle : main</label></text>
+    <notebook tab-labels="Valider (commit)|Changer de branche">
+      <vbox>
+        <table scrollable="true" space-expand="true" space-fill="true">
+          <label>État|Fichier</label>
+          <item> M|src/export.c</item>
+          <item> M|README.md</item>
+          <item>??|tests/test_export.c</item>
+        </table>
+        <checkbox><label>Inclure toutes les modifications des fichiers suivis (-a)</label><default>true</default><variable>TOUT</variable></checkbox>
+        <checkbox><label>Signer le commit : ligne Signed-off-by (-s)</label><variable>SIGNER</variable></checkbox>
+        <frame label="Message du commit (première ligne : le résumé)">
+          <edit space-expand="true" space-fill="true"><variable>MESSAGE</variable></edit>
+        </frame>
+        <hbox><button><label>Valider</label><action>exit:valider</action></button></hbox>
+      </vbox>
+      <vbox>
+        <list scrollable="true" space-expand="true" space-fill="true">
+          <variable>BRANCHE</variable>
+          <item>main</item>
+          <item>correctif-dates</item>
+          <item>fonction-export</item>
+        </list>
+        <hbox><text><label>Ou créer une nouvelle branche :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>NOUVELLE</variable></entry></hbox>
+        <hbox><button><label>Changer de branche</label><action>exit:changer</action></button></hbox>
+      </vbox>
+    </notebook>
+    <hbox><button cancel></button></hbox>
+  </vbox>
+</window>

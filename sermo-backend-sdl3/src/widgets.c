@@ -534,6 +534,13 @@ void widget_visibility_list_add(GtkWidget *widget, tag_attr *attr)
                 ((WidgetNode *)widget)->expand = -1;
             }
         }
+        /* space-fill : même lecture que l'étalon (boîte parente). */
+        char *space_fill = get_tag_attribute(attr, "space-fill");
+        if (space_fill != NULL)
+            ((WidgetNode *)widget)->fill =
+                (strcasecmp(space_fill, "true") == 0 ||
+                 strcasecmp(space_fill, "yes") == 0 ||
+                 atoi(space_fill) == 1) ? 1 : -1;
 
         if (visible != NULL &&
             (strcasecmp(visible, "false") == 0 ||

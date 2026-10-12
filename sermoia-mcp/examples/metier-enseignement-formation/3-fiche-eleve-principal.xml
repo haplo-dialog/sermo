@@ -1,0 +1,71 @@
+<!-- Script : examples/metiers/08-enseignement-formation/3-fiche-eleve.sh (dialogue principal) -->
+<window title="Fiche élève 2026-2027" default-width="560">
+  <vbox>
+    <notebook tab-labels="Élève|Responsables|Scolarité">
+      <vbox>
+        <hbox><text><label>Nom :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>NOM</variable><default>Petit</default></entry></hbox>
+        <hbox><text><label>Prénom :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>PRENOM</variable><default>Lucas</default></entry></hbox>
+        <hbox><text><label>Né(e) le (JJ/MM/AAAA) :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>NAISSANCE</variable><default>14/03/2013</default></entry></hbox>
+        <hbox><text><label>Classe :</label></text>
+          <comboboxtext space-expand="true" space-fill="true">
+            <variable>CLASSE</variable>
+            <default>5e B</default>
+            <item>6e A</item>
+            <item>6e B</item>
+            <item>5e A</item>
+            <item>5e B</item>
+            <item>4e A</item>
+            <item>3e A</item>
+          </comboboxtext></hbox>
+        <hbox><text><label>Droit à l'image accordé :</label></text>
+          <switch><variable>DROIT_IMAGE</variable><default>false</default></switch></hbox>
+      </vbox>
+      <vbox>
+        <frame label="Responsable 1">
+          <vbox>
+            <hbox><text><label>Nom :</label></text>
+              <entry space-expand="true" space-fill="true"><variable>RESP1</variable><default>Camille Petit (mère)</default></entry></hbox>
+            <hbox><text><label>Téléphone :</label></text>
+              <entry space-expand="true" space-fill="true"><variable>RESP1_TEL</variable><default>06 11 22 33 44</default></entry></hbox>
+            <hbox><text><label>Courriel :</label></text>
+              <entry space-expand="true" space-fill="true"><variable>RESP1_COURRIEL</variable><default>camille.petit@example.fr</default></entry></hbox>
+          </vbox>
+        </frame>
+        <frame label="Responsable 2">
+          <vbox>
+            <hbox><text><label>Nom :</label></text>
+              <entry space-expand="true" space-fill="true"><variable>RESP2</variable></entry></hbox>
+            <hbox><text><label>Téléphone :</label></text>
+              <entry space-expand="true" space-fill="true"><variable>RESP2_TEL</variable></entry></hbox>
+          </vbox>
+        </frame>
+      </vbox>
+      <vbox>
+        <hbox><text><label>Régime :</label></text>
+          <comboboxtext space-expand="true" space-fill="true">
+            <variable>REGIME</variable>
+            <default>Demi-pensionnaire</default>
+            <item>Externe</item>
+            <item>Demi-pensionnaire</item>
+            <item>Interne</item>
+          </comboboxtext></hbox>
+        <checkbox><label>Projet d'accueil individualisé (PAI : allergie, traitement)</label><variable>PAI</variable></checkbox>
+        <checkbox><label>Plan d'accompagnement personnalisé (PAP)</label><variable>PAP</variable></checkbox>
+        <checkbox><label>Option latin</label><variable>LATIN</variable></checkbox>
+        <text xalign="0"><label>Remarques (santé, transport, contacts d'urgence) :</label></text>
+        <edit height-request="80" wrap-mode="word"><variable>REMARQUES</variable><default>Prend le car de 7 h 35.</default></edit>
+      </vbox>
+    </notebook>
+    <hbox>
+      <text><label>Dossier :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>DOSSIER</variable><default>/home/utilisateur/Documents/Eleves</default></entry>
+    </hbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Enregistrer la fiche</label><action>exit:enregistrer</action></button>
+    </hbox>
+  </vbox>
+</window>

@@ -176,12 +176,21 @@ static int try_file(const char *base, const char *theme, const char *dir,
     return 0;
 }
 
+/* Un nom « …-symbolic » se cherche dans les dossiers symboliques ; un nom
+ * ordinaire, ailleurs (comme GTK). */
+static int est_symbolique(const char *name)
+{
+    size_t n = strlen(name);
+    return n > 9 && strcmp(name + n - 9, "-symbolic") == 0;
+}
+
 static char *lookup_in_theme(const char *theme, const char *name, int size, int depth,
                              char visited[MAX_DEPTH][64])
 {
     IconTheme *t;
     char out[1400];
     int i, b;
+    const int symb = est_symbolique(name);
     if (depth >= MAX_DEPTH) return NULL;
     for (i = 0; i < depth; i++) if (strcmp(visited[i], theme) == 0) return NULL;
     snprintf(visited[depth], 64, "%s", theme);
@@ -194,7 +203,7 @@ static char *lookup_in_theme(const char *theme, const char *name, int size, int 
     int best = -1, bestdist = 1 << 30;
     for (i = 0; i < t->ndirs; i++) {
         IconDir *d = &t->dirs[i];
-        if (strstr(d->path, "symbolic")) continue;   /* monochromes : pas ici */
+        if (!symb && strstr(d->path, "symbolic")) continue;   /* monochromes : pas ici */
         int dist = abs(d->size - size);
         if (size >= d->min && size <= d->max) dist = d->scalable ? 1 : 0;
         if (dist < bestdist) { bestdist = dist; best = i; }
@@ -205,7 +214,7 @@ static char *lookup_in_theme(const char *theme, const char *name, int size, int 
         for (i = 0; i < t->ndirs; i++) {
             IconDir *d = &t->dirs[i];
             if (d->size < 0) continue;              /* déjà essayé */
-            if (strstr(d->path, "symbolic")) continue;
+            if (!symb && strstr(d->path, "symbolic")) continue;
             int dist = abs(d->size - size);
             if (size >= d->min && size <= d->max) dist = d->scalable ? 1 : 0;
             if (dist < pd) { pd = dist; pick = i; }
@@ -336,12 +345,33 @@ char *sermo_icon_lookup(const char *name, int size)
     /* un chemin absolu est rendu tel quel */
     if (name[0] == '/') return file_exists(name) ? strdup(name) : NULL;
 
-    memset(visited, 0, sizeof(visited));
-    r = lookup_in_theme(sermo_icon_theme_name(), name, size, 0, visited);
-    if (r) return r;
-    memset(visited, 0, sizeof(visited));
-    r = lookup_in_theme("hicolor", name, size, 0, visited);
-    if (r) return r;
+    /* Comme GTK : le thème de la personne, puis Adwaita (le thème par défaut
+     * de GTK), puis hicolor ; dans chacun, le nom, puis sa variante
+     * « -symbolic » (Adwaita n'a plus que celle-là pour beaucoup d'icônes),
+     * puis le nom générique (« network-wired » → « network »). Jusqu'à la
+     * 2.8.1 : le nom seul, dans le thème de la personne et hicolor — sans
+     * thème réglé (session vide, SSH, cage), la plupart des icônes manquaient. */
+    {
+        const char *themes[3] = { sermo_icon_theme_name(), "Adwaita", "hicolor" };
+        char cand[256];
+        snprintf(cand, sizeof(cand), "%s", name);
+        for (;;) {
+            for (int sym = 0; sym < 2; sym++) {
+                char essai[300];
+                if (sym && est_symbolique(cand)) continue;
+                snprintf(essai, sizeof(essai), sym ? "%s-symbolic" : "%s", cand);
+                for (int k = 0; k < 3; k++) {
+                    if (k > 0 && strcmp(themes[k], themes[0]) == 0) continue;
+                    memset(visited, 0, sizeof(visited));
+                    r = lookup_in_theme(themes[k], essai, size, 0, visited);
+                    if (r) return r;
+                }
+            }
+            char *tiret = strrchr(cand, '-');
+            if (!tiret || tiret == cand) break;
+            *tiret = '\0';                          /* nom générique */
+        }
+    }
 
     /* repli : /usr/share/pixmaps */
     static const char *exts[] = { "svg", "png", "xpm" };
@@ -351,6 +381,45 @@ char *sermo_icon_lookup(const char *name, int size)
         if (file_exists(out)) return strdup(out);
     }
     return NULL;
+}
+
+char *sermo_icon_symbolique_teinte(const char *path, unsigned rgb, size_t *taille)
+{
+    static const char *gris[] = { "#2e3436", "#2e3434", "#474747", "#222222", "#222\"", "#222;" };
+    if (!path || !strstr(path, "-symbolic.svg")) return NULL;
+    FILE *f = fopen(path, "rb");
+    if (!f) return NULL;
+    if (fseek(f, 0, SEEK_END) != 0) { fclose(f); return NULL; }
+    long n = ftell(f);
+    if (n <= 0 || n > 1024 * 1024) { fclose(f); return NULL; }
+    rewind(f);
+    /* « #222 » (4 car.) devient 7 car. : de la place pour chaque remplacement */
+    char *src = (char *)malloc((size_t)n + 1);
+    if (!src) { fclose(f); return NULL; }
+    size_t lu = fread(src, 1, (size_t)n, f);
+    fclose(f);
+    src[lu] = '\0';
+    char *out = (char *)malloc(lu * 2 + 1);
+    if (!out) { free(src); return NULL; }
+    char coul[8];
+    snprintf(coul, sizeof coul, "#%06x", rgb & 0xffffffu);
+    size_t o = 0;
+    for (size_t i = 0; i < lu; ) {
+        int remplace = 0;
+        for (unsigned g = 0; g < sizeof gris / sizeof *gris; g++) {
+            size_t l = strlen(gris[g]);
+            /* « #222" » et « #222; » : seuls les 4 premiers caractères sont la couleur */
+            size_t lc = (gris[g][4] == '"' || gris[g][4] == ';') ? 4 : l;
+            if (i + l <= lu && strncasecmp(src + i, gris[g], l) == 0) {
+                memcpy(out + o, coul, 7); o += 7; i += lc; remplace = 1; break;
+            }
+        }
+        if (!remplace) out[o++] = src[i++];
+    }
+    out[o] = '\0';
+    free(src);
+    if (taille) *taille = o;
+    return out;
 }
 
 int sermo_icon_size_px(const char *s)

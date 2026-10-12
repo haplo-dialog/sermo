@@ -1,0 +1,40 @@
+<!-- Script : examples/metiers/03-support-informatique/5-aide-a-distance.sh (dialogue principal) -->
+<window title="Aide à distance" default-width="540">
+  <vbox>
+    <frame label="Qui">
+      <vbox>
+        <hbox><text><label>Personne aidée :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>PERSONNE</variable><default>Camille Dupont</default></entry></hbox>
+        <hbox><text><label>Technicien :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>TECHNICIEN</variable><default>Support informatique</default></entry></hbox>
+        <hbox><text><label>Joint par :</label></text>
+          <comboboxtext space-expand="true" space-fill="true">
+            <variable>CANAL</variable>
+            <default>Téléphone</default>
+            <item>Téléphone</item>
+            <item>Courriel</item>
+            <item>Messagerie interne</item>
+          </comboboxtext></hbox>
+      </vbox>
+    </frame>
+    <frame label="Outil">
+      <vbox>
+        <radiobutton><label>RustDesk : écran partagé (installé)</label><default>true</default><variable>O_RUSTDESK</variable></radiobutton>
+        <radiobutton><label>x11vnc par tunnel SSH : écran partagé (absent)</label><variable>O_VNC</variable></radiobutton>
+        <radiobutton><label>tmate : terminal partagé (installé)</label><variable>O_TMATE</variable></radiobutton>
+        <radiobutton><label>Aucun : guider la personne à la voix</label><variable>O_VOIX</variable></radiobutton>
+      </vbox>
+    </frame>
+    <frame label="Limites">
+      <vbox>
+        <hbox><text><label>Durée maximale (minutes) :</label></text>
+          <spinbutton range-min="5" range-max="240" range-step="5"><variable>DUREE</variable><default>30</default></spinbutton></hbox>
+        <checkbox><label>Vue seule : le technicien regarde, sans clavier ni souris (x11vnc)</label><variable>VUE_SEULE</variable></checkbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Préparer les consignes</label><action>exit:preparer</action></button>
+    </hbox>
+  </vbox>
+</window>

@@ -1,5 +1,42 @@
 # Bilan de santé — sermo (édition modulaire)
 
+## 2.8.2 — mesuré le 2026-10-11
+
+Sur l'arbre de construction de la 2.8.2 :
+
+- `bash ci/construire.sh` : tout construit ; le cœur et les ports touchés, sans
+  nouvel avertissement (les anciens de la 2.8.1 reviennent quand leurs fichiers
+  se recompilent). lvgl se lie désormais en C++ (ThorVG, pour le SVG).
+- `bash ci/bancs.sh` : 177 bancs (le banc des scripts métier et des boîtes à
+  outils s'y ajoute), 174 verts au premier passage. Les trois rouges : la garde
+  des lectures, qui ne connaissait pas encore la lecture d'une icône à
+  recolorer (nommée, plafonnée, verte) ; `efl1 clic widgets`, une fenêtre pas
+  apparue à temps sur un poste chargé (vert rejoué seul, 17 widgets) ; le banc
+  des scripts, arrêté par la limite de 30 minutes qu'il dépasse désormais (il a
+  la sienne, 90 minutes). Après la dernière correction de lvgl,
+  `ci/bancs.sh lvgl` rejoué.
+- `bash examples/metiers/verifie.sh` : **104 scripts, 187 dialogues, neuf
+  ports, 0 écart** avec gtk3sermo.
+- Ce que les bancs ne voient pas, les images : la galerie du site a été refaite
+  port par port ; elle a montré les écarts de htmlsermo (forme de la fenêtre),
+  les icônes absentes (gtk4, qt6, efl1, lvgl) et la page d'onglets de lvgl,
+  corrigés (voir CHANGELOG.md).
+- Paquets **2.8.2-2** (boîtes rangées comme gtk3 sur les neuf ports, bouton à
+  icône centré), le même jour : `ci/bancs.sh`, 177 bancs, 176 verts. Le rouge,
+  lvgl « source sans fin » : une ligne de 20 000 caractères figeait la mise en
+  page ; le texte d'un `<edit>` est désormais posé après la construction, puis
+  `ci/bancs.sh lvgl` rejoué, 57/57 ; `examples/metiers/verifie.sh`,
+  104 scripts, 187 dialogues, neuf ports, 0 écart ; banc XML 55/55 sur chaque
+  port. Chiffres relevés le 2026-10-11 sur le commit de la 2.8.2-2.
+- Paquets **2.8.2-3** (2026-10-12) : un correctif ncurses (les variables de
+  sortie restaient effacées avec l'écran alterné, nouveau crochet facultatif
+  `sermo_be_before_export()` du contrat), `debian/copyright` corrigé (ThorVG est
+  compilé dans lvglsermo depuis la 2.8.2) et la documentation réalignée. Le
+  cœur et le contrat changent : tous les bancs rejoués, `ci/bancs.sh` 177 joués,
+  177 verts, 0 en échec (dont `examples/metiers/verifie.sh` sur les neuf ports).
+  Le banc ajouté ensuite pour ce correctif (`tests/garde_ncurses_sortie_terminal.sh`,
+  178e banc) a été joué seul sur la même construction : vert.
+
 ## 2.8.1 — mesuré le 2026-10-10
 
 Mêmes commandes, sur l'arbre de construction de la 2.8.1 :
@@ -25,6 +62,7 @@ Mêmes commandes, sur l'arbre de construction de la 2.8.1 :
   revue des captures du site, port par port contre gtk3sermo, a montré
   (voir CHANGELOG.md).
 
+## 2.8.0 — mesuré le 2026-10-10
 
 Les **deux mêmes commandes** que ci-dessous, sur les **neuf** ports, jouées sur
 l'arbre de construction (pas encore sur les binaires des paquets 2.8.0-1) :

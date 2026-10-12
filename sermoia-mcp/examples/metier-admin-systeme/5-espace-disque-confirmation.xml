@@ -1,0 +1,11 @@
+<!-- Script : examples/metiers/01-admin-systeme/5-espace-disque.sh (dialogue confirmation) -->
+<window title="Confirmer le nettoyage">
+  <vbox>
+    <text><label>Ces fichiers seront supprimés définitivement :</label></text>
+    <text><label>apt-get clean, journal ramené à 30 jours</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Supprimer</label><action>exit:supprimer</action></button>
+    </hbox>
+  </vbox>
+</window>

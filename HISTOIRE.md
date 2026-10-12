@@ -84,7 +84,9 @@ Thunor en est le second mainteneur.
   est créé le **14 mars 2015** et reprend **tout l'historique svn de Thunor**
   (mêmes commits, depuis l'import de la 0.7.20).
 - Aucun commit entre avril 2013 et **mars 2018**. Le fichier `AUTHORS` note
-  alors : « Continued by the woof-CE gtkdialog contributors 2018-03-19 ».
+  alors : « Continued by the woof-CE gtkdialog contributors 2018-03-19 ». D'où
+  les deux dates : 2015 (titre) est la création du dépôt, 2018 (tableau) le
+  début des contributions de woof-CE.
 - Contributeurs principaux : woodenshoe-wi (GTK 3 et VTE 2.91, 2018),
   **Mick Amadio (01micko)**, **Dima Krasner** (construction Meson et
   **ancrage Wayland layer-shell**, novembre 2021), step- (widget `chooser`,

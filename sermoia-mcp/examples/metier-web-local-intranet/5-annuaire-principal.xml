@@ -1,0 +1,18 @@
+<!-- Script : examples/metiers/12-web-local-intranet/5-annuaire.sh (dialogue principal) -->
+<window title="Annuaire interne" default-width="520" default-height="380">
+  <vbox>
+    <hbox><text><label>Nom ou service :</label></text>
+      <searchentry space-expand="true" space-fill="true"><variable>TERME</variable><default>mar</default></searchentry>
+      <button><label>Chercher</label><action>exit:chercher</action></button></hbox>
+    <text><label>3 fiche(s) :</label></text>
+    <list scrollable="true" height-request="180"><variable>FICHE</variable>
+      <item>Camille Martin — Comptabilité — 214</item>
+      <item>Marc Dubois — Informatique — 301</item>
+      <item>Maryse Lefèvre — Direction — 100</item>
+    </list>
+    <hbox>
+      <button><label>Fermer</label><action>exit:fermer</action></button>
+      <button><label>Voir la fiche</label><action>exit:voir</action></button>
+    </hbox>
+  </vbox>
+</window>

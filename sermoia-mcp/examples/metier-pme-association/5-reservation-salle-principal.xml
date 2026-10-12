@@ -1,0 +1,55 @@
+<!-- Script : examples/metiers/07-pme-association/5-reservation-salle.sh (dialogue principal) -->
+<window title="Réserver une salle" default-width="640">
+  <vbox>
+    <hbox>
+      <vbox>
+        <tree scrollable="true" height-request="200">
+          <label>Salle|Places</label>
+          <variable>SALLE</variable>
+          <item>Salle polyvalente|80</item>
+          <item>Salle de réunion|16</item>
+          <item>Bureau partagé|6</item>
+          <item>Atelier|24</item>
+        </tree>
+      </vbox>
+      <vbox>
+        <frame label="Date">
+          <vbox>
+            <calendar><variable>DATE</variable><default>2026-10-12</default></calendar>
+          </vbox>
+        </frame>
+        <frame label="Créneau">
+          <vbox>
+            <radiobutton><label>Matin (8 h 30 - 12 h 30)</label><variable>C_MATIN</variable><default>true</default></radiobutton>
+            <radiobutton><label>Après-midi (13 h 30 - 17 h 30)</label><variable>C_APRES_MIDI</variable></radiobutton>
+            <radiobutton><label>Soirée (18 h - 22 h)</label><variable>C_SOIREE</variable></radiobutton>
+            <radiobutton><label>Journée entière</label><variable>C_JOURNEE</variable></radiobutton>
+          </vbox>
+        </frame>
+      </vbox>
+    </hbox>
+    <frame label="Demande">
+      <vbox>
+        <hbox><text><label>Demandeur :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>DEMANDEUR</variable><default>Section théâtre</default></entry>
+          <text><label>Personnes :</label></text>
+          <spinbutton range-min="1" range-max="200" range-step="1"><variable>PERSONNES</variable><default>12</default></spinbutton></hbox>
+        <hbox><text><label>Objet :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>OBJET</variable><default>Répétition du spectacle de fin d'année</default></entry></hbox>
+        <hbox>
+          <checkbox><label>Vidéoprojecteur</label><variable>VIDEO</variable></checkbox>
+          <checkbox><label>Sonorisation</label><variable>SONO</variable></checkbox>
+          <checkbox><label>Tables en U</label><variable>TABLES</variable></checkbox>
+        </hbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <text><label>Planning :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>PLANNING</variable><default>/home/utilisateur/Documents/reservations-salles.csv</default></entry>
+    </hbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Réserver</label><action>exit:reserver</action></button>
+    </hbox>
+  </vbox>
+</window>

@@ -11,6 +11,7 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
+#include "sermo_focus.h"
 #include "efl-compat.h"
 #include "efl-globals.h"
 #include "gtkdialog.h"
@@ -102,6 +103,8 @@ GtkWidget *widget_list_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     }
 
     Elm_Genlist_Item_Class *itc = _get_item_class();
+    /* La liste prend-elle le focus à l'ouverture ? (sermo_focus.h) */
+    evas_object_data_set(gl, "sermo-focus", (void *)(intptr_t)sermo_focus_initial("list"));
 
     if (Attr) {
         GList *el = NULL;
@@ -115,10 +118,22 @@ GtkWidget *widget_list_create(AttributeSet *Attr, tag_attr *attr, gint Type)
             }
             item = attributeset_get_next(&el, Attr, ATTR_ITEM);
         }
-        /* Parite etalon : sans <default>, le PREMIER item est selectionne */
-        if (premier) {
+        /* Parité gtk3 : la ligne de <default> si elle existe ; sinon la 1re,
+         * seulement si la liste prend le focus à l'ouverture (jusqu'à la
+         * 2.8.1 : toujours la 1re, et <default> ignoré). */
+        GList *ed = NULL;
+        gchar *def = attributeset_get_first(&ed, Attr, ATTR_DEFAULT);
+        const gchar *choix = NULL;
+        if (def && *def) {
+            GList *e2 = NULL;
+            for (gchar *it = attributeset_get_first(&e2, Attr, ATTR_ITEM); it && !choix;
+                 it = attributeset_get_next(&e2, Attr, ATTR_ITEM))
+                if (strcmp(it, def) == 0) choix = it;
+        }
+        if (!choix && evas_object_data_get(gl, "sermo-focus")) choix = premier;
+        if (choix) {
             free(evas_object_data_get(gl, "selected"));
-            evas_object_data_set(gl, "selected", strdup(premier));
+            evas_object_data_set(gl, "selected", strdup(choix));
         }
         /* <input> : lu par widget_list_refresh(), que le cœur appelle juste
          * après la création (lu ici aussi, la commande tournerait deux fois). */
@@ -162,7 +177,7 @@ void widget_list_refresh(variable *var)
         elm_genlist_item_append(gl, _get_item_class(), strdup(*p), NULL,
                                 ELM_GENLIST_ITEM_NONE, NULL, NULL);
     /* Comme après <item> : une liste jusque-là vide exporte sa 1re rangée. */
-    if (vide && lines[0]) {
+    if (vide && lines[0] && evas_object_data_get(gl, "sermo-focus")) {
         free(evas_object_data_get(gl, "selected"));
         evas_object_data_set(gl, "selected", strdup(lines[0]));
     }

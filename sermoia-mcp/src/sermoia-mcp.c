@@ -459,10 +459,19 @@ static JsonObject *tool_render(const char *xml)
  * est découpée en mots ; un sujet marque des points par mot trouvé dans son
  * nom (×3) et dans ses fichiers (×1) ; le vote départage. 100 % en C, sans
  * shell : `task` ne peut rien injecter. */
+/* Catalogue : SERMO_EXAMPLES_DIR, sinon celui du paquet (posé par CMake :
+ * <datadir>/sermoia-mcp/examples) s'il existe, sinon « examples » (lancé
+ * depuis le dépôt). Installé, le serveur trouvait « examples » relatif au
+ * dossier courant : rien. */
+#ifndef SERMOIA_EXAMPLES_DIR
+#define SERMOIA_EXAMPLES_DIR "/usr/share/sermoia-mcp/examples"
+#endif
 static const char *examples_dir(void)
 {
     const char *d = g_getenv("SERMO_EXAMPLES_DIR");
-    return (d && *d) ? d : "examples";
+    if (d && *d) return d;
+    if (g_file_test(SERMOIA_EXAMPLES_DIR, G_FILE_TEST_IS_DIR)) return SERMOIA_EXAMPLES_DIR;
+    return "examples";
 }
 
 /* ─── Vote de priorité, AJOUT SEUL ────────────────────────────────────────────
@@ -553,6 +562,28 @@ static int chaine_cmp(gconstpointer a, gconstpointer b)
     return g_strcmp0(*(const char *const *)a, *(const char *const *)b);
 }
 
+/* Un exemple trouvé : sa note propre (nom du sujet ×3, nom du fichier ×3,
+ * contenu ×1, par mot). Jusqu'à la 2.8.1, les fichiers d'un sujet sortaient
+ * dans l'ordre alphabétique sous la note du SUJET : dans une boîte à outils,
+ * « fail2ban » montrait d'abord le site nginx et les certificats. */
+typedef struct { const Sujet *s; gchar *fichier; int note; } Trouve;
+
+static int trouve_cmp(gconstpointer x, gconstpointer y)
+{
+    const Trouve *a = *(Trouve *const *)x, *b = *(Trouve *const *)y;
+    if (a->note != b->note) return b->note - a->note;
+    if (a->s->vote != b->s->vote) return b->s->vote - a->s->vote;
+    int c = g_strcmp0(a->s->nom, b->s->nom);
+    return c ? c : g_strcmp0(a->fichier, b->fichier);
+}
+
+static void trouve_free(gpointer p)
+{
+    Trouve *t = p;
+    g_free(t->fichier);
+    g_free(t);
+}
+
 static JsonObject *tool_examples(const char *task, int limite)
 {
     const char *root = examples_dir();
@@ -564,6 +595,7 @@ static JsonObject *tool_examples(const char *task, int limite)
     gchar **mots = mots_cles(task);
     GHashTable *votes = scores_vote();
     GArray *subs = g_array_new(FALSE, TRUE, sizeof(Sujet));
+    GHashTable *notes = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);   /* « sujet/fichier » → note */
     const char *sub;
     while ((sub = g_dir_read_name(d))) {
         gchar *sp = g_build_filename(root, sub, NULL);
@@ -579,13 +611,18 @@ static JsonObject *tool_examples(const char *task, int limite)
             if (!g_str_has_suffix(f, ".xml") || !nom_sur(f)) continue;
             g_ptr_array_add(s.fichiers, g_strdup(f));
             if (!mots[0]) continue;
+            int note = 0;
+            gchar *ncf = g_utf8_casefold(f, -1);
+            for (int k = 0; mots[k]; k++) if (strstr(ncf, mots[k])) note += 3;
+            g_free(ncf);
             gchar *fp = g_build_filename(sp, f, NULL), *txt = NULL;
             if (g_file_get_contents(fp, &txt, NULL, NULL)) {
                 gchar *cf = g_utf8_casefold(txt, -1);
-                for (int k = 0; mots[k]; k++) if (strstr(cf, mots[k])) s.pertinence += 1;
+                for (int k = 0; mots[k]; k++) if (strstr(cf, mots[k])) { s.pertinence += 1; note += 1; }
                 g_free(cf);
             }
             g_free(txt); g_free(fp);
+            g_hash_table_insert(notes, g_strdup_printf("%s/%s", sub, f), GINT_TO_POINTER(note));
         }
         g_dir_close(sd); g_free(sp);
         g_ptr_array_sort(s.fichiers, chaine_cmp);
@@ -607,15 +644,35 @@ static JsonObject *tool_examples(const char *task, int limite)
         }
     } else {
         int montres = 0;
-        for (guint i = 0; i < subs->len && montres < limite; i++) {
+        /* Tous les exemples, notés un à un : bonus du nom de sujet + note propre. */
+        GPtrArray *tr = g_ptr_array_new_with_free_func(trouve_free);
+        for (guint i = 0; i < subs->len; i++) {
             Sujet *s = &g_array_index(subs, Sujet, i);
-            if (s->pertinence == 0) break;
-            for (guint j = 0; j < s->fichiers->len && montres < limite; j++) {
+            int bonus = 0;
+            gchar *nomcf = g_utf8_casefold(s->nom, -1);
+            for (int k = 0; mots[k]; k++) if (strstr(nomcf, mots[k])) bonus += 3;
+            g_free(nomcf);
+            for (guint j = 0; j < s->fichiers->len; j++) {
                 const char *fn = g_ptr_array_index(s->fichiers, j);
+                gchar *cle = g_strdup_printf("%s/%s", s->nom, fn);
+                int note = bonus + GPOINTER_TO_INT(g_hash_table_lookup(notes, cle));
+                g_free(cle);
+                if (note <= 0) continue;
+                Trouve *t = g_new0(Trouve, 1);
+                t->s = s; t->fichier = g_strdup(fn); t->note = note;
+                g_ptr_array_add(tr, t);
+            }
+        }
+        g_ptr_array_sort(tr, trouve_cmp);
+        for (guint i = 0; i < tr->len && montres < limite; i++) {
+            const Trouve *t = g_ptr_array_index(tr, i);
+            const Sujet *s = t->s;
+            {
+                const char *fn = t->fichier;
                 gchar *fp = g_build_filename(root, s->nom, fn, NULL), *txt = NULL; gsize n = 0;
                 if (g_file_get_contents(fp, &txt, &n, NULL) && n > 0) {
                     g_string_append_printf(out, "===== %s/%s  [pertinence %d · vote %d] =====\n",
-                                           s->nom, fn, s->pertinence, s->vote);
+                                           s->nom, fn, t->note, s->vote);
                     g_string_append_len(out, txt, n > 4000 ? 4000 : (gssize)n);
                     if (n > 4000) g_string_append(out, "\n… (tronqué)");
                     g_string_append(out, "\n");
@@ -624,6 +681,7 @@ static JsonObject *tool_examples(const char *task, int limite)
                 g_free(txt); g_free(fp);
             }
         }
+        g_ptr_array_unref(tr);
         if (!montres) {
             g_string_append_printf(out, "Aucun exemple pour « %s ». Sujets disponibles :", task);
             for (guint i = 0; i < subs->len; i++)
@@ -638,6 +696,7 @@ static JsonObject *tool_examples(const char *task, int limite)
         g_ptr_array_unref(g_array_index(subs, Sujet, i).fichiers);
     }
     g_array_free(subs, TRUE);
+    g_hash_table_unref(notes);
     g_hash_table_unref(votes);
     g_strfreev(mots);
     JsonObject *r = tool_text_result(out->str, FALSE);

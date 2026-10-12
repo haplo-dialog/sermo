@@ -1,0 +1,48 @@
+<!-- Script : examples/metiers/09-multimedia/2-extraire-audio.sh (dialogue principal) -->
+<window title="Extraire le son" default-width="540">
+  <vbox>
+    <hbox><text><label>Vidéo source :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>SOURCE</variable><default>/home/utilisateur/Vidéos/conference-climat.mp4</default></entry></hbox>
+    <hbox>
+      <frame label="Format">
+        <vbox>
+          <radiobutton><label>MP3</label><variable>F_MP3</variable><default>true</default></radiobutton>
+          <radiobutton><label>Ogg Vorbis</label><variable>F_OGG</variable></radiobutton>
+          <radiobutton><label>FLAC (sans perte)</label><variable>F_FLAC</variable></radiobutton>
+          <radiobutton><label>WAV (pour le montage)</label><variable>F_WAV</variable></radiobutton>
+        </vbox>
+      </frame>
+      <frame label="Réglages">
+        <vbox>
+          <text xalign="0"><label>Débit (MP3 et Ogg) :</label></text>
+          <comboboxtext>
+            <variable>DEBIT</variable>
+            <default>128k</default>
+            <item>64k</item>
+            <item>96k</item>
+            <item>128k</item>
+            <item>192k</item>
+            <item>256k</item>
+          </comboboxtext>
+          <checkbox><label>Mono (voix seule)</label><variable>MONO</variable><default>true</default></checkbox>
+          <checkbox><label>Normaliser le volume (EBU R128)</label><variable>NORMALISER</variable><default>true</default></checkbox>
+        </vbox>
+      </frame>
+    </hbox>
+    <frame label="Extrait">
+      <vbox>
+        <checkbox><label>Ne garder qu'un extrait</label><variable>EXTRAIT</variable></checkbox>
+        <hbox>
+          <text><label>Début (hh:mm:ss) :</label></text>
+          <entry width-chars="9"><variable>DEBUT</variable><default>00:02:30</default></entry>
+          <text><label>Fin :</label></text>
+          <entry width-chars="9"><variable>FIN</variable><default>00:47:00</default></entry>
+        </hbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Extraire</label><action>exit:extraire</action></button>
+    </hbox>
+  </vbox>
+</window>

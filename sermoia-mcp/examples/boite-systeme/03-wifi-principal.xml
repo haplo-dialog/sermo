@@ -1,0 +1,51 @@
+<!-- Script : examples/boites-a-outils/systeme/03-wifi.sh (dialogue principal) -->
+<window title="Wi-Fi" default-width="600">
+  <vbox>
+    <hbox><text><label>Wi-Fi allumé :</label></text>
+      <switch><variable>WIFI_ALLUME</variable><default>true</default></switch></hbox>
+    <notebook tab-labels="Réseaux visibles|Réseaux connus">
+      <vbox>
+        <table scrollable="true" height-request="150">
+          <label>Réseau (SSID)|Signal (%)|Sécurité|Connecté</label>
+          <variable>VISIBLE</variable>
+          <item>Maison-5G|92|WPA2|oui</item>
+          <item>Maison|80|WPA2|</item>
+          <item>Mediatheque-Publique|54|ouvert|</item>
+          <item>Voisin-Box|31|WPA1 WPA2|</item>
+        </table>
+        <frame label="Se connecter au réseau choisi (ou à un réseau masqué)">
+          <vbox>
+            <hbox><text><label>Réseau masqué (sinon laisser vide) :</label></text>
+              <entry><variable>MASQUE</variable></entry></hbox>
+            <hbox><text><label>Clé Wi-Fi (vide si réseau ouvert) :</label></text>
+              <password space-expand="true" space-fill="true"><variable>CLE</variable></password></hbox>
+            <checkbox><label>Profil visible de moi seul (sinon, de tous les comptes du poste)</label><variable>PRIVE</variable><default>true</default></checkbox>
+          </vbox>
+        </frame>
+        <hbox>
+          <button cancel></button>
+          <button><label>Se connecter</label><action>exit:nouveau</action></button>
+        </hbox>
+      </vbox>
+      <vbox>
+        <list scrollable="true" height-request="150"><variable>CONNU</variable>
+          <item>Maison-5G</item>
+          <item>Maison</item>
+          <item>Gare-Wifi-Gratuit</item>
+          <item>Hotel-du-Port</item>
+        </list>
+        <hbox>
+          <radiobutton><label>Se connecter</label><default>true</default><variable>A_CONNECTER</variable></radiobutton>
+          <radiobutton><label>Oublier ce réseau</label><variable>A_OUBLIER</variable></radiobutton>
+        </hbox>
+        <hbox>
+          <button cancel></button>
+          <button><label>Appliquer</label><action>exit:connu</action></button>
+        </hbox>
+      </vbox>
+    </notebook>
+    <hbox>
+      <button><label>Seulement allumer / éteindre</label><action>exit:radio</action></button>
+    </hbox>
+  </vbox>
+</window>

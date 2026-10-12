@@ -3,27 +3,60 @@
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/).
 Versionnage : voir [VERSIONING.md](VERSIONING.md).
 
-La **2.7.3 est la première version 2.x publiée** ; les 2.7.4, 2.7.5, 2.7.7 et 2.8.1 la suivent (la 2.7.6 et la 2.8.0 n'ont été livrées qu'en paquets ; leur contenu est publié avec la version suivante). Les versions 2.0.0 à 2.7.2 sont
+La **2.7.3 est la première version 2.x publiée** ; les 2.7.4, 2.7.5, 2.7.7 et 2.8.2 la suivent (la 2.7.6, la 2.8.0 et la 2.8.1 n'ont été livrées qu'en paquets ; leur contenu est publié avec la version suivante). Les versions 2.0.0 à 2.7.2 sont
 restées internes ; elles sont décrites ci-dessous pour garder la trace de ce qui a
 changé depuis la 1.x. Pour passer de la 1.x à la 2.x : [MIGRATION.md](MIGRATION.md).
 
-## [2.8.1] — 2026-10-10
+## [2.8.2] — 2026-10-11
 
-Version CORRECTIF. Une revue des captures du site, port par port contre l'étalon
-gtk3sermo, a trouvé des widgets mal ou pas dessinés que les bancs ne voyaient
-pas : ils lisent les valeurs, pas l'image.
+Version CORRECTIF. Soixante scripts métier et quatre boîtes à outils, devenus le
+test de réussite des ports, ont trouvé des écarts entre les ports et l'étalon
+gtk3sermo : ils sont corrigés. Les deux serveurs MCP deviennent des paquets.
 
 ### Sécurité
 
-- **lvgl : `<searchentry>` écrivait au mauvais endroit.** Le texte saisi allait
-  dans `state.entry.buf`, qui partage la même mémoire que `state.list.items`
-  (un pointeur) : il l'écrasait. Il va désormais dans `state.list.filter`,
-  comme sur les autres ports.
 - **sermoia-mcp : `sermo_render` exécutait les commandes du XML.** Un `<input>`
   s'exécutait pendant le rendu : demander un aperçu suffisait à lancer une
   commande. Le rendu pose désormais `SERMO_ALLOWED_CMDS` sur une commande qui
   n'existe pas, ce qui interdit tout (repli `sh -c` compris) ; le banc le vérifie
   par un fichier témoin. Seul `sermo_run` exécute, et le dit.
+
+### Mesuré
+
+- `ci/bancs.sh` : 177 bancs, 174 verts au premier passage, les trois rouges
+  expliqués et réglés ; `examples/metiers/verifie.sh` : 104 scripts, 187
+  dialogues, neuf ports, 0 écart. Détail : [BILAN_SANTE.md](BILAN_SANTE.md).
+
+### Ajouté
+
+- **Soixante scripts métier** (`examples/metiers/`) : cinq par métier, pour douze
+  métiers (administration système, développement, support, intégration,
+  bornes, atelier, PME et associations, enseignement, multimédia, sécurité,
+  serveur sans écran, web local). Prêts à lancer, sans risque : par défaut,
+  la commande est affichée au lieu d'être lancée (`SERMO_A_BLANC=0` pour agir).
+  Ils sont aussi le **test de réussite des ports** : `examples/metiers/verifie.sh`
+  joue chaque dialogue sur les neuf ports et compare les valeurs à gtk3sermo.
+  Domaine public (CC0-1.0).
+- **Quatre boîtes à outils** (`examples/boites-a-outils/`) : système (écran, son,
+  Wi-Fi, heure, clavier…), serveur (nginx, certificats, SSH, fail2ban, rotation
+  des journaux, partages…), administrateur (groupes, droits, paquets, fstab,
+  formatage, sudo…) et utilisateur (recherche, archives, mot de passe, rappel,
+  impression…). Chacune : un lanceur et dix outils. Mêmes règles que les scripts
+  métier (à blanc par défaut, confirmation avant une action destructive, ni
+  `sudo` ni `pkexec`, saisies vérifiées) ; relues pour la sécurité ; jouées par le
+  même banc sur les neuf ports. Domaine public (CC0-1.0).
+- **Sommes de contrôle signées** : `SHA256SUMS.asc`, par la clé de haplo-dialog
+  (`devel@haplo-dialog.fr`, empreinte `66C7 F4AD 7A58 A037 967F 8339 3799 9F99
+  7570 F1ED`, dans le README) ; la clé publique est sur le site.
+- **Paquets `sermoia-mcp` et `sermoman-mcp`** : les deux serveurs MCP
+  s'installent (`/usr/bin/sermoia-mcp`, `/usr/bin/sermoman-mcp`). sermoia trouve
+  son catalogue installé, scripts métier et boîtes à outils compris ; sermoman annonce sa version
+  une fois installé. Scripts métier et boîtes à outils sont livrés dans `sermo-doc`.
+- **sermoman-mcp : `sermo_scripts`**, l'inventaire des 104 scripts (besoin,
+  commande enrobée, port conseillé, chemin), engendré à partir de leurs en-têtes
+  et compris dans la recherche ; le banc « vérité » échoue s'il n'est plus à jour.
+  **sermoia-mcp** : le catalogue compte 16 sujets (12 métiers, 4 boîtes) et
+  187 dialogues, et son banc échoue s'il n'est plus à jour.
 
 ### Amélioré
 
@@ -48,6 +81,135 @@ pas : ils lisent les valeurs, pas l'image.
   déclaration dans Claude Code) et version anglaise `README.en.md`. Banc étendu à
   cinq contrôles (rendu en image, témoin de commande, délais) ; quatre mutations
   du code le font chacune échouer.
+
+### Corrigé
+
+- **ncursessermo : les variables de sortie restaient effacées.** Lancé sur un
+  terminal sans capture, il écrivait `NOM="…"` et `EXIT="…"` pendant que
+  l'écran alterné était encore ouvert : elles disparaissaient avec lui. Le
+  contrat gagne un crochet facultatif, `sermo_be_before_export()`, appelé avant
+  l'export ; le port ncurses y rend l'écran. Les autres ports n'ont rien à
+  fournir.
+- **`--do` reçoit `EXIT`.** Le manuel le montre (`[ "$EXIT" = "valide" ]`), mais
+  seules les variables des widgets étaient exportées : `EXIT` arrivait vide, et
+  un script ne pouvait pas savoir quel bouton avait été cliqué. Il est exporté à
+  chaque sortie (bouton, fermeture, abandon), dans le cœur et dans les ports qui
+  écrivent `EXIT` eux-mêmes. Trouvé par le premier script métier.
+- **efl1 : la valeur d'un champ sortait en balisage.** `<entry>`, `<password>` et
+  `<searchentry>` rendaient « &laquo; » pour « « », « &amp; » pour « & » ; un `<`
+  dans une valeur par défaut était lu comme une balise. Texte brut à l'écriture
+  et à la lecture, comme `<edit>`.
+- **Entités XML décodées** dans le texte et les attributs : `&lt;` `&gt;` `&amp;`
+  `&quot;` `&apos;`, `&#NN;` et `&#xHH;`. `<default>a &amp; b</default>` rendait
+  « a &amp; b » ; il rend « a & b », comme tout lecteur XML. Une entité inconnue
+  reste telle quelle ; une chaîne entre guillemets n'est pas touchée. Un script
+  qui échappe ses valeurs (`&` → `&amp;`) obtient enfin la valeur d'origine.
+- **Une valeur sur plusieurs lignes garde toutes ses lignes** (`<default>`,
+  `<label>`…) : seule la dernière ligne était gardée.
+- **Première ligne choisie, comme l'étalon, sur les neuf ports.** `<list>`,
+  `<tree>` et `<table>` ne choisissent leur 1re ligne que s'ils sont le premier
+  widget à prendre le focus dans leur fenêtre (visible et actif) ; sinon rien
+  n'est choisi. `<default>` choisit la ligne voulue partout, gtk3 et gtk4
+  compris (gtk3 l'ignorait sur `<list>`).
+- **Groupes de boutons radio, comme l'étalon, sur les neuf ports.** Le premier
+  bouton d'un groupe est coché quand aucun n'a `<default>` (gtk4, qt6, fltk1,
+  sdl3, lvgl, ncurses et html n'en cochaient aucun) ; efl1 mettait tous les
+  boutons de la fenêtre dans un seul groupe. Un nouveau conteneur ouvre un
+  nouveau groupe.
+- **Boîtes rangées comme l'étalon, sur les neuf ports.** `homogeneous="true"`
+  donne des cases égales sur toute la longueur, un enfant qui ne remplit pas sa
+  case y étant centré ; `space-expand` / `space-fill` posés sur une `<vbox>` ou
+  une `<hbox>` valent pour ses enfants, avec la règle exacte de gtk3 (report
+  d'un enfant aux suivants, défauts par type) ; une `<hbox>` cale à droite ce
+  qui ne s'étire pas. Avant, la plupart des ports ignoraient ces réglages :
+  colonnes serrées d'un côté, boutons OK/Annuler mal placés, cadres non étirés.
+- **Bouton à icône : l'icône et le libellé forment un groupe centré** dans le
+  bouton (gtk3 le calait à droite, gtk4 à gauche) ; `image-position` est suivi
+  partout.
+- **Minuteurs** : ncurses tirait chaque `<timer>` à chaque image (et non à son
+  intervalle) ; sans affichage, ncurses et html les tiraient dans l'ordre du
+  document au lieu du plus court d'abord. `milliseconds="true"` est lu comme un
+  booléen sur les quatre ports neutres.
+- **fltk1 : `<spinbutton digits>`** partageait un même tampon de format entre
+  tous les champs : le dernier créé imposait ses décimales aux autres.
+- **htmlsermo, mode `serve`** : `--do` reçoit les valeurs envoyées par le
+  navigateur (il recevait les valeurs par défaut) ; `EXIT` vaut la sortie du
+  bouton (`exit:X` → « X »), plus son libellé ; un bouton dont les actions ne
+  ferment pas le dialogue n'envoie plus le formulaire.
+- **gtk3 : `<table>` n'est plus triée d'office.** Ses lignes étaient rangées
+  sur la 1re colonne dès l'ouverture, même sans `auto-sort` : l'ordre du
+  document était perdu, et la 1re ligne choisie différait des autres ports.
+  Comme gtkdialog, le tri n'a lieu qu'en `auto-sort` ou au clic sur un en-tête.
+- **`<text>` rend le texte affiché, sur les neuf ports**, comme gtkdialog : son
+  libellé (« text » s'il n'en a pas), puis ce que `<input>` a lu. Les ports
+  neutres rendaient une valeur vide, et qt6, efl1, sdl3, lvgl, ncurses et html
+  montraient un `<default>`, que `<text>` n'a pas.
+- **`<tree exported-column="N">` sur les neuf ports.** Seuls gtk3 et gtk4
+  rendaient la colonne demandée ; les sept autres rendaient toujours la 1re.
+  Trouvé par la boîte à outils « utilisateur » (le dossier d'un fichier trouvé).
+- **fltk1 : un `<item>` contenant « / » devenait un sous-menu**
+  (`<comboboxtext>`, `<combobox>`) : « Europe/Paris » rendait « Paris ». Les
+  éléments sont ajoutés tels quels, comme le faisaient déjà ceux d'`<input>`.
+  Trouvé par la boîte à outils « système » (fuseau horaire).
+- **htmlsermo : la page a la forme de la fenêtre.** La fenêtre prend sa largeur
+  (`default-width`, `width-request`) au lieu de 640 px fixes ; une boîte
+  horizontale ne passe plus à la ligne et range ses enfants par la fin, comme
+  gtkdialog ; ce qui s'étire (`space-expand`, et par défaut `<entry>`, `<edit>`,
+  `<frame>`) prend la place libre ; les onglets se placent selon `tab-pos`
+  (gauche, droite, bas) ; une image prend la taille demandée (`icon-size`,
+  `<width>`/`<height>`) en gardant son ratio ; un texte garde ses sauts de ligne
+  et se centre comme dans GTK ; une icône introuvable laisse une place vide,
+  comme gtk3. Signalé sur la capture « Un outil système complet » du site.
+- **Icônes de thème : recherche comme GTK, sur les ports neutres.** Le thème de la
+  personne, puis Adwaita, puis hicolor ; pour chaque nom, la variante
+  `-symbolic`, puis le nom générique (`network-wired` → `network`). Sans thème
+  réglé (SSH, session vide), la plupart des icônes manquaient : Adwaita n'a plus
+  que la variante symbolique de beaucoup d'entre elles. htmlsermo teint une icône
+  symbolique à la couleur du texte, comme GTK.
+- **Icônes : ports qui pouvaient les montrer et ne le faisaient pas** (relevé sur
+  la galerie du site) : gtk4 montrait une image cassée dans un bouton (il
+  demandait d'abord au thème s'il avait l'icône, et la réponse était toujours
+  non) ; qt6 ne cherchait l'icône d'un `<image icon-name>` que par Qt (une sur
+  cinq trouvée) et passe désormais par la recherche du cœur, comme ses boutons ;
+  efl1 recolore en clair les icônes symboliques sur son thème sombre, où elles
+  étaient presque invisibles ; lvgl dessine les icônes SVG (ThorVG, embarqué
+  dans LVGL — le port contient désormais du C++) et celles des boutons, et teint
+  une icône symbolique à la couleur du texte. Le cœur gagne
+  `sermo_icon_symbolique_teinte()`.
+- **lvgl : onglets et éléments étirés.** Une barre d'onglets sur le côté prend la
+  largeur du plus long libellé (36 px coupaient « Systeme » en « ystem ») et ses
+  onglets restent à leur hauteur, en haut ; `tab-pos` droite et bas sont lus. Un
+  élément en `space-expand` garde au moins sa taille naturelle : dans une boîte
+  taillée sur son contenu, LVGL l'écrasait à 0 px (les boutons « Actions
+  rapides » et le cadre « dmesg » de system-tools disparaissaient). Comme
+  gtkdialog, une rangée cale à droite ce qui ne s'étire pas, `<entry>`,
+  `<edit>` et `<frame>` s'étirent par défaut, une colonne qui s'étire dans une
+  rangée donne sa largeur à ses enfants, et les cadres d'une page d'onglet en
+  remplissent la hauteur ; une barre, un curseur ou un champ gardent leur
+  hauteur propre.
+- **sermoia-mcp : `sermo_examples` classe chaque exemple** (nom du sujet, nom du
+  fichier, contenu), et non plus le sujet entier : dans une boîte à outils,
+  « fail2ban » montrait d'abord le site nginx et les certificats. Le banc le
+  vérifie.
+- **fltk1 : une rangée de colonnes (icône et libellé) débordait** sous le
+  cadre suivant : sa hauteur était lue après que la rangée avait remis ses
+  enfants à sa propre hauteur. Vu sur la galerie du site (« Boutons et
+  icônes »).
+- **gtk3, gtk4 : un libellé qui n'est pas du balisage Pango valide** s'affiche en
+  texte brut, sans avertissement.
+
+## [2.8.1] — 2026-10-10
+
+Version CORRECTIF. Une revue des captures du site, port par port contre l'étalon
+gtk3sermo, a trouvé des widgets mal ou pas dessinés que les bancs ne voyaient
+pas : ils lisent les valeurs, pas l'image.
+
+### Sécurité
+
+- **lvgl : `<searchentry>` écrivait au mauvais endroit.** Le texte saisi allait
+  dans `state.entry.buf`, qui partage la même mémoire que `state.list.items`
+  (un pointeur) : il l'écrasait. Il va désormais dans `state.list.filter`,
+  comme sur les autres ports.
 
 ### Corrigé
 

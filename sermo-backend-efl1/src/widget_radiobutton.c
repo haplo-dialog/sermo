@@ -19,11 +19,12 @@
 #include "widgets.h"
 #include "tag_attributes.h"
 #include "widget_radiobutton.h"
+
+extern GtkWidget *lastradiowidget;   /* groupe radio ouvert (cœur, automaton.c) */
 #include <string.h>
 #include <stdlib.h>
 
 /* Groupe radio global — simplifié : tous les radios dans une même fenêtre partagent le groupe */
-static Evas_Object *_radio_group = NULL;
 static int          _radio_val   = 0;
 
 GtkWidget *widget_radiobutton_create(AttributeSet *Attr, tag_attr *attr, gint Type)
@@ -39,10 +40,16 @@ GtkWidget *widget_radiobutton_create(AttributeSet *Attr, tag_attr *attr, gint Ty
 
     elm_radio_state_value_set(rd, _radio_val++);
 
-    if (!_radio_group) {
-        _radio_group = rd;
+    /* Un groupe par suite de boutons radio, comme gtk3sermo : le cœur ouvre
+     * le groupe (lastradiowidget) et le ferme dès qu'un autre widget est créé.
+     * Jusqu'à la 2.8.1, efl1 mettait tous les boutons radio de la fenêtre dans
+     * un seul groupe : cocher l'un décochait ceux d'une autre question. Le 1er
+     * bouton d'un groupe est coché d'office, comme GtkRadioButton. */
+    if (lastradiowidget == NULL) {
+        lastradiowidget = (GtkWidget *)rd;
+        elm_radio_value_set(rd, elm_radio_state_value_get(rd));
     } else {
-        elm_radio_group_add(rd, _radio_group);
+        elm_radio_group_add(rd, (Evas_Object *)lastradiowidget);
     }
 
     /* Active si default=true */
@@ -50,7 +57,7 @@ GtkWidget *widget_radiobutton_create(AttributeSet *Attr, tag_attr *attr, gint Ty
         GList *el = NULL;
         gchar *def = attributeset_get_first(&el, Attr, ATTR_DEFAULT);
         if (def && (strcasecmp(def,"true")==0 || strcmp(def,"1")==0))
-            elm_radio_value_set(_radio_group, elm_radio_state_value_get(rd));
+            elm_radio_value_set(rd, elm_radio_state_value_get(rd));
     }
 
     evas_object_show(rd);
@@ -60,7 +67,7 @@ GtkWidget *widget_radiobutton_create(AttributeSet *Attr, tag_attr *attr, gint Ty
 gchar *widget_radiobutton_envvar_construct(GtkWidget *w)
 {
     if (!w) return g_strdup("false");
-    int grp_val  = elm_radio_value_get(_radio_group ? _radio_group : (Evas_Object *)w);
+    int grp_val  = elm_radio_value_get((Evas_Object *)w);   /* la valeur de SON groupe */
     int self_val = elm_radio_state_value_get((Evas_Object *)w);
     return g_strdup(grp_val == self_val ? "true" : "false");
 }

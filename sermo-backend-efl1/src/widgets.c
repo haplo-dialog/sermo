@@ -520,6 +520,17 @@ widget_visibility_list_add(GtkWidget *widget, tag_attr *attr)
             else
                 evas_object_data_set(widget, "sermo_noexpand", (void *)1);
         }
+        /* space-fill : lu par le rangement des boîtes (efl_boite_ranger) */
+        {
+            char *fill = get_tag_attribute(attr, "space-fill");
+            if (fill != NULL) {
+                if (strcasecmp(fill, "true") == 0 || strcasecmp(fill, "yes") == 0 ||
+                    strcmp(fill, "1") == 0)
+                    evas_object_data_set(widget, "sermo_fill", (void *)1);
+                else
+                    evas_object_data_set(widget, "sermo_nofill", (void *)1);
+            }
+        }
 
         vis = get_tag_attribute(attr, "visible");
         if (vis != NULL &&

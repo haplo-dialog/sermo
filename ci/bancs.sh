@@ -43,7 +43,10 @@ ligne() {  # ligne <état> <nom> <texte> : colonnes alignées en caractères, pa
 banc() {  # banc <nom> <commande…> : journal complet, une ligne de verdict
     local nom="$1"; shift
     local journal="$J/$(printf '%s' "$nom" | LC_ALL=C.UTF-8 iconv -f UTF-8 -t ASCII//TRANSLIT | tr -c 'A-Za-z0-9.-' '_').log"
-    timeout --kill-after=10 "$DELAI" "$@" > "$journal" 2>&1
+    # BANC_DELAI=<s> devant l'appel : un délai propre à ce banc (le banc des
+    # scripts joue 187 dialogues sur neuf ports, plus de 30 minutes).
+    local delai="${BANC_DELAI:-$DELAI}"
+    timeout --kill-after=10 "$delai" "$@" > "$journal" 2>&1
     local rc=$?
     local fin; fin=$(grep -a -v '^[[:space:]]*$' "$journal" | tail -1 | sed 's/\x1b\[[0-9;]*m//g' | cut -c1-80)
     joues=$((joues + 1))
@@ -54,7 +57,7 @@ banc() {  # banc <nom> <commande…> : journal complet, une ligne de verdict
         ligne 'IGNORÉ' "$nom" "compté en échec — $fin"
         echecs=$((echecs + 1))
     elif [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
-        ligne 'ÉCHEC ' "$nom" "figé, arrêté après ${DELAI}s"
+        ligne 'ÉCHEC ' "$nom" "figé, arrêté après ${delai}s"
         echecs=$((echecs + 1))
     else
         ligne 'ÉCHEC ' "$nom" "rc=$rc — $fin"
@@ -128,6 +131,7 @@ for p in "${PORTS[@]}"; do
     if [ "$p" = ncurses ]; then
         banc "$p mot de passe" bash tests/garde_ncurses_mot_de_passe.sh "$b"
         banc "$p sortie capturée" bash tests/garde_ncurses_sortie_capturee.sh "$b"
+        banc "$p sortie au terminal" bash tests/garde_ncurses_sortie_terminal.sh "$b"
     elif [ "$p" = html ]; then
         # Ni clic ni fenêtre à détecter (xdotool) : seule la sortie compte.
         banc "$p échappement" bash tests/garde_echappement_sortie.sh "$b"
@@ -146,7 +150,11 @@ else
 fi
 banc "sermoman-mcp : vérité" env SERMO_SRC="$RACINE" bash sermoman-mcp/tests/verifie-verite.sh
 banc "sermoman-mcp : exemples" env SERMO_SRC="$RACINE" SERMO_PORTS_REQUIS="${PORTS[*]/%/sermo}" bash sermoman-mcp/tests/verifie-exemples.sh
-banc "sermoia-mcp : schéma, exemples, protocole, rendu, délais" env SERMO_BIN="$RACINE/sermo-backend-${PORTS[0]}/_build/${PORTS[0]}sermo" bash sermoia-mcp/tests/verifie.sh
+# gtk3 est toujours joué : c'est l'étalon auquel les valeurs se comparent
+# (« ci/bancs.sh lvgl » le faisait jouer seul : 187 écarts, tous faux).
+PORTS_METIERS="gtk3"; for p in "${PORTS[@]}"; do [ "$p" = gtk3 ] || PORTS_METIERS+=" $p"; done
+BANC_DELAI=5400 banc "scripts métier et boîtes à outils (test de réussite des ports)" bash examples/metiers/verifie.sh --ports "$PORTS_METIERS"
+banc "sermoia-mcp : schéma, exemples, protocole, rendu, délais, catalogue métier" env SERMO_BIN="$RACINE/sermo-backend-${PORTS[0]}/_build/${PORTS[0]}sermo" bash sermoia-mcp/tests/verifie.sh
 
 echo
 echo "Bancs : $joues joué(s), $echecs en échec. Journaux : $J"

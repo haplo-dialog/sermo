@@ -1,0 +1,36 @@
+<!-- Script : examples/boites-a-outils/serveur/01-site-web.sh (dialogue principal) -->
+<window title="Site web nginx" default-width="580">
+  <vbox>
+    <hbox><text><label>Nom de domaine :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>DOMAINE</variable><default>exemple.org</default></entry></hbox>
+    <hbox><text><label>Racine des fichiers :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>RACINE</variable><default>/var/www/exemple.org</default></entry></hbox>
+    <frame label="Type de site">
+      <hbox>
+        <radiobutton><label>Statique</label><default>true</default><variable>T_STATIQUE</variable></radiobutton>
+        <radiobutton><label>Proxy vers une appli</label><variable>T_PROXY</variable></radiobutton>
+        <radiobutton><label>PHP (php-fpm)</label><variable>T_PHP</variable></radiobutton>
+      </hbox>
+    </frame>
+    <hbox><text><label>Proxy vers (adresse:port) :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>AMONT</variable><default>127.0.0.1:3000</default></entry></hbox>
+    <hbox><text><label>Port d'écoute :</label></text>
+      <spinbutton range-min="1" range-max="65535" range-step="1"><variable>PORT</variable><default>80</default></spinbutton></hbox>
+    <checkbox><label>Activer le site (lien dans sites-enabled)</label><default>true</default><variable>ACTIVER</variable></checkbox>
+    <checkbox><label>Répondre aussi pour www.domaine</label><variable>WWW</variable></checkbox>
+    <expander label="Page d'attente, si la racine n'a pas d'index.html">
+      <vbox>
+        <checkbox><label>Écrire une page d'attente</label><variable>PAGE</variable></checkbox>
+        <hbox><text><label>Fond :</label></text>
+          <colorbutton><variable>COULEUR</variable><default>#2e3440</default></colorbutton>
+          <text><label>Police :</label></text>
+          <fontbutton><variable>POLICE</variable><default>Sans 14</default></fontbutton></hbox>
+      </vbox>
+      <variable>PAGE_OUVERTE</variable>
+    </expander>
+    <hbox>
+      <button cancel></button>
+      <button><label>Voir le fichier</label><action>exit:apercu</action></button>
+    </hbox>
+  </vbox>
+</window>

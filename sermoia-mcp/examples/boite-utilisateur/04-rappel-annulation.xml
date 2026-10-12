@@ -1,0 +1,11 @@
+<!-- Script : examples/boites-a-outils/utilisateur/04-rappel.sh (dialogue annulation) -->
+<window title="Annuler ce rappel ?">
+  <vbox>
+    <text><label>Le rappel n° 7, prévu le Mon Oct 12 09:30:00 2026, sera supprimé.</label></text>
+    <text><label>Il ne s'affichera pas.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Supprimer le rappel</label><action>exit:supprimer</action></button>
+    </hbox>
+  </vbox>
+</window>

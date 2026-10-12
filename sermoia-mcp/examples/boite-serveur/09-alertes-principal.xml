@@ -1,0 +1,33 @@
+<!-- Script : examples/boites-a-outils/serveur/09-alertes.sh (dialogue principal) -->
+<window title="Alertes du serveur" default-width="580">
+  <vbox>
+    <text><label>Prévenir quand :</label></text>
+    <hbox>
+      <checkbox><label>le disque est plein à (%)</label><default>true</default><variable>V_DISQUE</variable></checkbox>
+      <hscale range-min="50" range-max="99" range-step="1" draw-value="true" space-expand="true" space-fill="true"><variable>DISQUE</variable><default>90</default></hscale></hbox>
+    <hbox>
+      <checkbox><label>la mémoire est prise à (%)</label><default>true</default><variable>V_MEMOIRE</variable></checkbox>
+      <hscale range-min="50" range-max="99" range-step="1" draw-value="true" space-expand="true" space-fill="true"><variable>MEMOIRE</variable><default>92</default></hscale></hbox>
+    <hbox>
+      <checkbox><label>la charge sur 5 min dépasse</label><default>true</default><variable>V_CHARGE</variable></checkbox>
+      <spinbutton range-min="1" range-max="256" range-step="1"><variable>CHARGE</variable><default>8</default></spinbutton></hbox>
+    <hbox><text><label>Adresse d'alerte :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>ADRESSE</variable><default>admin@exemple.org</default></entry></hbox>
+    <hbox><text><label>Vérifier :</label></text>
+      <comboboxtext><variable>FREQUENCE</variable><default>toutes les 15 min</default>
+        <item>toutes les 5 min</item><item>toutes les 15 min</item><item>toutes les heures</item>
+      </comboboxtext></hbox>
+    <expander label="Avancé">
+      <vbox>
+        <hbox><text><label>Points de montage surveillés :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>POINTS</variable><default>/ /var /srv</default></entry></hbox>
+        <checkbox><label>Aussi dans le journal (logger -t alertes-serveur)</label><default>true</default><variable>JOURNAL</variable></checkbox>
+      </vbox>
+      <variable>AVANCE</variable>
+    </expander>
+    <hbox>
+      <button cancel></button>
+      <button><label>Installer le contrôle</label><action>exit:installer</action></button>
+    </hbox>
+  </vbox>
+</window>

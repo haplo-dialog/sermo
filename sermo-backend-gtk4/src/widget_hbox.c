@@ -117,6 +117,14 @@ GtkWidget *widget_hbox_create(
 		}
 	}
 
+	/* homogeneous="true" : la propriete GtkBox n'est posee qu'APRES cette
+	 * fonction (attributs generiques), il faut donc la lire ici. GTK3 donne
+	 * alors a chaque enfant une case egale sur TOUTE la largeur et centre
+	 * dans sa case celui qui ne la remplit pas (etalon t1). */
+	gboolean homogene = attr && (value = get_tag_attribute(attr, "homogeneous")) &&
+		((strcasecmp(value, "true") == 0) || (strcasecmp(value, "yes") == 0) ||
+		(atoi(value) == 1));
+
 	/* Pack the widgets into the container */
 	s = pop();
 	gboolean any_expand = FALSE;   /* GTK4 : voir apres la boucle */
@@ -163,12 +171,14 @@ GtkWidget *widget_hbox_create(
 		gtk_box_pack_end(GTK_BOX(widget), s.widgets[n],
 			original_expand, original_fill, 0);
 		if (original_expand) any_expand = TRUE;
+		if (homogene && !original_fill)
+			gtk_widget_set_halign(s.widgets[n], GTK_ALIGN_CENTER);
 	}
 	/* GTK3 pack_end sans enfant extensible : la rangee se cale au bord
 	 * DROIT. GtkBox GTK4 empile toujours depuis le debut ; on aligne donc
 	 * la boite elle-meme a la fin de son allocation (rangees icone+texte de
 	 * System-Tools, pieds de page OK/Annuler — parite etalon). */
-	if (!any_expand && s.nwidgets > 0)
+	if (!any_expand && !homogene && s.nwidgets > 0)
 		gtk_widget_set_halign(widget, GTK_ALIGN_END);
 
 #ifdef DEBUG_TRANSITS

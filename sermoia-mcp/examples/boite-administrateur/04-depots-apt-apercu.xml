@@ -1,0 +1,16 @@
+<!-- Script : examples/boites-a-outils/administrateur/04-depots-apt.sh (dialogue apercu) -->
+<window title="Fichier à écrire" default-width="600" default-height="380">
+  <vbox>
+    <text><label>Fichier : /etc/apt/sources.list.d/exemple-logiciel.sources</label></text>
+    <edit editable="false" space-expand="true" space-fill="true"><variable>APERCU</variable><default>Types: deb
+URIs: https://depot.exemple.org/debian
+Suites: stable
+Components: main
+Signed-By: /usr/share/keyrings/exemple-logiciel.gpg</default></edit>
+    <checkbox><label>Lancer apt update ensuite</label><default>true</default><variable>MAJ</variable></checkbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Écrire le fichier</label><action>exit:ecrire</action></button>
+    </hbox>
+  </vbox>
+</window>

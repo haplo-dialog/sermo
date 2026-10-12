@@ -1,0 +1,26 @@
+<!-- Script : examples/metiers/10-securite-informatique/4-pare-feu.sh (dialogue principal) -->
+<window title="Pare-feu (nft)" default-width="600">
+  <vbox>
+    <frame label="Règles en place">
+      <edit editable="false" height-request="180"><variable>REGLES</variable><default></default></edit>
+    </frame>
+    <frame label="Nouvelle règle en entrée">
+      <vbox>
+        <hbox><text><label>Protocole :</label></text>
+          <comboboxtext><variable>PROTO</variable><default>tcp</default><item>tcp</item><item>udp</item></comboboxtext>
+          <text><label>Port :</label></text>
+          <spinbutton range-min="1" range-max="65535" range-step="1"><variable>PORT</variable><default>443</default></spinbutton></hbox>
+        <hbox><text><label>Depuis (vide = partout) :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>SOURCE</variable><default>192.168.1.0/24</default></entry></hbox>
+        <hbox>
+          <radiobutton><label>Autoriser</label><variable>AUTORISER</variable><default>true</default></radiobutton>
+          <radiobutton><label>Refuser</label><variable>REFUSER</variable></radiobutton>
+        </hbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Ajouter la règle</label><action>exit:ajouter</action></button>
+    </hbox>
+  </vbox>
+</window>

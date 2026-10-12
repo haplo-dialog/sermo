@@ -1,0 +1,11 @@
+<!-- Script : examples/metiers/09-multimedia/2-extraire-audio.sh (dialogue ecraser) -->
+<window title="Fichier existant">
+  <vbox>
+    <text><label>/home/utilisateur/Vidéos/conference-climat.mp3 existe déjà.</label></text>
+    <text><label>Le remplacer par le nouvel extrait ?</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Remplacer</label><action>exit:remplacer</action></button>
+    </hbox>
+  </vbox>
+</window>

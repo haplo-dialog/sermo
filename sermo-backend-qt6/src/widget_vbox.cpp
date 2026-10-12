@@ -34,26 +34,9 @@ GtkWidget *widget_vbox_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         if (v) spacing = atoi(v);
     }
 
-    QWidget     *box    = new QWidget();
-    QVBoxLayout *layout = new QVBoxLayout(box);
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(spacing);
-
-    /* Le parser émet push(new vbox(pop())) : l'instruction SUM a regroupé
-     * TOUS les enfants frères dans UN seul stackelement (s.nwidgets). On
-     * dépile une fois et on les ré-parente dans le layout (sinon ils restent
-     * sans parent → chacun devient une fenêtre top-level). */
-    stackelement s = pop();
-    bool anyExpand = false;
-    for (int n = 0; n < s.nwidgets; ++n) {
-        if (!s.widgets[n]) continue;
-        int e = qt6_layout_get_expand((GtkWidget *)s.widgets[n]);
-        if (e) anyExpand = true;
-        layout->addWidget(static_cast<QWidget *>(s.widgets[n]), e ? 1 : 0);
-    }
-    /* Aucun enfant extensible → ressort final pour empiler en haut (sinon Qt
-     * répartit l'espace vertical à parts égales et espace trop les lignes). */
-    if (!anyExpand) layout->addStretch(1);
+    /* Rangement des enfants (étirement, homogénéité, calage) : règles de
+     * gtk3, communes aux deux boîtes — voir qt6_box_construire(), widgets.cpp. */
+    QWidget *box = qt6_box_construire(attr, false, spacing);
 
     return (GtkWidget *)box;
 }

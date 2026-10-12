@@ -1,0 +1,9 @@
+<!-- Script : examples/metiers/02-developpeur-devops/4-conteneurs.sh (dialogue journaux) -->
+<window title="Journaux de web" default-width="760" default-height="500">
+  <vbox>
+    <edit editable="false" space-expand="true" space-fill="true">
+      <default>10.0.2.100 - - [11/Oct/2026:09:12:03 +0000] GET /sante HTTP/1.1 200 (démonstration)</default>
+    </edit>
+    <hbox><button><label>Fermer</label><action>exit:fermer</action></button></hbox>
+  </vbox>
+</window>

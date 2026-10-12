@@ -1,0 +1,11 @@
+<!-- Script : examples/boites-a-outils/systeme/10-bluetooth.sh (dialogue confirmation) -->
+<window title="Oublier un appareil ?">
+  <vbox>
+    <text><label>« Enceinte Salon » (5C:F3:70:8B:44:A1) sera oublié : appairage et confiance supprimés.</label></text>
+    <text><label>Pour le réutiliser, il faudra le remettre en mode appairage et recommencer.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Oublier</label><action>exit:oublier</action></button>
+    </hbox>
+  </vbox>
+</window>

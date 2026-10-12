@@ -1,0 +1,62 @@
+<!-- Script : examples/boites-a-outils/systeme/09-applications-par-defaut.sh (dialogue principal) -->
+<window title="Applications par défaut" default-width="600">
+  <vbox>
+    <table height-request="120">
+      <label>Pour ouvrir|Application actuelle</label>
+      <item>Liens web|firefox-esr.desktop</item>
+      <item>PDF|org.gnome.Evince.desktop</item>
+      <item>Textes|org.xfce.mousepad.desktop</item>
+      <item>Images|org.xfce.ristretto.desktop</item>
+      <variable>LIGNE</variable>
+    </table>
+    <notebook tab-labels="Web|Documents|Images">
+      <vbox>
+        <hbox><text><label>Navigateur :</label></text>
+<comboboxtext space-expand="true" space-fill="true"><variable>NAVIGATEUR</variable><default>(ne pas changer)</default>
+  <item>(ne pas changer)</item>
+  <item>chromium.desktop</item>
+  <item>firefox-esr.desktop</item>
+</comboboxtext>
+        </hbox>
+      </vbox>
+      <vbox>
+        <hbox><text><label>PDF :</label></text>
+<comboboxtext space-expand="true" space-fill="true"><variable>PDF</variable><default>(ne pas changer)</default>
+  <item>(ne pas changer)</item>
+  <item>atril.desktop</item>
+  <item>org.gnome.Evince.desktop</item>
+  <item>libreoffice-draw.desktop</item>
+</comboboxtext>
+        </hbox>
+        <hbox><text><label>Textes :</label></text>
+<comboboxtext space-expand="true" space-fill="true"><variable>TEXTE</variable><default>(ne pas changer)</default>
+  <item>(ne pas changer)</item>
+  <item>org.xfce.mousepad.desktop</item>
+  <item>vim.desktop</item>
+</comboboxtext>
+        </hbox>
+      </vbox>
+      <vbox>
+        <hbox><text><label>Images :</label></text>
+<comboboxtext space-expand="true" space-fill="true"><variable>IMAGE</variable><default>(ne pas changer)</default>
+  <item>(ne pas changer)</item>
+  <item>gimp.desktop</item>
+  <item>org.xfce.ristretto.desktop</item>
+  <item>eog.desktop</item>
+</comboboxtext>
+        </hbox>
+        <text><label>Pour quels formats d'image :</label></text>
+        <hbox>
+          <checkbox><label>PNG</label><variable>F_PNG</variable><default>true</default></checkbox>
+          <checkbox><label>JPEG</label><variable>F_JPEG</variable><default>true</default></checkbox>
+          <checkbox><label>WebP</label><variable>F_WEBP</variable><default>true</default></checkbox>
+          <checkbox><label>GIF</label><variable>F_GIF</variable></checkbox>
+        </hbox>
+      </vbox>
+    </notebook>
+    <hbox>
+      <button cancel></button>
+      <button><label>Appliquer</label><action>exit:appliquer</action></button>
+    </hbox>
+  </vbox>
+</window>

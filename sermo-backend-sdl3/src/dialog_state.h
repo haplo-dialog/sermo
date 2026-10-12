@@ -129,6 +129,15 @@ typedef struct WidgetNode {
     unsigned     icon_tex;     /* texture GL de l'icone (0 = pas chargee, ~0u = echec) */
     int          icon_px;      /* taille demandee de l'icone */
     int          expand;       /* space-expand : 1 vrai, -1 faux, 0 non dit */
+    int          fill;         /* space-fill   : 1 vrai, -1 faux, 0 non dit */
+    /* Rangement RETENU par la boîte parente, calculé à sa création comme
+     * gtk3 (widget_vbox.c / widget_hbox.c) : valeur de la boîte, reportée
+     * d'un enfant au suivant, défaut du type. 0/1. */
+    int          pk_expand, pk_fill;
+    gboolean     homogeneous;  /* <hbox>/<vbox homogeneous="true"> */
+    gboolean     scroller;     /* fenêtre défilante du cœur (passe-plat) */
+    int          icon_pos;     /* bouton : image-position 0 gauche 1 droite 2 haut 3 bas */
+    float        nat_w, nat_h; /* taille NATURELLE mesurée (rendu précédent) */
     float        row_w;        /* hbox : largeur mesuree de la rangee (cadre a droite) */
     float        tail_h;       /* vbox : hauteur mesuree des freres QUI SUIVENT l'enfant
                                   extensible — il la leur laisse au lieu de tout prendre */
@@ -148,6 +157,13 @@ typedef struct WidgetNode {
      * choisie d'une list ou d'un tree — le pose donc lui-même à la fin de
      * son refresh. */
     gboolean     initialised;
+
+    /* <list>, <tree>, <table> : ce widget prend le focus à l'ouverture, donc
+     * sa 1re ligne est choisie (sermo_focus.h). */
+    gboolean     focus_initial;
+
+    /* <tree exported-column="N"> : la colonne que la variable rend (défaut 0). */
+    int          colonne_exportee;
 
     /* État persistant (mis à jour par ImGui à chaque frame) */
     union {

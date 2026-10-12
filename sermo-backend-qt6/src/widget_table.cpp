@@ -18,6 +18,7 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
+#include "sermo_focus.h"
 #include "qt6-compat.h"
 #include "gtk3d.h"
 #include "attributes.h"
@@ -80,8 +81,10 @@ GtkWidget *widget_table_create(AttributeSet *Attr, tag_attr *attr, gint Type)
             tw->setProperty("exported_column", atoi(v));
     }
 
-    /* Parite gtk3 : selectionner la premiere ligne si rien ne l'est. */
-    if (!tw->currentItem() && tw->topLevelItemCount() > 0)
+    /* Parité gtk3 : la 1re ligne n'est choisie que si ce widget prend le
+     * focus à l'ouverture (sermo_focus.h) ; jusqu'à la 2.8.1, toujours. */
+    tw->setProperty("sermoFocus", (bool)sermo_focus_initial("table"));
+    if (tw->selectedItems().isEmpty() && tw->topLevelItemCount() > 0 && tw->property("sermoFocus").toBool())
         tw->setCurrentItem(tw->topLevelItem(0));
     return (GtkWidget *)tw;
 }
@@ -90,7 +93,10 @@ gchar *widget_table_envvar_construct(GtkWidget *widget)
 {
     QTreeWidget *tw = static_cast<QTreeWidget *>(widget);
     if (!tw) return g_strdup("");
-    QTreeWidgetItem *cur = tw->currentItem();
+    /* la SÉLECTION : Qt pose un élément courant sans le choisir quand le
+     * widget prend le focus */
+    QList<QTreeWidgetItem *> choix = tw->selectedItems();
+    QTreeWidgetItem *cur = choix.isEmpty() ? nullptr : choix.first();
     if (!cur) return g_strdup("");
     /* Parite gtk3 : rend la colonne « exported-column » (defaut 0), pas la
      * ligne entiere jointe. */
@@ -130,7 +136,7 @@ void widget_table_refresh(variable *var)
      * sélection que la création applique aux <item>. Le cœur neutre ne retient
      * pas « _initialised » : le passage est noté sur le widget. */
     if (!tw->property("sermoInitialise").toBool()) {
-        if (!tw->currentItem() && tw->topLevelItemCount() > 0)
+        if (tw->selectedItems().isEmpty() && tw->topLevelItemCount() > 0 && tw->property("sermoFocus").toBool())
             tw->setCurrentItem(tw->topLevelItem(0));
         tw->setProperty("sermoInitialise", true);
     }

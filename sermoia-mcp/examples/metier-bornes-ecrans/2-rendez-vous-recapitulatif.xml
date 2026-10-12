@@ -1,0 +1,10 @@
+<!-- Script : examples/metiers/05-bornes-ecrans/2-rendez-vous.sh (dialogue recapitulatif) -->
+<window title="Rendez-vous enregistré">
+  <vbox>
+    <text><label>Rendez-vous le mardi 13 octobre 2026 à 09:30, service Accueil général.</label></text>
+    <text><label>Présentez-vous à l'accueil cinq minutes avant l'heure.</label></text>
+    <hbox>
+      <button ok></button>
+    </hbox>
+  </vbox>
+</window>

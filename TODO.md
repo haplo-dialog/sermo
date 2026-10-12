@@ -32,18 +32,25 @@ l'étalon gtk3sermo mesurés (ou lus, quand c'est dit) pendant la réparation de
 `<input>`, laissés hors de la 2.7.1 :
 
 - [ ] **`auto-refresh`** (surveillance d'un `<input file>`) ne vit que sur gtk3 et
-      gtk4 (GFileMonitor de la vraie GLib) : qt6, fltk1, efl1 et sdl3 ne relisent
-      pas le fichier. Non documenté dans les manuels ; deux exemples l'emploient.
-- [ ] **Sélection initiale de `<list>`, `<tree>`, `<table>`** : chez l'étalon, la
+      gtk4 (GFileMonitor de la vraie GLib) : les sept autres ports (qt6, fltk1,
+      efl1, sdl3, lvgl, ncurses, html) ne relisent pas le fichier — seuls les
+      widgets de gtk3 et gtk4 appellent `widget_file_monitor_try_create()`
+      (relu le 2026-10-11). Non documenté dans les manuels ; deux exemples
+      l'emploient.
+- [x] **Sélection initiale de `<list>`, `<tree>`, `<table>`** : chez l'étalon, la
       1re rangée ne ressort que si le widget a le focus clavier (1er widget
-      focalisable de la fenêtre) ; les autres ports la sélectionnent toujours. Les
-      cas 16-18 et 45-52 placent le widget seul dans sa fenêtre. Après `refresh:`,
-      l'étalon ne sélectionne plus rien ; efl1 garde la 1re rangée.
+      focalisable de la fenêtre) ; les autres ports la sélectionnaient toujours.
+      **Fermé en 2.8.2** (2026-10-11) : le cœur dit à chaque port si le widget
+      prend le focus (`libsermocore/src/sermo_focus.c`, `sermo_focus_initial()`,
+      appelé par les huit ports autres que gtk3) ; `examples/metiers/verifie.sh`,
+      0 écart sur les neuf ports. Reste à revoir [NON VÉRIFIÉ] : après
+      `refresh:`, l'étalon ne sélectionne plus rien ; efl1 gardait la 1re rangée.
 - [ ] **Plusieurs `<input>` sur un widget** : l'étalon les lit toutes, dans
       l'ordre ; les ports sans GTK ne lisent que la première reconnue.
 - [ ] **`<item>` et `<input>` mêlés** : l'étalon charge `<input>` d'abord ; qt6,
-      fltk1 et efl1 (list, table) mettent les `<item>` d'abord. L'étalon trie aussi
-      `<table>` sur sa 1re colonne dès la création.
+      fltk1 et efl1 (list, table) mettent les `<item>` d'abord. (L'étalon triait
+      aussi `<table>` sur sa 1re colonne dès la création : plus depuis la 2.8.2,
+      le tri n'a lieu qu'en `auto-sort`, `sermo-backend-gtk3/src/widget_table.c`.)
 - [ ] **`<edit>` avec `<default>` et `<input>`** : l'étalon garde `<default>` au
       démarrage ; qt6, fltk1 et efl1 gardent `<input>` (sdl3 et ncurses suivent
       l'étalon).
@@ -109,10 +116,12 @@ Trouvé le 2026-09-17 en faisant l'image du README (binaires des paquets
 
 - [ ] **efl1 ignore `SERMO_DARK`** : `--render-png` donne la même image sombre
       avec `SERMO_DARK=0` et `SERMO_DARK=1`, alors que gtk3, gtk4, qt6, fltk1 et
-      sdl3 basculent. `ELM_PALETTE=light` n'y change rien.
+      sdl3 basculent. `ELM_PALETTE=light` n'y change rien. Toujours vrai : aucun
+      fichier de `sermo-backend-efl1/src` ne lit `SERMO_DARK` (2026-10-11).
 - [ ] **Libellé de `<button cancel>`** : « Cancel » sur gtk3, gtk4 et qt6 (écrit
-      en dur en anglais), « Annuler » sur fltk1, efl1, sdl3 et ncurses, quelle que
-      soit la langue du système.
+      en dur en anglais), « Annuler » sur fltk1, efl1, sdl3, lvgl, ncurses et
+      html, quelle que soit la langue du système (relu dans les
+      `widget_button.*` le 2026-10-11).
 
 Trouvé le même jour, **fermé en 2.7.1** (voir [CHANGELOG.md](CHANGELOG.md)) :
 
@@ -209,6 +218,7 @@ Trouvé le 2026-09-16, **fermé en 2.7.0** (voir [CHANGELOG.md](CHANGELOG.md)) :
 
 ## Toujours vrai (garde-fous)
 
-- Ne jamais régresser ce que joue **`ci/bancs.sh`** (XML 55 · comportement 52 ·
-  gardes · exemples réels).
+- Ne jamais régresser ce que joue **`ci/bancs.sh`** (XML 55 · comportement 61 ·
+  gardes · exemples réels · scripts métier et boîtes à outils sur les neuf
+  ports).
 - Ne jamais retirer un drapeau de durcissement (voir [SECURITY.md](SECURITY.md)).

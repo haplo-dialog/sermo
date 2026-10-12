@@ -13,6 +13,10 @@
 
 #include "efl-compat.h"
 #include "widgets.h"
+#include "stack.h"
+
+/* Rangement commun colonne / rangée (règle de l'étalon gtk3), widget_vbox.c */
+void efl_boite_ranger(Evas_Object *box, stackelement *s, int rangee, tag_attr *attr);
 
 GtkWidget *widget_vbox_create(AttributeSet *Attr, tag_attr *attr, gint Type);
 gchar     *widget_vbox_envvar_construct(GtkWidget *widget);

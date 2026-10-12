@@ -15,6 +15,7 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
+#include "sermo_focus.h"
 #include "efl-compat.h"
 #include "efl-globals.h"
 #include "gtkdialog.h"
@@ -136,6 +137,12 @@ GtkWidget *widget_tree_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     Evas_Object *gl = elm_genlist_add(parent ? parent : elm_win_add(NULL,"tmp",ELM_WIN_BASIC));
     (void)Attr;
     evas_object_data_set(gl, "selected", strdup(""));
+    evas_object_data_set(gl, "sermo-focus", (void *)(intptr_t)sermo_focus_initial("tree"));
+    /* <tree exported-column="N"> : la colonne que la variable rend (défaut 0) */
+    if (attr) {
+        const char *v = get_tag_attribute(attr, "exported-column");
+        if (v && atoi(v) > 0) evas_object_data_set(gl, "sermo-colonne", (void *)(intptr_t)atoi(v));
+    }
 
     /* <input> et <item> : chargés par widget_tree_refresh(), que le cœur
      * appelle juste après la création. Ce refresh VIDE l'arbre d'abord
@@ -149,15 +156,23 @@ gchar *widget_tree_envvar_construct(GtkWidget *w)
     if (!w) return g_strdup("");
     Elm_Object_Item *sel = elm_genlist_selected_item_get((Evas_Object *)w);
     const char *txt;
-    /* Parite etalon : sans selection, la PREMIERE ligne fait foi */
-    if (!sel) sel = _tree_premiere((Evas_Object *)w);
+    /* Parité gtk3 : sans sélection, la 1re ligne seulement si l'arbre prend
+     * le focus à l'ouverture (sermo_focus.h ; jusqu'à la 2.8.1 : toujours) */
+    if (!sel && evas_object_data_get((Evas_Object *)w, "sermo-focus"))
+        sel = _tree_premiere((Evas_Object *)w);
     if (!sel) return g_strdup("");
     /* genlist : le texte vit dans la DONNEE de l'item (text_get est un
      * callback, elm_object_item_text_get rend NULL) */
     txt = (const char *)elm_object_item_data_get(sel);
     if (!txt) txt = elm_object_item_text_get(sel);
     if (!txt) return g_strdup("");
-    /* la rangée garde sa ligne entière ; seule la 1re colonne est exportée */
+    /* la rangée garde sa ligne entière ; seule la colonne « exported-column »
+     * est exportée, comme l'étalon (jusqu'à la 2.8.1 : toujours la 1re) */
+    for (intptr_t n = (intptr_t)evas_object_data_get((Evas_Object *)w, "sermo-colonne"); n > 0; n--) {
+        txt = strchr(txt, '|');
+        if (!txt) return g_strdup("");
+        txt++;
+    }
     return g_strndup(txt, strcspn(txt, "|"));
 }
 gchar *widget_tree_envvar_all_construct(variable *var)

@@ -18,4 +18,9 @@
  * Renvoie 0 si un formulaire a été reçu et imprimé, 1 sinon. */
 int html_serve_once(const char *page, unsigned long len);
 
+/* Valeur envoyée par le navigateur pour la variable `nom`, ou NULL. Une fois le
+ * formulaire reçu, c'est elle que --do trouve dans l'environnement : le cœur
+ * réexporte les variables à la sortie, et le nœud, lui, est resté au défaut. */
+const char *html_valeur_soumise(const char *nom);
+
 #endif

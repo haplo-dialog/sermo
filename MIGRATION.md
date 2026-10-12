@@ -4,7 +4,7 @@
 
 La 1.x livrait trois ports, chacun dans son dossier, avec sa version et son
 paquet : gtk3sermo et gtk4sermo 1.1.4, qt6sermo 1.0.2, et `gtksermo` pour la
-commande `gtkdialog`. La 2.x les réunit autour d'un cœur commun, ajoute quatre
+commande `gtkdialog`. La 2.x les réunit autour d'un cœur commun, ajoute six
 ports et prend un seul numéro de version.
 
 **Vos scripts XML restent valides** et **les commandes gardent leur nom**. Ce qui
@@ -20,8 +20,8 @@ bas.
 | Commandes | `gtk3sermo`, `gtk4sermo`, `qt6sermo`, `gtkdialog` | les mêmes, plus `fltk1sermo`, `efl1sermo`, `sdl3sermo`, `lvglsermo`, `ncursessermo`, `htmlsermo` et `sermo` |
 | Variables de sécurité | `HAPLO_ALLOWED_CMDS`, `HAPLO_NO_SHELL_FALLBACK` | `SERMO_ALLOWED_CMDS`, `SERMO_NO_SHELL_FALLBACK` (les anciens noms sont encore lus) |
 | Sources | un dossier par port (`gtk3sermo/gtk3sermo_1.1.4/`…) | `libsermocore/` et `sermo-backend-<port>/`, construits par CMake |
-| Recettes Arch, Gentoo, RPM, Slackware | fournies | retirées : seul `debian/` est maintenu |
-| Version | une par port | une pour tout (2.8.1) |
+| Recettes Arch, Gentoo, RPM, Slackware | fournies | réécrites pour la 2.x dans `packaging/autres-os/` (plus Alpine et NixOS) ; `debian/` reste la référence |
+| Version | une par port | une pour tout (2.8.2) |
 
 ## Mettre à jour les paquets Debian
 
@@ -32,11 +32,11 @@ le [README](README.md#installer), puis installez ceux des ports que vous utilise
 apt retire lui-même les paquets 1.x qu'ils remplacent :
 
 ```sh
-sudo apt install ./sermo-backend-gtk3_2.8.1-1_amd64.deb ./sermo-gtkdialog_2.8.1-1_all.deb
+sudo apt install ./sermo-backend-gtk3_2.8.2-3_amd64.deb ./sermo-gtkdialog_2.8.2-3_all.deb
 ```
 
-Ajoutez `./sermo-backend-gtk4_2.8.1-1_amd64.deb` ou
-`./sermo-backend-qt6_2.8.1-1_amd64.deb` si vous aviez `gtk4sermo` ou `qt6sermo`.
+Ajoutez `./sermo-backend-gtk4_2.8.2-3_amd64.deb` ou
+`./sermo-backend-qt6_2.8.2-3_amd64.deb` si vous aviez `gtk4sermo` ou `qt6sermo`.
 
 Éprouvé le 2026-09-17 dans un conteneur Debian testing vierge, sans réseau :
 `gtk3sermo`, `gtk4sermo`, `gtksermo` 1.1.4-2 et `qt6sermo` 1.0.2-2 installés, puis
@@ -47,7 +47,8 @@ n'emporterait rien de sermo.
 
 ### Depuis un dépôt apt
 
-Si les paquets 2.x vous arrivent par un dépôt, `sudo apt upgrade` suffit : les
+Il n'y a pas de dépôt apt public. Si vous servez les paquets 2.x par un dépôt à
+vous, `sudo apt upgrade` suffit : les
 paquets `gtk3sermo`, `gtk4sermo`, `qt6sermo` et `gtksermo` passent en 2.x, vides,
 et font venir `sermo-backend-gtk3`, `-gtk4`, `-qt6` et `sermo-gtkdialog`.
 
@@ -100,7 +101,7 @@ Mesurés sur gtk3sermo et gtk4sermo, 1.1.4 puis 2.7.1 :
   apostrophe : la 1.1.4 ne chargeait rien, la 2.7.1 charge le fichier.
 - **`--glade-xml`** : la 2.7.1 exporte les valeurs des widgets du fichier, ce que
   la 1.1.4 ne faisait pas, et un fichier absent ou une fenêtre inconnue donnent une
-  erreur propre (code 1) au lieu d'un avortement (code 134). Les cinq autres ports
+  erreur propre (code 1) au lieu d'un avortement (code 134). Les autres ports
   refusent l'option.
 
 Mesurés sur qt6sermo 1.0.2 et 2.7.1 (cas de banc 43 et 44), la 2.7.1 suivant
@@ -127,6 +128,8 @@ Deux dépendances sont désormais **exigées** : VTE pour gtk3 et gtk4
 produire un binaire privé de `<terminal>` ou de l'ancrage Wayland. Pour s'en
 passer : `-DSERMOCORE_VTE=OFF`, `-DSERMO_LAYER_SHELL=OFF`.
 
-Les recettes Arch, Gentoo, RPM et Slackware de la 1.x ne sont plus fournies. Qui
-veut empaqueter pour une autre distribution peut partir de `debian/rules`, qui
-montre l'ordre de construction.
+Les recettes Arch, Gentoo, RPM et Slackware de la 1.x ne sont plus fournies. La
+2.8.0 en apporte de nouvelles, pour les neuf ports, dans `packaging/autres-os/`
+(Arch, Fedora, Gentoo, Slackware, Alpine, NixOS) ; ce qui y a été vérifié est
+dit dans `packaging/autres-os/README.md`. `debian/rules` montre aussi l'ordre de
+construction.

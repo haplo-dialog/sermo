@@ -1,0 +1,31 @@
+<!-- Script : examples/boites-a-outils/systeme/06-souris-pave.sh (dialogue principal) -->
+<window title="Souris et pavé tactile" default-width="540">
+  <vbox>
+    <frame label="Appareil">
+      <list scrollable="true" height-request="100"><variable>APPAREIL</variable>
+        <item>11: Logitech USB Optical Mouse</item>
+        <item>12: SynPS/2 Synaptics TouchPad</item>
+        <item>13: TPPS/2 IBM TrackPoint</item>
+      </list>
+    </frame>
+    <frame label="Pointeur">
+      <vbox>
+        <hbox><text><label>Vitesse (-100 lente, 0 normale, 100 rapide) :</label></text>
+          <hscale range-min="-100" range-max="100" range-step="10" draw-value="true" space-expand="true" space-fill="true"><variable>VITESSE</variable><default>0</default></hscale></hbox>
+        <checkbox><label>Gaucher : inverser les boutons gauche et droit</label><variable>GAUCHER</variable></checkbox>
+      </vbox>
+    </frame>
+    <frame label="Pavé tactile et molette">
+      <vbox>
+        <checkbox><label>Défilement naturel (le contenu suit le doigt)</label><variable>NATUREL</variable></checkbox>
+        <togglebutton><label>Taper pour cliquer</label><variable>TAP</variable><default>true</default></togglebutton>
+        <checkbox><label>Ignorer le pavé pendant la frappe</label><variable>FRAPPE</variable><default>true</default></checkbox>
+      </vbox>
+    </frame>
+    <text><label>Un réglage que l'appareil ne connaît pas est sauté (une souris n'a pas de tap).</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Appliquer</label><action>exit:appliquer</action></button>
+    </hbox>
+  </vbox>
+</window>

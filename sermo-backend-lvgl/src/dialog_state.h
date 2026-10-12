@@ -129,6 +129,16 @@ typedef struct WidgetNode {
     unsigned     icon_tex;     /* texture GL de l'icone (0 = pas chargee, ~0u = echec) */
     int          icon_px;      /* taille demandee de l'icone */
     int          expand;       /* space-expand : 1 vrai, -1 faux, 0 non dit */
+    int          fill;         /* space-fill   : 1 vrai, -1 faux, 0 non dit */
+    /* Dans une <hbox>/<vbox>, expand et fill sont ceux que la boîte a calculés
+     * (boite_repartir, widgets.c) : réglage de la boîte, puis report d'un
+     * enfant à l'autre, comme gtk3sermo. */
+    int          homogeneous;  /* hbox/vbox homogeneous="true" : des cases égales */
+    int          defile;       /* enveloppe « fenêtre défilante » posée par le cœur */
+    void        *lv_case;      /* port LVGL : case qui centre un enfant étiré sans remplir */
+    int          lv_hauteur;   /* port LVGL : hauteurs à poser après coup (H_* de render_lvgl.c) */
+    int          lv_haut_nat;  /* port LVGL : hauteur naturelle relevée avant de les poser */
+    int          icone_pos;    /* bouton : image-position, 0 gauche 1 droite 2 dessus 3 dessous */
     float        row_w;        /* hbox : largeur mesuree de la rangee (cadre a droite) */
     unsigned     bg_rgba, fg_rgba;   /* background/foreground (0 = theme) */
     char        *tooltip;
@@ -148,6 +158,13 @@ typedef struct WidgetNode {
      * choisie d'une list ou d'un tree — le pose donc lui-même à la fin de
      * son refresh. */
     gboolean     initialised;
+
+    /* <list>, <tree>, <table> : ce widget prend le focus à l'ouverture, donc
+     * sa 1re ligne est choisie (sermo_focus.h). */
+    gboolean     focus_initial;
+
+    /* <tree exported-column="N"> : la colonne que la variable rend (défaut 0). */
+    int          colonne_exportee;
 
     /* État persistant (mis à jour par ImGui à chaque frame) */
     union {

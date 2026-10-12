@@ -52,26 +52,16 @@ GtkWidget *widget_frame_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     }
 
     QGroupBox   *gb     = new QGroupBox(QString::fromUtf8(label));
-    QVBoxLayout *layout = new QVBoxLayout(gb);
-    layout->setContentsMargins(6, 6, 6, 6);
-    layout->setSpacing(2);
     gb->setCheckable(false);
 
-    /* Dépiler les enfants groupés par SUM et les ré-parenter (cf. vbox).
-     * ⚠️ Le facteur d'étirement doit être posé ICI aussi : sans lui, un enfant
-     * space-expand="true" gardait sa taille naturelle et ne remplissait pas le
-     * cadre — un <edit> restait à sa largeur minimale (300 px) au milieu d'un
-     * cadre trois fois plus large, alors que le port GTK 3 le fait remplir.
-     * Même logique que widget_vbox/widget_hbox. */
-    stackelement s = pop();
-    bool anyExpand = false;
-    for (int n = 0; n < s.nwidgets; ++n) {
-        if (!s.widgets[n]) continue;
-        int e = qt6_layout_get_expand((GtkWidget *)s.widgets[n]);
-        if (e) anyExpand = true;
-        layout->addWidget(static_cast<QWidget *>(s.widgets[n]), e ? 1 : 0);
-    }
-    if (!anyExpand) layout->addStretch(1);
+    /* Enfants rangés en COLONNE avec les règles de gtk3 (widget_frame.c) :
+     * valeur courante partie du PROJET seulement — l'attribut du cadre ne
+     * compte pas, la vbox interne de gtk3 lui est inaccessible —, reportée
+     * d'enfant en enfant, défaut edit/frame/fenêtre défilante/paned étirés.
+     * Avant : étiré seulement si space-expand="true" était écrit, donc un
+     * <edit> ou un <frame> enfant restait à sa taille naturelle. */
+    QLayout *layout = qt6_box_ranger(gb, NULL, false, 2);
+    layout->setContentsMargins(6, 6, 6, 6);
 
     return (GtkWidget *)gb;
 }

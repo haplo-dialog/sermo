@@ -1,0 +1,11 @@
+<!-- Script : examples/boites-a-outils/serveur/10-minuteries-systemd.sh (dialogue couper) -->
+<window title="Couper une minuterie">
+  <vbox>
+    <text><label>e2scrub_all.timer : arrêtée, et plus relancée au démarrage.</label></text>
+    <text><label>La tâche qu'elle lance ne tournera plus jusqu'à ce qu'on la réactive.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Couper</label><action>exit:couper</action></button>
+    </hbox>
+  </vbox>
+</window>

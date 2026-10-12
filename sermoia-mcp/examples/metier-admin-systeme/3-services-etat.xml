@@ -1,0 +1,11 @@
+<!-- Script : examples/metiers/01-admin-systeme/3-services.sh (dialogue etat) -->
+<window title="État de cron.service" default-width="680" default-height="460">
+  <vbox>
+    <edit editable="false" space-expand="true" space-fill="true">
+      <default>● cron.service - Regular background program processing daemon (démonstration)</default>
+    </edit>
+    <hbox>
+      <button><label>Fermer</label><action>exit:fermer</action></button>
+    </hbox>
+  </vbox>
+</window>

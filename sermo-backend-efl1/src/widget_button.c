@@ -94,7 +94,34 @@ GtkWidget *widget_button_create(AttributeSet *Attr, tag_attr *attr, gint Type)
                     const char *v = attr ? get_tag_attribute(attr, "theme-icon-size") : NULL;
                     if (v && atoi(v) > 0) px = atoi(v);
                     Evas_Object *ic = efl_theme_icon_new(btn, icon, px);
-                    if (ic) elm_object_part_content_set(btn, "icon", ic);
+                    if (ic) {
+                        /* Icône + libellé = UN groupe centré dans le bouton
+                         * (le thème d'EFL collait l'icône au bord gauche et
+                         * centrait le texte seul). Le groupe va dans la part
+                         * « icon », que le thème centre quand le texte est
+                         * vide ; image-position règle l'ordre (gauche par
+                         * défaut, right / top / bottom ou 1 / 2 / 3). */
+                        const char *pos = attr ? get_tag_attribute(attr, "image-position") : NULL;
+                        int droite = 0, haut = 0, bas = 0;
+                        if (pos) {
+                            droite = !strcasecmp(pos, "right")  || !strcmp(pos, "1");
+                            haut   = !strcasecmp(pos, "top")    || !strcmp(pos, "2");
+                            bas    = !strcasecmp(pos, "bottom") || !strcmp(pos, "3");
+                        }
+                        Evas_Object *grp = elm_box_add(btn);
+                        elm_box_horizontal_set(grp, (haut || bas) ? EINA_FALSE : EINA_TRUE);
+                        if (haut || bas) elm_box_padding_set(grp, 0, 2);
+                        else             elm_box_padding_set(grp, 4, 0);
+                        Evas_Object *lb = elm_label_add(grp);
+                        elm_object_text_set(lb, label);
+                        evas_object_show(lb);
+                        if (droite || bas) { elm_box_pack_end(grp, lb); elm_box_pack_end(grp, ic); }
+                        else               { elm_box_pack_end(grp, ic); elm_box_pack_end(grp, lb); }
+                        evas_object_show(ic);
+                        evas_object_show(grp);
+                        elm_object_text_set(btn, NULL);
+                        elm_object_part_content_set(btn, "icon", grp);
+                    }
                 }
                 break;
             }

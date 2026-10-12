@@ -1,0 +1,39 @@
+<!-- Script : examples/metiers/11-serveur-sans-ecran/3-sauvegarde-base.sh (dialogue principal) -->
+<window title="Sauvegarde de base de données" default-width="540">
+  <vbox>
+    <frame label="Moteur">
+      <hbox>
+        <radiobutton><label>PostgreSQL</label><variable>POSTGRES</variable><default>true</default></radiobutton>
+        <radiobutton><label>MariaDB / MySQL</label><variable>MARIADB</variable></radiobutton>
+      </hbox>
+    </frame>
+    <frame label="Connexion">
+      <vbox>
+        <hbox><text><label>Hôte :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>HOTE</variable><default>localhost</default></entry>
+          <text><label>Port :</label></text>
+          <spinbutton range-min="1" range-max="65535" range-step="1"><variable>PORT</variable><default>5432</default></spinbutton></hbox>
+        <hbox><text><label>Base :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>BASE</variable><default>intranet</default></entry></hbox>
+        <hbox><text><label>Utilisateur :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>UTILISATEUR</variable><default>sauvegarde</default></entry></hbox>
+      </vbox>
+    </frame>
+    <frame label="Fichier">
+      <vbox>
+        <hbox><text><label>Dossier :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>DOSSIER</variable><default>/var/backups/bases</default></entry></hbox>
+        <hbox><text><label>Format :</label></text>
+          <comboboxtext><variable>FORMAT</variable><default>archive compressée</default>
+            <item>archive compressée</item>
+            <item>script SQL</item>
+          </comboboxtext></hbox>
+        <checkbox><label>Structure seule, sans les données</label><variable>STRUCTURE</variable></checkbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Sauvegarder</label><action>exit:sauvegarder</action></button>
+    </hbox>
+  </vbox>
+</window>

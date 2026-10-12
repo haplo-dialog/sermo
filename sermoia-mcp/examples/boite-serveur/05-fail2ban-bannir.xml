@@ -1,0 +1,12 @@
+<!-- Script : examples/boites-a-outils/serveur/05-fail2ban.sh (dialogue bannir) -->
+<window title="Bannir une adresse">
+  <vbox>
+    <text><label>L'adresse 203.0.113.17 sera bannie de la prison sshd.</label></text>
+    <text><label>Vérifiez que ce n'est pas la vôtre, ni celle d'un poste d'administration :</label></text>
+    <text><label>bannie, elle ne pourra plus joindre ce serveur.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Bannir</label><action>exit:bannir</action></button>
+    </hbox>
+  </vbox>
+</window>

@@ -1,0 +1,41 @@
+<!-- Script : examples/boites-a-outils/systeme/04-date-heure.sh (dialogue principal) -->
+<window title="Date et heure" default-width="520">
+  <vbox>
+    <frame label="Fuseau horaire">
+      <hbox><text><label>Fuseau :</label></text>
+        <comboboxtext space-expand="true" space-fill="true"><variable>ZONE</variable><default>Europe/Paris</default>
+          <item>Africa/Casablanca</item>
+          <item>America/Montreal</item>
+          <item>Europe/Brussels</item>
+          <item>Europe/London</item>
+          <item>Europe/Paris</item>
+          <item>Europe/Zurich</item>
+          <item>Indian/Reunion</item>
+          <item>Pacific/Noumea</item>
+          <item>UTC</item>
+        </comboboxtext></hbox>
+    </frame>
+    <frame label="Mise à l'heure">
+      <vbox>
+        <hbox><text><label>Mise à l'heure automatique par le réseau (NTP) :</label></text>
+          <switch><variable>NTP</variable><default>true</default></switch></hbox>
+        <checkbox><label>Horloge matérielle en heure locale (utile seulement avec Windows en double démarrage)</label><variable>RTC_LOCALE</variable><default>false</default></checkbox>
+      </vbox>
+    </frame>
+    <expander label="Régler l'heure à la main (NTP éteint)">
+      <vbox>
+        <checkbox><label>Régler la date et l'heure ci-dessous</label><variable>MANUEL</variable></checkbox>
+        <calendar><variable>JOUR</variable><default>2026-10-11</default></calendar>
+        <hbox><text><label>Heure :</label></text>
+          <spinbutton range-min="0" range-max="23" range-step="1"><variable>HEURE</variable><default>14</default></spinbutton>
+          <text><label>Minute :</label></text>
+          <spinbutton range-min="0" range-max="59" range-step="1"><variable>MINUTE</variable><default>30</default></spinbutton></hbox>
+      </vbox>
+      <variable>DETAIL_OUVERT</variable>
+    </expander>
+    <hbox>
+      <button cancel></button>
+      <button><label>Préparer les commandes</label><action>exit:preparer</action></button>
+    </hbox>
+  </vbox>
+</window>

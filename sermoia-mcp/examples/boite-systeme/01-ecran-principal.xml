@@ -1,0 +1,71 @@
+<!-- Script : examples/boites-a-outils/systeme/01-ecran.sh (dialogue principal) -->
+<window title="Écran" default-width="640">
+  <vbox>
+    <notebook tab-labels="Disposition|Lisibilité">
+      <vbox>
+        <tree scrollable="true" height-request="120">
+          <label>Sortie|État|Mode|Fréquence (Hz)</label>
+          <variable>SORTIE</variable>
+          <item>HDMI-1|branché, principal|1920x1080|60.00</item>
+          <item>eDP-1|branché|1366x768|60.00</item>
+          <item>DP-1|débranché||</item>
+        </tree>
+        <frame label="Réglage de la sortie choisie">
+          <vbox>
+            <hbox><text><label>Résolution :</label></text>
+              <comboboxtext><variable>MODE</variable><default>1920x1080</default>
+                <item>1920x1080</item>
+                <item>1680x1050</item>
+                <item>1600x900</item>
+                <item>1366x768</item>
+                <item>1280x1024</item>
+                <item>1280x720</item>
+                <item>1024x768</item>
+              </comboboxtext></hbox>
+            <hbox><text><label>Fréquence :</label></text>
+              <comboboxtext><variable>FREQUENCE</variable><default>auto</default>
+                <item>auto</item><item>50</item><item>60</item><item>75</item><item>100</item><item>120</item><item>144</item><item>165</item>
+              </comboboxtext></hbox>
+            <hbox><text><label>Échelle (%) :</label></text>
+              <hscale range-min="100" range-max="200" range-step="25" draw-value="true" space-expand="true" space-fill="true"><variable>ECHELLE</variable><default>100</default></hscale></hbox>
+          </vbox>
+        </frame>
+        <frame label="Place par rapport à un autre écran">
+          <vbox>
+            <hbox>
+              <radiobutton><label>Ne pas bouger</label><default>true</default><variable>P_RIEN</variable></radiobutton>
+              <radiobutton><label>À droite de</label><variable>P_DROITE</variable></radiobutton>
+              <radiobutton><label>À gauche de</label><variable>P_GAUCHE</variable></radiobutton>
+              <radiobutton><label>Au-dessus de</label><variable>P_DESSUS</variable></radiobutton>
+              <radiobutton><label>En miroir de</label><variable>P_MIROIR</variable></radiobutton>
+            </hbox>
+            <hbox><text><label>Autre écran (nom de sortie) :</label></text>
+              <entry><variable>REPERE</variable><default>eDP-1</default></entry></hbox>
+          </vbox>
+        </frame>
+      </vbox>
+      <vbox>
+        <frame label="Police de l'interface (XFCE)">
+          <hbox><text><label>Police :</label></text>
+            <fontbutton><variable>POLICE</variable><default>Sans 10</default></fontbutton>
+            <checkbox><label>Appliquer la police</label><variable>CHANGER_POLICE</variable></checkbox></hbox>
+        </frame>
+        <frame label="Taille des textes (XFCE, DPI)">
+          <hbox><text><label>DPI :</label></text>
+            <spinbutton range-min="72" range-max="192" range-step="12"><variable>DPI</variable><default>96</default></spinbutton>
+            <checkbox><label>Appliquer le DPI</label><variable>CHANGER_DPI</variable></checkbox></hbox>
+        </frame>
+        <frame label="Couleur de fond (session sans gestionnaire de bureau)">
+          <hbox><text><label>Couleur :</label></text>
+            <colorbutton><variable>FOND</variable><default>#336699</default></colorbutton>
+            <checkbox><label>Appliquer la couleur</label><variable>CHANGER_FOND</variable></checkbox></hbox>
+        </frame>
+      </vbox>
+    </notebook>
+    <statusbar><variable>STATUT</variable><default>Session : x11. Sous Wayland, ces réglages passent par l'outil du compositeur.</default></statusbar>
+    <hbox>
+      <button cancel></button>
+      <button><label>Appliquer</label><action>exit:appliquer</action></button>
+    </hbox>
+  </vbox>
+</window>

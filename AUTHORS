@@ -76,4 +76,7 @@ Assistance IA
 
 Une partie du code, de la documentation et des tests a été écrite avec
 l'assistance d'un modèle de langage (Claude, Anthropic), sous la direction
-et la relecture du mainteneur. C'est dit ici, une fois pour toutes.
+du mainteneur. Il l'essaie et en signale les défauts, mais ne relit plus
+tout le code ligne à ligne : la vérification repose surtout sur les bancs
+du dépôt (ci/bancs.sh), que chacun peut rejouer. C'est dit ici, une fois
+pour toutes.

@@ -1,0 +1,38 @@
+<!-- Script : examples/boites-a-outils/administrateur/08-regles-sudo.sh (dialogue principal) -->
+<window title="Règle sudo" default-width="600" default-height="520">
+  <vbox>
+    <frame label="Qui">
+      <vbox>
+        <hbox>
+          <radiobutton><label>Une personne</label><variable>Q_PERSONNE</variable></radiobutton>
+          <radiobutton><label>Un groupe</label><default>true</default><variable>Q_GROUPE</variable></radiobutton>
+        </hbox>
+        <hbox><text><label>Identifiant ou groupe :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>QUI</variable><default>impression</default></entry></hbox>
+      </vbox>
+    </frame>
+    <frame label="Commandes permises (une par ligne, arguments fixés)">
+      <vbox>
+        <text><label>Seules ces formes sont acceptées : /usr/bin/systemctl restart|reload|start|stop UNITÉ.service ; /usr/bin/apt update ; /usr/bin/apt-get update ; /usr/sbin/cupsenable IMPRIMANTE ; /usr/sbin/cupsdisable IMPRIMANTE.</label></text>
+        <edit space-expand="true" space-fill="true" height-request="110"><variable>COMMANDES</variable><default>/usr/sbin/cupsenable Bureau-2
+/usr/sbin/cupsdisable Bureau-2</default></edit>
+      </vbox>
+    </frame>
+    <frame label="Conditions">
+      <vbox>
+        <hbox><text><label>En tant que :</label></text>
+          <comboboxtext><variable>EN_TANT_QUE</variable><default>root</default>
+            <item>root</item><item>www-data</item><item>postgres</item>
+          </comboboxtext></hbox>
+        <checkbox><label>Sans redemander le mot de passe (NOPASSWD)</label><variable>SANS_MDP</variable></checkbox>
+        <togglebutton><label>Journaliser la saisie et la sortie (log_output)</label><variable>JOURNAL</variable></togglebutton>
+      </vbox>
+    </frame>
+    <hbox><text><label>Nom du fichier sous /etc/sudoers.d :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>FICHIER</variable><default>50-impression</default></entry></hbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Vérifier la règle</label><action>exit:verifier</action></button>
+    </hbox>
+  </vbox>
+</window>

@@ -1,0 +1,15 @@
+<!-- Script : examples/boites-a-outils/administrateur/08-regles-sudo.sh (dialogue apercu) -->
+<window title="Règle vérifiée" default-width="620" default-height="360">
+  <vbox>
+    <text><label>Fichier : /etc/sudoers.d/50-impression</label></text>
+    <edit editable="false" space-expand="true" space-fill="true"><variable>APERCU</variable><default># Écrit par 08-regles-sudo.sh
+%impression ALL=(root) /usr/sbin/cupsenable, /usr/sbin/cupsdisable</default></edit>
+    <frame label="visudo -c">
+      <text><label>stdin : analyse réussie</label></text>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Écrire la règle</label><action>exit:ecrire</action></button>
+    </hbox>
+  </vbox>
+</window>

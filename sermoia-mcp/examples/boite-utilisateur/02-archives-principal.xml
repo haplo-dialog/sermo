@@ -1,0 +1,28 @@
+<!-- Script : examples/boites-a-outils/utilisateur/02-archives.sh (dialogue principal) -->
+<window title="Archives zip et tar.gz" default-width="560">
+  <vbox>
+    <notebook tab-labels="Faire une archive|Ouvrir une archive">
+      <vbox>
+        <hbox><text><label>Dossier à regrouper :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>DOSSIER</variable><default>/home/utilisateur/Documents/Vacances-2026</default></entry></hbox>
+        <hbox><text><label>Format :</label></text>
+          <comboboxtext><variable>FORMAT</variable><default>zip (lu partout, Windows compris)</default>
+            <item>zip (lu partout, Windows compris)</item><item>tar.gz (Linux)</item>
+          </comboboxtext></hbox>
+        <hbox><text><label>Compression (1 rapide, 9 plus petite) :</label></text>
+          <hscale range-min="1" range-max="9" range-step="1" draw-value="true" space-expand="true" space-fill="true"><variable>NIVEAU</variable><default>6</default></hscale></hbox>
+        <text><label>L'archive sera posée à côté du dossier, avec le même nom.</label></text>
+        <hbox><button><label>Faire l'archive</label><action>exit:creer</action></button></hbox>
+      </vbox>
+      <vbox>
+        <hbox><text><label>Archive à ouvrir :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>ARCHIVE</variable><default>/home/utilisateur/Téléchargements/photos-mariage.zip</default></entry></hbox>
+        <text><label>Les fichiers sortiront dans un nouveau dossier, à côté de l'archive.</label></text>
+        <hbox><button><label>Voir ce qu'elle contient</label><action>exit:regarder</action></button></hbox>
+      </vbox>
+    </notebook>
+    <hbox>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

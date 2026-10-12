@@ -1,0 +1,32 @@
+<!-- Script : examples/metiers/11-serveur-sans-ecran/4-taches-cron.sh (dialogue principal) -->
+<window title="Tâches planifiées" default-width="580">
+  <vbox>
+    <frame label="Table actuelle (crontab -l)">
+      <edit editable="false" height-request="120"><variable>TABLE</variable><default></default></edit>
+    </frame>
+    <frame label="Nouvelle tâche">
+      <vbox>
+        <hbox><text><label>Commande :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>COMMANDE</variable><default>/usr/local/bin/rotation-certificats</default></entry></hbox>
+        <hbox><text><label>Description :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>DESCRIPTION</variable><default>Renouvellement des certificats</default></entry></hbox>
+        <hbox><text><label>Fréquence :</label></text>
+          <comboboxtext><variable>FREQUENCE</variable><default>chaque jour</default>
+            <item>chaque heure</item>
+            <item>chaque jour</item>
+            <item>chaque lundi</item>
+            <item>le 1er du mois</item>
+          </comboboxtext></hbox>
+        <hbox><text><label>Heure :</label></text>
+          <spinbutton range-min="0" range-max="23" range-step="1"><variable>HEURE</variable><default>4</default></spinbutton>
+          <text><label>Minute :</label></text>
+          <spinbutton range-min="0" range-max="59" range-step="5"><variable>MINUTE</variable><default>30</default></spinbutton></hbox>
+        <checkbox><label>Jeter la sortie (sinon cron l'envoie par courriel)</label><variable>SILENCE</variable><default>true</default></checkbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Ajouter</label><action>exit:ajouter</action></button>
+    </hbox>
+  </vbox>
+</window>

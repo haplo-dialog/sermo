@@ -48,6 +48,9 @@ override_dh_auto_build:
 	sed 's/@PACKAGE_VERSION@/$(DEB_VERSION_UPSTREAM)/' doc/sermo.texi.in > $(B)/sermo.texi
 	makeinfo --no-split -o $(B)/sermo.info $(B)/sermo.texi
 	sed 's/@PACKAGE_VERSION@/$(DEB_VERSION_UPSTREAM)/' doc/sermo.1.in > $(B)/sermo.1
+	# Le serveur MCP sermoia (C) : préfixe /usr, catalogue dans <datadir>.
+	dh_auto_configure --sourcedirectory=sermoia-mcp --builddirectory=$(B)/sermoia
+	dh_auto_build --sourcedirectory=sermoia-mcp --builddirectory=$(B)/sermoia
 
 # Sans affichage : tests unitaires du cœur, et banc XML (--print-ir) sur les
 # neuf binaires. Les bancs graphiques tournent dans ci/bancs.sh.
@@ -90,6 +93,27 @@ override_dh_auto_install:
 	done
 	# Et une fois sous son nom générique, dans le paquet de documentation.
 	install -D -m 0644 $(B)/sermo.info debian/sermo-doc/usr/share/info/sermo-doc.info
+	# Les scripts métier (examples/metiers) et les boîtes à outils
+	# (examples/boites-a-outils) : exemples ET test de réussite des ports,
+	# jouables sur une machine où sermo est installé.
+	mkdir -p debian/sermo-doc/usr/share/doc/sermo-doc/examples
+	cp -a examples/metiers examples/boites-a-outils debian/sermo-doc/usr/share/doc/sermo-doc/examples/
+	# sermoia-mcp : binaire et catalogue (règles d'installation de son CMake).
+	dh_auto_install --sourcedirectory=sermoia-mcp --builddirectory=$(B)/sermoia --destdir=debian/sermoia-mcp
+	sed 's/@PACKAGE_VERSION@/$(DEB_VERSION_UPSTREAM)/' sermoia-mcp/sermoia-mcp.1.in > $(B)/sermoia-mcp.1
+	install -D -m 0644 $(B)/sermoia-mcp.1 debian/sermoia-mcp/usr/share/man/man1/sermoia-mcp.1
+	install -D -m 0644 sermoia-mcp/README.md debian/sermoia-mcp/usr/share/doc/sermoia-mcp/README.md
+	install -D -m 0644 sermoia-mcp/README.en.md debian/sermoia-mcp/usr/share/doc/sermoia-mcp/README.en.md
+	# sermoman-mcp : le serveur Python, ses données, sa version, et la commande.
+	install -D -m 0644 sermoman-mcp/server.py debian/sermoman-mcp/usr/share/sermoman-mcp/server.py
+	cp -a sermoman-mcp/data debian/sermoman-mcp/usr/share/sermoman-mcp/
+	install -D -m 0644 VERSION debian/sermoman-mcp/usr/share/sermoman-mcp/VERSION
+	install -d debian/sermoman-mcp/usr/bin
+	printf '#!/bin/sh\nexec python3 /usr/share/sermoman-mcp/server.py "$$@"\n' > debian/sermoman-mcp/usr/bin/sermoman-mcp
+	chmod 0755 debian/sermoman-mcp/usr/bin/sermoman-mcp
+	install -D -m 0644 sermoman-mcp/README.md debian/sermoman-mcp/usr/share/doc/sermoman-mcp/README.md
+	sed 's/@PACKAGE_VERSION@/$(DEB_VERSION_UPSTREAM)/' sermoman-mcp/sermoman-mcp.1.in > $(B)/sermoman-mcp.1
+	install -D -m 0644 $(B)/sermoman-mcp.1 debian/sermoman-mcp/usr/share/man/man1/sermoman-mcp.1
 
 # Le changelog amont n'est PAS livré. debhelper installe CHANGELOG.md dans
 # chacun des treize paquets ; il pèse 51 ko en clair, et 19,8 ko une fois
@@ -106,18 +130,18 @@ override_dh_auto_install:
 #
 # ⚠️ --link-doc ne franchit pas la frontière « all » / « any » : debhelper
 # refuse activement la combinaison depuis le niveau de compatibilité 10. Les
-# dix paquets « any » (le cœur et les neuf backends) gardent donc leur propre
+# onze paquets « any » (le cœur, les neuf backends et sermoia-mcp) gardent leur propre
 # copyright ; pour eux, le gain vient du changelog amont retiré ci-dessus.
 override_dh_installdocs:
 	dh_installdocs -psermo-doc
 	dh_installdocs -Nsermo-doc -Nsermo-core-dev -Nsermo-backend-gtk3 \
 	  -Nsermo-backend-gtk4 -Nsermo-backend-qt6 -Nsermo-backend-fltk1 \
 	  -Nsermo-backend-efl1 -Nsermo-backend-sdl3 -Nsermo-backend-lvgl \
-	  -Nsermo-backend-ncurses -Nsermo-backend-html --link-doc=sermo-doc
+	  -Nsermo-backend-ncurses -Nsermo-backend-html -Nsermoia-mcp -Nsermoman-mcp --link-doc=sermo-doc
 	dh_installdocs -psermo-core-dev -psermo-backend-gtk3 -psermo-backend-gtk4 \
 	  -psermo-backend-qt6 -psermo-backend-fltk1 -psermo-backend-efl1 \
 	  -psermo-backend-sdl3 -psermo-backend-lvgl -psermo-backend-ncurses \
-	  -psermo-backend-html
+	  -psermo-backend-html -psermoia-mcp -psermoman-mcp
 
 override_dh_installchangelogs:
 	dh_installchangelogs -XCHANGELOG

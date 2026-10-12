@@ -1,0 +1,11 @@
+<!-- Script : examples/boites-a-outils/utilisateur/02-archives.sh (dialogue remplacer) -->
+<window title="Remplacer l'archive ?">
+  <vbox>
+    <text><label>Ce fichier existe déjà : /home/utilisateur/Documents/Vacances-2026.zip</label></text>
+    <text><label>L'ancien sera mis à la corbeille, puis remplacé par le nouveau.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Remplacer</label><action>exit:remplacer</action></button>
+    </hbox>
+  </vbox>
+</window>

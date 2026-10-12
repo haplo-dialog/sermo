@@ -1,0 +1,12 @@
+<!-- Script : examples/metiers/02-developpeur-devops/3-deployer.sh (dialogue confirmation) -->
+<window title="Confirmer le déploiement">
+  <vbox>
+    <text><label>Version v2.4.1 vers deploie@prod.exemple.lan (production).</label></text>
+    <text><label>Pour confirmer, tapez le nom de l'environnement : production</label></text>
+    <entry><variable>CONFIRMATION</variable></entry>
+    <hbox>
+      <button cancel></button>
+      <button><label>Déployer</label><action>exit:deployer</action></button>
+    </hbox>
+  </vbox>
+</window>

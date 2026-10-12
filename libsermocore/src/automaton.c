@@ -1458,6 +1458,10 @@ instruction_execute_push(
 			push_widget(scrolled_window, WIDGET_SCROLLEDW);
 			break;
 		case WIDGET_TEXT:
+			/* Un <text> sans <label> affiche « text », comme gtkdialog (et
+			 * gtk3sermo, qui le posait seul) : les ports neutres le posent
+			 * ici. Une commande <input> le remplace ; refusée, il reste. */
+			attributeset_set_if_unset(Attr, ATTR_LABEL, "text");
 			Widget = widget_text_create(Attr, tag_attributes, Widget_Type);
 			push_widget(Widget, Widget_Type);
 			break;

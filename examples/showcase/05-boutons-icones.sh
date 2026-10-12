@@ -19,7 +19,7 @@ DIALOG="${1:-gtk3sermo}"
 
 export MAIN_DIALOG='
 <window title="Repere 5 - Boutons et icones" default-width="520" default-height="400">
-  <vbox space-expand="true" space-fill="true">
+  <vbox>
 
     <frame label="Icones de theme (image icon-name)">
       <hbox homogeneous="true">

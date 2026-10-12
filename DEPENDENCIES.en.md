@@ -24,7 +24,7 @@ carries no `Depends` field (static library, nothing to load at runtime).
 | fltk1 | `libfltk1.4-dev` |
 | efl1 | `libefl-all-dev` (Enlightenment/Elementary) |
 | sdl3 | `libsdl3-dev` |
-| lvgl | `libx11-dev`, `libpng-dev`, `libwayland-dev`, `libxkbcommon-dev`, `wayland-protocols` (LVGL itself is embedded in `sermo-backend-lvgl/tiers/lvgl/`) |
+| lvgl | `libx11-dev`, `libpng-dev`, `libwayland-dev`, `libxkbcommon-dev`, `wayland-protocols`, and a C++ compiler since 2.8.2 (ThorVG, the SVG engine embedded in LVGL); LVGL itself is embedded in `sermo-backend-lvgl/tiers/lvgl/` |
 | ncurses | `libncurses-dev` (provides `ncursesw.pc`) |
 | html | none |
 
@@ -43,13 +43,20 @@ per backend:
 | fltk1 | `libfltk1.4`, `libfltk-images1.4` |
 | efl1 | `libelementary1`, `libevas1`, `libecore*`, `libedje1`… |
 | sdl3 | `libsdl3-0` |
-| lvgl | `libx11-6`, `libwayland-client0`, `libwayland-cursor0`, `libxkbcommon0`, `libpng16-16t64` (LVGL is linked into the binary) |
+| lvgl | `libx11-6`, `libwayland-client0`, `libwayland-cursor0`, `libxkbcommon0`, `libpng16-16t64`, `libstdc++6` (LVGL is linked into the binary; ThorVG is C++) |
 | ncurses | `libncursesw6`, `libtinfo6` |
 | html | none, apart from `libc6` |
 
 All of them include `libc6` and the usual X11/Wayland/fontconfig libraries. The
 complete list is recomputed on every package build
 (`packaging/construire-paquets.sh`, in a pristine Debian testing).
+
+## MCP servers
+
+| Package | Build | Runtime |
+|---|---|---|
+| `sermoia-mcp` | `libglib2.0-dev`, `libjson-glib-dev` | GLib, json-glib, and at least one sermo port (`sermo-backend-qt6` recommended: it renders pictures without a display; gtk3, gtk4, fltk1 and lvgl need `xvfb`) |
+| `sermoman-mcp` | nothing (Python, standard library only) | `python3` |
 
 ## Checking / tests
 

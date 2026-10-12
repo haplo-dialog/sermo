@@ -77,10 +77,15 @@ GtkWidget *widget_spinbutton_create(AttributeSet *Attr, tag_attr *attr, gint Typ
         /* digits= : Fl_Spinner range son format et sait le relire — c'est lui
          * qui porte le nombre de décimales jusqu'à l'export. */
         if ((v = get_tag_attribute(attr, "digits"))) {
-            static char fmt[8];
+            /* Fl_Spinner garde le POINTEUR du format : une chaîne constante par
+             * nombre de décimales. Le tampon static unique d'avant était
+             * partagé par tous les <spinbutton> : le dernier digits= écrit
+             * valait pour tous (« 25.000 » rendu « 25.0 »). */
+            static const char *const fmts[] = { "%.0f", "%.1f", "%.2f", "%.3f", "%.4f",
+                "%.5f", "%.6f", "%.7f", "%.8f", "%.9f", "%.10f", "%.11f", "%.12f",
+                "%.13f", "%.14f", "%.15f" };
             int d = atoi(v); if (d < 0) d = 0; if (d > 15) d = 15;
-            snprintf(fmt, sizeof(fmt), "%%.%df", d);
-            sp->format(fmt);
+            sp->format(fmts[d]);
         }
     }
 

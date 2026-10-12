@@ -242,6 +242,11 @@ gint widget_set_tag_attributes(GtkWidget *widget, tag_attr *attr)
 	for (q = 0; q < attr->n; ++q) {
 		/* Thunor: killed tag attributes have null names */
 		if (attr->pairs[q].name[0] != 0) {
+			/* use-markup d'un <text> : déjà posé à la création, et seulement
+			 * si le texte s'analyse en balisage (widget_text.c). Le reposer
+			 * ici forçait le balisage sur un texte simple (avertissement GTK). */
+			if (GTK_IS_LABEL(widget) && strcmp(attr->pairs[q].name, "use-markup") == 0)
+				continue;
 			success = try_set_property(widget, attr->pairs + q);
 			if (success) ++retval;
 		}

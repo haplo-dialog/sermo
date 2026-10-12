@@ -1,0 +1,28 @@
+<!-- Script : examples/boites-a-outils/utilisateur/09-partager-sur-le-reseau.sh (dialogue principal) -->
+<window title="Prêter un fichier sur le réseau" default-width="540">
+  <vbox>
+    <frame label="Quel fichier">
+      <entry><variable>FICHIER</variable><default>/home/utilisateur/Images/photo-anniversaire.jpg</default></entry>
+    </frame>
+    <frame label="Pendant combien de temps">
+      <hbox>
+        <radiobutton><label>5 minutes</label><variable>D5</variable></radiobutton>
+        <radiobutton><label>15 minutes</label><variable>D15</variable><default>true</default></radiobutton>
+        <radiobutton><label>1 heure</label><variable>D60</variable></radiobutton>
+      </hbox>
+    </frame>
+    <expander label="Réglages">
+      <vbox>
+        <hbox><text><label>Numéro de porte (port) :</label></text>
+          <spinbutton range-min="8000" range-max="8999" range-step="1"><variable>PORT</variable><default>8080</default></spinbutton></hbox>
+        <text><label>Adresse de cet ordinateur : 192.168.1.20</label></text>
+      </vbox>
+      <variable>REGLAGES</variable>
+    </expander>
+    <text><label>Attention : tout appareil qui peut joindre l'adresse 192.168.1.20 et qui connaît le lien pourra le télécharger.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Partager</label><action>exit:partager</action></button>
+    </hbox>
+  </vbox>
+</window>

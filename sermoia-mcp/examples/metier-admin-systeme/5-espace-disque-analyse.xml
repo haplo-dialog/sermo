@@ -1,0 +1,19 @@
+<!-- Script : examples/metiers/01-admin-systeme/5-espace-disque.sh (dialogue analyse) -->
+<window title="Analyse de /home/utilisateur" default-width="560" default-height="440">
+  <vbox>
+    <text><label>Les plus gros dossiers (sans franchir les autres disques) :</label></text>
+    <tree scrollable="true" space-expand="true" space-fill="true">
+      <label>Dossier|Taille</label>
+      <variable>LOURD</variable>
+      <item>/home/utilisateur|58G</item>
+      <item>/home/utilisateur/Vidéos|31G</item>
+      <item>/home/utilisateur/.cache|9,4G</item>
+      <item>/home/utilisateur/Documents|6,2G</item>
+      <item>/home/utilisateur/Téléchargements|4,8G</item>
+    </tree>
+    <hbox>
+      <button><label>Fermer</label><action>exit:fermer</action></button>
+      <button><label>Analyser le dossier choisi</label><action>exit:descendre</action></button>
+    </hbox>
+  </vbox>
+</window>

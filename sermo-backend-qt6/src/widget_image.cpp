@@ -15,6 +15,7 @@
 #include <QtWidgets/QLabel>
 #include <QtGui/QPixmap>
 #include <QtGui/QIcon>
+#include "sermo_icon_theme.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -70,6 +71,14 @@ GtkWidget *widget_image_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     } else if (icon && *icon) {
         int sz = (w > 0) ? w : icon_size_px(sizestr);
         QIcon ic = QIcon::fromTheme(QString::fromUtf8(icon));
+        /* Repli comme les boutons : la recherche du cœur (thème, Adwaita,
+         * hicolor ; variante -symbolic ; nom générique). Qt seul ne trouvait
+         * que les icônes en couleur du thème : la galerie n'en montrait qu'une
+         * sur cinq (jusqu'à la 2.8.1). */
+        if (ic.isNull() || ic.pixmap(sz, sz).isNull()) {
+            char *p = sermo_icon_lookup(icon, sz);
+            if (p) { ic = QIcon(QString::fromUtf8(p)); free(p); }
+        }
         if (!ic.isNull()) lbl->setPixmap(ic.pixmap(sz, sz));
     }
     return (GtkWidget *)lbl;

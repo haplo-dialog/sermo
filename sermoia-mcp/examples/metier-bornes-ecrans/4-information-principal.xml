@@ -1,0 +1,51 @@
+<!-- Script : examples/metiers/05-bornes-ecrans/4-information.sh (dialogue principal) -->
+<window title="Informations" default-width="640" default-height="420">
+  <vbox>
+    <notebook tab-labels="Horaires|Plan|Contacts|Actualités" space-expand="true" space-fill="true">
+      <vbox>
+        <text><label>Horaires d'ouverture au public</label></text>
+        <tree scrollable="true" height-request="220">
+          <label>Jour|Matin|Après-midi</label>
+          <item>Lundi|8 h 30 – 12 h|13 h 30 – 17 h</item>
+          <item>Mardi|8 h 30 – 12 h|13 h 30 – 17 h</item>
+          <item>Mercredi|8 h 30 – 12 h|fermé</item>
+          <item>Jeudi|8 h 30 – 12 h|13 h 30 – 19 h</item>
+          <item>Vendredi|8 h 30 – 12 h|13 h 30 – 16 h</item>
+          <item>Samedi|9 h – 12 h|fermé</item>
+        </tree>
+      </vbox>
+      <vbox>
+        <frame label="Où trouver quoi">
+          <vbox>
+          <text><label>Rez-de-chaussée : accueil, salle d'attente, guichets 1 à 4.</label></text>
+          <text><label>1er étage : salles de réunion A et B, service social.</label></text>
+          <text><label>2e étage : direction, comptabilité.</label></text>
+          <text><label>Ascenseur à droite de l'accueil ; toilettes accessibles au rez-de-chaussée.</label></text>
+          </vbox>
+        </frame>
+        <text><label>Vous pouvez imprimer ce plan avec le bouton ci-dessous.</label></text>
+      </vbox>
+      <vbox>
+        <table scrollable="true" height-request="220">
+          <label>Service|Téléphone|Où</label>
+          <item>Accueil|01 23 45 67 00|RDC</item>
+          <item>Service social|01 23 45 67 10|1er, bureau 104</item>
+          <item>Comptabilité|01 23 45 67 20|2e, bureau 203</item>
+          <item>Urgences techniques|01 23 45 67 99|—</item>
+        </table>
+      </vbox>
+      <vbox>
+        <frame label="Actualités du site">
+          <vbox>
+          <text><label>Fermeture exceptionnelle le 11 novembre.</label></text>
+          <text><label>Nouvelle permanence juridique le jeudi soir, sur rendez-vous.</label></text>
+          </vbox>
+        </frame>
+      </vbox>
+    </notebook>
+    <hbox space-expand="false" space-fill="false">
+      <button><label>Imprimer le plan</label><action>exit:imprimer</action></button>
+      <button><label>Fermer</label><action>exit:fermer</action></button>
+    </hbox>
+  </vbox>
+</window>

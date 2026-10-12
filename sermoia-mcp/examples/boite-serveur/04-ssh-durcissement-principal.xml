@@ -1,0 +1,24 @@
+<!-- Script : examples/boites-a-outils/serveur/04-ssh-durcissement.sh (dialogue principal) -->
+<window title="Durcir SSH" default-width="560">
+  <vbox>
+    <switch><label>Connexion par mot de passe (non = clés seulement)</label><variable>MOT_DE_PASSE</variable><default>false</default></switch>
+    <hbox><text><label>Connexion de root :</label></text>
+      <comboboxtext><variable>ROOT</variable><default>no</default>
+        <item>no</item><item>prohibit-password</item><item>yes</item>
+      </comboboxtext></hbox>
+    <hbox><text><label>Port :</label></text>
+      <spinbutton range-min="1" range-max="65535" range-step="1"><variable>PORT</variable><default>22</default></spinbutton>
+      <text><label>Essais permis :</label></text>
+      <spinbutton range-min="1" range-max="10" range-step="1"><variable>ESSAIS</variable><default>3</default></spinbutton></hbox>
+    <hbox><text><label>Délai pour s'identifier (s) :</label></text>
+      <hscale range-min="10" range-max="120" range-step="5" draw-value="true" space-expand="true" space-fill="true"><variable>DELAI</variable><default>30</default></hscale></hbox>
+    <hbox><text><label>Comptes permis (vide = tous) :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>COMPTES</variable><default>admin deploiement</default></entry></hbox>
+    <togglebutton><label>Renvoi X11 (X11Forwarding)</label><variable>X11</variable></togglebutton>
+    <text><label>Avant de couper les mots de passe, vérifiez que votre clé entre déjà.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Voir le fichier</label><action>exit:apercu</action></button>
+    </hbox>
+  </vbox>
+</window>

@@ -76,6 +76,7 @@
 #include "sermo_input.h"
 
 #include <set>
+#include <FL/Fl_Input_Choice.H>
 #include <cstring>
 #include <cstdio>
 #include <strings.h>
@@ -509,6 +510,197 @@ gboolean widget_connect_signals(GtkWidget *widget, AttributeSet *Attr)
 
 static std::set<Fl_Widget *> sermo_expand_set;
 static std::set<Fl_Widget *> sermo_noexpand_set;
+static std::set<Fl_Widget *> sermo_fill_set;
+static std::set<Fl_Widget *> sermo_nofill_set;
+
+int sermo_widget_expand_rule(Fl_Widget *w)
+{
+    if (sermo_expand_set.count(w)) return 1;
+    if (sermo_noexpand_set.count(w)) return 0;
+    return -1;
+}
+
+int sermo_widget_fill_rule(Fl_Widget *w)
+{
+    if (sermo_fill_set.count(w)) return 1;
+    if (sermo_nofill_set.count(w)) return 0;
+    return -1;
+}
+
+/* ------------------------------------------------------------------ */
+/* SermoFlex — répartition à la gtk_box (voir widgets.h).               */
+/* ------------------------------------------------------------------ */
+
+void SermoFlex::child_rule(Fl_Widget *c, bool expand, bool fill, int nat,
+                           int cross, bool cross_fill)
+{
+    if (!c) return;
+    if (nat < 1) nat = 1;
+    Fl_Flex::fixed(c, nat);   /* marque « fixé » (lu par l'expander) */
+    rules_[c] = Rule{expand, fill, cross_fill, nat, cross};
+}
+
+void SermoFlex::natural(Fl_Widget *c, int nat)
+{
+    auto it = rules_.find(c);
+    if (it != rules_.end()) it->second.nat = nat > 0 ? nat : 1;
+    need_layout(1);
+}
+
+int SermoFlex::natural_h() const
+{
+    int ml = 0, mt = 0, mr = 0, mb = 0;
+    margin(&ml, &mt, &mr, &mb);
+    int tot = 0, nv = 0, mx = 0;
+    for (int i = 0; i < children(); i++) {
+        Fl_Widget *c = child(i);
+        if (!c->visible()) continue;
+        auto it = rules_.find(c);
+        int v = horizontal() ? (it != rules_.end() && it->second.cross > 0 ? it->second.cross : c->h())
+                             : (it != rules_.end() ? it->second.nat : c->h());
+        tot += v; if (v > mx) mx = v; nv++;
+    }
+    if (nv == 0) return 0;
+    if (horizontal()) return mx + mt + mb;
+    if (homog_) tot = mx * nv;            /* cases égales : la plus haute */
+    return tot + gap() * (nv - 1) + mt + mb;
+}
+
+void SermoFlex::on_remove(int index)
+{
+    if (index >= 0 && index < children()) rules_.erase(child(index));
+    Fl_Flex::on_remove(index);
+}
+
+void SermoFlex::resize(int X, int Y, int W, int H)
+{
+    Fl_Widget::resize(X, Y, W, H);
+    place();
+}
+
+void SermoFlex::draw()
+{
+    /* Fl_Flex::draw() relancerait SA répartition (layout() non virtuel) */
+    if (need_layout()) place();
+    Fl_Group::draw();
+}
+
+void SermoFlex::place()
+{
+    int ml = 0, mt = 0, mr = 0, mb = 0;
+    margin(&ml, &mt, &mr, &mb);
+    const bool row = horizontal();
+    const int bx = x() + Fl::box_dx(box()), by = y() + Fl::box_dy(box());
+    const int bw = w() - Fl::box_dw(box()), bh = h() - Fl::box_dh(box());
+
+    int nv = 0;
+    for (int i = 0; i < children(); i++) if (child(i)->visible()) nv++;
+    need_layout(0);
+    if (nv == 0) return;
+
+    const int g = gap();
+    int avail = (row ? bw - ml - mr : bh - mt - mb) - g * (nv - 1);
+    const int cpos = row ? by + mt : bx + ml;
+    const int clen = row ? bh - mt - mb : bw - ml - mr;
+
+    /* tailles naturelles et nombre d'enfants étirés */
+    int sum = 0, nexp = 0;
+    for (int i = 0; i < children(); i++) {
+        Fl_Widget *c = child(i);
+        if (!c->visible()) continue;
+        auto it = rules_.find(c);
+        int nat = it != rules_.end() ? it->second.nat : (row ? c->w() : c->h());
+        sum += nat;
+        if (it != rules_.end() && it->second.expand) nexp++;
+    }
+    int extra = avail - sum;
+
+    int cur = row ? bx + ml : by + mt;
+    /* rangée rangée par la fin, rien d'étiré : le groupe se cale à droite */
+    if (!homog_ && nexp == 0 && pack_end_ && extra > 0) cur += extra;
+
+    int k = 0, ke = 0;
+    for (int i = 0; i < children(); i++) {
+        Fl_Widget *c = child(i);
+        if (!c->visible()) continue;
+        auto it = rules_.find(c);
+        bool has = it != rules_.end();
+        bool fill = has ? it->second.fill : true;
+        int nat = has ? it->second.nat : (row ? c->w() : c->h());
+
+        int slot;
+        if (homog_) {
+            slot = avail / nv + (k < avail % nv ? 1 : 0);
+        } else {
+            slot = nat;
+            if (has && it->second.expand && nexp > 0) {
+                slot += extra / nexp;
+                if (ke == nexp - 1) slot += extra % nexp;   /* reste au dernier */
+                ke++;
+            }
+        }
+        if (slot < 0) slot = 0;
+        int len = fill ? slot : (nat < slot ? nat : slot);
+        int pos = cur + (slot - len) / 2;
+
+        /* axe croisé : toute l'épaisseur, sauf une feuille qui garde la sienne */
+        int cl = clen, cp = cpos;
+        if (has && !it->second.cross_fill && it->second.cross > 0 && it->second.cross < clen) {
+            cl = it->second.cross;
+            cp = cpos + (clen - cl) / 2;
+        }
+        if (row) c->resize(pos, cp, len, cl);
+        else     c->resize(cp, pos, cl, len);
+        cur += slot + g;
+        k++;
+    }
+    redraw();
+}
+
+/* largeur naturelle d'un widget feuille (image = son image, texte = mesure) */
+int sermo_natural_w(Fl_Widget *g)
+{
+    if (!g) return 0;
+    SermoFlex *sf = dynamic_cast<SermoFlex *>(g);
+    if (sf) return sf->natural_w() > 0 ? sf->natural_w() : g->w();
+    const char *txt = NULL;
+    Fl_Output *fo = dynamic_cast<Fl_Output *>(g);
+    if (fo) txt = fo->value();
+    else if (g->label() && *g->label() && !g->as_group()) txt = g->label();
+    int gw = 0, gh = 0;
+    if (g->image() && !g->as_group()) {
+        gw = g->image()->w() + 4;
+        if (txt && *txt) {            /* bouton icone + texte */
+            int tw = 0; fl_font(g->labelfont(), g->labelsize()); fl_measure(txt, tw, gh, 0);
+            gw += tw + 16;
+        }
+    } else if (txt && *txt) {
+        fl_font(fo ? fo->textfont() : g->labelfont(), fo ? fo->textsize() : g->labelsize());
+        fl_measure(txt, gw, gh, 0);
+        gw += (dynamic_cast<Fl_Button *>(g) ? 24 : 12);
+    } else if (g->as_group()) gw = g->w();               /* cadre : sa largeur */
+    else gw = g->w() > 200 ? 200 : g->w();
+    return gw;
+}
+
+int sermo_attr_rule(tag_attr *attr, const char *name, int dflt)
+{
+    const char *v = attr ? get_tag_attribute(attr, name) : NULL;
+    if (!v) return dflt;
+    return (strcasecmp(v, "true") == 0 || strcasecmp(v, "yes") == 0 ||
+            atoi(v) == 1) ? 1 : 0;
+}
+
+bool sermo_can_grow_v(Fl_Widget *c)
+{
+    if (!c) return false;
+    if (dynamic_cast<Fl_Spinner *>(c) || dynamic_cast<Fl_Input_Choice *>(c))
+        return false;                                     /* champs composés */
+    if (c->as_group()) return true;   /* cadres, boîtes, onglets, zones, listes */
+    if (dynamic_cast<Fl_Button *>(c) && !dynamic_cast<Fl_Light_Button *>(c))
+        return true;                                      /* bouton simple */
+    return false;
+}
 
 bool sermo_widget_expands(Fl_Widget *w)
 {
@@ -556,6 +748,15 @@ void widget_visibility_list_add(GtkWidget *widget, tag_attr *attr)
                 sermo_expand_set.insert(flw);
             else
                 sermo_noexpand_set.insert(flw);
+        }
+
+        const char *fill_value = get_tag_attribute(attr, "space-fill");
+
+        if (fill_value != NULL) {
+            if (sermo_attr_is_true(fill_value))
+                sermo_fill_set.insert(flw);
+            else
+                sermo_nofill_set.insert(flw);
         }
 
         const char *visible_value = get_tag_attribute(attr, "visible");

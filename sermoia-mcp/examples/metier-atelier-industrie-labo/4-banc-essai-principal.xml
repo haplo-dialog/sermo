@@ -1,0 +1,34 @@
+<!-- Script : examples/metiers/06-atelier-industrie-labo/4-banc-essai.sh (dialogue principal) -->
+<window title="Banc d'essai" default-width="560">
+  <vbox>
+    <frame label="Éprouvette">
+      <grid columns="2" row-spacing="6" column-spacing="8">
+        <text><label>N° d'éprouvette :</label></text>
+        <entry space-expand="true" space-fill="true"><variable>EPROUVETTE</variable><default>EP-2026-0412</default></entry>
+        <text><label>Opérateur :</label></text>
+        <entry space-expand="true" space-fill="true"><variable>OPERATEUR</variable><default>mdupuis</default></entry>
+        <text><label>Profil d'essai :</label></text>
+        <comboboxtext space-expand="true" space-fill="true"><variable>PROFIL</variable><default>Endurance</default>
+          <item>Endurance</item><item>Cyclage thermique</item><item>Surtension</item><item>Vibrations</item>
+        </comboboxtext>
+      </grid>
+    </frame>
+    <frame label="Consignes">
+      <vbox>
+        <hbox>
+          <text><label>Tension d'alimentation (V) :</label></text>
+          <spinbutton range-min="0" range-max="400" range-step="1"><variable>TENSION</variable><default>230</default></spinbutton>
+          <text><label>Durée (min) :</label></text>
+          <spinbutton range-min="1" range-max="1440" range-step="1"><variable>DUREE</variable><default>30</default></spinbutton>
+        </hbox>
+        <text><label>Température d'enceinte (°C) :</label></text>
+        <hscale range-min="-40" range-max="150" range-step="1" draw-value="true"><variable>TEMPERATURE</variable><default>23</default></hscale>
+        <checkbox><label>Essai destructif : l'éprouvette ne sera pas réutilisable</label><variable>DESTRUCTIF</variable></checkbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Lancer l'essai</label><action>exit:lancer</action></button>
+    </hbox>
+  </vbox>
+</window>

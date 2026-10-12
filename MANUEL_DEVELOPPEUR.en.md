@@ -67,10 +67,13 @@ option), because toolkit families do not share an ABI:
 |---|---|---|---|
 | **neutral** (default) | — | qt6, fltk1, efl1, sdl3, lvgl, ncurses, html | Types through a **shim** (`sermocore-shim.h`); toolkit headers replaced by empty **stubs** (`include/_shim/`). No graphical dependency. |
 | **glib/gtk3** | `-DSERMOCORE_GLIB=ON` | gtk3 | Real GLib/GTK 3 (native ABI of the `GList`, `GtkWidget`… structs), for the GObject introspection the GTK family uses. |
-| **gtk4** | `-DSERMOCORE_GTK4=ON` | gtk4 | Core files **rewritten for GTK 4**, **vendored in `libsermocore/src-gtk4/`** (5 files: `automaton.c`, `variables.c`, `signals.c`, `actions.c`, `gtkdialog.c` plus the `gtk4-compat.c` shim): GTK 4 removed `gtk_main`, `gtk_socket`, and the old event model. No external dependency. See §9. |
+| **gtk4** | `-DSERMOCORE_GTK4=ON` | gtk4 | Core files **rewritten for GTK 4**, **vendored in `libsermocore/src-gtk4/`** (5 files: `automaton.c`, `variables.c`, `signals.c`, `tag_attributes.c`, `gtkdialog.c` plus the `gtk4-compat.c` shim; the others, `actions.c` included, come from `src/`): GTK 4 removed `gtk_main`, `gtk_socket`, and the old event model. No external dependency. See §9. |
 
-The **neutral** and **gtk3** variants today compile **exactly the same** core
-sources (`src/*.c`); only the flags and headers differ (shim versus real GLib).
+The **neutral** and **gtk3** variants today compile **the same** core sources
+(`src/*.c`), but for one file: `sermo_progress.c` (the progress bar read as it
+comes) only goes into the neutral variant, gtk3 keeping its own reading thread
+(`libsermocore/CMakeLists.txt`). Otherwise, only the flags and headers differ
+(shim versus real GLib).
 The historical "9/10 files unified" count dates from the modularisation phase and
 no longer applies. The only family-specific file on the neutral/gtk3 side is the
 **attribute bridge** (`try_set_property` + `widget_set_tag_attributes`), moved out
@@ -79,7 +82,9 @@ introspection, which neutral backends do not have.
 
 Core files: `gtkdialog.c` (orchestration + `main`), `safe_exec.c`, `variables.c`,
 `stack.c`, `automaton.c`, `attributes.c`, `signals.c`, `stringman.c`, `actions.c`,
-`tag_attributes.c` (helpers), `sermo_icon_theme.c`, plus `gtkdialog_lexer.l` /
+`tag_attributes.c` (helpers), `sermo_icon_theme.c`, `sermo_input.c` (the
+`<input>` cap), `sermo_focus.c` (which widget takes the focus when a window
+opens), `sermo_progress.c` (neutral variant only), plus `gtkdialog_lexer.l` /
 `gtkdialog_parser.y` (the grammar, source of truth).
 
 ## 3. The core ↔ backend boundary
@@ -157,6 +162,11 @@ Symbols typically to be provided as well (resolved at link time):
 `widget_show_list` / `widget_hide_list` (visibility globals), and the glue the
 core refers to.
 
+To stay on par with the reference, a `<list>`, `<tree>` or `<table>` asks the
+core, when it is created, whether it takes the focus when the window opens
+(`sermo_focus_initial()`, `libsermocore/include/sermo_focus.h`): that answer
+alone decides whether its first row is chosen without `<default>`.
+
 ## 6. Verification benches (the three gates)
 
 No step moves forward on a red bench. The three gates, for a given `<port>`
@@ -167,7 +177,7 @@ binary:
 TIMEOUT=5 bash tests/xml/run_tests.sh <binary>           # expected: 55 PASS
 
 # 2. Behaviour — exported values == those of the gtk3sermo reference
-bash tests/comportement/run.sh <binary>                  # expected: 53/53
+bash tests/comportement/run.sh <binary>                  # expected: 61/61
 
 # 3. Guard — values at risk do not go back through the shell
 xvfb-run -a bash tests/garde_echappement_sortie.sh <binary>        # OK — 4 cases
@@ -177,6 +187,11 @@ The behaviour bench compares the **exports** (`VAR="value"`) with those of the
 gtk3sermo reference. Each case closes by itself: through a `<timer>` firing
 `exit:fin`, or (cases 41 and 42) through the action of a progress bar reaching
 100.
+
+Beyond the three gates, the pass test for a port is
+`bash examples/metiers/verifie.sh --ports "<port>"`: it plays every dialog of the
+job scripts and toolboxes (104 scripts, 187 dialogs) and compares the values
+with gtk3sermo.
 
 ### Every bench at once — the CI
 
@@ -285,17 +300,21 @@ These steps are incremental and guarded by the three benches.
 
 ## 10. Side components
 
-One tool ships alongside the repository without being part of the rendering
-chain:
+Two tools ship alongside the repository without being part of the rendering
+chain; both are packaged since 2.8.2:
 
 - **`sermoman-mcp/`** — an **MCP** **documentation** server (read-only) exposing
   the sermo reference to an AI: tools `sermo_reference`, `sermo_guide`,
-  `sermo_architecture`, `sermo_heritage`, `sermo_ecosystem`, `sermo_search`,
-  `sermo_example`, `sermo_how_to_report`. Code written for sermo,
+  `sermo_architecture`, `sermo_heritage`, `sermo_ecosystem`, `sermo_scripts`,
+  `sermo_search`, `sermo_example`, `sermo_how_to_report`. Code written for sermo,
   GPL-2.0-or-later; some of the examples it serves come from gtkdialog.
+  `sermo_scripts` serves the inventory of the job scripts and toolboxes,
+  generated by `sermoman-mcp/outils/inventaire-scripts.py`.
+- **`sermoia-mcp/`** — an **MCP** server (in C) that has a dialog **written,
+  checked and seen**: `sermo_schema`, `sermo_check`, `sermo_run`, `sermo_render`,
+  `sermo_examples`, `sermo_vote`. Its catalogue includes the dialogs of the job
+  scripts and toolboxes (`sermoia-mcp/outils/catalogue-metiers.sh`). See
+  [sermoia-mcp/README.en.md](sermoia-mcp/README.en.md).
 
-The MCP server for **generating** windows through an AI (a check / render / vote
-loop over a catalogue of examples), which used to live here, **has been removed
-from sermo**. The repository keeps the **manual** MCP above, read-only. Checking
-and off-screen rendering remain available on the command line (`--print-ir`,
-`--render-png`).
+Checking and off-screen rendering also remain available on the command line
+(`--print-ir`, `--render-png`).

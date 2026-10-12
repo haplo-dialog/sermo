@@ -19,6 +19,10 @@
 #include "render_html.h"
 #include "dialog_state.h"
 
+/* --space-expand / --space-fill du programme (cœur, gtkdialog.c) : -1 = non dit. */
+extern gint project_space_expand;
+extern gint project_space_fill;
+
 /* ─── Échappement HTML ───────────────────────────────────────────────────── */
 static void html_escape(FILE *out, const char *s)
 {
@@ -156,9 +160,13 @@ static void b64_write(FILE *out, const unsigned char *buf, size_t len)
 }
 
 /* Tente d'ecrire <img src="data:..."> pour `path`. Renvoie 0 si l'image n'a pas
- * pu etre incluse : l'appelant retombe alors sur le pictogramme. */
+ * pu etre incluse : l'appelant retombe alors sur le pictogramme.
+ * w, h : taille demandée en pixels (0 = libre) ; l'image garde son ratio
+ * (object-fit:contain), comme gtkdialog qui la charge « at_size ». Une icône
+ * SYMBOLIQUE (« …-symbolic.svg ») prend la couleur du texte, comme dans GTK :
+ * elle sert de masque à un carré de cette couleur. */
 static int html_emit_image(FILE *out, const char *path, const char *cls,
-                           const char *alt)
+                           const char *alt, int w, int h)
 {
     if (!path || !*path) return 0;
 
@@ -189,8 +197,30 @@ static int html_emit_image(FILE *out, const char *path, const char *cls,
     fclose(f);
     if (got != (size_t)sz) { free(buf); return 0; }
 
+    int symbolique = strstr(path, "-symbolic.") && !strcmp(mime, "image/svg+xml");
+    if (symbolique) {
+        int cote = w > 0 ? w : (h > 0 ? h : 16);
+        fputs("<span class=\"", out); html_escape(out, cls);
+        fputs(" sermo-symbolique\" role=\"img\" aria-label=\"", out); html_escape(out, alt ? alt : "");
+        fprintf(out, "\" style=\"width:%dpx;height:%dpx;", cote, h > 0 ? h : cote);
+        for (int k = 0; k < 2; k++) {
+            fputs(k ? "mask-image:url(data:" : "-webkit-mask-image:url(data:", out);
+            fputs(mime, out); fputs(";base64,", out);
+            b64_write(out, buf, got);
+            fputs(");", out);
+        }
+        fputs("\"></span>", out);
+        free(buf);
+        return 1;
+    }
     fputs("<img class=\"", out); html_escape(out, cls);
     fputs("\" alt=\"", out);    html_escape(out, alt ? alt : "");
+    if (w > 0 || h > 0) {
+        fputs("\" style=\"", out);
+        if (w > 0) fprintf(out, "width:%dpx;", w);
+        if (h > 0) fprintf(out, "height:%dpx;", h);
+        fputs("object-fit:contain;", out);
+    }
     fputs("\" src=\"data:", out); fputs(mime, out); fputs(";base64,", out);
     b64_write(out, buf, got);
     fputs("\">", out);
@@ -202,6 +232,79 @@ static int html_emit_image(FILE *out, const char *path, const char *cls,
  * Chaque nœud devient un élément HTML sémantique proche de son équivalent
  * natif. Les feuilles interactives sont rendues en lecture seule/désactivées
  * (export statique, pas de logique serveur derrière) — voir doc du module. */
+static void render_node(FILE *out, WidgetNode *n, int depth);
+
+/* Les enfants d'une boîte, rangés comme gtkdialog (widget_hbox.c et
+ * widget_vbox.c de gtk3sermo, l'étalon) :
+ *
+ *  - Étirement (expand) et remplissage (fill). La valeur COURANTE part de
+ *    celle de la boîte (<vbox space-expand=… space-fill=…>, sinon l'option
+ *    --space-expand/--space-fill du programme, sinon « non dit ») ; on
+ *    parcourt les enfants — colonne dans l'ordre du document, rangée À
+ *    L'ENVERS — et un enfant qui a son propre réglage REMPLACE la valeur
+ *    courante pour lui ET pour ceux parcourus après lui (l'étalon ne la remet
+ *    jamais à zéro). « Non dit » : le défaut du type — <edit>, <frame>
+ *    s'étirent partout, plus <entry> dans une rangée, <paned> dans une
+ *    colonne. Jusqu'à la 2.8.1, seul le réglage propre de l'enfant comptait :
+ *    une boîte qui demandait l'étirement n'était pas suivie.
+ *  - Un enfant étiré qui ne remplit pas sa place y est CENTRÉ.
+ *  - homogeneous="true" : chaque enfant reçoit une case de MÊME taille et
+ *    l'ensemble occupe toute la boîte ; un enfant qui ne remplit pas sa case
+ *    y est centré. Jusqu'à la 2.8.1, l'attribut était ignoré (rangée serrée
+ *    à droite). */
+static int bool_gtk(int v) { return v == 1 ? 1 : v == -1 ? 0 : -1; }
+
+static int defaut_etire(const WidgetNode *c, int horizontal)
+{
+    if (c->type == WT_EDIT || c->type == WT_FRAME) return 1;
+    return horizontal ? c->type == WT_ENTRY : c->type == WT_PANED;
+}
+
+/* Aussi pour les enfants d'un <frame> : l'étalon (widget_frame.c) les range
+ * dans une colonne cachée, dont la valeur courante part de l'option du
+ * programme SEULEMENT — le space-expand du cadre vaut pour le cadre dans sa
+ * boîte, pas pour ses enfants. Défaut : <edit>, <frame>, <paned> s'étirent. */
+static void render_enfants_boite(FILE *out, WidgetNode *n, int depth)
+{
+    const int horizontal = n->type == WT_HBOX;
+    const int cadre = n->type == WT_FRAME || n->type == WT_ASPECTFRAME;
+    const int nb = n->child_count;
+    if (nb <= 0) return;
+    unsigned char *etire = calloc((size_t)nb, 1), *remplit = calloc((size_t)nb, 1);
+    if (!etire || !remplit) {
+        free(etire); free(remplit);
+        for (int i = 0; i < nb; i++) render_node(out, n->children[i], depth + 1);
+        return;
+    }
+    /* -1 = non dit, 0 = faux, 1 = vrai (comme space_expand de l'étalon) */
+    int cur_e = cadre ? -1 : bool_gtk(n->expand), cur_f = cadre ? -1 : bool_gtk(n->fill);
+    if (cur_e == -1 && project_space_expand != -1) cur_e = project_space_expand ? 1 : 0;
+    if (cur_f == -1 && project_space_fill != -1)   cur_f = project_space_fill ? 1 : 0;
+    for (int k = 0; k < nb; k++) {
+        int i = horizontal ? nb - 1 - k : k;
+        WidgetNode *c = n->children[i];
+        if (!c) continue;
+        if (c->expand) cur_e = bool_gtk(c->expand);
+        if (c->fill)   cur_f = bool_gtk(c->fill);
+        int d = defaut_etire(c, horizontal);
+        etire[i]   = (unsigned char)(cur_e != -1 ? cur_e : d);
+        remplit[i] = (unsigned char)(cur_f != -1 ? cur_f : d);
+    }
+    for (int i = 0; i < nb; i++) {
+        WidgetNode *c = n->children[i];
+        if (!c || !c->visible) continue;
+        if ((n->homogene && !cadre) || etire[i]) {
+            fprintf(out, "<div class=\"%s%s\">\n",
+                    n->homogene && !cadre ? "sermo-case" : "sermo-etire",
+                    remplit[i] ? "" : " sermo-centre");
+            render_node(out, c, depth + 1);
+            fputs("</div>\n", out);
+        } else
+            render_node(out, c, depth + 1);
+    }
+    free(etire); free(remplit);
+}
+
 static void render_node(FILE *out, WidgetNode *n, int depth)
 {
     if (!n || !n->visible) return;
@@ -210,7 +313,16 @@ static void render_node(FILE *out, WidgetNode *n, int depth)
     switch (n->type) {
 
     case WT_WINDOW: {
-        fputs("<main class=\"sermo-window\">\n", out);
+        /* default-width / width-request : la fenêtre a cette largeur (bornée par
+         * l'écran), comme une vraie fenêtre ; jusqu'à la 2.8.1, 640 px fixes —
+         * une boîte horizontale plus large passait alors à la ligne. */
+        if (n->width > 0 || n->height > 0) {
+            fputs("<main class=\"sermo-window\" style=\"", out);
+            if (n->width > 0)  fprintf(out, "width:%dpx;max-width:100%%;", n->width);
+            if (n->height > 0) fprintf(out, "min-height:%dpx;", n->height);
+            fputs("\">\n", out);
+        } else
+            fputs("<main class=\"sermo-window\">\n", out);
         if (*lbl) { fputs("<h1>", out); html_escape(out, lbl); fputs("</h1>\n", out); }
         for (int i = 0; i < n->child_count; i++) render_node(out, n->children[i], depth + 1);
         fputs("</main>\n", out);
@@ -351,14 +463,14 @@ static void render_node(FILE *out, WidgetNode *n, int depth)
     }
 
     case WT_VBOX:
-        fputs("<div class=\"sermo-vbox\">\n", out);
-        for (int i = 0; i < n->child_count; i++) render_node(out, n->children[i], depth + 1);
+        fprintf(out, "<div class=\"sermo-vbox%s\">\n", n->homogene ? " sermo-homogene" : "");
+        render_enfants_boite(out, n, depth);
         fputs("</div>\n", out);
         return;
 
     case WT_HBOX:
-        fputs("<div class=\"sermo-hbox\">\n", out);
-        for (int i = 0; i < n->child_count; i++) render_node(out, n->children[i], depth + 1);
+        fprintf(out, "<div class=\"sermo-hbox%s\">\n", n->homogene ? " sermo-homogene" : "");
+        render_enfants_boite(out, n, depth);
         fputs("</div>\n", out);
         return;
 
@@ -366,7 +478,7 @@ static void render_node(FILE *out, WidgetNode *n, int depth)
         fputs("<fieldset class=\"sermo-frame\">", out);
         if (*lbl) { fputs("<legend class=\"sermo-legend\">", out); html_escape(out, lbl); fputs("</legend>", out); }
         fputc('\n', out);
-        for (int i = 0; i < n->child_count; i++) render_node(out, n->children[i], depth + 1);
+        render_enfants_boite(out, n, depth);
         fputs("</fieldset>\n", out);
         return;
 
@@ -379,7 +491,11 @@ static void render_node(FILE *out, WidgetNode *n, int depth)
         return;
 
     case WT_NOTEBOOK: {
-        fputs("<div class=\"sermo-notebook\">\n", out);
+        static const char *cote[] = { "", " sermo-onglets-gauche", " sermo-onglets-droite",
+                                      " sermo-onglets-bas" };
+        int side = n->state.notebook.side;
+        if (side < 0 || side > 3) side = 0;
+        fprintf(out, "<div class=\"sermo-notebook%s\">\n", cote[side]);
         int cur = n->state.notebook.current_tab;
         if (cur < 0 || cur >= n->child_count) cur = 0;
         fputs("<div class=\"sermo-tabs\">", out);
@@ -502,17 +618,32 @@ static void render_node(FILE *out, WidgetNode *n, int depth)
         } else {
             /* EXIT= est la valeur que le dialogue rend pour dire quel bouton a
              * ete presse : on la porte telle quelle dans le formulaire. */
-            fprintf(out, "<button class=\"sermo-button\" type=\"%s\" name=\"EXIT\" value=\"",
-                    html_mode() == MODE_SERVE ? "submit" : "button");
-            html_escape(out, *lbl ? lbl : "Bouton");
-            fputc('"', out);
+            if (n->sortie) {
+                fprintf(out, "<button class=\"sermo-button\" type=\"%s\" name=\"EXIT\" value=\"",
+                        html_mode() == MODE_SERVE ? "submit" : "button");
+                html_escape(out, n->sortie);
+                fputc('"', out);
+            } else {
+                /* Ses actions ne ferment pas le dialogue : il n'envoie rien. */
+                fputs("<button class=\"sermo-button\" type=\"button\"", out);
+            }
         }
         if (n->tooltip) { fputs(" title=\"", out); html_escape(out, n->tooltip); fputs("\"", out); }
         fputs(">", out);
-        if (n->icon_path && !html_emit_image(out, n->icon_path, "sermo-btn-icon",
-                                            *lbl ? lbl : "icone"))
-            fputs("\U0001F5BC️ ", out); /* repli : absent, trop gros, ou type inconnu */
-        html_escape(out, *lbl ? lbl : "Bouton");
+        /* Bouton à icône : icône et libellé forment un groupe CENTRÉ ; l'icône
+         * est placée selon image-position (gauche, droite, haut, bas). */
+        if (n->icon_path) {
+            static const char *pos[] = { "gauche", "droite", "haut", "bas" };
+            int p = n->image_pos >= 0 && n->image_pos <= 3 ? n->image_pos : 0;
+            fprintf(out, "<span class=\"sermo-btn-groupe sermo-img-%s\">", pos[p]);
+            if (!html_emit_image(out, n->icon_path, "sermo-btn-icon",
+                                 *lbl ? lbl : "icone", n->icon_px, n->icon_px))
+                fputs("<span>\U0001F5BC️</span>", out); /* repli : absent, trop gros, ou type inconnu */
+            fputs("<span>", out);
+            html_escape(out, *lbl ? lbl : "Bouton");
+            fputs("</span></span>", out);
+        } else
+            html_escape(out, *lbl ? lbl : "Bouton");
         fputs("</button>\n", out);
         return;
 
@@ -726,8 +857,18 @@ static void render_node(FILE *out, WidgetNode *n, int depth)
          * pictogramme si le fichier manque, depasse la taille maximale, ou porte
          * une extension non geree. */
         if (!html_emit_image(out, safe_label(n), "sermo-image",
-                             n->tooltip ? n->tooltip : "image"))
+                             n->tooltip ? n->tooltip : "image",
+                             n->type == WT_IMAGE_W ? n->icon_px : n->width,
+                             n->type == WT_IMAGE_W ? n->icon_px : n->height)) {
+            /* Icône du thème introuvable : la place vide, comme gtk3 (qui ne
+             * dessine rien) ; le pictogramme reste pour un FICHIER manquant. */
+            if (n->type == WT_IMAGE_W && n->tooltip && n->icon_px > 0) {
+                fprintf(out, "<span class=\"sermo-icone-absente\" style=\"width:%dpx;height:%dpx\"></span>\n",
+                        n->icon_px, n->icon_px);
+                return;
+            }
             fputs("<div class=\"sermo-image-placeholder\" aria-label=\"image\">\U0001F5BC️</div>", out);
+        }
         fputc('\n', out);
         return;
 
@@ -827,8 +968,65 @@ static void write_style(FILE *out)
         ".sermo-window h1{font-size:1.1rem;margin:0 0 1rem;border-bottom:1px solid var(--sermo-border);"
         "padding-bottom:.5rem;}\n"
         ".sermo-vbox{display:flex;flex-direction:column;gap:.6rem;}\n"
-        ".sermo-hbox{display:flex;flex-direction:row;gap:.6rem;align-items:center;flex-wrap:wrap;}\n"
-        ".sermo-frame{border:1px solid var(--sermo-border);border-radius:6px;padding:.7rem;}\n"
+        ".sermo-hbox{display:flex;flex-direction:row;gap:.6rem;align-items:stretch;justify-content:flex-end;}\n"
+        /* gtkdialog range une boîte horizontale PAR LA FIN (gtk_box_pack_end) :
+         * ce qui ne s'étire pas se cale à droite. */
+        ".sermo-hbox>.sermo-text,.sermo-hbox>.sermo-image,.sermo-hbox>.sermo-symbolique,"
+        ".sermo-hbox>.sermo-icone-absente{align-self:center;}\n"
+        /* Un texte GTK garde ses sauts de ligne et, dans une boîte, se centre
+         * (xalign 0,5) ; la barre d'état reste à gauche. */
+        ".sermo-text{margin:0;white-space:pre-wrap;}\n"
+        ".sermo-vbox>.sermo-text:not(.sermo-statusbar),.sermo-etire>.sermo-text:not(.sermo-statusbar),"
+        ".sermo-case>.sermo-text:not(.sermo-statusbar),.sermo-frame>.sermo-text:not(.sermo-statusbar)"
+        "{text-align:center;}\n"
+        ".sermo-vbox>progress,.sermo-etire>progress,.sermo-frame>progress,"
+        ".sermo-vbox>meter,.sermo-etire>meter,.sermo-frame>meter{width:100%;}\n"
+        ".sermo-separator{margin:.3rem 0;align-self:stretch;border:0;border-top:1px solid var(--sermo-border);}\n"
+        ".sermo-icone-absente{display:inline-block;flex:none;}\n"
+        /* Place d'un enfant étiré (sermo-etire) ou case d'une boîte homogène
+         * (sermo-case, toutes de même taille) : orientée comme la boîte ; un
+         * enfant qui remplit (space-fill) en prend toute la longueur, sinon
+         * (sermo-centre) il y est centré à sa taille propre. */
+        ".sermo-etire{flex:1 1 auto;min-width:0;min-height:0;display:flex;}\n"
+        ".sermo-case{min-width:0;min-height:0;display:flex;}\n"
+        /* Boîte homogène = grille de pistes égales : chaque case vaut la plus
+         * grande taille naturelle, ou sa part de la boîte si celle-ci est
+         * étirée. (En flex « 1 1 0 », une colonne non étirée s'écrasait :
+         * cases de hauteur nulle, boutons superposés — vu sur system-tools.) */
+        ".sermo-vbox.sermo-homogene{display:grid;grid-auto-rows:1fr;grid-template-columns:minmax(0,1fr);}\n"
+        ".sermo-hbox.sermo-homogene{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);}\n"
+        ".sermo-hbox>.sermo-etire,.sermo-hbox>.sermo-case{flex-direction:row;}\n"
+        ".sermo-vbox>.sermo-etire,.sermo-vbox>.sermo-case,.sermo-frame>.sermo-etire{flex-direction:column;}\n"
+        ".sermo-etire>*,.sermo-case>*{flex:1 1 auto;min-width:0;}\n"
+        ".sermo-centre{justify-content:center;}\n"
+        ".sermo-etire.sermo-centre>*,.sermo-case.sermo-centre>*{flex:0 0 auto;}\n"
+        /* Un champ, une barre, une case à cocher gardent leur hauteur propre
+         * même étirés dans une colonne : centrés dans la place reçue. Un
+         * <edit> (zone de texte) la remplit. */
+        ":is(.sermo-vbox,.sermo-frame)>.sermo-etire>:is(progress,meter,.sermo-pulse,.sermo-checkbox,.sermo-radio,"
+        ".sermo-field:not(:has(textarea))){flex:0 0 auto;margin:auto 0;}\n"
+        ".sermo-etire>.sermo-field>textarea{flex:1 1 auto;}\n"
+        ".sermo-hbox>:is(.sermo-etire,.sermo-case)>:is(.sermo-text,.sermo-image,.sermo-symbolique,"
+        ".sermo-icone-absente){align-self:center;}\n"
+        /* Une image dans une colonne est centrée sur sa largeur, comme GTK. */
+        ":is(.sermo-vbox,.sermo-frame)>:is(.sermo-image,.sermo-symbolique,.sermo-icone-absente,.sermo-image-placeholder),"
+        ":is(.sermo-vbox,.sermo-frame)>:is(.sermo-etire,.sermo-case)>:is(.sermo-image,.sermo-symbolique,.sermo-icone-absente)"
+        "{align-self:center;}\n"
+        /* L'enfant d'une fenêtre en occupe toute la hauteur (default-height). */
+        ".sermo-window{display:flex;flex-direction:column;}\n"
+        ".sermo-window>h1{flex:none;}\n"
+        ".sermo-window>:not(h1){flex:1 1 auto;}\n"
+        ".sermo-window{overflow-x:auto;}\n"
+        ".sermo-notebook.sermo-onglets-gauche,.sermo-notebook.sermo-onglets-droite{display:flex;gap:.6rem;}\n"
+        ".sermo-onglets-droite{flex-direction:row-reverse;}\n"
+        ".sermo-onglets-bas{display:flex;flex-direction:column-reverse;}\n"
+        ".sermo-onglets-gauche>.sermo-tabs,.sermo-onglets-droite>.sermo-tabs{flex-direction:column;"
+        "border-bottom:0;border-right:1px solid var(--sermo-border);margin:0;padding-right:.4rem;}\n"
+        ".sermo-onglets-gauche>.sermo-tabs .sermo-tab-active,.sermo-onglets-droite>.sermo-tabs .sermo-tab-active"
+        "{border-bottom:0;border-left:2px solid var(--sermo-accent);}\n"
+        ".sermo-onglets-gauche>:not(.sermo-tabs),.sermo-onglets-droite>:not(.sermo-tabs){flex:1 1 auto;min-width:0;}\n"
+        ".sermo-frame{border:1px solid var(--sermo-border);border-radius:6px;padding:.7rem;"
+        "display:flex;flex-direction:column;gap:.6rem;min-width:0;}\n"
         ".sermo-field{display:flex;flex-direction:column;gap:.2rem;font-size:.85rem;}\n"
         ".sermo-field input,.sermo-field select{font:inherit;}\n"
         "button,input,select,progress{accent-color:var(--sermo-accent);}\n"
@@ -852,7 +1050,15 @@ static void write_style(FILE *out)
         ".sermo-table{border-collapse:collapse;}\n"
         ".sermo-table th,.sermo-table td{border:1px solid var(--sermo-border);padding:.3rem .5rem;}\n"
         ".sermo-image{max-width:100%;height:auto;display:block;}"
-        ".sermo-btn-icon{height:1em;width:auto;vertical-align:-0.15em;margin-right:.35em;}"
+        ".sermo-btn-icon{height:1em;width:auto;vertical-align:-0.15em;}"
+        ".sermo-btn-groupe{display:inline-flex;align-items:center;justify-content:center;gap:.35em;"
+        "vertical-align:middle;}"
+        ".sermo-img-droite{flex-direction:row-reverse;}.sermo-img-haut{flex-direction:column;}"
+        ".sermo-img-bas{flex-direction:column-reverse;}"
+        ".sermo-symbolique{display:inline-block;background:currentColor;flex:none;"
+        "-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;"
+        "-webkit-mask-position:center;mask-position:center;}"
+        ".sermo-image{flex:none;}"
         ".sermo-image-placeholder{width:2rem;height:2rem;display:flex;align-items:center;"
         "justify-content:center;border:1px dashed var(--sermo-border);border-radius:4px;}\n"
         ".sermo-eventbox{display:block;}\n"

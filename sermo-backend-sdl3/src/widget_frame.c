@@ -15,6 +15,7 @@
 #include "tag_attributes.h"
 #include "stack.h"
 #include "widget_frame.h"
+#include "widget_vbox.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -38,6 +39,9 @@ GtkWidget *widget_frame_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     stackelement s = pop();
     for (int i = 0; i < s.nwidgets; i++)
         if (s.widgets[i]) widget_node_add_child(node, (WidgetNode *)s.widgets[i]);
+    /* rangement de cette boite verticale : regles de colonne, sans
+     * l'attribut du cadre (l'etalon ne lit que l'option du projet) */
+    sdl3_box_pack(node, &s, NULL, 0);
     return (GtkWidget *)node;
 }
 

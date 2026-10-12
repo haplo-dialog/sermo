@@ -22,6 +22,7 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
+#include "sermo_focus.h"
 #include "efl-compat.h"
 #include "efl-globals.h"
 #include "gtkdialog.h"
@@ -45,6 +46,7 @@ typedef struct {
     int          n_rows;    /* rangées posées, en-tête compris */
     int          n_cols;
     int          first_data; /* indice de la 1re rangée de données (1 sous un en-tête) */
+    int          focus;      /* prend le focus à l'ouverture (sermo_focus.h) */
 } TableData;
 
 /* ─── Ajoute une cellule label dans elm_table ─────────────────────────────── */
@@ -110,6 +112,7 @@ GtkWidget *widget_table_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     if (!td) { evas_object_show(sc); return (GtkWidget *)sc; }
     td->table    = table;
     td->selected = strdup("");
+    td->focus    = sermo_focus_initial("table");
     td->n_rows   = 0;
     td->n_cols   = TABLE_COLS_MAX;
     evas_object_data_set(sc, "table_data", td);
@@ -133,7 +136,7 @@ GtkWidget *widget_table_create(AttributeSet *Attr, tag_attr *attr, gint Type)
                 _parse_row(table, item, row, td->n_cols, 0);
                 /* Parite : la 1re ligne de donnees est selectionnee par
                  * defaut, et la variable exporte sa PREMIERE colonne. */
-                if (td->selected && !*td->selected) {
+                if (td->focus && td->selected && !*td->selected) {
                     const char *pipe = strchr(item, '|');
                     free(td->selected);
                     /* strndup/strdup : td->selected se libère par free() */

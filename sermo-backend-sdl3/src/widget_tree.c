@@ -15,6 +15,7 @@
 #define _GNU_SOURCE
 #endif
 #include "sdl3-compat.h"
+#include "sermo_focus.h"
 #include "dialog_state.h"
 #include "gtkdialog.h"
 #include "attributes.h"
@@ -50,10 +51,15 @@ GtkWidget *widget_tree_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         gchar *lbl = attributeset_get_first(&el, Attr, ATTR_LABEL);
         if (lbl && *lbl) { free(node->label); node->label = strdup(lbl); }
     }
+    if (attr) {
+        const char *v = get_tag_attribute(attr, "exported-column");
+        if (v && atoi(v) > 0) node->colonne_exportee = atoi(v);
+    }
     /* <input> et <item> : chargés par widget_tree_refresh(), que le cœur
      * appelle juste après la création — lire <input> ici aussi exécuterait
      * la commande deux fois. */
 
+    node->focus_initial = sermo_focus_initial("tree");
     return (GtkWidget *)node;
 }
 
@@ -65,10 +71,16 @@ gchar *widget_tree_envvar_construct(GtkWidget *widget)
     int idx = n->state.list.selected_index;
     if (idx < 0 || idx >= n->state.list.item_count)
         return g_strdup("");
-    /* La rangée reste entière pour l'affichage en liste plate ; la variable
-     * n'exporte que sa 1re colonne (colonnes séparées par « | »), comme
-     * l'étalon dont exported-column vaut 0 par défaut. */
+    /* La rangée reste entière pour l'affichage ; la variable n'exporte que la
+     * colonne « exported-column » (défaut 0 ; colonnes séparées par « | »),
+     * comme l'étalon. Jusqu'à la 2.8.1, toujours la 1re. Colonne absente :
+     * valeur vide. */
     const char *row = n->state.list.items[idx];
+    for (int c = 0; c < n->colonne_exportee; c++) {
+        row = strchr(row, '|');
+        if (!row) return g_strdup("");
+        row++;
+    }
     return g_strndup(row, strcspn(row, "|"));
 }
 
@@ -109,13 +121,23 @@ void widget_tree_refresh(variable *var)
          item = attributeset_get_next(&el, var->Attributes, ATTR_ITEM))
         if (*item) tree_append(n, item);
 
-    /* Au premier refresh seulement, la 1re rangée est choisie, qu'elle vienne
-     * de <item> ou de <input>. Chez l'étalon, elle ressort grâce au focus
-     * clavier pris à l'ouverture (ce port ne modélise pas le focus) ; un
-     * refresh ultérieur vide l'arbre et la sélection avec (mesuré). */
     if (!n->initialised) {
-        if (n->state.list.item_count > 0)
-            n->state.list.selected_index = 0;
+        /* Ligne choisie à l'ouverture, comme gtk3sermo (sermo_focus.h) :
+         * celle de <default> s'il y en a une ; sinon la 1re, seulement si ce
+         * widget prend le focus (premier focalisable de la fenêtre) ; sinon
+         * aucune. Jusqu'à la 2.8.1, la 1re rangée était toujours choisie. */
+        int choix = -1;
+        GList *ed = NULL;
+        gchar *def = attributeset_get_first(&ed, var->Attributes, ATTR_DEFAULT);
+        for (int i = 0; def && *def && i < n->state.list.item_count && choix < 0; i++) {
+            const char *it = n->state.list.items[i];
+            size_t l = strcspn(it, "|");
+            if (strcmp(it, def) == 0 || (strlen(def) == l && strncmp(it, def, l) == 0))
+                choix = i;
+        }
+        if (choix < 0 && n->focus_initial && n->state.list.item_count > 0)
+            choix = 0;
+        n->state.list.selected_index = choix;
         n->initialised = TRUE;
     }
 }

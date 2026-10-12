@@ -44,12 +44,9 @@ GtkWidget *widget_text_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     if (Attr) {
         GList *el = NULL;
         gchar *lbl = attributeset_get_first(&el, Attr, ATTR_LABEL);
+        /* « text » si <label> manque (posé par le cœur) ; <default> n'existe
+         * pas pour <text>, comme chez gtkdialog. */
         if (lbl && *lbl) txt = g_strdup(lbl);
-        if (!txt) {
-            el = NULL;
-            gchar *def = attributeset_get_first(&el, Attr, ATTR_DEFAULT);
-            if (def && *def) txt = g_strdup(def);
-        }
         /* <input> : lu par widget_text_refresh(), que le cœur appelle juste
          * après la création. */
     }

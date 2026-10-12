@@ -42,6 +42,9 @@
 #include <FL/Fl_Value_Slider.H>
 #include <FL/Fl_Spinner.H>
 #include <FL/Fl_Choice.H>
+/* Ajoute à un Fl_Choice un élément dont le libellé est le texte tel quel
+ * (« / », « \ », « | » et « _ » initial ne sont pas des commandes de menu). */
+void sermo_choice_add_literal(Fl_Choice *ch, const char *text);
 #include <FL/Fl_Browser.H>
 #include <FL/Fl_Progress.H>
 #include <FL/Fl_Color_Chooser.H>

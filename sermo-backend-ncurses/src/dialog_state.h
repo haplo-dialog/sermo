@@ -129,6 +129,11 @@ typedef struct WidgetNode {
     unsigned     icon_tex;     /* texture GL de l'icone (0 = pas chargee, ~0u = echec) */
     int          icon_px;      /* taille demandee de l'icone */
     int          expand;       /* space-expand : 1 vrai, -1 faux, 0 non dit */
+    int          fill;         /* space-fill : 1 vrai, -1 faux, 0 non dit */
+    /* Réglage reçu de la boîte qui le range (règle de l'étalon gtk3, voir
+     * widget_hbox.c / widget_vbox.c) : 1 = s'étire / remplit sa case. */
+    signed char  pack_expand, pack_fill;
+    gboolean     homogeneous;  /* <hbox>/<vbox homogeneous="true"> : cases égales */
     float        row_w;        /* hbox : largeur mesuree de la rangee (cadre a droite) */
     unsigned     bg_rgba, fg_rgba;   /* background/foreground (0 = theme) */
     char        *tooltip;
@@ -146,6 +151,13 @@ typedef struct WidgetNode {
      * choisie d'une list ou d'un tree — le pose donc lui-même à la fin de
      * son refresh. */
     gboolean     initialised;
+
+    /* <list>, <tree>, <table> : ce widget prend le focus à l'ouverture, donc
+     * sa 1re ligne est choisie (sermo_focus.h). */
+    gboolean     focus_initial;
+
+    /* <tree exported-column="N"> : la colonne que la variable rend (défaut 0). */
+    int          colonne_exportee;
 
     /* État persistant (mis à jour par ImGui à chaque frame) */
     union {

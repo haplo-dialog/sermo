@@ -1,0 +1,66 @@
+.\" sermoia-mcp.1 — man page for sermoia-mcp
+.\" haplo-dialog <devel@haplo-dialog.fr>
+.\" Installed as /usr/share/man/man1/sermoia-mcp.1
+.TH SERMOIA-MCP 1 "October 2026" "sermo @PACKAGE_VERSION@" "sermo User Commands"
+.SH NAME
+sermoia-mcp \- MCP server that has an AI assistant write, check and see sermo dialogs
+.SH SYNOPSIS
+.B sermoia-mcp
+.SH DESCRIPTION
+.B sermoia-mcp
+is a Model Context Protocol server. It speaks JSON-RPC on its standard input and
+output and is started by an MCP client (an AI assistant), not by hand.
+It gives the assistant six tools:
+.TP
+.B sermo_schema
+the tags and attributes of the sermo XML language;
+.TP
+.B sermo_check
+parse a dialog and report the first error;
+.TP
+.B sermo_run
+open a dialog for a person and return the values they entered (runs the
+commands of the dialog, and says so);
+.TP
+.B sermo_render
+draw a dialog as a picture without running any of its commands;
+.TP
+.B sermo_examples
+search the catalogue of examples, including the job scripts and toolboxes;
+.TP
+.B sermo_vote
+record that an example helped or misled.
+.SH ENVIRONMENT
+.TP
+.B SERMO_BIN
+sermo binary used by check, run and the text preview (default:
+.BR sermo ).
+.TP
+.B SERMO_RENDER_BIN
+binary used by render (default: SERMO_BIN). A port that renders without a
+display, such as qt6sermo, needs no X server.
+.TP
+.B SERMO_EXAMPLES_DIR
+example catalogue (default: the installed one).
+.TP
+.B SERMO_VOTE_FILE
+vote register (default:
+.IR $XDG_STATE_HOME/sermoia/votes.tsv ).
+.TP
+.BR SERMOIA_CHECK_DELAI ", " SERMOIA_RENDER_DELAI
+timeouts in seconds (defaults 20 and 30, at most 120 and 300).
+.SH FILES
+.TP
+.I /usr/share/sermoia-mcp/examples
+the example catalogue.
+.SH EXAMPLE
+.nf
+claude mcp add sermoia --env SERMO_BIN=/usr/bin/gtk3sermo \e
+  --env SERMO_RENDER_BIN=/usr/bin/qt6sermo -- /usr/bin/sermoia-mcp
+.fi
+.SH SEE ALSO
+.BR sermo (1),
+.BR sermoman-mcp (1),
+.I /usr/share/doc/sermoia-mcp/README.md
+.SH AUTHOR
+haplo-dialog <devel@haplo-dialog.fr>

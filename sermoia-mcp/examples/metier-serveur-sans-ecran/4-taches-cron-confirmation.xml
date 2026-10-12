@@ -1,0 +1,13 @@
+<!-- Script : examples/metiers/11-serveur-sans-ecran/4-taches-cron.sh (dialogue confirmation) -->
+<window title="Confirmer la tâche">
+  <vbox>
+    <text><label>Cette ligne sera ajoutée à votre table cron :</label></text>
+    <entry editable="false" width-request="520"><variable>LIGNE</variable><default>30 4 * * * /usr/local/bin/rotation-certificats</default></entry>
+    <checkbox sensitive="false"><label>Sortie et erreurs jetées (vers /dev/null)</label><variable>SORTIE_JETEE</variable><default>true</default></checkbox>
+    <text><label>La table entière est réinstallée : relisez-la avant.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Installer</label><action>exit:installer</action></button>
+    </hbox>
+  </vbox>
+</window>

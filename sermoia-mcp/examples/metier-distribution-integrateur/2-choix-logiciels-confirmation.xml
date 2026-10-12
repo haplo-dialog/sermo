@@ -1,0 +1,13 @@
+<!-- Script : examples/metiers/04-distribution-integrateur/2-choix-logiciels.sh (dialogue confirmation) -->
+<window title="Confirmer l'installation" default-width="520" default-height="360">
+  <vbox>
+    <text><label>Simulation faite : 4 paquets nouveaux, 2 dépendances.</label></text>
+    <text><label>Paquets demandés :</label></text>
+    <edit editable="false" wrap-mode="word" height-request="160"><variable>LISTE</variable><default>firefox-esr ristretto mousepad htop</default></edit>
+    <text><label>Lancer l'installation ?</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Installer</label><action>exit:installer</action></button>
+    </hbox>
+  </vbox>
+</window>

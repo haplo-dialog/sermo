@@ -1,0 +1,11 @@
+<!-- Script : examples/boites-a-outils/administrateur/10-redemarrage-programme.sh (dialogue confirmation) -->
+<window title="Confirmer">
+  <vbox>
+    <text><label>Programmer un redémarrage à 22:30 ?</label></text>
+    <text><label>Les programmes ouverts seront fermés sans enregistrer. Les connexions seront refusées 5 minutes avant.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Programmer</label><action>exit:confirmer</action></button>
+    </hbox>
+  </vbox>
+</window>

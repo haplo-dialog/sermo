@@ -1,0 +1,15 @@
+<!-- Script : examples/boites-a-outils/administrateur/03-paquets.sh (dialogue recherche) -->
+<window title="Paquets : chercher" default-width="480">
+  <vbox>
+    <hbox><text><label>Chercher :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>TERME</variable><default>pdf viewer</default>
+        <action signal="activate">exit:chercher</action></entry></hbox>
+    <checkbox><label>Chercher dans le nom seulement (--names-only)</label><variable>NOMS_SEULS</variable></checkbox>
+    <hbox><text><label>Résultats au plus :</label></text>
+      <spinbutton range-min="10" range-max="200" range-step="10"><variable>MAX</variable><default>50</default></spinbutton></hbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Chercher</label><action>exit:chercher</action></button>
+    </hbox>
+  </vbox>
+</window>

@@ -1,0 +1,13 @@
+<!-- Script : examples/boites-a-outils/serveur/04-ssh-durcissement.sh (dialogue confirmation) -->
+<window title="Appliquer le durcissement SSH" default-width="560">
+  <vbox>
+    <text><label>Fichier : /etc/ssh/sshd_config.d/10-durcissement.conf</label></text>
+    <edit editable="false" height-request="170"><variable>CONTENU</variable><input>printenv APERCU_SSHD</input></edit>
+    <text><label>Attention : le port reste 22.</label></text>
+    <text><label>Gardez une 2e session SSH ouverte jusqu'à l'essai d'une connexion neuve.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Écrire et recharger</label><action>exit:appliquer</action></button>
+    </hbox>
+  </vbox>
+</window>

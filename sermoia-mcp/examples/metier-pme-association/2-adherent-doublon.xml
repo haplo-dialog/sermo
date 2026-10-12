@@ -1,0 +1,12 @@
+<!-- Script : examples/metiers/07-pme-association/2-adherent.sh (dialogue doublon) -->
+<window title="Adhérent déjà inscrit ?">
+  <vbox>
+    <text><label>Le courriel sophie.durand@example.org figure déjà au registre :</label></text>
+    <text><label>2026-09-14 · 2026-2027 · Durand · Sophie</label></text>
+    <text><label>Ajouter quand même une nouvelle ligne ?</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Ajouter quand même</label><action>exit:ajouter</action></button>
+    </hbox>
+  </vbox>
+</window>

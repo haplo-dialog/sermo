@@ -1,0 +1,11 @@
+<!-- Script : examples/metiers/10-securite-informatique/3-audit-comptes.sh (dialogue verrouiller) -->
+<window title="Verrouiller le compte ?">
+  <vbox>
+    <text><label>Verrouiller le mot de passe du compte stagiaire ?</label></text>
+    <text><label>La personne ne pourra plus se connecter par mot de passe (une clé SSH reste valable).</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Verrouiller</label><action>exit:verrouiller</action></button>
+    </hbox>
+  </vbox>
+</window>

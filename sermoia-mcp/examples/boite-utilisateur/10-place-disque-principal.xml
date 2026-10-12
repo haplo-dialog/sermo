@@ -1,0 +1,28 @@
+<!-- Script : examples/boites-a-outils/utilisateur/10-place-disque.sh (dialogue principal) -->
+<window title="Ce qui prend de la place" default-width="600" default-height="480">
+  <vbox>
+    <text><label>Les plus gros dossiers dans /home/utilisateur :</label></text>
+    <tree scrollable="true" space-expand="true" space-fill="true">
+      <label>Dossier|Taille</label>
+      <variable>CHOIX</variable>
+      <item>/home/utilisateur/Vidéos|21 Go</item>
+      <item>/home/utilisateur/Images|9,6 Go</item>
+      <item>/home/utilisateur/.cache|3,1 Go</item>
+      <item>/home/utilisateur/Téléchargements|2,4 Go</item>
+      <item>/home/utilisateur/Musique|1,8 Go</item>
+      <item>/home/utilisateur/Documents|640 Mo</item>
+    </tree>
+    <hbox>
+      <checkbox><label>Compter les dossiers cachés (.cache…)</label><variable>CACHES</variable><default>true</default></checkbox>
+      <text><label>Lignes montrées :</label></text>
+      <spinbutton range-min="5" range-max="50" range-step="5"><variable>LIGNES</variable><default>15</default></spinbutton>
+    </hbox>
+    <statusbar><variable>LIBRE</variable><default>Place encore libre sur le disque : 38 Go</default></statusbar>
+    <hbox>
+      <button><label>Fermer</label><action>exit:fermer</action></button>
+      <button><label>Recompter</label><action>exit:recompter</action></button>
+      <button><label>Regarder dedans</label><action>exit:descendre</action></button>
+      <button><label>Ouvrir ce dossier</label><action>exit:ouvrir</action></button>
+    </hbox>
+  </vbox>
+</window>

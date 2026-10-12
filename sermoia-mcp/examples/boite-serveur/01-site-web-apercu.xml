@@ -1,0 +1,13 @@
+<!-- Script : examples/boites-a-outils/serveur/01-site-web.sh (dialogue apercu) -->
+<window title="Fichier de site nginx" default-width="620">
+  <vbox>
+    <text><label>Fichier : /etc/nginx/sites-available/exemple.org (nouveau fichier)</label></text>
+    <edit editable="false" height-request="260"><variable>CONTENU</variable><input>printenv APERCU_SITE</input></edit>
+    <checkbox><label>Recharger nginx si nginx -t réussit</label><default>true</default><variable>RECHARGER</variable></checkbox>
+    <text><label>Rien n'est rechargé si la vérification échoue.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Écrire le fichier</label><action>exit:ecrire</action></button>
+    </hbox>
+  </vbox>
+</window>

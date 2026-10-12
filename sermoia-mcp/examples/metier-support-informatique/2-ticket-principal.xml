@@ -1,0 +1,53 @@
+<!-- Script : examples/metiers/03-support-informatique/2-ticket.sh (dialogue principal) -->
+<window title="Nouveau ticket" default-width="540" default-height="520">
+  <vbox>
+    <notebook tab-labels="Demande|Description|Envoi" space-expand="true" space-fill="true">
+      <vbox>
+        <hbox><text><label>Votre nom :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>NOM</variable></entry></hbox>
+        <hbox><text><label>Poste concerné :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>POSTE</variable><default>poste-accueil</default></entry></hbox>
+        <hbox><text><label>Catégorie :</label></text>
+          <comboboxtext space-expand="true" space-fill="true">
+            <variable>CATEGORIE</variable>
+            <default>Logiciel</default>
+            <item>Matériel</item>
+            <item>Logiciel</item>
+            <item>Réseau et Internet</item>
+            <item>Compte et mot de passe</item>
+            <item>Impression</item>
+            <item>Autre</item>
+          </comboboxtext></hbox>
+        <hbox><text><label>Objet :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>OBJET</variable></entry></hbox>
+        <frame label="Urgence">
+          <vbox>
+            <radiobutton><label>Faible : je peux attendre</label><variable>U_FAIBLE</variable></radiobutton>
+            <radiobutton><label>Normale : gênant, contournable</label><default>true</default><variable>U_NORMALE</variable></radiobutton>
+            <radiobutton><label>Haute : je ne peux plus travailler correctement</label><variable>U_HAUTE</variable></radiobutton>
+            <radiobutton><label>Bloquante : plusieurs personnes arrêtées</label><variable>U_BLOQUANTE</variable></radiobutton>
+          </vbox>
+        </frame>
+      </vbox>
+      <vbox>
+        <frame label="Ce que vous faisiez, ce qui s'est passé, le message affiché">
+          <edit space-expand="true" space-fill="true"><variable>DESCRIPTION</variable></edit>
+        </frame>
+        <text><label>Le problème a commencé le :</label></text>
+        <calendar><variable>DEPUIS</variable><default>2026-10-11</default></calendar>
+      </vbox>
+      <vbox>
+        <radiobutton><label>Enregistrer le ticket dans un fichier</label><default>true</default><variable>D_FICHIER</variable></radiobutton>
+        <radiobutton><label>Préparer un courriel au support (xdg-email)</label><variable>D_COURRIEL</variable></radiobutton>
+        <hbox><text><label>Dossier des tickets :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>DOSSIER</variable><default>~/tickets</default></entry></hbox>
+        <hbox><text><label>Adresse du support :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>ADRESSE</variable><default>support@exemple.lan</default></entry></hbox>
+      </vbox>
+    </notebook>
+    <hbox space-expand="false" space-fill="false">
+      <button cancel></button>
+      <button><label>Créer le ticket</label><action>exit:creer</action></button>
+    </hbox>
+  </vbox>
+</window>

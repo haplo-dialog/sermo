@@ -1,0 +1,39 @@
+<!-- Script : examples/boites-a-outils/utilisateur/04-rappel.sh (dialogue principal) -->
+<window title="Me faire un rappel" default-width="560">
+  <vbox>
+    <frame label="Nouveau rappel">
+      <vbox>
+        <hbox><text><label>Me rappeler de :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>MESSAGE</variable><default>Appeler le cabinet médical</default></entry></hbox>
+        <hbox>
+          <calendar><variable>JOUR</variable><default>2026-10-12</default></calendar>
+          <vbox>
+            <hbox><text><label>Heure :</label></text>
+              <spinbutton range-min="0" range-max="23" range-step="1"><variable>HEURE</variable><default>9</default></spinbutton></hbox>
+            <hbox><text><label>Minutes :</label></text>
+              <spinbutton range-min="0" range-max="55" range-step="5"><variable>MINUTE</variable><default>30</default></spinbutton></hbox>
+            <hbox><text><label>Importance :</label></text>
+              <comboboxtext><variable>IMPORTANCE</variable><default>Normale</default>
+                <item>Discrète</item><item>Normale</item><item>Urgente</item>
+              </comboboxtext></hbox>
+          </vbox>
+        </hbox>
+        <hbox><button><label>Créer le rappel</label><action>exit:creer</action></button></hbox>
+      </vbox>
+    </frame>
+    <frame label="Mes rappels déjà prévus">
+      <vbox>
+        <tree scrollable="true" height-request="110">
+          <label>N°|Quand</label>
+          <variable>RAPPEL</variable>
+          <item>7|Mon Oct 12 09:30:00 2026</item>
+          <item>8|Thu Oct 15 18:00:00 2026</item>
+        </tree>
+        <hbox><button><label>Annuler le rappel choisi</label><action>exit:annuler</action></button></hbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

@@ -1,0 +1,12 @@
+<!-- Script : examples/boites-a-outils/administrateur/07-modules-noyau.sh (dialogue confirmation) -->
+<window title="Confirmer : mettre sur liste noire pcspkr" default-width="560">
+  <vbox>
+    <text><label>Vous allez mettre sur liste noire le module pcspkr.</label></text>
+    <text><label>Fichier /etc/modprobe.d/blacklist-pcspkr.conf : blacklist pcspkr</label></text>
+    <text><label>Un pilote de disque, de clavier ou de réseau mis hors jeu peut couper l'accès à la machine (et SSH avec).</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Confirmer</label><action>exit:confirmer</action></button>
+    </hbox>
+  </vbox>
+</window>

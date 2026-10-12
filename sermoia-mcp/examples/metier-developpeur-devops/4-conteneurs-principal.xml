@@ -1,0 +1,29 @@
+<!-- Script : examples/metiers/02-developpeur-devops/4-conteneurs.sh (dialogue principal) -->
+<window title="Conteneurs (podman)" default-width="620" default-height="440">
+  <vbox>
+    <tree scrollable="true" space-expand="true" space-fill="true">
+      <label>Nom|Image|État</label>
+      <variable>CONTENEUR</variable>
+      <item>web|docker.io/library/nginx:1.27|Up 3 hours</item>
+      <item>base|docker.io/library/postgres:16|Up 3 hours</item>
+      <item>file-attente|docker.io/library/redis:7|Exited (137) 2 days ago</item>
+    </tree>
+    <frame label="Action sur le conteneur choisi" space-expand="false" space-fill="false">
+      <vbox>
+        <hbox>
+          <radiobutton><label>Journaux</label><default>true</default><variable>A_JOURNAUX</variable></radiobutton>
+          <radiobutton><label>Démarrer</label><variable>A_DEMARRER</variable></radiobutton>
+          <radiobutton><label>Redémarrer</label><variable>A_REDEMARRER</variable></radiobutton>
+          <radiobutton><label>Arrêter</label><variable>A_ARRETER</variable></radiobutton>
+        </hbox>
+        <hbox><text><label>Dernières lignes de journal :</label></text>
+          <spinbutton range-min="10" range-max="10000" range-step="10"><variable>LIGNES</variable><default>200</default></spinbutton>
+          <checkbox><label>Avec l'heure (-t)</label><variable>HORODATAGE</variable></checkbox></hbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Appliquer</label><action>exit:appliquer</action></button>
+    </hbox>
+  </vbox>
+</window>

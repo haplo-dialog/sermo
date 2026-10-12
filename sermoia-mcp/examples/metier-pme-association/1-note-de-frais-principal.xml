@@ -1,0 +1,51 @@
+<!-- Script : examples/metiers/07-pme-association/1-note-de-frais.sh (dialogue principal) -->
+<window title="Note de frais" default-width="600">
+  <vbox>
+    <hbox>
+      <frame label="Date de la dépense">
+        <vbox>
+          <calendar><variable>DATE</variable><default>2026-10-12</default></calendar>
+        </vbox>
+      </frame>
+      <frame label="Dépense">
+        <vbox>
+          <text xalign="0"><label>Qui a payé :</label></text>
+          <entry><variable>NOM</variable><default>Claire Martin</default></entry>
+          <text xalign="0"><label>Objet :</label></text>
+          <entry><variable>OBJET</variable><default>Train Lyon-Paris, réunion fédérale</default></entry>
+          <text xalign="0"><label>Catégorie :</label></text>
+          <comboboxtext>
+            <variable>CATEGORIE</variable>
+            <default>Déplacement</default>
+            <item>Déplacement</item>
+            <item>Repas</item>
+            <item>Hébergement</item>
+            <item>Fournitures</item>
+            <item>Affranchissement</item>
+            <item>Autre</item>
+          </comboboxtext>
+          <text xalign="0"><label>Montant TTC (euros) :</label></text>
+          <spinbutton range-min="0" range-max="10000" range-step="0.5" digits="2">
+            <variable>MONTANT</variable><default>48.50</default>
+          </spinbutton>
+        </vbox>
+      </frame>
+    </hbox>
+    <frame label="Paiement">
+      <vbox>
+        <radiobutton><label>Avance personnelle, à rembourser</label><variable>PAYE_PERSO</variable><default>true</default></radiobutton>
+        <radiobutton><label>Carte de la structure</label><variable>PAYE_CARTE</variable></radiobutton>
+        <radiobutton><label>Espèces de la caisse</label><variable>PAYE_CAISSE</variable></radiobutton>
+        <checkbox><label>Justificatif (ticket, facture) remis au trésorier</label><variable>JUSTIFICATIF</variable><default>true</default></checkbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <text><label>Registre :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>FICHIER</variable><default>/home/utilisateur/Documents/notes-de-frais.csv</default></entry>
+    </hbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Enregistrer la dépense</label><action>exit:enregistrer</action></button>
+    </hbox>
+  </vbox>
+</window>

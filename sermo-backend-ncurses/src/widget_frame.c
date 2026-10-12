@@ -18,6 +18,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+extern gint project_space_expand, project_space_fill;   /* coeur (gtkdialog.c) */
+
 GtkWidget *widget_frame_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
     WidgetNode *node = widget_node_new(WT_FRAME, NULL, "");
@@ -38,6 +40,24 @@ GtkWidget *widget_frame_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     stackelement s = pop();
     for (int i = 0; i < s.nwidgets; i++)
         if (s.widgets[i]) widget_node_add_child(node, (WidgetNode *)s.widgets[i]);
+
+    /* Étirement des enfants : la règle de l'étalon (sermo-backend-gtk3/src/
+     * widget_frame.c), une colonne dont la valeur part de celle du PROJET
+     * (le cadre lui-même n'en donne pas) ; un enfant qui dit la sienne la
+     * reporte sur les suivants ; « non dit » : edit, frame, fenêtre
+     * défilante et paned s'étirent. */
+    int ex = project_space_expand, fi = project_space_fill;
+    for (int i = 0; i < s.nwidgets; ++i) {
+        WidgetNode *c = (WidgetNode *)s.widgets[i];
+        if (!c) continue;
+        if (c->expand) ex = c->expand > 0;
+        if (c->fill)   fi = c->fill > 0;
+        int t = s.widgettypes[i];
+        int d = (t == WIDGET_EDIT || t == WIDGET_FRAME || t == WIDGET_SCROLLEDW ||
+                 t == WIDGET_PANED);
+        c->pack_expand = (signed char)(ex != -1 ? ex : d);
+        c->pack_fill   = (signed char)(fi != -1 ? fi : d);
+    }
     return (GtkWidget *)node;
 }
 

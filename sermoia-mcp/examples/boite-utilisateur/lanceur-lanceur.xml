@@ -1,0 +1,28 @@
+<!-- Script : examples/boites-a-outils/utilisateur/lanceur.sh (dialogue lanceur) -->
+<window title="Mes petits outils" default-width="640">
+  <vbox>
+    <text><label>Choisissez ce que vous voulez faire.</label></text>
+    <notebook tab-labels="Mes fichiers|Tous les jours|Partager">
+      <vbox>
+        <hbox><button width-request="210"><label>Retrouver un fichier</label><action>exit:01-rechercher-fichiers</action></button><text><label>par son nom, son genre, sa taille ou sa date</label></text></hbox>
+        <hbox><button width-request="210"><label>Faire ou ouvrir un zip</label><action>exit:02-archives</action></button><text><label>regrouper des fichiers, ou sortir ceux d'une archive</label></text></hbox>
+        <hbox><button width-request="210"><label>Ranger un dossier</label><action>exit:07-ranger-dossier</action></button><text><label>trier par genre ou par mois ; vieux fichiers à la corbeille</label></text></hbox>
+        <hbox><button width-request="210"><label>Ce qui prend de la place</label><action>exit:10-place-disque</action></button><text><label>les plus gros dossiers de votre dossier personnel</label></text></hbox>
+      </vbox>
+      <vbox>
+        <hbox><button width-request="210"><label>Inventer un mot de passe</label><action>exit:03-mot-de-passe</action></button><text><label>solide, affiché une fois, jamais enregistré</label></text></hbox>
+        <hbox><button width-request="210"><label>Me faire un rappel</label><action>exit:04-rappel</action></button><text><label>un message qui s'affichera à l'heure choisie</label></text></hbox>
+        <hbox><button width-request="210"><label>Imprimer</label><action>exit:05-imprimer</action></button><text><label>choisir l'imprimante, les copies, le recto verso</label></text></hbox>
+        <hbox><button width-request="210"><label>Transformer en PDF</label><action>exit:06-convertir-documents</action></button><text><label>un document texte (ODT, DOCX) en PDF</label></text></hbox>
+      </vbox>
+      <vbox>
+        <hbox><button width-request="210"><label>Copier sur une clé USB</label><action>exit:08-copie-cle-usb</action></button><text><label>un dossier vers la clé, sans rien effacer sur la clé</label></text></hbox>
+        <hbox><button width-request="210"><label>Prêter un fichier</label><action>exit:09-partager-sur-le-reseau</action></button><text><label>sur le réseau de la maison, pendant quelques minutes</label></text></hbox>
+      </vbox>
+    </notebook>
+    <statusbar><variable>ETAT</variable><default>Mode à blanc : rien ne sera modifié, les commandes seront seulement affichées</default></statusbar>
+    <hbox>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

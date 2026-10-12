@@ -9,7 +9,7 @@
       variante GTK4.
 - [x] `sermocore.pc` : les backends consomment le cœur par pkg-config.
 - [x] Porter les sept backends sur `libsermocore` (qt6, gtk3, fltk1, efl1, sdl3,
-      gtk4, ncurses).
+      gtk4, ncurses). lvgl et html sont venus ensuite (2.8.0) : neuf aujourd'hui.
 - [x] Packaging séparé (`sermo-core-dev` + `sermo-backend-*`), dépendances
       disjointes, alias `sermo`, pont `gtkdialog`.
 
@@ -39,7 +39,9 @@
 - [ ] Cloisonnement de processus (IPC) : shell confiné au cœur.
 - [ ] Backends supplémentaires via le contrat de frontière. *(2.8.0 : lvgl et html, sur le
       cœur neutre.)*
-- [ ] Publication produit (dépôt apt, site).
+- [x] Site (`haplo-dialog.fr`) et paquets joints à chaque publication, avec
+      sommes de contrôle signées (`SHA256SUMS.asc`, depuis la 2.8.2).
+- [ ] Dépôt apt (il n'y en a pas aujourd'hui).
 
-> La progression est **gardée par les trois bancs** (XML 55 · comportement 53 ·
+> La progression est **gardée par les trois bancs** (XML 55 · comportement 61 ·
 > gardes) : aucune phase n'avance en laissant un banc rouge.

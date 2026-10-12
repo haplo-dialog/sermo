@@ -1,0 +1,26 @@
+<!-- Script : examples/metiers/03-support-informatique/3-reseau.sh (dialogue principal) -->
+<window title="Connexions réseau" default-width="600" default-height="440">
+  <vbox>
+    <text><label>Accès au réseau : full</label></text>
+    <tree scrollable="true" space-expand="true" space-fill="true">
+      <label>Connexion|Type|Interface|État</label>
+      <variable>CONNEXION</variable>
+      <item>Bureau filaire|802-3-ethernet|enp3s0|activated</item>
+      <item>Wi-Fi Invités|802-11-wireless||</item>
+      <item>VPN siège|vpn||</item>
+    </tree>
+    <frame label="Action sur la connexion choisie" space-expand="false" space-fill="false">
+      <hbox>
+        <radiobutton><label>Détails</label><default>true</default><variable>A_DETAILS</variable></radiobutton>
+        <radiobutton><label>Activer</label><variable>A_ACTIVER</variable></radiobutton>
+        <radiobutton><label>Désactiver</label><variable>A_DESACTIVER</variable></radiobutton>
+        <radiobutton><label>Relancer</label><variable>A_RELANCER</variable></radiobutton>
+      </hbox>
+    </frame>
+    <checkbox><label>Wi-Fi allumé</label><default>true</default><variable>WIFI</variable></checkbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Appliquer</label><action>exit:appliquer</action></button>
+    </hbox>
+  </vbox>
+</window>

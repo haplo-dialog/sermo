@@ -186,7 +186,7 @@
  *
  *  Enable: LV_USE_FLOAT
  */
-#define LV_USE_MATRIX 0
+#define LV_USE_MATRIX 1   /* sermo : requis par le dessin vectoriel (SVG) */
 
 #if LV_USE_MATRIX
 /** The rendering engine must support 3x3 matrix transformations. */
@@ -230,13 +230,13 @@
  *
  *  Enable: LV_USE_MATRIX
  */
-#define LV_USE_VECTOR_GRAPHIC 0
+#define LV_USE_VECTOR_GRAPHIC 1   /* sermo : requis par ThorVG (icônes SVG des thèmes) */
 
 /** Render a widget and its children into an image buffer with lv_snapshot_take(). */
 #define LV_USE_SNAPSHOT 0
 
 /** Backend that gives the SW renderer vector graphics support. */
-#define LV_USE_THORVG 0
+#define LV_USE_THORVG 1   /* sermo : la copie embarquée (LV_USE_THORVG_INTERNAL) */
 
 #if LV_USE_THORVG
 /** Build the ThorVG copy shipped with LVGL instead of linking an external one. */
@@ -793,7 +793,7 @@
 #define LV_USE_EXT_DATA 0
 
 /** Use `float` instead of `int32_t` for coordinates and values that need sub-pixel precision. */
-#define LV_USE_FLOAT 0
+#define LV_USE_FLOAT 1   /* sermo : requis par LV_USE_MATRIX */
 
 /** Bind widgets to subject variables so they update automatically when the value changes. */
 #define LV_USE_OBSERVER 1
@@ -954,7 +954,9 @@
  *
  *  Enable: LV_USE_VECTOR_GRAPHIC
  */
-#define LV_USE_SVG 0
+#define LV_USE_SVG 0   /* sermo : l'analyseur SVG de LVGL 9.6 plante sur les icônes d'Adwaita
+                        * (_process_attr_tag, mesuré 2026-10-11) : le port dessine le SVG par
+                        * le lecteur de ThorVG (render_lvgl.c, icone_svg). */
 
 #if LV_USE_SVG
 /** SVG animation */
@@ -1479,7 +1481,8 @@
  *
  *  Enable: LV_USE_VECTOR_GRAPHIC
  */
-#define LV_USE_LOTTIE 0
+#define LV_USE_LOTTIE 1   /* sermo : compile le lecteur SVG de ThorVG (THORVG_SVG_LOADER_SUPPORT
+                           * suit LV_USE_LOTTIE dans tiers/lvgl/src/libs/thorvg/config.h) */
 
 #endif /*LV_USE_THORVG*/
 

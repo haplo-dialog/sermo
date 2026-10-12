@@ -28,10 +28,11 @@ project license, unless it is listed in the table below.
 | `imgui/backends/imgui_impl_opengl3_loader.h` — OpenGL loader | public domain and MIT (Khronos headers) | The Khronos Group |
 | `sermo-backend-lvgl/tiers/lvgl/` — **LVGL v9.6.0**, compiled into `lvglsermo` (provenance: `tiers/lvgl/PROVENANCE`) | MIT (`tiers/lvgl/LICENCE.txt`); third-party parts: `tiers/lvgl/COPYRIGHTS.md` | LVGL Kft |
 | `sermo-backend-lvgl/lv_conf.h` — LVGL configuration, derived from the original template | MIT | LVGL Kft; S. Cage |
+| `tiers/lvgl/src/libs/thorvg/` — **ThorVG**, the SVG engine embedded in LVGL, compiled into `lvglsermo` since 2.8.2 (`LV_USE_THORVG` in `sermo-backend-lvgl/lv_conf.h`) | MIT (header of each file, `thorvg/LICENSE.txt`) | the ThorVG project |
 | `tiers/lvgl/src/libs/tiny_ttf/` — TrueType font reader (stb_truetype), compiled into `lvglsermo` | MIT or Unlicense, at your choice | Sean Barrett; codewitch-honey-crisis (tiny_ttf) |
 | Montserrat 14 font and Font Awesome 5 Free symbols, compiled into `tiers/lvgl/src/font/lv_font_montserrat_14.c` | OFL-1.1 | Julieta Ulanovsky; Fonticons, Inc. |
 | `sermo-backend-qt6/data/fr.haplo_dialog.qt6sermo.metainfo.xml` — AppStream metadata (AppStream requires a permissive license) | FSFAP | S. Cage |
-| `tests/xml/*.xml`, `sermo-backend-qt6/examples/*/demo.sh`, and the examples written for sermo that say so in their header (`examples/showcase/`, `examples/system-tools/`), and `contrib/trousses/` | CC0-1.0 | — |
+| `tests/xml/*.xml`, `sermo-backend-qt6/examples/*/demo.sh`, and the examples written for sermo that say so in their header (`examples/showcase/`, `examples/system-tools/`), the job scripts (`examples/metiers/`) and the toolboxes (`examples/boites-a-outils/`), and `contrib/trousses/` | CC0-1.0 | — |
 | Icons of the `button`, `togglebutton`, `pfeme` examples (inherited from gtkdialog) | GPL-2 or LGPL-2.1: see the `COPYING-*-icons` file next to them | elementary, fast-forward, nuvola projects |
 
 ## Provenance — what exactly sermo descends from

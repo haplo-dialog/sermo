@@ -30,6 +30,7 @@
  * TTF du système (DejaVu Sans) ; à défaut, Montserrat 14.
  */
 #include "lvgl.h"
+#include "src/libs/thorvg/thorvg_capi.h"   /* lecteur SVG de ThorVG (icônes) */
 
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
@@ -122,6 +123,7 @@ static int export_abort(void)
 {
     variables_export_all();
     printf("EXIT=\"abort\"\n");
+    g_setenv("EXIT", "abort", TRUE);   /* --do lit EXIT dans l'environnement (manuel §3.2) : il n'y était pas. */
     fflush(stdout);
     return 0;
 }
@@ -823,13 +825,119 @@ static int colonne(const WidgetNode *p)
  * des colonnes, ou si on lui en donne une. Non dès qu'elle est dans une rangée :
  * taillée sur son contenu, ses enfants à 100 % tomberaient à 0 px (mesuré :
  * <hbox><vbox><text> n'affichait pas son texte). */
+static int rangee(const WidgetNode *p);
+
+/* Le défaut de gtkdialog (widget_hbox.c / widget_vbox.c de gtk3sermo) quand
+ * rien n'est dit, pour space-expand comme pour space-fill : <edit>, <frame>,
+ * fenêtre défilante, et <entry> dans une rangée, <paned> dans une colonne. */
+static int etire_par_defaut(const WidgetNode *n)
+{
+    if (n->defile || n->type == WT_EDIT || n->type == WT_FRAME) return 1;
+    return rangee(n->parent) ? n->type == WT_ENTRY : n->type == WT_PANED;
+}
+
+/* Une <hbox>/<vbox> homogeneous="true" : chaque enfant a une case de même
+ * taille, et l'ensemble occupe toute la boîte. */
+static int homogene(const WidgetNode *p)
+{
+    return p && (p->type == WT_HBOX || p->type == WT_VBOX) && p->homogeneous;
+}
+
+/* La fenêtre et la page d'onglet n'ont qu'un enfant, qui prend toute leur
+ * place (GtkWindow, page de GtkNotebook) : t4, F1 occupe toute la hauteur. */
+static int seul_enfant(const WidgetNode *p)
+{
+    return p && (p->type == WT_WINDOW || p->type == WT_NOTEBOOK);
+}
+
+/* S'étire-t-il ? space-expand (celui de la boîte, reporté d'un enfant à
+ * l'autre : boite_repartir, widgets.c) ; sans réglage, le défaut du type.
+ * L'enfant d'une fenêtre ou d'une page d'onglet prend toute la place ; dans
+ * une boîte homogène, chaque enfant reçoit sa case. */
+static int etire(const WidgetNode *n)
+{
+    if (!n->parent) return 0;
+    if (seul_enfant(n->parent) || homogene(n->parent)) return 1;
+    if (n->expand) return n->expand > 0;
+    return etire_par_defaut(n);
+}
+
+/* Remplit-il la place qu'il reçoit (space-fill) ? Sinon il garde sa taille,
+ * centré dans cette place (t3 : « Etire » au milieu de la place libre). */
+static int remplit(const WidgetNode *n)
+{
+    if (!n->parent || seul_enfant(n->parent)) return 1;
+    if (n->fill) return n->fill > 0;
+    return etire_par_defaut(n);
+}
+
+/* Un enfant d'une <hbox>/<vbox> qui reçoit de la place sans la remplir est
+ * posé dans une case transparente, qui prend la place et le centre. */
+static int en_case(const WidgetNode *n)
+{
+    return n->parent && (n->parent->type == WT_HBOX || n->parent->type == WT_VBOX)
+           && n->type != WT_TIMER && etire(n) && !remplit(n);
+}
+
+/* … ou dans une rangée de largeur connue, où il s'étire : sa largeur est alors
+ * la place libre de la rangée (jusqu'à la 2.8.1, « inconnue » : les lignes du
+ * cadre « Systeme » de system-tools restaient à gauche, ses cadres étroits). */
 static int largeur_connue(const WidgetNode *c)
 {
     for (; c; c = c->parent) {
         if (c->type == WT_WINDOW || c->width > 0 || !c->parent) return 1;
-        if (!colonne(c->parent)) return 0;
+        if (!colonne(c->parent) && !(rangee(c->parent) && etire(c) && remplit(c))) return 0;
     }
     return 1;
+}
+
+/* Une boîte a-t-elle une hauteur ? Oui si on la lui donne, si c'est une page
+ * d'onglet (le lv_tabview a une hauteur fixée), si elle s'étire dans une
+ * colonne de hauteur connue, ou si elle remplit une rangée de hauteur connue. */
+static int hauteur_connue(const WidgetNode *c)
+{
+    for (; c; c = c->parent) {
+        if (c->height > 0) return 1;
+        /* la fenêtre a la taille de l'écran — pas pendant la mesure, où elle
+         * est taillée sur son contenu */
+        if (c->type == WT_WINDOW) return !g_mesure;
+        if (!c->parent) return 0;
+        if (c->parent->type == WT_NOTEBOOK) return 1;
+        if (rangee(c->parent)) continue;
+        if (colonne(c->parent) && etire(c) && remplit(c)) continue;
+        return 0;
+    }
+    return 0;
+}
+
+/* Ce que GTK dessine à sa hauteur propre, centré dans la place reçue : une
+ * barre, un curseur, une jauge, un champ. LVGL, lui, le dessinerait sur toute
+ * la hauteur (barre de 120 px de haut, mesuré sur 04-indicateurs) : ces
+ * widgets ne s'étirent qu'en largeur. */
+static int hauteur_propre(const WidgetNode *n)
+{
+    switch (n->type) {
+    case WT_PROGRESSBAR: case WT_PULSE: case WT_HSCALE: case WT_LEVELBAR: case WT_SPINBUTTON:
+    case WT_ENTRY: case WT_PASSWORD: case WT_SEARCHENTRY: case WT_COMBOBOX: case WT_SPINNER:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+/* Remplit la hauteur de sa rangée, comme dans GTK (une rangée donne toute sa
+ * hauteur à ses enfants) : les conteneurs et ce qui s'étire. */
+static int remplit_rangee(const WidgetNode *n)
+{
+    if (hauteur_propre(n)) return 0;
+    switch (n->type) {
+    case WT_FRAME: case WT_VBOX: case WT_HBOX: case WT_NOTEBOOK: case WT_EDIT:
+    case WT_TREE: case WT_LIST: case WT_TABLE: case WT_PANED: case WT_EXPANDER:
+    case WT_BUTTON:   /* t2 : OK / Cancel prennent la hauteur de leur rangée */
+        return 1;
+    default:
+        return etire(n);
+    }
 }
 
 static void construire_enfants(WidgetNode *n, lv_obj_t *o)
@@ -968,8 +1076,26 @@ static void construire_onglets(WidgetNode *n, lv_obj_t *parent)
         return;
     }
     lv_obj_t *tv = lv_tabview_create(parent);
-    lv_tabview_set_tab_bar_size(tv, barre);
-    if (n->state.notebook.side) lv_tabview_set_tab_bar_position(tv, LV_DIR_LEFT);
+    const int cote = n->state.notebook.side;   /* 0 haut, 1 gauche, 2 droite, 3 bas */
+    if (cote == 1 || cote == 2) {
+        /* Barre sur le côté : sa « taille » est sa LARGEUR — 36 px coupaient
+         * les libellés (« ystem » pour « Systeme », jusqu'à la 2.8.1). Elle
+         * prend la largeur du plus long libellé, plus la marge du bouton. */
+        const lv_font_t *police = lv_obj_get_style_text_font(tv, 0);
+        int32_t large = 0;
+        for (int i = 0; i < n->child_count && i < n->state.notebook.tab_count; i++) {
+            const char *t = n->state.notebook.tab_labels[i];
+            if (!t) continue;
+            lv_point_t sz;
+            lv_text_get_size(&sz, t, police, 0, 0, LV_COORD_MAX, LV_TEXT_FLAG_NONE);
+            if (sz.x > large) large = sz.x;
+        }
+        lv_tabview_set_tab_bar_size(tv, large > 0 ? large + 32 : 80);
+        lv_tabview_set_tab_bar_position(tv, cote == 1 ? LV_DIR_LEFT : LV_DIR_RIGHT);
+    } else {
+        lv_tabview_set_tab_bar_size(tv, barre);
+        if (cote == 3) lv_tabview_set_tab_bar_position(tv, LV_DIR_BOTTOM);
+    }
     lv_obj_set_height(tv, n->height > 0 ? n->height
                           : (n->lv_mesure_h > 0 ? n->lv_mesure_h : 240));
     for (int i = 0; i < n->child_count; i++) {
@@ -980,6 +1106,17 @@ static void construire_onglets(WidgetNode *n, lv_obj_t *parent)
         lv_obj_set_flex_flow(page, LV_FLEX_FLOW_COLUMN);
         lv_obj_set_style_pad_gap(page, 6, 0);
         construire(n->children[i], page);
+    }
+    if (cote == 1 || cote == 2) {
+        /* Onglets à leur hauteur, empilés en haut, comme GTK : LVGL les étirait
+         * sur toute la hauteur de la barre. */
+        lv_obj_t *bar = lv_tabview_get_tab_bar(tv);
+        lv_obj_set_flex_align(bar, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
+        for (uint32_t i = 0; i < lv_obj_get_child_count(bar); i++) {
+            lv_obj_t *b = lv_obj_get_child(bar, (int32_t)i);
+            lv_obj_set_flex_grow(b, 0);
+            lv_obj_set_size(b, lv_pct(100), barre);
+        }
     }
     if (n->state.notebook.current_tab > 0 && n->state.notebook.current_tab < n->child_count)
         lv_tabview_set_active(tv, (uint32_t)n->state.notebook.current_tab, LV_ANIM_OFF);
@@ -1032,32 +1169,185 @@ static int rangee(const WidgetNode *p)
     return p && (p->type == WT_HBOX || p->type == WT_TOOLBAR || p->type == WT_FLOWBOX || p->type == WT_GRID);
 }
 
-/* <pixmap>, <image> : un PNG par le décodeur libpng de LVGL (lettre A: =
- * stdio). Ni SVG ni icône de thème sans fichier PNG : rien n'est dessiné. */
-static lv_obj_t *image_creer(WidgetNode *n, lv_obj_t *parent)
+/* Pose le fichier `f` (PNG, ou SVG par ThorVG) dans l'image `o`, à `px`
+ * pixels de large si px > 0. Une icône SYMBOLIQUE (« …-symbolic.svg ») prend la
+ * couleur du texte, comme dans GTK. Rend 1 si l'image est posée. Jusqu'à la
+ * 2.8.1 : PNG seulement — les thèmes n'ayant presque plus que du SVG, aucune
+ * icône ne s'affichait. */
+/* Un SVG dessiné par ThorVG dans une image ARGB8888 de `px` pixels de large
+ * (hauteur au ratio). Rend le descripteur (à garder tant que l'image vit), ou
+ * NULL. L'analyseur SVG de LVGL plante sur les icônes d'Adwaita : ThorVG a le
+ * sien, solide. */
+static lv_image_dsc_t *icone_svg(const char *chemin, int px)
 {
-    const char *f = n->type == WT_IMAGE_W ? n->icon_path : n->label;
+    Tvg_Paint *pic = tvg_picture_new();
+    if (!pic) return NULL;
+    float w = 0, h = 0;
+    if (tvg_picture_load(pic, chemin) != TVG_RESULT_SUCCESS ||
+        tvg_picture_get_size(pic, &w, &h) != TVG_RESULT_SUCCESS || w <= 0 || h <= 0) {
+        tvg_paint_del(pic);
+        return NULL;
+    }
+    if (px <= 0) px = (int)w;
+    int pw = px, ph = (int)(px * h / w + 0.5f);
+    if (pw > 1024 || ph < 1 || ph > 1024) { tvg_paint_del(pic); return NULL; }
+    tvg_picture_set_size(pic, (float)pw, (float)ph);
+    lv_image_dsc_t *d = calloc(1, sizeof *d);
+    uint32_t *buf = calloc((size_t)pw * (size_t)ph, sizeof *buf);
+    Tvg_Canvas *cv = tvg_swcanvas_create();
+    if (!d || !buf || !cv) { free(d); free(buf); if (cv) tvg_canvas_destroy(cv); tvg_paint_del(pic); return NULL; }
+    tvg_swcanvas_set_target(cv, buf, (uint32_t)pw, (uint32_t)pw, (uint32_t)ph, TVG_COLORSPACE_ARGB8888S);
+    tvg_canvas_push(cv, pic);            /* le canevas possède désormais l'image */
+    tvg_canvas_draw(cv);
+    tvg_canvas_sync(cv);
+    tvg_canvas_destroy(cv);
+    d->header.magic = LV_IMAGE_HEADER_MAGIC;
+    d->header.cf = LV_COLOR_FORMAT_ARGB8888;
+    d->header.w = (uint32_t)pw;
+    d->header.h = (uint32_t)ph;
+    d->header.stride = (uint32_t)pw * 4;
+    d->data = (const uint8_t *)buf;
+    d->data_size = (uint32_t)pw * (uint32_t)ph * 4;
+    return d;
+}
+
+static void icone_liberer(lv_event_t *e)
+{
+    lv_image_dsc_t *d = lv_event_get_user_data(e);
+    if (d) { free((void *)d->data); free(d); }
+}
+
+static int icone_poser(lv_obj_t *o, const char *f, int px)
+{
     if (f && g_ascii_strncasecmp(f, "file:", 5) == 0) f += 5;
     while (f && (*f == ' ' || *f == '\t')) f++;
-    lv_obj_t *o = lv_image_create(parent);
+    if (!f || !*f || !(g_str_has_suffix(f, ".png") || g_str_has_suffix(f, ".svg"))) return 0;
     struct stat st;
     /* chemin relatif : au dossier courant, comme l'étalon (fond.png d'<overlay>) */
-    char *abs = (f && *f && g_str_has_suffix(f, ".png")) ? realpath(f, NULL) : NULL;
-    if (abs && stat(abs, &st) == 0 && S_ISREG(st.st_mode)) {
+    char *abs = realpath(f, NULL);
+    int ok = 0;
+    if (abs && stat(abs, &st) == 0 && S_ISREG(st.st_mode) && g_str_has_suffix(abs, ".svg")) {
+        lv_image_dsc_t *d = icone_svg(abs, px > 0 ? px : 0);
+        if (d) {
+            lv_image_set_src(o, d);
+            lv_obj_add_event_cb(o, icone_liberer, LV_EVENT_DELETE, d);
+            ok = 1;
+        }
+    } else if (abs && stat(abs, &st) == 0 && S_ISREG(st.st_mode)) {
         char *src = g_strconcat("A:", abs, NULL);
         lv_image_set_src(o, src);   /* LVGL copie la chaîne */
         g_free(src);
-        if (n->type == WT_IMAGE_W && n->icon_px > 0) {
+        ok = 1;
+        if (px > 0) {
             lv_image_header_t h;
             if (lv_image_decoder_get_info(lv_image_get_src(o), &h) == LV_RESULT_OK && h.w > 0) {
-                lv_image_set_scale(o, (uint32_t)(256 * n->icon_px / h.w));
-                lv_obj_set_size(o, n->icon_px, n->icon_px * h.h / h.w);
+                lv_image_set_scale(o, (uint32_t)(256 * px / h.w));
+                lv_obj_set_size(o, px, px * h.h / h.w);
                 lv_image_set_inner_align(o, LV_IMAGE_ALIGN_CENTER);
             }
         }
     }
+    if (ok && strstr(abs, "-symbolic.svg")) {
+        lv_obj_set_style_image_recolor(o, lv_obj_get_style_text_color(lv_obj_get_parent(o), 0), 0);
+        lv_obj_set_style_image_recolor_opa(o, LV_OPA_COVER, 0);
+    }
     free(abs);
+    return ok;
+}
+
+/* <pixmap>, <image> : un fichier PNG ou SVG, ou une icône du thème. */
+static lv_obj_t *image_creer(WidgetNode *n, lv_obj_t *parent)
+{
+    lv_obj_t *o = lv_image_create(parent);
+    icone_poser(o, n->type == WT_IMAGE_W ? n->icon_path : n->label,
+                n->type == WT_IMAGE_W ? n->icon_px : 0);
     return o;
+}
+
+/* L'objet qui occupe la place d'un nœud dans sa boîte : sa case, s'il en a. */
+static lv_obj_t *place_de(const WidgetNode *n)
+{
+    return n->lv_case ? (lv_obj_t *)n->lv_case : (lv_obj_t *)n->lv;
+}
+
+/* homogeneous="true" : chaque enfant reçoit une case de MÊME taille sur l'axe
+ * de la boîte — au moins la plus grande taille naturelle, et toute la longueur
+ * de la boîte quand elle est connue (flex-grow posé par finir : etire() vaut 1
+ * dans une boîte homogène). Un enfant qui ne remplit pas sa case y est centré
+ * (en_case). Étalon : t1, cinq colonnes égales sur toute la largeur. */
+static void cases_egales(WidgetNode *n, lv_obj_t *o, int r)
+{
+    int32_t plus = 0;
+    lv_obj_update_layout(o);
+    for (int i = 0; i < n->child_count; i++) {
+        lv_obj_t *p = place_de(n->children[i]);
+        if (!p || !n->children[i]->visible) continue;
+        int32_t t = r ? lv_obj_get_width(p) : lv_obj_get_height(p);
+        if (t > plus) plus = t;
+    }
+    for (int i = 0; i < n->child_count; i++) {
+        lv_obj_t *p = place_de(n->children[i]);
+        if (!p) continue;
+        if (r) lv_obj_set_style_min_width(p, plus, 0);
+        else   lv_obj_set_style_min_height(p, plus, 0);
+    }
+}
+
+/* Les hauteurs qui dépendent de la place reçue : posées APRÈS la construction
+ * de tout l'arbre (hauteurs_poser). Mesurée au fil de la construction, la
+ * hauteur naturelle d'un nœud se lit sur des parents encore taillés sur leur
+ * contenu : un texte en pleine largeur d'un cadre de 0 px y passe à la ligne à
+ * chaque lettre (mesuré : 544 px pour une ligne, une colonne de 1501 px dans
+ * system-tools). */
+enum {
+    H_GRANDIT      = 1,   /* s'étire en hauteur dans sa colonne (flex-grow) */
+    H_REMPLIT      = 2,   /* prend toute la hauteur de sa rangée */
+    H_CASE_REMPLIT = 4,   /* sa case prend toute la hauteur de sa rangée */
+};
+static void hauteurs_relever(WidgetNode *n)
+{
+    lv_obj_t *o = (lv_obj_t *)n->lv, *c = (lv_obj_t *)n->lv_case;
+    if (!o) n->lv_hauteur = 0;
+    if (n->lv_hauteur & (H_GRANDIT | H_CASE_REMPLIT))
+        n->lv_haut_nat = lv_obj_get_height(c ? c : o);
+    else if (n->lv_hauteur & H_REMPLIT)
+        n->lv_haut_nat = lv_obj_get_height(o);
+    for (int i = 0; i < n->child_count; i++) hauteurs_relever(n->children[i]);
+}
+static void hauteurs_appliquer(WidgetNode *n)
+{
+    lv_obj_t *o = (lv_obj_t *)n->lv, *c = (lv_obj_t *)n->lv_case;
+    if (!o) n->lv_hauteur = 0;
+    /* AU MOINS la hauteur naturelle : une boîte taillée sur son contenu ne
+     * compte pas un enfant en pour-cent ou qui grandit, et LVGL l'écraserait
+     * à 0 px (les boutons de « Actions rapides » et le cadre « dmesg » de
+     * system-tools disparaissaient, jusqu'à la 2.8.1). */
+    if (n->lv_hauteur & H_GRANDIT) {
+        lv_obj_t *t = c ? c : o;
+        lv_obj_set_style_min_height(t, n->lv_haut_nat, 0);
+        lv_obj_set_flex_grow(t, 1);
+    }
+    if (n->lv_hauteur & H_CASE_REMPLIT) {
+        lv_obj_set_style_min_height(c, n->lv_haut_nat, 0);
+        lv_obj_set_height(c, lv_pct(100));
+    }
+    if (n->lv_hauteur & H_REMPLIT) {
+        if (!c) lv_obj_set_style_min_height(o, n->lv_haut_nat, 0);
+        lv_obj_set_height(o, lv_pct(100));
+    }
+    for (int i = 0; i < n->child_count; i++) hauteurs_appliquer(n->children[i]);
+}
+static void textes_poser(WidgetNode *n)
+{
+    if (n->type == WT_EDIT && n->lv)
+        lv_textarea_set_text((lv_obj_t *)n->lv, n->state.text.content ? n->state.text.content : "");
+    for (int i = 0; i < n->child_count; i++) textes_poser(n->children[i]);
+}
+static void hauteurs_poser(WidgetNode *root)
+{
+    lv_obj_update_layout(lv_screen_active());
+    hauteurs_relever(root);
+    hauteurs_appliquer(root);
 }
 
 static void construire(WidgetNode *n, lv_obj_t *parent)
@@ -1065,6 +1355,21 @@ static void construire(WidgetNode *n, lv_obj_t *parent)
     lv_obj_t *o = NULL;
     const char *lbl = n->label ? n->label : "";
     int boite_n = 0;   /* une boîte : on lui applique width/height-request */
+
+    /* Étiré sans remplir (space-fill faux) : une case transparente prend la
+     * place reçue et y centre le widget, à sa taille propre — sur la largeur
+     * dans une rangée, sur la hauteur dans une colonne (où il garde toute la
+     * largeur, comme dans une GtkBox verticale). */
+    n->lv_case = NULL;
+    if (en_case(n)) {
+        int r = rangee(n->parent);
+        lv_obj_t *c = boite(parent, r ? LV_FLEX_FLOW_ROW : LV_FLEX_FLOW_COLUMN);
+        lv_obj_set_style_pad_gap(c, 0, 0);
+        lv_obj_set_flex_align(c, LV_FLEX_ALIGN_CENTER, r ? LV_FLEX_ALIGN_CENTER : LV_FLEX_ALIGN_START,
+                              LV_FLEX_ALIGN_CENTER);
+        n->lv_case = c;
+        parent = c;
+    }
 
     switch (n->type) {
     case WT_WINDOW:
@@ -1149,6 +1454,7 @@ static void construire(WidgetNode *n, lv_obj_t *parent)
                           ? LV_FLEX_FLOW_ROW : LV_FLEX_FLOW_COLUMN);
         boite_n = 1;
         construire_enfants(n, o);
+        if (homogene(n)) cases_egales(n, o, 0);
         break;
     case WT_GRID: {
         /* <grid columns="N"> : des rangées de N cellules, chaque colonne à la
@@ -1184,9 +1490,13 @@ static void construire(WidgetNode *n, lv_obj_t *parent)
     case WT_HBOX: case WT_TOOLBAR: case WT_FLOWBOX:
         o = boite(parent, n->type == WT_FLOWBOX ? LV_FLEX_FLOW_ROW_WRAP : LV_FLEX_FLOW_ROW);
         boite_n = 1;
-        /* Une étiquette se centre sur la hauteur de son champ, comme chez l'étalon. */
-        lv_obj_set_flex_align(o, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+        /* Une étiquette se centre sur la hauteur de son champ, comme chez l'étalon.
+         * gtkdialog range une rangée PAR LA FIN (gtk_box_pack_end) : ce qui ne
+         * s'étire pas se cale à droite (jusqu'à la 2.8.1 : à gauche). */
+        lv_obj_set_flex_align(o, n->type == WT_HBOX ? LV_FLEX_ALIGN_END : LV_FLEX_ALIGN_START,
+                              LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
         construire_enfants(n, o);
+        if (homogene(n)) cases_egales(n, o, 1);
         break;
     case WT_FRAME: case WT_ASPECTFRAME: {
         /* <aspectframe label="…"> se dessine comme un cadre titré. */
@@ -1280,6 +1590,24 @@ static void construire(WidgetNode *n, lv_obj_t *parent)
     case WT_BUTTON: case WT_MENUITEM: case WT_FONTBUTTON:
     case WT_COLORBUTTON: case WT_FILECHOOSER: {
         o = lv_button_create(parent);
+        /* Le contenu (icône et libellé) est un groupe CENTRÉ dans le bouton,
+         * sur les deux axes, comme l'étalon : un bouton élargi ou étiré en
+         * hauteur (t2, t4) gardait son libellé en haut à gauche. */
+        lv_obj_set_flex_flow(o, LV_FLEX_FLOW_ROW);
+        lv_obj_set_flex_align(o, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+        /* <input file icon="…"> : l'icône du thème avant le libellé, comme
+         * l'étalon (jusqu'à la 2.8.1, lvgl n'en dessinait aucune). */
+        if (n->icon_path && (n->type == WT_BUTTON || n->type == WT_MENUITEM)) {
+            /* image-position : l'icône à droite, dessus ou dessous du libellé ;
+             * le groupe reste centré (flux inversé, alignement au centre) */
+            static const lv_flex_flow_t flux[4] = { LV_FLEX_FLOW_ROW, LV_FLEX_FLOW_ROW_REVERSE,
+                                                    LV_FLEX_FLOW_COLUMN, LV_FLEX_FLOW_COLUMN_REVERSE };
+            lv_obj_set_flex_flow(o, flux[n->icone_pos & 3]);
+            lv_obj_set_style_pad_column(o, 6, 0);
+            lv_obj_set_style_pad_row(o, 4, 0);
+            lv_obj_t *ic = lv_image_create(o);
+            if (!icone_poser(ic, n->icon_path, n->icon_px > 0 ? n->icon_px : 16)) lv_obj_delete(ic);
+        }
         /* un <chooser> sans libellé montre son dossier, pas « OK » */
         lv_label_set_text(lv_label_create(o), lbl[0] ? lbl
                           : n->type == WT_FILECHOOSER ? (n->state.entry.buf[0] ? n->state.entry.buf : "…") : "OK");
@@ -1331,7 +1659,11 @@ static void construire(WidgetNode *n, lv_obj_t *parent)
     case WT_EDIT:
         o = lv_textarea_create(parent);
         lv_obj_set_size(o, n->width > 0 ? n->width : 300, n->height > 0 ? n->height : 120);
-        lv_textarea_set_text(o, n->state.text.content ? n->state.text.content : "");
+        /* Le texte est posé après la construction (textes_poser) : sa taille
+         * est fixée ci-dessus, il ne compte pas dans la mesure, et
+         * lv_textarea_set_text refait la mise en page de tout l'écran — un
+         * texte de 20000 caractères sans saut de ligne coûtait 3 s à chaque
+         * fois (tests/garde_input_sans_fin.sh figé au-delà de 40 s). */
         lv_obj_add_event_cb(o, champ_change, LV_EVENT_VALUE_CHANGED, n);
         break;
     case WT_LIST:
@@ -1449,26 +1781,59 @@ static void finir(WidgetNode *n, lv_obj_t *o)
      * pour-cent d'une boîte taillée sur son contenu ne se mesure pas. */
     /* Un interrupteur garde sa taille, comme chez l'étalon : étiré, il devenait
      * une longue barre (capture du site, 2026-10-10). */
+    /* Sa case (en_case), s'il en a une : c'est elle qui prend la place dans la
+     * boîte ; le widget y garde sa taille sur l'axe de la boîte. */
+    lv_obj_t *cel = (lv_obj_t *)n->lv_case;
+    n->lv_hauteur = 0;
+    if (cel && g_mesure != 1 && colonne(n->parent) && largeur_connue(n->parent))
+        lv_obj_set_width(cel, lv_pct(100));
+    if (cel && g_mesure != 1 && rangee(n->parent) && hauteur_connue(n->parent))
+        n->lv_hauteur |= H_CASE_REMPLIT;
     if (o && g_mesure != 1 && colonne(n->parent) && largeur_connue(n->parent)
         && !(n->width > 0) && n->type != WT_TABLE && n->type != WT_SWITCH && n->type != WT_VSCALE
         && n->type != WT_MENUBUTTON)
         lv_obj_set_width(o, lv_pct(100));   /* lv_table : une largeur en pour-cent la met à 0 px (mesuré) */
     /* space-expand="true" : l'enfant prend la place restante dans sa boîte,
      * en largeur dans un hbox, en hauteur dans un vbox — et remplit l'autre
-     * sens, comme chez l'étalon (space-fill). */
-    if (o && n->expand > 0 && g_mesure != 1 && n->type != WT_VSCALE) {
+     * sens, comme chez l'étalon (space-fill). Posé après coup, par
+     * hauteurs_poser : voir là. */
+    if (o && g_mesure != 1 && rangee(n->parent) && hauteur_connue(n->parent) && remplit_rangee(n)
+        && !(n->height > 0))
+        n->lv_hauteur |= H_REMPLIT;
+    lv_obj_t *t = cel ? cel : o;   /* ce qui s'étire dans la boîte */
+    if (o && etire(n) && g_mesure != 1 && n->type != WT_VSCALE) {
         /* Pas de flex-grow pendant la mesure : dans une boîte taillée sur son
          * contenu, il n'y a rien à prendre et LVGL écrase l'enfant à 0 px (le
          * formulaire mesurait 80 px de haut et sortait coupé). */
-        if (!g_mesure) lv_obj_set_flex_grow(o, 1);
+        if (!g_mesure) {
+            /* Il garde AU MOINS sa taille naturelle : dans une boîte taillée
+             * sur son contenu, LVGL écrase sinon un enfant qui grandit à 0 px
+             * (les boutons de « Actions rapides » et le cadre « dmesg » de
+             * system-tools disparaissaient, jusqu'à la 2.8.1). */
+            /* Une mise en page complète ne sert qu'à la largeur d'une rangée :
+             * la hauteur d'une colonne est relevée une seule fois, par
+             * hauteurs_poser. Chacune refait tout l'écran — un <edit> de
+             * 20000 caractères sans saut de ligne y passait plus de 40 s
+             * (tests/garde_input_sans_fin.sh). */
+            if (rangee(n->parent)) {
+                lv_obj_update_layout(t);
+                lv_obj_set_style_min_width(t, lv_obj_get_width(t), 0);
+                lv_obj_set_flex_grow(t, 1);
+            } else if (cel || !hauteur_propre(n)) {
+                n->lv_hauteur |= H_GRANDIT;   /* hauteurs_poser */
+            }
+        }
         if (n->parent && (n->parent->type == WT_HBOX || n->parent->type == WT_TOOLBAR)) {
-            /* Remplir la hauteur d'une rangée n'a de sens que si la rangée en a
-             * une : taillée sur son contenu, un 100 % devient circulaire et LVGL
-             * écrase le champ (texte coupé, mesuré sur 01-formulaire). */
-            if (n->parent->height > 0) lv_obj_set_height(o, lv_pct(100));
-        } else
-            lv_obj_set_width(o, lv_pct(100));
+            /* La hauteur d'une rangée : ci-dessus (remplit_rangee), et seulement
+             * si la rangée en a une — taillée sur son contenu, un 100 % devient
+             * circulaire et LVGL écrase le champ (mesuré sur 01-formulaire). */
+        } else if (largeur_connue(n->parent))
+            /* Même piège en largeur : 100 % d'une colonne taillée sur son
+             * contenu vaut 0 px — les boutons de « Actions rapides » de
+             * system-tools n'apparaissaient pas (jusqu'à la 2.8.1). */
+            lv_obj_set_width(t, lv_pct(100));
     }
+    if (cel && !n->visible) lv_obj_set_hidden(cel, true);
     if (o && !n->visible) lv_obj_set_hidden(o, true);
     if (o && !n->sensitive) lv_obj_add_state(o, LV_STATE_DISABLED);
 }
@@ -1477,6 +1842,7 @@ static void finir(WidgetNode *n, lv_obj_t *o)
 static void synchroniser(WidgetNode *n)
 {
     lv_obj_t *o = (lv_obj_t *)n->lv;
+    if (n->lv_case) lv_obj_set_hidden((lv_obj_t *)n->lv_case, !n->visible);
     if (o) {
         lv_obj_set_hidden(o, !n->visible);
         if (n->sensitive) lv_obj_remove_state(o, LV_STATE_DISABLED);
@@ -1695,6 +2061,8 @@ static void preparer_ecran(WidgetNode *root)
         if (lv_indev_get_type(i) == LV_INDEV_TYPE_KEYPAD) lv_indev_set_group(i, g);
 
     construire(root, ecran);
+    if (!g_mesure) textes_poser(root);
+    hauteurs_poser(root);
 }
 
 /* ─── Taille de la fenêtre : celle du contenu, comme chez l'étalon ──────────
@@ -1704,6 +2072,8 @@ static void preparer_ecran(WidgetNode *root)
 static void oublier(WidgetNode *n)
 {
     n->lv = NULL;
+    n->lv_case = NULL;
+    n->lv_hauteur = 0;
     for (int i = 0; i < n->child_count; i++) oublier(n->children[i]);
 }
 

@@ -107,7 +107,8 @@ m=[{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"20
    appel(10,"sermo_inexistant",{}),
    appel(11,"sermo_examples",{"task":"formulaire de contact","limit":1}),
    appel(12,"sermo_vote",{"example":"../../etc","helpful":True}),
-   appel(13,"sermo_check",{"xml":5})]
+   appel(13,"sermo_check",{"xml":5}),
+   appel(14,"sermo_examples",{"task":"fail2ban","limit":1})]
 for x in m: print(json.dumps(x))
 print('{pas du json')
 print('[1,2]')
@@ -148,6 +149,10 @@ if e.get(10)!=-32602: err.append(f"outil inconnu : code {e.get(10)}")
 if 'formulaire/' not in texte(11): err.append("sermo_examples ne trouve pas « formulaire de contact »")
 if not r.get(12,{}).get('isError'): err.append("sermo_vote accepte un sujet hors catalogue")
 if not r.get(13,{}).get('isError'): err.append("sermo_check accepte un 'xml' qui n'est pas une chaîne")
+# Le classement est par FICHIER : dans un gros sujet (une boîte à outils), le
+# fichier qui contient le mot passe devant ses voisins (2.8.1 : ordre alphabétique).
+if "fail2ban" not in texte(14).split("\n",1)[0]:
+    err.append("sermo_examples classe par sujet, pas par fichier (« fail2ban » ne sort pas en tête)")
 if sans_id!=[-32700,-32600]: err.append(f"JSON illisible / tableau : codes {sans_id}")
 print('\n'.join(err) if err else 'OK')
 PY
@@ -196,6 +201,11 @@ ok=len(l)==2 and l[0]["result"].get("isError") and "timeout" in l[0]["result"]["
 sys.exit(0 if ok else 1)
 PY
 pgrep -f "$ESSAIS/bloque.sh" >/dev/null && ko "des processus du faux binaire survivent au délai"
+
+# ── 6. Catalogue métier : à jour des scripts d'examples/metiers ──────────────
+if [ -d "$RACINE/examples/metiers" ]; then
+    m=$(bash "$ICI/outils/catalogue-metiers.sh" --verifier 2>&1) && echo "$m" || ko "$m"
+fi
 
 [ "$ecarts" -eq 0 ] && { echo "verifie : OK"; exit 0; }
 echo "verifie : $ecarts écart(s)"; exit 1

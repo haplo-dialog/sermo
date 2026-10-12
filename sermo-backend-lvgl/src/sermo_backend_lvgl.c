@@ -61,7 +61,8 @@ void sermo_be_window_move(void *w, int x, int y)
 void *sermo_be_scroll_new(int w, int h)
 {
     WidgetNode *n = widget_node_new(WT_VBOX, NULL, NULL);
-    if (n) { n->width = w; n->height = h; }
+    /* defile : s'étire par défaut, comme le GtkScrolledWindow de l'étalon */
+    if (n) { n->width = w; n->height = h; n->defile = 1; }
     return n;
 }
 

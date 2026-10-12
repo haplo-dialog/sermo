@@ -1,0 +1,58 @@
+<!-- Script : examples/metiers/08-enseignement-formation/1-qcm.sh (dialogue principal) -->
+<window title="QCM : Les bons réflexes numériques" default-width="560">
+  <vbox>
+    <hbox>
+      <text><label>Nom :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>ELEVE</variable><default>Léa Moreau</default></entry>
+      <text><label>Groupe :</label></text>
+      <comboboxtext>
+        <variable>GROUPE</variable>
+        <default>Groupe A</default>
+        <item>Groupe A</item>
+        <item>Groupe B</item>
+        <item>Formation continue</item>
+      </comboboxtext>
+    </hbox>
+    <notebook tab-labels="Q1|Q2|Q3|Q4|Q5">
+      <vbox>
+        <text wrap="true" xalign="0"><label>Un courriel vous demande votre mot de passe « pour vérification ». Que faites-vous ?</label></text>
+        <radiobutton><label>Je ne sais pas</label><variable>Q1_R0</variable><default>true</default></radiobutton>
+        <radiobutton><label>Je réponds vite pour ne pas perdre mon compte</label><variable>Q1_R1</variable></radiobutton>
+        <radiobutton><label>Je ne réponds pas et je le signale</label><variable>Q1_R2</variable></radiobutton>
+        <radiobutton><label>Je clique sur le lien pour vérifier</label><variable>Q1_R3</variable></radiobutton>
+      </vbox>
+      <vbox>
+        <text wrap="true" xalign="0"><label>Que contient une sauvegarde « 3-2-1 » ?</label></text>
+        <radiobutton><label>Je ne sais pas</label><variable>Q2_R0</variable><default>true</default></radiobutton>
+        <radiobutton><label>3 copies, 2 supports, 1 copie hors site</label><variable>Q2_R1</variable></radiobutton>
+        <radiobutton><label>3 disques, 2 ordinateurs, 1 serveur</label><variable>Q2_R2</variable></radiobutton>
+        <radiobutton><label>3 mots de passe, 2 comptes, 1 clé</label><variable>Q2_R3</variable></radiobutton>
+      </vbox>
+      <vbox>
+        <text wrap="true" xalign="0"><label>Quel mot de passe est le plus solide ?</label></text>
+        <radiobutton><label>Je ne sais pas</label><variable>Q3_R0</variable><default>true</default></radiobutton>
+        <radiobutton><label>Soleil2026!</label><variable>Q3_R1</variable></radiobutton>
+        <radiobutton><label>tortue-agrafe-pluie-lanterne</label><variable>Q3_R2</variable></radiobutton>
+        <radiobutton><label>P@ssw0rd</label><variable>Q3_R3</variable></radiobutton>
+      </vbox>
+      <vbox>
+        <text wrap="true" xalign="0"><label>Que signifie le cadenas à côté de l'adresse d'un site ?</label></text>
+        <radiobutton><label>Je ne sais pas</label><variable>Q4_R0</variable><default>true</default></radiobutton>
+        <radiobutton><label>Le site est forcément honnête</label><variable>Q4_R1</variable></radiobutton>
+        <radiobutton><label>La connexion est chiffrée</label><variable>Q4_R2</variable></radiobutton>
+        <radiobutton><label>Le site est hébergé en France</label><variable>Q4_R3</variable></radiobutton>
+      </vbox>
+      <vbox>
+        <text wrap="true" xalign="0"><label>Avant de brancher une clé USB trouvée sur un parking, il faut…</label></text>
+        <radiobutton><label>Je ne sais pas</label><variable>Q5_R0</variable><default>true</default></radiobutton>
+        <radiobutton><label>la brancher pour retrouver le propriétaire</label><variable>Q5_R1</variable></radiobutton>
+        <radiobutton><label>la donner au service informatique sans la brancher</label><variable>Q5_R2</variable></radiobutton>
+        <radiobutton><label>la formater</label><variable>Q5_R3</variable></radiobutton>
+      </vbox>
+    </notebook>
+    <hbox>
+      <button cancel></button>
+      <button><label>Rendre la copie</label><action>exit:rendre</action></button>
+    </hbox>
+  </vbox>
+</window>

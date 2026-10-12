@@ -1,0 +1,39 @@
+<!-- Script : examples/boites-a-outils/systeme/08-applications-demarrage.sh (dialogue principal) -->
+<window title="Applications au démarrage" default-width="660" default-height="520">
+  <vbox>
+    <tree scrollable="true" height-request="170">
+      <label>Fichier|Nom|Active|Origine</label>
+      <variable>ENTREE</variable>
+      <item>blueman.desktop|Blueman Applet|oui|système</item>
+      <item>nm-applet.desktop|Network|oui|système</item>
+      <item>redshift-gtk.desktop|Redshift|non|personnel</item>
+      <item>xfce4-clipman-plugin-autostart.desktop|Clipman|oui|système</item>
+      <item>syncthing-start.desktop|Start Syncthing|oui|personnel</item>
+    </tree>
+    <frame label="Sur l'entrée choisie">
+      <hbox>
+        <radiobutton><label>Désactiver</label><default>true</default><variable>A_DESACTIVER</variable></radiobutton>
+        <radiobutton><label>Réactiver</label><variable>A_ACTIVER</variable></radiobutton>
+        <radiobutton><label>Retirer (entrée personnelle)</label><variable>A_RETIRER</variable></radiobutton>
+        <button><label>Appliquer</label><action>exit:modifier</action></button>
+      </hbox>
+    </frame>
+    <expander label="Ajouter une application">
+      <vbox>
+        <hbox><text><label>Nom :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>NOUVEAU_NOM</variable><default>Bloc-notes du matin</default></entry></hbox>
+        <hbox><text><label>Commande :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>NOUVELLE_COMMANDE</variable><default>mousepad /home/utilisateur/Documents/notes.txt</default></entry></hbox>
+        <hbox><text><label>Attendre avant de lancer (s) :</label></text>
+          <spinbutton range-min="0" range-max="120" range-step="5"><variable>DELAI</variable><default>0</default></spinbutton></hbox>
+        <hbox>
+          <button><label>Ajouter</label><action>exit:ajouter</action></button>
+        </hbox>
+      </vbox>
+      <variable>AJOUT_OUVERT</variable>
+    </expander>
+    <hbox>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

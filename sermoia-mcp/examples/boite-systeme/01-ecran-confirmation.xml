@@ -1,0 +1,12 @@
+<!-- Script : examples/boites-a-outils/systeme/01-ecran.sh (dialogue confirmation) -->
+<window title="Confirmer le réglage de l'écran">
+  <vbox>
+    <text><label>Ces commandes vont être lancées :</label></text>
+    <text><label>xrandr --output HDMI-1 --mode 1920x1080 --rate 60 --scale 1x1</label></text>
+    <text><label>Si l'écran devient noir, attendez : rien n'est enregistré, une nouvelle session revient au réglage d'avant.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Appliquer</label><action>exit:confirmer</action></button>
+    </hbox>
+  </vbox>
+</window>

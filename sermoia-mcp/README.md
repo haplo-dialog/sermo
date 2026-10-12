@@ -162,11 +162,25 @@ sujet absent du catalogue est refusé.
 |---|---|---|
 | `SERMO_BIN` | `sermo` | binaire pour `check`, `run` et l'aperçu texte |
 | `SERMO_RENDER_BIN` | `SERMO_BIN` | binaire pour `render` (un port à fenêtre pour avoir une image) |
-| `SERMO_EXAMPLES_DIR` | `examples` | catalogue d'exemples |
+| `SERMO_EXAMPLES_DIR` | celui du paquet, sinon `examples` | catalogue d'exemples |
 | `SERMO_VOTE_FILE` | `$XDG_STATE_HOME/sermoia/votes.tsv` | registre des votes |
 | `SERMOIA_CHECK_DELAI` | 20 s (≤ 120) | délai de l'analyse |
 | `SERMOIA_RENDER_DELAI` | 30 s (≤ 300) | délai de chaque tentative de rendu |
 | `SERMO_ALLOWED_CMDS` | — | liste des commandes que `sermo_run` peut lancer (voir Sécurité) |
+
+## Installer
+
+Les paquets sont joints à chaque publication ; vérifiez d'abord les sommes signées
+(`SHA256SUMS.asc`), comme l'explique le [README](../README.md#installer).
+
+```sh
+sudo apt install ./sermoia-mcp_2.8.2-3_amd64.deb ./sermo-backend-qt6_2.8.2-3_amd64.deb
+```
+
+Le paquet installe `/usr/bin/sermoia-mcp` et son catalogue dans
+`/usr/share/sermoia-mcp/examples` (que le serveur trouve tout seul), scripts métier
+et boîtes à outils compris. Il demande au moins un port de sermo ; `sermo-backend-qt6` est recommandé :
+il rend les images sans affichage ni `xvfb`.
 
 ## Construire, lancer, vérifier
 
@@ -204,7 +218,7 @@ délai ignoré, `ping` refusé) font chacune échouer le banc.
 Claude Code :
 
 ```sh
-claude mcp add sermoia --env SERMO_BIN=/usr/bin/gtk3sermo --env SERMO_RENDER_BIN=/usr/bin/qt6sermo --env SERMO_EXAMPLES_DIR=/chemin/vers/sermoia-mcp/examples -- /chemin/vers/sermoia-mcp/_build/sermoia-mcp
+claude mcp add sermoia --env SERMO_BIN=/usr/bin/gtk3sermo --env SERMO_RENDER_BIN=/usr/bin/qt6sermo -- /usr/bin/sermoia-mcp
 ```
 
 Autres clients (fichier de configuration JSON) :
@@ -213,11 +227,10 @@ Autres clients (fichier de configuration JSON) :
 {
   "mcpServers": {
     "sermoia": {
-      "command": "/chemin/vers/sermoia-mcp/_build/sermoia-mcp",
+      "command": "/usr/bin/sermoia-mcp",
       "env": {
         "SERMO_BIN": "/usr/bin/gtk3sermo",
-        "SERMO_RENDER_BIN": "/usr/bin/qt6sermo",
-        "SERMO_EXAMPLES_DIR": "/chemin/vers/sermoia-mcp/examples"
+        "SERMO_RENDER_BIN": "/usr/bin/qt6sermo"
       }
     }
   }
@@ -250,14 +263,18 @@ Points du protocole :
 ## Catalogue d'exemples (`examples/`)
 
 Chaque sous-dossier est un **sujet**, chaque `.xml` un dialogue complet que le banc fait
-analyser. Deux familles :
+analyser. Trois familles :
 
 - **patrons de dialogue**, utiles à la génération : `formulaire`, `saisie-simple`,
   `confirmation`, `information`, `mot-de-passe`, `cases-a-cocher`, `choix-radio`,
   `zone-texte`, `liste-selection`, `liste-deroulante`, `onglets`, `tableau`, `arbre` ;
 - **widgets**, un dialogue minimal par widget : `button`, `checkbox`, `entry`,
   `combobox`, `spinbutton`, `calendar`, `list`, `table`, `tree`, `notebook`, `menu`,
-  `timer`…
+  `timer`… ;
+- **scripts métier et boîtes à outils** : 16 sujets (`metier-…` pour les 12 métiers,
+  `boite-…` pour les 4 boîtes), 187 dialogues tirés des scripts de
+  `examples/metiers/` et `examples/boites-a-outils/` par
+  `outils/catalogue-metiers.sh`. Chaque XML nomme en commentaire le script d'origine.
 
 Les noms de sujets et de fichiers se limitent aux lettres, chiffres, `-`, `_` et `.`.
 Pointer `SERMO_EXAMPLES_DIR` ailleurs pour servir un autre catalogue.

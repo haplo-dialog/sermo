@@ -67,4 +67,15 @@ int  qt6_layout_get_expand(GtkWidget *widget);
 }
 #endif
 
+#ifdef __cplusplus
+/* Construit une <hbox> (horizontal=true) ou une <vbox>, dépile ses enfants et
+ * les range avec les règles d'étirement de gtk3 (voir widgets.cpp). */
+class QWidget;
+class QLayout;
+QWidget *qt6_box_construire(tag_attr *attr, bool horizontal, int spacing);
+/* Même rangement sur un widget existant (attr NULL = départ du projet seul,
+ * cas du <frame>) ; rend la disposition posée. */
+QLayout *qt6_box_ranger(QWidget *box, tag_attr *attr, bool horizontal, int spacing);
+#endif
+
 #endif

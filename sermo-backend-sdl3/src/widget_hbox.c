@@ -15,6 +15,7 @@
 #include "tag_attributes.h"
 #include "stack.h"
 #include "widget_hbox.h"
+#include "widget_vbox.h"
 #include <stdlib.h>
 
 GtkWidget *widget_hbox_create(AttributeSet *Attr, tag_attr *attr, gint Type)
@@ -27,6 +28,7 @@ GtkWidget *widget_hbox_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     stackelement s = pop();
     for (int i = 0; i < s.nwidgets; ++i)
         if (s.widgets[i]) widget_node_add_child(node, (WidgetNode *)s.widgets[i]);
+    sdl3_box_pack(node, &s, attr, 1);   /* rangée : à l'envers (pack_end) */
     return (GtkWidget *)node;
 }
 

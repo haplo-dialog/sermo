@@ -1,0 +1,13 @@
+<!-- Script : examples/boites-a-outils/administrateur/06-formatage.sh (dialogue confirmation) -->
+<window title="Effacer /dev/sdb1 ?" default-width="520">
+  <vbox>
+    <text><label>Vous allez formater /dev/sdb1 en ext4.</label></text>
+    <text><label>Aujourd'hui : 58,6G exfat CLE-USB. TOUT son contenu sera perdu.</label></text>
+    <text><label>Pour confirmer, retapez le nom exact du périphérique :</label></text>
+    <entry><variable>RETAPE</variable></entry>
+    <hbox>
+      <button cancel></button>
+      <button><label>Effacer et formater</label><action>exit:effacer</action></button>
+    </hbox>
+  </vbox>
+</window>

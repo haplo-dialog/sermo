@@ -1,0 +1,15 @@
+<!-- Script : examples/boites-a-outils/serveur/09-alertes.sh (dialogue confirmation) -->
+<window title="Installer les alertes">
+  <vbox>
+    <text><label>Seuils : disque 90 %, mémoire 92 %, charge 8 ; toutes les 15 min.</label></text>
+    <text><label>Courriel vers : admin@exemple.org.</label></text>
+    <text><label>Fichiers écrits, remplacés s'ils existent :</label></text>
+    <text><label>/usr/local/sbin/alertes-serveur</label></text>
+    <text><label>/etc/systemd/system/alertes-serveur.service et .timer</label></text>
+    <checkbox><label>Lancer un premier contrôle tout de suite</label><default>true</default><variable>ESSAI</variable></checkbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Écrire et activer</label><action>exit:activer</action></button>
+    </hbox>
+  </vbox>
+</window>

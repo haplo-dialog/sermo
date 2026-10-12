@@ -1,0 +1,11 @@
+<!-- Script : examples/boites-a-outils/systeme/08-applications-demarrage.sh (dialogue confirmation) -->
+<window title="Retirer du démarrage ?">
+  <vbox>
+    <text><label>Le fichier /home/utilisateur/.config/autostart/redshift-gtk.desktop sera supprimé.</label></text>
+    <text><label>L'application reste installée ; seul son lancement automatique disparaît.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Retirer</label><action>exit:retirer</action></button>
+    </hbox>
+  </vbox>
+</window>

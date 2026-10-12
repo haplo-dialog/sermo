@@ -1,0 +1,33 @@
+<!-- Script : examples/metiers/04-distribution-integrateur/5-mises-a-jour.sh (dialogue principal) -->
+<window title="Mises à jour" default-width="540">
+  <vbox>
+    <frame label="Rechercher les mises à jour">
+      <vbox>
+        <radiobutton><label>Chaque jour (conseillé)</label><variable>FREQ_JOUR</variable><default>true</default></radiobutton>
+        <radiobutton><label>Chaque semaine</label><variable>FREQ_SEMAINE</variable></radiobutton>
+        <radiobutton><label>Jamais seul : je les lance moi-même</label><variable>FREQ_MANUEL</variable></radiobutton>
+      </vbox>
+    </frame>
+    <frame label="Installation automatique">
+      <vbox>
+        <checkbox><label>Installer seul les mises à jour trouvées</label><variable>AUTO</variable><default>true</default></checkbox>
+        <hbox><text><label>Lesquelles :</label></text>
+          <comboboxtext space-expand="true" space-fill="true"><variable>ORIGINE</variable><default>Sécurité seulement</default>
+            <item>Sécurité seulement</item><item>Toutes celles de Debian</item>
+          </comboboxtext></hbox>
+        <hbox>
+          <checkbox><label>Redémarrer seul si nécessaire, à</label><variable>REDEMARRER</variable></checkbox>
+          <spinbutton range-min="0" range-max="23" range-step="1"><variable>HEURE</variable><default>3</default></spinbutton>
+          <text><label>h</label></text>
+        </hbox>
+        <hbox><text><label>Compte rendu par courriel à :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>COURRIEL</variable><default>root</default></entry></hbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Voir les mises à jour en attente</label><action>exit:voir</action></button>
+      <button><label>Enregistrer</label><action>exit:enregistrer</action></button>
+    </hbox>
+  </vbox>
+</window>

@@ -10,9 +10,10 @@ Ce petit serveur [MCP](https://modelcontextprotocol.io) donne à un assistant IA
 écosystème d'outils. Votre assistant peut alors vous aider à écrire des
 dialogues corrects, sans inventer de balise.
 
-> **Optionnel.** Il vit dans l'arbre des sources de sermo. sermo fonctionne
-> parfaitement sans ; installez ce compagnon si vous développez avec l'aide
-> d'une IA et souhaitez qu'elle connaisse le format sur le bout des doigts.
+> **Optionnel.** sermo fonctionne parfaitement sans ; installez ce compagnon si
+> vous développez avec l'aide d'une IA et souhaitez qu'elle connaisse le format
+> sur le bout des doigts. Il existe en paquet Debian (`sermoman-mcp`, depuis la
+> 2.8.2) et dans l'arbre des sources.
 
 ## Protection de l'utilisateur d'abord
 
@@ -33,10 +34,20 @@ Le pire qu'il puisse faire, c'est vous donner une réponse de documentation.
 
 ## Installation
 
-Ce serveur est fourni dans l'arbre des sources de sermo, à
-`sermoman-mcp/server.py`. Il suffit de le déclarer dans la configuration MCP de
-votre client, en pointant le chemin **absolu** vers `server.py` (voir
-`mcp.example.json`) :
+**Par le paquet Debian** (joint à chaque publication, voir le
+[README](../README.md#installer) pour la vérification des sommes signées) :
+
+```sh
+sudo apt install ./sermoman-mcp_2.8.2-3_all.deb
+```
+
+Il installe la commande `/usr/bin/sermoman-mcp` (le serveur et ses données sont
+dans `/usr/share/sermoman-mcp/`) et sa page de manuel. Déclarez alors
+`"command": "sermoman-mcp"`, sans argument, dans votre client.
+
+**Depuis l'arbre des sources** : le serveur est `sermoman-mcp/server.py`. Il
+suffit de le déclarer dans la configuration MCP de votre client, en pointant le
+chemin **absolu** vers `server.py` (voir `mcp.example.json`) :
 
 ```json
 {
@@ -60,6 +71,7 @@ Redémarrez votre client : l'assistant dispose alors des outils ci-dessous.
 | `sermo_architecture` | L'architecture modulaire : `libsermocore`, les neuf backends, le contrat cœur↔backend, les variantes de build, le packaging, les bancs. |
 | `sermo_heritage` | La vie de sermo : lignée gtkdialog → haplo-dialog → sermo, historique des versions, feuille de route, bilan de santé. |
 | `sermo_ecosystem` | Les outils autour de sermo (sermoman-mcp, le binaire et ses options de vérification) : quel outil pour quoi. |
+| `sermo_scripts` | Les 104 scripts prêts à l'emploi (60 scripts métier, 4 boîtes à outils) : besoin, commande enrobée, port conseillé, chemin. |
 | `sermo_search` | Recherche plein texte dans toute la documentation embarquée. |
 | `sermo_example` | Un exemple complet de dialogue ; sans argument, la liste des exemples curés disponibles. |
 | `sermo_how_to_report` | Comment signaler un bug ou proposer une amélioration. |

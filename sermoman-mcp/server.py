@@ -31,11 +31,15 @@ def _version():
     interrogeait ce serveur n'apprenait rien de la version qu'il avait en face.
     VERSION est la seule source du dépôt — voir VERSIONING.md.
     """
-    try:
-        with open(os.path.join(HERE, os.pardir, "VERSION"), encoding="utf-8") as f:
-            return f.read().strip() or "inconnue"
-    except OSError:
-        return "inconnue"
+    # Installé (paquet sermoman-mcp), VERSION est posé à côté du serveur ;
+    # dans le dépôt, il est à la racine, un cran au-dessus.
+    for chemin in (os.path.join(HERE, "VERSION"), os.path.join(HERE, os.pardir, "VERSION")):
+        try:
+            with open(chemin, encoding="utf-8") as f:
+                return f.read().strip() or "inconnue"
+        except OSError:
+            continue
+    return "inconnue"
 
 
 VERSION = _version()
@@ -57,6 +61,7 @@ GUIDE = _load("guide.md")
 ARCHITECTURE = _load("architecture.md")
 HERITAGE = _load("heritage.md")
 ECOSYSTEM = _load("ecosystem.md")
+SCRIPTS = _load("scripts.md")   # engendré par outils/inventaire-scripts.py
 
 # Corpus indexé pour la recherche : (étiquette, texte).
 CORPUS = [
@@ -65,6 +70,7 @@ CORPUS = [
     ("architecture", ARCHITECTURE),
     ("héritage", HERITAGE),
     ("écosystème", ECOSYSTEM),
+    ("scripts", SCRIPTS),
 ]
 
 # Exemple canonique servi par défaut ; les autres exemples curés vivent à côté.
@@ -199,6 +205,14 @@ TOOLS = [
         "inputSchema": {"type": "object", "properties": {}},
     },
     {
+        "name": "sermo_scripts",
+        "description": "Les 104 scripts prêts à l'emploi : 60 scripts métier "
+                       "(12 métiers) et 4 boîtes à outils (système, serveur, "
+                       "administrateur, utilisateur). Pour chacun : le besoin, "
+                       "la commande enrobée, le port conseillé, le chemin.",
+        "inputSchema": {"type": "object", "properties": {}},
+    },
+    {
         "name": "sermo_search",
         "description": "Recherche plein texte dans toute la documentation "
                        "embarquée (référence, guide, architecture, héritage, "
@@ -264,6 +278,8 @@ def _call_tool(name, args):
         return HERITAGE or "(héritage indisponible)"
     if name == "sermo_ecosystem":
         return ECOSYSTEM or "(écosystème indisponible)"
+    if name == "sermo_scripts":
+        return SCRIPTS or "(inventaire des scripts indisponible)"
     if name == "sermo_example":
         return _get_example(str(args.get("name", "")))
     if name == "sermo_how_to_report":

@@ -29,10 +29,11 @@ GtkWidget *widget_text_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         GList *el = NULL;
         gchar *lbl = attributeset_get_first(&el, Attr, ATTR_LABEL);
         if (lbl && *lbl) { free(node->label); node->label = strdup(lbl); }
-        el = NULL;
-        gchar *def = attributeset_get_first(&el, Attr, ATTR_DEFAULT);
-        if (def && *def) { free(node->state.text.content);
-            node->state.text.content = strdup(def); }
+        /* La variable rend le texte affiché, comme gtkdialog : d'abord le
+         * libellé (« text » s'il manque, posé par le cœur). <default> n'existe
+         * pas pour <text> ; jusqu'à la 2.8.1 il remplaçait le libellé ici. */
+        if (lbl && *lbl) { free(node->state.text.content);
+            node->state.text.content = strdup(lbl); }
         /* <input> : lu par widget_text_refresh(), que le cœur appelle juste
          * après la création. */
     }

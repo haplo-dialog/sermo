@@ -1,0 +1,48 @@
+<!-- Script : examples/boites-a-outils/utilisateur/05-imprimer.sh (dialogue principal) -->
+<window title="Imprimer" default-width="560">
+  <vbox>
+    <frame label="Quoi et où">
+      <vbox>
+        <hbox><text><label>Fichier :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>FICHIER</variable><default>/home/utilisateur/Documents/attestation-assurance.pdf</default></entry></hbox>
+        <hbox><text><label>Imprimante :</label></text>
+          <comboboxtext space-expand="true" space-fill="true"><variable>IMPRIMANTE</variable><default>Bureau-Laser</default><item>Bureau-Laser</item><item>Salon-JetEncre</item><item>PDF</item></comboboxtext></hbox>
+        <hbox><text><label>Nombre de copies :</label></text>
+          <spinbutton range-min="1" range-max="50" range-step="1"><variable>COPIES</variable><default>1</default></spinbutton></hbox>
+      </vbox>
+    </frame>
+    <frame label="Recto verso">
+      <vbox>
+        <radiobutton><label>Recto seulement</label><variable>RECTO</variable><default>true</default></radiobutton>
+        <radiobutton><label>Recto verso, on tourne les pages comme un livre</label><variable>VERSO_LIVRE</variable></radiobutton>
+        <radiobutton><label>Recto verso, on tourne les pages vers le haut (bloc-notes)</label><variable>VERSO_BLOC</variable></radiobutton>
+      </vbox>
+    </frame>
+    <frame label="Pages">
+      <vbox>
+        <hbox>
+          <radiobutton><label>Toutes</label><variable>TOUTES</variable><default>true</default></radiobutton>
+          <radiobutton><label>Seulement :</label><variable>CERTAINES</variable></radiobutton>
+          <entry><variable>PAGES</variable><default>1-3,5</default></entry>
+        </hbox>
+        <hbox>
+          <togglebutton><label>À l'italienne (paysage)</label><variable>PAYSAGE</variable></togglebutton>
+          <switch><variable>ASSEMBLER</variable><default>true</default></switch>
+          <text><label>Assembler les copies (1 2 3, 1 2 3)</label></text>
+        </hbox>
+      </vbox>
+    </frame>
+    <expander label="En attente d'impression">
+      <table height-request="90">
+        <label>Travail|Par|Taille|Depuis</label>
+        <item>Bureau-Laser-41|utilisateur|125 Ko|lun. 12 oct. 2026 10:02</item>
+        <variable>FILE</variable>
+      </table>
+      <variable>VOIR_FILE</variable>
+    </expander>
+    <hbox>
+      <button cancel></button>
+      <button><label>Imprimer</label><action>exit:imprimer</action></button>
+    </hbox>
+  </vbox>
+</window>

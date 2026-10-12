@@ -27,45 +27,19 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <vector>
 
-/* largeur naturelle d'un widget feuille (image = son image, texte = mesure) */
-static int fltk_natural_w(Fl_Widget *g)
-{
-    const char *txt = NULL;
-    Fl_Output *fo = dynamic_cast<Fl_Output *>(g);
-    if (fo) txt = fo->value();
-    else if (g->label() && *g->label() && !g->as_group()) txt = g->label();
-    int gw = 0, gh = 0;
-    if (g->image() && !g->as_group()) {
-        gw = g->image()->w() + 4;
-        if (txt && *txt) {            /* bouton icone + texte */
-            int tw = 0; fl_font(g->labelfont(), g->labelsize()); fl_measure(txt, tw, gh, 0);
-            gw += tw + 16;
-        }
-    } else if (txt && *txt) {
-        fl_font(fo ? fo->textfont() : g->labelfont(), fo ? fo->textsize() : g->labelsize());
-        fl_measure(txt, gw, gh, 0);
-        gw += (dynamic_cast<Fl_Button *>(g) ? 24 : 12);
-    } else if (g->as_group()) gw = g->w();               /* cadre : sa largeur */
-    else gw = g->w() > 200 ? 200 : g->w();
-    return gw;
-}
-
-/* l'enfant est-il extensible (space-expand, ou saisie/cadre par defaut) ? */
-static bool fltk_child_expands(Fl_Widget *c)
-{
-    if (sermo_widget_expands(c)) return true;
-    if (sermo_widget_noexpand(c)) return false;          /* space-expand="false" explicite */
-    if (dynamic_cast<Fl_Input_ *>(c) && !dynamic_cast<Fl_Output *>(c)) return true;   /* entry (pas <text>) */
-    if (c->as_group()) return true;                       /* frame, scroll, onglets, vbox/hbox */
-    return false;
-}
-
+/* Rangée <hbox> : règle de l'étalon gtk3 (sermo-backend-gtk3/src/widget_hbox.c).
+ *  - (expand, fill) courant = celui de la BOÎTE (ou « non dit ») ; les enfants
+ *    sont parcourus À L'ENVERS (gtk_box_pack_end) et un enfant qui déclare le
+ *    sien le remplace pour lui ET pour ceux parcourus après lui ;
+ *  - « non dit » : <edit>, <frame>, fenêtre défilante, <entry> s'étirent ;
+ *  - ce qui ne s'étire pas se cale à DROITE ; un enfant étiré sans fill est
+ *    centré dans sa case ; homogeneous = cases égales sur toute la largeur.
+ * La répartition elle-même est faite par SermoFlex (widgets.cpp). */
 GtkWidget *widget_hbox_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
-    /* Fl_Flex en ligne : les enfants se partagent la largeur disponible
-     * (etiquette + champ, colonnes, rangees de boutons). */
-    Fl_Flex *flex = new Fl_Flex(0, 0, 800, 30, Fl_Flex::ROW);
+    SermoFlex *flex = new SermoFlex(0, 0, 800, 30, Fl_Flex::ROW);
     flex->end();
     int spacing = 4;
     if (attr) {
@@ -74,71 +48,50 @@ GtkWidget *widget_hbox_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     }
     flex->gap(spacing);
     flex->user_data(&SERMO_FLEX_TAG);
+    flex->pack_end(true);
+    flex->homogeneous(sermo_attr_rule(attr, "homogeneous", 0) == 1);
 
     stackelement s = pop();
+    /* Hauteur de la rangée : la plus grande hauteur NATURELLE des enfants, lue
+     * AVANT de les ajouter — Fl_Flex (créé à 30 px) les remet à sa propre
+     * hauteur dès l'ajout, et une colonne image + texte débordait alors sous
+     * la rangée (galerie « Boutons et icônes », jusqu'à la 2.8.2). */
     int hmax = 0;
-    /* gtkdialog empile par pack_end : sans enfant extensible, la rangee
-     * est calee a DROITE a sa taille naturelle (etalon gtk3) — un bourrage
-     * flexible en tete absorbe l'espace */
-    bool any_expand = false;
     for (int n = 0; n < s.nwidgets; n++)
-        if (s.widgets[n] && fltk_child_expands((Fl_Widget *)s.widgets[n])) any_expand = true;
-    if (!any_expand && s.nwidgets > 0) {
-        Fl_Box *filler = new Fl_Box(0, 0, 1, 1);
-        filler->box(FL_NO_BOX);
-        flex->add(filler);
-        for (int n = 0; n < s.nwidgets; n++) {
-            Fl_Widget *c = (Fl_Widget *)s.widgets[n];
-            if (!c) continue;
-            flex->add(c);
-            flex->fixed(c, fltk_natural_w(c));
-            if (c->h() > hmax) hmax = c->h();
-        }
-        if (hmax > 0) flex->size(800, hmax);
-        return (GtkWidget *)flex;
+        if (s.widgets[n] && ((Fl_Widget *)s.widgets[n])->h() > hmax) hmax = ((Fl_Widget *)s.widgets[n])->h();
+
+    /* règles (expand, fill), parcours à l'envers comme gtk_box_pack_end */
+    int cur_e = sermo_attr_rule(attr, "space-expand", project_space_expand);
+    int cur_f = sermo_attr_rule(attr, "space-fill", project_space_fill);
+    std::vector<char> ex(s.nwidgets + 1, 0), fi(s.nwidgets + 1, 0);
+    std::vector<int>  nh(s.nwidgets + 1, 0);
+    for (int n = s.nwidgets - 1; n >= 0; --n) {
+        Fl_Widget *c = (Fl_Widget *)s.widgets[n];
+        ex[n] = fi[n] = false; nh[n] = 0;
+        if (!c) continue;
+        int e = sermo_widget_expand_rule(c), f = sermo_widget_fill_rule(c);
+        if (e != -1) cur_e = e;
+        if (f != -1) cur_f = f;
+        int t = s.widgettypes[n];
+        bool def = (t == WIDGET_EDIT || t == WIDGET_FRAME ||
+                    t == WIDGET_SCROLLEDW || t == WIDGET_ENTRY);
+        ex[n] = cur_e != -1 ? cur_e == 1 : def;
+        fi[n] = cur_f != -1 ? cur_f == 1 : def;
+        nh[n] = c->h();
     }
+
+    int natw = 0, added = 0;
     for (int n = 0; n < s.nwidgets; n++) {
         Fl_Widget *c = (Fl_Widget *)s.widgets[n];
         if (!c) continue;
+        int nat = sermo_natural_w(c);
         flex->add(c);
-        /* une image (Fl_Box porteur d'image) garde sa largeur : sinon le
-         * partage egal lui donnait une demi-ligne et poussait le texte */
-        if (c->image() && !c->as_group()) flex->fixed(c, c->image()->w() + 4);
-        /* un cadre declare space-expand="false" garde sa largeur */
-        else if (c->as_group() && c->user_data() != &SERMO_FLEX_TAG && sermo_widget_noexpand(c))
-            flex->fixed(c, c->w());
-        /* une feuille non extensible (bouton, texte) garde sa largeur
-         * naturelle : seuls les extensibles se partagent le reste */
-        else if (!c->as_group() && !fltk_child_expands(c))
-            flex->fixed(c, fltk_natural_w(c));
-        /* une colonne (vbox) sans space-expand garde sa largeur naturelle :
-         * le plus large de ses enfants (image = sa largeur, texte = mesure) */
-        Fl_Group *cg = c->as_group();
-        if (cg && c->user_data() == &SERMO_FLEX_TAG && !sermo_widget_expands(c)) {
-            int nat = 0;
-            for (int k = 0; k < cg->children(); k++) {
-                Fl_Widget *g = cg->child(k);
-                int gw = 0, gh = 0;
-                const char *txt = NULL;
-                Fl_Output *fo = dynamic_cast<Fl_Output *>(g);   /* <text> du port */
-                if (fo) txt = fo->value();
-                else if (g->label() && *g->label() && !g->as_group()) txt = g->label();
-                /* la vbox a deja etire la boite a sa largeur : prendre celle
-                 * de l'IMAGE, pas du widget */
-                if (g->image() && !g->as_group()) gw = g->image()->w() + 4;
-                else if (txt && *txt) {
-                    fl_font(fo ? fo->textfont() : g->labelfont(),
-                            fo ? fo->textsize() : g->labelsize());
-                    gw = 0; gh = 0;
-                    fl_measure(txt, gw, gh, 0);
-                    gw += 12;
-                } else gw = g->w() > 200 ? 200 : g->w();   /* jamais la largeur brute 800 */
-                if (gw > nat) nat = gw;
-            }
-            if (nat > 0) flex->fixed(c, nat + 4);
-        }
-        if (c->h() > hmax) hmax = c->h();
+        flex->child_rule(c, ex[n], fi[n], nat, nh[n], sermo_can_grow_v(c));
+        natw += nat;
+        added++;
     }
+    if (added > 1) natw += spacing * (added - 1);
+    flex->natural_w(natw);
     if (hmax > 0) flex->size(800, hmax);
     return (GtkWidget *)flex;
 }

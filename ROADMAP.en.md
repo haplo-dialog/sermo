@@ -8,6 +8,7 @@
 - [x] Two build variants (neutral + GLib) from one source; then the GTK4 variant.
 - [x] `sermocore.pc`: backends consume the core via pkg-config.
 - [x] Port all seven backends onto `libsermocore` (qt6, gtk3, fltk1, efl1, sdl3, gtk4, ncurses).
+      lvgl and html came later (2.8.0): nine today.
 - [x] Separate packaging (`sermo-core-dev` + `sermo-backend-*`), disjoint deps,
       `sermo` alias, `gtkdialog` bridge.
 
@@ -36,7 +37,9 @@
 - [ ] Process isolation (IPC): the shell confined to the core.
 - [ ] Additional backends via the frontier contract. *(2.8.0: lvgl and html, on the
       neutral core.)*
-- [ ] Product publication (apt repository, website).
+- [x] Website (`haplo-dialog.fr`) and packages attached to each release, with
+      signed checksums (`SHA256SUMS.asc`, since 2.8.2).
+- [ ] apt repository (there is none today).
 
-> Progress is **guarded by the three benches** (XML 55 · behaviour 53 · guards):
+> Progress is **guarded by the three benches** (XML 55 · behaviour 61 · guards):
 > no phase advances while a bench is red.

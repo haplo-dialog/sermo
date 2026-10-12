@@ -22,6 +22,25 @@
 #include <string.h>
 #include <stdlib.h>
 
+/* Le texte d'une elm_entry est du BALISAGE : « < » y ouvre une balise, et la
+ * lecture rend « &lt; », « &laquo; »… Écrire et lire en texte brut, comme
+ * widget_edit.c. Jusqu'à la 2.8.1, la valeur exportée sortait échappée
+ * (mesuré : « « » rendu « &laquo; »). */
+static void texte_poser(Evas_Object *en, const char *t)
+{
+    char *m = elm_entry_utf8_to_markup(t ? t : "");
+    elm_entry_entry_set(en, m ? m : "");
+    free(m);
+}
+static gchar *texte_lire(Evas_Object *en)
+{
+    const char *m = elm_entry_entry_get(en);
+    char *t = m ? elm_entry_markup_to_utf8(m) : NULL;
+    gchar *r = g_strdup(t ? t : "");
+    free(t);
+    return r;
+}
+
 GtkWidget *widget_entry_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
     Evas_Object *parent = efl_main_win_get();
@@ -34,7 +53,7 @@ GtkWidget *widget_entry_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     if (Attr) {
         GList *el = NULL;
         gchar *def = attributeset_get_first(&el, Attr, ATTR_DEFAULT);
-        if (def && *def) elm_entry_entry_set(en, def);
+        if (def && *def) texte_poser(en, def);
     }
     if (attr) {
         const char *v;
@@ -51,8 +70,7 @@ GtkWidget *widget_entry_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 gchar *widget_entry_envvar_construct(GtkWidget *widget)
 {
     if (!widget) return g_strdup("");
-    const char *txt = elm_entry_entry_get((Evas_Object *)widget);
-    return g_strdup(txt ? txt : "");
+    return texte_lire((Evas_Object *)widget);
 }
 gchar *widget_entry_envvar_all_construct(variable *var)
 {
@@ -74,7 +92,7 @@ void widget_entry_refresh(variable *var)
         /* la PREMIÈRE ligne, sans CR/LF — étalon gtk3sermo (elm_entry recollait
          * les lignes bout à bout : « un » + « deux » rendait « undeux ») */
         text[strcspn(text, "\r\n")] = '\0';
-        elm_entry_entry_set((Evas_Object *)var->Widget, text);
+        texte_poser((Evas_Object *)var->Widget, text);
         g_free(text);
     }
 }

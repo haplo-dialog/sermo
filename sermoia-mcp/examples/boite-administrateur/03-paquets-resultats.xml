@@ -1,0 +1,32 @@
+<!-- Script : examples/boites-a-outils/administrateur/03-paquets.sh (dialogue resultats) -->
+<window title="Paquets : résultats" default-width="640" default-height="480">
+  <vbox>
+    <tree scrollable="true" space-expand="true" space-fill="true" exported-column="0">
+      <label>Paquet|Installé|Description</label>
+      <variable>PAQUET</variable>
+      <item>atril|non|MATE document viewer</item>
+      <item>evince|oui|Document (PostScript, PDF) viewer</item>
+      <item>mupdf|non|lightweight PDF viewer</item>
+      <item>qpdfview|non|tabbed document viewer</item>
+      <item>zathura-pdf-poppler|non|PDF support for zathura</item>
+    </tree>
+    <frame label="Que faire du paquet choisi ?">
+      <hbox>
+        <radiobutton><label>Installer</label><default>true</default><variable>A_INSTALLER</variable></radiobutton>
+        <radiobutton><label>Retirer</label><variable>A_RETIRER</variable></radiobutton>
+        <radiobutton><label>Purger (retirer et effacer sa configuration)</label><variable>A_PURGER</variable></radiobutton>
+      </hbox>
+    </frame>
+    <expander label="Options d'apt">
+      <vbox>
+        <checkbox><label>Sans les paquets recommandés (--no-install-recommends)</label><variable>SANS_RECO</variable></checkbox>
+        <checkbox><label>Simuler seulement (--simulate), même en mode réel</label><variable>SIMULER</variable></checkbox>
+      </vbox>
+      <variable>OPTIONS_OUVERTES</variable>
+    </expander>
+    <hbox>
+      <button cancel></button>
+      <button><label>Appliquer</label><action>exit:appliquer</action></button>
+    </hbox>
+  </vbox>
+</window>

@@ -1248,6 +1248,7 @@ gboolean window_delete_event_handler(GtkWidget *widget, GtkWidget *event,
 
 	if (variables_count_widgets() == 0) {
 		printf("EXIT=\"abort\"\n");
+		g_setenv("EXIT", "abort", TRUE);   /* --do lit EXIT dans l'environnement (manuel §3.2) : il n'y était pas. */
 
 #ifdef DEBUG_CONTENT
 		fprintf(stderr, "%s(): Calling exit(EXIT_SUCCESS)\n", __func__);

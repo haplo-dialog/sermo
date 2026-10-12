@@ -1,0 +1,12 @@
+<!-- Script : examples/metiers/11-serveur-sans-ecran/1-reseau.sh (dialogue confirmation) -->
+<window title="Confirmer le changement d'adresse">
+  <vbox>
+    <text><label>lan-serveurs : 192.168.1.20/24 via 192.168.1.1</label></text>
+    <text><label>Si vous êtes connecté par SSH sur cette interface, la session sera coupée.</label></text>
+    <text><label>Prévoyez un accès de secours (console, IPMI) avant d'appliquer.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Appliquer</label><action>exit:appliquer</action></button>
+    </hbox>
+  </vbox>
+</window>

@@ -28,7 +28,7 @@ terminal, sans serveur d'affichage.
   cmake -S . -B _build && make -C _build      # → _build/ncursessermo
   ```
 - **Bancs** : `bash ../tests/comportement/run.sh _build/ncursessermo` (voir [MANUEL_DEVELOPPEUR §6](../MANUEL_DEVELOPPEUR.md)).
-  XML **55/55** et comportement **53/53** rejoués en **headless** ; le rendu
-  identique aux six backends GUI porte donc sur les **sept** ports.
+  XML **55/55** et comportement **61/61** rejoués en **headless** ; la parité
+  des valeurs avec l'étalon vaut donc pour les **neuf** ports.
 
 Documentation produit : à la **racine** du dépôt. GPL-2.0-or-later.

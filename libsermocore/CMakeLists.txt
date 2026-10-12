@@ -72,6 +72,7 @@ if(SERMOCORE_GTK4)
     ${CMAKE_CURRENT_SOURCE_DIR}/src/stringman.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/sermo_icon_theme.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/sermo_input.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/sermo_focus.c
     ${FLEX_SermoLexer_OUTPUTS} ${BISON_SermoParser_OUTPUTS})
 else()
   set(CORE_SRC
@@ -79,6 +80,7 @@ else()
     src/safe_exec.c src/variables.c src/stack.c src/automaton.c src/attributes.c
     src/signals.c src/stringman.c src/actions.c src/tag_attributes.c src/sermo_icon_theme.c
     src/sermo_input.c
+    src/sermo_focus.c
     ${FLEX_SermoLexer_OUTPUTS} ${BISON_SermoParser_OUTPUTS})
   if(NOT SERMOCORE_GLIB)
     # Barre de progression lue au fil de l'eau, pour les ports sans GTK

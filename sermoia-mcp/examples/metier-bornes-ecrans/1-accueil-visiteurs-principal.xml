@@ -1,0 +1,39 @@
+<!-- Script : examples/metiers/05-bornes-ecrans/1-accueil-visiteurs.sh (dialogue principal) -->
+<window title="Accueil des visiteurs" default-width="640">
+  <vbox>
+    <text><label>Bienvenue. Merci de vous enregistrer à l'arrivée et au départ.</label></text>
+
+    <frame label="Vous">
+      <grid columns="2" row-spacing="6" column-spacing="8">
+        <text><label>Nom :</label></text>
+        <entry space-expand="true" space-fill="true"><variable>NOM</variable></entry>
+        <text><label>Prénom :</label></text>
+        <entry space-expand="true" space-fill="true"><variable>PRENOM</variable></entry>
+        <text><label>Société :</label></text>
+        <entry space-expand="true" space-fill="true"><variable>SOCIETE</variable></entry>
+        <text><label>Vous venez voir :</label></text>
+        <comboboxtext space-expand="true" space-fill="true"><variable>HOTE</variable>
+          <item>Accueil</item>
+          <item>Direction — Mme Martin</item>
+          <item>Comptabilité</item>
+          <item>Atelier — M. Leroy</item>
+          <item>Service informatique</item>
+        </comboboxtext>
+      </grid>
+    </frame>
+    <frame label="Motif de la visite">
+      <hbox>
+        <radiobutton><label>Rendez-vous</label><variable>MOTIF_RDV</variable><default>true</default></radiobutton>
+        <radiobutton><label>Livraison</label><variable>MOTIF_LIVRAISON</variable></radiobutton>
+        <radiobutton><label>Intervention</label><variable>MOTIF_INTERVENTION</variable></radiobutton>
+        <radiobutton><label>Autre</label><variable>MOTIF_AUTRE</variable></radiobutton>
+      </hbox>
+    </frame>
+    <checkbox><label>J'ai lu les consignes de sécurité du site (affichées à l'accueil)</label><variable>CONSIGNES</variable></checkbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Je pars</label><action>exit:depart</action></button>
+      <button><label>J'arrive</label><action>exit:arrivee</action></button>
+    </hbox>
+  </vbox>
+</window>

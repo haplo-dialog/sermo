@@ -1,0 +1,18 @@
+<!-- Script : examples/metiers/12-web-local-intranet/2-rapport.sh (dialogue rapport) -->
+<window title="Rapport hebdomadaire du serveur">
+  <vbox>
+    <text><label>Période : du 2026-10-04 au 2026-10-11, gravité err et plus</label></text>
+    <frame label="Erreurs du journal système">
+      <edit editable="false" height-request="160"><variable>JOURNAL</variable><default></default></edit>
+    </frame>
+    <frame label="Occupation des disques">
+      <table height-request="120">
+        <label>Montage|Taille|Utilisé|Occupation</label>
+        <variable>DISQUE</variable>
+        <item>/|29G|11G|39%</item>
+        <item>/var|98G|71G|76%</item>
+      </table>
+    </frame>
+    <hbox><button ok></button></hbox>
+  </vbox>
+</window>

@@ -1,0 +1,38 @@
+<!-- Script : examples/metiers/06-atelier-industrie-labo/1-saisie-mesures.sh (dialogue principal) -->
+<window title="Saisie des mesures" default-width="560">
+  <vbox>
+
+    <frame label="Traçabilité">
+      <grid columns="4" row-spacing="6" column-spacing="8">
+        <text><label>Opérateur :</label></text>
+        <entry><variable>OPERATEUR</variable><default>mdupuis</default></entry>
+        <text><label>Lot :</label></text>
+        <entry><variable>LOT</variable><default>L2026-1042</default></entry>
+        <text><label>Poste :</label></text>
+        <comboboxtext><variable>POSTE</variable><default>Tour CN 2</default>
+          <item>Tour CN 1</item><item>Tour CN 2</item><item>Fraiseuse 3 axes</item><item>Rectifieuse</item><item>Contrôle final</item>
+        </comboboxtext>
+        <text><label>Pièce n° :</label></text>
+        <spinbutton range-min="1" range-max="9999" range-step="1"><variable>PIECE</variable><default>1</default></spinbutton>
+      </grid>
+    </frame>
+    <frame label="Mesures">
+      <grid columns="3" row-spacing="6" column-spacing="8">
+        <text><label>Diamètre (mm) :</label></text>
+        <spinbutton range-min="0" range-max="100" range-step="0.001" digits="3"><variable>DIAMETRE</variable><default>25.000</default></spinbutton>
+        <text><label>25.000 ± 0.020</label></text>
+        <text><label>Longueur (mm) :</label></text>
+        <spinbutton range-min="0" range-max="500" range-step="0.01" digits="2"><variable>LONGUEUR</variable><default>120.00</default></spinbutton>
+        <text><label>120.00 ± 0.10</label></text>
+        <text><label>Masse (g) :</label></text>
+        <spinbutton range-min="0" range-max="5000" range-step="0.1" digits="1"><variable>MASSE</variable><default>462.0</default></spinbutton>
+        <text><label>462.0 ± 5.0</label></text>
+      </grid>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Enregistrer et terminer</label><action>exit:terminer</action></button>
+      <button><label>Enregistrer, pièce suivante</label><action>exit:suivante</action></button>
+    </hbox>
+  </vbox>
+</window>

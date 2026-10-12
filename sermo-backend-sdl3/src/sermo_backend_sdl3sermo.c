@@ -103,6 +103,7 @@ void *sermo_be_scroll_new(int w, int h)
     if (n) {
         n->width  = w;
         n->height = h;
+        n->scroller = TRUE;   /* render.cpp : passe l'étirement à l'enfant */
     }
     return n;
 }
@@ -142,6 +143,7 @@ int sermo_be_run_loop(void)
      * sortie (fenetre fermee) ; rendre la main au parser lui ferait imprimer
      * un faux « syntax error » sur le dernier token. */
     printf("EXIT=\"abort\"\n");
+    g_setenv("EXIT", "abort", TRUE);   /* --do lit EXIT dans l'environnement (manuel §3.2) : il n'y était pas. */
     fflush(stdout);
     exit(EXIT_SUCCESS);
 }

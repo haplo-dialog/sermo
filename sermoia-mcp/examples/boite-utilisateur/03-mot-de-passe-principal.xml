@@ -1,0 +1,31 @@
+<!-- Script : examples/boites-a-outils/utilisateur/03-mot-de-passe.sh (dialogue principal) -->
+<window title="Inventer un mot de passe" default-width="520">
+  <vbox>
+    <frame label="Ce que je veux">
+      <vbox>
+        <radiobutton><label>Un mot de passe (lettres, chiffres, signes)</label><variable>MDP</variable><default>true</default></radiobutton>
+        <hbox><text><label>Longueur :</label></text>
+          <spinbutton range-min="8" range-max="64" range-step="1"><variable>LONGUEUR</variable><default>16</default></spinbutton></hbox>
+        <checkbox><label>Avec des chiffres</label><variable>CHIFFRES</variable><default>true</default></checkbox>
+        <checkbox><label>Avec des signes (! ? # % …)</label><variable>SIGNES</variable><default>true</default></checkbox>
+        <hbox><switch><variable>LISIBLE</variable><default>true</default></switch>
+          <text><label>Éviter les signes qui se ressemblent (0 et O, 1 et l)</label></text></hbox>
+        <radiobutton><label>Une phrase de passe (des mots, plus facile à retenir)</label><variable>PHRASE</variable></radiobutton>
+        <hbox><text><label>Nombre de mots :</label></text>
+          <spinbutton range-min="4" range-max="10" range-step="1"><variable>NB_MOTS</variable><default>6</default></spinbutton></hbox>
+      </vbox>
+    </frame>
+    <frame label="Pour bien le lire">
+      <hbox>
+        <text><label>Police :</label></text>
+        <fontbutton><variable>POLICE</variable><default>Monospace 20</default></fontbutton>
+        <text><label>Couleur :</label></text>
+        <colorbutton><variable>COULEUR</variable><default>#1a5fb4</default></colorbutton>
+      </hbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Inventer</label><action>exit:inventer</action></button>
+    </hbox>
+  </vbox>
+</window>

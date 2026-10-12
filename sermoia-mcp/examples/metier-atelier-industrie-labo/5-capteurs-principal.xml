@@ -1,0 +1,30 @@
+<!-- Script : examples/metiers/06-atelier-industrie-labo/5-capteurs.sh (dialogue principal) -->
+<window title="Températures" default-width="560">
+  <vbox>
+    <frame label="Capteurs (°C, jauge de 0 à 110)">
+      <grid columns="3" row-spacing="6" column-spacing="10">
+        <text><label>x86_pkg_temp</label></text>
+        <levelbar range-min="0" range-max="110" digits="1" space-expand="true" space-fill="true"><variable>TEMP_0</variable><default>52.0</default></levelbar>
+        <text><label>52.0 °C</label></text>
+        <text><label>acpitz</label></text>
+        <levelbar range-min="0" range-max="110" digits="1" space-expand="true" space-fill="true"><variable>TEMP_1</variable><default>41.5</default></levelbar>
+        <text><label>41.5 °C</label></text>
+        <text><label>nvme Composite</label></text>
+        <levelbar range-min="0" range-max="110" digits="1" space-expand="true" space-fill="true"><variable>TEMP_2</variable><default>38.9</default></levelbar>
+        <text><label>38.9 °C</label></text>
+      </grid>
+    </frame>
+    <frame label="Alerte">
+      <vbox>
+        <text><label>Seuil d'alerte (°C) :</label></text>
+        <hscale range-min="40" range-max="105" range-step="1" draw-value="true"><variable>SEUIL</variable><default>80</default></hscale>
+        <checkbox><label>N'enregistrer que les capteurs au-dessus du seuil</label><variable>SEULEMENT_ALERTES</variable></checkbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button><label>Fermer</label><action>exit:fermer</action></button>
+      <button><label>Actualiser</label><action>exit:actualiser</action></button>
+      <button><label>Enregistrer le relevé</label><action>exit:enregistrer</action></button>
+    </hbox>
+  </vbox>
+</window>

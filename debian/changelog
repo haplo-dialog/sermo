@@ -1,3 +1,45 @@
+sermo (2.8.2-3) unstable; urgency=medium
+
+  * ncursessermo : les variables de sortie restent à l'écran après le
+    dialogue (elles s'effaçaient avec l'écran alterné quand la sortie
+    n'était pas capturée).
+  * debian/copyright : ThorVG est compilé dans lvglsermo depuis la 2.8.2
+    (la remarque disait le contraire) ; msinttypes ne l'est pas.
+  * Documentation réalignée sur le code (README, NEWS, TODO, ROADMAP,
+    SECURITY, PACKAGING, MIGRATION, COMPILE, manuels…) et vérification
+    des sommes signées décrite partout.
+
+ -- s.cage <devel@haplo-dialog.fr>  Mon, 12 Oct 2026 08:21:49 +0200
+
+sermo (2.8.2-2) unstable; urgency=medium
+
+  * fltk1 : une rangée qui contient des colonnes (icône et libellé) prend
+    leur hauteur ; elle débordait sous le cadre suivant (« Boutons et
+    icônes »).
+  * Boîtes rangées comme gtk3 sur les neuf ports (homogeneous, space-expand
+    et space-fill posés sur la boîte, rangée calée à droite) ; icône et
+    libellé centrés dans un bouton.
+  * Pages de manuel des deux serveurs MCP.
+
+ -- s.cage <devel@haplo-dialog.fr>  Sun, 11 Oct 2026 21:55:10 +0200
+
+sermo (2.8.2-1) unstable; urgency=medium
+
+  * Nouvelle version amont 2.8.2.
+  * Deux nouveaux paquets : sermoia-mcp (serveur MCP qui fait écrire,
+    vérifier et voir un dialogue ; l'aperçu n'exécute aucune commande) et
+    sermoman-mcp (serveur MCP du manuel, en lecture seule).
+  * sermo-doc livre soixante scripts métier (examples/metiers), aussi test
+    de réussite des ports.
+  * Entités XML décodées ; valeurs sur plusieurs lignes gardées entières.
+  * Neuf ports alignés sur gtk3sermo : 1re ligne d'une liste, <default>,
+    groupes radio, minuteurs, texte rendu par <text>.
+  * gtk3 : <table> garde l'ordre du document (tri en auto-sort seulement).
+  * --do reçoit EXIT, et en mode serve les valeurs du navigateur.
+  * efl1 : la valeur d'un champ ne sort plus en balisage (« &laquo; »).
+
+ -- s.cage <devel@haplo-dialog.fr>  Sun, 11 Oct 2026 13:59:11 +0200
+
 sermo (2.8.1-1) unstable; urgency=medium
 
   * Version de correction : widgets mal ou pas dessinés, vus sur les

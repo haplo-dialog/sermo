@@ -65,12 +65,16 @@ backend(s):
 
 ```sh
 TIMEOUT=5 bash tests/xml/run_tests.sh <BIN>                       # 55 PASS
-bash tests/comportement/run.sh <BIN>                              # 53 green
+bash tests/comportement/run.sh <BIN>                              # 61 green
 xvfb-run -a bash tests/garde_echappement_sortie.sh <BIN>          # OK — 4 cases
 ```
 
 A merge request that turns a bench red is not merged. If you add a capability,
 add the test case that checks it.
+
+For a port, the pass test is also
+`bash examples/metiers/verifie.sh --ports "<port>"`: it plays the job scripts
+and the toolboxes on that port and compares the values with gtk3sermo.
 
 ### Replay everything, like the CI
 

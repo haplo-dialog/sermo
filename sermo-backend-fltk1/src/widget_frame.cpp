@@ -30,17 +30,37 @@
 
 /* Fl_Group::resize deplace les enfants PROPORTIONNELLEMENT : agrandi par
  * son vbox (space-expand), le cadre voyait sa zone de texte remonter sur le
- * titre. On garde l'enfant sous le titre, a la taille du cadre. */
+ * titre. On garde l'enfant sous le titre, a la taille du cadre.
+ *
+ * Règle de l'étalon (sermo-backend-gtk3/src/widget_frame.c) : le cadre range
+ * son enfant en colonne avec la valeur (expand, fill) du PROJET — pas celle
+ * de l'attribut du cadre —, remplacée par celle que l'enfant déclare ; « non
+ * dit » : edit, frame, fenêtre défilante, paned s'étirent, le reste non. Un
+ * enfant qui ne s'étire pas garde sa hauteur naturelle, calé en HAUT ; étiré
+ * sans fill, il est centré. Jusqu'ici toute boîte s'étirait sur la hauteur
+ * du cadre (galerie system-tools : 5 boutons étirés sur toute la rangée). */
 class SermoFrame : public Fl_Group {
 public:
     SermoFrame(int X, int Y, int W, int H) : Fl_Group(X, Y, W, H, nullptr) {}
+    bool expand_ = true, fill_ = true;   /* règle de l'enfant unique */
+    int  nat_h_ = 0;                     /* sa hauteur naturelle */
     void resize(int X, int Y, int W, int H) override {
         Fl_Widget::resize(X, Y, W, H);
+        int dispo = H - 22;
         for (int i = 0; i < children(); i++) {
             Fl_Widget *c = child(i);
-            int ch = c->as_group() ? H - 22 : c->h();
-            if (c->as_group() || c->h() > H - 22) ch = H - 22;
-            c->resize(X + 4, Y + 18, W - 8, ch);
+            int ch = c->as_group() ? dispo : c->h();
+            if (c->as_group() || c->h() > dispo) ch = dispo;
+            int cy = Y + 18;
+            if (!(expand_ && fill_)) {
+                SermoFlex *sf = dynamic_cast<SermoFlex *>(c);
+                int nat = sf ? sf->natural_h() : nat_h_;
+                if (nat > 0 && nat < dispo) {
+                    if (expand_) cy += (dispo - nat) / 2;   /* étiré sans fill */
+                    ch = nat;
+                }
+            }
+            c->resize(X + 4, cy, W - 8, ch);
         }
     }
 };
@@ -64,7 +84,7 @@ GtkWidget *widget_frame_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         if (tv && *tv) label = (gchar *)tv;
     }
 
-    Fl_Group *grp = new SermoFrame(0, 0, w, h);
+    SermoFrame *grp = new SermoFrame(0, 0, w, h);
     grp->box(FL_ENGRAVED_FRAME);
     grp->align(FL_ALIGN_TOP_LEFT | FL_ALIGN_INSIDE);
     if (label && *label) grp->copy_label(label);
@@ -72,6 +92,17 @@ GtkWidget *widget_frame_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     /* Récupérer l'enfant depuis la pile et l'insérer dans le groupe */
     stackelement _se_frame = pop();
     Fl_Widget *child = (Fl_Widget *)_se_frame.widgets[0];
+    if (_se_frame.nwidgets == 1 && child) {
+        int t = _se_frame.widgettypes[0];
+        bool def = (t == WIDGET_EDIT || t == WIDGET_FRAME ||
+                    t == WIDGET_SCROLLEDW || t == WIDGET_PANED);
+        int e = sermo_widget_expand_rule(child), f = sermo_widget_fill_rule(child);
+        if (e == -1) e = project_space_expand;
+        if (f == -1) f = project_space_fill;
+        grp->expand_ = e != -1 ? e == 1 : def;
+        grp->fill_   = (f != -1 ? f == 1 : def) && sermo_can_grow_v(child);
+        grp->nat_h_  = child->h();
+    }
     if (_se_frame.nwidgets > 1) {
         /* L'étalon range TOUS les enfants d'un cadre dans une boîte verticale
          * (sermo-backend-gtk3/src/widget_frame.c). Jusqu'à la 2.6.8 ce port ne

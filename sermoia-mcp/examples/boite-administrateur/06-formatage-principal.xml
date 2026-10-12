@@ -1,0 +1,33 @@
+<!-- Script : examples/boites-a-outils/administrateur/06-formatage.sh (dialogue principal) -->
+<window title="Formater un périphérique" default-width="560" default-height="520">
+  <vbox>
+    <frame label="Périphérique (seuls les non montés sont proposés)">
+      <list scrollable="true" height-request="120" space-expand="true" space-fill="true"><variable>CHOIX</variable>
+        <item>/dev/sdb 58,6G disque (Clé USB 64 Go)</item>
+        <item>/dev/sdb1 58,6G exfat CLE-USB</item>
+        <item>/dev/sdc1 1,8T ext4 ancien-nas</item>
+      </list>
+    </frame>
+    <frame label="Système de fichiers">
+      <vbox>
+        <hbox>
+          <radiobutton><label>ext4</label><default>true</default><variable>FS_EXT4</variable></radiobutton>
+          <radiobutton><label>xfs</label><variable>FS_XFS</variable></radiobutton>
+          <radiobutton><label>btrfs</label><variable>FS_BTRFS</variable></radiobutton>
+        </hbox>
+        <hbox>
+          <radiobutton><label>vfat (FAT32, tout appareil)</label><variable>FS_VFAT</variable></radiobutton>
+          <radiobutton><label>exfat (gros fichiers, Windows et macOS)</label><variable>FS_EXFAT</variable></radiobutton>
+        </hbox>
+      </vbox>
+    </frame>
+    <hbox><text><label>Étiquette (lettres, chiffres, - et _) :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>ETIQUETTE</variable><default>DONNEES</default></entry></hbox>
+    <checkbox><label>Écraser une signature déjà présente (-f pour xfs et btrfs)</label><variable>FORCER</variable></checkbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Formater…</label><action>exit:formater</action></button>
+    </hbox>
+    <statusbar><variable>AVERTISSEMENT</variable><default>Formater efface tout le contenu du périphérique choisi.</default></statusbar>
+  </vbox>
+</window>

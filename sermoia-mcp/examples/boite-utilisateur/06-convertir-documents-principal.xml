@@ -1,0 +1,32 @@
+<!-- Script : examples/boites-a-outils/utilisateur/06-convertir-documents.sh (dialogue principal) -->
+<window title="Transformer en PDF" default-width="600" default-height="440">
+  <vbox>
+    <text><label>Documents trouvés dans /home/utilisateur/Documents :</label></text>
+    <table scrollable="true" space-expand="true" space-fill="true">
+      <label>Nom|Taille|Changé le</label>
+      <variable>DOCUMENT</variable>
+      <item>lettre-proprietaire.odt|24 Ko|2026-09-28</item>
+      <item>cv-2026.docx|61 Ko|2026-09-02</item>
+      <item>compte-rendu-reunion.odt|18 Ko|2026-08-30</item>
+      <item>recette-tarte.rtf|5 Ko|2026-07-14</item>
+    </table>
+    <frame label="Que transformer ?">
+      <vbox>
+        <radiobutton><label>Seulement le document choisi dans la liste</label><variable>UN</variable><default>true</default></radiobutton>
+        <radiobutton><label>Tous les documents de la liste</label><variable>TOUS</variable></radiobutton>
+      </vbox>
+    </frame>
+    <frame label="Où poser le PDF">
+      <vbox>
+        <comboboxtext><variable>OU</variable><default>À côté du document</default>
+          <item>À côté du document</item><item>Dans un sous-dossier « PDF »</item>
+        </comboboxtext>
+        <checkbox><label>Ouvrir le PDF à la fin (un seul document)</label><variable>OUVRIR</variable></checkbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Transformer</label><action>exit:convertir</action></button>
+    </hbox>
+  </vbox>
+</window>

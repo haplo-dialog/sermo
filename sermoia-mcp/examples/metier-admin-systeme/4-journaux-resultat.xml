@@ -1,0 +1,12 @@
+<!-- Script : examples/metiers/01-admin-systeme/4-journaux.sh (dialogue resultat) -->
+<window title="Journal" default-width="760" default-height="520">
+  <vbox>
+    <text><label>journalctl --no-pager -p warning -b -u ssh.service</label></text>
+    <edit editable="false" space-expand="true" space-fill="true">
+      <default>oct. 11 09:12:03 poste sshd[812]: error: kex_exchange_identification (démonstration)</default>
+    </edit>
+    <hbox>
+      <button><label>Fermer</label><action>exit:fermer</action></button>
+    </hbox>
+  </vbox>
+</window>

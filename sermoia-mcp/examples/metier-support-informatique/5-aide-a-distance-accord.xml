@@ -1,0 +1,16 @@
+<!-- Script : examples/metiers/03-support-informatique/5-aide-a-distance.sh (dialogue accord) -->
+<window title="Aide à distance : accord" default-width="620" default-height="480">
+  <vbox>
+    <text><label>Consignes pour Camille Dupont :</label></text>
+    <edit editable="false" space-expand="true" space-fill="true">
+      <default>1. Ouvrez RustDesk depuis le menu Internet. (démonstration)</default>
+    </edit>
+    <frame label="Question à la personne aidée" space-expand="false" space-fill="false">
+      <text><label>Camille Dupont, acceptez-vous que Support informatique accède à ce poste pendant 30 minutes au plus ?</label></text>
+    </frame>
+    <hbox>
+      <button><label>Je refuse</label><action>exit:refuser</action></button>
+      <button><label>J'accepte</label><action>exit:accepter</action></button>
+    </hbox>
+  </vbox>
+</window>

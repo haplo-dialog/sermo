@@ -1,0 +1,36 @@
+<!-- Script : examples/metiers/09-multimedia/3-redimensionner-images.sh (dialogue principal) -->
+<window title="Redimensionner des images" default-width="540">
+  <vbox>
+    <hbox><text><label>Dossier des photos :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>DOSSIER</variable><default>/home/utilisateur/Images/fete-du-quartier-2026</default></entry></hbox>
+    <frame label="Taille">
+      <vbox>
+        <hbox><text><label>Plus grand côté (pixels) :</label></text>
+          <spinbutton range-min="320" range-max="6000" range-step="160"><variable>COTE</variable><default>1600</default></spinbutton></hbox>
+        <checkbox><label>Ne jamais agrandir une image plus petite</label><variable>SANS_AGRANDIR</variable><default>true</default></checkbox>
+        <text xalign="0"><label>Qualité JPEG / WebP :</label></text>
+        <hscale range-min="50" range-max="100" range-step="1" draw-value="true"><variable>QUALITE</variable><default>82</default></hscale>
+      </vbox>
+    </frame>
+    <frame label="Résultat">
+      <vbox>
+        <hbox><text><label>Format :</label></text>
+          <comboboxtext space-expand="true" space-fill="true">
+            <variable>FORMAT</variable>
+            <default>Garder le format</default>
+            <item>Garder le format</item>
+            <item>JPEG</item>
+            <item>WebP</item>
+          </comboboxtext></hbox>
+        <checkbox><label>Retirer les métadonnées (position GPS, appareil)</label><variable>NETTOYER</variable><default>true</default></checkbox>
+        <radiobutton><label>Écrire des copies dans un sous-dossier :</label><variable>EN_COPIE</variable><default>true</default></radiobutton>
+        <entry><variable>SOUS_DOSSIER</variable><default>web</default></entry>
+        <radiobutton><label>Remplacer les originaux (irréversible)</label><variable>SUR_PLACE</variable></radiobutton>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Redimensionner</label><action>exit:redimensionner</action></button>
+    </hbox>
+  </vbox>
+</window>

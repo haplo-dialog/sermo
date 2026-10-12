@@ -1,0 +1,30 @@
+<!-- Script : examples/boites-a-outils/administrateur/10-redemarrage-programme.sh (dialogue principal) -->
+<window title="Redémarrage programmé" default-width="540" default-height="480">
+  <vbox>
+    <text><label>Déjà programmé : aucun arrêt programmé</label></text>
+    <frame label="Quoi">
+      <hbox>
+        <radiobutton><label>Redémarrer</label><default>true</default><variable>Q_REDEMARRER</variable></radiobutton>
+        <radiobutton><label>Éteindre</label><variable>Q_ETEINDRE</variable></radiobutton>
+        <radiobutton><label>Annuler ce qui est programmé</label><variable>Q_ANNULER</variable></radiobutton>
+      </hbox>
+    </frame>
+    <frame label="Quand">
+      <vbox>
+        <radiobutton><label>À une heure précise (dans les 24 h)</label><default>true</default><variable>W_HEURE</variable></radiobutton>
+        <hbox><text><label>Heure :</label></text>
+          <spinbutton range-min="0" range-max="23" range-step="1"><variable>HEURE</variable><default>22</default></spinbutton>
+          <text><label>h</label></text>
+          <spinbutton range-min="0" range-max="59" range-step="5"><variable>MINUTE</variable><default>30</default></spinbutton></hbox>
+        <radiobutton><label>Dans un délai (minutes)</label><variable>W_DELAI</variable></radiobutton>
+        <hscale range-min="1" range-max="240" range-step="1" draw-value="true" space-expand="true" space-fill="true"><variable>DELAI</variable><default>15</default></hscale>
+      </vbox>
+    </frame>
+    <hbox><text><label>Message aux personnes connectées :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>MESSAGE</variable><default>Mise à jour du serveur : enregistrez votre travail.</default></entry></hbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Programmer</label><action>exit:programmer</action></button>
+    </hbox>
+  </vbox>
+</window>

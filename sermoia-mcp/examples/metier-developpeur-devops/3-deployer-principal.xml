@@ -1,0 +1,35 @@
+<!-- Script : examples/metiers/02-developpeur-devops/3-deployer.sh (dialogue principal) -->
+<window title="Déployer" default-width="540">
+  <vbox>
+    <frame label="Où">
+      <vbox>
+        <hbox>
+          <radiobutton><label>recette</label><default>true</default><variable>ENV_RECETTE</variable></radiobutton>
+          <radiobutton><label>preprod</label><variable>ENV_PREPROD</variable></radiobutton>
+          <radiobutton><label>production</label><variable>ENV_PRODUCTION</variable></radiobutton>
+        </hbox>
+        <hbox><text><label>Serveur (ssh) :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>HOTE</variable><default>deploie@recette.exemple.lan</default></entry></hbox>
+        <hbox><text><label>Dossier distant :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>CHEMIN</variable><default>/srv/appli</default></entry></hbox>
+      </vbox>
+    </frame>
+    <frame label="Quoi">
+      <vbox>
+        <hbox><text><label>Version :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>VERSION</variable><default>v2.4.1</default></entry></hbox>
+        <hbox><text><label>Dossier local construit :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>SOURCE</variable><default>./dist</default></entry></hbox>
+        <checkbox><label>Supprimer dans la version distante ce qui n'existe plus ici (--delete)</label><variable>SUPPRIMER</variable></checkbox>
+        <hbox>
+          <checkbox><label>Puis recharger le service :</label><default>true</default><variable>RECHARGER</variable></checkbox>
+          <entry space-expand="true" space-fill="true"><variable>SERVICE</variable><default>appli.service</default></entry>
+        </hbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Préparer le déploiement</label><action>exit:preparer</action></button>
+    </hbox>
+  </vbox>
+</window>

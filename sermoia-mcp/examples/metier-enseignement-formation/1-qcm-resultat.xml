@@ -1,0 +1,21 @@
+<!-- Script : examples/metiers/08-enseignement-formation/1-qcm.sh (dialogue resultat) -->
+<window title="Résultat du QCM" default-width="520">
+  <vbox>
+    <text><label>Léa Moreau : 3/5 bonnes réponses</label></text>
+    <progressbar>
+      <label>60 %</label>
+      <input>echo 60</input>
+    </progressbar>
+    <frame label="Correction des réponses manquées">
+      <vbox>
+        <edit editable="false" height-request="110" wrap-mode="word"><variable>CORRECTION</variable><default>"Q1 : Je ne réponds pas et je le signale
+Q4 : La connexion est chiffrée"</default></edit>
+      </vbox>
+    </frame>
+    <checkbox><label>Garder ce résultat dans le fichier de la classe</label><variable>GARDER</variable><default>true</default></checkbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Terminer</label><action>exit:terminer</action></button>
+    </hbox>
+  </vbox>
+</window>

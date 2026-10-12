@@ -15,6 +15,8 @@
 #ifndef SERMO_ICON_THEME_H
 #define SERMO_ICON_THEME_H
 
+#include <stddef.h>   /* size_t */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -38,6 +40,13 @@ int sermo_icon_size_px(const char *icon_size);
  * XFCE. Permet aux ports sans détection propre (qt6, sdl3) de SUIVRE le thème
  * système au lieu d'imposer le leur. */
 int sermo_desktop_is_dark(void);
+
+/* Icône SYMBOLIQUE (« …-symbolic.svg ») recolorée comme le fait GTK : ses gris
+ * (#2e3436, #2e3434, #474747, #222, #222222) deviennent la couleur `rgb`
+ * (0xRRGGBB, en général celle du texte) ; les couleurs d'état (vert, orange,
+ * rouge) restent. Rend le SVG modifié (à libérer par free()) et sa taille, ou
+ * NULL si `path` n'est pas une icône symbolique ou ne se lit pas. */
+char *sermo_icon_symbolique_teinte(const char *path, unsigned rgb, size_t *taille);
 
 #ifdef __cplusplus
 }

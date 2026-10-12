@@ -43,12 +43,16 @@ GtkWidget *widget_frame_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     }
 
     stackelement s = pop();
-    Evas_Object *contenu = (Evas_Object *)s.widgets[0];
-    if (s.nwidgets > 1) {
+    Evas_Object *contenu = NULL;
+    if (s.nwidgets > 0) {
         /* L'étalon range TOUS les enfants d'un cadre dans une boîte verticale
-         * (sermo-backend-gtk3/src/widget_frame.c). Jusqu'à la 2.6.8 ce port ne
-         * gardait que le premier : les suivants étaient créés mais jamais
-         * affichés. La <vbox> du port les empile, avec ses règles de taille. */
+         * interne (sermo-backend-gtk3/src/widget_frame.c:111-156), même un
+         * seul : valeur courante partie du PROJET, reportée d'enfant en
+         * enfant, défaut edit/frame/défilante/paned étirés, le reste à sa
+         * hauteur naturelle, calé en haut. Jusqu'à la 2.6.8 ce port ne
+         * gardait que le premier enfant ; jusqu'à la 2.8.2 un enfant seul
+         * remplissait tout le cadre (system-tools : boutons étirés sur toute
+         * la hauteur). La <vbox> du port, sans attribut, fait ce rangement. */
         push(s);
         contenu = (Evas_Object *)widget_vbox_create(NULL, NULL, 0);
     }

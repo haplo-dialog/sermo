@@ -49,5 +49,9 @@ char *widgets_to_str(int itype);
 gboolean widget_connect_signals(GtkWidget *widget, AttributeSet *Attr);
 void widget_visibility_list_add(GtkWidget *widget, tag_attr *attr);
 void widget_show_all(void);
+/* <hbox>/<vbox> : étirement réglé sur la boîte et report d'un enfant à
+ * l'autre (dans l'ordre, ou à l'envers pour une rangée), homogeneous. */
+struct WidgetNode;
+void boite_repartir(struct WidgetNode *b, tag_attr *attr, int rangee);
 
 #endif

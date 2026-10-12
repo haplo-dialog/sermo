@@ -1,0 +1,14 @@
+<!-- Script : examples/boites-a-outils/serveur/03-ports-ecoute.sh (dialogue confirmation_ssh) -->
+<window title="Couper SSH ?">
+  <vbox>
+    <text><label>ssh.service sera : arrêtée.</label></text>
+    <text><label>Votre session SSH sera coupée, et plus personne n'entrera par SSH :</label></text>
+    <text><label>il faudra la console de la machine pour le relancer.</label></text>
+    <hbox><text><label>Tapez le nom de l'unité pour confirmer :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>RETAPE</variable></entry></hbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Couper SSH</label><action>exit:arreter</action></button>
+    </hbox>
+  </vbox>
+</window>

@@ -12,8 +12,10 @@
 #include "tag_attributes.h"
 #include "widget_radiobutton.h"
 #include <QtWidgets/QRadioButton>
+#include <QtWidgets/QButtonGroup>
 #include <string.h>
 #include <stdlib.h>
+
 
 GtkWidget *widget_radiobutton_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
@@ -28,6 +30,23 @@ GtkWidget *widget_radiobutton_create(AttributeSet *Attr, tag_attr *attr, gint Ty
     if (Attr) label = attributeset_get_first(&element, Attr, ATTR_LABEL);
     QRadioButton *rb = new QRadioButton(label ? label : "");
     rb->resize(w, h);
+    /* Un groupe par suite de boutons radio, comme gtk3sermo : le cœur ouvre le
+     * groupe (lastradiowidget) et le ferme dès qu'un autre widget est créé. Qt
+     * regroupait par conteneur parent (deux questions dans une même boîte ne
+     * faisaient qu'un groupe), et ne cochait aucun bouton d'office. */
+    if (lastradiowidget == nullptr) {
+        QButtonGroup *g = new QButtonGroup(rb);
+        g->setExclusive(true);
+        rb->setProperty("sermoGroupe", QVariant::fromValue((QObject *)g));
+        lastradiowidget = (GtkWidget *)rb;
+        rb->setChecked(true);               /* le 1er coché, comme GtkRadioButton */
+    } else {
+        QObject *g = static_cast<QRadioButton *>((void *)lastradiowidget)->property("sermoGroupe").value<QObject *>();
+        rb->setProperty("sermoGroupe", QVariant::fromValue(g));
+    }
+    rb->setAutoExclusive(false);
+    if (QButtonGroup *g = qobject_cast<QButtonGroup *>(rb->property("sermoGroupe").value<QObject *>()))
+        g->addButton(rb);
     if (Attr) {
         element = nullptr;
         gchar *def = attributeset_get_first(&element, Attr, ATTR_DEFAULT);

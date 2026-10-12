@@ -1,0 +1,19 @@
+<!-- Script : examples/boites-a-outils/utilisateur/07-ranger-dossier.sh (dialogue plan) -->
+<window title="Ce qui va bouger" default-width="560" default-height="420">
+  <vbox>
+    <text><label>4 fichier(s) rangé(s), 1 mis à la corbeille.</label></text>
+    <expander label="Voir le détail" expanded="true">
+      <edit editable="false" scrollable="true" height-request="220"><variable>PLAN</variable><default>facture-garage.pdf  →  Documents/
+IMG_2041.jpg  →  Images/
+IMG_2042.jpg  →  Images/
+chanson.mp3  →  Musique/
+vieux-formulaire.pdf  →  corbeille</default></edit>
+      <variable>DETAIL</variable>
+    </expander>
+    <text><label>Rien n'est effacé pour de bon : la corbeille se vide seulement quand vous le décidez.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Ranger</label><action>exit:ranger</action></button>
+    </hbox>
+  </vbox>
+</window>

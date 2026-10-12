@@ -56,11 +56,12 @@ GtkWidget *widget_window_create(AttributeSet *Attr, tag_attr *attr, gint Type)
      * naturelle. Un resize(640, 480) inconditionnel donnait ici une fenêtre
      * quatre fois trop grande, presque vide, là où la référence rend 320×105. */
     bool sized = false;
+    bool wset = false, hset = false;   /* quel côté l'XML impose-t-il ? */
     int  minw = 0, minh = 0;
     if (attr) {
         const char *v;
-        if ((v = get_tag_attribute(attr, "default-width")))  { dw = atoi(v); sized = true; }
-        if ((v = get_tag_attribute(attr, "default-height"))) { dh = atoi(v); sized = true; }
+        if ((v = get_tag_attribute(attr, "default-width")))  { dw = atoi(v); sized = wset = true; }
+        if ((v = get_tag_attribute(attr, "default-height"))) { dh = atoi(v); sized = hset = true; }
         /* width-request/height-request = taille MINIMALE, comme
          * gtk_widget_set_size_request() côté référence. */
         if ((v = get_tag_attribute(attr, "width-request")))  minw = atoi(v);
@@ -144,6 +145,18 @@ GtkWidget *widget_window_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     if (!sized) {
         win->ensurePolished();
         win->resize(win->sizeHint());
+    } else if (!wset || !hset) {
+        /* Un SEUL côté imposé (default-width sans default-height, ou
+         * l'inverse) : gtk_window_set_default_size(w, -1) garde la taille
+         * NATURELLE pour l'autre côté. Ce port posait 480 (ou 640) d'office :
+         * depuis que les cadres s'étirent comme dans gtk3, une fenêtre
+         * <window default-width="520"> sortait en 520x480 avec un cadre tiré
+         * jusqu'en bas, là où l'étalon fait la hauteur de son contenu. */
+        win->ensurePolished();
+        QSize nat = win->sizeHint();
+        QSize taille(wset ? dw : nat.width(), hset ? dh : nat.height());
+        win->resize(taille);
+        win->setProperty("sermoTailleDemandee", taille);
     }
 
     /* Centrage — sur la taille RÉELLE de la fenêtre, pas sur dw/dh, qui ne

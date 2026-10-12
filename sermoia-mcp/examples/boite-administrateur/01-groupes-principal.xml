@@ -1,0 +1,40 @@
+<!-- Script : examples/boites-a-outils/administrateur/01-groupes.sh (dialogue principal) -->
+<window title="Groupes" default-width="600" default-height="520">
+  <vbox>
+    <frame label="Groupes existants (GID ≥ 1000 et quelques groupes système)">
+      <tree scrollable="true" height-request="160" space-expand="true" space-fill="true">
+        <label>Groupe|GID|Membres</label>
+        <variable>CHOISI</variable>
+        <item>adm|4|syslog</item>
+        <item>audio|29|utilisateur</item>
+        <item>compta|1003|alice,bruno</item>
+        <item>projet-web|1004|</item>
+        <item>sudo|27|utilisateur</item>
+      </tree>
+    </frame>
+    <frame label="Action">
+      <vbox>
+        <hbox>
+          <radiobutton><label>Ajouter un membre</label><default>true</default><variable>A_AJOUTER</variable></radiobutton>
+          <radiobutton><label>Retirer un membre</label><variable>A_RETIRER</variable></radiobutton>
+          <radiobutton><label>Créer le groupe</label><variable>A_CREER</variable></radiobutton>
+        </hbox>
+        <hbox><text><label>Groupe :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>GROUPE</variable><default>compta</default></entry></hbox>
+        <hbox><text><label>Membre (identifiant) :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>MEMBRE</variable><default>utilisateur</default></entry></hbox>
+      </vbox>
+    </frame>
+    <frame label="Pour la création seulement">
+      <vbox>
+        <checkbox><label>Groupe système (--system, GID sous 1000)</label><variable>SYSTEME</variable></checkbox>
+        <hbox><text><label>GID imposé (0 = choisi par groupadd) :</label></text>
+          <spinbutton range-min="0" range-max="60000" range-step="1"><variable>GID</variable><default>0</default></spinbutton></hbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Appliquer</label><action>exit:appliquer</action></button>
+    </hbox>
+  </vbox>
+</window>

@@ -1,0 +1,19 @@
+<!-- Script : examples/boites-a-outils/utilisateur/08-copie-cle-usb.sh (dialogue confirmation) -->
+<window title="Avant de copier">
+  <vbox>
+    <table height-request="120">
+      <label>Quoi|Combien</label>
+      <item>Fichiers à copier|214</item>
+      <item>Taille à copier|1,3 Go</item>
+      <item>Place libre sur la clé|12 Go</item>
+      <item>Fichiers effacés sur la clé|0</item>
+      <variable>RESUME</variable>
+    </table>
+    <text><label>Destination : /media/utilisateur/CLE-USB/Copie</label></text>
+    <statusbar><variable>CONSEIL</variable><default>À la fin, éjectez la clé avant de la débrancher.</default></statusbar>
+    <hbox>
+      <button cancel></button>
+      <button><label>Copier</label><action>exit:copier</action></button>
+    </hbox>
+  </vbox>
+</window>

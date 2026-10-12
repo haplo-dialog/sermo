@@ -1,0 +1,45 @@
+<!-- Script : examples/metiers/06-atelier-industrie-labo/3-etiquetage.sh (dialogue principal) -->
+<window title="Étiquetage des colis" default-width="580">
+  <vbox>
+    <frame label="Produit">
+      <grid columns="2" row-spacing="6" column-spacing="8">
+        <text><label>Référence :</label></text>
+        <entry space-expand="true" space-fill="true"><variable>REFERENCE</variable><default>AX-2500-H7</default></entry>
+        <text><label>Désignation :</label></text>
+        <entry space-expand="true" space-fill="true"><variable>DESIGNATION</variable><default>Axe rectifié Ø 25 mm, L 120 mm</default></entry>
+        <text><label>Lot :</label></text>
+        <entry space-expand="true" space-fill="true"><variable>LOT</variable><default>L2026-1042</default></entry>
+      </grid>
+    </frame>
+    <hbox>
+      <frame label="Date de fabrication">
+        <calendar><variable>FABRICATION</variable><default>2026-10-12</default></calendar>
+      </frame>
+      <frame label="Quantités" space-expand="true" space-fill="true">
+        <vbox>
+          <text><label>Pièces par colis :</label></text>
+          <spinbutton range-min="1" range-max="10000" range-step="1"><variable>QUANTITE</variable><default>50</default></spinbutton>
+          <text><label>Nombre d'étiquettes :</label></text>
+          <spinbutton range-min="1" range-max="500" range-step="1"><variable>NOMBRE</variable><default>4</default></spinbutton>
+        </vbox>
+      </frame>
+    </hbox>
+    <frame label="Impression">
+      <vbox>
+        <hbox>
+          <radiobutton><label>Étiquette 100 × 50 mm</label><variable>FORMAT_ETIQUETTE</variable><default>true</default></radiobutton>
+          <radiobutton><label>Feuille A4</label><variable>FORMAT_A4</variable></radiobutton>
+        </hbox>
+        <hbox><text><label>Imprimante :</label></text>
+          <comboboxtext space-expand="true" space-fill="true"><variable>IMPRIMANTE</variable>
+            <item>Zebra_ZD421</item>
+            <item>Bureau_Laser</item>
+          </comboboxtext></hbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Aperçu</label><action>exit:apercu</action></button>
+    </hbox>
+  </vbox>
+</window>

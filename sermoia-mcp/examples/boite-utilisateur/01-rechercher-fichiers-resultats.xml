@@ -1,0 +1,19 @@
+<!-- Script : examples/boites-a-outils/utilisateur/01-rechercher-fichiers.sh (dialogue resultats) -->
+<window title="Fichiers trouvés" default-width="720" default-height="420">
+  <vbox>
+    <text><label>Choisissez une ligne, puis « Ouvrir son dossier ».</label></text>
+    <tree scrollable="true" exported-column="3" space-expand="true" space-fill="true">
+      <label>Nom|Taille|Changé le|Dossier</label>
+      <variable>CHOIX</variable>
+      <item>facture-electricite-2026-03.pdf|182 Ko|2026-03-14|/home/utilisateur/Documents/Maison</item>
+      <item>facture-garage.pdf|1,2 Mo|2026-05-02|/home/utilisateur/Téléchargements</item>
+      <item>facture-internet-avril.pdf|96 Ko|2026-04-08|/home/utilisateur/Documents/Maison</item>
+      <item>facture-dentiste.jpg|2,4 Mo|2026-06-21|/home/utilisateur/Images/Papiers</item>
+    </tree>
+    <statusbar><variable>BILAN</variable><default>4 fichier(s) trouvé(s) (200 au plus)</default></statusbar>
+    <hbox>
+      <button><label>Fermer</label><action>exit:fermer</action></button>
+      <button><label>Ouvrir son dossier</label><action>exit:ouvrir</action></button>
+    </hbox>
+  </vbox>
+</window>

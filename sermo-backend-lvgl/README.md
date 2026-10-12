@@ -2,7 +2,7 @@
 
 Port de sermo sur [LVGL](https://lvgl.io) v9.6.0, la bibliothèque graphique des
 écrans sans bureau (bornes, embarqué, framebuffer). Même cœur neutre que les
-ports fltk1, efl1, sdl3 et ncurses : le cœur lit le dialogue, tient les
+ports qt6, fltk1, efl1, sdl3, ncurses et html : le cœur lit le dialogue, tient les
 variables et joue les actions ; ce port dessine et renvoie au cœur ce que
 l'utilisateur change.
 
@@ -26,8 +26,12 @@ l'utilisateur change.
   Serif, Monospace) et une taille. Ils s'ouvrent DANS la fenêtre : une fenêtre
   qui en contient un fait au moins 380×340.
 - **Onglets et tableau** : `<notebook>` en vrais onglets (`tab-labels`,
-  `tab-pos="left"`), `<table>` en tableau à en-têtes. `<tree>` reste une liste
-  simple (le cœur neutre le range ainsi).
+  `tab-pos` en haut, à gauche, à droite ou en bas), `<table>` en tableau à
+  en-têtes. `<tree>` s'affiche en colonnes sous ses en-têtes (depuis la 2.8.1)
+  et rend la colonne `exported-column` (2.8.2).
+- **Icônes SVG** : dessinées par ThorVG, embarqué dans LVGL (`LV_USE_THORVG`
+  dans `lv_conf.h`) ; une icône symbolique prend la couleur du texte. Depuis la
+  2.8.2, le port contient donc du C++.
 - **Clic** : le pilote X11 de LVGL relit la souris toutes les 33 ms et ne garde
   que l'état du moment. Un clic plus bref (appui et relâche dans le même
   relevé, comme `xdotool click`) est perdu ; un clic humain ne l'est pas. Les
@@ -35,9 +39,10 @@ l'utilisateur change.
 
 ## Construire
 
-Dépendances en plus du cœur : `libx11-dev`, `libpng-dev`, `libwayland-dev`,
-`libxkbcommon-dev`, `wayland-protocols` (les en-têtes de protocole Wayland que
-LVGL attend sont engendrés à la construction par `wayland-scanner`).
+Dépendances en plus du cœur : un compilateur C++ (ThorVG), `libx11-dev`,
+`libpng-dev`, `libwayland-dev`, `libxkbcommon-dev`, `wayland-protocols` (les
+en-têtes de protocole Wayland que LVGL attend sont engendrés à la construction
+par `wayland-scanner`).
 
 ```sh
 ci/construire.sh lvgl          # → sermo-backend-lvgl/_build/lvglsermo

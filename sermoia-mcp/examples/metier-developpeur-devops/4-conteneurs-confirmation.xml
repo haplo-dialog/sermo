@@ -1,0 +1,11 @@
+<!-- Script : examples/metiers/02-developpeur-devops/4-conteneurs.sh (dialogue confirmation) -->
+<window title="Confirmer">
+  <vbox>
+    <text><label>Vraiment arrêter le conteneur base ?</label></text>
+    <text><label>Le service qu'il rend sera interrompu.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Confirmer</label><action>exit:confirmer</action></button>
+    </hbox>
+  </vbox>
+</window>

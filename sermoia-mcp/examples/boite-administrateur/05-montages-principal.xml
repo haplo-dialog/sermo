@@ -1,0 +1,34 @@
+<!-- Script : examples/boites-a-outils/administrateur/05-montages.sh (dialogue principal) -->
+<window title="Monter un disque" default-width="700" default-height="540">
+  <vbox>
+    <text><label>Partitions vues par lsblk. Choisissez celle à monter.</label></text>
+    <table scrollable="true" height-request="140" space-expand="true" space-fill="true">
+      <label>Périphérique|UUID|Type|Taille|Étiquette|Monté sur</label>
+      <variable>PART</variable>
+      <item>/dev/sda1|3f2c9a1e-7b4d-4e8a-9c21-5d6e7f8a9b0c|ext4|931,5G|archives|</item>
+      <item>/dev/sdb1|6A1F-2C3D|exfat|58,6G|CLE-USB|</item>
+      <item>/dev/nvme0n1p2|0b1d2e3f-4a5b-6c7d-8e9f-a0b1c2d3e4f5|ext4|475,9G||/</item>
+    </table>
+    <frame label="Ligne fstab">
+      <vbox>
+        <hbox><text><label>Point de montage :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>POINT</variable><default>/srv/archives</default></entry></hbox>
+        <hbox><text><label>Type :</label></text>
+          <comboboxtext><variable>TYPE</variable><default>auto</default>
+            <item>auto</item><item>ext4</item><item>xfs</item><item>btrfs</item><item>vfat</item><item>exfat</item><item>ntfs3</item>
+          </comboboxtext></hbox>
+        <hbox>
+          <checkbox><label>nofail (démarrer même si le disque manque)</label><default>true</default><variable>NOFAIL</variable></checkbox>
+          <checkbox><label>noatime</label><default>true</default><variable>NOATIME</variable></checkbox>
+          <checkbox><label>lecture seule (ro)</label><variable>LECTURE_SEULE</variable></checkbox>
+        </hbox>
+        <hbox><text><label>Vérification au démarrage (fsck, 0 = jamais, 2 = après la racine) :</label></text>
+          <spinbutton range-min="0" range-max="2" range-step="1"><variable>PASSE</variable><default>2</default></spinbutton></hbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Préparer la ligne</label><action>exit:preparer</action></button>
+    </hbox>
+  </vbox>
+</window>

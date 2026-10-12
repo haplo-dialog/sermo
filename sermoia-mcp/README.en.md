@@ -2,8 +2,6 @@
 
 # sermoia-mcp — an MCP server for writing sermo with an AI
 
-[Français](README.md)
-
 sermoia-mcp gives an AI assistant (Claude, or any **MCP** client) the tools to write a
 sermo dialog, have the real parser **check** it, **see** it as a picture and **fix**
 it, before showing it to the user.
@@ -163,11 +161,25 @@ topic missing from the catalogue is refused.
 |---|---|---|
 | `SERMO_BIN` | `sermo` | binary for `check`, `run` and the text preview |
 | `SERMO_RENDER_BIN` | `SERMO_BIN` | binary for `render` (a windowed port to get a picture) |
-| `SERMO_EXAMPLES_DIR` | `examples` | example catalogue |
+| `SERMO_EXAMPLES_DIR` | the package's, otherwise `examples` | example catalogue |
 | `SERMO_VOTE_FILE` | `$XDG_STATE_HOME/sermoia/votes.tsv` | vote register |
 | `SERMOIA_CHECK_DELAI` | 20 s (≤ 120) | parsing timeout |
 | `SERMOIA_RENDER_DELAI` | 30 s (≤ 300) | timeout of each render attempt |
 | `SERMO_ALLOWED_CMDS` | — | commands `sermo_run` may launch (see Security) |
+
+## Install
+
+The packages are attached to each release; check the signed checksums
+(`SHA256SUMS.asc`) first, as the [README](../README.en.md#install) explains.
+
+```sh
+sudo apt install ./sermoia-mcp_2.8.2-3_amd64.deb ./sermo-backend-qt6_2.8.2-3_amd64.deb
+```
+
+The package installs `/usr/bin/sermoia-mcp` and its catalogue in
+`/usr/share/sermoia-mcp/examples` (which the server finds by itself), job scripts
+and toolboxes included. It needs at least one sermo port; `sermo-backend-qt6` is recommended: it
+renders pictures without a display or `xvfb`.
 
 ## Build, run, check
 
@@ -205,7 +217,7 @@ rejected, timeout ignored, `ping` refused) each make the test fail.
 Claude Code:
 
 ```sh
-claude mcp add sermoia --env SERMO_BIN=/usr/bin/gtk3sermo --env SERMO_RENDER_BIN=/usr/bin/qt6sermo --env SERMO_EXAMPLES_DIR=/path/to/sermoia-mcp/examples -- /path/to/sermoia-mcp/_build/sermoia-mcp
+claude mcp add sermoia --env SERMO_BIN=/usr/bin/gtk3sermo --env SERMO_RENDER_BIN=/usr/bin/qt6sermo -- /usr/bin/sermoia-mcp
 ```
 
 Other clients (JSON configuration file):
@@ -214,11 +226,10 @@ Other clients (JSON configuration file):
 {
   "mcpServers": {
     "sermoia": {
-      "command": "/path/to/sermoia-mcp/_build/sermoia-mcp",
+      "command": "/usr/bin/sermoia-mcp",
       "env": {
         "SERMO_BIN": "/usr/bin/gtk3sermo",
-        "SERMO_RENDER_BIN": "/usr/bin/qt6sermo",
-        "SERMO_EXAMPLES_DIR": "/path/to/sermoia-mcp/examples"
+        "SERMO_RENDER_BIN": "/usr/bin/qt6sermo"
       }
     }
   }
@@ -251,14 +262,18 @@ Protocol points:
 ## Example catalogue (`examples/`)
 
 Each subdirectory is a **topic**, each `.xml` a whole dialog that the test has parsed.
-Two families:
+Three families:
 
 - **dialog patterns**, useful for generation: `formulaire`, `saisie-simple`,
   `confirmation`, `information`, `mot-de-passe`, `cases-a-cocher`, `choix-radio`,
   `zone-texte`, `liste-selection`, `liste-deroulante`, `onglets`, `tableau`, `arbre`;
 - **widgets**, one minimal dialog per widget: `button`, `checkbox`, `entry`,
   `combobox`, `spinbutton`, `calendar`, `list`, `table`, `tree`, `notebook`, `menu`,
-  `timer`…
+  `timer`…;
+- **job scripts and toolboxes**: 16 topics (`metier-…` for the 12 jobs, `boite-…`
+  for the 4 toolboxes), 187 dialogs taken from the scripts of `examples/metiers/`
+  and `examples/boites-a-outils/` by `outils/catalogue-metiers.sh`. Each XML names
+  its source script in a comment.
 
 Topic and file names are limited to letters, digits, `-`, `_` and `.`. Point
 `SERMO_EXAMPLES_DIR` elsewhere to serve another catalogue.

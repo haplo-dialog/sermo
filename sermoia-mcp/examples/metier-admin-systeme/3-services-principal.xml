@@ -1,0 +1,29 @@
+<!-- Script : examples/metiers/01-admin-systeme/3-services.sh (dialogue principal) -->
+<window title="Services systemd" default-width="680" default-height="480">
+  <vbox>
+    <text><label>Choisissez un service, puis l'action.</label></text>
+    <tree scrollable="true" space-expand="true" space-fill="true">
+      <label>Service|Actif|État|Description</label>
+      <variable>SERVICE</variable>
+      <item>cron.service|active|running|Regular background program processing daemon</item>
+      <item>cups.service|active|running|CUPS Scheduler</item>
+      <item>ssh.service|inactive|dead|OpenBSD Secure Shell server</item>
+      <item>systemd-timesyncd.service|active|running|Network Time Synchronization</item>
+    </tree>
+    <frame label="Action" space-expand="false" space-fill="false">
+      <vbox>
+        <hbox>
+          <radiobutton><label>Voir l'état</label><default>true</default><variable>A_ETAT</variable></radiobutton>
+          <radiobutton><label>Démarrer</label><variable>A_DEMARRER</variable></radiobutton>
+          <radiobutton><label>Arrêter</label><variable>A_ARRETER</variable></radiobutton>
+          <radiobutton><label>Redémarrer</label><variable>A_REDEMARRER</variable></radiobutton>
+        </hbox>
+        <checkbox><label>Aussi au démarrage de la machine (enable avec Démarrer, disable avec Arrêter)</label><variable>PERMANENT</variable></checkbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Appliquer</label><action>exit:appliquer</action></button>
+    </hbox>
+  </vbox>
+</window>

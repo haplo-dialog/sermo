@@ -1,0 +1,34 @@
+<!-- Script : examples/boites-a-outils/systeme/02-son.sh (dialogue principal) -->
+<window title="Son" default-width="620">
+  <vbox>
+    <notebook tab-labels="Sortie (haut-parleurs, casque)|Entrée (micro)">
+      <vbox>
+        <text><label>Sortie par défaut (laisser sans choix pour ne pas la changer) :</label></text>
+        <list scrollable="true" height-request="110"><variable>SORTIE</variable>
+          <item>alsa_output.pci-0000_00_1f.3.analog-stereo</item>
+          <item>alsa_output.pci-0000_01_00.1.hdmi-stereo</item>
+          <item>bluez_output.00_1A_7D_DA_71_13.1</item>
+        </list>
+        <hbox><text><label>Volume (%) :</label></text>
+          <hscale range-min="0" range-max="150" range-step="5" draw-value="true" space-expand="true" space-fill="true"><variable>VOL_SORTIE</variable><default>45</default></hscale></hbox>
+        <togglebutton><label>Couper le son de la sortie</label><variable>MUET_SORTIE</variable><default>false</default></togglebutton>
+      </vbox>
+      <vbox>
+        <text><label>Entrée par défaut (laisser sans choix pour ne pas la changer) :</label></text>
+        <list scrollable="true" height-request="110"><variable>ENTREE</variable>
+          <item>alsa_input.pci-0000_00_1f.3.analog-stereo</item>
+          <item>alsa_input.usb-Logitech_Webcam_C270-02.mono-fallback</item>
+        </list>
+        <hbox><text><label>Volume (%) :</label></text>
+          <hscale range-min="0" range-max="150" range-step="5" draw-value="true" space-expand="true" space-fill="true"><variable>VOL_ENTREE</variable><default>70</default></hscale></hbox>
+        <hbox><text><label>Micro coupé :</label></text>
+          <switch><variable>MUET_ENTREE</variable><default>false</default></switch></hbox>
+      </vbox>
+    </notebook>
+    <text><label>Au-delà de 100 %, le son est amplifié et peut saturer.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Appliquer</label><action>exit:appliquer</action></button>
+    </hbox>
+  </vbox>
+</window>

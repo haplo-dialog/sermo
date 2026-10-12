@@ -1,0 +1,11 @@
+<!-- Script : examples/metiers/10-securite-informatique/2-integrite.sh (dialogue ecraser) -->
+<window title="Remplacer la liste ?">
+  <vbox>
+    <text><label>La liste /home/utilisateur/empreintes-etc.sha256 existe déjà.</label></text>
+    <text><label>La remplacer par un nouveau relevé ? L'ancienne sera perdue.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Remplacer</label><action>exit:relever</action></button>
+    </hbox>
+  </vbox>
+</window>

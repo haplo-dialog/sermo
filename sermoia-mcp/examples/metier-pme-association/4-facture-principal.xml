@@ -1,0 +1,46 @@
+<!-- Script : examples/metiers/07-pme-association/4-facture.sh (dialogue principal) -->
+<window title="Nouvelle facture" default-width="600">
+  <vbox>
+    <frame label="En-tête">
+      <vbox>
+        <hbox><text><label>Numéro :</label></text>
+          <entry><variable>NUMERO</variable><default>F-2026-042</default></entry>
+          <text><label>Date :</label></text>
+          <entry><variable>DATE</variable><default>2026-10-12</default></entry></hbox>
+        <hbox><text><label>Client :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>CLIENT</variable><default>Mairie de Bourg-lès-Valence</default></entry></hbox>
+        <text xalign="0"><label>Adresse du client :</label></text>
+        <edit height-request="50"><variable>ADRESSE</variable><default>"Place de la République
+26500 Bourg-lès-Valence"</default></edit>
+      </vbox>
+    </frame>
+    <frame label="Lignes : désignation ; quantité ; prix unitaire HT">
+      <vbox>
+        <edit height-request="110"><variable>LIGNES</variable><default>"Atelier numérique (demi-journée) ; 2 ; 180
+Support imprimé ; 25 ; 3.50
+Frais de déplacement ; 1 ; 42"</default></edit>
+      </vbox>
+    </frame>
+    <hbox>
+      <text><label>TVA :</label></text>
+      <comboboxtext>
+        <variable>TVA</variable>
+        <default>20 %</default>
+        <item>20 %</item>
+        <item>10 %</item>
+        <item>5,5 %</item>
+        <item>Non applicable (art. 293 B du CGI)</item>
+      </comboboxtext>
+      <text><label>Paiement à (jours) :</label></text>
+      <spinbutton range-min="0" range-max="60" range-step="15"><variable>ECHEANCE</variable><default>30</default></spinbutton>
+    </hbox>
+    <hbox>
+      <text><label>Dossier :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>DOSSIER</variable><default>/home/utilisateur/Documents/Factures</default></entry>
+    </hbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Calculer et relire</label><action>exit:calculer</action></button>
+    </hbox>
+  </vbox>
+</window>

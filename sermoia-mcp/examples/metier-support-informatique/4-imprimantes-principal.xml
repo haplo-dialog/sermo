@@ -1,0 +1,31 @@
+<!-- Script : examples/metiers/03-support-informatique/4-imprimantes.sh (dialogue principal) -->
+<window title="Imprimantes" default-width="620" default-height="420">
+  <vbox>
+    <notebook tab-labels="File d'attente|Page de test" space-expand="true" space-fill="true">
+      <vbox>
+        <table scrollable="true" space-expand="true" space-fill="true">
+          <label>Travail|Propriétaire|Taille|Envoyé le</label>
+          <variable>TRAVAIL</variable>
+          <item>Laser-Accueil-118|cdupont|2,1 Mo|sam. 11 oct. 2026 09:02</item>
+          <item>Laser-Accueil-119|mmartin|340 ko|sam. 11 oct. 2026 09:15</item>
+        </table>
+        <checkbox><label>Annuler tous mes travaux, sur toutes les imprimantes</label><variable>TOUS</variable></checkbox>
+        <hbox><button><label>Annuler</label><action>exit:annuler</action></button></hbox>
+      </vbox>
+      <vbox>
+        <hbox><text><label>Imprimante :</label></text>
+          <comboboxtext space-expand="true" space-fill="true">
+            <variable>IMPRIMANTE</variable>
+            <default>Laser-Accueil</default>
+            <item>Laser-Accueil</item>
+            <item>Couleur-Etage2</item>
+          </comboboxtext></hbox>
+        <hbox><text><label>Exemplaires :</label></text>
+          <spinbutton range-min="1" range-max="5" range-step="1"><variable>COPIES</variable><default>1</default></spinbutton></hbox>
+        <checkbox><label>Recto verso</label><variable>RECTO_VERSO</variable></checkbox>
+        <hbox><button><label>Imprimer la page de test</label><action>exit:tester</action></button></hbox>
+      </vbox>
+    </notebook>
+    <hbox space-expand="false" space-fill="false"><button><label>Fermer</label><action>exit:fermer</action></button></hbox>
+  </vbox>
+</window>

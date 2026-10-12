@@ -110,12 +110,35 @@ static void listes_chargees(WidgetNode *n)
 
 /* Rejoue les actions des <timer> de l'arbre, une fois. Un « exit:... » sort
  * via action_exitprogram (print_variables + exit), sans repasser par ici. */
-static void fire_timers_once(WidgetNode *node)
+static void lister_timers(WidgetNode *n, WidgetNode ***t, int *nb, int *cap)
 {
-    if (!node) return;
-    if (node->type == WT_TIMER)
-        declencher(node, "tick", NULL);
-    for (int i = 0; i < node->child_count; i++) fire_timers_once(node->children[i]);
+    if (!n) return;
+    if (n->type == WT_TIMER && n->sensitive) {
+        if (*nb == *cap) { *cap = *cap ? *cap * 2 : 8; *t = realloc(*t, (size_t)*cap * sizeof **t); }
+        if (*t) (*t)[(*nb)++] = n;
+    }
+    for (int i = 0; i < n->child_count; i++) lister_timers(n->children[i], t, nb, cap);
+}
+static int intervalle_ms(const WidgetNode *n)
+{
+    int ms = (n->label && *n->label) ? atoi(n->label) : 1000;
+    return ms > 0 ? ms : 1000;
+}
+/* Chacune une fois, de la plus courte à la plus longue (tri stable : deux
+ * délais égaux gardent l'ordre du document) — l'ordre où elles partiraient
+ * dans une fenêtre. Jusqu'à la 2.8.1 : l'ordre du document, et une minuterie
+ * de 8 s fermait le dialogue avant celle d'une seconde. */
+static void fire_timers_once(WidgetNode *root)
+{
+    WidgetNode **t = NULL;
+    int nb = 0, cap = 0;
+    lister_timers(root, &t, &nb, &cap);
+    for (int i = 1; i < nb; i++)
+        for (int j = i; j > 0 && intervalle_ms(t[j - 1]) > intervalle_ms(t[j]); j--) {
+            WidgetNode *x = t[j]; t[j] = t[j - 1]; t[j - 1] = x;
+        }
+    for (int i = 0; i < nb; i++) declencher(t[i], "tick", NULL);
+    free(t);
 }
 
 /* Barres de progression : relever ce que leurs commandes ont écrit. Rend le
@@ -155,7 +178,7 @@ int sermo_be_run_loop(void)
         fclose(mem);
         int rc = html_serve_once(buf, (unsigned long)blen);
         free(buf);
-        if (rc != 0) { printf("EXIT=\"abort\"\n"); fflush(stdout); }
+        if (rc != 0) { printf("EXIT=\"abort\"\n"); g_setenv("EXIT", "abort", TRUE); fflush(stdout); }
         exit(EXIT_SUCCESS);
     }
 
@@ -175,6 +198,7 @@ int sermo_be_run_loop(void)
      * que les autres backends dans ce cas (variables + EXIT="abort"). */
     print_variables(NULL);
     printf("EXIT=\"abort\"\n");
+    g_setenv("EXIT", "abort", TRUE);   /* --do lit EXIT dans l'environnement (manuel §3.2) : il n'y était pas. */
     fflush(stdout);
     exit(EXIT_SUCCESS);
 }

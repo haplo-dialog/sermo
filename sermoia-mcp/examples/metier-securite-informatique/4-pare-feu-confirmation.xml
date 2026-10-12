@@ -1,0 +1,12 @@
+<!-- Script : examples/metiers/10-securite-informatique/4-pare-feu.sh (dialogue confirmation) -->
+<window title="Confirmer la règle">
+  <vbox>
+    <text><label>Cette commande modifie le pare-feu en service :</label></text>
+    <entry editable="false" width-request="520"><variable>COMMANDE</variable><default>nft add rule inet filter input ip saddr 192.168.1.0/24 tcp dport 443 accept</default></entry>
+    <text><label>Par SSH, une erreur peut couper votre propre connexion. Continuer ?</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Appliquer</label><action>exit:appliquer</action></button>
+    </hbox>
+  </vbox>
+</window>

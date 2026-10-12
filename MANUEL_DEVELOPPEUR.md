@@ -67,11 +67,13 @@ Le cœur se compile depuis **une source largement unifiée** en trois variantes
 |---|---|---|---|
 | **neutre** (défaut) | — | qt6, fltk1, efl1, sdl3, lvgl, ncurses, html | Types via un **shim** (`sermocore-shim.h`) ; en-têtes toolkit remplacés par des **stubs** vides (`include/_shim/`). Aucune dépendance graphique. |
 | **glib/gtk3** | `-DSERMOCORE_GLIB=ON` | gtk3 | Vraie GLib/GTK 3 (ABI native des structs `GList`, `GtkWidget`…), pour l'introspection GObject utilisée par la famille GTK. |
-| **gtk4** | `-DSERMOCORE_GTK4=ON` | gtk4 | Fichiers cœur **réécrits pour GTK 4**, **vendorés dans `libsermocore/src-gtk4/`** (5 fichiers : `automaton.c`, `variables.c`, `signals.c`, `actions.c`, `gtkdialog.c` + le shim `gtk4-compat.c`) : GTK 4 a retiré `gtk_main`, `gtk_socket`, l'ancien modèle d'évènements. Aucune dépendance externe. Voir §9. |
+| **gtk4** | `-DSERMOCORE_GTK4=ON` | gtk4 | Fichiers cœur **réécrits pour GTK 4**, **vendorés dans `libsermocore/src-gtk4/`** (5 fichiers : `automaton.c`, `variables.c`, `signals.c`, `tag_attributes.c`, `gtkdialog.c` + le shim `gtk4-compat.c` ; les autres, `actions.c` compris, viennent de `src/`) : GTK 4 a retiré `gtk_main`, `gtk_socket`, l'ancien modèle d'évènements. Aucune dépendance externe. Voir §9. |
 
-Les variantes **neutre** et **gtk3** compilent aujourd'hui **exactement le même
-jeu de sources** cœur (`src/*.c`) ; seuls diffèrent les drapeaux et en-têtes (shim
-contre vraie GLib). Le décompte historique « 9/10 fichiers unifiés » date de la
+Les variantes **neutre** et **gtk3** compilent aujourd'hui **le même jeu de
+sources** cœur (`src/*.c`), à un fichier près : `sermo_progress.c` (la barre de
+progression lue au fil de l'eau) n'entre que dans la variante neutre, gtk3
+gardant son propre fil de lecture (`libsermocore/CMakeLists.txt`). Pour le
+reste, seuls diffèrent les drapeaux et en-têtes (shim contre vraie GLib). Le décompte historique « 9/10 fichiers unifiés » date de la
 phase de modularisation et ne s'applique plus. Le seul fichier « famille-spécifique » côté
 neutre/gtk3 est le **bridge d'attributs** (`try_set_property` +
 `widget_set_tag_attributes`), sorti du cœur vers le backend (`tag_set_property.c`)
@@ -80,6 +82,8 @@ parce qu'il repose sur l'introspection GObject que les backends neutres n'ont pa
 Fichiers du cœur : `gtkdialog.c` (orchestration + `main`), `safe_exec.c`,
 `variables.c`, `stack.c`, `automaton.c`, `attributes.c`, `signals.c`,
 `stringman.c`, `actions.c`, `tag_attributes.c` (helpers), `sermo_icon_theme.c`,
+`sermo_input.c` (plafond des `<input>`), `sermo_focus.c` (quel widget prend le
+focus à l'ouverture), `sermo_progress.c` (variante neutre seule),
 + `gtkdialog_lexer.l` / `gtkdialog_parser.y` (grammaire, source de vérité).
 
 ## 3. La frontière cœur ↔ backend
@@ -154,6 +158,11 @@ variante, on pointe `PKG_CONFIG_PATH` sur le préfixe d'install correspondant
 Symboles typiquement à fournir en plus (résolus au lien) : `widget_show_list` /
 `widget_hide_list` (globales de visibilité), et la glue référencée par le cœur.
 
+Pour rester à parité avec l'étalon, une `<list>`, un `<tree>` ou une `<table>`
+demande au cœur, à sa création, s'il prend le focus à l'ouverture
+(`sermo_focus_initial()`, `libsermocore/include/sermo_focus.h`) : seule cette
+réponse décide si sa 1re ligne est choisie sans `<default>`.
+
 ## 6. Bancs de vérification (les trois portes)
 
 Aucune étape n'avance avec un banc rouge. Les trois portes, pour un binaire
@@ -164,7 +173,7 @@ Aucune étape n'avance avec un banc rouge. Les trois portes, pour un binaire
 TIMEOUT=5 bash tests/xml/run_tests.sh <binaire>          # attendu : 55 PASS
 
 # 2. Comportement — les valeurs exportées == celles de l'étalon gtk3sermo
-bash tests/comportement/run.sh <binaire>                 # attendu : 53/53
+bash tests/comportement/run.sh <binaire>                 # attendu : 61/61
 
 # 3. Garde — les valeurs à risque ne repassent pas par le shell
 xvfb-run -a bash tests/garde_echappement_sortie.sh <binaire>        # OK — 4 cas
@@ -173,6 +182,11 @@ xvfb-run -a bash tests/garde_echappement_sortie.sh <binaire>        # OK — 4 c
 Le banc de comportement compare les **exports** (`VAR="valeur"`) à ceux de
 l'étalon gtk3sermo. Chaque cas se ferme seul : par un `<timer>` déclenchant
 `exit:fin`, ou (cas 41 et 42) par l'action d'une barre de progression arrivée à 100.
+
+Au-delà des trois portes, le test de réussite d'un port est
+`bash examples/metiers/verifie.sh --ports "<port>"` : il joue chaque dialogue des
+scripts métier et des boîtes à outils (104 scripts, 187 dialogues) et compare les
+valeurs à gtk3sermo.
 
 ### Tous les bancs d'un coup — la CI
 
@@ -280,16 +294,21 @@ Ces étapes sont incrémentales et gardées par les trois bancs.
 
 ## 10. Composants annexes
 
-Un outil accompagne le dépôt sans faire partie de la chaîne de rendu :
+Deux outils accompagnent le dépôt sans faire partie de la chaîne de rendu ; tous
+deux sont empaquetés depuis la 2.8.2 :
 
 - **`sermoman-mcp/`** — un serveur **MCP** de **documentation** (lecture seule) qui
   expose la référence sermo à une IA : outils `sermo_reference`, `sermo_guide`,
-  `sermo_architecture`, `sermo_heritage`, `sermo_ecosystem`, `sermo_search`,
-  `sermo_example`, `sermo_how_to_report`. Code écrit pour sermo, GPL-2.0-or-later ;
-  une partie des exemples qu'il sert vient de gtkdialog.
+  `sermo_architecture`, `sermo_heritage`, `sermo_ecosystem`, `sermo_scripts`,
+  `sermo_search`, `sermo_example`, `sermo_how_to_report`. Code écrit pour sermo,
+  GPL-2.0-or-later ; une partie des exemples qu'il sert vient de gtkdialog.
+  `sermo_scripts` sert l'inventaire des scripts métier et des boîtes à outils,
+  engendré par `sermoman-mcp/outils/inventaire-scripts.py`.
+- **`sermoia-mcp/`** — un serveur **MCP** (en C) qui fait **écrire, vérifier et
+  voir** un dialogue : `sermo_schema`, `sermo_check`, `sermo_run`, `sermo_render`,
+  `sermo_examples`, `sermo_vote`. Son catalogue comprend les dialogues des scripts
+  métier et des boîtes à outils (`sermoia-mcp/outils/catalogue-metiers.sh`). Voir
+  [sermoia-mcp/README.md](sermoia-mcp/README.md).
 
-Le serveur MCP de **génération** de fenêtres par une IA (boucle vérifier / rendre
-/ voter sur un catalogue d'exemples), qui vivait ici, **a été retiré de sermo**.
-Le dépôt garde le MCP de **manuel** ci-dessus, en lecture seule. La vérification
-et le rendu hors écran restent disponibles en ligne de commande
-(`--print-ir`, `--render-png`).
+La vérification et le rendu hors écran restent aussi disponibles en ligne de
+commande (`--print-ir`, `--render-png`).

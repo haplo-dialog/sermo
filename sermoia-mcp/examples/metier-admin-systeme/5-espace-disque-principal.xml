@@ -1,0 +1,36 @@
+<!-- Script : examples/metiers/01-admin-systeme/5-espace-disque.sh (dialogue principal) -->
+<window title="Espace disque" default-width="660" default-height="600">
+  <vbox>
+    <frame label="Systèmes de fichiers">
+      <vbox>
+        <table scrollable="true" space-expand="true" space-fill="true">
+          <label>Périphérique|Taille|Utilisé|Libre|Occupé|Monté sur</label>
+          <item>/dev/nvme0n1p2|468G|301G|144G|68%|/</item>
+          <item>/dev/nvme0n1p1|511M|6,1M|505M|2%|/boot/efi</item>
+          <item>/dev/sda1|916G|802G|68G|93%|/media/donnees</item>
+        </table>
+      </vbox>
+    </frame>
+    <frame label="Chercher ce qui prend de la place" space-expand="false" space-fill="false">
+      <hbox>
+        <entry space-expand="true" space-fill="true"><variable>DOSSIER</variable><default>/home/utilisateur</default></entry>
+        <text><label>Profondeur :</label></text>
+        <spinbutton range-min="1" range-max="3" range-step="1"><variable>PROFONDEUR</variable><default>1</default></spinbutton>
+        <button><label>Analyser</label><action>exit:analyser</action></button>
+      </hbox>
+    </frame>
+    <frame label="Nettoyage" space-expand="false" space-fill="false">
+      <vbox>
+        <checkbox><label>Vider le cache des paquets téléchargés (apt-get clean) : 1,2G</label><variable>N_APT</variable><default>true</default></checkbox>
+        <checkbox><label>Réduire le journal système (640M aujourd'hui)</label><variable>N_JOURNAL</variable><default>true</default></checkbox>
+        <hbox><text><label>Garder les journaux des derniers jours :</label></text>
+          <hscale range-min="1" range-max="90" range-step="1" draw-value="true" space-expand="true" space-fill="true"><variable>JOURS</variable><default>30</default></hscale></hbox>
+        <checkbox><label>Effacer les vignettes d'images (~/.cache/thumbnails) : 150M</label><variable>N_VIGNETTES</variable></checkbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Nettoyer…</label><action>exit:nettoyer</action></button>
+    </hbox>
+  </vbox>
+</window>

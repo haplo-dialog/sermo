@@ -1,0 +1,27 @@
+<!-- Script : examples/boites-a-outils/serveur/lanceur.sh (dialogue lanceur) -->
+<window title="Boîte à outils : serveur" default-width="560">
+  <vbox>
+    <text><label>Chaque outil montre d'abord la commande ; il n'agit que si SERMO_A_BLANC=0.</label></text>
+    <notebook tab-labels="Web|Accès|Entretien">
+      <vbox>
+        <button><label>01  Site web nginx : fichier de site, nginx -t, rechargement</label><action>exit:01-site-web</action></button>
+        <button><label>02  Certificats TLS : demander, renouveler à blanc, lister</label><action>exit:02-certificats</action></button>
+        <button><label>03  Ports à l'écoute : voir qui écoute, arrêter le service</label><action>exit:03-ports-ecoute</action></button>
+      </vbox>
+      <vbox>
+        <button><label>04  SSH : durcir sshd par un fichier drop-in</label><action>exit:04-ssh-durcissement</action></button>
+        <button><label>05  fail2ban : prisons, adresses bannies, débannir</label><action>exit:05-fail2ban</action></button>
+        <button><label>06  Base de données : créer une base et son compte</label><action>exit:06-base-de-donnees</action></button>
+        <button><label>08  Partages : export NFS ou partage Samba</label><action>exit:08-partages</action></button>
+      </vbox>
+      <vbox>
+        <button><label>07  Rotation des journaux : règle logrotate</label><action>exit:07-rotation-journaux</action></button>
+        <button><label>09  Alertes : seuils disque, charge, mémoire</label><action>exit:09-alertes</action></button>
+        <button><label>10  Minuteries systemd : lister, activer, créer</label><action>exit:10-minuteries-systemd</action></button>
+      </vbox>
+    </notebook>
+    <hbox>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

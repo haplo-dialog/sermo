@@ -1,0 +1,10 @@
+<!-- Script : examples/metiers/05-bornes-ecrans/5-inscription-evenement.sh (dialogue confirmation) -->
+<window title="Inscription enregistrée">
+  <vbox>
+    <text><label>Inscription enregistrée : 2 place(s) pour l'Atelier numérique.</label></text>
+    <text><label>Merci. Une confirmation vous sera remise à l'accueil.</label></text>
+    <hbox>
+      <button ok></button>
+    </hbox>
+  </vbox>
+</window>

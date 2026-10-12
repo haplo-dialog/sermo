@@ -1,0 +1,25 @@
+<!-- Script : examples/boites-a-outils/utilisateur/07-ranger-dossier.sh (dialogue principal) -->
+<window title="Ranger un dossier" default-width="540">
+  <vbox>
+    <frame label="Dossier à ranger">
+      <entry><variable>DOSSIER</variable><default>/home/utilisateur/Téléchargements</default></entry>
+    </frame>
+    <frame label="Comment trier">
+      <vbox>
+        <radiobutton><label>Par genre : Images, Documents, Musique, Vidéos, Archives, Autres</label><variable>PAR_GENRE</variable><default>true</default></radiobutton>
+        <radiobutton><label>Par mois : 2026-09, 2026-10…</label><variable>PAR_MOIS</variable></radiobutton>
+      </vbox>
+    </frame>
+    <frame label="Vieux fichiers">
+      <vbox>
+        <checkbox><label>Mettre à la corbeille les fichiers plus vieux que :</label><variable>VIEUX</variable></checkbox>
+        <hbox><hscale range-min="1" range-max="36" range-step="1" draw-value="true" space-expand="true" space-fill="true"><variable>MOIS</variable><default>12</default></hscale>
+          <text><label>mois</label></text></hbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Voir ce qui va bouger</label><action>exit:preparer</action></button>
+    </hbox>
+  </vbox>
+</window>

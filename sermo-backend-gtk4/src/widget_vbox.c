@@ -125,6 +125,13 @@ GtkWidget *widget_vbox_create(
 		}
 	}
 
+	/* homogeneous="true" : lu ici (la propriete GtkBox n'est posee
+	 * qu'apres) ; GTK3 centre dans sa case l'enfant qui ne la remplit pas,
+	 * l'aide GTK4 le collait au haut de sa case. */
+	gboolean homogene = attr && (value = get_tag_attribute(attr, "homogeneous")) &&
+		((strcasecmp(value, "true") == 0) || (strcasecmp(value, "yes") == 0) ||
+		(atoi(value) == 1));
+
 	/* Pack the widgets into the container */
 	s = pop();
 	for (n = 0; n < s.nwidgets; ++n) {
@@ -168,6 +175,8 @@ GtkWidget *widget_vbox_create(
 #endif
 		gtk_box_pack_start(GTK_BOX(widget), s.widgets[n],
 			original_expand, original_fill, 0);
+		if (homogene && !original_fill)
+			gtk_widget_set_valign(s.widgets[n], GTK_ALIGN_CENTER);
 	}
 
 #ifdef DEBUG_TRANSITS

@@ -1,0 +1,18 @@
+<!-- Script : examples/metiers/09-multimedia/4-renommer-photos.sh (dialogue apercu) -->
+<window title="Aperçu du renommage" default-width="620" default-height="360">
+  <vbox>
+    <text><label>3 photo(s) seront renommées ainsi (aperçu sans rien changer) :</label></text>
+    <tree scrollable="true" height-request="200">
+      <label>Nom actuel|Nouveau nom</label>
+      <variable>PHOTO</variable>
+      <item>DSC_0412.JPG|Mariage-Julie-Marc_2026-09-19_15h32m07.jpg</item>
+      <item>DSC_0413.JPG|Mariage-Julie-Marc_2026-09-19_15h32m07-1.jpg</item>
+      <item>IMG_2201.jpeg|Mariage-Julie-Marc_2026-09-19_16h01m44.jpg</item>
+    </tree>
+    <text><label>Le renommage est fait sur place : gardez une copie si vous tenez aux noms d'origine.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Renommer</label><action>exit:renommer</action></button>
+    </hbox>
+  </vbox>
+</window>

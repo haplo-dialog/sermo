@@ -1,0 +1,45 @@
+<!-- Script : examples/metiers/08-enseignement-formation/5-releve-notes.sh (dialogue principal) -->
+<window title="Relevé de notes" default-width="560">
+  <vbox>
+    <hbox>
+      <text><label>Classe :</label></text>
+      <comboboxtext>
+        <variable>CLASSE</variable>
+        <default>4e A</default>
+        <item>6e A</item>
+        <item>5e B</item>
+        <item>4e A</item>
+        <item>3e A</item>
+        <item>BTS SIO 1</item>
+      </comboboxtext>
+      <text><label>Devoir :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>DEVOIR</variable><default>Contrôle n° 3, fractions</default></entry>
+    </hbox>
+    <hbox>
+      <text><label>Noté sur :</label></text>
+      <spinbutton range-min="5" range-max="100" range-step="1"><variable>BAREME</variable><default>40</default></spinbutton>
+      <text><label>Coefficient :</label></text>
+      <spinbutton range-min="0.5" range-max="5" range-step="0.5" digits="1"><variable>COEF</variable><default>2.0</default></spinbutton>
+    </hbox>
+    <frame label="Notes : « Nom Prénom ; note » (ABS pour un absent)">
+      <vbox>
+        <edit height-request="150"><variable>NOTES</variable><default>"ARNAUD Inès ; 31
+BERNARD Tom ; 24,5
+CHEVALIER Yanis ; ABS
+DIALLO Awa ; 36
+FONTAINE Hugo ; 17"</default></edit>
+      </vbox>
+    </frame>
+    <frame label="Arrondi de la note sur 20">
+      <hbox>
+        <radiobutton><label>Au dixième</label><variable>A_DIXIEME</variable><default>true</default></radiobutton>
+        <radiobutton><label>Au demi-point</label><variable>A_DEMI</variable></radiobutton>
+        <radiobutton><label>Au point</label><variable>A_POINT</variable></radiobutton>
+      </hbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Calculer</label><action>exit:calculer</action></button>
+    </hbox>
+  </vbox>
+</window>

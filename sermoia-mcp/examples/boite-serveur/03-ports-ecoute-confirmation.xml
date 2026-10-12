@@ -1,0 +1,12 @@
+<!-- Script : examples/boites-a-outils/serveur/03-ports-ecoute.sh (dialogue confirmation) -->
+<window title="Confirmer l'arrêt">
+  <vbox>
+    <text><label>Le processus 1288 appartient à l'unité rpcbind.service.</label></text>
+    <text><label>Elle sera : arrêté puis désactivé.</label></text>
+    <text><label>Ce qui en dépend s'arrêtera aussi.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Arrêter le service</label><action>exit:arreter</action></button>
+    </hbox>
+  </vbox>
+</window>

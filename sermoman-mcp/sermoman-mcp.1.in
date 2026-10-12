@@ -1,0 +1,40 @@
+.\" sermoman-mcp.1 — man page for sermoman-mcp
+.\" haplo-dialog <devel@haplo-dialog.fr>
+.\" Installed as /usr/share/man/man1/sermoman-mcp.1
+.TH SERMOMAN-MCP 1 "October 2026" "sermo @PACKAGE_VERSION@" "sermo User Commands"
+.SH NAME
+sermoman-mcp \- read-only MCP server that gives an AI assistant the sermo manual
+.SH SYNOPSIS
+.B sermoman-mcp
+.SH DESCRIPTION
+.B sermoman-mcp
+is a Model Context Protocol server. It speaks JSON-RPC on its standard input and
+output and is started by an MCP client (an AI assistant), not by hand. It only
+reads its own documentation: it runs no command and writes no file.
+.PP
+Its tools:
+.BR sermo_reference ,
+.BR sermo_guide ,
+.BR sermo_architecture ,
+.BR sermo_heritage ,
+.BR sermo_ecosystem ,
+.B sermo_scripts
+(the job scripts and toolboxes),
+.BR sermo_search ,
+.B sermo_example
+and
+.BR sermo_how_to_report .
+.SH FILES
+.TP
+.I /usr/share/sermoman-mcp/data
+the documentation it serves.
+.SH EXAMPLE
+.nf
+claude mcp add sermoman -- /usr/bin/sermoman-mcp
+.fi
+.SH SEE ALSO
+.BR sermo (1),
+.BR sermoia-mcp (1),
+.I /usr/share/doc/sermoman-mcp/README.md
+.SH AUTHOR
+haplo-dialog <devel@haplo-dialog.fr>

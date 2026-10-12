@@ -95,11 +95,32 @@ GtkWidget *widget_notebook_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
     QTabWidget *tabs = new QTabWidget();
 
-    /* Onglets à GAUCHE (colonne verticale), pour s'aligner sur le rendu de
-     * gtk3dialog/gtk4dialog (référence visuelle). */
-    tabs->setTabPosition(QTabWidget::West);
+    /* Position des onglets : tab-pos, lu comme gtk3 (tag_set_property.c) —
+     * surnom (« top »), nom (« GTK_POS_TOP »), sinon nombre (0 gauche,
+     * 1 droite, 2 haut, 3 bas ; atoi d'un texte inconnu = 0 = gauche).
+     * Sans tab-pos : en HAUT, le défaut de GtkNotebook.
+     * Ce port les mettait TOUJOURS à gauche : il copiait l'ancien rendu de
+     * l'étalon, où tab-pos="top" passait par atoi() et donnait 0 = gauche.
+     * L'étalon corrigé les met en haut (galerie 03-onglets, 11/10). */
+    QTabWidget::TabPosition position = QTabWidget::North;
+    const char *tp = attr ? get_tag_attribute(attr, "tab-pos") : NULL;
+    if (tp) {
+        int v;
+        if (strcmp(tp, "left") == 0 || strcmp(tp, "GTK_POS_LEFT") == 0)            v = 0;
+        else if (strcmp(tp, "right") == 0 || strcmp(tp, "GTK_POS_RIGHT") == 0)     v = 1;
+        else if (strcmp(tp, "top") == 0 || strcmp(tp, "GTK_POS_TOP") == 0)         v = 2;
+        else if (strcmp(tp, "bottom") == 0 || strcmp(tp, "GTK_POS_BOTTOM") == 0)   v = 3;
+        else v = atoi(tp);
+        switch (v) {
+        case 0: position = QTabWidget::West;  break;
+        case 1: position = QTabWidget::East;  break;
+        case 3: position = QTabWidget::South; break;
+        default: position = QTabWidget::North; break;  /* 2, ou hors plage : gtk3 refuse et garde le haut */
+        }
+    }
+    tabs->setTabPosition(position);
 
-    /* …mais avec le LIBELLÉ à l'horizontale, comme l'étalon GTK3.
+    /* Onglets à gauche/droite : LIBELLÉ à l'horizontale, comme l'étalon GTK3.
      * QWidget::setStyle() ne prend PAS possession du style : on garde une
      * instance unique et permanente (static) partagée par tous les notebooks. */
     static HorizontalTabTextStyle *horizontal_tab_style = new HorizontalTabTextStyle();

@@ -25,6 +25,7 @@
 #include "widget_togglebutton.h"
 #include "sermo_icon_theme.h"
 #include <string.h>
+#include <strings.h>
 #include <stdlib.h>
 
 GtkWidget *widget_button_create(AttributeSet *Attr, tag_attr *attr, gint Type)
@@ -81,6 +82,13 @@ GtkWidget *widget_button_create(AttributeSet *Attr, tag_attr *attr, gint Type)
                     if (v && atoi(v) > 0) px = atoi(v);
                     node->icon_path = sermo_icon_lookup(icon, px);
                     node->icon_px   = px;
+                    /* image-position : l'icône autour du libellé (left par défaut) */
+                    const char *pos = attr ? get_tag_attribute(attr, "image-position") : NULL;
+                    if (pos) {
+                        if (strcasecmp(pos, "right") == 0 || strcmp(pos, "1") == 0)       node->icon_pos = 1;
+                        else if (strcasecmp(pos, "top") == 0 || strcmp(pos, "2") == 0)    node->icon_pos = 2;
+                        else if (strcasecmp(pos, "bottom") == 0 || strcmp(pos, "3") == 0) node->icon_pos = 3;
+                    }
                 }
                 break;
             }

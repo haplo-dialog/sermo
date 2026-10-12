@@ -1,0 +1,17 @@
+<!-- Script : examples/boites-a-outils/serveur/05-fail2ban.sh (dialogue principal) -->
+<window title="fail2ban : prisons" default-width="460">
+  <vbox>
+    <text><label>Prisons actives (fail2ban-client status) :</label></text>
+    <list height-request="150"><variable>PRISON</variable>
+<item>sshd</item>
+<item>nginx-http-auth</item>
+<item>postfix-sasl</item>
+<item>recidive</item>
+    </list>
+    <text><label>Choisissez une prison pour voir ses adresses bannies.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Voir les bannis</label><action>exit:voir</action></button>
+    </hbox>
+  </vbox>
+</window>

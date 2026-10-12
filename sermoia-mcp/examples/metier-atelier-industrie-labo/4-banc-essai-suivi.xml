@@ -1,0 +1,14 @@
+<!-- Script : examples/metiers/06-atelier-industrie-labo/4-banc-essai.sh (dialogue suivi) -->
+<window title="Essai en cours" default-width="480">
+  <vbox>
+    <text><label>Essai lancé pour 30 min. Avancement :</label></text>
+    <progressbar>
+      <label>Essai en cours</label>
+      <input>timeout 2100 tail -n 1 -F -- '/home/utilisateur/banc/EP-2026-0412/avancement'</input>
+    </progressbar>
+    <text><label>Fermer cette fenêtre n'arrête pas l'essai.</label></text>
+    <hbox>
+      <button><label>Fermer le suivi</label><action>exit:fermer</action></button>
+    </hbox>
+  </vbox>
+</window>

@@ -1,0 +1,11 @@
+<!-- Script : examples/boites-a-outils/utilisateur/09-partager-sur-le-reseau.sh (dialogue en_cours) -->
+<window title="Partage en cours" default-width="520">
+  <vbox>
+    <text><label>Sur l'autre appareil (relié au même réseau), ouvrez le navigateur et tapez :</label></text>
+    <entry editable="false"><variable>ADRESSE</variable><default>http://192.168.1.20:8080/photo-anniversaire.jpg</default></entry>
+    <statusbar><variable>DUREE</variable><default>Le partage s'arrêtera seul dans 15 minutes.</default></statusbar>
+    <hbox>
+      <button><label>Arrêter le partage</label><action>exit:arreter</action></button>
+    </hbox>
+  </vbox>
+</window>

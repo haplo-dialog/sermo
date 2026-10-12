@@ -1,0 +1,46 @@
+<!-- Script : examples/boites-a-outils/administrateur/lanceur.sh (dialogue lanceur) -->
+<window title="Boîte à outils : administrateur" default-width="560">
+  <vbox>
+    <text><label>Choisissez un outil. Il s'ouvre, puis cette fenêtre revient.</label></text>
+    <notebook tab-labels="Comptes et fichiers|Logiciels et disques|Système">
+      <vbox>
+        <frame label="Comptes">
+          <vbox>
+            <button><label>Groupes et membres (groupadd, gpasswd)</label><action>exit:01-groupes</action></button>
+            <button><label>Règles sudo (sudoers.d, visudo -c)</label><action>exit:08-regles-sudo</action></button>
+          </vbox>
+        </frame>
+        <frame label="Fichiers">
+          <button><label>Propriétaire, mode et ACL d'un dossier</label><action>exit:02-droits-fichiers</action></button>
+        </frame>
+      </vbox>
+      <vbox>
+        <frame label="Logiciels">
+          <vbox>
+            <button><label>Chercher, installer, retirer un paquet (apt)</label><action>exit:03-paquets</action></button>
+            <button><label>Dépôts apt (sources deb822)</label><action>exit:04-depots-apt</action></button>
+          </vbox>
+        </frame>
+        <frame label="Disques">
+          <vbox>
+            <button><label>Monter un disque (fstab par UUID)</label><action>exit:05-montages</action></button>
+            <button><label>Formater un périphérique (mkfs)</label><action>exit:06-formatage</action></button>
+          </vbox>
+        </frame>
+      </vbox>
+      <vbox>
+        <frame label="Noyau et machine">
+          <vbox>
+            <button><label>Modules du noyau (modprobe, liste noire)</label><action>exit:07-modules-noyau</action></button>
+            <button><label>Nom de la machine (hostnamectl, /etc/hosts)</label><action>exit:09-nom-machine</action></button>
+            <button><label>Redémarrer ou éteindre à une heure (shutdown)</label><action>exit:10-redemarrage-programme</action></button>
+          </vbox>
+        </frame>
+      </vbox>
+    </notebook>
+    <hbox>
+      <button cancel></button>
+    </hbox>
+    <statusbar><variable>ETAT</variable><default>Mode : à blanc (rien n'est modifié)</default></statusbar>
+  </vbox>
+</window>

@@ -26,6 +26,7 @@
 #include "safe_exec.h"
 
 #include <string.h>
+#include <strings.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -54,6 +55,14 @@ GtkWidget *widget_edit_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         }
     }
     inp->box(FL_DOWN_BOX);
+    /* wrap-mode (propriété GtkTextView de l'étalon) : tout sauf « none » / 0
+     * replie les lignes ; sans l'attribut, pas de repli (défaut gtk3) */
+    if (attr) {
+        const char *wm = get_tag_attribute(attr, "wrap-mode");
+        if (wm && *wm && strcasecmp(wm, "none") != 0 && strcmp(wm, "0") != 0 &&
+            strcasecmp(wm, "GTK_WRAP_NONE") != 0)
+            inp->wrap(1);
+    }
 
     /* Valeur statique. <input> est lu dans refresh, que le cœur appelle juste
      * après la création : lu ici aussi, la commande tournait deux fois. Il
@@ -62,6 +71,9 @@ GtkWidget *widget_edit_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         gchar *def = attributeset_get_first(&element, Attr, ATTR_DEFAULT);
         if (def && *def) inp->value(def);
     }
+    /* value() pose le curseur en FIN : la vue défilait jusqu'au bout et le
+     * début du texte était coupé. L'étalon montre le texte depuis le début. */
+    inp->insert_position(0);
 
     return (GtkWidget *)inp;
 }
@@ -93,6 +105,7 @@ void widget_edit_refresh(variable *var)
     gchar *text = widget_input_text(var->Attributes);
     if (text) {
         inp->value(text);
+        inp->insert_position(0);   /* vue au début, comme l'étalon */
         g_free(text);
         inp->redraw();
     }

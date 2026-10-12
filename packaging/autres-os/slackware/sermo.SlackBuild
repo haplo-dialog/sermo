@@ -4,7 +4,7 @@
 #!/bin/bash
 # sermo.SlackBuild — construit un paquet .txz par backend demandé.
 #
-#   PORTS="gtk3 ncurses html" ./sermo.SlackBuild
+#   PORTS="ncurses html" ./sermo.SlackBuild
 #
 # Ports : gtk3 gtk4 qt6 fltk1 efl1 sdl3 lvgl ncurses html (et « coeur-dev » pour la bibliothèque statique).
 # Défaut : gtk3 ncurses html — les seuls dont les bibliothèques sont dans
@@ -18,11 +18,11 @@
 
 cd "$(dirname "$0")" || exit 1
 CWD=$(pwd)
-VERSION=${VERSION:-2.8.1}
+VERSION=${VERSION:-2.8.2}
 BUILD=${BUILD:-1}
 TAG=${TAG:-_SBo}
 PKGTYPE=${PKGTYPE:-txz}
-PORTS=${PORTS:-gtk3 ncurses html}
+PORTS=${PORTS:-ncurses html}   # gtk3 : gtk-layer-shell absent de Slackware 15.0
 SRCDIR=${SRCDIR:-$CWD/../../..}
 
 if [ -z "$ARCH" ]; then

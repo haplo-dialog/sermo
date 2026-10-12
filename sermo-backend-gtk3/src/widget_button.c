@@ -331,6 +331,13 @@ GtkWidget *widget_button_create(
 							gtk_box_pack_end(GTK_BOX(boxouter), box, FALSE, FALSE, 0);
 						}
 					}
+					/* Groupe icone + libelle CENTRE dans le bouton (comme
+					 * gtkdialog d'origine, qt6, lvgl) : la boite exterieure,
+					 * homogene, donne toute la place a son unique enfant,
+					 * qui sans « fill » s'y centre. Non homogene, le
+					 * pack_end le calait a droite. */
+					if (boxouter)
+						gtk_box_set_homogeneous(GTK_BOX(boxouter), TRUE);
 					if (position == GTK_POS_BOTTOM || position == GTK_POS_RIGHT) {
 						gtk_box_pack_end(GTK_BOX(box), icon, FALSE, FALSE, 0);
 						gtk_box_pack_end(GTK_BOX(box), label, FALSE, FALSE, 0);

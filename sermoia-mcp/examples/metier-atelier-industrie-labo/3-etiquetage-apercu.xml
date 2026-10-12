@@ -1,0 +1,19 @@
+<!-- Script : examples/metiers/06-atelier-industrie-labo/3-etiquetage.sh (dialogue apercu) -->
+<window title="Aperçu de l'étiquette" default-width="460">
+  <vbox>
+    <text><label>Aperçu (4 étiquettes sur Zebra_ZD421) :</label></text>
+    <frame label="Étiquette">
+      <vbox>
+        <text><label>RÉF   AX-2500-H7</label></text>
+        <text><label>Axe rectifié Ø 25 mm, L 120 mm</label></text>
+        <text><label>LOT   L2026-1042</label></text>
+        <text><label>QTÉ   50 pièces</label></text>
+        <text><label>FAB   2026-10-12</label></text>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Imprimer</label><action>exit:imprimer</action></button>
+    </hbox>
+  </vbox>
+</window>

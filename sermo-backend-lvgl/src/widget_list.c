@@ -12,6 +12,7 @@
 #define _GNU_SOURCE
 #endif
 #include "lvgl-compat.h"
+#include "sermo_focus.h"
 #include "dialog_state.h"
 #include "gtkdialog.h"
 #include "attributes.h"
@@ -55,6 +56,7 @@ GtkWidget *widget_list_create(AttributeSet *Attr, tag_attr *attr, gint Type)
      * actions suivent un autre signal. */
     node->actions_attr = (void *)Attr;
 
+    node->focus_initial = sermo_focus_initial("list");
     return (GtkWidget *)node;
 }
 
@@ -104,14 +106,23 @@ void widget_list_refresh(variable *var)
          item = attributeset_get_next(&el, var->Attributes, ATTR_ITEM))
         if (*item) list_append(n, item);
 
-    /* Au premier refresh seulement, la 1re rangée est choisie, qu'elle vienne
-     * de <item> ou de <input>. Chez l'étalon, elle ressort grâce au focus
-     * clavier pris à l'ouverture (ce port ne modélise pas le focus) ; un
-     * refresh ultérieur garde la sélection, et après un clear il n'y en a
-     * plus (mesuré). */
     if (!n->initialised) {
-        if (n->state.list.item_count > 0)
-            n->state.list.selected_index = 0;
+        /* Ligne choisie à l'ouverture, comme gtk3sermo (sermo_focus.h) :
+         * celle de <default> s'il y en a une ; sinon la 1re, seulement si ce
+         * widget prend le focus (premier focalisable de la fenêtre) ; sinon
+         * aucune. Jusqu'à la 2.8.1, la 1re rangée était toujours choisie. */
+        int choix = -1;
+        GList *ed = NULL;
+        gchar *def = attributeset_get_first(&ed, var->Attributes, ATTR_DEFAULT);
+        for (int i = 0; def && *def && i < n->state.list.item_count && choix < 0; i++) {
+            const char *it = n->state.list.items[i];
+            size_t l = strcspn(it, "|");
+            if (strcmp(it, def) == 0 || (strlen(def) == l && strncmp(it, def, l) == 0))
+                choix = i;
+        }
+        if (choix < 0 && n->focus_initial && n->state.list.item_count > 0)
+            choix = 0;
+        n->state.list.selected_index = choix;
         n->initialised = TRUE;
     }
 }

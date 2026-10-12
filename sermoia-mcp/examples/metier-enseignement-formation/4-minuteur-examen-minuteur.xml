@@ -1,0 +1,23 @@
+<!-- Script : examples/metiers/08-enseignement-formation/4-minuteur-examen.sh (dialogue minuteur) -->
+<window title="Épreuve en cours" default-width="520">
+  <vbox>
+    <text use-markup="true"><label>"<big><b>Mathématiques, devoir commun</b></big>"</label></text>
+    <text><label>Fin de l'épreuve à 10 h 00</label></text>
+    <text use-markup="true">
+      <variable>RESTE</variable>
+      <input>"r=$(( 1791792000 + 7200 - $(date +%s) )); [ $r -lt 0 ] && r=0; m=$(( r / 60 ))
+if [ $r -gt 0 ] && [ $r -le 600 ]; then printf '<big><b>Plus que %d min</b></big>' $(( (r + 59) / 60 ))
+elif [ $r -eq 0 ]; then printf '<big><b>Posez les stylos</b></big>'
+else printf '<big>Reste %d h %02d</big>' $((m / 60)) $((m % 60)); fi"</input>
+    </text>
+    <progressbar>
+      <label>Temps écoulé</label>
+      <input>"while :; do p=$(( ($(date +%s) - 1791792000) * 100 / 7200 )); [ $p -gt 100 ] && p=100
+echo $p; [ $p -ge 100 ] && break; sleep 15; done"</input>
+    </progressbar>
+    <timer interval="10" visible="false"><action>refresh:RESTE</action></timer>
+    <hbox>
+      <button><label>Clore l'épreuve</label><action>exit:clore</action></button>
+    </hbox>
+  </vbox>
+</window>

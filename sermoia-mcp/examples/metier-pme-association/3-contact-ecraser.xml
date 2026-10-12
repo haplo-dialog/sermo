@@ -1,0 +1,11 @@
+<!-- Script : examples/metiers/07-pme-association/3-contact.sh (dialogue ecraser) -->
+<window title="Fiche existante">
+  <vbox>
+    <text><label>Le fichier /home/utilisateur/Contacts/Benali_Nadia.vcf existe déjà.</label></text>
+    <text><label>Le remplacer par la nouvelle fiche ? L'ancienne sera perdue.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Remplacer</label><action>exit:remplacer</action></button>
+    </hbox>
+  </vbox>
+</window>

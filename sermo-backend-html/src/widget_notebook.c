@@ -29,8 +29,13 @@ GtkWidget *widget_notebook_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     /* tab-pos="left" : memorise pour le rendu (barre verticale) */
     {
         const char *tp = attr ? get_tag_attribute(attr, "tab-pos") : NULL;
-        g_sdl3_notebook_side = tp && (!strcasecmp(tp, "left") || !strcasecmp(tp, "right") ||
-                                      !strcasecmp(tp, "start") || !strcmp(tp, "0"));
+        /* 0 en haut, 1 à gauche, 2 à droite, 3 en bas (GtkPositionType :
+         * 0 gauche, 1 droite, 2 haut, 3 bas). */
+        g_sdl3_notebook_side =
+            !tp ? 0 :
+            (!strcasecmp(tp, "left") || !strcasecmp(tp, "start") || !strcmp(tp, "0")) ? 1 :
+            (!strcasecmp(tp, "right") || !strcasecmp(tp, "end") || !strcmp(tp, "1")) ? 2 :
+            (!strcasecmp(tp, "bottom") || !strcmp(tp, "3")) ? 3 : 0;
     }
     WidgetNode *node = widget_node_new(WT_NOTEBOOK, NULL, "");
     node->state.notebook.side = g_sdl3_notebook_side;

@@ -178,6 +178,9 @@ echo
 
 for dir in $(find "$EXAMPLES" -maxdepth 1 -mindepth 1 -type d | sort); do
     name="$(basename "$dir")"
+    # Les scripts métier ne sont pas un exemple mais soixante : ils ont leur
+    # propre banc (examples/metiers/verifie.sh, lancé par ci/bancs.sh).
+    [[ "$name" = metiers ]] && { printf '  %-16s %s\n' "$name" "(banc à part : metiers/verifie.sh)"; continue; }
     # Point d'entrée : fichier homonyme du répertoire, puis « main », puis un
     # script décrivant une fenêtre (hors fonctions func*), sinon tout exécutable.
     script="$dir/$name"

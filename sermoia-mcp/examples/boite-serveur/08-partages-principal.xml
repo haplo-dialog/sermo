@@ -1,0 +1,34 @@
+<!-- Script : examples/boites-a-outils/serveur/08-partages.sh (dialogue principal) -->
+<window title="Partager un dossier" default-width="580">
+  <vbox>
+    <hbox><text><label>Nom du partage :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>NOM</variable><default>compta</default></entry></hbox>
+    <hbox><text><label>Dossier partagé :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>DOSSIER</variable><default>/srv/partages/compta</default></entry></hbox>
+    <notebook tab-labels="NFS (Linux)|Samba (Windows, Mac)">
+      <vbox>
+        <hbox><text><label>Machines permises :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>CLIENTS</variable><default>192.168.10.0/24</default></entry></hbox>
+        <hbox>
+          <radiobutton><label>Lecture et écriture</label><default>true</default><variable>NFS_RW</variable></radiobutton>
+          <radiobutton><label>Lecture seule</label><variable>NFS_RO</variable></radiobutton>
+        </hbox>
+        <checkbox><label>Écriture synchrone (sync : plus sûr, plus lent)</label><default>true</default><variable>NFS_SYNC</variable></checkbox>
+        <checkbox><label>root d'un client reste anonyme (root_squash)</label><default>true</default><variable>NFS_SQUASH</variable></checkbox>
+        <button><label>Exporter en NFS</label><action>exit:nfs</action></button>
+      </vbox>
+      <vbox>
+        <hbox><text><label>Comptes ou @groupe permis :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>SMB_COMPTES</variable><default>@compta</default></entry></hbox>
+        <hbox><text><label>Description :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>SMB_DESCRIPTION</variable><default>Pièces comptables</default></entry></hbox>
+        <switch><label>Lecture seule</label><variable>SMB_LECTURE</variable></switch>
+        <checkbox><label>Visible dans le voisinage réseau</label><default>true</default><variable>SMB_VISIBLE</variable></checkbox>
+        <button><label>Partager en Samba</label><action>exit:samba</action></button>
+      </vbox>
+    </notebook>
+    <hbox>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

@@ -42,6 +42,16 @@ GtkWidget *widget_pixmap_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         }
     }
     WidgetNode *node = widget_node_new(WT_PIXMAP, NULL, path);
+    /* <width> / <height> : l'image est rendue à cette taille, ratio gardé
+     * (gtkdialog la charge « at_size ») ; jusqu'à la 2.8.1, taille native. */
+    if (Attr) {
+        GList *el = NULL;
+        gchar *v = attributeset_get_first(&el, Attr, ATTR_WIDTH);
+        if (v && atoi(v) > 0) node->width = atoi(v);
+        el = NULL;
+        v = attributeset_get_first(&el, Attr, ATTR_HEIGHT);
+        if (v && atoi(v) > 0) node->height = atoi(v);
+    }
     return (GtkWidget *)node;
 }
 

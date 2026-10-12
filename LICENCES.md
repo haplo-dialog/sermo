@@ -29,10 +29,11 @@ relève de la licence du projet, sauf s'il figure dans le tableau ci-dessous.
 | `imgui/backends/imgui_impl_opengl3_loader.h` — chargeur OpenGL | domaine public et MIT (en-têtes Khronos) | The Khronos Group |
 | `sermo-backend-lvgl/tiers/lvgl/` — **LVGL v9.6.0**, compilé dans `lvglsermo` (provenance : `tiers/lvgl/PROVENANCE`) | MIT (`tiers/lvgl/LICENCE.txt`) ; parties tierces : `tiers/lvgl/COPYRIGHTS.md` | LVGL Kft |
 | `sermo-backend-lvgl/lv_conf.h` — réglage de LVGL, tiré du modèle d'origine | MIT | LVGL Kft ; S. Cage |
+| `tiers/lvgl/src/libs/thorvg/` — **ThorVG**, moteur SVG embarqué dans LVGL, compilé dans `lvglsermo` depuis la 2.8.2 (`LV_USE_THORVG` dans `sermo-backend-lvgl/lv_conf.h`) | MIT (en-tête de chaque fichier, `thorvg/LICENSE.txt`) | le projet ThorVG |
 | `tiers/lvgl/src/libs/tiny_ttf/` — lecteur de police TrueType (stb_truetype), compilé dans `lvglsermo` | MIT ou Unlicense, au choix | Sean Barrett ; codewitch-honey-crisis (tiny_ttf) |
 | Police Montserrat 14 et symboles Font Awesome 5 Free, compilés dans `tiers/lvgl/src/font/lv_font_montserrat_14.c` | OFL-1.1 | Julieta Ulanovsky ; Fonticons, Inc. |
 | `sermo-backend-qt6/data/fr.haplo_dialog.qt6sermo.metainfo.xml` — métadonnées AppStream (AppStream demande une licence permissive) | FSFAP | S. Cage |
-| `tests/xml/*.xml`, `sermo-backend-qt6/examples/*/demo.sh`, et les exemples écrits pour sermo qui le déclarent dans leur en-tête (`examples/showcase/`, `examples/system-tools/`), et `contrib/trousses/` | CC0-1.0 | — |
+| `tests/xml/*.xml`, `sermo-backend-qt6/examples/*/demo.sh`, et les exemples écrits pour sermo qui le déclarent dans leur en-tête (`examples/showcase/`, `examples/system-tools/`), les scripts métier (`examples/metiers/`) et les boîtes à outils (`examples/boites-a-outils/`), et `contrib/trousses/` | CC0-1.0 | — |
 | Icônes des exemples `button`, `togglebutton`, `pfeme` (héritées de gtkdialog) | GPL-2 ou LGPL-2.1 : voir le fichier `COPYING-*-icons` posé à côté | projets elementary, fast-forward, nuvola |
 
 ## Provenance — de quoi sermo descend exactement

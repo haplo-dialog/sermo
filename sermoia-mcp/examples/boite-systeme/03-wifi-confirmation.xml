@@ -1,0 +1,11 @@
+<!-- Script : examples/boites-a-outils/systeme/03-wifi.sh (dialogue confirmation) -->
+<window title="Oublier un réseau Wi-Fi ?">
+  <vbox>
+    <text><label>Le profil « Hotel-du-Port » sera supprimé, avec sa clé.</label></text>
+    <text><label>Pour revenir sur ce réseau, il faudra retaper la clé.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Oublier</label><action>exit:oublier</action></button>
+    </hbox>
+  </vbox>
+</window>

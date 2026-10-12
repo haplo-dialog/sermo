@@ -29,6 +29,7 @@
 #include <sys/stat.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <string.h>
 #include <strings.h>   /* strcasecmp (thème) */
 #include <unistd.h>
@@ -79,12 +80,68 @@ static void listes_chargees(WidgetNode *n)
     for (int i = 0; i < n->child_count; i++) listes_chargees(n->children[i]);
 }
 
+/* Minuteries. label = intervalle en millisecondes (widget_timer.c) ;
+ * state.scale.value = prochaine échéance, en secondes d'horloge monotone.
+ * Jusqu'à la 2.8.1, chaque minuterie partait à CHAQUE tour de boucle (en
+ * terminal) ou toutes dans l'ordre du document (sans terminal) : une
+ * minuterie de 8 s fermait le dialogue avant celle d'une seconde. */
+static double maintenant(void)
+{
+    struct timespec t;
+    clock_gettime(CLOCK_MONOTONIC, &t);
+    return (double)t.tv_sec + (double)t.tv_nsec / 1e9;
+}
+
+static double intervalle(const WidgetNode *n)
+{
+    int ms = (n->label && *n->label) ? atoi(n->label) : 1000;
+    return (ms > 0 ? ms : 1000) / 1000.0;
+}
+
+/* En terminal : chaque minuterie part à son échéance, puis repart. */
 static void fire_timers(WidgetNode *node)
 {
     if (!node) return;
-    if (node->type == WT_TIMER)
-        declencher(node, "tick", NULL);
+    if (node->type == WT_TIMER && node->sensitive) {
+        double t = maintenant(), iv = intervalle(node);
+        if (node->state.scale.value <= 0)
+            node->state.scale.value = t + iv;
+        else if (t >= node->state.scale.value) {
+            node->state.scale.value = t + iv;
+            declencher(node, "tick", NULL);
+        }
+    }
     for (int i = 0; i < node->child_count; i++) fire_timers(node->children[i]);
+}
+
+/* Sans terminal : chacune une fois, de la plus courte à la plus longue —
+ * l'ordre où elles partiraient à l'écran (un « exit:… » sort au passage). */
+static void lister_timers(WidgetNode *n, WidgetNode ***t, int *nb, int *cap)
+{
+    if (!n) return;
+    if (n->type == WT_TIMER && n->sensitive) {
+        if (*nb == *cap) { *cap = *cap ? *cap * 2 : 8; *t = realloc(*t, (size_t)*cap * sizeof **t); }
+        if (*t) (*t)[(*nb)++] = n;
+    }
+    for (int i = 0; i < n->child_count; i++) lister_timers(n->children[i], t, nb, cap);
+}
+static int par_intervalle(const void *a, const void *b)
+{
+    double x = intervalle(*(WidgetNode *const *)a), y = intervalle(*(WidgetNode *const *)b);
+    return (x > y) - (x < y);
+}
+static void fire_timers_une_fois(WidgetNode *root)
+{
+    WidgetNode **t = NULL;
+    int nb = 0, cap = 0;
+    lister_timers(root, &t, &nb, &cap);
+    /* tri par insertion : STABLE, deux délais égaux gardent l'ordre du document */
+    for (int i = 1; i < nb; i++)
+        for (int j = i; j > 0 && par_intervalle(&t[j - 1], &t[j]) > 0; j--) {
+            WidgetNode *x = t[j]; t[j] = t[j - 1]; t[j - 1] = x;
+        }
+    for (int i = 0; i < nb; i++) declencher(t[i], "tick", NULL);
+    free(t);
 }
 
 /* Barres de progression : relever ce que leurs commandes ont écrit.
@@ -107,6 +164,7 @@ static int export_abort(void)
 {
     variables_export_all();
     printf("EXIT=\"abort\"\n");
+    g_setenv("EXIT", "abort", TRUE);   /* --do lit EXIT dans l'environnement (manuel §3.2) : il n'y était pas. */
     fflush(stdout);
     return 0;
 }
@@ -119,7 +177,7 @@ static int run_headless(WidgetNode *root)
      * la lecture d'un seul tenant le faisait déjà jusqu'à la 2.6.8. */
     while (servir_barres(root) > 0)
         usleep(20000);
-    fire_timers(root);      /* un « exit:… » sort ici via action_exitprogram */
+    fire_timers_une_fois(root);   /* un « exit:… » sort ici via action_exitprogram */
     return export_abort();
 }
 
@@ -191,10 +249,285 @@ static void colonnes_ecrire(const char *t, const int *larg, int nc, char *out, s
     g_strfreev(c);
 }
 
+/* Texte d'une feuille sur une ligne (sans le dessiner) : sert au dessin ET à la
+ * mesure de la largeur naturelle (rangée). etirer = la rangée lui donne une
+ * case qu'il doit remplir (space-fill) : bouton et champs s'élargissent. */
+static void ligne_feuille(WidgetNode *n, int w, int etirer, char *line, size_t sz)
+{
+    const char *lbl = n->label ? n->label : "";
+    /* largeur d'un champ : 16 colonnes, ou toute la case qu'il remplit */
+    int champ = 16;
+    if (etirer) {
+        int reste = w - (int)g_utf8_strlen(lbl, -1) - 2;
+        if (reste > champ) champ = reste;
+    }
+    switch (n->type) {
+    case WT_TEXT: case WT_STATUSBAR: {
+        /* <text> : ce que <input>/<default> ont posé, sinon le <label> ;
+         * sans le saut de ligne final de la commande. */
+        const char *t = lbl;
+        if (n->type == WT_TEXT && n->state.text.content && n->state.text.content[0]) t = n->state.text.content;
+        snprintf(line, sz, "%s", t);
+        size_t l = strlen(line);
+        while (l > 0 && (line[l - 1] == '\n' || line[l - 1] == '\r')) line[--l] = '\0';
+        break;
+    }
+    case WT_BUTTON: {
+        /* Bouton qui remplit sa case : les crochets aux bords, le libellé au
+         * milieu (en terminal, le bouton n'a pas d'icône : point 4 sans objet). */
+        const char *t = lbl[0] ? lbl : "OK";
+        int lw = (int)g_utf8_strlen(t, -1), dedans = w - 2;
+        if (etirer && dedans > lw + 2) {
+            int g = (dedans - lw) / 2;
+            snprintf(line, sz, "[%*s%s%*s]", g, "", t, dedans - lw - g, "");
+        } else {
+            snprintf(line, sz, "[ %s ]", t);
+        }
+        break;
+    }
+    case WT_CHECKBOX: case WT_TOGGLEBUTTON: case WT_SWITCH:
+        snprintf(line, sz, "[%c] %s", n->state.toggle.active ? 'x' : ' ', lbl); break;
+    case WT_RADIOBUTTON:
+        snprintf(line, sz, "(%c) %s", n->state.toggle.active ? '*' : ' ', lbl); break;
+    case WT_ENTRY:
+        snprintf(line, sz, "%s[%-*s]", lbl[0] ? lbl : "", champ, n->state.entry.buf); break;
+    case WT_EDIT: {
+        /* ⛔ Le contenu d'un <edit> vit dans state.text.content, un
+         * POINTEUR de tas — pas dans state.entry.buf. Les deux occupent la
+         * même place dans l'union : lire entry.buf ici revenait à afficher
+         * les octets du pointeur, puis à lire au-delà jusqu'au premier
+         * zéro (débordement de lecture). Mesuré : « ��jU » à l'écran. */
+        const char *contenu = n->state.text.content ? n->state.text.content : "";
+        snprintf(line, sz, "%s[%-*s]", lbl[0] ? lbl : "", champ, contenu);
+        break;
+    }
+    case WT_SEARCHENTRY:
+        snprintf(line, sz, "%s[%-16s]?", lbl[0] ? lbl : "", n->state.list.filter); break;
+    case WT_PASSWORD: {
+        int L = (int)strlen(n->state.entry.buf), k = L < 16 ? L : 16;
+        char st[24]; memset(st, '*', k); st[k] = '\0';
+        snprintf(line, sz, "%s[%-*s]", lbl[0] ? lbl : "", champ, st); break;
+    }
+    case WT_SPINBUTTON:
+        snprintf(line, sz, "%s[%d]", lbl[0] ? lbl : "", (int)n->state.spin.value); break;
+    case WT_PROGRESSBAR: case WT_LEVELBAR: {
+        char bar[160];
+        double mx = (n->state.scale.max > n->state.scale.min) ? n->state.scale.max : 1.0;
+        draw_bar(0, 0, w > 30 ? 30 : w, n->state.scale.value / (mx ? mx : 1.0), bar, sizeof bar);
+        snprintf(line, sz, "%s%s", lbl[0] ? lbl : "", bar); break;
+    }
+    case WT_HSCALE: case WT_VSCALE: {
+        char bar[160];
+        double lo = n->state.scale.min, hi = n->state.scale.max, v = n->state.scale.value;
+        double frac = (hi > lo) ? (v - lo) / (hi - lo) : 0;
+        draw_bar(0, 0, w > 24 ? 24 : w, frac, bar, sizeof bar);
+        snprintf(line, sz, "%s%s %.6g", lbl[0] ? lbl : "", bar, v); break;
+    }
+    case WT_COMBOBOX: {
+        int si = n->state.list.selected_index;
+        const char *it = (si >= 0 && si < n->state.list.item_count &&
+                          n->state.list.items && n->state.list.items[si])
+                         ? n->state.list.items[si] : "";
+        snprintf(line, sz, "%s< %s >", lbl[0] ? lbl : "", it);
+        break;
+    }
+    case WT_INFOBAR:
+        snprintf(line, sz, "[%s] %s", n->state.infobar.message_type, lbl); break;
+    case WT_MENUBUTTON:
+        /* Le libellé, puis le choix courant entre chevrons — en terminal
+         * un menu déroulant se lit mieux ainsi qu'il ne se déroule. */
+        snprintf(line, sz, "[ %s \u25be ] %s", lbl[0] ? lbl : "Menu",
+                 n->state.entry.buf);
+        break;
+    case WT_LINKBUTTON:
+        /* Le libellé, puis l'URI entre chevrons — en terminal le lien ne
+         * se « survole » pas : l'adresse doit être lisible telle quelle. */
+        if (n->state.entry.buf[0] && strcmp(lbl, n->state.entry.buf) != 0)
+            snprintf(line, sz, "%s <%s>", lbl, n->state.entry.buf);
+        else
+            snprintf(line, sz, "<%s>", n->state.entry.buf);
+        break;
+    case WT_FILECHOOSER:
+        snprintf(line, sz, "%s[%-24s]", lbl[0] ? lbl : "",
+                 n->state.entry.buf[0] ? n->state.entry.buf : "(choisir…)");
+        break;
+    case WT_PULSE: {
+        /* Bloc qui va et vient : « ça travaille », sans valeur. */
+        int inner = (w > 32 ? 30 : (w > 6 ? w - 2 : 4));
+        int blk   = inner / 5 > 2 ? inner / 5 : 2;
+        int span  = inner - blk;
+        int phase = (int) n->state.spinner.angle;
+        int pos   = span > 0 ? phase % (2 * span) : 0;
+        if (pos > span) pos = 2 * span - pos;       /* aller-retour */
+        char bar[128];
+        int k = inner < 120 ? inner : 120;
+        for (int i = 0; i < k; i++) bar[i] = (i >= pos && i < pos + blk) ? '#' : '-';
+        bar[k] = '\0';
+        snprintf(line, sz, "%s[%s]", lbl[0] ? lbl : "", bar);
+        break;
+    }
+    case WT_CALENDAR:
+        snprintf(line, sz, "%s<%04d-%02d-%02d>", lbl[0] ? lbl : "",
+                 n->state.calendar.year, n->state.calendar.month, n->state.calendar.day); break;
+    default:
+        snprintf(line, sz, "%s", lbl); break;
+    }
+}
+
+/* Écart entre deux voisins d'une rangée : une colonne (gtk3 : 5 px). */
+#define ESPACE_RANGEE 1
+
+/* Le réglage d'étirement que la rangée passe au prochain draw_node (lu et remis
+ * à zéro à son entrée : il ne vaut que pour l'enfant visé, pas pour ses
+ * descendants). */
+static int g_etirer;
+
+/* Hauteur imposée (en lignes) au prochain draw_node, même règle de passage :
+ * une colonne étirée, ou la fenêtre qui a une hauteur, la donne à l'enfant
+ * qui la remplit. 0 = hauteur naturelle. */
+static int g_haut;
+
+/* Une ligne de terminal vaut à peu près 16 px de l'étalon (police de 12). */
+#define PX_PAR_LIGNE 16
+
+/* Efface un rectangle (avant de redessiner une colonne répartie). */
+static void effacer_zone(int y, int x, int h, int w)
+{
+    for (int i = 0; i < h; i++) mvprintw(y + i, x, "%*s", w > 0 ? w : 0, "");
+}
+
+/* Largeur NATURELLE d'un nœud, en colonnes : ce qu'il occupe quand on ne
+ * l'étire pas. Sert à la rangée (<hbox>) pour caler à droite et partager le
+ * reste ; 0 = ne prend aucune place (image, minuterie, caché). */
+static int largeur(WidgetNode *n)
+{
+    if (!n || !n->visible) return 0;
+    const char *lbl = n->label ? n->label : "";
+    int lw = (int)g_utf8_strlen(lbl, -1);
+    int m = 0, s = 0, k = 0;
+    for (int i = 0; i < n->child_count; i++) {
+        int l = largeur(n->children[i]);
+        if (l > 0) { s += l; k++; if (l > m) m = l; }
+    }
+    switch (n->type) {
+    case WT_TIMER: case WT_IMAGE_W: case WT_PIXMAP:
+        return 0;
+    case WT_SEPARATOR:
+        return 1;
+    case WT_HBOX:
+        return k ? (n->homogeneous ? m * k : s) + (k - 1) * ESPACE_RANGEE : 0;
+    case WT_VBOX: case WT_EVENTBOX: case WT_WINDOW:
+        return m;
+    case WT_REVEALER:
+        return (n->state.toggle.active && n->child_count) ? largeur(n->children[0]) : 0;
+    case WT_FRAME: case WT_ASPECTFRAME:
+        return (m > lw + 4 ? m : lw + 4) + 2;
+    case WT_EXPANDER:
+        return lw + 4 > m + 2 ? lw + 4 : m + 2;
+    case WT_WIZARD:
+        return m > 40 ? m : 40;
+    case WT_OVERLAY:
+        return m > 13 ? m : 13;
+    case WT_STACK:
+        return m > 4 * n->child_count ? m : 4 * n->child_count;
+    case WT_NOTEBOOK: {
+        int t = 0;
+        for (int i = 0; i < n->child_count; i++) {
+            const char *tl = (n->state.notebook.tab_labels && n->state.notebook.tab_labels[i])
+                             ? n->state.notebook.tab_labels[i] : "•";
+            t += (int)g_utf8_strlen(tl, -1) + 3;
+        }
+        return t > m ? t : m;
+    }
+    case WT_PANED:
+        return n->state.paned.vertical ? m : s + 1 > 9 ? s + 1 : 9;
+    case WT_TOOLBAR:
+        if (n->state.grid.columns == 1) return m;
+        return n->child_count * (m + 1);
+    case WT_GRID: case WT_FLOWBOX: {
+        int nc = n->state.grid.columns > 0 ? n->state.grid.columns : 1;
+        return nc * (m + 1);
+    }
+    case WT_LIST: {
+        int larg[16] = {0}, nc = colonnes_mesurer(n, larg, 16), l = lw;
+        if (nc > 1) {
+            int t = 0;
+            for (int j = 0; j < nc; j++) t += larg[j] + (j < nc - 1 ? 2 : 0);
+            return t + 2 > l ? t + 2 : l;
+        }
+        for (int i = 0; i < n->state.list.item_count; i++) {
+            const char *it = n->state.list.items ? n->state.list.items[i] : NULL;
+            int e = it ? (int)g_utf8_strlen(it, -1) + 2 : 0;
+            if (e > l) l = e;
+        }
+        return l;
+    }
+    default: {
+        char line[512];
+        ligne_feuille(n, 30, 0, line, sizeof line);
+        return (int)g_utf8_strlen(line, -1);
+    }
+    }
+}
+static int draw_node(WidgetNode *n, int y, int x, int w);
+
+/* Colonne (<vbox>, et l'intérieur d'un <frame>, qui chez gtk3 est une boîte
+ * verticale) : hauteurs naturelles d'abord. Si la colonne a reçu plus de
+ * lignes (cible), le surplus va aux enfants qui s'étirent (pack_expand, règle
+ * de l'étalon, voir widget_vbox.c / widget_frame.c) et la colonne est
+ * redessinée : un cadre, une colonne ou une rangée qui remplit sa place la
+ * prend toute ; une feuille (bouton, champ, barre) garde sa ligne, centrée
+ * dans sa place (une liste qui la remplit, elle, reste en haut). */
+static int colonne(WidgetNode *n, int y, int x, int w, int cible)
+{
+    int nc = n->child_count, used = 0, f0 = g_nfocus;
+    int *h = nc > 0 ? g_new0(int, nc) : NULL;
+    for (int i = 0; i < nc; i++) {
+        h[i] = draw_node(n->children[i], y + used, x, w);
+        used += h[i];
+    }
+    int extra = cible - used, nexp = 0;
+    for (int i = 0; i < nc; i++)
+        if (h[i] > 0 && n->children[i]->pack_expand) nexp++;
+    if (extra > 0 && nexp > 0) {
+        effacer_zone(y, x, used, w);
+        g_nfocus = f0;
+        int oy = y, j = 0;
+        for (int i = 0; i < nc; i++) {
+            WidgetNode *c = n->children[i];
+            int place = h[i];
+            if (h[i] > 0 && c->pack_expand)
+                place += extra / nexp + (j++ >= nexp - extra % nexp ? 1 : 0);
+            int remplit = c->pack_fill && (c->type == WT_VBOX || c->type == WT_EVENTBOX ||
+                          c->type == WT_HBOX ||
+                          c->type == WT_FRAME || c->type == WT_ASPECTFRAME);
+            /* zone de contenu (liste, arbre, texte édité) qui remplit sa
+             * place : son contenu commence en HAUT, comme chez gtk3 */
+            int zone = c->pack_fill && (c->type == WT_LIST || c->type == WT_TREE ||
+                       c->type == WT_TABLE || c->type == WT_EDIT ||
+                       c->type == WT_TERMINAL_W || c->type == WT_NOTEBOOK);
+            if (place > h[i] && remplit) {
+                g_haut = place;
+                draw_node(c, oy, x, w);
+            } else if (zone) {
+                draw_node(c, oy, x, w);
+            } else {
+                draw_node(c, oy + (place - h[i]) / 2, x, w);
+            }
+            oy += place;
+        }
+        used = cible;
+    }
+    g_free(h);
+    return used;
+}
+
 /* Dessine un nœud à (y,x) dans une largeur w ; renvoie le nombre de lignes
  * consommées. Récursif : gère conteneurs et feuilles. */
 static int draw_node(WidgetNode *n, int y, int x, int w)
 {
+    int etirer = g_etirer, cible = g_haut;
+    g_etirer = 0; g_haut = 0;
     if (!n || (!n->visible && n->type != WT_WINDOW)) return 0;
     const char *lbl = n->label ? n->label : "";
 
@@ -210,9 +543,15 @@ static int draw_node(WidgetNode *n, int y, int x, int w)
         return 0;
 
     case WT_WINDOW: {
+        /* default-height / height-request : la fenêtre a une hauteur, son
+         * enfant la remplit (comme gtk3) ; sans hauteur, la naturelle. */
         int used = 0;
-        for (int i = 0; i < n->child_count; i++)
+        int haut = n->height > 0 ? n->height / PX_PAR_LIGNE : 0;
+        if (haut > LINES - 3) haut = LINES - 3;   /* LINES-2 : l'invite de saisie */
+        for (int i = 0; i < n->child_count; i++) {
+            if (n->child_count == 1 && haut > 0) g_haut = haut;
             used += draw_node(n->children[i], y + used, x, w);
+        }
         return used;
     }
 
@@ -237,12 +576,8 @@ static int draw_node(WidgetNode *n, int y, int x, int w)
         return used;
     }
 
-    case WT_VBOX: case WT_EVENTBOX: {
-        int used = 0;
-        for (int i = 0; i < n->child_count; i++)
-            used += draw_node(n->children[i], y + used, x, w);
-        return used ? used : 0;
-    }
+    case WT_VBOX: case WT_EVENTBOX:
+        return colonne(n, y, x, w, cible);
 
     case WT_WIZARD: {
         /* L'étape courante, puis la rangée de navigation. Les touches
@@ -341,13 +676,96 @@ static int draw_node(WidgetNode *n, int y, int x, int w)
     }
 
     case WT_HBOX: {
+        /* Rangée, règle de l'étalon gtk3 (gtk_box_pack_end) transposée en
+         * colonnes : chaque enfant a sa largeur naturelle ; le reste va à ceux
+         * qui s'étirent (pack_expand, voir widget_hbox.c) ; si personne ne
+         * s'étire, la rangée se cale à DROITE, côte à côte. Un enfant étiré
+         * sans space-fill est centré dans sa place. homogeneous="true" : des
+         * cases ÉGALES sur toute la largeur, chaque enfant centré dans la
+         * sienne s'il ne la remplit pas. */
         int nc = n->child_count; if (nc <= 0) return 0;
-        int cw = w / nc, maxh = 1, cx = x;
+        int *nat = g_new0(int, nc), *place = g_new0(int, nc), *haut = g_new0(int, nc);
+        int f0 = g_nfocus;
+        int k = 0, somme = 0, nexp = 0;
         for (int i = 0; i < nc; i++) {
-            int h = draw_node(n->children[i], y, cx, cw);
-            if (h > maxh) maxh = h;
-            cx += cw;
+            nat[i] = largeur(n->children[i]);
+            if (nat[i] <= 0) continue;
+            k++; somme += nat[i];
+            if (n->children[i]->pack_expand) nexp++;
         }
+        int maxh = 1;
+        if (k == 0) { g_free(nat); g_free(place); g_free(haut); return 1; }
+        int libre = w - (k - 1) * ESPACE_RANGEE;
+        int cx = x, deborde = 0;
+        if (n->homogeneous) {
+            int cell = libre / k, reste = libre - cell * k, j = 0;
+            for (int i = 0; i < nc; i++)
+                if (nat[i] > 0) place[i] = cell + (j++ >= k - reste ? 1 : 0);
+        } else if (somme <= libre) {
+            int extra = libre - somme, j = 0;
+            for (int i = 0; i < nc; i++) {
+                if (nat[i] <= 0) continue;
+                place[i] = nat[i];
+                if (nexp && n->children[i]->pack_expand)
+                    place[i] += extra / nexp + (j++ >= nexp - extra % nexp ? 1 : 0);
+            }
+            if (!nexp) cx += extra;                 /* calé à droite */
+        } else {
+            /* Trop large pour la ligne : cases égales, comme avant. */
+            deborde = 1;
+            for (int i = 0; i < nc; i++) if (nat[i] > 0) place[i] = libre / k;
+        }
+        int cx0 = cx;
+        for (int i = 0; i < nc; i++) {
+            if (nat[i] <= 0) continue;
+            WidgetNode *c = n->children[i];
+            int h;
+            if (deborde) {
+                h = draw_node(c, y, cx, place[i]);
+            } else if (c->pack_fill) {
+                g_etirer = 1;
+                h = draw_node(c, y, cx, place[i]);
+            } else {
+                int cw = nat[i] < place[i] ? nat[i] : place[i];
+                h = draw_node(c, y, cx + (place[i] - cw) / 2, cw);
+            }
+            if (h > maxh) maxh = h;
+            haut[i] = h;
+            cx += place[i] + ESPACE_RANGEE;
+        }
+        /* Hauteur de la rangée : celle de son plus haut enfant, ou celle que la
+         * colonne lui donne (cible). Comme chez gtk3, chaque enfant occupe
+         * toute cette hauteur : un cadre ou une colonne s'y étire, une feuille
+         * garde sa ligne, centrée. Redessin si un enfant n'y est pas. */
+        int H = cible > maxh ? cible : maxh, refaire = 0;
+        for (int i = 0; i < nc; i++)
+            if (nat[i] > 0 && haut[i] < H) refaire = 1;
+        if (refaire) {
+            effacer_zone(y, x, maxh, w);
+            g_nfocus = f0;
+            cx = cx0;
+            for (int i = 0; i < nc; i++) {
+                if (nat[i] <= 0) continue;
+                WidgetNode *c = n->children[i];
+                int conteneur = (c->type == WT_VBOX || c->type == WT_EVENTBOX ||
+                                 c->type == WT_FRAME || c->type == WT_ASPECTFRAME);
+                int cy = conteneur ? y : y + (H - haut[i]) / 2;
+                if (conteneur) g_haut = H;
+                if (deborde) {
+                    draw_node(c, cy, cx, place[i]);
+                } else if (c->pack_fill) {
+                    g_etirer = 1;
+                    if (conteneur) g_haut = H;
+                    draw_node(c, cy, cx, place[i]);
+                } else {
+                    int cw = nat[i] < place[i] ? nat[i] : place[i];
+                    draw_node(c, cy, cx + (place[i] - cw) / 2, cw);
+                }
+                cx += place[i] + ESPACE_RANGEE;
+            }
+            maxh = H;
+        }
+        g_free(nat); g_free(place); g_free(haut);
         return maxh;
     }
 
@@ -405,10 +823,11 @@ static int draw_node(WidgetNode *n, int y, int x, int w)
 
     case WT_FRAME: case WT_ASPECTFRAME: {
         /* Cadre : bordure + label, enfants à l'intérieur. */
-        int inner = 0, iy = y + 1, ix = x + 1, iw = w - 2;
-        for (int i = 0; i < n->child_count; i++)
-            inner += draw_node(n->children[i], iy + inner, ix, iw);
+        /* l'intérieur est une colonne (règle de widget_frame.c de l'étalon) */
+        int iy = y + 1, ix = x + 1, iw = w - 2;
+        int inner = colonne(n, iy, ix, iw, cible > 2 ? cible - 2 : 0);
         int h = inner + 2;
+        if (h < cible) h = cible;
         /* bordure */
         mvhline(y, x, ACS_HLINE, w); mvhline(y + h - 1, x, ACS_HLINE, w);
         mvvline(y, x, ACS_VLINE, h); mvvline(y, x + w - 1, ACS_VLINE, h);
@@ -441,139 +860,44 @@ static int draw_node(WidgetNode *n, int y, int x, int w)
     default: {
         char line[512];
         int rows = 1;
-        switch (n->type) {
-        case WT_TEXT: case WT_STATUSBAR: {
-            /* <text> : ce que <input>/<default> ont posé, sinon le <label> ;
-             * sans le saut de ligne final de la commande. */
-            const char *t = lbl;
-            if (n->type == WT_TEXT && n->state.text.content && n->state.text.content[0]) t = n->state.text.content;
-            snprintf(line, sizeof line, "%s", t);
-            size_t l = strlen(line);
-            while (l > 0 && (line[l - 1] == '\n' || line[l - 1] == '\r')) line[--l] = '\0';
-            break;
+        if (n->type == WT_SEPARATOR) {
+            /* dans une rangée, il reçoit sa largeur naturelle (1) : un trait
+             * vertical entre ses voisins */
+            if (w <= 1) mvaddch(y, x, ACS_VLINE);
+            else mvhline(y, x, ACS_HLINE, w);
+            return 1;
         }
-        case WT_SEPARATOR:
-            mvhline(y, x, ACS_HLINE, w); return 1;
-        case WT_BUTTON:
-            snprintf(line, sizeof line, "[ %s ]", lbl[0] ? lbl : "OK"); break;
-        case WT_CHECKBOX: case WT_TOGGLEBUTTON: case WT_SWITCH:
-            snprintf(line, sizeof line, "[%c] %s", n->state.toggle.active ? 'x' : ' ', lbl); break;
-        case WT_RADIOBUTTON:
-            snprintf(line, sizeof line, "(%c) %s", n->state.toggle.active ? '*' : ' ', lbl); break;
-        case WT_ENTRY:
-            snprintf(line, sizeof line, "%s[%-16s]", lbl[0] ? lbl : "", n->state.entry.buf); break;
-        case WT_EDIT: {
-            /* ⛔ Le contenu d'un <edit> vit dans state.text.content, un
-             * POINTEUR de tas — pas dans state.entry.buf. Les deux occupent la
-             * même place dans l'union : lire entry.buf ici revenait à afficher
-             * les octets du pointeur, puis à lire au-delà jusqu'au premier
-             * zéro (débordement de lecture). Mesuré : « ��jU » à l'écran. */
-            const char *contenu = n->state.text.content ? n->state.text.content : "";
-            snprintf(line, sizeof line, "%s[%-16s]", lbl[0] ? lbl : "", contenu);
-            break;
-        }
-        case WT_SEARCHENTRY:
-            snprintf(line, sizeof line, "%s[%-16s]?", lbl[0] ? lbl : "", n->state.list.filter); break;
-        case WT_PASSWORD: {
-            int L = (int)strlen(n->state.entry.buf), k = L < 16 ? L : 16;
-            char st[24]; memset(st, '*', k); st[k] = '\0';
-            snprintf(line, sizeof line, "%s[%-16s]", lbl[0] ? lbl : "", st); break;
-        }
-        case WT_SPINBUTTON:
-            snprintf(line, sizeof line, "%s[%d]", lbl[0] ? lbl : "", (int)n->state.spin.value); break;
-        case WT_PROGRESSBAR: case WT_LEVELBAR: {
-            char bar[160];
-            double mx = (n->state.scale.max > n->state.scale.min) ? n->state.scale.max : 1.0;
-            draw_bar(y, x, w > 30 ? 30 : w, n->state.scale.value / (mx ? mx : 1.0), bar, sizeof bar);
-            snprintf(line, sizeof line, "%s%s", lbl[0] ? lbl : "", bar); break;
-        }
-        case WT_HSCALE: case WT_VSCALE: {
-            char bar[160];
-            double lo = n->state.scale.min, hi = n->state.scale.max, v = n->state.scale.value;
-            double frac = (hi > lo) ? (v - lo) / (hi - lo) : 0;
-            draw_bar(y, x, w > 24 ? 24 : w, frac, bar, sizeof bar);
-            snprintf(line, sizeof line, "%s%s %.6g", lbl[0] ? lbl : "", bar, v); break;
-        }
-        case WT_LIST: case WT_COMBOBOX: {
-            if (n->type == WT_COMBOBOX) {
-                int si = n->state.list.selected_index;
-                const char *it = (si >= 0 && si < n->state.list.item_count &&
-                                  n->state.list.items && n->state.list.items[si])
-                                 ? n->state.list.items[si] : "";
-                snprintf(line, sizeof line, "%s< %s >", lbl[0] ? lbl : "", it);
+        if (n->type == WT_LIST) {
+            /* liste multi-lignes ; un <tree> à colonnes : en-têtes, puis
+             * lignes alignées */
+            int larg[16] = {0};
+            int nc = colonnes_mesurer(n, larg, 16);
+            char cell[512];
+            if (nc > 1 && strchr(lbl, '|')) {
+                colonnes_ecrire(lbl, larg, nc, cell, sizeof cell);
+                attron(A_BOLD);
+                mvprintw(y, x + 2, "%s", cell);
+                attroff(A_BOLD);
             } else {
-                /* liste multi-lignes ; un <tree> à colonnes : en-têtes, puis
-                 * lignes alignées */
-                int larg[16] = {0};
-                int nc = colonnes_mesurer(n, larg, 16);
-                char cell[512];
-                if (nc > 1 && strchr(lbl, '|')) {
-                    colonnes_ecrire(lbl, larg, nc, cell, sizeof cell);
-                    attron(A_BOLD);
-                    mvprintw(y, x + 2, "%s", cell);
-                    attroff(A_BOLD);
-                } else {
-                    mvprintw(y, x, "%s", lbl[0] ? lbl : "");
-                }
-                int base = *lbl ? 1 : 0;
-                int cnt = n->state.list.item_count, shown = cnt < 6 ? cnt : 6;
-                for (int i = 0; i < shown; i++) {
-                    int sel = (i == n->state.list.selected_index);
-                    const char *it = n->state.list.items && n->state.list.items[i] ? n->state.list.items[i] : "";
-                    if (nc > 1) { colonnes_ecrire(it, larg, nc, cell, sizeof cell); it = cell; }
-                    if (sel) attron(A_REVERSE);
-                    mvprintw(y + base + i, x + 2, "%-*s", w > 4 ? w - 4 : 1, it);
-                    if (sel) attroff(A_REVERSE);
-                }
-                rows = base + (shown ? shown : 1);
-                if (node_focusable(n->type) && g_nfocus < 256) {
-                    g_focus[g_nfocus++] = (Focusable){ n, y + base, x + 2, w - 4 };
-                }
-                return rows;
+                mvprintw(y, x, "%s", lbl[0] ? lbl : "");
             }
-            break;
+            int base = *lbl ? 1 : 0;
+            int cnt = n->state.list.item_count, shown = cnt < 6 ? cnt : 6;
+            for (int i = 0; i < shown; i++) {
+                int sel = (i == n->state.list.selected_index);
+                const char *it = n->state.list.items && n->state.list.items[i] ? n->state.list.items[i] : "";
+                if (nc > 1) { colonnes_ecrire(it, larg, nc, cell, sizeof cell); it = cell; }
+                if (sel) attron(A_REVERSE);
+                mvprintw(y + base + i, x + 2, "%-*s", w > 4 ? w - 4 : 1, it);
+                if (sel) attroff(A_REVERSE);
+            }
+            rows = base + (shown ? shown : 1);
+            if (node_focusable(n->type) && g_nfocus < 256) {
+                g_focus[g_nfocus++] = (Focusable){ n, y + base, x + 2, w - 4 };
+            }
+            return rows;
         }
-        case WT_INFOBAR:
-            snprintf(line, sizeof line, "[%s] %s", n->state.infobar.message_type, lbl); break;
-        case WT_MENUBUTTON:
-            /* Le libellé, puis le choix courant entre chevrons — en terminal
-             * un menu déroulant se lit mieux ainsi qu'il ne se déroule. */
-            snprintf(line, sizeof line, "[ %s \u25be ] %s", lbl[0] ? lbl : "Menu",
-                     n->state.entry.buf);
-            break;
-        case WT_LINKBUTTON:
-            /* Le libellé, puis l'URI entre chevrons — en terminal le lien ne
-             * se « survole » pas : l'adresse doit être lisible telle quelle. */
-            if (n->state.entry.buf[0] && strcmp(lbl, n->state.entry.buf) != 0)
-                snprintf(line, sizeof line, "%s <%s>", lbl, n->state.entry.buf);
-            else
-                snprintf(line, sizeof line, "<%s>", n->state.entry.buf);
-            break;
-        case WT_FILECHOOSER:
-            snprintf(line, sizeof line, "%s[%-24s]", lbl[0] ? lbl : "",
-                     n->state.entry.buf[0] ? n->state.entry.buf : "(choisir…)");
-            break;
-        case WT_PULSE: {
-            /* Bloc qui va et vient : « ça travaille », sans valeur. */
-            int inner = (w > 32 ? 30 : (w > 6 ? w - 2 : 4));
-            int blk   = inner / 5 > 2 ? inner / 5 : 2;
-            int span  = inner - blk;
-            int phase = (int) n->state.spinner.angle;
-            int pos   = span > 0 ? phase % (2 * span) : 0;
-            if (pos > span) pos = 2 * span - pos;       /* aller-retour */
-            char bar[128];
-            int k = inner < 120 ? inner : 120;
-            for (int i = 0; i < k; i++) bar[i] = (i >= pos && i < pos + blk) ? '#' : '-';
-            bar[k] = '\0';
-            snprintf(line, sizeof line, "%s[%s]", lbl[0] ? lbl : "", bar);
-            break;
-        }
-        case WT_CALENDAR:
-            snprintf(line, sizeof line, "%s<%04d-%02d-%02d>", lbl[0] ? lbl : "",
-                     n->state.calendar.year, n->state.calendar.month, n->state.calendar.day); break;
-        default:
-            snprintf(line, sizeof line, "%s", lbl); break;
-        }
+        ligne_feuille(n, w, etirer, line, sizeof line);
 
         int focused = 0;
         if (node_focusable(n->type) && g_nfocus < 256) {
@@ -861,6 +1185,16 @@ static void ecran_modes(void)
 static void ecran_fermer(void)
 {
     if (g_ecran && !isendwin()) endwin();
+}
+
+/* Crochet du contrat : le cœur l'appelle juste avant d'écrire les variables et
+ * EXIT=… (action « exit:… », puis exit()). L'écran est rendu d'abord : quand la
+ * sortie standard est le terminal, les variables s'écrivent alors sur l'écran
+ * normal et restent visibles, au lieu de partir avec l'écran alterné. */
+void sermo_be_before_export(void)
+{
+    ecran_fermer();
+    fflush(g_tty ? g_tty : stdout);
 }
 
 /* Rend 1 si l'écran est ouvert, 0 s'il n'y a pas de terminal où dessiner. */

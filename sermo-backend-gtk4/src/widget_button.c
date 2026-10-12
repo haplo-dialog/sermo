@@ -239,15 +239,16 @@ GtkWidget *widget_button_create(
 						 * GdkPixbuf. On construit l'image directement depuis le nom
 						 * d'icone du theme et on fixe la taille en pixels. Le shim
 						 * renvoyait NULL, ce qui affichait une image cassee. */
-						if (gtk_icon_theme_has_icon(icon_theme, icon_name)) {
-							icon = gtk_image_new_from_icon_name(icon_name);
-							gtk_image_set_pixel_size(GTK_IMAGE(icon),
-								theme_icon_size);
-						} else {
-							/* icone absente du theme : gtk substitue une image
-							 * cassee, comme le faisait la branche GTK3 */
-							icon = gtk_image_new_from_file("");
-						}
+						/* Sans demander d'abord au thème s'il a l'icône : le
+						 * thème obtenu ici (shim de gtk_icon_theme_get_default)
+						 * répondait non pour toutes, et le bouton montrait une
+						 * image cassée (galerie du site, jusqu'à la 2.8.1).
+						 * GtkImage fait lui-même les replis de GTK (variante
+						 * -symbolic), comme <image icon-name>. */
+						(void)icon_theme;
+						icon = gtk_image_new_from_icon_name(icon_name);
+						gtk_image_set_pixel_size(GTK_IMAGE(icon),
+							theme_icon_size);
 					} else {
 						if (width == -1 && height == -1) {
 							/* Handle unscaled images */
@@ -372,6 +373,20 @@ GtkWidget *widget_button_create(
 							box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 2);
 							gtk_box_pack_end(GTK_BOX(boxouter), box, FALSE, FALSE, 0);
 						}
+					}
+					/* Groupe icone + libelle CENTRE dans le bouton (parite
+					 * gtk3/qt6/lvgl). GtkBox GTK4 ne donne a un enfant non
+					 * extensible que sa taille naturelle, au debut : le groupe
+					 * restait a gauche. Homogene, la boite exterieure donne
+					 * toute la place a son unique enfant (sans poser hexpand,
+					 * qui remonterait jusqu'au bouton et changerait la mise
+					 * en page) ; l'enfant s'y centre. */
+					if (boxouter) {
+						gtk_box_set_homogeneous(GTK_BOX(boxouter), TRUE);
+						if (position == GTK_POS_BOTTOM || position == GTK_POS_TOP)
+							gtk_widget_set_valign(box, GTK_ALIGN_CENTER);
+						else
+							gtk_widget_set_halign(box, GTK_ALIGN_CENTER);
 					}
 					if (position == GTK_POS_BOTTOM || position == GTK_POS_RIGHT) {
 						gtk_box_pack_end(GTK_BOX(box), icon, FALSE, FALSE, 0);

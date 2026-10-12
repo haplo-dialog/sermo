@@ -84,6 +84,10 @@ GtkWidget *widget_radiobutton_create(
 		widget = gtk_radio_button_new_with_label(NULL,
 			attributeset_get_first(&element, Attr, ATTR_LABEL));
 		lastradiowidget = widget;
+		/* Le 1er bouton d'un groupe est coché d'office, comme GtkRadioButton
+		 * de GTK 3 ; une GtkCheckButton de GTK 4 groupée ne l'est pas, et un
+		 * groupe sans <default> sortait sans aucun bouton choisi. */
+		gtk_check_button_set_active(GTK_CHECK_BUTTON(widget), TRUE);
 	} else {
 		widget = gtk_radio_button_new_with_label_from_widget(
 			GTK_RADIO_BUTTON(lastradiowidget),

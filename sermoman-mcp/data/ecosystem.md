@@ -181,6 +181,7 @@ Le pire qu'il puisse faire, c'est donner une réponse de documentation.
 | `sermo_architecture` | l'architecture modulaire : le cœur, les neuf backends, le contrat cœur↔backend, le packaging, les bancs |
 | `sermo_heritage` | la vie de sermo : lignée, historique des versions, feuille de route, bilan de santé |
 | `sermo_ecosystem` | ce fichier : quel outil pour quoi |
+| `sermo_scripts` | les 104 scripts prêts à l'emploi (scripts métier et boîtes à outils) |
 | `sermo_search` | recherche plein texte dans la documentation |
 | `sermo_example` | un exemple complet de dialogue ; sans argument, la liste des exemples curés |
 | `sermo_how_to_report` | comment signaler un bug ou proposer une amélioration |

@@ -1,0 +1,35 @@
+<!-- Script : examples/metiers/11-serveur-sans-ecran/5-etat-serveur.sh (dialogue principal) -->
+<window title="État du serveur" default-width="560">
+  <vbox>
+    <notebook tab-labels="Système|Disques|Services">
+      <vbox>
+        <text><label>Durée de marche : 12 jours, 4 heures, 7 minutes</label></text>
+        <text><label>Charge sur 1 minute : 0.42 (jauge : part des cœurs occupée)</label></text>
+        <levelbar range-min="0" range-max="1"><variable>CHARGE</variable><default>0.07</default></levelbar>
+        <text><label>Mémoire utilisée : 38 %</label></text>
+        <hscale range-min="0" range-max="100" range-step="1" draw-value="true" sensitive="false"><variable>MEMOIRE</variable><default>38</default></hscale>
+      </vbox>
+      <vbox>
+        <table scrollable="true" height-request="160">
+          <label>Montage|Taille|Utilisé|Occupation</label>
+          <variable>DISQUE</variable>
+          <item>/|29G|11G|39%</item>
+          <item>/var|98G|71G|76%</item>
+        </table>
+      </vbox>
+      <vbox>
+        <text><label>Services en échec (systemctl --failed) :</label></text>
+        <list scrollable="true" height-request="140">
+          <variable>SERVICE</variable>
+          <item>nginx.service</item>
+          <item>certbot.service</item>
+        </list>
+        <hbox><button><label>Relancer le service choisi</label><action>exit:relancer</action></button></hbox>
+      </vbox>
+    </notebook>
+    <hbox>
+      <button><label>Actualiser</label><action>exit:actualiser</action></button>
+      <button><label>Fermer</label><action>exit:fermer</action></button>
+    </hbox>
+  </vbox>
+</window>

@@ -1,0 +1,28 @@
+<!-- Script : examples/metiers/08-enseignement-formation/4-minuteur-examen.sh (dialogue principal) -->
+<window title="Minuteur d'examen" default-width="500">
+  <vbox>
+    <frame label="Épreuve">
+      <vbox>
+        <hbox><text><label>Intitulé :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>EPREUVE</variable><default>Mathématiques, devoir commun</default></entry></hbox>
+        <hbox><text><label>Salle :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>SALLE</variable><default>B204</default></entry></hbox>
+        <hbox><text><label>Durée (minutes) :</label></text>
+          <spinbutton range-min="5" range-max="360" range-step="5"><variable>DUREE</variable><default>120</default></spinbutton></hbox>
+        <checkbox><label>Tiers-temps (durée majorée d'un tiers)</label><variable>TIERS_TEMPS</variable></checkbox>
+      </vbox>
+    </frame>
+    <frame label="Alerte avant la fin (minutes)">
+      <vbox>
+        <hscale range-min="0" range-max="30" range-step="5" draw-value="true">
+          <variable>ALERTE</variable><default>10</default>
+        </hscale>
+      </vbox>
+    </frame>
+    <checkbox><label>Noter début et fin au procès-verbal</label><variable>PV</variable><default>true</default></checkbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Distribuer les sujets et démarrer</label><action>exit:demarrer</action></button>
+    </hbox>
+  </vbox>
+</window>

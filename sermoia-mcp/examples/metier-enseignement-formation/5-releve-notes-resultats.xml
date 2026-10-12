@@ -1,0 +1,24 @@
+<!-- Script : examples/metiers/08-enseignement-formation/5-releve-notes.sh (dialogue resultats) -->
+<window title="Résultats" default-width="520" default-height="360">
+  <vbox>
+    <text><label>4e A · Contrôle n° 3, fractions</label></text>
+    <tree scrollable="true" height-request="170">
+      <label>Élève|Note brute|Sur 20</label>
+      <variable>ELEVE</variable>
+      <item>ARNAUD Inès|31|15,5</item>
+      <item>BERNARD Tom|24,5|12,3</item>
+      <item>CHEVALIER Yanis|ABS|-</item>
+      <item>DIALLO Awa|36|18</item>
+      <item>FONTAINE Hugo|17|8,5</item>
+    </tree>
+    <text><label>Moyenne 13,6 / 20 · plus basse 8,5 · plus haute 18 · 4 notés, 1 absent</label></text>
+    <hbox>
+      <text><label>Exporter vers :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>EXPORT</variable><default>/home/utilisateur/Documents/Notes/releve.csv</default></entry>
+    </hbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Exporter le relevé</label><action>exit:exporter</action></button>
+    </hbox>
+  </vbox>
+</window>

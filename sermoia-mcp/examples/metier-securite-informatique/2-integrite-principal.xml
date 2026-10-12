@@ -1,0 +1,25 @@
+<!-- Script : examples/metiers/10-securite-informatique/2-integrite.sh (dialogue principal) -->
+<window title="Intégrité des fichiers" default-width="560">
+  <vbox>
+    <notebook tab-labels="Relever les empreintes|Vérifier une liste">
+      <vbox>
+        <text><label>Calcule l'empreinte SHA-256 de chaque fichier du dossier et l'écrit dans une liste.</label></text>
+        <hbox><text><label>Dossier :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>DOSSIER</variable><default>/etc</default></entry></hbox>
+        <hbox><text><label>Liste à écrire :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>SORTIE</variable><default>/home/utilisateur/empreintes-etc.sha256</default></entry></hbox>
+        <checkbox><label>Descendre dans les sous-dossiers</label><variable>RECURSIF</variable><default>true</default></checkbox>
+        <checkbox><label>Ignorer les fichiers cachés</label><variable>SANS_CACHES</variable></checkbox>
+        <hbox><button><label>Relever</label><action>exit:relever</action></button></hbox>
+      </vbox>
+      <vbox>
+        <text><label>Relit chaque fichier de la liste et signale ceux qui ont changé ou disparu.</label></text>
+        <hbox><text><label>Liste d'empreintes :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>LISTE</variable><default>/home/utilisateur/empreintes-etc.sha256</default></entry></hbox>
+        <checkbox><label>N'afficher que les écarts (--quiet)</label><variable>SILENCIEUX</variable><default>true</default></checkbox>
+        <hbox><button><label>Vérifier</label><action>exit:verifier</action></button></hbox>
+      </vbox>
+    </notebook>
+    <hbox><button cancel></button></hbox>
+  </vbox>
+</window>

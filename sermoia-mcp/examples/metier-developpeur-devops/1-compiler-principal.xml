@@ -1,0 +1,36 @@
+<!-- Script : examples/metiers/02-developpeur-devops/1-compiler.sh (dialogue principal) -->
+<window title="Compiler" default-width="520">
+  <vbox>
+    <frame label="Projet">
+      <vbox>
+        <hbox><text><label>Dossier :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>DOSSIER</variable><default>/home/utilisateur/src/mon-projet</default></entry></hbox>
+        <hbox><text><label>Outil :</label></text>
+          <comboboxtext space-expand="true" space-fill="true">
+            <variable>OUTIL</variable>
+            <default>automatique</default>
+            <item>automatique</item>
+            <item>make</item>
+            <item>cmake</item>
+          </comboboxtext></hbox>
+        <hbox><text><label>Cible :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>CIBLE</variable><default>all</default></entry></hbox>
+      </vbox>
+    </frame>
+    <frame label="Réglages">
+      <vbox>
+        <hbox><text><label>Tâches en parallèle (-j) :</label></text>
+          <spinbutton range-min="1" range-max="64" range-step="1"><variable>TACHES</variable><default>4</default></spinbutton></hbox>
+        <hbox><text><label>Mode (cmake) :</label></text>
+          <radiobutton><label>Débogage</label><variable>MODE_DEBUG</variable></radiobutton>
+          <radiobutton><label>Optimisé</label><default>true</default><variable>MODE_RELEASE</variable></radiobutton></hbox>
+        <checkbox><label>Continuer après une erreur (-k)</label><variable>CONTINUER</variable></checkbox>
+        <checkbox><label>Nettoyer avant de compiler (cible clean)</label><variable>NETTOYER</variable></checkbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Compiler</label><action>exit:compiler</action></button>
+    </hbox>
+  </vbox>
+</window>

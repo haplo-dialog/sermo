@@ -1,0 +1,11 @@
+<!-- Script : examples/boites-a-outils/administrateur/02-droits-fichiers.sh (dialogue confirmation) -->
+<window title="Appliquer à tout le contenu ?">
+  <vbox>
+    <text><label>Le changement touchera 1 284 fichiers et dossiers sous /srv/partage/compta.</label></text>
+    <text><label>Il n'y a pas d'annulation : les anciens droits ne sont pas gardés.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Appliquer à tout</label><action>exit:recursif</action></button>
+    </hbox>
+  </vbox>
+</window>

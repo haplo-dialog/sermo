@@ -1,0 +1,36 @@
+<!-- Script : examples/metiers/05-bornes-ecrans/2-rendez-vous.sh (dialogue principal) -->
+<window title="Prendre rendez-vous" default-width="680">
+  <vbox>
+
+    <hbox>
+      <text><label>Service :</label></text>
+      <comboboxtext space-expand="true" space-fill="true"><variable>SERVICE</variable><default>Accueil général</default>
+        <item>Accueil général</item><item>Dépôt de dossier</item><item>Retrait de documents</item><item>Conseiller emploi</item><item>Permanence juridique</item>
+      </comboboxtext>
+    </hbox>
+    <hbox>
+      <frame label="Jour">
+        <calendar><variable>JOUR</variable><default>2026-10-13</default></calendar>
+      </frame>
+      <frame label="Créneau" space-expand="true" space-fill="true">
+        <list scrollable="true" height-request="200"><variable>CRENEAU</variable>
+          <item>09:00</item><item>09:30</item><item>10:00</item><item>10:30</item><item>11:00</item><item>11:30</item>
+          <item>14:00</item><item>14:30</item><item>15:00</item><item>15:30</item><item>16:00</item><item>16:30</item>
+        </list>
+      </frame>
+    </hbox>
+    <frame label="Vos coordonnées">
+      <grid columns="2" row-spacing="6" column-spacing="8">
+        <text><label>Nom :</label></text>
+        <entry space-expand="true" space-fill="true"><variable>NOM</variable></entry>
+        <text><label>Téléphone :</label></text>
+        <entry space-expand="true" space-fill="true"><variable>TELEPHONE</variable></entry>
+      </grid>
+    </frame>
+    <checkbox><label>Je souhaite être rappelé la veille</label><variable>RAPPEL</variable></checkbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Réserver</label><action>exit:reserver</action></button>
+    </hbox>
+  </vbox>
+</window>

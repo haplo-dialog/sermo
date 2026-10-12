@@ -1,0 +1,11 @@
+<!-- Script : examples/metiers/02-developpeur-devops/1-compiler.sh (dialogue confirmation) -->
+<window title="Nettoyer d'abord ?">
+  <vbox>
+    <text><label>Tous les fichiers produits dans /home/utilisateur/src/mon-projet seront effacés,</label></text>
+    <text><label>puis tout sera recompilé.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Nettoyer et compiler</label><action>exit:compiler</action></button>
+    </hbox>
+  </vbox>
+</window>

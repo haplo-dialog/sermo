@@ -75,5 +75,7 @@ AI assistance
 ──────────────────────────────────────────────────
 
 Part of the code, documentation and tests was written with the help of a
-language model (Claude, Anthropic), directed and reviewed by the maintainer.
-It is stated here, once and for all.
+language model (Claude, Anthropic), under the maintainer's direction. The
+maintainer tests it and reports the defects found, but no longer reviews all
+of the code line by line: checking relies mainly on the repository's tests
+(ci/bancs.sh), which anyone can re-run. It is stated here, once and for all.

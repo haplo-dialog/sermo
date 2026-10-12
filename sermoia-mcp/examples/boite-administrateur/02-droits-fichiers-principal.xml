@@ -1,0 +1,60 @@
+<!-- Script : examples/boites-a-outils/administrateur/02-droits-fichiers.sh (dialogue principal) -->
+<window title="Droits d'un dossier" default-width="580" default-height="500">
+  <vbox>
+    <hbox><text><label>Dossier :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>DOSSIER</variable><default>/srv/partage/compta</default></entry></hbox>
+    <notebook tab-labels="Propriétaire|Mode|ACL" space-expand="true" space-fill="true">
+      <vbox>
+        <checkbox><label>Changer le propriétaire et le groupe (chown)</label><variable>F_CHOWN</variable></checkbox>
+        <hbox><text><label>Propriétaire :</label></text>
+          <entry><variable>PROPRIO</variable><default>root</default></entry></hbox>
+        <hbox><text><label>Groupe :</label></text>
+          <entry><variable>GROUPE</variable><default>compta</default></entry></hbox>
+      </vbox>
+      <vbox>
+        <checkbox><label>Changer le mode (chmod)</label><default>true</default><variable>F_CHMOD</variable></checkbox>
+        <hbox><text><label>Propriétaire :</label></text>
+          <checkbox><label>lire</label><default>true</default><variable>U_R</variable></checkbox>
+          <checkbox><label>écrire</label><default>true</default><variable>U_W</variable></checkbox>
+          <checkbox><label>entrer</label><default>true</default><variable>U_X</variable></checkbox></hbox>
+        <hbox><text><label>Groupe :</label></text>
+          <checkbox><label>lire</label><default>true</default><variable>G_R</variable></checkbox>
+          <checkbox><label>écrire</label><default>true</default><variable>G_W</variable></checkbox>
+          <checkbox><label>entrer</label><default>true</default><variable>G_X</variable></checkbox></hbox>
+        <hbox><text><label>Les autres :</label></text>
+          <checkbox><label>lire</label><variable>O_R</variable></checkbox>
+          <checkbox><label>écrire</label><variable>O_W</variable></checkbox>
+          <checkbox><label>entrer</label><variable>O_X</variable></checkbox></hbox>
+        <checkbox><label>Les nouveaux fichiers prennent le groupe du dossier (setgid)</label><default>true</default><variable>SETGID</variable></checkbox>
+      </vbox>
+      <vbox>
+        <text><label>ACL actuelle :</label></text>
+        <list scrollable="true" height-request="110">
+          <item>user::rwx</item>
+          <item>group::rwx</item>
+          <item>group:direction:r-x</item>
+          <item>mask::rwx</item>
+          <item>other::---</item>
+        </list>
+        <checkbox><label>Ajouter une entrée d'ACL (setfacl -m)</label><variable>F_ACL</variable></checkbox>
+        <hbox>
+          <comboboxtext><variable>ACL_TYPE</variable><default>group</default>
+            <item>group</item><item>user</item>
+          </comboboxtext>
+          <entry space-expand="true" space-fill="true"><variable>ACL_NOM</variable><default>direction</default></entry>
+          <comboboxtext><variable>ACL_DROITS</variable><default>r-x</default>
+            <item>r-x</item><item>rwx</item><item>r--</item><item>---</item>
+          </comboboxtext>
+        </hbox>
+        <checkbox><label>Aussi par défaut pour ce qui sera créé dedans (-d)</label><default>true</default><variable>ACL_DEFAUT</variable></checkbox>
+      </vbox>
+    </notebook>
+    <hbox>
+      <switch><label>Récursif (tout le contenu du dossier)</label><variable>RECURSIF</variable></switch>
+    </hbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Appliquer</label><action>exit:appliquer</action></button>
+    </hbox>
+  </vbox>
+</window>

@@ -99,10 +99,15 @@ static void expander_replace_les_voisins(Fl_Widget *grp, int delta)
     for (Fl_Group *p = grp->parent(); p; p = p->parent()) {
         if (p->user_data() == &SERMO_FLEX_TAG) {
             Fl_Flex *boite = (Fl_Flex *)p;
-            if (!boite->horizontal() && boite->fixed(enfant))
+            SermoFlex *sf = dynamic_cast<SermoFlex *>(p);
+            if (sf) {
+                if (!boite->horizontal()) sf->natural(enfant, enfant->h());
+            } else if (!boite->horizontal() && boite->fixed(enfant))
                 boite->fixed(enfant, enfant->h());
+            /* size() passe par resize(), VIRTUEL : la boîte du port
+             * (SermoFlex) y refait SA répartition ; layout() (non virtuel)
+             * relancerait celle de Fl_Flex. */
             boite->size(boite->w(), boite->h() + delta);
-            boite->layout();
         }
         enfant = p;
     }

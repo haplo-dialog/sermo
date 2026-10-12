@@ -246,9 +246,20 @@ void widget_list_refresh(variable *var)
 		if (attributeset_is_avail(var->Attributes, ATTR_LABEL))
 			fprintf(stderr, "%s(): <label> not implemented for this widget.\n",
 				__func__);
-		if (attributeset_is_avail(var->Attributes, ATTR_DEFAULT))
-			fprintf(stderr, "%s(): <default> not implemented for this widget.\n",
-				__func__);
+		/* <default> : la ligne de ce texte est choisie à l'ouverture (2.8.2 ;
+		 * avant, « not implemented »). Les neuf ports font de même. */
+		if (attributeset_is_avail(var->Attributes, ATTR_DEFAULT)) {
+			GList *ed = NULL;
+			gchar *def = attributeset_get_first(&ed, var->Attributes, ATTR_DEFAULT);
+			GtkListBoxRow *r;
+			for (gint i = 0; def && (r = gtk_list_box_get_row_at_index(GTK_LIST_BOX(var->Widget), i)); i++) {
+				const gchar *t = g_object_get_data(G_OBJECT(r), "user_data");
+				if (t && strcmp(t, def) == 0) {
+					gtk_list_box_select_row(GTK_LIST_BOX(var->Widget), r);
+					break;
+				}
+			}
+		}
 		if ((attributeset_cmp_left(var->Attributes, ATTR_SENSITIVE, "false")) ||
 			(attributeset_cmp_left(var->Attributes, ATTR_SENSITIVE, "disabled")) ||	/* Deprecated */
 			(attributeset_cmp_left(var->Attributes, ATTR_SENSITIVE, "no")) ||

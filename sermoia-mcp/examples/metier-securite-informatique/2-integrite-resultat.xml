@@ -1,0 +1,8 @@
+<!-- Script : examples/metiers/10-securite-informatique/2-integrite.sh (dialogue resultat) -->
+<window title="Résultat de la vérification" default-width="560">
+  <vbox>
+    <text><label>2 fichier(s) modifié(s) ou absent(s)</label></text>
+    <edit editable="false" height-request="220"><variable>DETAIL</variable><default></default></edit>
+    <hbox><button ok></button></hbox>
+  </vbox>
+</window>

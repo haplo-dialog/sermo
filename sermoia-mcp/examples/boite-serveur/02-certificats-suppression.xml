@@ -1,0 +1,12 @@
+<!-- Script : examples/boites-a-outils/serveur/02-certificats.sh (dialogue suppression) -->
+<window title="Supprimer un certificat">
+  <vbox>
+    <text><label>Le certificat « ancien.exemple.net » sera supprimé de /etc/letsencrypt.</label></text>
+    <text><label>Un site nginx qui le cite encore ne démarrera plus :</label></text>
+    <text><label>retirez-le d'abord du fichier de site.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Supprimer</label><action>exit:supprimer</action></button>
+    </hbox>
+  </vbox>
+</window>

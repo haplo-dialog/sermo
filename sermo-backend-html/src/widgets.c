@@ -16,6 +16,7 @@
 #include <strings.h>
 
 #include "gtkdialog.h"
+#include "serve_http.h"
 #include "dialog_state.h"
 #include "safe_exec.h"
 #include "widgets.h"
@@ -233,6 +234,13 @@ char *widget_get_text_value(GtkWidget *widget, int type)
     if (widget == NULL) {
         g_warning("widget_get_text_value: widget NULL");
         return "NULL WIDGET";
+    }
+
+    /* Mode serve : la valeur envoyée par le navigateur, pas le défaut du nœud. */
+    {
+        const WidgetNode *n = (const WidgetNode *)widget;
+        const char *v = n->var_name ? html_valeur_soumise(n->var_name) : NULL;
+        if (v) return g_strdup(v);
     }
 
     switch (type) {
@@ -524,6 +532,7 @@ void widget_visibility_list_add(GtkWidget *widget, tag_attr *attr)
     if (attr != NULL) {
         char *space_expand = get_tag_attribute(attr, "space-expand");
         char *visible = get_tag_attribute(attr, "visible");
+        char *space_fill = get_tag_attribute(attr, "space-fill");
 
         if (space_expand != NULL) {
             if (strcasecmp(space_expand, "true") == 0 ||
@@ -533,6 +542,13 @@ void widget_visibility_list_add(GtkWidget *widget, tag_attr *attr)
             } else {
                 ((WidgetNode *)widget)->expand = -1;
             }
+        }
+
+        /* space-fill : même lecture que l'étalon (true, yes ou 1 ; sinon faux). */
+        if (space_fill != NULL) {
+            ((WidgetNode *)widget)->fill =
+                (strcasecmp(space_fill, "true") == 0 || strcasecmp(space_fill, "yes") == 0 ||
+                 atoi(space_fill) == 1) ? 1 : -1;
         }
 
         if (visible != NULL &&

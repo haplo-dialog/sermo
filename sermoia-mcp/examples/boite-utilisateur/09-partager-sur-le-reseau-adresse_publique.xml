@@ -1,0 +1,12 @@
+<!-- Script : examples/boites-a-outils/utilisateur/09-partager-sur-le-reseau.sh (dialogue adresse_publique) -->
+<window title="Adresse qui n'est pas celle de la maison">
+  <vbox>
+    <text><label>L'adresse de cet ordinateur est 203.0.113.7.</label></text>
+    <text><label>Ce n'est pas une adresse de réseau domestique : ce peut être un VPN ou Internet.</label></text>
+    <text><label>Des inconnus pourraient alors télécharger le fichier. Partager quand même ?</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Partager quand même</label><action>exit:confirmer</action></button>
+    </hbox>
+  </vbox>
+</window>

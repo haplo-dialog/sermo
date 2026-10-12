@@ -38,14 +38,19 @@
     }
 
 
+#include <stdlib.h>
 #include <string.h>
 #include <gtk/gtk.h>
 
 #include "gtk3d.h"
 #include "attributes.h"
 #include "gtkdialog_parser.h"
+#include "sermo_focus.h"
+/* Chaque balise ouvrante, dans l'ordre du document, est notée pour savoir
+ * quel widget prend le focus à l'ouverture (sermo_focus.h). */
+#define YY_USER_ACTION sermo_focus_ouvre(yytext);
 
-static gchar *process_string(gchar *str);
+static gchar *texte_xml(const gchar *s, gboolean rogner);
 
 /* Forward declarations for functions defined in other translation units */
 int getnextchar(void);
@@ -83,6 +88,7 @@ gchar *Token;
 	g_message(" -> TAG_ATTR_NAME: '%s'", yytext);
 	#endif
 	Token="tag attribute name";
+	sermo_focus_attribut(yytext);
 	gtkdialog_lval.cval=strdup(yytext);
 	return TAG_ATTR_NAME;
 }
@@ -121,8 +127,10 @@ gchar *Token;
 					  
 <ST_QUOTED_TAGATTR>\"			{
 					  Token = yytext;
-					  gtkdialog_lval.cval = g_strdup(yytext);
-					  gtkdialog_lval.cval[strlen(gtkdialog_lval.cval) - 1] = '\0';
+					  yytext[yyleng - 1] = '\0';
+					  /* label="Tom &amp; Jerry" : entités décodées (2.8.2) */
+					  gtkdialog_lval.cval = texte_xml(yytext, FALSE);
+					  sermo_focus_valeur(gtkdialog_lval.cval);
 					  BEGIN(ST_TAG_ATTR);
 					  return STRING;
 					  							}
@@ -844,9 +852,22 @@ gchar *Token;
 					  yymore();
 												}
 
+<ST_STRING>\n				{
+					  /* Une valeur sur plusieurs lignes garde toutes ses
+					   * lignes. Jusqu'à la 2.8.1, ce saut de ligne passait
+					   * par la règle générale, qui effaçait ce qui précédait :
+					   * seule la dernière ligne restait, et un texte indenté
+					   * sous sa balise sortait vide. */
+					  ++linenumber;
+					  yymore();
+												}
+
 <ST_STRING>"<"				{
-					  gtkdialog_lval.cval = g_strdup(yytext);
-					  gtkdialog_lval.cval[strlen(gtkdialog_lval.cval) - 1] = '\0';
+					  yytext[yyleng - 1] = '\0';
+					  /* entités décodées ; blancs de fin (l'indentation avant
+					   * la balise fermante) retirés */
+					  gtkdialog_lval.cval = texte_xml(yytext, TRUE);
+					  sermo_focus_contenu(gtkdialog_lval.cval);
 					  unput('<');
 					  BEGIN(0);
 					  return STRING;
@@ -884,11 +905,59 @@ gchar *Token;
 												}
 %%
 
+/*
+ * texte_xml : décode les entités XML d'une chaîne sans guillemets ou d'une
+ * valeur d'attribut — &lt; &gt; &amp; &quot; &apos;, &#NN; et &#xHH; — et, si
+ * « rogner », retire les blancs de fin. Une entité inconnue reste telle quelle.
+ * Jusqu'à la 2.8.1, aucune n'était décodée : « Dupont &amp; Fils » s'affichait
+ * et revenait tel quel, et un « < » ne pouvait s'écrire qu'entre guillemets.
+ * Les chaînes ENTRE GUILLEMETS ne passent pas ici : c'est là qu'on écrit le
+ * balisage Pango (use-markup), qui garde ses propres entités.
+ */
 static gchar *
-process_string(gchar *str)
+texte_xml(const gchar *s, gboolean rogner)
 {
-	//fprintf(stderr, "%s(): Input = '%s'\n", __func__, str);
-	// FIXME: Well, this will come tomorrow...
-	return g_strdup(str);
+	/* C simple : la variante neutre du cœur n'a qu'un sous-ensemble de GLib. */
+	static const struct { const char *nom; char c; } noms[] = {
+		{ "lt", '<' }, { "gt", '>' }, { "amp", '&' }, { "quot", '"' }, { "apos", '\'' }
+	};
+	size_t o = 0;
+	gchar *r = g_strdup(s);      /* le décodage ne fait que raccourcir */
+	const gchar *p = s;
+	while (*p) {
+		if (*p == '&') {
+			const gchar *fin = strchr(p + 1, ';');
+			if (fin && fin - p <= 10) {
+				size_t n = (size_t)(fin - p - 1), i;
+				int fait = 0;
+				for (i = 0; i < sizeof noms / sizeof noms[0] && !fait; i++)
+					if (strlen(noms[i].nom) == n && strncmp(p + 1, noms[i].nom, n) == 0) {
+						r[o++] = noms[i].c;
+						fait = 1;
+					}
+				if (!fait && n >= 2 && p[1] == '#') {
+					char *bout = NULL;
+					unsigned long v = (p[2] == 'x' || p[2] == 'X')
+						? strtoul(p + 3, &bout, 16) : strtoul(p + 2, &bout, 10);
+					/* un point de code Unicode valide, encodé en UTF-8 (4 octets
+					 * au plus : toujours moins que « &#NN; ») */
+					if (bout == fin && v > 0 && v <= 0x10FFFF && !(v >= 0xD800 && v <= 0xDFFF)) {
+						if (v < 0x80) r[o++] = (char)v;
+						else if (v < 0x800) { r[o++] = (char)(0xC0 | (v >> 6)); r[o++] = (char)(0x80 | (v & 0x3F)); }
+						else if (v < 0x10000) { r[o++] = (char)(0xE0 | (v >> 12)); r[o++] = (char)(0x80 | ((v >> 6) & 0x3F)); r[o++] = (char)(0x80 | (v & 0x3F)); }
+						else { r[o++] = (char)(0xF0 | (v >> 18)); r[o++] = (char)(0x80 | ((v >> 12) & 0x3F)); r[o++] = (char)(0x80 | ((v >> 6) & 0x3F)); r[o++] = (char)(0x80 | (v & 0x3F)); }
+						fait = 1;
+					}
+				}
+				if (fait) { p = fin + 1; continue; }
+			}
+		}
+		r[o++] = *p++;
+	}
+	if (rogner)
+		while (o > 0 && strchr(" \t\r\n", r[o - 1]))
+			o--;
+	r[o] = '\0';
+	return r;
 }
 

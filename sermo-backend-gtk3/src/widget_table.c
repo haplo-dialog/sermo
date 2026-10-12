@@ -305,9 +305,15 @@ GtkWidget *widget_table_create(
 	if (hdr_active)  list_t_free(hdr_active);
 	if (col_visible) list_t_free(col_visible);
 
-	/* ---- Apply initial sort column / direction ---- */
-	gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(store),
-		sort_column, sort_type);
+	/* ---- Apply initial sort column / direction ----
+	 * Seulement en auto-sort, comme gtkdialog 0.8.3 (GtkCList : sort-column et
+	 * sort-type réglaient le tri, qui n'avait lieu qu'en auto-sort ou au clic
+	 * sur un en-tête). Jusqu'à la 2.8.1, la table était toujours triée sur sa
+	 * 1re colonne : ses lignes n'étaient plus dans l'ordre du document, et la
+	 * 1re ligne choisie différait des autres ports. */
+	if (auto_sort)
+		gtk_tree_sortable_set_sort_column_id(GTK_TREE_SORTABLE(store),
+			sort_column, sort_type);
 
 #ifdef DEBUG_TRANSITS
 	fprintf(stderr, "%s(): Exiting.\n", __func__);

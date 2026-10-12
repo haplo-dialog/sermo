@@ -1,0 +1,12 @@
+<!-- Script : examples/boites-a-outils/serveur/10-minuteries-systemd.sh (dialogue creation) -->
+<window title="Nouvelle minuterie" default-width="600">
+  <vbox>
+    <text><label>Unités /etc/systemd/system/purge-cache.service et .timer</label></text>
+    <text><label>Quand : *-*-* 03:30:00 ; prochaine fois : Tue 2026-11-03 03:30:00 CET</label></text>
+    <edit editable="false" height-request="240"><variable>CONTENU</variable><input>printenv APERCU_UNITES</input></edit>
+    <hbox>
+      <button cancel></button>
+      <button><label>Écrire et activer</label><action>exit:ecrire</action></button>
+    </hbox>
+  </vbox>
+</window>

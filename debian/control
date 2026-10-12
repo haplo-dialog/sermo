@@ -14,6 +14,7 @@ Build-Depends: debhelper-compat (= 14),
                libgtk-3-dev,
                libgtk-4-dev,
                libgtk-layer-shell-dev,
+               libjson-glib-dev,
                libncurses-dev,
                libpng-dev,
                libsdl3-dev,
@@ -238,3 +239,35 @@ Depends: ${misc:Depends}, sermo-doc (= ${source:Version}), sermo-gtkdialog (>= $
 Description: transitional package - use sermo-gtkdialog
  The 1.x package gtksermo has become sermo-gtkdialog, in the modular edition of
  sermo 2. This transitional package can safely be removed.
+
+Package: sermoia-mcp
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends},
+         sermo-backend-gtk3 | sermo-backend-gtk4 | sermo-backend-qt6 | sermo-backend-fltk1 | sermo-backend-efl1 | sermo-backend-sdl3 | sermo-backend-lvgl | sermo-backend-ncurses | sermo-backend-html
+Recommends: sermo-backend-qt6
+Suggests: xvfb
+Description: sermo dialog boxes for shell scripts - MCP server to write dialogs with an AI
+ sermo opens a dialog box described in XML from a shell script, and returns the
+ values entered. The same script runs on eight toolkits, or is written out
+ as an HTML page.
+ .
+ sermoia-mcp is a Model Context Protocol server (JSON-RPC on standard input
+ and output, no network) that lets an AI assistant write a sermo dialog, have
+ the real parser check it, see it as a PNG picture and fix it, before showing
+ it to the user. Previews never run the commands of the dialog; only the
+ explicit "run" tool does. It serves a catalogue of validated dialogs, job
+ examples included. qt6sermo renders pictures without a display; gtk3sermo,
+ gtk4sermo, fltk1sermo and lvglsermo need xvfb.
+
+Package: sermoman-mcp
+Architecture: all
+Depends: ${misc:Depends}, python3
+Description: sermo dialog boxes for shell scripts - MCP server for the manual
+ sermo opens a dialog box described in XML from a shell script, and returns the
+ values entered. The same script runs on eight toolkits, or is written out
+ as an HTML page.
+ .
+ sermoman-mcp is a read-only Model Context Protocol server (JSON-RPC on
+ standard input and output, no network) that gives an AI assistant sermo's
+ XML reference, guide, architecture, history and examples. It runs nothing
+ and writes nothing. Written in Python, standard library only.

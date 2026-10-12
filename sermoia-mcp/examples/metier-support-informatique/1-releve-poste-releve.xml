@@ -1,0 +1,16 @@
+<!-- Script : examples/metiers/03-support-informatique/1-releve-poste.sh (dialogue releve) -->
+<window title="Relevé" default-width="700" default-height="540">
+  <vbox>
+    <text><label>Vous pouvez compléter le texte avant de l'enregistrer ou de le copier.</label></text>
+    <edit space-expand="true" space-fill="true">
+      <variable>RELEVE</variable>
+      <default>Poste : poste-accueil · Debian GNU/Linux forky · noyau 7.1.13 (démonstration)</default>
+    </edit>
+    <hbox><text><label>Enregistrer sous :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>FICHIER</variable><default>/home/utilisateur/releve-poste.txt</default></entry></hbox>
+    <hbox>
+      <button><label>Fermer</label><action>exit:fermer</action></button>
+      <button><label>Enregistrer</label><action>exit:enregistrer</action></button>
+    </hbox>
+  </vbox>
+</window>

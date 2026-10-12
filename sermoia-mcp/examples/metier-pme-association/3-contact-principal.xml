@@ -1,0 +1,65 @@
+<!-- Script : examples/metiers/07-pme-association/3-contact.sh (dialogue principal) -->
+<window title="Fiche contact" default-width="620">
+  <vbox>
+    <hbox>
+      <frame label="Personne">
+        <vbox>
+          <text xalign="0"><label>Civilité :</label></text>
+          <comboboxtext>
+            <variable>CIVILITE</variable>
+            <default>Mme</default>
+            <item>Mme</item>
+            <item>M.</item>
+            <item>(aucune)</item>
+          </comboboxtext>
+          <text xalign="0"><label>Prénom :</label></text>
+          <entry><variable>PRENOM</variable><default>Nadia</default></entry>
+          <text xalign="0"><label>Nom :</label></text>
+          <entry><variable>NOM</variable><default>Benali</default></entry>
+          <text xalign="0"><label>Organisation :</label></text>
+          <entry><variable>ORGANISATION</variable><default>Imprimerie du Centre</default></entry>
+          <text xalign="0"><label>Fonction :</label></text>
+          <entry><variable>FONCTION</variable><default>Responsable commerciale</default></entry>
+        </vbox>
+      </frame>
+      <frame label="Coordonnées">
+        <vbox>
+          <text xalign="0"><label>Téléphone :</label></text>
+          <entry><variable>TELEPHONE</variable><default>04 75 00 00 00</default></entry>
+          <text xalign="0"><label>Mobile :</label></text>
+          <entry><variable>MOBILE</variable><default>06 00 00 00 00</default></entry>
+          <text xalign="0"><label>Courriel :</label></text>
+          <entry><variable>COURRIEL</variable><default>n.benali@example.fr</default></entry>
+          <text xalign="0"><label>Rue :</label></text>
+          <entry><variable>RUE</variable><default>3 avenue Victor-Hugo</default></entry>
+          <hbox>
+            <entry width-chars="6"><variable>CODE_POSTAL</variable><default>26000</default></entry>
+            <entry space-expand="true" space-fill="true"><variable>VILLE</variable><default>Valence</default></entry>
+          </hbox>
+        </vbox>
+      </frame>
+    </hbox>
+    <hbox>
+      <text><label>Catégorie :</label></text>
+      <comboboxtext>
+        <variable>CATEGORIE</variable>
+        <default>Fournisseur</default>
+        <item>Client</item>
+        <item>Fournisseur</item>
+        <item>Partenaire</item>
+        <item>Bénévole</item>
+        <item>Administration</item>
+      </comboboxtext>
+    </hbox>
+    <text xalign="0"><label>Notes :</label></text>
+    <edit height-request="70" wrap-mode="word"><variable>NOTES</variable><default>Devis papier recyclé à relancer fin du mois.</default></edit>
+    <hbox>
+      <text><label>Dossier des fiches :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>DOSSIER</variable><default>/home/utilisateur/Contacts</default></entry>
+    </hbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Enregistrer la vCard</label><action>exit:enregistrer</action></button>
+    </hbox>
+  </vbox>
+</window>

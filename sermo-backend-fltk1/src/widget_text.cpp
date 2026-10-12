@@ -24,6 +24,7 @@
 #include "widget_text.h"
 
 #include <string>
+#include <FL/fl_draw.H>
 #include <string.h>
 #include <stdlib.h>
 
@@ -33,7 +34,23 @@
 class TexteOut : public Fl_Output {
 public:
     std::string entier;
+    float xalign = 0.5f;   /* GtkLabel : xalign 0.5 par défaut (étalon) */
     TexteOut(int x, int y, int w, int h) : Fl_Output(x, y, w, h, nullptr) {}
+    /* Fl_Output cale toujours à gauche : une ligne sans saut de ligne est
+     * dessinée selon xalign (centrée par défaut, comme gtk3). Calé à gauche
+     * ou texte sur plusieurs lignes : dessin d'Fl_Output, inchangé. */
+    void draw() override {
+        const char *t = value();
+        if (xalign < 0.25f || !t || strchr(t, '\n')) { Fl_Output::draw(); return; }
+        draw_box();
+        fl_font(textfont(), textsize());
+        fl_color(active_r() ? textcolor() : fl_inactive(textcolor()));
+        int X = x() + Fl::box_dx(box()) + 3, W = w() - Fl::box_dw(box()) - 6;
+        Fl_Align a = FL_ALIGN_CLIP | (xalign > 0.75f ? FL_ALIGN_RIGHT : FL_ALIGN_CENTER);
+        fl_push_clip(x(), y(), w(), h());
+        fl_draw(t, X, y(), W, h(), a, nullptr, 0);
+        fl_pop_clip();
+    }
     void poser(const char *t) {
         entier = t ? t : "";
         std::string vu = entier;
@@ -55,6 +72,10 @@ GtkWidget *widget_text_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 
     TexteOut *out = new TexteOut(0, 0, w, h);
     out->box(FL_NO_BOX);  /* pas de bordure — style label */
+    if (attr) {
+        const char *xa = get_tag_attribute(attr, "xalign");
+        if (xa && *xa) out->xalign = (float)g_ascii_strtod(xa, NULL);
+    }
 
     /* Label <label>texte</label> */
     if (Attr) {

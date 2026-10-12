@@ -1,0 +1,25 @@
+<!-- Script : examples/metiers/11-serveur-sans-ecran/2-mises-a-jour.sh (dialogue principal) -->
+<window title="Mises à jour du serveur" default-width="600">
+  <vbox>
+    <text><label>3 paquet(s) peuvent être mis à jour :</label></text>
+    <table scrollable="true" height-request="180">
+      <label>Paquet|Proposée|Installée</label>
+      <variable>PAQUET</variable>
+      <item>openssl|3.5.4-1|3.5.3-1</item>
+      <item>openssh-server|1:10.2p1-1|1:10.0p1-7</item>
+      <item>nginx|1.28.0-3|1.28.0-2</item>
+    </table>
+    <frame label="Que faire ?">
+      <vbox>
+        <radiobutton><label>Tout mettre à jour (apt-get upgrade)</label><variable>TOUT</variable><default>true</default></radiobutton>
+        <radiobutton><label>Seulement le paquet sélectionné</label><variable>UN_SEUL</variable></radiobutton>
+        <checkbox><label>Simuler d'abord (--simulate)</label><variable>SIMULER</variable><default>true</default></checkbox>
+        <checkbox><label>Garder les fichiers de configuration modifiés localement</label><variable>GARDER_CONF</variable><default>true</default></checkbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Mettre à jour</label><action>exit:maj</action></button>
+    </hbox>
+  </vbox>
+</window>

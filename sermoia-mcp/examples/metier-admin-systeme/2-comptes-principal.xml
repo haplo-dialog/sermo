@@ -1,0 +1,43 @@
+<!-- Script : examples/metiers/01-admin-systeme/2-comptes.sh (dialogue principal) -->
+<window title="Nouveau compte" default-width="480">
+  <vbox>
+    <frame label="Identité">
+      <vbox>
+        <hbox><text><label>Identifiant :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>IDENTIFIANT</variable><default>cdupont</default></entry></hbox>
+        <hbox><text><label>Nom complet :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>NOM_COMPLET</variable><default>Camille Dupont</default></entry></hbox>
+        <hbox><text><label>Shell de connexion :</label></text>
+          <comboboxtext space-expand="true" space-fill="true">
+            <variable>SHELL_CONNEXION</variable>
+            <default>/bin/bash</default>
+            <item>/bin/bash</item>
+            <item>/bin/sh</item>
+            <item>/usr/bin/zsh</item>
+          </comboboxtext></hbox>
+      </vbox>
+    </frame>
+    <frame label="Groupes supplémentaires">
+      <vbox>
+        <checkbox><label>users (utilisateurs ordinaires)</label><default>true</default><variable>GR_USERS</variable></checkbox>
+        <checkbox><label>audio et video (son, webcam)</label><default>true</default><variable>GR_MULTIMEDIA</variable></checkbox>
+        <checkbox><label>plugdev (clés USB, disques amovibles)</label><default>true</default><variable>GR_PLUGDEV</variable></checkbox>
+        <checkbox><label>lpadmin (gérer les imprimantes)</label><variable>GR_LPADMIN</variable></checkbox>
+        <checkbox><label>adm (lire les journaux système)</label><variable>GR_ADM</variable></checkbox>
+      </vbox>
+    </frame>
+    <frame label="Mot de passe initial">
+      <vbox>
+        <hbox><text><label>Mot de passe :</label></text>
+          <password space-expand="true" space-fill="true"><variable>MDP1</variable></password></hbox>
+        <hbox><text><label>Encore une fois :</label></text>
+          <password space-expand="true" space-fill="true"><variable>MDP2</variable></password></hbox>
+        <checkbox><label>Le changer à la première connexion</label><default>true</default><variable>EXPIRER</variable></checkbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Créer le compte</label><action>exit:creer</action></button>
+    </hbox>
+  </vbox>
+</window>

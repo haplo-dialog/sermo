@@ -1,0 +1,51 @@
+<!-- Script : examples/metiers/05-bornes-ecrans/5-inscription-evenement.sh (dialogue principal) -->
+<window title="Inscription" default-width="640">
+  <vbox>
+
+    <hbox>
+      <text><label>Événement :</label></text>
+      <comboboxtext space-expand="true" space-fill="true"><variable>EVENEMENT</variable>
+        <item>Atelier numérique — samedi 17 octobre, 10 h</item>
+        <item>Conférence « Économiser l'énergie » — jeudi 22 octobre, 18 h 30</item>
+        <item>Visite guidée des ateliers — samedi 31 octobre, 14 h</item>
+      </comboboxtext>
+    </hbox>
+    <frame label="Vos coordonnées">
+      <grid columns="2" row-spacing="6" column-spacing="8">
+        <text><label>Nom :</label></text>
+        <entry space-expand="true" space-fill="true"><variable>NOM</variable><default></default></entry>
+        <text><label>Prénom :</label></text>
+        <entry space-expand="true" space-fill="true"><variable>PRENOM</variable><default></default></entry>
+        <text><label>Courriel :</label></text>
+        <entry space-expand="true" space-fill="true"><variable>COURRIEL</variable><default></default></entry>
+        <text><label>Téléphone (facultatif) :</label></text>
+        <entry space-expand="true" space-fill="true"><variable>TELEPHONE</variable><default></default></entry>
+      </grid>
+    </frame>
+    <frame label="Votre venue">
+      <vbox>
+        <hbox>
+          <text><label>Nombre de places :</label></text>
+          <spinbutton range-min="1" range-max="4" range-step="1"><variable>PLACES</variable><default>1</default></spinbutton>
+        </hbox>
+        <hbox>
+          <radiobutton><label>Plein tarif</label><variable>TARIF_PLEIN</variable><default>true</default></radiobutton>
+          <radiobutton><label>Tarif réduit</label><variable>TARIF_REDUIT</variable></radiobutton>
+          <radiobutton><label>Gratuit (adhérent)</label><variable>TARIF_GRATUIT</variable></radiobutton>
+        </hbox>
+        <checkbox><label>J'ai besoin d'un accès pour personne à mobilité réduite</label><variable>PMR</variable></checkbox>
+      </vbox>
+    </frame>
+    <frame label="Vos données">
+      <vbox>
+        <text><label>Vos coordonnées servent seulement à gérer cette inscription ; elles sont effacées un mois après l'événement.</label></text>
+        <checkbox><label>J'accepte que mes coordonnées soient utilisées pour cette inscription (obligatoire)</label><variable>CONSENTEMENT</variable></checkbox>
+        <checkbox><label>Je souhaite recevoir la lettre d'information (facultatif)</label><variable>LETTRE</variable></checkbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>M'inscrire</label><action>exit:inscrire</action></button>
+    </hbox>
+  </vbox>
+</window>

@@ -2,7 +2,7 @@
 
 Le port HTML de sermo. Il **n'ouvre pas de fenêtre** : il écrit le dialogue dans
 une page HTML autonome — CSS embarqué, aucun fichier externe. Même cœur neutre
-que les ports fltk1, efl1, sdl3, lvgl et ncurses : le cœur lit le dialogue, tient
+que les ports qt6, fltk1, efl1, sdl3, lvgl et ncurses : le cœur lit le dialogue, tient
 les variables et joue les actions ; ce port écrit la page.
 
 Aucune bibliothèque graphique : il s'installe sur une machine sans affichage.

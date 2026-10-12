@@ -1,0 +1,26 @@
+<!-- Script : examples/metiers/09-multimedia/4-renommer-photos.sh (dialogue principal) -->
+<window title="Renommer des photos" default-width="540">
+  <vbox>
+    <hbox><text><label>Dossier :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>DOSSIER</variable><default>/home/utilisateur/Images/import-appareil</default></entry></hbox>
+    <checkbox><label>Inclure les sous-dossiers</label><variable>RECURSIF</variable></checkbox>
+    <frame label="Nouveau nom">
+      <vbox>
+        <hbox><text><label>Préfixe (facultatif) :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>PREFIXE</variable><default>Mariage-Julie-Marc_</default></entry></hbox>
+        <text xalign="0"><label>Modèle de date :</label></text>
+        <list height-request="100">
+          <variable>MODELE</variable>
+          <item>2026-10-11_14h05m09</item>
+          <item>20261011_140509</item>
+          <item>2026-10-11/140509 (un dossier par jour)</item>
+        </list>
+        <text xalign="0"><label>Deux photos à la même seconde reçoivent « -1 », « -2 »… ; l'extension passe en minuscules.</label></text>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Voir les nouveaux noms</label><action>exit:apercu</action></button>
+    </hbox>
+  </vbox>
+</window>

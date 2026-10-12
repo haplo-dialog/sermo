@@ -17,7 +17,7 @@ when the light theme is requested ([TODO.md](TODO.md) (French only)). The image 
 
 ## Where sermo comes from
 
-sermo is a fork of **gtkdialog 0.8.3**, written by Pere László (2004-2007) and
+sermo is a fork of **gtkdialog 0.8.3**, written by Pere László (2003-2007) and
 then taken over by Thunor (2011-2013), under GPL-2.0-or-later. The original line
 continues at Puppy Linux: <https://github.com/puppylinux-woof-CE/gtkdialog>. Who
 did what, when, and where the other descendants stand (gtk3dialog, gtkdialog3):
@@ -30,17 +30,20 @@ What comes from upstream and what was written here is counted file by file in
 
 ## Project status
 
-- Version **2.8.1**. sermo has **a single maintainer**, S. Cage. There is no team
+- Version **2.8.2**. sermo has **a single maintainer**, S. Cage. There is no team
   behind it: an answer may take time.
 - Part of the code, documentation and tests was written with the help of an AI
-  (Claude, by Anthropic), directed and reviewed by the maintainer
+  (Claude, by Anthropic), under the maintainer's direction. The maintainer tests
+  it and reports the defects found, but no longer reviews all of the code line by
+  line: checking relies mainly on the tests, which anyone can re-run
   ([AUTHORS.en](AUTHORS.en)).
-- **What is verified**: 176 benches (XML parsing, exported values, security,
-  clicks, opening the real examples, MCP servers) on the nine ports, all green
-  on 2026-10-10. Every figure can be replayed with a command:
-  [BILAN_SANTE.md](BILAN_SANTE.md) (French only).
+- **What is verified**: 178 benches (XML parsing, exported values, security,
+  clicks, opening the real examples, MCP servers) on the nine ports; the last
+  full run (2026-10-11) is detailed in
+  [BILAN_SANTE.md](BILAN_SANTE.md) (French only). Every figure can be replayed
+  with a command.
 - **Known gaps**: the ports without GTK still differ from gtk3sermo on a few
-  points (`auto-refresh`, initial selection in lists, `<terminal>`…). They are
+  points (`auto-refresh`, the label of the Cancel button, `<terminal>`…). They are
   listed in [TODO.md](TODO.md) (French only).
 - **No apt repository**: the Debian packages are attached to each release (see
   "Install").
@@ -107,26 +110,43 @@ without changing a single line of the core. Architecture:
 ## Install
 
 There is no apt repository. The Debian packages are attached to the
-[**v2.8.1**](https://gitlab.com/haplo-dialog/sermo/-/releases/v2.8.1) release,
+[**v2.8.2**](https://gitlab.com/haplo-dialog/sermo/-/releases/v2.8.2) release,
 with their checksums: download, check, install.
 
 ```sh
-U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/2.8.1
-for f in sermo-backend-gtk3_2.8.1-1_amd64.deb sermo-gtkdialog_2.8.1-1_all.deb SHA256SUMS; do
+U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/2.8.2
+for f in sermo-backend-gtk3_2.8.2-3_amd64.deb sermo-gtkdialog_2.8.2-3_all.deb SHA256SUMS SHA256SUMS.asc; do
     curl -fLO "$U/$f"
 done
+curl -fLO https://haplo-dialog.fr/cle-haplo-dialog.asc
+gpg --import cle-haplo-dialog.asc
+gpg --verify SHA256SUMS.asc SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
-sudo apt install ./sermo-backend-gtk3_2.8.1-1_amd64.deb \
-                 ./sermo-gtkdialog_2.8.1-1_all.deb
+sudo apt install ./sermo-backend-gtk3_2.8.2-3_amd64.deb \
+                 ./sermo-gtkdialog_2.8.2-3_all.deb
 ```
 
 For another port, replace `gtk3` with `gtk4`, `qt6`, `fltk1`, `efl1`, `sdl3`,
 `lvgl`, `ncurses` or `html`. The packages are built on **Debian testing (amd64)** and require its
-library versions (Qt ≥ 6.10.2 for qt6, glibc ≥ 2.43 for sdl3…). Elsewhere,
+library versions (Qt ≥ 6.11.2 for qt6, glibc ≥ 2.43 for sdl3…). Elsewhere,
 compile from source.
 
-The checksums protect against a damaged download, not against a file replaced on
-the server: the packages are not signed.
+The checksums are signed with the haplo-dialog key. `gpg --verify` must report a
+good signature from "haplo-dialog <devel@haplo-dialog.fr>", with the fingerprint:
+
+```
+66C7 F4AD 7A58 A037 967F  8339 3799 9F99 7570 F1ED
+```
+
+The public key is on the website (`https://haplo-dialog.fr/cle-haplo-dialog.asc`);
+the fingerprint is here, in the repository. Compare it with the one in this
+README on GitLab (<https://gitlab.com/haplo-dialog/sermo>) **and** on GitHub
+(<https://github.com/haplo-dialog/sermo>): a key replaced on the website would
+not be replaced everywhere at once.
+
+What is signed is the list of checksums (`SHA256SUMS`), not each `.deb` one by
+one: a package can be trusted because its checksum is in a list whose signature
+is good. There is no signed apt repository either.
 
 **Build the packages yourself** (Debian testing, Docker):
 `bash packaging/construire-paquets.sh` builds in a clean container, runs lintian,
@@ -175,6 +195,8 @@ Install the 2.x packages of the ports you use (`sermo-backend-gtk3`,
   [CHANGELOG.en.md](CHANGELOG.en.md) · [ROADMAP.en.md](ROADMAP.en.md)
 - [`sermoman-mcp`](sermoman-mcp/README.md) (French only) — a read-only MCP server that gives an
   AI assistant sermo's manual, architecture and examples.
+- [`sermoia-mcp`](sermoia-mcp/README.en.md) — an MCP server that lets an AI
+  assistant write, check and see a dialog; previews run no command.
 
 ## Reporting a problem
 

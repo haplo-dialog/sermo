@@ -138,6 +138,44 @@ neither glibc's startup objects, nor glibc itself, nor the toolkit libraries car
 them (measured with `readelf` on 2026-09-16). On that system CET therefore cannot
 act at run time — deduced from the missing notes, not measured at run time.
 
+## MCP servers
+
+- **`sermoia-mcp`**: only the `sermo_run` tool launches the commands of the
+  dialog, with the user's rights, as the script would. `sermo_check` and
+  `sermo_render` run nothing: they set `SERMO_ALLOWED_CMDS` to a command that
+  does not exist, which refuses every command and the `/bin/sh -c` fallback
+  (`sermoia-mcp/src/sermoia-mcp.c`, `AUCUNE_COMMANDE`). Up to 2.8.1,
+  `sermo_render` ran the dialog's `<input>`s. To bound `sermo_run`, set
+  `SERMO_ALLOWED_CMDS` in the server's environment.
+- **`sermoman-mcp`** is read-only: it serves the documentation, runs nothing
+  and writes nothing.
+
+Details: [sermoia-mcp/README.en.md](sermoia-mcp/README.en.md#security).
+
+## Checking downloaded packages
+
+The Debian packages are attached to each release with `SHA256SUMS` (one SHA-256
+checksum per package) and its detached signature `SHA256SUMS.asc`, made with
+the haplo-dialog key (`devel@haplo-dialog.fr`), whose fingerprint is:
+
+```
+66C7 F4AD 7A58 A037 967F  8339 3799 9F99 7570 F1ED
+```
+
+```sh
+curl -fLO https://haplo-dialog.fr/cle-haplo-dialog.asc
+gpg --import cle-haplo-dialog.asc
+gpg --verify SHA256SUMS.asc SHA256SUMS      # "Good signature from haplo-dialog <devel@haplo-dialog.fr>"
+sha256sum --ignore-missing -c SHA256SUMS
+```
+
+Compare the fingerprint shown with the one in the README on GitLab **and** on
+GitHub: the public key comes from the website, and a key replaced on the
+website would not be replaced everywhere at once. What is signed is the list of
+checksums: the `.deb` files are not signed one by one, and there is no apt
+repository (so no signed repository). Full command:
+[README.en.md](README.en.md#install).
+
 ## Known limits
 
 - **No sandbox.** A command started by a dialog has the rights of the user who
@@ -162,7 +200,8 @@ act at run time — deduced from the missing notes, not measured at run time.
 - **A Glade file is code**, and **`<linkbutton>`** opens its address outside the
   command list (see above).
 - **No external audit.** What is verified is verified by the repository's benches
-  (`ci/bancs.sh`) and by the maintainer's reviews. Open gaps are listed in
+  (`ci/bancs.sh`) and by the maintainer's own trials; the code is not entirely
+  reviewed. Open gaps are listed in
   [TODO.md](TODO.md) (French only).
 
 ## Reporting a vulnerability
@@ -175,7 +214,7 @@ act at run time — deduced from the missing notes, not measured at run time.
 - **Timelines** — sermo has a single maintainer: acknowledgement within **14
   days**; a fix, or a public advisory with a workaround, no later than **90
   days** after the report, sooner if the vulnerability is already public.
-- **Supported versions**: only the latest published release (2.7.x today)
+- **Supported versions**: only the latest published release (2.8.x today)
   receives fixes. The 1.x line no longer does: move to 2.x
   ([MIGRATION.en.md](MIGRATION.en.md)).
 - If you wish, your name goes into the [CHANGELOG.en.md](CHANGELOG.en.md) with the

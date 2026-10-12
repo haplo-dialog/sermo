@@ -34,28 +34,9 @@ GtkWidget *widget_hbox_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         if (v) spacing = atoi(v);
     }
 
-    QWidget     *box    = new QWidget();
-    QHBoxLayout *layout = new QHBoxLayout(box);
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(spacing);
-
-    /* Dépiler les enfants groupés par SUM et les ré-parenter (cf. vbox) —
-     * sinon ils restent sans parent → fenêtres top-level séparées.
-     * Facteur d'étirement : 1 pour les enfants space-expand, 0 sinon. Si AUCUN
-     * n'est extensible, on ajoute un ressort final pour empiler à gauche (sinon
-     * Qt étale l'espace à parts égales : icône à gauche, texte loin à droite). */
-    stackelement s = pop();
-    bool anyExpand = false;
-    for (int n = 0; n < s.nwidgets; ++n) {
-        if (!s.widgets[n]) continue;
-        int e = qt6_layout_get_expand((GtkWidget *)s.widgets[n]);
-        if (e) anyExpand = true;
-        layout->addWidget(static_cast<QWidget *>(s.widgets[n]), e ? 1 : 0);
-    }
-    /* Aucun enfant extensible → ressort EN TÊTE : le contenu est poussé à
-     * DROITE, comme gtk3 (gtk_box_pack_end). Les lignes d'infos de l'en-tête
-     * (icône+texte) s'alignent ainsi au bord droit. */
-    if (!anyExpand) layout->insertStretch(0, 1);
+    /* Rangement des enfants (étirement, homogénéité, calage) : règles de
+     * gtk3, communes aux deux boîtes — voir qt6_box_construire(), widgets.cpp. */
+    QWidget *box = qt6_box_construire(attr, true, spacing);
 
     return (GtkWidget *)box;
 }

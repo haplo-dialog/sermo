@@ -1,0 +1,11 @@
+<!-- Script : examples/boites-a-outils/systeme/04-date-heure.sh (dialogue commandes) -->
+<window title="Commandes à lancer en administrateur" default-width="560">
+  <vbox>
+    <text><label>Ces réglages touchent tout le poste. Lancez ces commandes en administrateur (root) :</label></text>
+    <edit editable="false" height-request="120"><variable>COMMANDES</variable><input>printf "%s\n" "$TEXTE_COMMANDES"</input></edit>
+    <text><label>Elles s'affichent aussi dans le terminal qui a lancé l'outil.</label></text>
+    <hbox>
+      <button><label>Fermer</label><action>exit:fermer</action></button>
+    </hbox>
+  </vbox>
+</window>

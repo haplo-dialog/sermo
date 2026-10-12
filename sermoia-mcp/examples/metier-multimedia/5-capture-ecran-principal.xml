@@ -1,0 +1,46 @@
+<!-- Script : examples/metiers/09-multimedia/5-capture-ecran.sh (dialogue principal) -->
+<window title="Capture d'écran vidéo" default-width="560">
+  <vbox>
+    <text xalign="0"><label>Écran :0 : 1920 x 1080 pixels</label></text>
+    <frame label="Zone filmée">
+      <vbox>
+        <radiobutton><label>Tout l'écran</label><variable>TOUT</variable><default>true</default></radiobutton>
+        <radiobutton><label>Une zone :</label><variable>ZONE</variable></radiobutton>
+        <hbox>
+          <text><label>x</label></text>
+          <spinbutton range-min="0" range-max="1920" range-step="10"><variable>X</variable><default>0</default></spinbutton>
+          <text><label>y</label></text>
+          <spinbutton range-min="0" range-max="1080" range-step="10"><variable>Y</variable><default>0</default></spinbutton>
+          <text><label>largeur</label></text>
+          <spinbutton range-min="64" range-max="1920" range-step="10"><variable>LARGEUR</variable><default>1280</default></spinbutton>
+          <text><label>hauteur</label></text>
+          <spinbutton range-min="64" range-max="1080" range-step="10"><variable>HAUTEUR</variable><default>720</default></spinbutton>
+        </hbox>
+      </vbox>
+    </frame>
+    <frame label="Réglages">
+      <vbox>
+        <text xalign="0"><label>Images par seconde :</label></text>
+        <hscale range-min="5" range-max="60" range-step="5" draw-value="true"><variable>IPS</variable><default>30</default></hscale>
+        <hbox><text><label>Durée maximale (minutes, 0 = jusqu'à « q ») :</label></text>
+          <spinbutton range-min="0" range-max="240" range-step="1"><variable>DUREE</variable><default>0</default></spinbutton></hbox>
+        <hbox><text><label>Encodage :</label></text>
+          <comboboxtext space-expand="true" space-fill="true">
+            <variable>ENCODAGE</variable>
+            <default>Équilibré</default>
+            <item>Rapide (machine modeste, fichier lourd)</item>
+            <item>Équilibré</item>
+            <item>Compact (fichier léger, processeur sollicité)</item>
+          </comboboxtext></hbox>
+        <checkbox><label>Enregistrer le son du poste (PulseAudio / PipeWire)</label><variable>SON</variable><default>true</default></checkbox>
+        <checkbox><label>Montrer le pointeur de la souris</label><variable>SOURIS</variable><default>true</default></checkbox>
+      </vbox>
+    </frame>
+    <hbox><text><label>Fichier :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>FICHIER</variable><default>/home/utilisateur/Vidéos/capture-2026-10-12_1030.mkv</default></entry></hbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Préparer l'enregistrement</label><action>exit:enregistrer</action></button>
+    </hbox>
+  </vbox>
+</window>

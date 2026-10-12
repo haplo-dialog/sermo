@@ -1,0 +1,19 @@
+<!-- Script : examples/metiers/07-pme-association/4-facture.sh (dialogue apercu) -->
+<window title="Relire la facture" default-width="560" default-height="340">
+  <vbox>
+    <text><label>Facture F-2026-042 pour Mairie de Bourg-lès-Valence</label></text>
+    <table scrollable="true" height-request="140">
+      <label>N°|Désignation|Qté|PU HT (€)|Total HT (€)</label>
+      <variable>LIGNE</variable>
+      <item>01|Atelier numérique (demi-journée)|2|180,00|360,00</item>
+      <item>02|Support imprimé|25|3,50|87,50</item>
+      <item>03|Frais de déplacement|1|42,00|42,00</item>
+    </table>
+    <text><label>Total HT 489,50 € · TVA 97,90 € · Total TTC 587,40 €</label></text>
+    <checkbox><label>Imprimer la facture (imprimante par défaut)</label><variable>IMPRIMER</variable></checkbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Enregistrer la facture</label><action>exit:enregistrer</action></button>
+    </hbox>
+  </vbox>
+</window>

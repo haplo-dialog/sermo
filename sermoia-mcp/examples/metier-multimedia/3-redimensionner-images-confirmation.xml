@@ -1,0 +1,11 @@
+<!-- Script : examples/metiers/09-multimedia/3-redimensionner-images.sh (dialogue confirmation) -->
+<window title="Remplacer les originaux ?">
+  <vbox>
+    <text><label>84 photo(s) de /home/utilisateur/Images/fete-du-quartier-2026 vont être réduites SUR PLACE.</label></text>
+    <text><label>Les originaux en pleine taille seront perdus. Avez-vous une copie ?</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Remplacer les originaux</label><action>exit:remplacer</action></button>
+    </hbox>
+  </vbox>
+</window>

@@ -1,0 +1,11 @@
+<!-- Script : examples/metiers/11-serveur-sans-ecran/2-mises-a-jour.sh (dialogue confirmation) -->
+<window title="Confirmer la mise à jour">
+  <vbox>
+    <text><label>Installer pour de vrai : tous les paquets ?</label></text>
+    <text><label>Un service mis à jour peut redémarrer pendant l'opération.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Installer</label><action>exit:installer</action></button>
+    </hbox>
+  </vbox>
+</window>

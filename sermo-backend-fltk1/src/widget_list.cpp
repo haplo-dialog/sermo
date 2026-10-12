@@ -23,6 +23,7 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
+#include "sermo_focus.h"
 #include "fltk-compat.h"
 #include "gtkdialog.h"
 #include "attributes.h"
@@ -44,6 +45,12 @@
  * la rangée égale à <default>, sinon (sélection simple) la PREMIÈRE — parité
  * étalon, LI="x" sur le banc comme gtk3sermo. Une sélection simple déjà faite
  * n'est pas déplacée par un refresh qui ajoute des rangées. */
+/* Listes qui prennent le focus à l'ouverture (sermo_focus.h) : seules
+ * celles-là ont leur 1re ligne choisie sans <default>, comme gtk3sermo.
+ * Jusqu'à la 2.8.1, toutes l'avaient. */
+#include <set>
+static std::set<const Fl_Widget *> listes_focus;
+
 static void list_select_default(Fl_Browser *br, AttributeSet *Attr)
 {
     bool multi = (br->type() == FL_MULTI_BROWSER);
@@ -61,7 +68,7 @@ static void list_select_default(Fl_Browser *br, AttributeSet *Attr)
         }
     }
 
-    if (!multi && br->size() > 0 && br->value() <= 0)
+    if (!multi && br->size() > 0 && br->value() <= 0 && listes_focus.count(br))
         br->select(1);
 }
 
@@ -125,6 +132,7 @@ GtkWidget *widget_list_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         }
     }
 
+    if (sermo_focus_initial("list")) listes_focus.insert(br);
     list_select_default(br, Attr);
 
     if (Attr) {

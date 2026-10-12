@@ -12,7 +12,7 @@ cmake_minimum_required(VERSION 3.16)
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/../VERSION" SERMO_VERSION)
 string(STRIP "${SERMO_VERSION}" SERMO_VERSION)
 
-project(lvglsermo VERSION ${SERMO_VERSION} LANGUAGES C)
+project(lvglsermo VERSION ${SERMO_VERSION} LANGUAGES C CXX)   # CXX : ThorVG (SVG), embarqué dans LVGL
 
 # Le lien se fait en -pie : le code doit être compilé en -fPIE. Debian le fait par
 # défaut, pas toutes les distributions (Slackware 15 : « relocation R_X86_64_32 …
@@ -66,7 +66,7 @@ endforeach()
 # Réglage : lv_conf.h à côté de ce fichier. Compilé à part, sans le shim GLib
 # du port et sans avertissements (ce n'est pas notre code), mais durci comme lui.
 set(LVGL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tiers/lvgl")
-file(GLOB_RECURSE LVGL_SRC "${LVGL_DIR}/src/*.c")
+file(GLOB_RECURSE LVGL_SRC "${LVGL_DIR}/src/*.c" "${LVGL_DIR}/src/*.cpp")   # .cpp : ThorVG
 add_library(lvgl_tiers STATIC ${LVGL_SRC} ${WL_GEN_SRC})
 target_include_directories(lvgl_tiers PUBLIC ${LVGL_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(lvgl_tiers PRIVATE ${WL_GEN} ${WAYLAND_INCLUDE_DIRS})
@@ -122,6 +122,9 @@ target_link_libraries(lvglsermo PRIVATE
   ${WAYLAND_LIBRARIES}
   m)
 target_link_directories(lvglsermo PRIVATE ${X11_LIBRARY_DIRS})
+# ThorVG (C++) est dans lvgl_tiers : l'édition des liens se fait en C++
+# (libstdc++), le reste du port reste du C.
+set_target_properties(lvglsermo PROPERTIES LINKER_LANGUAGE CXX)
 
 
 # ─── Installation ─────────────────────────────────────────────────────────────

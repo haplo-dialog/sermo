@@ -17,7 +17,7 @@ quand le thème clair est demandé ([TODO.md](TODO.md)). L'image se refait avec
 
 ## D'où vient sermo
 
-sermo est un fork de **gtkdialog 0.8.3**, écrit par Pere László (2004-2007) puis
+sermo est un fork de **gtkdialog 0.8.3**, écrit par Pere László (2003-2007) puis
 repris par Thunor (2011-2013), sous GPL-2.0-or-later. La lignée d'origine continue
 chez Puppy Linux : <https://github.com/puppylinux-woof-CE/gtkdialog>. Qui a fait
 quoi, quand, et où en sont les autres descendants (gtk3dialog, gtkdialog3) :
@@ -30,17 +30,19 @@ par fichier dans [LICENCES.md](LICENCES.md).
 
 ## État du projet
 
-- Version **2.8.1**. sermo est tenu par **un seul mainteneur**, S. Cage. Il n'y a
+- Version **2.8.2**. sermo est tenu par **un seul mainteneur**, S. Cage. Il n'y a
   pas d'équipe derrière : une réponse peut prendre du temps.
 - Une partie du code, de la documentation et des tests a été écrite avec l'aide
-  d'une IA (Claude, d'Anthropic), sous la direction et la relecture du mainteneur
+  d'une IA (Claude, d'Anthropic), sous la direction du mainteneur. Il l'essaie et
+  en signale les défauts, mais ne relit plus tout le code ligne à ligne : la
+  vérification repose surtout sur les bancs, que chacun peut rejouer
   ([AUTHORS](AUTHORS)).
-- **Ce qui est vérifié** : 176 bancs (analyse XML, valeurs exportées, sécurité,
-  clics, ouverture des exemples réels, serveurs MCP) sur les neuf ports, tous
-  verts le 2026-10-10. Chaque chiffre se rejoue par une commande :
-  [BILAN_SANTE.md](BILAN_SANTE.md).
+- **Ce qui est vérifié** : 178 bancs (analyse XML, valeurs exportées, sécurité,
+  clics, ouverture des exemples réels, serveurs MCP) sur les neuf ports ; le
+  dernier passage complet (2026-10-11) est détaillé dans
+  [BILAN_SANTE.md](BILAN_SANTE.md). Chaque chiffre se rejoue par une commande.
 - **Écarts connus** : les ports sans GTK s'écartent encore de gtk3sermo sur
-  quelques points (`auto-refresh`, sélection initiale des listes, `<terminal>`…).
+  quelques points (`auto-refresh`, libellé du bouton Annuler, `<terminal>`…).
   Ils sont listés dans [TODO.md](TODO.md).
 - **Pas de dépôt apt** : les paquets Debian sont joints à chaque publication
   (voir « Installer »).
@@ -103,26 +105,43 @@ ncurses a été ajouté sans changer une ligne du cœur. Architecture :
 ## Installer
 
 Il n'y a pas de dépôt apt. Les paquets Debian sont joints à la publication
-[**v2.8.1**](https://gitlab.com/haplo-dialog/sermo/-/releases/v2.8.1), avec leurs
+[**v2.8.2**](https://gitlab.com/haplo-dialog/sermo/-/releases/v2.8.2), avec leurs
 sommes de contrôle : on télécharge, on vérifie, on installe.
 
 ```sh
-U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/2.8.1
-for f in sermo-backend-gtk3_2.8.1-1_amd64.deb sermo-gtkdialog_2.8.1-1_all.deb SHA256SUMS; do
+U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/2.8.2
+for f in sermo-backend-gtk3_2.8.2-3_amd64.deb sermo-gtkdialog_2.8.2-3_all.deb SHA256SUMS SHA256SUMS.asc; do
     curl -fLO "$U/$f"
 done
+curl -fLO https://haplo-dialog.fr/cle-haplo-dialog.asc
+gpg --import cle-haplo-dialog.asc
+gpg --verify SHA256SUMS.asc SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
-sudo apt install ./sermo-backend-gtk3_2.8.1-1_amd64.deb \
-                 ./sermo-gtkdialog_2.8.1-1_all.deb
+sudo apt install ./sermo-backend-gtk3_2.8.2-3_amd64.deb \
+                 ./sermo-gtkdialog_2.8.2-3_all.deb
 ```
 
 Pour un autre port, remplacez `gtk3` par `gtk4`, `qt6`, `fltk1`, `efl1`, `sdl3`,
 `lvgl`, `ncurses` ou `html`. Les paquets sont construits sur **Debian testing (amd64)** et demandent
-ses versions de bibliothèques (Qt ≥ 6.10.2 pour qt6, glibc ≥ 2.43 pour sdl3…).
+ses versions de bibliothèques (Qt ≥ 6.11.2 pour qt6, glibc ≥ 2.43 pour sdl3…).
 Ailleurs, compilez depuis les sources.
 
-Les sommes de contrôle protègent d'un téléchargement abîmé, pas d'un fichier
-remplacé sur le serveur : les paquets ne sont pas signés.
+Les sommes sont signées par la clé de haplo-dialog. `gpg --verify` doit dire
+« Bonne signature de haplo-dialog <devel@haplo-dialog.fr> », avec l'empreinte :
+
+```
+66C7 F4AD 7A58 A037 967F  8339 3799 9F99 7570 F1ED
+```
+
+La clé publique est sur le site (`https://haplo-dialog.fr/cle-haplo-dialog.asc`) ;
+l'empreinte, ici, dans le dépôt. Comparez-la à celle de ce README sur GitLab
+(<https://gitlab.com/haplo-dialog/sermo>) **et** sur GitHub
+(<https://github.com/haplo-dialog/sermo>) : une clé remplacée sur le site ne le
+serait pas partout à la fois.
+
+Ce qui est signé, c'est la liste des sommes (`SHA256SUMS`), pas chaque `.deb`
+un par un : un paquet est sûr parce que sa somme figure dans une liste dont la
+signature est bonne. Il n'y a pas non plus de dépôt apt signé.
 
 **Construire les paquets vous-même** (Debian testing, Docker) :
 `bash packaging/construire-paquets.sh` construit dans un conteneur vierge, passe
@@ -172,6 +191,9 @@ Installez les paquets 2.x des ports que vous utilisez (`sermo-backend-gtk3`,
   [TODO.md](TODO.md) · [ROADMAP.md](ROADMAP.md)
 - [`sermoman-mcp`](sermoman-mcp/README.md) — un serveur MCP en lecture seule qui
   donne à un assistant IA le manuel, l'architecture et les exemples de sermo.
+- [`sermoia-mcp`](sermoia-mcp/README.md) — un serveur MCP qui fait écrire,
+  vérifier et voir un dialogue à un assistant IA ; l'aperçu n'exécute aucune
+  commande.
 
 ## Signaler un problème
 

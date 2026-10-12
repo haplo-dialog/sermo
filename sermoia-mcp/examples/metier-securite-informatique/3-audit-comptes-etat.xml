@@ -1,0 +1,9 @@
+<!-- Script : examples/metiers/10-securite-informatique/3-audit-comptes.sh (dialogue etat) -->
+<window title="État du compte">
+  <vbox>
+    <text><label>Compte : bob</label></text>
+    <entry editable="false"><variable>ETAT</variable><default>bob P 2026-03-02 0 99999 7 -1</default></entry>
+    <text><label>Deuxième champ : P mot de passe utilisable, L verrouillé, NP sans mot de passe.</label></text>
+    <hbox><button ok></button></hbox>
+  </vbox>
+</window>

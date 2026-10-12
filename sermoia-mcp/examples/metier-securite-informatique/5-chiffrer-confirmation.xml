@@ -1,0 +1,12 @@
+<!-- Script : examples/metiers/10-securite-informatique/5-chiffrer.sh (dialogue confirmation) -->
+<window title="Effacer l'original ?">
+  <vbox>
+    <text><label>Le fichier chiffré sera : /home/utilisateur/Documents/contrats-2026.tar.gpg</label></text>
+    <text><label>L'original /home/utilisateur/Documents/contrats-2026.tar sera ensuite écrasé puis supprimé.</label></text>
+    <text><label>Sans la phrase secrète, le contenu sera perdu pour de bon.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Chiffrer et effacer</label><action>exit:effacer</action></button>
+    </hbox>
+  </vbox>
+</window>

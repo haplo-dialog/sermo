@@ -1,0 +1,48 @@
+<!-- Script : examples/boites-a-outils/serveur/10-minuteries-systemd.sh (dialogue principal) -->
+<window title="Minuteries systemd" default-width="640">
+  <vbox>
+    <notebook tab-labels="Minuteries|Créer">
+      <vbox>
+        <tree scrollable="true" height-request="170" exported-column="0">
+          <label>Minuterie|Prochaine|Dernière|Au démarrage</label>
+          <variable>MINUTERIE</variable>
+<item>apt-daily.timer|Mon 2026-11-02 06:41|Sun 2026-11-01 06:12|enabled</item>
+<item>certbot.timer|Mon 2026-11-02 11:07|Sun 2026-11-01 23:52|enabled</item>
+<item>logrotate.timer|Tue 2026-11-03 00:00|Mon 2026-11-02 00:00|enabled</item>
+<item>alertes-serveur.timer|Mon 2026-11-02 10:15|Mon 2026-11-02 10:00|enabled</item>
+<item>e2scrub_all.timer|Sun 2026-11-08 03:10|Sun 2026-11-01 03:10|disabled</item>
+        </tree>
+        <hbox>
+          <button><label>Activer</label><action>exit:activer</action></button>
+          <button><label>Couper</label><action>exit:couper</action></button>
+          <button><label>Lancer maintenant</label><action>exit:lancer</action></button>
+        </hbox>
+      </vbox>
+      <vbox>
+        <hbox><text><label>Nom :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>NOM</variable><default>purge-cache</default></entry>
+          <text><label>Compte :</label></text>
+          <entry><variable>COMPTE</variable><default>www-data</default></entry></hbox>
+        <hbox><text><label>Commande :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>COMMANDE</variable><default>/usr/local/bin/purge-cache --plus-vieux-que 7</default></entry></hbox>
+        <hbox>
+          <radiobutton><label>Régulièrement :</label><default>true</default><variable>R_PERIODE</variable></radiobutton>
+          <radiobutton><label>Une seule fois, le :</label><variable>R_UNE_FOIS</variable></radiobutton>
+        </hbox>
+        <hbox>
+          <comboboxtext><variable>PERIODE</variable><default>chaque jour</default>
+            <item>chaque heure</item><item>chaque jour</item><item>chaque lundi</item><item>le 1er du mois</item>
+          </comboboxtext>
+          <calendar><variable>JOUR</variable><default>2026-11-02</default></calendar></hbox>
+        <hbox><text><label>À (heure, minute) :</label></text>
+          <spinbutton range-min="0" range-max="23" range-step="1"><variable>HEURE</variable><default>3</default></spinbutton>
+          <spinbutton range-min="0" range-max="59" range-step="5"><variable>MINUTE</variable><default>30</default></spinbutton></hbox>
+        <togglebutton><label>Rattraper un passage manqué machine éteinte (Persistent)</label><default>true</default><variable>RATTRAPER</variable></togglebutton>
+        <button><label>Voir les unités</label><action>exit:creer</action></button>
+      </vbox>
+    </notebook>
+    <hbox>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

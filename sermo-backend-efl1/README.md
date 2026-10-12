@@ -5,7 +5,10 @@ Binaire : `efl1sermo`.
 
 - **Cœur** : variante **neutre** de `libsermocore` (préfixe `_install`).
 - **Spécificités** :
-  - **Thème sombre par défaut** (décision projet) ; suit sinon le thème système.
+  - **Thème sombre** d'EFL, toujours : `SERMO_DARK=0` n'y change rien (aucun
+    fichier de `src/` ne lit `SERMO_DARK` ; écart ouvert dans
+    [TODO.md](../TODO.md)). Les icônes symboliques y sont recolorées en clair
+    (2.8.2).
   - `default-width/height` traités comme **minimums** (la fenêtre grandit au
     contenu — corrige un rognage du pied de page).
   - `calendar` : la date canonique est gardée **hors** du round-trip `time_t`

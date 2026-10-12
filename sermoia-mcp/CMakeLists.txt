@@ -18,7 +18,9 @@ pkg_check_modules(DEPS REQUIRED glib-2.0 gio-2.0 json-glib-1.0)
 
 add_executable(sermoia-mcp src/sermoia-mcp.c)
 target_include_directories(sermoia-mcp PRIVATE ${DEPS_INCLUDE_DIRS})
-target_compile_definitions(sermoia-mcp PRIVATE SERMOIA_MCP_VERSION="${PROJECT_VERSION}")
+include(GNUInstallDirs)
+target_compile_definitions(sermoia-mcp PRIVATE SERMOIA_MCP_VERSION="${PROJECT_VERSION}"
+  SERMOIA_EXAMPLES_DIR="${CMAKE_INSTALL_FULL_DATADIR}/sermoia-mcp/examples")
 target_compile_options(sermoia-mcp PRIVATE
   -Wall -Wextra -std=gnu11 ${DEPS_CFLAGS_OTHER}
   -D_FORTIFY_SOURCE=3 -fstack-protector-strong -fstack-clash-protection -fcf-protection=full)
@@ -27,3 +29,7 @@ target_link_options(sermoia-mcp PRIVATE
   -fcf-protection=full -fstack-protector-strong -fstack-clash-protection)
 target_link_libraries(sermoia-mcp PRIVATE ${DEPS_LIBRARIES})
 target_link_directories(sermoia-mcp PRIVATE ${DEPS_LIBRARY_DIRS})
+
+# Installation : le serveur et son catalogue d'exemples (paquet sermoia-mcp).
+install(TARGETS sermoia-mcp RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(DIRECTORY examples/ DESTINATION ${CMAKE_INSTALL_DATADIR}/sermoia-mcp/examples)

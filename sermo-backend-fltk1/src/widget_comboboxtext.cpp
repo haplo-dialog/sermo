@@ -86,6 +86,12 @@ void choice_select_text(Fl_Choice *ch, const char *text)
 
 } /* namespace */
 
+/* Partagé avec <combobox> (fltk-compat.h). */
+void sermo_choice_add_literal(Fl_Choice *ch, const char *text)
+{
+    choice_add_literal(ch, text);
+}
+
 GtkWidget *widget_comboboxtext_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
     (void)Attr; (void)attr; (void)Type;
@@ -122,7 +128,9 @@ void widget_comboboxtext_refresh(variable *v)
 
     GList *el = NULL;
     gchar *item = attributeset_get_first(&el, v->Attributes, ATTR_ITEM);
-    while (item) { if (*item) ch->add(item); item = attributeset_get_next(&el, v->Attributes, ATTR_ITEM); }
+    /* <item> : du texte aussi (« Europe/Paris » devenait un sous-menu « Paris »,
+     * jusqu'à la 2.8.1) — même ajout littéral que <input>. */
+    while (item) { if (*item) choice_add_literal(ch, item); item = attributeset_get_next(&el, v->Attributes, ATTR_ITEM); }
 
     /* Parité étalon : un comboboxtext sélectionne son élément 0 ; un
      * comboboxentry (éditable, nu) ne sélectionne RIEN. */

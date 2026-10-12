@@ -1,0 +1,33 @@
+<!-- Script : examples/boites-a-outils/systeme/10-bluetooth.sh (dialogue principal) -->
+<window title="Bluetooth" default-width="640" default-height="460">
+  <vbox>
+    <hbox><text><label>Bluetooth allumé :</label></text>
+      <switch><variable>ALLUME</variable><default>true</default></switch>
+      <button><label>Chercher des appareils (10 s)</label><action>exit:chercher</action></button></hbox>
+    <tree scrollable="true" space-expand="true" space-fill="true">
+      <label>Adresse|Nom|Appairé|Confiance|Connecté</label>
+      <variable>APPAREIL</variable>
+      <item>00:1A:7D:DA:71:13|Casque JBL Tune 510BT|oui|oui|oui</item>
+      <item>E4:17:D8:2C:09:5B|Souris MX Anywhere 3|oui|oui|non</item>
+      <item>5C:F3:70:8B:44:A1|Enceinte Salon|non|non|non</item>
+    </tree>
+    <frame label="Sur l'appareil choisi">
+      <vbox>
+        <hbox>
+          <radiobutton><label>Connecter</label><default>true</default><variable>A_CONNECTER</variable></radiobutton>
+          <radiobutton><label>Déconnecter</label><variable>A_DECONNECTER</variable></radiobutton>
+          <radiobutton><label>Appairer</label><variable>A_APPAIRER</variable></radiobutton>
+          <radiobutton><label>Faire confiance</label><variable>A_CONFIANCE</variable></radiobutton>
+          <radiobutton><label>Retirer la confiance</label><variable>A_DEFIANCE</variable></radiobutton>
+          <radiobutton><label>Oublier</label><variable>A_OUBLIER</variable></radiobutton>
+        </hbox>
+        <text><label>Confiance : l'appareil se reconnecte seul, sans rien demander.</label></text>
+      </vbox>
+    </frame>
+    <statusbar><variable>RESUME</variable><default>Adaptateur hci0 allumé, visible : non</default></statusbar>
+    <hbox>
+      <button cancel></button>
+      <button><label>Appliquer</label><action>exit:appliquer</action></button>
+    </hbox>
+  </vbox>
+</window>

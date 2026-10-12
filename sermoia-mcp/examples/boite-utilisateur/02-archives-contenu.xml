@@ -1,0 +1,20 @@
+<!-- Script : examples/boites-a-outils/utilisateur/02-archives.sh (dialogue contenu) -->
+<window title="Contenu de l'archive" default-width="520" default-height="380">
+  <vbox>
+    <text><label>/home/utilisateur/Téléchargements/photos-mariage.zip contient :</label></text>
+    <list scrollable="true" space-expand="true" space-fill="true">
+      <variable>LIGNE</variable>
+      <item>photos-mariage/</item>
+      <item>photos-mariage/eglise-01.jpg</item>
+      <item>photos-mariage/eglise-02.jpg</item>
+      <item>photos-mariage/repas-01.jpg</item>
+      <item>photos-mariage/lisez-moi.txt</item>
+    </list>
+    <text><label>Les fichiers iront dans : /home/utilisateur/Téléchargements/photos-mariage</label></text>
+    <checkbox><label>Ouvrir ce dossier ensuite</label><variable>OUVRIR</variable><default>true</default></checkbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Sortir les fichiers</label><action>exit:extraire</action></button>
+    </hbox>
+  </vbox>
+</window>

@@ -12,6 +12,7 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
+#include "sermo_focus.h"
 #include "fltk-compat.h"
 #include "gtkdialog.h"
 #include "attributes.h"
@@ -129,9 +130,17 @@ static void tree_add_items(Fl_Tree *tree, AttributeSet *Attr)
 
 /* Parité étalon : la première ligne est sélectionnée par défaut
  * (TR="a" sur le banc, comme gtk3sermo) — après <item> comme après <input>. */
+/* Arbres qui prennent le focus à l'ouverture (sermo_focus.h) : seuls ceux-là
+ * ont leur 1re ligne choisie, comme gtk3sermo (jusqu'à la 2.8.1 : tous). */
+#include <map>
+#include <set>
+static std::set<const Fl_Tree *> arbres_focus;
+/* <tree exported-column="N"> : la colonne que la variable rend (défaut 0). */
+static std::map<const Fl_Widget *, int> arbres_colonne;
+
 static void tree_select_first(Fl_Tree *tree)
 {
-    if (tree->first_selected_item()) return;
+    if (tree->first_selected_item() || !arbres_focus.count(tree)) return;
     Fl_Tree_Item *it = tree->first();
     while (it && (it == tree->root() || !it->is_active())) it = tree->next(it);   /* pas l'en-tête */
     if (it) tree->select(it, 0);
@@ -160,6 +169,11 @@ GtkWidget *widget_tree_create(AttributeSet *Attr, tag_attr *attr, gint Type)
      * (lu ici aussi, la commande tournait deux fois). */
     if (Attr) { tree_entete(tree, Attr); tree_add_items(tree, Attr); }
     tree_mesurer(tree);
+    if (sermo_focus_initial("tree")) arbres_focus.insert(tree);
+    if (attr) {
+        const char *v = get_tag_attribute(attr, "exported-column");
+        if (v && atoi(v) > 0) arbres_colonne[tree] = atoi(v);
+    }
     tree_select_first(tree);
 
     tree->redraw();
@@ -173,8 +187,14 @@ gchar *widget_tree_envvar_construct(GtkWidget *w)
     /* Premier niveau : le libellé tel quel. item_pathname() y échappe « / »
      * et « \ », et rend "" dès 1022 octets (mesuré, FLTK 1.4.4) : une ligne
      * de <input> ne ressortirait pas telle quelle. */
-    if (sel->parent() == tree->root()) {   /* la 1re colonne, comme l'étalon */
+    if (sel->parent() == tree->root()) {   /* exported-column, comme l'étalon */
         const char *l = sel->label() ? sel->label() : "";
+        auto c = arbres_colonne.find(tree);
+        for (int n = c == arbres_colonne.end() ? 0 : c->second; n > 0; n--) {
+            l = strchr(l, '|');
+            if (!l) return g_strdup("");
+            l++;
+        }
         return g_strndup(l, strcspn(l, "|"));
     }
     char path[1024] = "";

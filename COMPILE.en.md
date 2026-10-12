@@ -8,6 +8,8 @@ that suits your backend), then the backend itself against that core.
 ## 1. Build dependencies
 
 Shared (the core): `flex`, `bison`, `cmake` (≥ 3.16), `gcc`, `pkg-config`.
+The qt6, fltk1, sdl3 and lvgl ports also need a C++ compiler (`g++`): lvgl
+since 2.8.2, for ThorVG (LVGL's SVG support).
 
 Per backend, the `-dev` packages of its toolkit — see
 [DEPENDENCIES.en.md](DEPENDENCIES.en.md). Examples:
@@ -122,7 +124,7 @@ French):
 ```bash
 BIN=sermo-backend-qt6/_build/qt6sermo
 TIMEOUT=5 bash tests/xml/run_tests.sh "$BIN"                       # 55 PASS
-bash tests/comportement/run.sh "$BIN"                             # 53 green
+bash tests/comportement/run.sh "$BIN"                             # 61 green
 xvfb-run -a bash tests/garde_echappement_sortie.sh "$BIN"          # OK — 4 cases
 ```
 
@@ -139,7 +141,7 @@ bash packaging/construire-paquets.sh    # in a clean Debian testing system (Dock
 ```
 
 Or directly on Debian testing: `sudo apt build-dep ./` then
-`dpkg-buildpackage -us -uc -b`. Sixteen packages: `sermo-core-dev`, the nine
-`sermo-backend-*`, `sermo-doc`, `sermo-gtkdialog` and four transitional packages
-from 1.x. See
+`dpkg-buildpackage -us -uc -b`. Eighteen packages: `sermo-core-dev`, the nine
+`sermo-backend-*`, `sermo-doc`, `sermo-gtkdialog`, the two MCP servers
+(`sermoia-mcp`, `sermoman-mcp`) and four transitional packages from 1.x. See
 [PACKAGING.en.md](PACKAGING.en.md).

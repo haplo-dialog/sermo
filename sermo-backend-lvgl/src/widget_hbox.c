@@ -27,6 +27,7 @@ GtkWidget *widget_hbox_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     stackelement s = pop();
     for (int i = 0; i < s.nwidgets; ++i)
         if (s.widgets[i]) widget_node_add_child(node, (WidgetNode *)s.widgets[i]);
+    boite_repartir(node, attr, 1);   /* space-expand/space-fill de la boîte, homogeneous */
     return (GtkWidget *)node;
 }
 

@@ -1,0 +1,32 @@
+<!-- Script : examples/metiers/04-distribution-integrateur/4-apparence.sh (dialogue principal) -->
+<window title="Apparence du bureau" default-width="520">
+  <vbox>
+    <frame label="Thème">
+      <grid columns="2" row-spacing="4" column-spacing="8">
+        <text><label>Fenêtres et boutons :</label></text>
+        <comboboxtext space-expand="true" space-fill="true"><variable>THEME</variable><default>Greybird</default><item>Adwaita</item><item>Adwaita-dark</item><item>Greybird</item><item>Greybird-dark</item></comboboxtext>
+        <text><label>Icônes :</label></text>
+        <comboboxtext space-expand="true" space-fill="true"><variable>ICONES</variable><default>elementary-xfce</default><item>Adwaita</item><item>elementary-xfce</item><item>elementary-xfce-dark</item></comboboxtext>
+      </grid>
+    </frame>
+    <frame label="Textes">
+      <vbox>
+        <hbox>
+          <text><label>Police :</label></text>
+          <comboboxtext space-expand="true" space-fill="true"><variable>POLICE</variable><default>Sans</default>
+            <item>Sans</item><item>Serif</item><item>DejaVu Sans</item><item>Noto Sans</item><item>Cantarell</item><item>Liberation Sans</item>
+          </comboboxtext>
+          <text><label>Taille :</label></text>
+          <spinbutton range-min="6" range-max="24" range-step="1"><variable>TAILLE</variable><default>10</default></spinbutton>
+        </hbox>
+        <text><label>Échelle des textes, en points par pouce (96 = 100 %) :</label></text>
+        <hscale range-min="72" range-max="192" range-step="1" draw-value="true"><variable>DPI</variable><default>96</default></hscale>
+        <checkbox><label>Lisser les caractères (anticrénelage)</label><variable>LISSAGE</variable><default>true</default></checkbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Appliquer</label><action>exit:appliquer</action></button>
+    </hbox>
+  </vbox>
+</window>

@@ -1,0 +1,31 @@
+<!-- Script : examples/metiers/11-serveur-sans-ecran/1-reseau.sh (dialogue principal) -->
+<window title="Réseau du serveur" default-width="520">
+  <vbox>
+    <hbox><text><label>Connexion :</label></text>
+      <comboboxtext space-expand="true" space-fill="true"><variable>CONNEXION</variable><default>Connexion filaire 1</default>
+        <item>Connexion filaire 1</item>
+        <item>lan-serveurs</item>
+      </comboboxtext></hbox>
+    <frame label="Adressage IPv4">
+      <vbox>
+        <radiobutton><label>Automatique (DHCP)</label><variable>DHCP</variable></radiobutton>
+        <radiobutton><label>Adresse fixe</label><variable>FIXE</variable><default>true</default></radiobutton>
+      </vbox>
+    </frame>
+    <frame label="Adresse fixe">
+      <vbox>
+        <hbox><text><label>Adresse/préfixe :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>ADRESSE</variable><default>192.168.1.20/24</default></entry></hbox>
+        <hbox><text><label>Passerelle :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>PASSERELLE</variable><default>192.168.1.1</default></entry></hbox>
+        <hbox><text><label>DNS (séparés par des espaces) :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>DNS</variable><default>192.168.1.1 9.9.9.9</default></entry></hbox>
+      </vbox>
+    </frame>
+    <checkbox><label>Réactiver la connexion tout de suite</label><variable>REACTIVER</variable><default>true</default></checkbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Préparer</label><action>exit:preparer</action></button>
+    </hbox>
+  </vbox>
+</window>

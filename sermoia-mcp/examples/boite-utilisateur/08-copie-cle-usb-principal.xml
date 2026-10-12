@@ -1,0 +1,27 @@
+<!-- Script : examples/boites-a-outils/utilisateur/08-copie-cle-usb.sh (dialogue principal) -->
+<window title="Copier sur une clé USB" default-width="560">
+  <vbox>
+    <frame label="Quoi">
+      <hbox><text><label>Dossier à copier :</label></text>
+        <entry space-expand="true" space-fill="true"><variable>SOURCE</variable><default>/home/utilisateur/Documents</default></entry></hbox>
+    </frame>
+    <frame label="Vers quelle clé">
+      <vbox>
+        <comboboxtext space-expand="true" space-fill="true"><variable>CLE</variable><default>/media/utilisateur/CLE-USB</default><item>/media/utilisateur/CLE-USB</item><item>/media/utilisateur/KINGSTON</item></comboboxtext>
+        <hbox><text><label>Dans le dossier de la clé :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>SOUS_DOSSIER</variable><default>Copie</default></entry></hbox>
+      </vbox>
+    </frame>
+    <frame label="Comment">
+      <vbox>
+        <hbox><switch><variable>RECENTS</variable><default>true</default></switch>
+          <text><label>Ne pas recopier ce qui est déjà à jour sur la clé</label></text></hbox>
+        <checkbox><label>Effacer sur la clé ce qui n'existe plus dans le dossier (déconseillé)</label><variable>EFFACER</variable></checkbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Voir ce qui partira</label><action>exit:simuler</action></button>
+    </hbox>
+  </vbox>
+</window>

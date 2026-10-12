@@ -16,10 +16,17 @@
 #include "stack.h"
 #include "widget_vbox.h"
 #include <stdlib.h>
+#include <string.h>
+#include <strings.h>
 
 GtkWidget *widget_vbox_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
     WidgetNode *node = widget_node_new(WT_VBOX, NULL, "");
+    /* homogeneous="true" : chaque enfant reçoit une case de même taille
+     * (lecture de l'étalon : true, yes ou 1). */
+    const char *h = attr ? get_tag_attribute(attr, "homogeneous") : NULL;
+    if (h && (!strcasecmp(h, "true") || !strcasecmp(h, "yes") || atoi(h) == 1))
+        node->homogene = TRUE;
     /* Le coeur fusionne les enfants en UN element de pile (instruction
      * SUM) : UN SEUL pop, dans l'ordre du document. L'ancienne boucle
      * « pop jusqu'a une sentinelle » provoquait un stack underflow sur

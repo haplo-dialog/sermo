@@ -17,6 +17,7 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
+#include "sermo_focus.h"
 #include "qt6-compat.h"
 #include "gtk3d.h"
 #include "attributes.h"
@@ -67,9 +68,11 @@ GtkWidget *widget_list_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         }
     }
 
-    /* Parite gtk3 (GtkListBox auto-selectionne la 1re ligne) : si rien n'est
-     * selectionne, selectionner le premier item. */
-    if (lw->selectedItems().isEmpty() && lw->count() > 0)
+    /* Parité gtk3 : sans <default>, la 1re ligne n'est choisie que si la liste
+     * prend le focus à l'ouverture (premier focalisable, sermo_focus.h).
+     * Jusqu'à la 2.8.1, elle l'était toujours. */
+    lw->setProperty("sermoFocus", (bool)sermo_focus_initial("list"));
+    if (lw->selectedItems().isEmpty() && lw->count() > 0 && lw->property("sermoFocus").toBool())
         lw->setCurrentRow(0);
 
     /* Actions : jouées à chaque changement de sélection, comme le signal
@@ -138,7 +141,7 @@ void widget_list_refresh(variable *var)
      * sélection que la création applique aux <item>. Le cœur neutre ne retient
      * pas « _initialised » : le passage est noté sur le widget. */
     if (!lw->property("sermoInitialise").toBool()) {
-        if (lw->selectedItems().isEmpty() && lw->count() > 0)
+        if (lw->selectedItems().isEmpty() && lw->count() > 0 && lw->property("sermoFocus").toBool())
             lw->setCurrentRow(0);
         lw->setProperty("sermoInitialise", true);
     }

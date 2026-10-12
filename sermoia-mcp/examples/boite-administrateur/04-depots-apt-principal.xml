@@ -1,0 +1,40 @@
+<!-- Script : examples/boites-a-outils/administrateur/04-depots-apt.sh (dialogue principal) -->
+<window title="Dépôts apt" default-width="600" default-height="520">
+  <vbox>
+    <hbox>
+      <radiobutton><label>Ajouter un dépôt</label><default>true</default><variable>A_AJOUTER</variable></radiobutton>
+      <radiobutton><label>Désactiver un dépôt existant</label><variable>A_DESACTIVER</variable></radiobutton>
+    </hbox>
+    <frame label="Nouveau dépôt">
+      <vbox>
+        <hbox><text><label>Nom du fichier (sans .sources) :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>NOM</variable><default>exemple-logiciel</default></entry></hbox>
+        <hbox><text><label>Adresse (URIs) :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>URI</variable><default>https://depot.exemple.org/debian</default></entry></hbox>
+        <hbox><text><label>Version (Suites) :</label></text>
+          <comboboxtext><variable>SUITE</variable><default>stable</default>
+            <item>stable</item><item>testing</item><item>unstable</item><item>trixie</item><item>forky</item>
+          </comboboxtext></hbox>
+        <hbox><text><label>Composants :</label></text>
+          <checkbox><label>main</label><default>true</default><variable>C_MAIN</variable></checkbox>
+          <checkbox><label>contrib</label><variable>C_CONTRIB</variable></checkbox>
+          <checkbox><label>non-free</label><variable>C_NONFREE</variable></checkbox>
+          <checkbox><label>non-free-firmware</label><variable>C_FIRMWARE</variable></checkbox></hbox>
+        <hbox><text><label>Clé (Signed-By) :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>CLE</variable><default>/usr/share/keyrings/exemple-logiciel.gpg</default></entry></hbox>
+        <checkbox><label>Aussi les sources (Types: deb deb-src)</label><variable>DEB_SRC</variable></checkbox>
+      </vbox>
+    </frame>
+    <frame label="Dépôt à désactiver (Enabled: no)">
+      <list scrollable="true" height-request="90"><variable>EXISTANT</variable>
+        <item>debian.sources</item>
+        <item>mozilla.sources</item>
+        <item>vscodium.sources</item>
+      </list>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Voir le fichier</label><action>exit:voir</action></button>
+    </hbox>
+  </vbox>
+</window>

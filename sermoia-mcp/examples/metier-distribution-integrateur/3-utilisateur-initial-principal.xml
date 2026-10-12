@@ -1,0 +1,36 @@
+<!-- Script : examples/metiers/04-distribution-integrateur/3-utilisateur-initial.sh (dialogue principal) -->
+<window title="Compte de l'utilisateur" default-width="520">
+  <vbox>
+    <text><label>Créez le compte de la personne qui utilisera ce poste.</label></text>
+
+    <frame label="Identité">
+      <vbox>
+        <hbox><text><label>Nom complet :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>NOM_COMPLET</variable><default>Camille Durand</default></entry></hbox>
+        <hbox><text><label>Identifiant (minuscules) :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>IDENTIFIANT</variable><default>camille</default></entry></hbox>
+      </vbox>
+    </frame>
+    <frame label="Mot de passe (8 caractères au moins)">
+      <vbox>
+        <hbox><text><label>Mot de passe :</label></text>
+          <password space-expand="true" space-fill="true"><variable>MDP1</variable></password></hbox>
+        <hbox><text><label>Le retaper :</label></text>
+          <password space-expand="true" space-fill="true"><variable>MDP2</variable></password></hbox>
+      </vbox>
+    </frame>
+    <frame label="Droits et interpréteur">
+      <vbox>
+        <checkbox><label>Administrateur du poste (groupe administrateurs)</label><variable>ADMIN</variable><default>true</default></checkbox>
+        <hbox><text><label>Interpréteur de commandes :</label></text>
+          <comboboxtext><variable>COQUILLE</variable><default>/bin/bash</default>
+            <item>/bin/bash</item><item>/bin/sh</item><item>/usr/bin/zsh</item><item>/usr/bin/fish</item>
+          </comboboxtext></hbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Créer le compte</label><action>exit:creer</action></button>
+    </hbox>
+  </vbox>
+</window>

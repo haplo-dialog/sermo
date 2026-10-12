@@ -25,6 +25,35 @@
 #include "sermo_icon_theme.h"
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
+
+/* EFL ne lit pas un SVG en mémoire (elm_image_memfile_set rend 0, mesuré) :
+ * l'icône recolorée est écrite une fois dans le cache de la personne
+ * (~/.cache/sermo/icones/<nom>-<couleur>.svg), puis lue comme un fichier.
+ * Rend ce chemin (à libérer), ou NULL si l'icône n'est pas symbolique. */
+static char *icone_teinte_en_cache(const char *path, unsigned rgb)
+{
+    size_t taille = 0;
+    char *svg = sermo_icon_symbolique_teinte(path, rgb, &taille);
+    if (!svg) return NULL;
+    const char *xdg = getenv("XDG_CACHE_HOME"), *home = getenv("HOME");
+    char dossier[1024], fichier[1400];
+    if (xdg && *xdg && xdg[0] == '/') snprintf(dossier, sizeof dossier, "%s/sermo/icones", xdg);
+    else if (home && *home)           snprintf(dossier, sizeof dossier, "%s/.cache/sermo/icones", home);
+    else { free(svg); return NULL; }
+    if (g_mkdir_with_parents(dossier, 0700) != 0) { free(svg); return NULL; }
+    const char *base = strrchr(path, '/');
+    snprintf(fichier, sizeof fichier, "%s/%s-%06x.svg", dossier, base ? base + 1 : path, rgb & 0xffffffu);
+    char tmp[1500];
+    snprintf(tmp, sizeof tmp, "%s.%d", fichier, (int)getpid());
+    FILE *f = fopen(tmp, "wb");
+    int ok = f && fwrite(svg, 1, taille, f) == taille;
+    if (f && fclose(f) != 0) ok = 0;
+    free(svg);
+    if (!ok || rename(tmp, fichier) != 0) { unlink(tmp); return NULL; }   /* écriture atomique */
+    return strdup(fichier);
+}
 
 /* Cree une elm_image de `px` pixels pour l'icone `icon` ; NULL si absente. */
 Evas_Object *efl_theme_icon_new(Evas_Object *parent, const char *icon, int px)
@@ -33,7 +62,13 @@ Evas_Object *efl_theme_icon_new(Evas_Object *parent, const char *icon, int px)
     char *path = sermo_icon_lookup(icon, px);
     if (!path) return NULL;
     Evas_Object *img = elm_image_add(parent);
-    elm_image_file_set(img, path, NULL);
+    /* Une icône symbolique (gris foncé) est recolorée en clair, comme GTK le
+     * fait selon le thème : le thème d'EFL est sombre, et elle y était presque
+     * invisible (galerie du site, jusqu'à la 2.8.1). Le SVG recoloré vit aussi
+     * longtemps que l'image. */
+    char *teinte = icone_teinte_en_cache(path, 0xdddddd);
+    elm_image_file_set(img, teinte ? teinte : path, NULL);
+    free(teinte);
     elm_image_resizable_set(img, EINA_TRUE, EINA_TRUE);
     elm_image_aspect_fixed_set(img, EINA_TRUE);
     evas_object_size_hint_min_set(img, px, px);

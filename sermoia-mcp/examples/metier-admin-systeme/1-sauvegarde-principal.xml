@@ -1,0 +1,24 @@
+<!-- Script : examples/metiers/01-admin-systeme/1-sauvegarde.sh (dialogue principal) -->
+<window title="Sauvegarde" default-width="520">
+  <vbox>
+    <frame label="Quoi et où">
+      <vbox>
+        <hbox><text><label>Dossier à sauvegarder :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>SOURCE</variable><default>/home/utilisateur/Documents</default></entry></hbox>
+        <hbox><text><label>Destination :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>DESTINATION</variable><default>/media/sauvegarde</default></entry></hbox>
+      </vbox>
+    </frame>
+    <frame label="Options">
+      <vbox>
+        <checkbox><label>Garder les droits et les dates (-a)</label><default>true</default><variable>ARCHIVE</variable></checkbox>
+        <checkbox><label>Compresser pendant le transfert (-z)</label><variable>COMPRESSER</variable></checkbox>
+        <checkbox><label>Effacer à destination ce qui n'existe plus à la source (--delete)</label><variable>EFFACER</variable></checkbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Voir ce qui partira</label><action>exit:simuler</action></button>
+    </hbox>
+  </vbox>
+</window>

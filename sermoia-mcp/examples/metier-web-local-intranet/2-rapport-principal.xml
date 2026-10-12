@@ -1,0 +1,27 @@
+<!-- Script : examples/metiers/12-web-local-intranet/2-rapport.sh (dialogue principal) -->
+<window title="Rapport pour l'intranet" default-width="520">
+  <vbox>
+    <hbox><text><label>Titre :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>TITRE</variable><default>Rapport hebdomadaire du serveur</default></entry></hbox>
+    <frame label="Période : depuis le">
+      <calendar><variable>DEBUT</variable><default>2026-10-04</default></calendar>
+    </frame>
+    <frame label="Contenu">
+      <vbox>
+        <hbox><text><label>Gravité minimale :</label></text>
+          <comboboxtext><variable>PRIORITE</variable><default>err</default>
+            <item>crit</item><item>err</item><item>warning</item>
+          </comboboxtext>
+          <text><label>Lignes au plus :</label></text>
+          <spinbutton range-min="10" range-max="500" range-step="10"><variable>MAX</variable><default>50</default></spinbutton></hbox>
+        <checkbox><label>Occupation des disques</label><variable>DISQUES</variable><default>true</default></checkbox>
+      </vbox>
+    </frame>
+    <hbox><text><label>Page à écrire :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>PAGE</variable><default>/var/www/intranet/rapport.html</default></entry></hbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Produire la page</label><action>exit:produire</action></button>
+    </hbox>
+  </vbox>
+</window>

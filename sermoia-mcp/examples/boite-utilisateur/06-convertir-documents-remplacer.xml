@@ -1,0 +1,12 @@
+<!-- Script : examples/boites-a-outils/utilisateur/06-convertir-documents.sh (dialogue remplacer) -->
+<window title="Remplacer les PDF ?">
+  <vbox>
+    <text><label>Ces PDF existent déjà et seront remplacés :</label></text>
+    <text><label>cv-2026.pdf, lettre-proprietaire.pdf</label></text>
+    <text><label>Les anciens seront d'abord mis à la corbeille.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Remplacer</label><action>exit:remplacer</action></button>
+    </hbox>
+  </vbox>
+</window>

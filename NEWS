@@ -5,6 +5,63 @@ Ce fichier résume les changements du point de vue de l'utilisateur.
 Pour l'historique technique complet, voir CHANGELOG.md.
 
 ──────────────────────────────────────────────────
+Version 2.8.2
+──────────────────────────────────────────────────
+
+Version de correction. Soixante scripts métier et quatre boîtes à
+outils, joués sur les neuf ports, ont montré où les ports s'écartaient de
+gtk3sermo.
+
+* Soixante scripts métier prêts à lancer (examples/metiers, paquet
+  sermo-doc) : cinq par métier, de l'administration système au web local.
+  Par défaut ils affichent la commande au lieu de la lancer.
+
+* Quatre boîtes à outils (examples/boites-a-outils, paquet sermo-doc) :
+  système, serveur, administrateur et utilisateur, dix outils chacune.
+  Mêmes règles : à blanc par défaut, confirmation avant d'effacer.
+
+* Les sommes de contrôle des paquets sont signées : SHA256SUMS.asc, par
+  la clé de haplo-dialog (devel@haplo-dialog.fr, empreinte
+  66C7 F4AD 7A58 A037 967F  8339 3799 9F99 7570 F1ED). La clé publique est
+  sur le site ; la vérification est décrite dans le README.
+
+* Les deux serveurs MCP s'installent : paquets sermoia-mcp et sermoman-mcp.
+
+* Les entités XML (&amp; &lt; &gt; &quot; &apos; &#NN;) sont décodées : un
+  script qui échappe ses valeurs retrouve la valeur d'origine. Une valeur
+  écrite sur plusieurs lignes les garde toutes.
+
+* Sur les neuf ports, comme gtk3sermo : la 1re ligne d'une liste n'est
+  choisie que si elle prend le focus ; <default> choisit la ligne ; le 1er
+  bouton d'un groupe radio est coché ; <text> rend le texte affiché ;
+  <tree exported-column> rend la colonne demandée.
+
+* gtk3sermo ne trie plus un <table> à l'ouverture : l'ordre du document
+  est gardé (tri en auto-sort ou au clic sur un en-tête).
+
+* Sur les neuf ports, les boîtes se rangent comme dans gtk3sermo : cases
+  égales (homogeneous), étirement réglé sur la boîte, boutons d'une rangée
+  calés à droite. Dans un bouton, l'icône et le libellé sont centrés.
+
+* --do reçoit EXIT (le bouton cliqué). En mode serve, htmlsermo lui passe
+  les valeurs saisies dans le navigateur.
+
+* Minuteurs de ncursessermo, décimales de fltk1sermo, champs d'efl1sermo
+  (plus de « &laquo; ») corrigés. fltk1sermo garde un élément qui contient
+  « / » (« Europe/Paris ») au lieu d'en faire un sous-menu. Dans un
+  terminal, ncursessermo laisse ses variables de sortie à l'écran.
+
+* Icônes : les ports sans GTK les cherchent comme GTK (thème, Adwaita,
+  hicolor, variante symbolique) ; gtk4, qt6, efl1 et lvgl montrent celles
+  qui manquaient. La page de htmlsermo prend la forme de la fenêtre ; les
+  onglets de lvglsermo ne coupent plus leurs libellés.
+
+* sermoia-mcp : l'aperçu (sermo_render) n'exécute plus aucune commande du
+  dialogue ; chaque outil a un délai ; les exemples se cherchent par une
+  phrase ; documentation refaite, en français et en anglais.
+  sermoman-mcp : l'outil sermo_scripts donne l'inventaire des scripts.
+
+──────────────────────────────────────────────────
 Version 2.8.1
 ──────────────────────────────────────────────────
 
@@ -21,10 +78,6 @@ du site.
   Un champ de recherche n'abîme plus la mémoire du dialogue.
 
 * fltk1sermo, qt6sermo et efl1sermo : --render-png rend le code 0.
-
-* sermoia-mcp : l'aperçu (sermo_render) n'exécute plus aucune commande du
-  dialogue ; chaque outil a un délai ; les exemples se cherchent par une
-  phrase ; documentation refaite, en français et en anglais.
 
 ──────────────────────────────────────────────────
 Version 2.8.0

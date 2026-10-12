@@ -1,0 +1,23 @@
+<!-- Script : examples/metiers/10-securite-informatique/3-audit-comptes.sh (dialogue principal) -->
+<window title="Audit des comptes" default-width="600">
+  <vbox>
+    <text><label>Comptes pouvant ouvrir une session (shell de connexion valide) :</label></text>
+    <tree scrollable="true" height-request="200">
+      <label>Compte|UID|Shell|Dernière connexion</label>
+      <variable>COMPTE</variable>
+      <item>alice|1000|/bin/bash|2026-10-09 08:12</item>
+      <item>bob|1001|/bin/bash|jamais</item>
+      <item>stagiaire|1002|/bin/sh|2025-12-18 17:40</item>
+    </tree>
+    <frame label="Compte sélectionné">
+      <vbox>
+        <radiobutton><label>Afficher l'état du mot de passe (passwd -S)</label><variable>VOIR_ETAT</variable><default>true</default></radiobutton>
+        <radiobutton><label>Verrouiller le mot de passe (passwd -l)</label><variable>VERROUILLER</variable></radiobutton>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Appliquer au compte</label><action>exit:compte</action></button>
+    </hbox>
+  </vbox>
+</window>

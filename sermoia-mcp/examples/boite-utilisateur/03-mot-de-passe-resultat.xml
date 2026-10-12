@@ -1,0 +1,13 @@
+<!-- Script : examples/boites-a-outils/utilisateur/03-mot-de-passe.sh (dialogue resultat) -->
+<window title="Votre mot de passe" default-width="560">
+  <vbox>
+    <text use-markup="true"><label>"<span font='Monospace 20' foreground='#1a5fb4'>cheval-tulipe-orage-piano-sable-yaourt</span>"</label></text>
+    <hbox><text><label>Pour le copier :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>A_COPIER</variable><default>cheval-tulipe-orage-piano-sable-yaourt</default></entry></hbox>
+    <text><label>Il n'est enregistré nulle part : notez-le ou mettez-le dans votre coffre à mots de passe.</label></text>
+    <hbox>
+      <button><label>Fermer</label><action>exit:fermer</action></button>
+      <button><label>En inventer un autre</label><action>exit:encore</action></button>
+    </hbox>
+  </vbox>
+</window>

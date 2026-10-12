@@ -121,6 +121,12 @@ else
     ko "balise(s) du lexer absente(s) de la « RÉFÉRENCE COMPLÈTE » :$manquantes"
 fi
 
+# L'inventaire des scripts (data/scripts.md) suit les en-têtes des scripts.
+if [ -d "$SRC/examples/metiers" ]; then
+    essai
+    if m=$(python3 -I "$ICI/outils/inventaire-scripts.py" --verifier 2>&1); then ok "$m"; else ko "$m"; fi
+fi
+
 echo
 [ -n "$VERSION" ] && printf 'Version du cœur (libsermocore) : %s\n' "$VERSION"
 printf '%s vérification(s), %s échec(s). Source : %s\n' "$joues" "$echecs" "$SRC/libsermocore"

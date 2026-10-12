@@ -1,0 +1,39 @@
+<!-- Script : examples/metiers/12-web-local-intranet/1-demande-materiel.sh (dialogue principal) -->
+<window title="Demande de matériel" default-width="560">
+  <vbox>
+    <frame label="Demandeur">
+      <vbox>
+        <hbox><text><label>Nom et prénom :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>NOM</variable><default>Camille Martin</default></entry></hbox>
+        <hbox><text><label>Service :</label></text>
+          <comboboxtext><variable>SERVICE</variable><default>Comptabilité</default>
+            <item>Accueil</item><item>Comptabilité</item><item>Direction</item>
+            <item>Informatique</item><item>Ressources humaines</item><item>Technique</item>
+          </comboboxtext></hbox>
+      </vbox>
+    </frame>
+    <frame label="Matériel">
+      <vbox>
+        <hbox><text><label>Article :</label></text>
+          <comboboxtext><variable>ARTICLE</variable><default>Écran 24 pouces</default>
+            <item>Ordinateur portable</item><item>Écran 24 pouces</item><item>Clavier et souris</item>
+            <item>Casque avec micro</item><item>Station d'accueil</item><item>Autre (préciser)</item>
+          </comboboxtext>
+          <text><label>Quantité :</label></text>
+          <spinbutton range-min="1" range-max="20" range-step="1"><variable>QUANTITE</variable><default>1</default></spinbutton></hbox>
+        <hbox>
+          <radiobutton><label>Normal</label><variable>NORMAL</variable><default>true</default></radiobutton>
+          <radiobutton><label>Urgent (poste bloqué)</label><variable>URGENT</variable></radiobutton>
+        </hbox>
+        <text><label>Date souhaitée :</label></text>
+        <calendar><variable>DATE_SOUHAITEE</variable><default>2026-10-20</default></calendar>
+        <text><label>Justification :</label></text>
+        <edit height-request="70"><variable>JUSTIFICATION</variable><default>Second écran pour la clôture des comptes.</default></edit>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Envoyer la demande</label><action>exit:envoyer</action></button>
+    </hbox>
+  </vbox>
+</window>

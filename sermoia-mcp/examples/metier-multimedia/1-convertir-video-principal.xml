@@ -1,0 +1,45 @@
+<!-- Script : examples/metiers/09-multimedia/1-convertir-video.sh (dialogue principal) -->
+<window title="Convertir une vidéo" default-width="560">
+  <vbox>
+    <hbox><text><label>Vidéo source :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>SOURCE</variable><default>/home/utilisateur/Vidéos/reunion-2026-10-08.mov</default></entry></hbox>
+    <frame label="Image">
+      <vbox>
+        <hbox><text><label>Format :</label></text>
+          <comboboxtext space-expand="true" space-fill="true">
+            <variable>FORMAT</variable>
+            <default>MP4 (H.264 + AAC), lisible partout</default>
+            <item>MP4 (H.264 + AAC), lisible partout</item>
+            <item>WebM (VP9 + Opus), pour le web</item>
+            <item>MKV (H.265 + AAC), fichier plus léger</item>
+          </comboboxtext></hbox>
+        <hbox><text><label>Définition :</label></text>
+          <comboboxtext space-expand="true" space-fill="true">
+            <variable>DEFINITION</variable>
+            <default>720p (1280 de large)</default>
+            <item>Identique à la source</item>
+            <item>1080p (1920 de large)</item>
+            <item>720p (1280 de large)</item>
+            <item>480p (854 de large)</item>
+          </comboboxtext></hbox>
+        <text xalign="0"><label>Qualité (CRF : petit = meilleur et plus lourd ; 23 est un bon réglage)</label></text>
+        <hscale range-min="16" range-max="36" range-step="1" draw-value="true">
+          <variable>CRF</variable><default>23</default>
+        </hscale>
+      </vbox>
+    </frame>
+    <frame label="Son">
+      <vbox>
+        <radiobutton><label>Réencoder (compatible avec le format choisi)</label><variable>SON_REENCODER</variable><default>true</default></radiobutton>
+        <radiobutton><label>Copier tel quel (rapide, si le format l'accepte)</label><variable>SON_COPIER</variable></radiobutton>
+        <radiobutton><label>Supprimer le son</label><variable>SON_SUPPRIMER</variable></radiobutton>
+      </vbox>
+    </frame>
+    <hbox><text><label>Dossier de sortie :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>SORTIE</variable><default>/home/utilisateur/Vidéos/converties</default></entry></hbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Analyser la source</label><action>exit:analyser</action></button>
+    </hbox>
+  </vbox>
+</window>

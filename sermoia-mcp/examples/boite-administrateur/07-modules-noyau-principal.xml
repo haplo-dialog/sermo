@@ -1,0 +1,38 @@
+<!-- Script : examples/boites-a-outils/administrateur/07-modules-noyau.sh (dialogue principal) -->
+<window title="Modules du noyau" default-width="600" default-height="540">
+  <vbox>
+    <frame label="Modules chargés">
+      <tree scrollable="true" height-request="150" space-expand="true" space-fill="true">
+        <label>Module|Taille (octets)|Utilisé par</label>
+        <variable>CHARGE</variable>
+        <item>btusb|77824|0</item>
+        <item>pcspkr|12288|0</item>
+        <item>snd_hda_intel|61440|3</item>
+        <item>uvcvideo|135168|0</item>
+        <item>usb_storage|86016|1 uas</item>
+      </tree>
+    </frame>
+    <hbox><text><label>Module visé (vide = celui choisi dans la liste) :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>MODULE</variable><default>pcspkr</default></entry></hbox>
+    <frame label="Action">
+      <vbox>
+        <radiobutton><label>Charger maintenant (modprobe)</label><variable>A_CHARGER</variable></radiobutton>
+        <radiobutton><label>Décharger maintenant (modprobe -r)</label><variable>A_DECHARGER</variable></radiobutton>
+        <radiobutton><label>Mettre sur liste noire (prochains démarrages)</label><default>true</default><variable>A_LISTE_NOIRE</variable></radiobutton>
+      </vbox>
+    </frame>
+    <expander label="Réglages fins">
+      <vbox>
+        <hbox><text><label>Paramètres au chargement (ex. index=1) :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>PARAMS</variable></entry></hbox>
+        <switch><label>Liste noire stricte : refuser aussi un chargement demandé par un autre module (install … /bin/false)</label><variable>STRICTE</variable></switch>
+        <togglebutton><label>Reconstruire l'initramfs après la liste noire (la liste noire joue alors dès le démarrage)</label><variable>INITRAMFS</variable></togglebutton>
+      </vbox>
+      <variable>REGLAGES_OUVERTS</variable>
+    </expander>
+    <hbox>
+      <button cancel></button>
+      <button><label>Appliquer</label><action>exit:appliquer</action></button>
+    </hbox>
+  </vbox>
+</window>

@@ -150,6 +150,148 @@ static SDL_Window *g_sdl_window = nullptr;
  * largeur y ecraseraient leurs voisins */
 static bool g_in_hbox = false;
 
+/* ── Rangement des boîtes (parité gtk3 : homogeneous, space-expand/fill,
+ *    rangée calée par la fin) ──────────────────────────────────────────────
+ * ImGui ne distribue pas l'espace : la boîte le fait elle-même, d'après la
+ * taille NATURELLE de chaque enfant (nat_w/nat_h, mesurée au rendu précédent
+ * — même patron que les autres mesures de ce fichier). Avant de rendre un
+ * enfant, la boîte peut lui imposer une taille (g_fill_w/g_fill_h, 0 = sa
+ * taille naturelle) ; render_widget la prend à l'entrée, et seuls les types
+ * qui savent s'étirer s'en servent. Une barre, un curseur, un champ gardent
+ * leur hauteur propre. */
+static float g_fill_w = 0.0f, g_fill_h = 0.0f;
+/* Largeur qu'une rangee OFFRE a l'enfant en cours (0 = pas de rangee) : un
+ * texte, ou une colonne dans la rangee, y replie ses lignes au lieu du bord
+ * de la fenetre. Sans elle, un texte pose a droite (rangee calee par la fin)
+ * se repliait mot par mot, et sa largeur mesuree restait a un mot. */
+static float g_wrap_w = 0.0f;
+
+/* Le type donne-t-il lui-même sa taille naturelle (au lieu d'être mesuré) ?
+ * Ce sont les types qui s'étirent : mesurés étirés, ils renverraient la
+ * place reçue, et la mise en page ne rétrécirait plus jamais. */
+static bool sait_s_etirer(const WidgetNode *n)
+{
+    switch (n->type) {
+    case WT_BUTTON: case WT_TOGGLEBUTTON: case WT_EDIT: case WT_FRAME:
+    case WT_VBOX: case WT_HBOX: case WT_LIST:
+        return true;
+    case WT_ENTRY: case WT_PASSWORD:
+        return !(n->label && n->label[0]);   /* libellé à part : mesuré */
+    default:
+        return false;
+    }
+}
+/* en hauteur : pas les champs (ils gardent leur hauteur) */
+static bool s_etire_en_hauteur(const WidgetNode *n)
+{
+    return sait_s_etirer(n) && n->type != WT_ENTRY && n->type != WT_PASSWORD;
+}
+/* un libellé, une image : centrés dans la place reçue (comme gtk) */
+static bool se_centre(const WidgetNode *n)
+{
+    return n->type == WT_TEXT || n->type == WT_PIXMAP || n->type == WT_IMAGE_W;
+}
+
+static void render_widget(WidgetNode *node);
+
+/* Rend un enfant et rend sa taille naturelle : celle qu'il annonce s'il sait
+ * s'étirer, sinon celle mesurée (groupe ImGui autour de lui). */
+static ImVec2 rendre_mesure(WidgetNode *ch)
+{
+    if (sait_s_etirer(ch)) {
+        render_widget(ch);
+        return ImVec2(ch->nat_w, ch->nat_h);
+    }
+    ImGui::BeginGroup();
+    render_widget(ch);
+    ImGui::EndGroup();
+    ImVec2 s = ImGui::GetItemRectSize();
+    ch->nat_w = s.x;
+    ch->nat_h = s.y;
+    return s;
+}
+
+/* Enfant étiré d'un type qui ne sait pas le faire lui-même (notebook,
+ * paned, table…) : une fenêtre fille de la taille reçue, qu'il remplit
+ * s'il prend la place disponible. h = 0 : hauteur au contenu. */
+static ImVec2 rendre_dans_case(WidgetNode *ch, const char *id, int i, float w, float h)
+{
+    char wid[300];
+    snprintf(wid, sizeof(wid), "%s##case%d", id, i);
+    /* sa taille naturelle reste celle mesuree hors case : mesure dedans, il
+     * rendrait la case, et la fenetre ne se dimensionnerait plus au contenu */
+    ImVec2 nat(ch->nat_w, ch->nat_h);
+    if (ImGui::BeginChild(wid, ImVec2(w > 0.0f ? w : 0.0f, h), ImGuiChildFlags_None))
+        (void)rendre_mesure(ch);
+    ImGui::EndChild();
+    ch->nat_w = nat.x;
+    ch->nat_h = nat.y;
+    return nat;
+}
+
+/* Colonne, parite gtk3 (widget_vbox.c, et la boite verticale qu'un <frame>
+ * met autour de ses enfants) : la place en trop (la hauteur recue moins la
+ * somme des tailles naturelles) va, a parts egales, aux enfants extensibles
+ * (pk_expand) ; etire sans space-fill, un enfant est centre dans sa part. En
+ * largeur, les conteneurs et les boutons prennent celle de la colonne (wv ;
+ * fill_w s'il est donne). dans_rangee : la colonne est dans une rangee, a sa
+ * largeur naturelle — libelles et images y sont centres, comme gtk.
+ * Rend la taille naturelle de la colonne. */
+static ImVec2 colonne(WidgetNode *node, const char *id, float fill_w, float fill_h,
+                      bool dans_rangee, float wv)
+{
+    const float sp = ImGui::GetStyle().ItemSpacing.y;
+    const float x0 = ImGui::GetCursorPosX();
+    const float Wv = fill_w > 0.0f ? fill_w : wv;
+    int n = 0, n_exp = 0;
+    float somme = 0.0f;
+    for (int i = 0; i < node->child_count; i++) {
+        WidgetNode *ch = node->children[i];
+        if (!ch->visible) continue;
+        n++;
+        somme += ch->nat_h;
+        if (ch->pk_expand) n_exp++;
+    }
+    if (n > 1) somme += sp * (float)(n - 1);
+    const float trop = fill_h > 0.0f ? fill_h - somme : 0.0f;
+    float nw = 0.0f, nh = 0.0f;
+    int k = 0;
+    for (int i = 0; i < node->child_count; i++) {
+        WidgetNode *ch = node->children[i];
+        if (!ch->visible) { render_widget(ch); continue; }   /* minuteur */
+        const bool etire = ch->pk_expand && n_exp > 0 && trop > 0.5f;
+        const float part = ch->nat_h + (etire ? trop / (float)n_exp : 0.0f);
+        const float y = ImGui::GetCursorPosY();
+        const bool croise = ch->type == WT_BUTTON || ch->type == WT_EDIT ||
+                            ch->type == WT_FRAME || ch->type == WT_VBOX ||
+                            ch->type == WT_HBOX;
+        if (Wv > 0.0f && croise) g_fill_w = Wv;
+        bool en_case = false;
+        if (etire) {
+            if (ch->pk_fill) {
+                if (s_etire_en_hauteur(ch)) g_fill_h = part;
+                else if (!sait_s_etirer(ch) && !se_centre(ch) && ch->nat_h > 0.0f)
+                    en_case = true;   /* notebook, paned… : une case */
+            } else {
+                ImGui::SetCursorPosY(y + (part - ch->nat_h) * 0.5f);
+            }
+        }
+        if (dans_rangee && se_centre(ch) && Wv > ch->nat_w + 0.5f)
+            ImGui::SetCursorPosX(x0 + (Wv - ch->nat_w) * 0.5f);
+        ImVec2 m = en_case ? rendre_dans_case(ch, id, i, Wv, part) : rendre_mesure(ch);
+        if (etire && ImGui::GetCursorPosY() < y + part + sp) {
+            /* la part entiere est occupee, meme par un enfant plus petit */
+            ImGui::SetCursorPos(ImVec2(x0, y));
+            ImGui::Dummy(ImVec2(0.0f, part));
+        }
+        if (m.x > nw) nw = m.x;
+        nh += m.y;
+        k++;
+    }
+    if (k > 1) nh += sp * (float)(k - 1);
+    return ImVec2(nw, nh);
+}
+
 /* Vrai si l'arbre contient une barre de menus (pour poser le flag MenuBar
  * sur la fenetre ImGui — sinon BeginMenuBar echoue et le menu n'apparait pas). */
 static bool tree_has_menubar(WidgetNode *n)
@@ -370,6 +512,9 @@ static ImVec4 levelbar_color(float frac)
 
 static void render_widget(WidgetNode *node)
 {
+    /* taille imposée par la boîte parente : pour CE noeud seulement */
+    const float fill_w = g_fill_w, fill_h = g_fill_h;
+    g_fill_w = g_fill_h = 0.0f;
     if (!node) return;
     /* WT_TIMER n'a rien à dessiner et est conventionnellement marqué
      * visible="false" dans le XML : sa cadence (case WT_TIMER plus bas)
@@ -421,10 +566,38 @@ static void render_widget(WidgetNode *node)
         ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
         bool open = true;
         if (ImGui::Begin(node->label ? node->label : "sdl3sermo", &open, wf)) {
-            for (int i = 0; i < node->child_count; i++)
-                render_widget(node->children[i]);
-            /* contenu : hauteur atteinte + marge basse */
-            g_need_h = ImGui::GetCursorPosY() + ImGui::GetStyle().WindowPadding.y;
+            /* L'enfant unique de la fenetre (la boite racine) la remplit,
+             * comme dans gtk : c'est lui qui distribue la place en trop a
+             * ses enfants extensibles. */
+            int n_place = 0;
+            for (int i = 0; i < node->child_count; i++) {
+                WidgetNode *ch = node->children[i];
+                if (ch->visible && ch->type != WT_MENUBAR && ch->type != WT_TIMER) n_place++;
+            }
+            const float sp = ImGui::GetStyle().ItemSpacing.y;
+            const float y0 = ImGui::GetCursorPosY();
+            float nat = 0.0f;
+            for (int i = 0; i < node->child_count; i++) {
+                WidgetNode *ch = node->children[i];
+                bool place = ch->visible && ch->type != WT_MENUBAR && ch->type != WT_TIMER;
+                if (place && n_place == 1 &&
+                    (ch->type == WT_VBOX || ch->type == WT_HBOX || ch->type == WT_FRAME)) {
+                    ImVec2 av = ImGui::GetContentRegionAvail();
+                    g_fill_w = av.x;
+                    g_fill_h = av.y;
+                }
+                float ya = ImGui::GetCursorPosY();
+                if (place) {
+                    ImVec2 m = rendre_mesure(ch);
+                    nat += m.y + sp;
+                } else {
+                    render_widget(ch);
+                    nat += ImGui::GetCursorPosY() - ya;
+                }
+            }
+            /* contenu : hauteur NATURELLE (pas la place recue : la fenetre
+             * se dimensionne au contenu) + marge basse */
+            g_need_h = y0 + nat + ImGui::GetStyle().WindowPadding.y;
         }
         ImGui::End();
         if (!open) SDL_Event ev; /* signal fermeture */
@@ -433,30 +606,63 @@ static void render_widget(WidgetNode *node)
 
     /* ── BUTTON ──────────────────────────────────────────────────────────── */
     case WT_BUTTON: {
-        /* pleine largeur par defaut, sauf dans un hbox (voisins en ligne) */
-        ImVec2 bsz = sz.x > 0 ? sz
-                   : (g_in_hbox ? ImVec2(0, 0) : ImVec2(-FLT_MIN, 0));
-        /* icone a gauche du libelle : on reserve la place dans le bouton
-         * puis on dessine l'image par-dessus (ImGui n'a pas de bouton
-         * image+texte natif) */
+        /* Taille naturelle : libelle (+ icone) + marges du cadre. */
+        const ImGuiStyle &st = ImGui::GetStyle();
+        const char *vis = node->label ? node->label : "";
+        ImVec2 ts = ImGui::CalcTextSize(vis, NULL, true);
         bool has_icon = node->icon_path && node_icon_texture(node);
         float ipx = has_icon ? (float)node->icon_px : 0.0f;
-        std::string padded;
-        const char *blabel = label;
+        float gap = st.ItemInnerSpacing.x;
+        bool vertical = has_icon && (node->icon_pos == 2 || node->icon_pos == 3);
+        ImVec2 grp = ts;   /* le groupe icone + libelle */
         if (has_icon) {
-            padded = std::string("   ") + label;      /* espace pour l'icone */
-            blabel = padded.c_str();
+            if (vertical) grp = ImVec2(fmaxf(ipx, ts.x), ipx + gap + ts.y);
+            else          grp = ImVec2(ipx + gap + ts.x, fmaxf(ipx, ts.y));
         }
-        ImVec2 bpos = ImGui::GetCursorScreenPos();
-        bool clicked = ImGui::Button(blabel, bsz);
+        node->nat_w = grp.x + st.FramePadding.x * 2.0f;
+        node->nat_h = grp.y + st.FramePadding.y * 2.0f;
+        /* pleine largeur par defaut, sauf dans un hbox (voisins en ligne) ;
+         * la boite parente peut imposer une taille (etirement) */
+        ImVec2 bsz;
+        bsz.x = sz.x > 0 ? sz.x : fill_w > 0 ? fill_w
+              : (g_in_hbox ? node->nat_w : -FLT_MIN);
+        bsz.y = sz.y > 0 ? sz.y : fill_h > 0 ? fill_h : node->nat_h;
+        bool clicked;
         if (has_icon) {
+            /* ImGui n'a pas de bouton image+texte : bouton sans texte, puis
+             * le GROUPE icone + libelle dessine CENTRE dans le bouton (comme
+             * qt6 et lvgl ; image-position place l'icone autour du texte). */
+            clicked = ImGui::Button(id, bsz);
             ImVec2 bmin = ImGui::GetItemRectMin(), bmax = ImGui::GetItemRectMax();
-            float pad = ImGui::GetStyle().FramePadding.x;
-            float y0 = bmin.y + ((bmax.y - bmin.y) - ipx) * 0.5f;
-            ImGui::GetWindowDrawList()->AddImage((ImTextureID)(uintptr_t)node->icon_tex,
-                ImVec2(bmin.x + pad, y0), ImVec2(bmin.x + pad + ipx, y0 + ipx));
+            ImVec2 o(bmin.x + ((bmax.x - bmin.x) - grp.x) * 0.5f,
+                     bmin.y + ((bmax.y - bmin.y) - grp.y) * 0.5f);
+            ImVec2 ip, tp;
+            switch (node->icon_pos) {
+            case 1:  /* droite */
+                tp = ImVec2(o.x, o.y + (grp.y - ts.y) * 0.5f);
+                ip = ImVec2(o.x + ts.x + gap, o.y + (grp.y - ipx) * 0.5f);
+                break;
+            case 2:  /* haut */
+                ip = ImVec2(o.x + (grp.x - ipx) * 0.5f, o.y);
+                tp = ImVec2(o.x + (grp.x - ts.x) * 0.5f, o.y + ipx + gap);
+                break;
+            case 3:  /* bas */
+                tp = ImVec2(o.x + (grp.x - ts.x) * 0.5f, o.y);
+                ip = ImVec2(o.x + (grp.x - ipx) * 0.5f, o.y + ts.y + gap);
+                break;
+            default: /* gauche */
+                ip = ImVec2(o.x, o.y + (grp.y - ipx) * 0.5f);
+                tp = ImVec2(o.x + ipx + gap, o.y + (grp.y - ts.y) * 0.5f);
+                break;
+            }
+            ImDrawList *dl = ImGui::GetWindowDrawList();
+            dl->AddImage((ImTextureID)(uintptr_t)node->icon_tex,
+                         ip, ImVec2(ip.x + ipx, ip.y + ipx));
+            const char *fin = strstr(vis, "##");   /* ce qui suit ## ne s'affiche pas */
+            dl->AddText(tp, ImGui::GetColorU32(ImGuiCol_Text), vis, fin);
+        } else {
+            clicked = ImGui::Button(label, bsz);
         }
-        (void)bpos;
         if (clicked) {
             if (node->action && *node->action) {
                 /* La fonction vient du prefixe (exit:, refresh:...) ou de
@@ -505,7 +711,10 @@ static void render_widget(WidgetNode *node)
 
     /* ── ENTRY ───────────────────────────────────────────────────────────── */
     case WT_ENTRY: {
-        ImGui::PushItemWidth(sz.x > 0 ? sz.x : 200.0f);
+        /* etire par sa rangee (space-expand) : la largeur recue */
+        node->nat_w = sz.x > 0 ? sz.x : 200.0f;
+        node->nat_h = ImGui::GetFrameHeight();
+        ImGui::PushItemWidth(sz.x > 0 ? sz.x : fill_w > 0 ? fill_w : 200.0f);
         if (node->label && node->label[0]) {
             ImGui::LabelText("##lbl", "%s", node->label);
             ImGui::SameLine();
@@ -521,7 +730,9 @@ static void render_widget(WidgetNode *node)
 
     /* ── PASSWORD ────────────────────────────────────────────────────────── */
     case WT_PASSWORD: {
-        ImGui::PushItemWidth(sz.x > 0 ? sz.x : 200.0f);
+        node->nat_w = sz.x > 0 ? sz.x : 200.0f;
+        node->nat_h = ImGui::GetFrameHeight();
+        ImGui::PushItemWidth(sz.x > 0 ? sz.x : fill_w > 0 ? fill_w : 200.0f);
         if (node->label && node->label[0]) {
             ImGui::LabelText("##lbl", "%s", node->label);
             ImGui::SameLine();
@@ -538,13 +749,13 @@ static void render_widget(WidgetNode *node)
 
     /* ── EDIT (multiline) ────────────────────────────────────────────────── */
     case WT_EDIT: {
-        /* pleine largeur ; toute la hauteur restante si space-expand */
-        ImVec2 avail = ImGui::GetContentRegionAvail();
-        /* space-expand : remplir le cadre. Le noeud porte 200x100 (taille par
-         * defaut du « scrolled window » de l'automate) qu'on ignore alors. */
+        /* pleine largeur ; etiree par sa boite (space-expand/fill, ou le
+         * defaut de gtk : une zone de texte s'etire), la place recue. */
+        node->nat_w = sz.x > 0 ? sz.x : 200.0f;
+        node->nat_h = sz.y > 0 ? sz.y : 120.0f;
         ImVec2 msz = {
-            node->expand == 1 ? -FLT_MIN : (sz.x > 0 ? sz.x : -FLT_MIN),
-            node->expand == 1 && avail.y > 60.0f ? avail.y : (sz.y > 0 ? sz.y : 120.0f)
+            fill_w > 0 ? fill_w : (sz.x > 0 ? sz.x : -FLT_MIN),
+            fill_h > 0 ? fill_h : node->nat_h
         };
         /* le contenu vit dans state.text (tas), pas dans entry.buf : lui
          * garantir une capacite d'edition avant de le confier a ImGui */
@@ -584,7 +795,11 @@ static void render_widget(WidgetNode *node)
         if (node->state.text.content && node->state.text.content[0]) t = node->state.text.content;
         int l = (int)strlen(t);
         while (l > 0 && (t[l - 1] == '\n' || t[l - 1] == '\r')) l--;
+        /* dans une rangee : repli a la largeur qu'elle offre */
+        bool repli = g_in_hbox && g_wrap_w > 0.0f;
+        if (repli) ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + g_wrap_w);
         ImGui::TextWrapped("%.*s", l, t);
+        if (repli) ImGui::PopTextWrapPos();
         break;
     }
 
@@ -653,7 +868,9 @@ static void render_widget(WidgetNode *node)
 
     /* ── LIST ────────────────────────────────────────────────────────────── */
     case WT_LIST: {
-        ImVec2 lsz = {sz.x > 0 ? sz.x : 200.0f, sz.y > 0 ? sz.y : 120.0f};
+        node->nat_w = sz.x > 0 ? sz.x : 200.0f;
+        node->nat_h = sz.y > 0 ? sz.y : 120.0f;
+        ImVec2 lsz = {fill_w > 0 ? fill_w : node->nat_w, fill_h > 0 ? fill_h : node->nat_h};
         /* <tree> (un WT_LIST du cœur) : colonnes « a|b|c » dans une table,
          * sous les en-têtes du <label>. Jusqu'à la 2.8.0, la ligne brute. */
         int nc = 1;
@@ -1307,86 +1524,80 @@ static void render_widget(WidgetNode *node)
     }
 
     case WT_HBOX: {
+        /* Rangee, parite gtk3 (widget_hbox.c). Les enfants y sont ranges par
+         * la FIN (pack_end) : sans enfant extensible, la rangee est calee A
+         * DROITE, cote a cote. La place en trop va, a parts egales, aux
+         * enfants extensibles (pk_expand, calcule a la creation) ; un enfant
+         * etire sans space-fill est CENTRE dans sa part. homogeneous : cases
+         * egales sur toute la longueur, l'enfant qui ne remplit pas la sienne
+         * y est centre. En hauteur, la rangee a celle de son plus haut enfant
+         * (ou la place recue) : boutons et cadres la remplissent, libelles et
+         * images y sont centres, les champs gardent leur hauteur. */
         bool prev = g_in_hbox;
         g_in_hbox = true;
-        /* gtkdialog empile les enfants d'un hbox par pack_end : sans enfant
-         * extensible, la rangee est CALEE A DROITE (etalon gtk3). La largeur
-         * est mesuree au rendu precedent (patron ImGui). */
-        bool any_expand = false;
+        const float sp = ImGui::GetStyle().ItemSpacing.x;
+        const ImVec2 p0 = ImGui::GetCursorPos();
+        const float W = fill_w > 0.0f ? fill_w
+                      : (prev ? node->nat_w : ImGui::GetContentRegionAvail().x);
+        const float H = fill_h > 0.0f ? fill_h : node->nat_h;
+        int n = 0, n_exp = 0;
+        float somme = 0.0f, max_w = 0.0f;
         for (int i = 0; i < node->child_count; i++) {
             WidgetNode *ch = node->children[i];
-            if (ch->expand == 1) any_expand = true;
-            else if (ch->expand == 0 &&
-                     (ch->type == WT_ENTRY || ch->type == WT_EDIT || ch->type == WT_FRAME ||
-                      ch->type == WT_LIST || ch->type == WT_TREE || ch->type == WT_TABLE ||
-                      ch->type == WT_NOTEBOOK || ch->type == WT_VBOX || ch->type == WT_HBOX))
-                any_expand = true;
+            if (!ch->visible) continue;
+            n++;
+            somme += ch->nat_w;
+            if (ch->pk_expand) n_exp++;
         }
-        if (!any_expand && node->row_w > 0.0f) {
-            float avail = ImGui::GetContentRegionAvail().x;
-            if (avail > node->row_w)
-                ImGui::SetCursorPosX(ImGui::GetCursorPosX() + avail - node->row_w);
-        }
-        /* Combien d'enfants extensibles vont etre enveloppes : ils se
-         * PARTAGENT la largeur restante. Le premier la prenait entiere
-         * (av.x), et ses freres disparaissaient — deux <frame space-expand>
-         * cote a cote ne montraient que le premier, ecrase sur son contenu.
-         * Mesure du 2026-09-20 : l'etalon gtk3 rend les deux colonnes. */
-        int a_partager = 0;
-        for (int i = 0; i < node->child_count; i++) {
-            WidgetNode *ch = node->children[i];
-            if (ch->expand == 1 &&
-                (ch->type == WT_VBOX || ch->type == WT_FRAME ||
-                 ch->type == WT_EDIT || ch->type == WT_LIST ||
-                 ch->type == WT_TREE || ch->type == WT_TABLE ||
-                 ch->type == WT_NOTEBOOK))
-                a_partager++;
-        }
-
+        if (n > 1) somme += sp * (float)(n - 1);
+        const float trop = W - somme;
+        const bool homog = node->homogeneous && n > 0;
+        const float case_w = homog ? (W - sp * (float)(n - 1)) / (float)n : 0.0f;
+        float x = p0.x;
+        if (!homog && n_exp == 0 && trop > 0.0f) x += trop;   /* calee a droite */
+        const float wrap_avant = g_wrap_w;
         ImGui::BeginGroup();
-        /* SameLine() seulement si le voisin precedent a emis quelque chose :
-         * un enfant muet (image sans texture) suivi de SameLine() recollait
-         * la ligne a celle de l'hbox PRECEDENT — tout l'en-tete sur une ligne */
-        bool emitted = false;
+        float nat_w = 0.0f, nat_h = 0.0f;
+        int k = 0;
         for (int i = 0; i < node->child_count; i++) {
-            if (emitted) ImGui::SameLine();
             WidgetNode *ch = node->children[i];
-            /* un enfant CONTENEUR extensible (colonne de droite, zone qui
-             * doit remplir) doit occuper la largeur restante ; ImGui ne
-             * distribue pas l'espace. On l'enveloppe dans un child de la
-             * taille restante. Les colonnes fixes rendues avant ont deja
-             * consomme leur largeur naturelle. */
-            bool wrap = (ch->expand == 1) &&
-                        (ch->type == WT_VBOX || ch->type == WT_FRAME ||
-                         ch->type == WT_EDIT || ch->type == WT_LIST ||
-                         ch->type == WT_TREE || ch->type == WT_TABLE ||
-                         ch->type == WT_NOTEBOOK);
-            ImVec2 c0 = ImGui::GetCursorPos();
-            if (wrap) {
-                ImVec2 av = ImGui::GetContentRegionAvail();
-                /* Sa part du restant. On divise par ce qui RESTE a placer,
-                 * pas par le total : le dernier recoit ainsi le reste exact,
-                 * sans arrondi perdu. */
-                float part = av.x;
-                if (a_partager > 1) {
-                    float sp = ImGui::GetStyle().ItemSpacing.x;
-                    part = (av.x - sp * (float)(a_partager - 1)) / (float)a_partager;
-                    if (part < 1.0f) part = 1.0f;
-                }
-                if (a_partager > 0) a_partager--;
-                char wid[288]; snprintf(wid, sizeof(wid), "%s##hxp%d", id, i);
-                if (ImGui::BeginChild(wid, ImVec2(part, av.y), ImGuiChildFlags_None))
-                    render_widget(ch);
-                ImGui::EndChild();
-                emitted = true;
-            } else {
-                render_widget(ch);
-                ImVec2 c1 = ImGui::GetCursorPos();
-                emitted = (c0.x != c1.x || c0.y != c1.y);
+            if (!ch->visible) { render_widget(ch); continue; }   /* minuteur */
+            const float part = homog ? case_w
+                : ch->nat_w + ((n_exp > 0 && trop > 0.0f && ch->pk_expand)
+                               ? trop / (float)n_exp : 0.0f);
+            float dx = 0.0f, dy = 0.0f;
+            const bool remplit = ch->pk_fill && sait_s_etirer(ch) &&
+                                 (homog || part > ch->nat_w + 0.5f);
+            if (remplit) g_fill_w = part;
+            else if (part > ch->nat_w + 0.5f) dx = (part - ch->nat_w) * 0.5f;
+            const bool en_case = ch->type == WT_NOTEBOOK && ch->pk_fill &&
+                                 part > ch->nat_w + 0.5f && H > 0.0f && ch->nat_h > 0.0f;
+            if (en_case) dx = 0.0f;
+            if (H > ch->nat_h + 0.5f) {
+                if (s_etire_en_hauteur(ch)) g_fill_h = H;
+                else if (se_centre(ch)) dy = (H - ch->nat_h) * 0.5f;
             }
+            /* largeur offerte : toute la rangee moins ce que prennent les autres */
+            float offre = W - (somme - ch->nat_w);
+            g_wrap_w = offre > part ? offre : part;
+            if (g_wrap_w < 1.0f) g_wrap_w = 1.0f;
+            ImGui::SetCursorPos(ImVec2(x + dx, p0.y + dy));
+            ImVec2 m = en_case ? rendre_dans_case(ch, id, i, part, H) : rendre_mesure(ch);
+            g_wrap_w = wrap_avant;
+            nat_w += m.x;
+            if (m.x > max_w) max_w = m.x;
+            if (m.y > nat_h) nat_h = m.y;
+            k++;
+            x += part + sp;
         }
+        if (homog) nat_w = max_w * (float)k;
+        if (k > 1) nat_w += sp * (float)(k - 1);
+        node->nat_w = nat_w;
+        node->nat_h = nat_h;
+        /* la rangee occupe sa hauteur (la place recue si elle est etiree) */
+        ImGui::SetCursorPos(p0);
+        ImGui::Dummy(ImVec2(0.0f, H > 0.0f ? H : 0.0f));
         ImGui::EndGroup();
-        if (!any_expand) node->row_w = ImGui::GetItemRectSize().x;
         g_in_hbox = prev;
         break;
     }
@@ -1395,45 +1606,49 @@ static void render_widget(WidgetNode *node)
          * restait vrai et la colonne entiere partait sur une seule ligne) */
         bool prev = g_in_hbox;
         g_in_hbox = false;
+        const float sp = ImGui::GetStyle().ItemSpacing.y;
         if (prev) ImGui::BeginGroup();
-        /* Un enfant extensible prend la hauteur RESTANTE. Ses freres d'apres
-         * — un bandeau bas, une rangee de boutons — sortaient alors du champ :
-         * ils etaient dessines sous le bord de la fenetre, invisibles.
-         * Mesure du 2026-09-20 sur examples/showcase/02-conteneurs.sh : gtk3
-         * montre le bandeau et le bouton, sdl3 n'en montrait aucun.
-         *
-         * On lui laisse donc la place de ses freres. Leur hauteur est celle
-         * MESUREE au rendu precedent (meme patron que row_w pour un hbox) :
-         * ImGui ne connait la taille d'un widget qu'apres l'avoir dessine.
-         * La premiere frame reserve 0 et deborde ; la suivante est juste — les
-         * douze frames de chauffe du rendu PNG suffisent largement. */
-        float apres_expand = -1.0f;
-        for (int i = 0; i < node->child_count; i++) {
-            WidgetNode *ch = node->children[i];
-            bool wrap = (ch->expand == 1) && (i + 1 < node->child_count) &&
-                        (ch->type == WT_HBOX || ch->type == WT_VBOX ||
-                         ch->type == WT_FRAME || ch->type == WT_EDIT ||
-                         ch->type == WT_LIST || ch->type == WT_TREE ||
-                         ch->type == WT_TABLE || ch->type == WT_NOTEBOOK);
-            if (wrap) {
-                ImVec2 av = ImGui::GetContentRegionAvail();
-                float h = av.y - node->tail_h;
-                /* garde-fou : une reserve absurde (freres plus hauts que la
-                 * fenetre) ne doit pas ecraser l'enfant a rien */
-                if (h < 40.0f) h = av.y;
-                char wid[288]; snprintf(wid, sizeof(wid), "%s##vxp%d", id, i);
-                if (ImGui::BeginChild(wid, ImVec2(av.x, h), ImGuiChildFlags_None))
-                    render_widget(ch);
-                ImGui::EndChild();
-                apres_expand = ImGui::GetCursorPosY();
-            } else {
-                render_widget(ch);
+        const float x0 = ImGui::GetCursorPosX();
+        const float wrap_avant = g_wrap_w;
+        g_wrap_w = 0.0f;
+        if (node->scroller) {
+            /* fenetre defilante du coeur : passe-plat, l'etirement recu va
+             * a l'enfant (zone de texte, liste) ; un enfant qui ne sait pas
+             * s'etirer (arbre, table) remplit une case de la hauteur recue. */
+            float nw = 0.0f, nh = 0.0f;
+            int k = 0;
+            for (int i = 0; i < node->child_count; i++) {
+                WidgetNode *ch = node->children[i];
+                if (!ch->visible) { render_widget(ch); continue; }
+                ImVec2 m;
+                if (sait_s_etirer(ch)) {
+                    g_fill_w = fill_w;
+                    g_fill_h = s_etire_en_hauteur(ch) ? fill_h : 0.0f;
+                    m = rendre_mesure(ch);
+                } else if (fill_h > 0.0f && ch->nat_h > 0.0f) {
+                    m = rendre_dans_case(ch, id, i, fill_w, fill_h);
+                } else {
+                    m = rendre_mesure(ch);
+                }
+                if (m.x > nw) nw = m.x;
+                nh += m.y;
+                k++;
             }
+            if (k > 1) nh += sp * (float)(k - 1);
+            node->nat_w = nw;
+            node->nat_h = nh;
+        } else {
+            /* colonne dans une rangee : ses textes se replient a la largeur
+             * que la rangee lui offre (ou qu'elle lui donne) */
+            const bool repli = prev && (fill_w > 0.0f || wrap_avant > 0.0f);
+            if (repli) ImGui::PushTextWrapPos(x0 + (fill_w > 0.0f ? fill_w : wrap_avant));
+            ImVec2 nat = colonne(node, id, fill_w, fill_h, prev,
+                                 prev ? node->nat_w : ImGui::GetContentRegionAvail().x);
+            node->nat_w = nat.x;
+            node->nat_h = nat.y;
+            if (repli) ImGui::PopTextWrapPos();
         }
-        if (apres_expand >= 0.0f) {
-            float t = ImGui::GetCursorPosY() - apres_expand;
-            if (t >= 0.0f) node->tail_h = t;
-        }
+        g_wrap_w = wrap_avant;
         if (prev) ImGui::EndGroup();
         g_in_hbox = prev;
         break;
@@ -1444,24 +1659,42 @@ static void render_widget(WidgetNode *node)
          * (2e frame, boutons) etaient rendus hors champ. */
         /* dans un hbox : largeur au contenu aussi, sinon le 1er frame
          * prend toute la ligne et le 2e disparait */
-        ImGuiChildFlags cf = ImGuiChildFlags_Borders | ImGuiChildFlags_AutoResizeY;
-        /* dans un hbox : largeur au contenu — SAUF si le cadre est extensible.
-         * Le hbox lui a alors deja reserve sa part de la ligne : se serrer sur
-         * son contenu la gaspille. Mesure du 2026-09-20 : un <frame
-         * space-expand> seul dans un hbox de 500 px sortait large de 70 px,
-         * son libelle coupe sur deux lignes, la ou gtk3 lui donne la ligne. */
-        if (g_in_hbox && node->expand != 1) cf |= ImGuiChildFlags_AutoResizeX;
-        /* cadre space-expand : il prend la place restante (sa zone de texte la
-         * remplit) au lieu de se serrer sur son contenu — en hauteur comme en
-         * largeur, dans un hbox comme dans une vbox. */
-        if (node->expand == 1) cf &= ~ImGuiChildFlags_AutoResizeY;
-        if (ImGui::BeginChild(id, sz, cf)) {
-            if (node->label && node->label[0])
+        ImGuiChildFlags cf = ImGuiChildFlags_Borders;
+        ImVec2 fsz = sz;
+        /* etire par sa boite (un cadre s'etire par defaut, comme dans gtk) :
+         * la place recue, en largeur dans une rangee, en hauteur dans une
+         * colonne ; sinon au contenu. */
+        if (fill_w > 0.0f) fsz.x = fill_w;
+        else if (g_in_hbox) cf |= ImGuiChildFlags_AutoResizeX;
+        if (fill_h > 0.0f) fsz.y = fill_h;
+        else cf |= ImGuiChildFlags_AutoResizeY;
+        const float wrap_avant = g_wrap_w;
+        if (!(cf & ImGuiChildFlags_AutoResizeX)) g_wrap_w = 0.0f;   /* la fenetre fille replie */
+        if (ImGui::BeginChild(id, fsz, cf)) {
+            const ImGuiStyle &st = ImGui::GetStyle();
+            float nw = 0.0f;
+            if (node->label && node->label[0]) {
                 ImGui::SeparatorText(node->label);
-            for (int i = 0; i < node->child_count; i++)
-                render_widget(node->children[i]);
+                nw = ImGui::CalcTextSize(node->label, NULL, true).x +
+                     st.SeparatorTextPadding.x * 2.0f;
+            }
+            const float y0 = ImGui::GetCursorPosY();
+            const ImVec2 av = ImGui::GetContentRegionAvail();
+            /* l'etalon range les enfants d'un cadre dans une boite verticale
+             * (regles de colonne, rangement calcule a la creation) qui le
+             * remplit : etire, le cadre passe sa place a ses enfants. Au
+             * contenu (dans une rangee), la largeur est la naturelle. */
+            const bool au_contenu = (cf & ImGuiChildFlags_AutoResizeX) != 0;
+            const float wv = au_contenu ? node->nat_w - st.WindowPadding.x * 2.0f : av.x;
+            ImVec2 nat = colonne(node, id, au_contenu ? 0.0f : av.x,
+                                 fill_h > 0.0f ? av.y : 0.0f, g_in_hbox, wv);
+            if (nat.x > nw) nw = nat.x;
+            const float nh = nat.y;
+            node->nat_w = nw + st.WindowPadding.x * 2.0f;
+            node->nat_h = y0 + nh + st.WindowPadding.y;
         }
         ImGui::EndChild();
+        g_wrap_w = wrap_avant;
         break;
     }
     case WT_EXPANDER: {
@@ -1479,7 +1712,18 @@ static void render_widget(WidgetNode *node)
 
     /* ── SEPARATOR ───────────────────────────────────────────────────────── */
     case WT_SEPARATOR: {
-        ImGui::Separator();
+        if (g_in_hbox) {
+            /* dans une rangee : un trait VERTICAL, de la hauteur d'une ligne.
+             * Separator() trace jusqu'au bord de la fenetre : mesure, il
+             * prenait toute la rangee et poussait ses voisins hors champ. */
+            float h = ImGui::GetFrameHeight();
+            ImVec2 p = ImGui::GetCursorScreenPos();
+            ImGui::Dummy(ImVec2(1.0f, h));
+            ImGui::GetWindowDrawList()->AddLine(p, ImVec2(p.x, p.y + h),
+                                                ImGui::GetColorU32(ImGuiCol_Separator));
+        } else {
+            ImGui::Separator();
+        }
         break;
     }
 
@@ -1522,7 +1766,14 @@ static void render_widget(WidgetNode *node)
             ImGui::PushStyleColor(ImGuiCol_Button,       active_col);
             ImGui::PushStyleColor(ImGuiCol_ButtonHovered,active_col);
         }
-        if (ImGui::Button(label, sz)) {
+        {
+            const ImGuiStyle &st = ImGui::GetStyle();
+            ImVec2 ts = ImGui::CalcTextSize(label, NULL, true);
+            node->nat_w = ts.x + st.FramePadding.x * 2.0f;
+            node->nat_h = ts.y + st.FramePadding.y * 2.0f;
+        }
+        ImVec2 tsz(sz.x > 0 ? sz.x : fill_w, sz.y > 0 ? sz.y : fill_h);
+        if (ImGui::Button(label, tsz)) {
             node->state.toggle.active = !on;
             if (node->var_name)
                 export_bool(node->var_name, node->state.toggle.active);

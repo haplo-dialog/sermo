@@ -15,6 +15,7 @@
 #define _GNU_SOURCE
 #endif
 #include "html-compat.h"
+#include "sermo_focus.h"
 #include "dialog_state.h"
 #include "gtkdialog.h"
 #include "attributes.h"
@@ -84,6 +85,7 @@ GtkWidget *widget_table_create(AttributeSet *Attr, tag_attr *attr, gint Type)
          * fois. */
     }
 
+    node->focus_initial = sermo_focus_initial("table");
     return (GtkWidget *)node;
 }
 
@@ -95,6 +97,9 @@ gchar *widget_table_envvar_construct(GtkWidget *widget)
     if (!n || n->state.table.rows < 1 || n->state.table.cols < 1 ||
         !n->state.table.cells || !n->state.table.cells[0])
         return g_strdup("");
+    /* sans sélection, la 1re ligne n'est choisie que si le tableau prend le
+     * focus à l'ouverture, comme gtk3sermo (sermo_focus.h) */
+    if (!n->focus_initial) return g_strdup("");
     return g_strdup(n->state.table.cells[0]);
 }
 

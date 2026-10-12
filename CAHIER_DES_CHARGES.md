@@ -75,9 +75,10 @@ cloisonnement de processus (IPC), nouveaux backends.
 - ENF1 — **Sécurité** : `safe_system`/`safe_popen`, pas de shell hors
   métacaractères, échappement de sortie, durcissement (FORTIFY=3, PIE, RELRO,
   CET) — voir [SECURITY.md](SECURITY.md).
-- ENF2 — **Vérifiabilité** : trois bancs rejouables (XML 55, comportement 52,
+- ENF2 — **Vérifiabilité** : trois bancs rejouables (XML 55, comportement 61,
   et les gardes `tests/garde_*.sh`) gardent chaque étape.
-- ENF3 — **Légèreté** : `sermo-core-dev` ne dépend que de `libc6` ; chaque
+- ENF3 — **Légèreté** : `sermo-core-dev` n'a aucune dépendance (bibliothèque
+  statique) ; chaque
   backend, que de sa toolkit (dépendances dérivées, non devinées).
 - ENF4 — **Thème** : chaque backend suit le thème système courant.
 
@@ -98,7 +99,9 @@ backends `sermo-backend-<t>` (rendu + boucle). Détail :
 
 - `libsermocore` (3 variantes) + `sermocore.pc`.
 - 7 backends (gtk4 et ncurses inclus) ; 9 paquets `.deb` (`sermo-core-dev` +
-  7 backends + `sermo-gtkdialog`).
+  7 backends + `sermo-gtkdialog`). Depuis : 9 backends (lvgl et html en 2.8.0) ;
+  18 paquets en 2.8.2 (`sermo-core-dev`, 9 backends, `sermo-doc`,
+  `sermo-gtkdialog`, 4 paquets de transition, `sermoia-mcp`, `sermoman-mcp`).
 - Jeu documentaire complet (manuels, man page, Texinfo, bilan, changelog…).
 
 ## 9. Jalons
@@ -110,10 +113,12 @@ Phase 2 (gtk4 24/24, doc, 9 .deb) ✅ ; Phase 3 (frontière propre) en cours
 
 ## 10. Critères d'acceptation
 
-- CA1 — Les sept backends lient et tournent sur `libsermocore`. ✅
-- CA2 — Chaque backend passe les trois bancs. ✅ **7/7** à 53/53 (comportement
+- CA1 — Les sept backends lient et tournent sur `libsermocore`. ✅ (Neuf
+  depuis la 2.8.0.)
+- CA2 — Chaque backend passe les trois bancs. ✅ **9/9** à 61/61 (comportement
   rejoué par `tests/comportement/run_all.sh`), XML 55/55, gardes — ncurses joue
-  le comportement en mode batch headless — [BILAN_SANTE.md](BILAN_SANTE.md).
+  le comportement en mode batch headless — [BILAN_SANTE.md](BILAN_SANTE.md)
+  (2.8.0, 2026-10-10).
 - CA3 — Dépendances runtime disjointes, prouvées. ✅
 - CA4 — Aucun banc rouge introduit par la modularisation. ✅
 
@@ -123,8 +128,9 @@ Phase 2 (gtk4 24/24, doc, 9 .deb) ✅ ; Phase 3 (frontière propre) en cours
   `gtk_main`/`gtk_socket` ; parade = variante `SERMOCORE_GTK4` dédiée, **vendorée
   dans `libsermocore/src-gtk4/`** (plus de dépendance externe). Reste à fondre en
   source unique en Phase 3.
-- **R2 — Couplage cœur→backend** (`widget_*_create`, ponts `qt6_*`) : empêche une
-  `.so` partagée propre ; levé par la formalisation d'une IR (Part 3).
+- **R2 — Couplage cœur→backend** (`widget_*_create`, ponts `qt6_*`, devenus
+  `sermo_be_*`) : empêche une `.so` partagée propre ; levé par la formalisation
+  d'une IR (Part 3).
 - **R3 — Fuite d'attribution** à la publication : filtrer en-têtes de poste et
   métadonnées d'auteur avant toute copie publique.
 

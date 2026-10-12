@@ -1,0 +1,29 @@
+<!-- Script : examples/boites-a-outils/systeme/07-energie.sh (dialogue principal) -->
+<window title="Énergie de l'écran" default-width="520">
+  <vbox>
+    <frame label="Où régler">
+      <vbox>
+        <radiobutton><label>XFCE, durablement (gestionnaire d'énergie)</label><default>true</default><variable>CIBLE_XFCE</variable></radiobutton>
+        <radiobutton><label>Session en cours seulement (xset, perdu à la déconnexion)</label><default>false</default><variable>CIBLE_X</variable></radiobutton>
+      </vbox>
+    </frame>
+    <frame label="Sur secteur (0 = jamais)">
+      <vbox>
+        <hbox><text><label>Gestion d'énergie de l'écran (DPMS) :</label></text>
+          <switch><variable>DPMS</variable><default>true</default></switch></hbox>
+        <hbox><text><label>Écran noir après (min) :</label></text>
+          <spinbutton range-min="0" range-max="180" range-step="1"><variable>NOIR</variable><default>10</default></spinbutton></hbox>
+        <hbox><text><label>Mise en veille après (min) :</label></text>
+          <spinbutton range-min="0" range-max="180" range-step="1"><variable>VEILLE</variable><default>15</default></spinbutton></hbox>
+        <hbox><text><label>Extinction après (min) :</label></text>
+          <spinbutton range-min="0" range-max="180" range-step="1"><variable>ETEINT</variable><default>30</default></spinbutton></hbox>
+      </vbox>
+    </frame>
+    <checkbox><label>Mêmes délais sur batterie (XFCE)</label><variable>BATTERIE</variable><default>true</default></checkbox>
+    <statusbar><variable>ETAT</variable><default>XFCE : écran noir 10 min, veille 15 min, extinction 30 min.</default></statusbar>
+    <hbox>
+      <button cancel></button>
+      <button><label>Appliquer</label><action>exit:appliquer</action></button>
+    </hbox>
+  </vbox>
+</window>

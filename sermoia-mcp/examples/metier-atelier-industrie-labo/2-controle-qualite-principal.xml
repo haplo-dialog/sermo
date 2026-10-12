@@ -1,0 +1,33 @@
+<!-- Script : examples/metiers/06-atelier-industrie-labo/2-controle-qualite.sh (dialogue principal) -->
+<window title="Contrôle qualité" default-width="620">
+  <vbox>
+
+    <hbox>
+      <text><label>Ordre de fabrication :</label></text>
+      <entry><variable>OF</variable><default>OF-26-0815</default></entry>
+      <text><label>Contrôleur :</label></text>
+      <entry><variable>CONTROLEUR</variable><default>mdupuis</default></entry>
+    </hbox>
+    <frame label="Points de contrôle">
+      <grid columns="2" row-spacing="6" column-spacing="12">
+        <text><label>Aspect visuel (rayures, chocs, bavures)</label></text>
+        <comboboxtext><variable>POINT_1</variable><default>À contrôler</default><item>À contrôler</item><item>Conforme</item><item>Non conforme</item><item>Sans objet</item></comboboxtext>
+        <text><label>Cotes fonctionnelles (plan indice C)</label></text>
+        <comboboxtext><variable>POINT_2</variable><default>À contrôler</default><item>À contrôler</item><item>Conforme</item><item>Non conforme</item><item>Sans objet</item></comboboxtext>
+        <text><label>Marquage et traçabilité du lot</label></text>
+        <comboboxtext><variable>POINT_3</variable><default>À contrôler</default><item>À contrôler</item><item>Conforme</item><item>Non conforme</item><item>Sans objet</item></comboboxtext>
+        <text><label>Propreté (copeaux, huile)</label></text>
+        <comboboxtext><variable>POINT_4</variable><default>À contrôler</default><item>À contrôler</item><item>Conforme</item><item>Non conforme</item><item>Sans objet</item></comboboxtext>
+        <text><label>Emballage et étiquette</label></text>
+        <comboboxtext><variable>POINT_5</variable><default>À contrôler</default><item>À contrôler</item><item>Conforme</item><item>Non conforme</item><item>Sans objet</item></comboboxtext>
+      </grid>
+    </frame>
+    <frame label="Remarque (obligatoire en cas de non-conformité)">
+      <edit wrap-mode="word" height-request="100"><variable>REMARQUE</variable></edit>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Valider le contrôle</label><action>exit:valider</action></button>
+    </hbox>
+  </vbox>
+</window>

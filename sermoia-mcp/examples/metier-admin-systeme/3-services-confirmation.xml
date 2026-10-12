@@ -1,0 +1,11 @@
+<!-- Script : examples/metiers/01-admin-systeme/3-services.sh (dialogue confirmation) -->
+<window title="Confirmer">
+  <vbox>
+    <text><label>Vraiment arrêter le service cups.service ?</label></text>
+    <text><label>Les utilisateurs de ce service seront coupés.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Confirmer</label><action>exit:confirmer</action></button>
+    </hbox>
+  </vbox>
+</window>

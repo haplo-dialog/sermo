@@ -1,0 +1,37 @@
+<!-- Script : examples/boites-a-outils/utilisateur/01-rechercher-fichiers.sh (dialogue principal) -->
+<window title="Retrouver un fichier" default-width="560">
+  <vbox>
+    <frame label="Où chercher">
+      <hbox><text><label>Dans le dossier :</label></text>
+        <entry space-expand="true" space-fill="true"><variable>DOSSIER</variable><default>/home/utilisateur</default></entry></hbox>
+    </frame>
+    <frame label="Ce que je cherche">
+      <vbox>
+        <hbox><text><label>Le nom contient :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>NOM</variable><default>facture</default></entry></hbox>
+        <hbox><text><label>Genre de fichier :</label></text>
+          <comboboxtext><variable>GENRE</variable><default>Tous</default>
+            <item>Tous</item><item>Documents</item><item>Images</item><item>Musique</item><item>Vidéos</item><item>Archives</item>
+          </comboboxtext></hbox>
+        <text><label>Taille :</label></text>
+        <hbox>
+          <radiobutton><label>Peu importe</label><variable>T_TOUTES</variable><default>true</default></radiobutton>
+          <radiobutton><label>Plus de 1 Mo</label><variable>T_MOYEN</variable></radiobutton>
+          <radiobutton><label>Plus de 100 Mo</label><variable>T_GROS</variable></radiobutton>
+        </hbox>
+      </vbox>
+    </frame>
+    <expander label="Plus d'options">
+      <vbox>
+        <checkbox><label>Seulement les fichiers changés depuis le jour choisi</label><variable>AVEC_DATE</variable></checkbox>
+        <calendar><variable>DEPUIS</variable><default>2026-01-01</default></calendar>
+        <checkbox><label>Chercher aussi dans les dossiers cachés</label><variable>CACHES</variable></checkbox>
+      </vbox>
+      <variable>PLUS</variable>
+    </expander>
+    <hbox>
+      <button cancel></button>
+      <button><label>Chercher</label><action>exit:chercher</action></button>
+    </hbox>
+  </vbox>
+</window>

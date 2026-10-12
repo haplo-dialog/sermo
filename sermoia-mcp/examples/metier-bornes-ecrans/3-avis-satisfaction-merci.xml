@@ -1,0 +1,10 @@
+<!-- Script : examples/metiers/05-bornes-ecrans/3-avis-satisfaction.sh (dialogue merci) -->
+<window title="Merci">
+  <vbox>
+    <text><label>Merci pour votre avis.</label></text>
+    <timer visible="false" interval="6"><action>exit:fin</action></timer>
+    <hbox>
+      <button ok></button>
+    </hbox>
+  </vbox>
+</window>

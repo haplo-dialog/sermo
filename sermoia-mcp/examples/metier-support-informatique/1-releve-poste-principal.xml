@@ -1,0 +1,27 @@
+<!-- Script : examples/metiers/03-support-informatique/1-releve-poste.sh (dialogue principal) -->
+<window title="Relevé du poste" default-width="460">
+  <vbox>
+    <frame label="Pour qui">
+      <vbox>
+        <hbox><text><label>Demandeur :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>DEMANDEUR</variable></entry></hbox>
+        <hbox><text><label>N° de ticket :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>TICKET</variable></entry></hbox>
+      </vbox>
+    </frame>
+    <frame label="Ce que le relevé contient">
+      <vbox>
+        <checkbox><label>Système (distribution, noyau, durée de marche)</label><default>true</default><variable>R_SYSTEME</variable></checkbox>
+        <checkbox><label>Processeur</label><default>true</default><variable>R_MATERIEL</variable></checkbox>
+        <checkbox><label>Mémoire</label><default>true</default><variable>R_MEMOIRE</variable></checkbox>
+        <checkbox><label>Disques et partitions</label><default>true</default><variable>R_DISQUES</variable></checkbox>
+        <checkbox><label>Réseau (adresses, passerelle)</label><default>true</default><variable>R_RESEAU</variable></checkbox>
+        <checkbox><label>Versions de quelques logiciels clés</label><variable>R_LOGICIELS</variable></checkbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Faire le relevé</label><action>exit:relever</action></button>
+    </hbox>
+  </vbox>
+</window>

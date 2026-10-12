@@ -121,6 +121,7 @@ void action_closewindow(GtkWidget *widget, char *string)
 		if (variables_count_widgets() == 0) {
 
 			printf("EXIT=\"closewindow\"\n");
+			g_setenv("EXIT", "closewindow", TRUE);   /* --do lit EXIT dans l'environnement (manuel §3.2) : il n'y était pas. */
 
 			/* Redundant: Since being here requires that there are no
 			 * remaining variables therefore there's nothing to print.
@@ -248,8 +249,17 @@ try launching from a checkbox which is activated by the timer.",
  * Action exit                                                         *
  ***********************************************************************/
 
+/* Crochet FACULTATIF du contrat (contract/sermo-contract.h) : un port qui
+ * tient le terminal (ncurses) le rend ici, AVANT que les variables soient
+ * écrites. Sinon elles partaient dans l'écran alterné et s'effaçaient avec lui
+ * à la sortie. Déclaré FAIBLE : un port qui ne le fournit pas se lie quand même. */
+__attribute__((weak)) void sermo_be_before_export(void);
+
 void action_exitprogram(GtkWidget *widget, char *string)
 {
+	if (sermo_be_before_export)
+		sermo_be_before_export();
+
 	print_variables(NULL);
 
 	if (string[0] == '=') {
@@ -261,6 +271,10 @@ void action_exitprogram(GtkWidget *widget, char *string)
 		gchar *escaped = shell_escape_value(string);
 		printf("EXIT=\"%s\"\n", escaped);
 		g_free(escaped);
+		/* --do lit EXIT dans l'environnement (manuel §3.2) : seules les
+		 * variables des widgets y étaient. La valeur brute, sans échappement :
+		 * l'environnement n'est jamais relu comme du code. */
+		g_setenv("EXIT", string, TRUE);
 	}
 
 #ifdef DEBUG

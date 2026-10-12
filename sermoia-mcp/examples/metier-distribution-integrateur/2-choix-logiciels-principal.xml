@@ -1,0 +1,42 @@
+<!-- Script : examples/metiers/04-distribution-integrateur/2-choix-logiciels.sh (dialogue principal) -->
+<window title="Choix des logiciels" default-width="600">
+  <vbox>
+    <frame label="Profil du poste">
+      <vbox>
+        <radiobutton><label>Poste de base : navigateur, visionneuse, éditeur de texte</label><variable>PROFIL_BASE</variable><default>true</default></radiobutton>
+        <radiobutton><label>Bureautique : base + LibreOffice, courrier, correcteur français</label><variable>PROFIL_BUREAUTIQUE</variable></radiobutton>
+        <radiobutton><label>Développement : base + git, compilateur, meson, débogueur</label><variable>PROFIL_DEV</variable></radiobutton>
+        <radiobutton><label>Multimédia : base + VLC, Audacity, GIMP, Inkscape</label><variable>PROFIL_MULTIMEDIA</variable></radiobutton>
+      </vbox>
+    </frame>
+    <frame label="Logiciels en plus">
+      <notebook tab-labels="Internet|Documents|Graphisme|Outils">
+        <vbox>
+          <checkbox><label>Firefox en français (firefox-esr-l10n-fr)</label><variable>L_FIREFOX_FR</variable><default>true</default></checkbox>
+          <checkbox><label>Thunderbird, courrier (thunderbird)</label><variable>L_THUNDERBIRD</variable></checkbox>
+          <checkbox><label>Transmission, téléchargements BitTorrent (transmission-gtk)</label><variable>L_TRANSMISSION</variable></checkbox>
+        </vbox>
+        <vbox>
+          <checkbox><label>Evince, lecteur PDF (evince)</label><variable>L_EVINCE</variable><default>true</default></checkbox>
+          <checkbox><label>Simple Scan, numérisation (simple-scan)</label><variable>L_SCAN</variable></checkbox>
+          <checkbox><label>KeePassXC, mots de passe (keepassxc)</label><variable>L_KEEPASSXC</variable></checkbox>
+        </vbox>
+        <vbox>
+          <checkbox><label>GIMP, retouche photo (gimp)</label><variable>L_GIMP</variable></checkbox>
+          <checkbox><label>Inkscape, dessin vectoriel (inkscape)</label><variable>L_INKSCAPE</variable></checkbox>
+          <checkbox><label>darktable, développement RAW (darktable)</label><variable>L_DARKTABLE</variable></checkbox>
+        </vbox>
+        <vbox>
+          <checkbox><label>GParted, partitions (gparted)</label><variable>L_GPARTED</variable></checkbox>
+          <checkbox><label>Timeshift, instantanés du système (timeshift)</label><variable>L_TIMESHIFT</variable></checkbox>
+          <checkbox><label>htop, processus (htop)</label><variable>L_HTOP</variable><default>true</default></checkbox>
+        </vbox>
+      </notebook>
+    </frame>
+    <checkbox><label>Installer aussi les paquets recommandés (plus complet, plus lourd)</label><variable>RECOMMANDES</variable></checkbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Voir ce qui sera installé</label><action>exit:preparer</action></button>
+    </hbox>
+  </vbox>
+</window>

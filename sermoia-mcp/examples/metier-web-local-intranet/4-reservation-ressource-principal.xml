@@ -1,0 +1,39 @@
+<!-- Script : examples/metiers/12-web-local-intranet/4-reservation-ressource.sh (dialogue principal) -->
+<window title="Réserver une ressource" default-width="620">
+  <vbox>
+    <frame label="Déjà réservé">
+      <tree scrollable="true" height-request="110">
+        <label>Ressource|Date|Début|Fin|Par</label>
+        <variable>DEJA</variable>
+        <item>Salle Rhône (12 places)|2026-10-14|09:00|11:00|C. Martin</item>
+        <item>Véhicule de service|2026-10-15|08:00|17:00|L. Bernard</item>
+      </tree>
+    </frame>
+    <frame label="Nouvelle réservation">
+      <vbox>
+        <text><label>Ressource :</label></text>
+        <list height-request="90"><variable>RESSOURCE</variable>
+          <item>Salle Rhône (12 places)</item>
+          <item>Salle Isère (6 places)</item>
+          <item>Vidéoprojecteur portable</item>
+          <item>Véhicule de service</item>
+        </list>
+        <hbox>
+          <calendar><variable>JOUR</variable><default>2026-10-14</default></calendar>
+          <vbox>
+            <hbox><text><label>Début (heure) :</label></text>
+              <spinbutton range-min="7" range-max="19" range-step="1"><variable>DEBUT</variable><default>14</default></spinbutton></hbox>
+            <hbox><text><label>Durée (heures) :</label></text>
+              <spinbutton range-min="1" range-max="10" range-step="1"><variable>DUREE</variable><default>2</default></spinbutton></hbox>
+            <hbox><text><label>Votre nom :</label></text>
+              <entry><variable>NOM</variable><default>C. Martin</default></entry></hbox>
+          </vbox>
+        </hbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Réserver</label><action>exit:reserver</action></button>
+    </hbox>
+  </vbox>
+</window>

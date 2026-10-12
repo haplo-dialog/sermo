@@ -33,6 +33,9 @@ declare -A PERMIS=(
     # Les fichiers du thème d'icônes (index.theme, réglages GTK).
     ['libsermocore/src/sermo_icon_theme.c|f = fopen(path, "r");']=1
     ['libsermocore/src/sermo_icon_theme.c|if ((f = fopen(path, "r"))) {']=4
+    # Une icône symbolique à recolorer (sermo_icon_symbolique_teinte) : un
+    # fichier du thème, refusé au-delà de 1 Mio avant toute lecture.
+    ['libsermocore/src/sermo_icon_theme.c|FILE *f = fopen(path, "rb");']=1
     # Le tube de safe_popen(), plafonné à la ligne suivante (sermo_input_wrap).
     ['libsermocore/src/safe_exec.c|stream = fdopen(stdout_fd, "r");']=1
     ['libsermocore/src-gtk4/safe_exec.c|stream = fdopen(stdout_fd, "r");']=1

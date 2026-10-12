@@ -1,0 +1,40 @@
+<!-- Script : examples/metiers/01-admin-systeme/4-journaux.sh (dialogue principal) -->
+<window title="Journal système" default-width="520">
+  <vbox>
+    <frame label="Filtres">
+      <vbox>
+        <hbox><text><label>Service (vide = tous) :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>UNITE</variable><default>ssh.service</default></entry></hbox>
+        <hbox><text><label>Gravité au moins :</label></text>
+          <comboboxtext space-expand="true" space-fill="true">
+            <variable>PRIORITE</variable>
+            <default>warning</default>
+            <item>emerg</item>
+            <item>alert</item>
+            <item>crit</item>
+            <item>err</item>
+            <item>warning</item>
+            <item>notice</item>
+            <item>info</item>
+            <item>debug</item>
+          </comboboxtext></hbox>
+        <checkbox><label>Messages du noyau seulement (-k)</label><variable>NOYAU</variable></checkbox>
+      </vbox>
+    </frame>
+    <frame label="Période">
+      <vbox>
+        <radiobutton><label>Dernière heure</label><variable>P_HEURE</variable></radiobutton>
+        <radiobutton><label>Depuis le dernier démarrage</label><default>true</default><variable>P_DEMARRAGE</variable></radiobutton>
+        <radiobutton><label>Depuis la date choisie ci-dessous</label><variable>P_DATE</variable></radiobutton>
+        <calendar><variable>DEPUIS</variable><default>2026-10-11</default></calendar>
+      </vbox>
+    </frame>
+    <hbox><text><label>Nombre de lignes au plus :</label></text>
+      <spinbutton range-min="10" range-max="5000" range-step="10"><variable>LIGNES</variable><default>300</default></spinbutton>
+      <checkbox><label>Les plus récentes d'abord</label><default>true</default><variable>INVERSE</variable></checkbox></hbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Afficher</label><action>exit:afficher</action></button>
+    </hbox>
+  </vbox>
+</window>

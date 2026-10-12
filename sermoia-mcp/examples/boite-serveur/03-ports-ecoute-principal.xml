@@ -1,0 +1,29 @@
+<!-- Script : examples/boites-a-outils/serveur/03-ports-ecoute.sh (dialogue principal) -->
+<window title="Ports à l'écoute" default-width="600">
+  <vbox>
+    <text><label>Programmes qui attendent des connexions (ss -tulnp) :</label></text>
+    <table scrollable="true" height-request="170">
+      <label>PID|Programme|Adresse|Port|Proto</label>
+      <variable>PID_CHOISI</variable>
+<item>612|sshd|0.0.0.0|22|tcp</item>
+<item>905|nginx|0.0.0.0|80|tcp</item>
+<item>905|nginx|0.0.0.0|443|tcp</item>
+<item>741|postgres|127.0.0.1|5432|tcp</item>
+<item>1288|rpcbind|0.0.0.0|111|udp</item>
+<item>1530|smbd|0.0.0.0|445|tcp</item>
+    </table>
+    <frame label="Pour le service de la ligne choisie">
+      <hbox>
+        <radiobutton><label>Arrêter</label><default>true</default><variable>A_ARRETER</variable></radiobutton>
+        <radiobutton><label>+ désactiver</label><variable>A_DESACTIVER</variable></radiobutton>
+        <radiobutton><label>+ masquer</label><variable>A_MASQUER</variable></radiobutton>
+      </hbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Relire</label><action>exit:relire</action></button>
+      <button><label>Agir sur le service</label><action>exit:agir</action></button>
+    </hbox>
+    <statusbar><variable>ETAT</variable><default>Lecture seule tant que vous n'avez pas confirmé.</default></statusbar>
+  </vbox>
+</window>

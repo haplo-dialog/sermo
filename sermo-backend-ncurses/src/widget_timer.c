@@ -46,8 +46,13 @@ GtkWidget *widget_timer_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         const char *v;
         if ((v = get_tag_attribute(attr, "interval")) && *v)
             interval = g_ascii_strtod(v, NULL);
-        if ((v = get_tag_attribute(attr, "milliseconds")) && *v)
-            interval = g_ascii_strtod(v, NULL) / 1000.0;
+        /* milliseconds="true" : l'intervalle est en millisecondes (un
+         * booléen, comme gtk3sermo). Il était lu comme un nombre : « true »
+         * valait 0, et le minuteur partait toutes les secondes. */
+        if ((v = get_tag_attribute(attr, "milliseconds")) &&
+            (strcasecmp(v, "true") == 0 || strcasecmp(v, "yes") == 0 || atoi(v) == 1) &&
+            get_tag_attribute(attr, "interval"))   /* sans interval : 1000 ms = 1 s */
+            interval /= 1000.0;
         if ((v = get_tag_attribute(attr, "variable")) && *v)
             node->var_name = strdup(v);
     }

@@ -1,0 +1,15 @@
+<!-- Script : examples/boites-a-outils/administrateur/05-montages.sh (dialogue confirmation) -->
+<window title="Ajouter à /etc/fstab ?" default-width="640">
+  <vbox>
+    <text><label>Ligne ajoutée à la fin de /etc/fstab :</label></text>
+    <entry editable="false"><variable>LIGNE_VUE</variable><default>UUID=3f2c9a1e-7b4d-4e8a-9c21-5d6e7f8a9b0c /srv/archives auto defaults,nofail,noatime 0 2</default></entry>
+    <frame label="Test de la table (findmnt --verify, sans rien monter)">
+      <text><label>Success, no errors or warnings detected</label></text>
+    </frame>
+    <checkbox><label>Monter tout de suite après l'ajout</label><default>true</default><variable>MONTER</variable></checkbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Ajouter la ligne</label><action>exit:ajouter</action></button>
+    </hbox>
+  </vbox>
+</window>

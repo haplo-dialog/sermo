@@ -1,0 +1,11 @@
+<!-- Script : examples/metiers/03-support-informatique/3-reseau.sh (dialogue confirmation) -->
+<window title="Confirmer">
+  <vbox>
+    <text><label>Le poste va perdre le réseau un moment :</label></text>
+    <text><label>désactiver « Bureau filaire »</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Confirmer</label><action>exit:confirmer</action></button>
+    </hbox>
+  </vbox>
+</window>

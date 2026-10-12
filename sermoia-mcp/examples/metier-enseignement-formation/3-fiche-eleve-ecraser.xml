@@ -1,0 +1,11 @@
+<!-- Script : examples/metiers/08-enseignement-formation/3-fiche-eleve.sh (dialogue ecraser) -->
+<window title="Fiche déjà présente">
+  <vbox>
+    <text><label>La fiche /home/utilisateur/Documents/Eleves/5e_B/PETIT_Lucas.txt existe déjà.</label></text>
+    <text><label>La remplacer ? L'ancienne version sera perdue.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Remplacer la fiche</label><action>exit:remplacer</action></button>
+    </hbox>
+  </vbox>
+</window>

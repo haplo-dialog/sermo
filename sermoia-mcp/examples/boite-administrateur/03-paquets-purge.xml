@@ -1,0 +1,11 @@
+<!-- Script : examples/boites-a-outils/administrateur/03-paquets.sh (dialogue purge) -->
+<window title="Purger le paquet ?">
+  <vbox>
+    <text><label>Le paquet evince sera retiré, avec ses fichiers de configuration sous /etc.</label></text>
+    <text><label>Les réglages faits à la main dans ces fichiers seront perdus.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Purger</label><action>exit:purger</action></button>
+    </hbox>
+  </vbox>
+</window>

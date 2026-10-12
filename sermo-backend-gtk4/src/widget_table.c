@@ -22,6 +22,7 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
+#include "sermo_focus.h"
 #include <gtk/gtk.h>
 #include "config.h"
 #include "gtkdialog.h"
@@ -279,6 +280,12 @@ GtkWidget *widget_table_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 
     /* ── Construire le GtkColumnView ──────────────────────────────── */
     td->selection  = gtk_single_selection_new(G_LIST_MODEL(td->store));
+    /* Pas de ligne choisie d'office : GtkSingleSelection prenait toujours la
+     * 1re, gtk3sermo seulement quand le tableau prend le focus à l'ouverture
+     * (sermo_focus.h ; voir l'export). */
+    gtk_single_selection_set_autoselect(td->selection, FALSE);
+    gtk_single_selection_set_can_unselect(td->selection, TRUE);
+    gtk_single_selection_set_selected(td->selection, GTK_INVALID_LIST_POSITION);
     td->column_view = gtk_column_view_new(GTK_SELECTION_MODEL(td->selection));
     gtk_column_view_set_show_row_separators(GTK_COLUMN_VIEW(td->column_view), TRUE);
     gtk_column_view_set_show_column_separators(GTK_COLUMN_VIEW(td->column_view), TRUE);
@@ -297,6 +304,7 @@ GtkWidget *widget_table_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     gtk_widget_set_visible(sw, TRUE);
 
     g_object_set_data(G_OBJECT(sw), "table_data", td);
+    g_object_set_data(G_OBJECT(sw), "focus_initial", GINT_TO_POINTER(sermo_focus_initial("table")));
     return sw;
 }
 
@@ -308,11 +316,18 @@ gchar *widget_table_envvar_construct(GtkWidget *widget)
     if (!td || !td->selection) return g_strdup("");
 
     GObject *sel = gtk_single_selection_get_selected_item(td->selection);
+    /* sans choix de l'utilisateur : la 1re ligne si le tableau prend le focus */
+    if (!sel && g_object_get_data(G_OBJECT(widget), "focus_initial"))
+        sel = g_list_model_get_n_items(G_LIST_MODEL(td->store)) > 0
+              ? g_list_model_get_item(G_LIST_MODEL(td->store), 0) : NULL;
+    else if (sel)
+        g_object_ref(sel);
     if (!sel) return g_strdup("");
     RowObject *row = ROW_OBJECT(sel);
-    if (!row || row->n_cells == 0) return g_strdup("");
+    gchar *r = g_strdup((row && row->n_cells > 0 && row->cells[0]) ? row->cells[0] : "");
+    g_object_unref(sel);
     /* Retourne la première colonne de la ligne sélectionnée */
-    return g_strdup(row->cells[0] ? row->cells[0] : "");
+    return r;
 }
 
 gchar *widget_table_envvar_all_construct(variable *var)

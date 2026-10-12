@@ -35,6 +35,9 @@ debian/.debhelper/
 debian/tmp/
 debian/sermo-*/
 debian/*sermo/
+# les dossiers de construction des paquets MCP (sermoia-mcp, sermoman-mcp)
+debian/sermoia-mcp/
+debian/sermoman-mcp/
 debian/debhelper-build-stamp
 debian/files
 debian/*.substvars

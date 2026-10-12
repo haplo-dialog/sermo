@@ -1,0 +1,16 @@
+<!-- Script : examples/metiers/09-multimedia/1-convertir-video.sh (dialogue confirmation) -->
+<window title="Avant de convertir" default-width="560">
+  <vbox>
+    <text xalign="0"><label>Source : Durée 00:42:17 · 1920x1080 · h264 · son aac</label></text>
+    <text xalign="0"><label>Résultat : /home/utilisateur/Vidéos/converties/reunion-2026-10-08.mp4</label></text>
+    <frame label="Commande prévue">
+      <vbox>
+        <edit editable="false" wrap-mode="char" height-request="80"><variable>COMMANDE</variable><default>"ffmpeg -i reunion.mov -c:v libx264 -crf 23 reunion.mp4"</default></edit>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Convertir</label><action>exit:convertir</action></button>
+    </hbox>
+  </vbox>
+</window>

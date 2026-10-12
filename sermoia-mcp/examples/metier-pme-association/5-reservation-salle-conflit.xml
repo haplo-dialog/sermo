@@ -1,0 +1,13 @@
+<!-- Script : examples/metiers/07-pme-association/5-reservation-salle.sh (dialogue conflit) -->
+<window title="Salle déjà prise" default-width="460">
+  <vbox>
+    <text><label>Demande : Salle de réunion, 2026-10-12, matin.</label></text>
+    <text><label>Déjà réservé sur ce créneau :</label></text>
+    <edit editable="false" height-request="70"><variable>DEJA</variable><default>"Bureau du conseil (matin)"</default></edit>
+    <text><label>Inscrire la demande en liste d'attente ?</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Mettre en attente</label><action>exit:attente</action></button>
+    </hbox>
+  </vbox>
+</window>

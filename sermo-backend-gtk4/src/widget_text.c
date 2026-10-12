@@ -90,7 +90,13 @@ GtkWidget *widget_text_create(
 		(value = get_tag_attribute(attr, "use-markup")) &&
 		((strcasecmp(value, "true") == 0) ||
 		(strcasecmp(value, "yes") == 0) || (atoi(value) == 1))) {
-		gtk_label_set_use_markup(GTK_LABEL(widget), TRUE);
+		/* Depuis la 2.8.2, le lexer décode les entités d'un texte sans
+		 * guillemets : « Tom &amp; Jerry » arrive « Tom & Jerry », qui n'est
+		 * plus du balisage valide. Un texte qui ne s'analyse pas en balisage
+		 * reste du texte simple (le balisage s'écrit entre guillemets). */
+		const gchar *t = gtk_label_get_label(GTK_LABEL(widget));
+		if (pango_parse_markup(t ? t : "", -1, 0, NULL, NULL, NULL, NULL))
+			gtk_label_set_use_markup(GTK_LABEL(widget), TRUE);
 	}
 
 	/* Enable line wrapping by default */

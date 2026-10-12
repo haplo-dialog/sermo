@@ -16,6 +16,15 @@
 #include "stack.h"
 #include "widget_vbox.h"
 #include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+
+extern gint project_space_expand, project_space_fill;   /* coeur (gtkdialog.c) */
+
+static int vrai(const char *v)
+{
+    return strcasecmp(v, "true") == 0 || strcasecmp(v, "yes") == 0 || atoi(v) == 1;
+}
 
 GtkWidget *widget_vbox_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
@@ -27,6 +36,27 @@ GtkWidget *widget_vbox_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     stackelement s = pop();
     for (int i = 0; i < s.nwidgets; ++i)
         if (s.widgets[i]) widget_node_add_child(node, (WidgetNode *)s.widgets[i]);
+
+    /* Étirement : la règle de l'étalon gtk3 (sermo-backend-gtk3/src/widget_vbox.c).
+     * Valeur courante = celle de la boîte, sinon « non dit » ; un enfant qui
+     * dit la sienne la REMPLACE pour lui et pour les suivants (colonne : dans l'ordre du document) ;
+     * « non dit » = le défaut du type. */
+    int ex = project_space_expand, fi = project_space_fill;
+    const char *v;
+    if (attr && (v = get_tag_attribute(attr, "space-expand"))) ex = vrai(v);
+    if (attr && (v = get_tag_attribute(attr, "space-fill")))   fi = vrai(v);
+    if (attr && (v = get_tag_attribute(attr, "homogeneous")))  node->homogeneous = vrai(v);
+    for (int i = 0; i < s.nwidgets; ++i) {
+        WidgetNode *c = (WidgetNode *)s.widgets[i];
+        if (!c) continue;
+        if (c->expand) ex = c->expand > 0;
+        if (c->fill)   fi = c->fill > 0;
+        int t = s.widgettypes[i];
+        int d = (t == WIDGET_EDIT || t == WIDGET_FRAME || t == WIDGET_SCROLLEDW ||
+                 t == WIDGET_PANED);
+        c->pack_expand = (signed char)(ex != -1 ? ex : d);
+        c->pack_fill   = (signed char)(fi != -1 ? fi : d);
+    }
     return (GtkWidget *)node;
 }
 

@@ -26,6 +26,7 @@
 #include "sermo_icon_theme.h"
 #include <string.h>
 #include <stdlib.h>
+#include <strings.h>
 
 GtkWidget *widget_button_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
@@ -63,6 +64,34 @@ GtkWidget *widget_button_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     WidgetNode *node = widget_node_new(WT_BUTTON, NULL, label);
     if (action) node->action = strdup(action);
 
+    /* Valeur d'EXIT, comme l'étalon gtk3sermo : une action « exit:X » ou
+     * <action type="exit">X</action> rend X ; un bouton SANS action sort avec
+     * son libellé (la famille de sortie : OK, Cancel, Yes, No, Help si aucun
+     * libellé n'est donné) ; des actions sans sortie ne ferment pas. */
+    {
+        GList *el = NULL;
+        gchar *a = Attr ? attributeset_get_first(&el, Attr, ATTR_ACTION) : NULL;
+        if (!a) {
+            const char *l = (Attr && attributeset_is_avail(Attr, ATTR_LABEL))
+                ? attributeset_get_first(&el, Attr, ATTR_LABEL) : NULL;
+            if (!l || !*l) {
+                switch (Type) {
+                    case WIDGET_CANCELBUTTON: l = "Cancel"; break;
+                    case WIDGET_YESBUTTON:    l = "Yes";    break;
+                    case WIDGET_NOBUTTON:     l = "No";     break;
+                    case WIDGET_HELPBUTTON:   l = "Help";   break;
+                    default:                  l = "OK";     break;
+                }
+            }
+            node->sortie = strdup(l);
+        }
+        for (; a && !node->sortie; a = attributeset_get_next(&el, Attr, ATTR_ACTION)) {
+            const char *t = attributeset_get_this_tagattr(&el, Attr, ATTR_ACTION, "type");
+            if (t && strcasecmp(t, "exit") == 0) node->sortie = strdup(a);
+            else if (strncasecmp(a, "exit:", 5) == 0) node->sortie = strdup(a + 5);
+        }
+    }
+
     /* <input file icon="nom"> / stock="nom" : icone du theme, 20 px (etalon) */
     if (Attr) {
         GList *el = NULL;
@@ -77,6 +106,16 @@ GtkWidget *widget_button_create(AttributeSet *Attr, tag_attr *attr, gint Type)
                     if (v && atoi(v) > 0) px = atoi(v);
                     node->icon_path = sermo_icon_lookup(icon, px);
                     node->icon_px   = px;
+                    /* image-position : l'icône par rapport au libellé, lu comme
+                     * l'étalon (gtk3 widget_button.c) — left/right/top/bottom
+                     * ou 0-3 ; toute autre valeur = à gauche. */
+                    const char *pos = attr ? get_tag_attribute(attr, "image-position") : NULL;
+                    if (pos) {
+                        if (!strcasecmp(pos, "bottom") || atoi(pos) == 3)     node->image_pos = 3;
+                        else if (!strcasecmp(pos, "top") || atoi(pos) == 2)   node->image_pos = 2;
+                        else if (!strcasecmp(pos, "right") || atoi(pos) == 1) node->image_pos = 1;
+                        else                                                  node->image_pos = 0;
+                    }
                 }
                 break;
             }

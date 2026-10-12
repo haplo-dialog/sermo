@@ -2,7 +2,7 @@
 
 [Français](MANUEL_UTILISATEUR.md)
 
-**Version:** 2.8.1
+**Version:** 2.8.2
 **Licence:** GPL-2.0-or-later | **Distributor:** haplo-dialog (devel@haplo-dialog.fr)
 
 ---
@@ -57,9 +57,10 @@ sermo --program=DIALOG
 
 ### 1.1 Compatibility
 
-sermo is **compatible** with historical gtkdialog scripts. The virtual
-`gtkdialog` package points at the GTK 3 backend, so scripts calling `gtkdialog`
-keep working. Visible differences:
+sermo is **compatible** with historical gtkdialog scripts. The
+`sermo-gtkdialog` package (which provides the virtual `gtkdialog` package) makes
+the `gtkdialog` command a link to the GTK 3 backend, so scripts calling
+`gtkdialog` keep working. Visible differences:
 
 - The look follows the **current system theme** (light/dark).
 - Colours are given as `rgba(r,g,b,a)` or `#RRGGBB`.
@@ -71,13 +72,24 @@ keep working. Visible differences:
 
 ### 2.1 From packages
 
-sermo ships **separate** packages — a common core plus one backend per toolkit:
+sermo ships **separate** Debian packages — one backend per toolkit, each with
+the core linked into its binary. There is no apt repository: the packages are
+attached to each release, with the `SHA256SUMS` file and its signature
+`SHA256SUMS.asc`. Download, check, install:
 
 ```bash
-apt install sermo-backend-gtk3     # GTK 3
-apt install sermo-backend-fltk1    # FLTK, without pulling in GTK or Qt
-apt install sermo-backend-qt6      # Qt 6
+gpg --import cle-haplo-dialog.asc            # https://haplo-dialog.fr/cle-haplo-dialog.asc
+gpg --verify SHA256SUMS.asc SHA256SUMS       # "Good signature from haplo-dialog <devel@haplo-dialog.fr>"
+sha256sum --ignore-missing -c SHA256SUMS
+sudo apt install ./sermo-backend-gtk3_2.8.2-3_amd64.deb     # GTK 3
+sudo apt install ./sermo-backend-fltk1_2.8.2-3_amd64.deb    # FLTK, without pulling in GTK or Qt
+sudo apt install ./sermo-gtkdialog_2.8.2-3_all.deb          # + the gtkdialog command
 ```
+
+The key fingerprint must be
+`66C7 F4AD 7A58 A037 967F  8339 3799 9F99 7570 F1ED`: compare it with the one in
+the README on GitLab and on GitHub. The checksums are signed, not each `.deb`.
+Download and details: [README.en.md](README.en.md#install).
 
 The `sermo` alias (`/usr/bin/sermo`) is managed by `update-alternatives`: every
 installed backend registers there and you choose the default.
@@ -375,6 +387,10 @@ The variable is `true` or `false`.
 </vbox>
 ```
 
+The buttons of one container form a group. When none of them has
+`<default>true</default>`, the first one is checked (on all nine ports since
+2.8.2).
+
 #### `<comboboxtext>` — Simple drop-down list
 
 ```xml
@@ -396,6 +412,12 @@ The variable is `true` or `false`.
   <item>Item 2</item>
 </list>
 ```
+
+Without `<default>`, the first row of a `<list>`, `<tree>` or `<table>` is
+chosen only if that widget takes the focus when the window opens, that is if it
+is the first focusable widget of the window (visible and sensitive); otherwise
+nothing is chosen. `<default>` chooses the row you
+want. Same rule on all nine ports since 2.8.2.
 
 #### `<tree>` — Multi-column tree/table
 

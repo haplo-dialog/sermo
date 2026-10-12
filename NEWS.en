@@ -5,6 +5,62 @@ This file summarises changes from the user's point of view.
 For the full technical history, see CHANGELOG.en.md.
 
 ──────────────────────────────────────────────────
+Version 2.8.2
+──────────────────────────────────────────────────
+
+Patch release. Sixty job scripts and four toolboxes, played on the nine
+ports, showed where the ports differed from gtk3sermo.
+
+* Sixty ready-to-run job scripts (examples/metiers, sermo-doc package):
+  five per job, from system administration to local web. By default they
+  print the command instead of running it.
+
+* Four toolboxes (examples/boites-a-outils, sermo-doc package): system,
+  server, administrator and user, ten tools each. Same rules: dry run by
+  default, confirmation before deleting.
+
+* The package checksums are signed: SHA256SUMS.asc, with the haplo-dialog
+  key (devel@haplo-dialog.fr, fingerprint
+  66C7 F4AD 7A58 A037 967F  8339 3799 9F99 7570 F1ED). The public key is on
+  the website; the check is described in the README.
+
+* Both MCP servers can be installed: sermoia-mcp and sermoman-mcp packages.
+
+* XML entities (&amp; &lt; &gt; &quot; &apos; &#NN;) are decoded: a script
+  that escapes its values gets the original value back. A value written on
+  several lines keeps all of them.
+
+* On the nine ports, as in gtk3sermo: a list's first row is chosen only if
+  the list takes the focus; <default> chooses the row; the first button of a
+  radio group is checked; <text> returns the text shown;
+  <tree exported-column> returns the column asked for.
+
+* gtk3sermo no longer sorts a <table> when it opens: the document order is
+  kept (sorting in auto-sort, or on a click on a header).
+
+* On all nine ports, boxes are laid out as in gtk3sermo: equal cells
+  (homogeneous), stretching set on the box, buttons in a row packed to the
+  right. In a button, the icon and the label are centred.
+
+* --do receives EXIT (the button clicked). In serve mode, htmlsermo passes
+  it the values typed in the browser.
+
+* ncursessermo timers, fltk1sermo decimals, efl1sermo fields (no more
+  "&laquo;") fixed. fltk1sermo keeps an item containing "/"
+  ("Europe/Paris") instead of turning it into a submenu. In a terminal,
+  ncursessermo leaves its output variables on screen.
+
+* Icons: the ports without GTK look them up as GTK does (theme, Adwaita,
+  hicolor, symbolic variant); gtk4, qt6, efl1 and lvgl show the ones that
+  were missing. htmlsermo's page takes the shape of the window; lvglsermo's
+  tabs no longer cut their labels.
+
+* sermoia-mcp: the preview (sermo_render) no longer runs any command of the
+  dialog; each tool has a timeout; examples can be searched with a phrase;
+  documentation rewritten, in French and English.
+  sermoman-mcp: the sermo_scripts tool gives the inventory of the scripts.
+
+──────────────────────────────────────────────────
 Version 2.8.1
 ──────────────────────────────────────────────────
 
@@ -20,10 +76,6 @@ Patch release: widgets drawn wrong, seen on the website screenshots.
   damages the dialog's memory.
 
 * fltk1sermo, qt6sermo and efl1sermo: --render-png returns code 0.
-
-* sermoia-mcp: the preview (sermo_render) no longer runs any of the
-  dialog's commands; every tool has a timeout; examples can be searched
-  with a sentence; documentation rewritten, in French and English.
 
 ──────────────────────────────────────────────────
 Version 2.8.0

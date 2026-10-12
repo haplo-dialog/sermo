@@ -1,0 +1,61 @@
+<!-- Script : examples/metiers/04-distribution-integrateur/1-premier-demarrage.sh (dialogue principal) -->
+<window title="Premier démarrage" default-width="560">
+  <vbox>
+    <text><label>Bienvenue. Réglez la langue, le clavier et l'heure de ce poste.</label></text>
+
+    <frame label="Langue du système">
+      <hbox>
+        <text><label>Langue (locale) :</label></text>
+        <comboboxtext space-expand="true" space-fill="true">
+          <variable>LANGUE</variable>
+          <default>fr_FR.UTF-8</default>
+          <item>fr_FR.UTF-8</item>
+          <item>fr_BE.UTF-8</item>
+          <item>fr_CH.UTF-8</item>
+          <item>fr_CA.UTF-8</item>
+          <item>en_US.UTF-8</item>
+          <item>en_GB.UTF-8</item>
+          <item>de_DE.UTF-8</item>
+          <item>es_ES.UTF-8</item>
+        </comboboxtext>
+      </hbox>
+    </frame>
+    <frame label="Disposition du clavier">
+      <vbox>
+        <radiobutton><label>Français AZERTY (fr)</label><variable>CLAVIER_FR</variable><default>true</default></radiobutton>
+        <radiobutton><label>Français AZERTY, variante latin9 (fr latin9)</label><variable>CLAVIER_LATIN9</variable></radiobutton>
+        <radiobutton><label>Belge (be)</label><variable>CLAVIER_BE</variable></radiobutton>
+        <radiobutton><label>Suisse romand (ch fr)</label><variable>CLAVIER_CH</variable></radiobutton>
+        <radiobutton><label>Canadien français (ca fr)</label><variable>CLAVIER_CA</variable></radiobutton>
+        <radiobutton><label>Anglais américain QWERTY (us)</label><variable>CLAVIER_US</variable></radiobutton>
+      </vbox>
+    </frame>
+    <frame label="Date et heure">
+      <vbox>
+        <text><label>Fuseau horaire :</label></text>
+        <list scrollable="true" height-request="130">
+          <variable>FUSEAU</variable>
+          <default>Europe/Paris</default>
+          <item>Europe/Paris</item>
+          <item>Europe/Brussels</item>
+          <item>Europe/Zurich</item>
+          <item>Europe/Luxembourg</item>
+          <item>America/Montreal</item>
+          <item>America/Guadeloupe</item>
+          <item>America/Martinique</item>
+          <item>America/Cayenne</item>
+          <item>Indian/Reunion</item>
+          <item>Indian/Mayotte</item>
+          <item>Pacific/Noumea</item>
+          <item>Pacific/Tahiti</item>
+          <item>UTC</item>
+        </list>
+        <checkbox><label>Synchroniser l'heure par le réseau (NTP)</label><variable>NTP</variable><default>true</default></checkbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Appliquer</label><action>exit:appliquer</action></button>
+    </hbox>
+  </vbox>
+</window>

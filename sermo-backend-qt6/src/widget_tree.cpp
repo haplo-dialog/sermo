@@ -17,6 +17,7 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
+#include "sermo_focus.h"
 #include "qt6-compat.h"
 #include "gtk3d.h"
 #include "attributes.h"
@@ -90,10 +91,15 @@ GtkWidget *widget_tree_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         const char *v;
         if ((v = get_tag_attribute(attr, "width-request")))  tw->setMinimumWidth(atoi(v));
         if ((v = get_tag_attribute(attr, "height-request"))) tw->setMinimumHeight(atoi(v));
+        /* exported-column : la colonne que la variable rend (défaut 0) */
+        if ((v = get_tag_attribute(attr, "exported-column")) && atoi(v) > 0)
+            tw->setProperty("sermoColonne", atoi(v));
     }
 
-    /* Parite gtk3 : selectionner le premier item si rien ne l'est. */
-    if (!tw->currentItem() && tw->topLevelItemCount() > 0)
+    /* Parité gtk3 : la 1re ligne n'est choisie que si ce widget prend le
+     * focus à l'ouverture (sermo_focus.h) ; jusqu'à la 2.8.1, toujours. */
+    tw->setProperty("sermoFocus", (bool)sermo_focus_initial("tree"));
+    if (tw->selectedItems().isEmpty() && tw->topLevelItemCount() > 0 && tw->property("sermoFocus").toBool())
         tw->setCurrentItem(tw->topLevelItem(0));
     return (GtkWidget *)tw;
 }
@@ -102,9 +108,14 @@ gchar *widget_tree_envvar_construct(GtkWidget *widget)
 {
     QTreeWidget *tw = static_cast<QTreeWidget *>(widget);
     if (!tw) return g_strdup("");
-    QTreeWidgetItem *cur = tw->currentItem();
+    /* la SÉLECTION : Qt pose un élément courant sans le choisir quand le
+     * widget prend le focus */
+    QList<QTreeWidgetItem *> choix = tw->selectedItems();
+    QTreeWidgetItem *cur = choix.isEmpty() ? nullptr : choix.first();
     if (!cur) return g_strdup("");
-    return g_strdup(cur->text(0).toUtf8().constData());
+    /* exported-column, comme l'étalon (jusqu'à la 2.8.1 : toujours la 1re) */
+    int col = tw->property("sermoColonne").isValid() ? tw->property("sermoColonne").toInt() : 0;
+    return g_strdup(cur->text(col).toUtf8().constData());
 }
 
 gchar *widget_tree_envvar_all_construct(variable *var)
@@ -137,7 +148,7 @@ void widget_tree_refresh(variable *var)
      * neutre ne retient pas « _initialised » : le passage est noté sur le
      * widget. */
     if (!tw->property("sermoInitialise").toBool()) {
-        if (!tw->currentItem() && tw->topLevelItemCount() > 0)
+        if (tw->selectedItems().isEmpty() && tw->topLevelItemCount() > 0 && tw->property("sermoFocus").toBool())
             tw->setCurrentItem(tw->topLevelItem(0));
         tw->setProperty("sermoInitialise", true);
     }

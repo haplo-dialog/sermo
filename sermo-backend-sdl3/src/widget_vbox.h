@@ -23,5 +23,8 @@ void       widget_vbox_refresh(variable *var);
 void       widget_vbox_fileselect(variable *var, const char *name, const char *value);
 void       widget_vbox_removeselected(variable *var);
 void       widget_vbox_save(variable *var);
+/* rangement des enfants (expand/fill), commun à <vbox> et <hbox> */
+struct _stackelement;
+void       sdl3_box_pack(WidgetNode *box, struct _stackelement *s, tag_attr *attr, int rangee);
 
 #endif /* WIDGET_VBOX_H */

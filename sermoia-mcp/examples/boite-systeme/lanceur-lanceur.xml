@@ -1,0 +1,77 @@
+<!-- Script : examples/boites-a-outils/systeme/lanceur.sh (dialogue lanceur) -->
+<window title="Boîte à outils : Système" default-width="560">
+  <vbox>
+    <text><label>Choisissez un réglage. Chaque outil montre d'abord la commande ; rien ne change sans votre accord.</label></text>
+    <notebook tab-labels="Affichage et son|Réseau et périphériques|Session et bureau">
+      <vbox>
+        <frame label="Écran">
+          <hbox>
+            <button><label>Écran</label><action>exit:01-ecran</action></button>
+            <text><label>Résolution, fréquence, échelle, disposition</label></text>
+          </hbox>
+        </frame>
+        <frame label="Son">
+          <hbox>
+            <button><label>Son</label><action>exit:02-son</action></button>
+            <text><label>Volume, sortie, entrée, muet</label></text>
+          </hbox>
+        </frame>
+        <frame label="Énergie">
+          <hbox>
+            <button><label>Énergie</label><action>exit:07-energie</action></button>
+            <text><label>Mise en veille de l'écran et délais</label></text>
+          </hbox>
+        </frame>
+      </vbox>
+      <vbox>
+        <frame label="Wi-Fi">
+          <hbox>
+            <button><label>Wi-Fi</label><action>exit:03-wifi</action></button>
+            <text><label>Réseaux connus, connexion, oubli</label></text>
+          </hbox>
+        </frame>
+        <frame label="Bluetooth">
+          <hbox>
+            <button><label>Bluetooth</label><action>exit:10-bluetooth</action></button>
+            <text><label>Appareils, appairage, confiance</label></text>
+          </hbox>
+        </frame>
+        <frame label="Clavier">
+          <hbox>
+            <button><label>Clavier et langue</label><action>exit:05-clavier-langue</action></button>
+            <text><label>Disposition, variante, options</label></text>
+          </hbox>
+        </frame>
+        <frame label="Souris">
+          <hbox>
+            <button><label>Souris et pavé tactile</label><action>exit:06-souris-pave</action></button>
+            <text><label>Vitesse, défilement naturel, tap</label></text>
+          </hbox>
+        </frame>
+      </vbox>
+      <vbox>
+        <frame label="Date">
+          <hbox>
+            <button><label>Date et heure</label><action>exit:04-date-heure</action></button>
+            <text><label>Fuseau horaire, synchronisation NTP</label></text>
+          </hbox>
+        </frame>
+        <frame label="Démarrage">
+          <hbox>
+            <button><label>Applications au démarrage</label><action>exit:08-applications-demarrage</action></button>
+            <text><label>Activer, désactiver, ajouter</label></text>
+          </hbox>
+        </frame>
+        <frame label="Par défaut">
+          <hbox>
+            <button><label>Applications par défaut</label><action>exit:09-applications-par-defaut</action></button>
+            <text><label>Navigateur, PDF, images</label></text>
+          </hbox>
+        </frame>
+      </vbox>
+    </notebook>
+    <hbox>
+      <button cancel></button>
+    </hbox>
+  </vbox>
+</window>

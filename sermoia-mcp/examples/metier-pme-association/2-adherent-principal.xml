@@ -1,0 +1,56 @@
+<!-- Script : examples/metiers/07-pme-association/2-adherent.sh (dialogue principal) -->
+<window title="Inscription d'un adhérent" default-width="560">
+  <vbox>
+    <notebook tab-labels="Identité|Adhésion|Consentements">
+      <vbox>
+        <hbox><text><label>Nom :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>NOM</variable><default>Durand</default></entry></hbox>
+        <hbox><text><label>Prénom :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>PRENOM</variable><default>Sophie</default></entry></hbox>
+        <text xalign="0"><label>Adresse :</label></text>
+        <edit height-request="60"><variable>ADRESSE</variable><default>"12 rue des Lilas
+26000 Valence"</default></edit>
+        <hbox><text><label>Courriel :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>COURRIEL</variable><default>sophie.durand@example.org</default></entry></hbox>
+        <hbox><text><label>Téléphone :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>TELEPHONE</variable><default>06 12 34 56 78</default></entry></hbox>
+      </vbox>
+      <vbox>
+        <frame label="Formule">
+          <vbox>
+            <radiobutton><label>Individuelle (20 €)</label><variable>F_INDIVIDUELLE</variable><default>true</default></radiobutton>
+            <radiobutton><label>Famille (35 €)</label><variable>F_FAMILLE</variable></radiobutton>
+            <radiobutton><label>Tarif réduit, étudiant ou sans emploi (10 €)</label><variable>F_REDUITE</variable></radiobutton>
+          </vbox>
+        </frame>
+        <hbox><text><label>Don en plus de la cotisation (€) :</label></text>
+          <spinbutton range-min="0" range-max="1000" range-step="5"><variable>DON</variable><default>0</default></spinbutton></hbox>
+        <hbox><text><label>Règlement :</label></text>
+          <comboboxtext space-expand="true" space-fill="true">
+            <variable>REGLEMENT</variable>
+            <default>Chèque</default>
+            <item>Chèque</item>
+            <item>Espèces</item>
+            <item>Virement</item>
+            <item>Paiement en ligne</item>
+          </comboboxtext></hbox>
+        <hbox><text><label>Saison :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>SAISON</variable><default>2026-2027</default></entry></hbox>
+      </vbox>
+      <vbox>
+        <checkbox><label>J'accepte que mes données servent à la gestion des adhésions (obligatoire)</label><variable>RGPD</variable></checkbox>
+        <checkbox><label>Je souhaite recevoir la lettre d'information</label><variable>LETTRE</variable><default>true</default></checkbox>
+        <checkbox><label>J'autorise la publication de photos où j'apparais</label><variable>DROIT_IMAGE</variable></checkbox>
+        <checkbox><label>Je souhaite un reçu fiscal pour mon don</label><variable>RECU</variable></checkbox>
+      </vbox>
+    </notebook>
+    <hbox>
+      <text><label>Registre :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>REGISTRE</variable><default>/home/utilisateur/Documents/adherents-2026-2027.csv</default></entry>
+    </hbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Inscrire</label><action>exit:inscrire</action></button>
+    </hbox>
+  </vbox>
+</window>

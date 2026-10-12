@@ -1,0 +1,25 @@
+<!-- Script : examples/metiers/05-bornes-ecrans/3-avis-satisfaction.sh (dialogue principal) -->
+<window title="Votre avis" default-width="600">
+  <vbox>
+    <text><label>Votre avis nous aide à mieux vous accueillir. Il est anonyme.</label></text>
+    <hbox>
+      <text><label>Service rencontré :</label></text>
+      <comboboxtext space-expand="true" space-fill="true"><variable>SERVICE</variable><default>Accueil</default>
+        <item>Accueil</item><item>Caisse</item><item>Service après-vente</item><item>Conseil</item><item>Autre</item>
+      </comboboxtext>
+    </hbox>
+    <frame label="Votre note : 1 = pas du tout satisfait, 5 = très satisfait">
+      <hscale range-min="1" range-max="5" range-step="1" draw-value="true"><variable>NOTE</variable><default>4</default></hscale>
+    </frame>
+    <frame label="Un commentaire ? (facultatif)">
+      <edit wrap-mode="word" height-request="110"><variable>COMMENTAIRE</variable></edit>
+    </frame>
+    <checkbox><label>Je souhaite une réponse (mon adresse ne sert qu'à cela)</label><variable>REPONSE</variable></checkbox>
+    <hbox><text><label>Courriel :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>COURRIEL</variable></entry></hbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Envoyer mon avis</label><action>exit:envoyer</action></button>
+    </hbox>
+  </vbox>
+</window>

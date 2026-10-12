@@ -513,6 +513,42 @@ gboolean widget_connect_signals(GtkWidget *widget, AttributeSet *Attr)
 /* Fonctions 6 et 7 — visibilite initiale d'un widget                   */
 /* -------------------------------------------------------------------- */
 
+/* space-expand / space-fill / homogeneous : 1 vrai, -1 faux (lecture de
+ * gtk3sermo : « true », « yes » ou un nombre qui vaut 1). */
+static int vrai_faux(const char *v)
+{
+    return (strcasecmp(v, "true") == 0 || strcasecmp(v, "yes") == 0 || atoi(v) == 1) ? 1 : -1;
+}
+
+/* L'étirement d'une <hbox>/<vbox> vaut pour ses enfants, comme dans
+ * widget_vbox.c / widget_hbox.c de gtk3sermo : la valeur courante part de
+ * celle de la boîte (ou de --space-expand / --space-fill), un enfant qui a la
+ * sienne la REMPLACE pour lui et pour ceux qui suivent (jamais remise à zéro :
+ * l'étalon fait ainsi). Une colonne se parcourt dans l'ordre du document, une
+ * rangée à l'envers (gtk_box_pack_end). Une valeur restée « non dite » (0)
+ * laisse le défaut du type (render_lvgl.c). Les enfants sont déjà réglés : le
+ * cœur appelle widget_visibility_list_add juste après chaque création. */
+void boite_repartir(WidgetNode *b, tag_attr *attr, int rangee)
+{
+    int e = project_space_expand == -1 ? 0 : (project_space_expand ? 1 : -1);
+    int f = project_space_fill == -1 ? 0 : (project_space_fill ? 1 : -1);
+    char *v;
+
+    if (b == NULL) return;
+    if (attr != NULL) {
+        if ((v = get_tag_attribute(attr, "space-expand")) != NULL) e = vrai_faux(v);
+        if ((v = get_tag_attribute(attr, "space-fill")) != NULL)   f = vrai_faux(v);
+        if ((v = get_tag_attribute(attr, "homogeneous")) != NULL)  b->homogeneous = vrai_faux(v) > 0;
+    }
+    for (int k = 0; k < b->child_count; k++) {
+        WidgetNode *c = b->children[rangee ? b->child_count - 1 - k : k];
+        if (c->expand) e = c->expand;
+        if (c->fill)   f = c->fill;
+        c->expand = e;
+        c->fill   = f;
+    }
+}
+
 void widget_visibility_list_add(GtkWidget *widget, tag_attr *attr)
 {
     gboolean hide = FALSE;
@@ -523,17 +559,13 @@ void widget_visibility_list_add(GtkWidget *widget, tag_attr *attr)
 
     if (attr != NULL) {
         char *space_expand = get_tag_attribute(attr, "space-expand");
+        char *space_fill = get_tag_attribute(attr, "space-fill");
         char *visible = get_tag_attribute(attr, "visible");
 
-        if (space_expand != NULL) {
-            if (strcasecmp(space_expand, "true") == 0 ||
-                strcasecmp(space_expand, "yes") == 0 ||
-                strcmp(space_expand, "1") == 0) {
-                ((WidgetNode *)widget)->expand = 1;
-            } else {
-                ((WidgetNode *)widget)->expand = -1;
-            }
-        }
+        if (space_expand != NULL)
+            ((WidgetNode *)widget)->expand = vrai_faux(space_expand);
+        if (space_fill != NULL)
+            ((WidgetNode *)widget)->fill = vrai_faux(space_fill);
 
         if (visible != NULL &&
             (strcasecmp(visible, "false") == 0 ||

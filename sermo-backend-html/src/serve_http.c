@@ -114,6 +114,16 @@ static int name_ok(const char *name)
 
 #define FORM_MAX_FIELDS 512
 
+static char *soumis_noms[FORM_MAX_FIELDS], *soumis_vals[FORM_MAX_FIELDS];
+static int   soumis_n;
+
+const char *html_valeur_soumise(const char *nom)
+{
+    for (int i = 0; nom && i < soumis_n; i++)
+        if (!strcmp(soumis_noms[i], nom)) return soumis_vals[i];
+    return NULL;
+}
+
 /* Imprime le corps `application/x-www-form-urlencoded` en VAR="valeur".
  *
  * DEDOUBLONNAGE, LA DERNIERE GAGNE. Une case a cocher est precedee d'un champ
@@ -142,7 +152,12 @@ static void print_form(char *body)
         printf("%s=\"", names[i]);
         print_shell_escaped(vals[i]);
         printf("\"\n");
+        /* --do lit les valeurs, et EXIT, dans l'environnement (manuel §3.2). */
+        setenv(names[i], vals[i], 1);
+        soumis_noms[i] = strdup(names[i]);
+        soumis_vals[i] = strdup(vals[i]);
     }
+    soumis_n = n;
     fflush(stdout);
 }
 

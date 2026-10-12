@@ -373,6 +373,111 @@ Files: contrib/trousses/CHARTE.md
        contrib/trousses/hub-simple/modules/info.sh
        contrib/trousses/hub-simple/modules/servys.sh
        contrib/trousses/servys/servys.sh
+       examples/boites-a-outils/administrateur/01-groupes.sh
+       examples/boites-a-outils/administrateur/02-droits-fichiers.sh
+       examples/boites-a-outils/administrateur/03-paquets.sh
+       examples/boites-a-outils/administrateur/04-depots-apt.sh
+       examples/boites-a-outils/administrateur/05-montages.sh
+       examples/boites-a-outils/administrateur/06-formatage.sh
+       examples/boites-a-outils/administrateur/07-modules-noyau.sh
+       examples/boites-a-outils/administrateur/08-regles-sudo.sh
+       examples/boites-a-outils/administrateur/09-nom-machine.sh
+       examples/boites-a-outils/administrateur/10-redemarrage-programme.sh
+       examples/boites-a-outils/administrateur/lanceur.sh
+       examples/boites-a-outils/serveur/01-site-web.sh
+       examples/boites-a-outils/serveur/02-certificats.sh
+       examples/boites-a-outils/serveur/03-ports-ecoute.sh
+       examples/boites-a-outils/serveur/04-ssh-durcissement.sh
+       examples/boites-a-outils/serveur/05-fail2ban.sh
+       examples/boites-a-outils/serveur/06-base-de-donnees.sh
+       examples/boites-a-outils/serveur/07-rotation-journaux.sh
+       examples/boites-a-outils/serveur/08-partages.sh
+       examples/boites-a-outils/serveur/09-alertes.sh
+       examples/boites-a-outils/serveur/10-minuteries-systemd.sh
+       examples/boites-a-outils/serveur/lanceur.sh
+       examples/boites-a-outils/systeme/01-ecran.sh
+       examples/boites-a-outils/systeme/02-son.sh
+       examples/boites-a-outils/systeme/03-wifi.sh
+       examples/boites-a-outils/systeme/04-date-heure.sh
+       examples/boites-a-outils/systeme/05-clavier-langue.sh
+       examples/boites-a-outils/systeme/06-souris-pave.sh
+       examples/boites-a-outils/systeme/07-energie.sh
+       examples/boites-a-outils/systeme/08-applications-demarrage.sh
+       examples/boites-a-outils/systeme/09-applications-par-defaut.sh
+       examples/boites-a-outils/systeme/10-bluetooth.sh
+       examples/boites-a-outils/systeme/lanceur.sh
+       examples/boites-a-outils/utilisateur/01-rechercher-fichiers.sh
+       examples/boites-a-outils/utilisateur/02-archives.sh
+       examples/boites-a-outils/utilisateur/03-mot-de-passe.sh
+       examples/boites-a-outils/utilisateur/04-rappel.sh
+       examples/boites-a-outils/utilisateur/05-imprimer.sh
+       examples/boites-a-outils/utilisateur/06-convertir-documents.sh
+       examples/boites-a-outils/utilisateur/07-ranger-dossier.sh
+       examples/boites-a-outils/utilisateur/08-copie-cle-usb.sh
+       examples/boites-a-outils/utilisateur/09-partager-sur-le-reseau.sh
+       examples/boites-a-outils/utilisateur/10-place-disque.sh
+       examples/boites-a-outils/utilisateur/lanceur.sh
+       examples/metiers/01-admin-systeme/1-sauvegarde.sh
+       examples/metiers/01-admin-systeme/2-comptes.sh
+       examples/metiers/01-admin-systeme/3-services.sh
+       examples/metiers/01-admin-systeme/4-journaux.sh
+       examples/metiers/01-admin-systeme/5-espace-disque.sh
+       examples/metiers/02-developpeur-devops/1-compiler.sh
+       examples/metiers/02-developpeur-devops/2-git.sh
+       examples/metiers/02-developpeur-devops/3-deployer.sh
+       examples/metiers/02-developpeur-devops/4-conteneurs.sh
+       examples/metiers/02-developpeur-devops/5-nouveau-projet.sh
+       examples/metiers/03-support-informatique/1-releve-poste.sh
+       examples/metiers/03-support-informatique/2-ticket.sh
+       examples/metiers/03-support-informatique/3-reseau.sh
+       examples/metiers/03-support-informatique/4-imprimantes.sh
+       examples/metiers/03-support-informatique/5-aide-a-distance.sh
+       examples/metiers/04-distribution-integrateur/1-premier-demarrage.sh
+       examples/metiers/04-distribution-integrateur/2-choix-logiciels.sh
+       examples/metiers/04-distribution-integrateur/3-utilisateur-initial.sh
+       examples/metiers/04-distribution-integrateur/4-apparence.sh
+       examples/metiers/04-distribution-integrateur/5-mises-a-jour.sh
+       examples/metiers/05-bornes-ecrans/1-accueil-visiteurs.sh
+       examples/metiers/05-bornes-ecrans/2-rendez-vous.sh
+       examples/metiers/05-bornes-ecrans/3-avis-satisfaction.sh
+       examples/metiers/05-bornes-ecrans/4-information.sh
+       examples/metiers/05-bornes-ecrans/5-inscription-evenement.sh
+       examples/metiers/06-atelier-industrie-labo/1-saisie-mesures.sh
+       examples/metiers/06-atelier-industrie-labo/2-controle-qualite.sh
+       examples/metiers/06-atelier-industrie-labo/3-etiquetage.sh
+       examples/metiers/06-atelier-industrie-labo/4-banc-essai.sh
+       examples/metiers/06-atelier-industrie-labo/5-capteurs.sh
+       examples/metiers/07-pme-association/1-note-de-frais.sh
+       examples/metiers/07-pme-association/2-adherent.sh
+       examples/metiers/07-pme-association/3-contact.sh
+       examples/metiers/07-pme-association/4-facture.sh
+       examples/metiers/07-pme-association/5-reservation-salle.sh
+       examples/metiers/08-enseignement-formation/1-qcm.sh
+       examples/metiers/08-enseignement-formation/2-lanceur-tp.sh
+       examples/metiers/08-enseignement-formation/3-fiche-eleve.sh
+       examples/metiers/08-enseignement-formation/4-minuteur-examen.sh
+       examples/metiers/08-enseignement-formation/5-releve-notes.sh
+       examples/metiers/09-multimedia/1-convertir-video.sh
+       examples/metiers/09-multimedia/2-extraire-audio.sh
+       examples/metiers/09-multimedia/3-redimensionner-images.sh
+       examples/metiers/09-multimedia/4-renommer-photos.sh
+       examples/metiers/09-multimedia/5-capture-ecran.sh
+       examples/metiers/10-securite-informatique/1-perimetre-analyse.sh
+       examples/metiers/10-securite-informatique/2-integrite.sh
+       examples/metiers/10-securite-informatique/3-audit-comptes.sh
+       examples/metiers/10-securite-informatique/4-pare-feu.sh
+       examples/metiers/10-securite-informatique/5-chiffrer.sh
+       examples/metiers/11-serveur-sans-ecran/1-reseau.sh
+       examples/metiers/11-serveur-sans-ecran/2-mises-a-jour.sh
+       examples/metiers/11-serveur-sans-ecran/3-sauvegarde-base.sh
+       examples/metiers/11-serveur-sans-ecran/4-taches-cron.sh
+       examples/metiers/11-serveur-sans-ecran/5-etat-serveur.sh
+       examples/metiers/12-web-local-intranet/1-demande-materiel.sh
+       examples/metiers/12-web-local-intranet/2-rapport.sh
+       examples/metiers/12-web-local-intranet/3-sondage-interne.sh
+       examples/metiers/12-web-local-intranet/4-reservation-ressource.sh
+       examples/metiers/12-web-local-intranet/5-annuaire.sh
+       examples/metiers/CONVENTION.md
        examples/showcase/01-formulaire.sh
        examples/showcase/02-conteneurs.sh
        examples/showcase/03-onglets.sh
@@ -591,7 +696,9 @@ Files: sermo-backend-lvgl/tiers/lvgl/src/libs/thorvg/*
 Copyright: 2020-2025 les auteurs de ThorVG
 License: Expat
 Comment: rapidjson/ (inclus dans ThorVG) est sous MIT, et BSD-3-Clause pour son
- assistant msinttypes ; non compilé ici (LV_USE_THORVG vaut 0).
+ assistant msinttypes. ThorVG est compilé dans lvglsermo depuis la 2.8.2
+ (LV_USE_THORVG vaut 1) : il dessine les icônes SVG. msinttypes n'est pas
+ compilé : rapidjson ne l'inclut que pour Visual Studio antérieur à 2013.
 
 Files: sermo-backend-lvgl/tiers/lvgl/src/libs/tiny_ttf/*
 Copyright: 2017 Sean Barrett

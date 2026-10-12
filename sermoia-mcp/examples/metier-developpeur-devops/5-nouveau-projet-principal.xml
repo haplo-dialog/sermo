@@ -1,0 +1,43 @@
+<!-- Script : examples/metiers/02-developpeur-devops/5-nouveau-projet.sh (dialogue principal) -->
+<window title="Nouveau projet" default-width="500">
+  <vbox>
+    <frame label="Projet">
+      <vbox>
+        <hbox><text><label>Nom :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>NOM</variable><default>mon-outil</default></entry></hbox>
+        <hbox><text><label>Dans le dossier :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>PARENT</variable><default>/home/utilisateur/projets</default></entry></hbox>
+        <hbox><text><label>Auteur :</label></text>
+          <entry space-expand="true" space-fill="true"><variable>AUTEUR</variable><default>Camille Dupont</default></entry></hbox>
+        <hbox><text><label>Langage :</label></text>
+          <comboboxtext space-expand="true" space-fill="true">
+            <variable>LANGAGE</variable>
+            <default>C</default>
+            <item>C</item>
+            <item>Python</item>
+            <item>Shell</item>
+            <item>Rust</item>
+          </comboboxtext></hbox>
+      </vbox>
+    </frame>
+    <frame label="Licence">
+      <vbox>
+        <radiobutton><label>GPL-3.0-or-later (copyleft)</label><default>true</default><variable>LIC_GPL</variable></radiobutton>
+        <radiobutton><label>MIT (permissive, courte)</label><variable>LIC_MIT</variable></radiobutton>
+        <radiobutton><label>Apache-2.0 (permissive, clause de brevets)</label><variable>LIC_APACHE</variable></radiobutton>
+        <radiobutton><label>CC0-1.0 (domaine public)</label><variable>LIC_CC0</variable></radiobutton>
+      </vbox>
+    </frame>
+    <frame label="Options">
+      <vbox>
+        <checkbox><label>Créer un dépôt git (git init)</label><default>true</default><variable>GIT</variable></checkbox>
+        <checkbox><label>Dossier tests/</label><default>true</default><variable>TESTS</variable></checkbox>
+        <checkbox><label>Dossier docs/</label><variable>DOCS</variable></checkbox>
+      </vbox>
+    </frame>
+    <hbox>
+      <button cancel></button>
+      <button><label>Créer le projet</label><action>exit:creer</action></button>
+    </hbox>
+  </vbox>
+</window>

@@ -146,6 +146,43 @@ toolkits n'en portent (mesuré au `readelf` le 2026-09-16). Sur ce système, CET
 peut donc pas agir à l'exécution — déduit de l'absence des notes, pas mesuré en
 exécution.
 
+## Serveurs MCP
+
+- **`sermoia-mcp`** : seul l'outil `sermo_run` lance les commandes du dialogue,
+  avec les droits de l'utilisateur, comme le ferait le script. `sermo_check` et
+  `sermo_render` n'exécutent rien : ils posent `SERMO_ALLOWED_CMDS` sur une
+  commande qui n'existe pas, ce qui refuse toute commande et le repli
+  `/bin/sh -c` (`sermoia-mcp/src/sermoia-mcp.c`, `AUCUNE_COMMANDE`). Jusqu'à la
+  2.8.1, `sermo_render` exécutait les `<input>` du dialogue. Pour borner
+  `sermo_run`, poser `SERMO_ALLOWED_CMDS` dans l'environnement du serveur.
+- **`sermoman-mcp`** est en lecture seule : il sert la documentation, ne lance
+  rien et n'écrit rien.
+
+Détails : [sermoia-mcp/README.md](sermoia-mcp/README.md#sécurité).
+
+## Vérifier les paquets téléchargés
+
+Les paquets Debian sont joints à chaque publication avec `SHA256SUMS` (une somme
+SHA-256 par paquet) et sa signature détachée `SHA256SUMS.asc`, faite par la clé
+de haplo-dialog (`devel@haplo-dialog.fr`), d'empreinte :
+
+```
+66C7 F4AD 7A58 A037 967F  8339 3799 9F99 7570 F1ED
+```
+
+```sh
+curl -fLO https://haplo-dialog.fr/cle-haplo-dialog.asc
+gpg --import cle-haplo-dialog.asc
+gpg --verify SHA256SUMS.asc SHA256SUMS      # « Bonne signature de haplo-dialog <devel@haplo-dialog.fr> »
+sha256sum --ignore-missing -c SHA256SUMS
+```
+
+Comparez l'empreinte affichée à celle du README sur GitLab **et** sur GitHub :
+la clé publique vient du site, et une clé remplacée sur le site ne le serait
+pas partout à la fois. Ce qui est signé, c'est la liste des sommes : les `.deb`
+ne sont pas signés un par un, et il n'y a pas de dépôt apt (donc pas de dépôt
+signé). Commande complète : [README.md](README.md#installer).
+
 ## Limites connues
 
 - **Pas de bac à sable.** Une commande lancée par un dialogue a les droits de
@@ -172,7 +209,8 @@ exécution.
 - **Un fichier Glade est du code**, et **`<linkbutton>`** ouvre son adresse hors
   de la liste des commandes (voir plus haut).
 - **Pas d'audit externe.** Ce qui est vérifié l'est par les bancs du dépôt
-  (`ci/bancs.sh`) et par des relectures du mainteneur. Les écarts ouverts sont
+  (`ci/bancs.sh`) et par les essais du mainteneur ; le code n'est pas relu en
+  entier. Les écarts ouverts sont
   dans [TODO.md](TODO.md).
 
 ## Signaler une faille
@@ -185,7 +223,7 @@ exécution.
 - **Délais** — sermo a un seul mainteneur : accusé de réception sous **14 jours** ;
   correctif, ou avis public avec contournement, au plus tard **90 jours** après
   le signalement, plus tôt si la faille est déjà publique.
-- **Versions suivies** : seule la dernière version publiée (2.7.x aujourd'hui)
+- **Versions suivies** : seule la dernière version publiée (2.8.x aujourd'hui)
   reçoit des correctifs. La ligne 1.x n'en reçoit plus : passez à la 2.x
   ([MIGRATION.md](MIGRATION.md)).
 - Si vous le souhaitez, votre nom figure dans le [CHANGELOG.md](CHANGELOG.md) avec

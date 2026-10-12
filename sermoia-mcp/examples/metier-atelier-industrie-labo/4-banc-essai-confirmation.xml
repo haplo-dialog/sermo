@@ -1,0 +1,11 @@
+<!-- Script : examples/metiers/06-atelier-industrie-labo/4-banc-essai.sh (dialogue confirmation) -->
+<window title="Essai destructif">
+  <vbox>
+    <text><label>L'éprouvette EP-2026-0412 sera détruite par cet essai.</label></text>
+    <text><label>Vérifiez que l'enceinte est fermée et que personne n'est à proximité.</label></text>
+    <hbox>
+      <button cancel></button>
+      <button><label>Lancer quand même</label><action>exit:confirmer</action></button>
+    </hbox>
+  </vbox>
+</window>

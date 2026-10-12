@@ -90,6 +90,14 @@ void          sermo_be_window_move(sermo_widget *w, int x, int y);
 extern const char *sermo_port_name;      /* « gtk3sermo », « qt6sermo »…      */
 extern const char *sermo_port_details;   /* « gtk3sermo 2.7.1 (haplo-dialog) » */
 
+/* Avant l'export de sortie (action « exit:… »). FACULTATIF, déclaré FAIBLE par
+ * le cœur comme les deux symboles ci-dessus. Le cœur l'appelle juste avant
+ * d'écrire les variables et EXIT=… sur la sortie standard, puis il sort par
+ * exit(). Un port qui tient le terminal (ncurses : écran alterné) y rend
+ * l'écran : sans cela, les variables écrites sur le terminal disparaissaient
+ * avec l'écran alterné. Les ports graphiques n'ont rien à fournir. */
+void          sermo_be_before_export(void);
+
 /* Applique les attributs de balise à un widget natif (spécifique au toolkit :
  * introspection GObject pour GTK, réimplémentation pour les backends neutres). */
 gint          widget_set_tag_attributes(sermo_widget *widget, tag_attr *attr);

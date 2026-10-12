@@ -6,8 +6,9 @@
 /* widget_text.cpp — Étiquette texte Qt6 (QLabel)
  *
  * <text> est une étiquette d'affichage (comme GtkLabel), PAS une zone éditable.
- * Le texte vient de <label> (ATTR_LABEL, cas courant), sinon <default>, sinon
- * la sortie d'une commande <input>. (Les zones éditables multilignes sont des
+ * Le texte vient de <label> (« text » si absent, posé par le cœur), puis de
+ * la sortie d'une commande <input>. <default> n'existe pas pour <text>
+ * (gtkdialog l'ignore aussi). (Les zones éditables multilignes sont des
  * <edit>, gérées par widget_edit.)
  */
 #include "qt6-compat.h"
@@ -40,9 +41,6 @@ GtkWidget *widget_text_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         /* <text><label>…</label></text> : cas le plus courant (était ignoré). */
         gchar *l = attributeset_get_first(&element, Attr, ATTR_LABEL);
         if (l && *l) lbl->setText(QString::fromUtf8(l));
-        element = nullptr;
-        gchar *def = attributeset_get_first(&element, Attr, ATTR_DEFAULT);
-        if (def && *def) lbl->setText(QString::fromUtf8(def));
         /* <input> : lu par widget_text_refresh(), que le cœur appelle juste
          * après la création. */
     }

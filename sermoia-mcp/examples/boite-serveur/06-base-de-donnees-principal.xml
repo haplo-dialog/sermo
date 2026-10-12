@@ -1,0 +1,31 @@
+<!-- Script : examples/boites-a-outils/serveur/06-base-de-donnees.sh (dialogue principal) -->
+<window title="Nouvelle base de données" default-width="540">
+  <vbox>
+    <frame label="Serveur">
+      <hbox>
+        <radiobutton><label>PostgreSQL</label><default>true</default><variable>S_POSTGRES</variable></radiobutton>
+        <radiobutton><label>MariaDB</label><variable>S_MARIADB</variable></radiobutton>
+      </hbox>
+    </frame>
+    <hbox><text><label>Nom de la base :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>BASE</variable><default>gestion_stock</default></entry></hbox>
+    <hbox><text><label>Compte de l'application :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>COMPTE</variable><default>appli_stock</default></entry></hbox>
+    <hbox><text><label>Mot de passe :</label></text>
+      <password space-expand="true" space-fill="true"><variable>MDP</variable></password></hbox>
+    <hbox><text><label>Une seconde fois :</label></text>
+      <password space-expand="true" space-fill="true"><variable>MDP2</variable></password></hbox>
+    <hbox><text><label>Jeu de caractères :</label></text>
+      <comboboxtext><variable>CODAGE</variable><default>UTF-8 (utf8mb4 pour MariaDB)</default>
+        <item>UTF-8 (utf8mb4 pour MariaDB)</item>
+        <item>Latin-1 (ancien logiciel)</item>
+      </comboboxtext></hbox>
+    <hbox><text><label>Connexion permise depuis (MariaDB) :</label></text>
+      <entry space-expand="true" space-fill="true"><variable>HOTE</variable><default>localhost</default></entry></hbox>
+    <checkbox><label>Le compte possède la base (sinon : droits complets sur la base)</label><default>true</default><variable>PROPRIETAIRE</variable></checkbox>
+    <hbox>
+      <button cancel></button>
+      <button><label>Créer</label><action>exit:creer</action></button>
+    </hbox>
+  </vbox>
+</window>

@@ -16,6 +16,50 @@
 #include "stack.h"
 #include "widget_vbox.h"
 #include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+
+/* Vrai/faux d'un attribut space-* comme l'étalon ; -1 s'il est absent. */
+static int valeur_space(tag_attr *attr, const char *nom, int defaut)
+{
+    const char *v = attr ? get_tag_attribute(attr, nom) : NULL;
+    if (!v) return defaut;
+    return (strcasecmp(v, "true") == 0 || strcasecmp(v, "yes") == 0 ||
+            atoi(v) == 1) ? 1 : 0;
+}
+
+/* Rangement des enfants d'une boîte, calculé à sa création comme gtk3
+ * (sermo-backend-gtk3/src/widget_vbox.c et widget_hbox.c) :
+ *   - valeur courante = celle de la boîte, sinon l'option du projet ;
+ *   - parcours : colonne dans l'ordre, RANGÉE à l'envers (pack_end) ;
+ *   - un enfant qui dit space-expand / space-fill REMPLACE la valeur
+ *     courante, pour lui et pour ceux parcourus après (jamais remise à zéro) ;
+ *   - valeur non dite : défaut du type empilé (colonne : edit, frame,
+ *     fenêtre défilante, paned ; rangée : edit, frame, fenêtre défilante,
+ *     entry).
+ * L'attribut propre de l'enfant est déjà posé (widgets.c, liste de
+ * visibilité, appelée juste après la création de chaque enfant). */
+void sdl3_box_pack(WidgetNode *box, stackelement *s, tag_attr *attr, int rangee)
+{
+    int expand = valeur_space(attr, "space-expand", project_space_expand);
+    int fill   = valeur_space(attr, "space-fill", project_space_fill);
+    const char *h = attr ? get_tag_attribute(attr, "homogeneous") : NULL;
+    box->homogeneous = h && (strcasecmp(h, "true") == 0 ||
+                             strcasecmp(h, "yes") == 0 || atoi(h) == 1);
+    for (int k = 0; k < s->nwidgets; ++k) {
+        int i = rangee ? s->nwidgets - 1 - k : k;
+        WidgetNode *ch = (WidgetNode *)s->widgets[i];
+        if (!ch) continue;
+        if (ch->expand) expand = (ch->expand == 1);
+        if (ch->fill)   fill   = (ch->fill == 1);
+        int t = s->widgettypes[i];
+        int defaut = (t == WIDGET_EDIT || t == WIDGET_FRAME ||
+                      t == WIDGET_SCROLLEDW ||
+                      (rangee ? t == WIDGET_ENTRY : t == WIDGET_PANED));
+        ch->pk_expand = (expand != -1) ? expand : defaut;
+        ch->pk_fill   = (fill   != -1) ? fill   : defaut;
+    }
+}
 
 GtkWidget *widget_vbox_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
@@ -27,6 +71,7 @@ GtkWidget *widget_vbox_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     stackelement s = pop();
     for (int i = 0; i < s.nwidgets; ++i)
         if (s.widgets[i]) widget_node_add_child(node, (WidgetNode *)s.widgets[i]);
+    sdl3_box_pack(node, &s, attr, 0);
     return (GtkWidget *)node;
 }
 
