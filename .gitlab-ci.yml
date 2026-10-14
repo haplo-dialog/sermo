@@ -101,10 +101,14 @@ paquets:
     # Format 3.0 (quilt) : dpkg-source exige l'archive amont à côté de l'arbre ;
     # sans elle, la tâche échouait avant de construire (vu sur v2.7.3 et v2.7.4).
     # Même contenu que packaging/construire-paquets.sh : l'arbre sans debian/ ni .git.
+    # Drapeau « S » : le renommage ne touche PAS la cible des liens symboliques.
+    # Sans lui, GNU tar réécrivait aussi « ../../servys/servys.sh » (contrib/trousses,
+    # liens ajoutés le 2026-10-10) en « sermo-2.8.2./../servys/servys.sh », et
+    # dpkg-source refusait l'arbre (tâche « paquets » de v2.8.2, 2026-10-13).
     - |
       AMONT=$(dpkg-parsechangelog -S Version | sed 's/-[^-]*$//')
       tar --exclude=./debian --exclude=./.git --exclude=./paquets \
-          --transform "s,^\.,sermo-$AMONT," -cJf "../sermo_${AMONT}.orig.tar.xz" .
+          --transform "s,^\.,sermo-$AMONT,S" -cJf "../sermo_${AMONT}.orig.tar.xz" .
     - dpkg-buildpackage -us -uc
     # Le .changes et les paquets sortent dans le répertoire PARENT.
     - mkdir -p paquets
