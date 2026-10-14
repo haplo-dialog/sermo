@@ -60,6 +60,18 @@ clic() {
 			echo NODISPLAY; exit 0
 		fi
 		[ -z "$WID" ] && { kill $pid 2>/dev/null; echo NOWIN; exit 0; }
+		# Taille STABLE avant de cliquer : sdl3 montre sa fenêtre avant d avoir
+		# dessiné et dimensionné le dialogue (3e image). Un clic arrivé avant
+		# se perd sans bruit, et VIVANT resterait vrai sans que rien ait été
+		# cliqué. On relit jusqu à trois lectures égales (voir
+		# garde_echappement_sortie.sh, mesure du 2026-10-13).
+		H0=""; n=0
+		for k in $(seq 1 30); do
+			H1=$(xwininfo -id $WID 2>/dev/null | awk "/Height:/{print \$2}")
+			if [ -n "$H1" ] && [ "$H1" = "$H0" ]; then n=$((n + 1)); else n=0; fi
+			[ $n -ge 2 ] && break
+			H0=$H1; sleep 0.3
+		done
 		eval $(xdotool getwindowgeometry --shell $WID)
 		xdotool mousemove $((X + 40)) $((Y + 22)) click 1; sleep 1
 		xdotool mousemove $((X + 40)) $((Y + 22)) click 1; sleep 1.5

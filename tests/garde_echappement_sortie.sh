@@ -61,7 +61,23 @@ rendre_ligne() {
 			kill -0 $pid 2>/dev/null || break
 			sleep 0.2
 		done
+		# Sans fenêtre et sorti de lui-même : un port sans écran (html), qui
+		# rend ses valeurs sans clic. Noté pour le cas EXIT, voir plus bas.
+		[ -z "$WID" ] && ! kill -0 $pid 2>/dev/null && : > "$3.sansfenetre"
 		[ -z "$WID" ] && { kill $pid 2>/dev/null; exit 1; }
+		# Taille STABLE avant de viser : sdl3 montre sa fenêtre en 800x600 puis
+		# la réduit au contenu à la 3e image (~80 ms plus tard, mesuré le
+		# 2026-10-13). Lue entre les deux, la hauteur valait 600 : le clic
+		# « bas de fenêtre » tombait 500 px sous le bouton, le binaire était
+		# tué, et la garde échouait sans que le code ait changé — selon la
+		# vitesse de la machine. On relit jusqu à trois lectures égales.
+		H0=""; n=0
+		for k in $(seq 1 30); do
+			H1=$(xwininfo -id $WID 2>/dev/null | awk "/Height:/{print \$2}")
+			if [ -n "$H1" ] && [ "$H1" = "$H0" ]; then n=$((n + 1)); else n=0; fi
+			[ $n -ge 2 ] && break
+			H0=$H1; sleep 0.3
+		done
 		eval $(xdotool getwindowgeometry --shell $WID)
 		CX=$(xwininfo -id $WID | awk "/Absolute upper-left X/{print \$4}")
 		CY=$(xwininfo -id $WID | awk "/Absolute upper-left Y/{print \$4}")
@@ -127,6 +143,15 @@ rendre_ligne "$TMP/e.xml" "$TMP/oute"
 ligne="$(grep -a '^EXIT=' "$TMP/oute" 2>/dev/null | head -1)"
 if [ -z "$ligne" ]; then
 	echo "  ✘ EXIT : aucune ligne EXIT= rendue — la mesure n'a pas eu lieu" >&2
+	echec=$((echec + 1))
+elif [ "$ligne" = 'EXIT="abort"' ] && [ -e "$TMP/oute.sansfenetre" ]; then
+	# Port sans fenêtre (html) : personne ne presse le bouton, son étiquette
+	# n'est jamais rendue. Le cas ne mesure rien ; on le dit, sans le compter.
+	echo "  ○ EXIT : port sans fenêtre, aucun bouton pressé — cas non mesurable ici"
+elif [ "$ligne" = 'EXIT="abort"' ]; then
+	# Ce que rend un dialogue TUÉ sans clic : le bouton n'a pas été pressé,
+	# son étiquette n'a jamais été écrite. Compté vert jusqu'au 2026-10-13.
+	echo "  ✘ EXIT : le clic n'a pas porté (EXIT=\"abort\") — la mesure n'a pas eu lieu" >&2
 	echec=$((echec + 1))
 else
 	joues=$((joues + 1))
