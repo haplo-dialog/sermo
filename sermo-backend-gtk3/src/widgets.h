@@ -42,6 +42,7 @@
 #include "variables.h"
 #include "automaton.h"
 
+/* Contrat : rend une chaîne ALLOUÉE (ou NULL), à libérer par g_free(). */
 char *widget_get_text_value(GtkWidget *widget, int type);
 FILE *widget_opencommand(const char *command);
 char *widgets_to_str(int itype);

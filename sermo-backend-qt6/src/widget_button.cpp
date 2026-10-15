@@ -14,6 +14,8 @@
 #include "widgets.h"
 #include "tag_attributes.h"
 #include "widget_button.h"
+#include "widget_checkbox.h"   /* qt6_bascule_brancher() */
+#include "jouer_actions.h"    /* condition_vraie() */
 #include "signals.h"
 #include "actions.h"
 #include "safe_exec.h"
@@ -117,6 +119,14 @@ GtkWidget *widget_button_create(AttributeSet *Attr, tag_attr *attr, gint Type)
             btn->setMinimumHeight(atoi(v));
     }
 
+    /* Togglebutton : comme l'étalon (widget_button.c, « toggled » seulement),
+     * ses actions jouent quand il bascule, « if true »/« if false » compris ;
+     * nu, il bascule sans sortir. Voir qt6_bascule_brancher(). */
+    if (Type == WIDGET_TOGGLEBUTTON) {
+        qt6_bascule_brancher((GtkWidget *)btn, Attr);
+        return (GtkWidget *)btn;
+    }
+
     /* Actions exécutées au clic. On ne peut PAS passer par
      * widget_signal_executor() : il décide du signal par défaut via
      * GTK_IS_BUTTON(), qui vaut 0 sur ce port → l'action ne serait jamais
@@ -161,8 +171,9 @@ GtkWidget *widget_button_create(AttributeSet *Attr, tag_attr *attr, gint Type)
             if (!function)
                 function = attributeset_get_this_tagattr(&ae, acap, ATTR_ACTION, (gchar *)"type");
             gchar *signal = attributeset_get_this_tagattr(&ae, acap, ATTR_ACTION, (gchar *)"signal");
-            if (!signal || g_ascii_strcasecmp(signal, "clicked") == 0
-                || (Type == WIDGET_TOGGLEBUTTON && g_ascii_strcasecmp(signal, "toggled") == 0))
+            if ((!signal || g_ascii_strcasecmp(signal, "clicked") == 0
+                 || (Type == WIDGET_TOGGLEBUTTON && g_ascii_strcasecmp(signal, "toggled") == 0))
+                && condition_vraie(&ae, acap))   /* condition= : voir jouer_actions.h */
                 execute_action(nullptr, cmd, function);
             cmd = attributeset_get_next(&ae, acap, ATTR_ACTION);
         }
@@ -173,16 +184,24 @@ GtkWidget *widget_button_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 
 gchar *widget_button_envvar_construct(GtkWidget *widget)
 {
-    /* Togglebutton = seul bouton CHECKABLE : exporte son état actif true/false,
-     * comme l'étalon gtk3 (widget_button.c:413). Bouton ordinaire : "true". */
+    /* Togglebutton = seul bouton CHECKABLE : exporte son état actif true/false ;
+     * bouton ordinaire : "", comme l'étalon (gtk3 widget_button.c). Ce port
+     * exportait "true" (cas 71). */
     QPushButton *b = static_cast<QPushButton *>(widget);
     if (b && b->isCheckable())
         return g_strdup(b->isChecked() ? "true" : "false");
-    return g_strdup("true");
+    return g_strdup("");
 }
 gchar *widget_button_envvar_all_construct(variable *var) { if (!var || !var->Widget) return nullptr; return widget_button_envvar_construct(var->Widget); }
 void   widget_button_clear(variable *var) {}
-void   widget_button_refresh(variable *var) { if (var && var->Widget) static_cast<QWidget*>(var->Widget)->update(); }
+void   widget_button_refresh(variable *var)
+{
+    /* Le cœur route <togglebutton> ici : son <input> se lit comme celui d'une
+     * case à cocher (widget_checkbox.cpp). Un bouton simple n'en fait rien,
+     * comme l'étalon. */
+    if (var && var->Widget && var->Type == WIDGET_TOGGLEBUTTON)
+        qt6_bascule_lire(var);
+}
 void   widget_button_fileselect(variable *var, const char *n, const char *v) {}
 void   widget_button_removeselected(variable *var) {}
 void   widget_button_save(variable *var) {}

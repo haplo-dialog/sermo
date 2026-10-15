@@ -39,6 +39,9 @@ pkg_check_modules(SERMOCORE REQUIRED sermocore)
 pkg_check_modules(X11       REQUIRED x11)
 pkg_check_modules(LIBPNG    REQUIRED libpng)   # --render-png
 pkg_check_modules(WAYLAND   REQUIRED wayland-client wayland-cursor xkbcommon)
+# Exigé à la configuration : sans lui, pkg_get_variable rend une chaîne vide et
+# l'échec n'arrivait qu'à la compilation (« /stable/xdg-shell/xdg-shell.xml »).
+pkg_check_modules(WL_PROTOS REQUIRED wayland-protocols)
 pkg_get_variable(WL_PROTOCOLES wayland-protocols pkgdatadir)
 find_program(WAYLAND_SCANNER wayland-scanner REQUIRED)
 
@@ -47,9 +50,18 @@ find_program(WAYLAND_SCANNER wayland-scanner REQUIRED)
 set(WL_GEN "${CMAKE_CURRENT_BINARY_DIR}/wayland")
 file(MAKE_DIRECTORY ${WL_GEN})
 set(WL_GEN_SRC)
+# linux-dmabuf est passé de unstable/ à stable/ dans wayland-protocols 1.33, sous
+# les mêmes noms d'interface (zwp_linux_dmabuf_v1). Slackware 15.0 n'a que la
+# 1.25 : on y prend l'ancien chemin (mesuré le 12/10/2026, la construction
+# s'arrêtait sur « No rule to make target …/stable/linux-dmabuf/… »).
+if(EXISTS "${WL_PROTOCOLES}/stable/linux-dmabuf/linux-dmabuf-v1.xml")
+  set(WL_DMABUF "stable/linux-dmabuf/linux-dmabuf-v1.xml")
+else()
+  set(WL_DMABUF "unstable/linux-dmabuf/linux-dmabuf-unstable-v1.xml")
+endif()
 foreach(paire "xdg_shell:stable/xdg-shell/xdg-shell.xml"
               "xdg_output:unstable/xdg-output/xdg-output-unstable-v1.xml"
-              "linux_dmabuf:stable/linux-dmabuf/linux-dmabuf-v1.xml")
+              "linux_dmabuf:${WL_DMABUF}")
   string(REPLACE ":" ";" paire_l "${paire}")
   list(GET paire_l 0 nom)
   list(GET paire_l 1 xml)
@@ -71,8 +83,52 @@ add_library(lvgl_tiers STATIC ${LVGL_SRC} ${WL_GEN_SRC})
 target_include_directories(lvgl_tiers PUBLIC ${LVGL_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(lvgl_tiers PRIVATE ${WL_GEN} ${WAYLAND_INCLUDE_DIRS})
 target_compile_definitions(lvgl_tiers PUBLIC LV_CONF_INCLUDE_SIMPLE)
+# Version légère (paquet sermo-backend-lvgl-leger) : sans ThorVG ni Lottie,
+# donc sans icônes SVG ; ~31 % plus léger (mesuré le 15/10 : 1 663 Kio au lieu
+# de 2 399, banc de comportement à parité). Même binaire « lvglsermo ».
+option(SERMO_LVGL_LEGER "lvgl sans ThorVG/Lottie (icônes SVG absentes)" OFF)
+if(SERMO_LVGL_LEGER)
+  target_compile_definitions(lvgl_tiers PUBLIC SERMO_LVGL_LEGER)
+endif()
+# Protection du flot de contrôle selon le processeur : CET sur x86
+# (-fcf-protection), BTI/PAC sur ARM64 (-mbranch-protection). Écrite en dur,
+# -fcf-protection arrêtait toute construction ARM64 : « option 'cf-protection'
+# cannot be specified on this target » (clang 21, Termux, mesuré le 2026-10-12).
+include(CheckCCompilerFlag)
+check_c_compiler_flag(-fcf-protection=full SERMO_A_CF_PROTECTION)
+check_c_compiler_flag(-mbranch-protection=standard SERMO_A_BRANCH_PROTECTION)
+if(SERMO_A_CF_PROTECTION)
+  set(SERMO_FLOT_CONTROLE -fcf-protection=full)
+elseif(SERMO_A_BRANCH_PROTECTION)
+  set(SERMO_FLOT_CONTROLE -mbranch-protection=standard)
+else()
+  set(SERMO_FLOT_CONTROLE "")
+endif()
 target_compile_options(lvgl_tiers PRIVATE -w -fPIE
-  -D_FORTIFY_SOURCE=3 -fstack-protector-strong -fstack-clash-protection -fcf-protection=full)
+  -D_FORTIFY_SOURCE=3 -fstack-protector-strong -fstack-clash-protection ${SERMO_FLOT_CONTROLE})
+
+# Le pilote Wayland de LVGL crée ses tampons par shm_open/shm_unlink. Sans
+# eux (bionic d'Android), on les fournit par memfd_create (sermo_shm_repli.c)
+# et on les déclare à LVGL par un en-tête inclus de force, sans toucher à son
+# code. glibc < 2.34 les range dans librt : essayé avant le repli.
+include(CheckSymbolExists)
+check_symbol_exists(shm_open "sys/mman.h" SERMO_A_SHM_OPEN)
+if(NOT SERMO_A_SHM_OPEN)
+  set(CMAKE_REQUIRED_LIBRARIES rt)
+  check_symbol_exists(shm_open "sys/mman.h" SERMO_A_SHM_OPEN_RT)
+  unset(CMAKE_REQUIRED_LIBRARIES)
+endif()
+set(SERMO_SHM_REPLI "")
+if(SERMO_A_SHM_OPEN_RT)
+  target_link_libraries(lvgl_tiers PUBLIC rt)
+elseif(NOT SERMO_A_SHM_OPEN)
+  target_compile_options(lvgl_tiers PRIVATE
+    $<$<COMPILE_LANGUAGE:C>:-include ${CMAKE_CURRENT_SOURCE_DIR}/src/sermo_shm_repli.h>)
+  add_library(sermo_shm_repli OBJECT src/sermo_shm_repli.c)
+  target_compile_options(sermo_shm_repli PRIVATE -Wall -Wextra -fPIE
+    -D_FORTIFY_SOURCE=3 -fstack-protector-strong -fstack-clash-protection ${SERMO_FLOT_CONTROLE})
+  set(SERMO_SHM_REPLI $<TARGET_OBJECTS:sermo_shm_repli>)
+endif()
 
 # ─── Sources backend ───────────────────────────────────────────────────────
 # widget*.c capture widget_*.c + widgets.c + widget_node.c + widget_stubs.c.
@@ -91,6 +147,7 @@ add_executable(lvglsermo
   src/sermo_backend_lvgl.c
   src/render_lvgl.c
   $<TARGET_OBJECTS:sermo_neutral_glist>
+  ${SERMO_SHM_REPLI}
 )
 
 target_include_directories(lvglsermo BEFORE PRIVATE
@@ -101,18 +158,30 @@ target_include_directories(lvglsermo BEFORE PRIVATE
   ${X11_INCLUDE_DIRS}
   ${LIBPNG_INCLUDE_DIRS})
 
+# Les objets à part sont liés dans le même binaire : un seul objet sans la
+# protection du flot de contrôle et le lieur la retire du binaire entier
+# (mesuré sur ARM64 avec -z bti-report). Même durcissement que le binaire.
+target_compile_options(sermo_neutral_glist PRIVATE
+  -D_FORTIFY_SOURCE=3 -fstack-protector-strong -fstack-clash-protection ${SERMO_FLOT_CONTROLE})
 target_compile_options(lvglsermo PRIVATE
   -std=gnu11
   # lvgl-compat.h : shim GLib auto-suffisant (GList, g_*), pas de glib réelle
   -include ${CMAKE_CURRENT_SOURCE_DIR}/src/lvgl-compat.h
-  -D_FORTIFY_SOURCE=3 -fstack-protector-strong -fstack-clash-protection -fcf-protection=full
+  -D_FORTIFY_SOURCE=3 -fstack-protector-strong -fstack-clash-protection ${SERMO_FLOT_CONTROLE}
   ${X11_CFLAGS_OTHER})
 
 # Durcissement au lien : PIE/RELRO/BIND_NOW/NX + CET (IBT/SHSTK forcés, cf. qt6).
+# Marquage CET (-z ibt/shstk) : x86 seulement, comme -fcf-protection.
+if(SERMO_A_CF_PROTECTION)
+  set(SERMO_CET_LIEN -Wl,-z,ibt -Wl,-z,shstk)
+endif()
 target_link_options(lvglsermo PRIVATE
   -pie -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack
-  -Wl,-z,ibt -Wl,-z,shstk
-  -fcf-protection=full -fstack-protector-strong -fstack-clash-protection)
+  # XOpenDisplay du pilote X11 de LVGL : l'écran ouvert par le port, échec
+  # sans plantage (src/render_lvgl.c, __wrap_XOpenDisplay)
+  -Wl,--wrap=XOpenDisplay
+  ${SERMO_CET_LIEN}
+  ${SERMO_FLOT_CONTROLE} -fstack-protector-strong -fstack-clash-protection)
 
 target_link_libraries(lvglsermo PRIVATE
   ${SERMOCORE_LINK_LIBRARIES}     # cœur via pkg-config (variante neutre, lien statique)
@@ -122,6 +191,14 @@ target_link_libraries(lvglsermo PRIVATE
   ${WAYLAND_LIBRARIES}
   m)
 target_link_directories(lvglsermo PRIVATE ${X11_LIBRARY_DIRS})
+# Le pilote Wayland de LVGL appelle shm_open/shm_unlink : dans la libc depuis
+# la glibc 2.34, dans librt avant (Slackware 15.0, glibc 2.33 : « undefined
+# reference to shm_open », mesuré le 13/10/2026). Ne lier librt que là.
+include(CheckSymbolExists)
+check_symbol_exists(shm_open "sys/mman.h" SERMO_SHM_OPEN_DANS_LIBC)
+if(NOT SERMO_SHM_OPEN_DANS_LIBC)
+  target_link_libraries(lvglsermo PRIVATE rt)
+endif()
 # ThorVG (C++) est dans lvgl_tiers : l'édition des liens se fait en C++
 # (libstdc++), le reste du port reste du C.
 set_target_properties(lvglsermo PROPERTIES LINKER_LANGUAGE CXX)

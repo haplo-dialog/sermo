@@ -41,5 +41,5 @@
       signed checksums (`SHA256SUMS.asc`, since 2.8.2).
 - [ ] apt repository (there is none today).
 
-> Progress is **guarded by the three benches** (XML 55 · behaviour 61 · guards):
+> Progress is **guarded by the three benches** (XML 55 · behaviour 75 · guards):
 > no phase advances while a bench is red.

@@ -59,7 +59,30 @@ void widget_searchentry_clear(variable *var)
     if (!var || !var->Widget) return;
     ((WidgetNode *)var->Widget)->state.list.filter[0] = '\0';
 }
-void widget_searchentry_refresh(variable *var) {}
+void widget_searchentry_refresh(variable *var)
+{
+    /* <input> : rejoué à chaque « refresh », comme l'étalon gtk3sermo, sans
+     * jouer d'action. Jusqu'au 2026-10-13 il n'était jamais lu. Le texte vit
+     * dans state.list.filter (export et page). Au premier passage, <default>
+     * l'emporte : l'étalon l'applique après l'<input>. */
+    WidgetNode *n;
+    gchar      *ligne;
+    GList      *el = NULL;
+
+    if (!var || !var->Widget) return;
+    n = (WidgetNode *)var->Widget;
+    ligne = widget_input_line(var->Attributes);
+    if (ligne) {
+        snprintf(n->state.list.filter, sizeof(n->state.list.filter), "%s", ligne);
+        g_free(ligne);
+    }
+    if (!n->initialised) {
+        n->initialised = TRUE;
+        gchar *def = attributeset_get_first(&el, var->Attributes, ATTR_DEFAULT);
+        if (def && *def)
+            snprintf(n->state.list.filter, sizeof(n->state.list.filter), "%s", def);
+    }
+}
 void widget_searchentry_fileselect(variable *var, const char *n, const char *v) {}
 void widget_searchentry_removeselected(variable *var) {}
 void widget_searchentry_save(variable *var) {}

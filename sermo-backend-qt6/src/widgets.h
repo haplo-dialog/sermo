@@ -48,11 +48,14 @@
 extern "C" {
 #endif
 
+/* Contrat : rend une chaîne ALLOUÉE (ou NULL), à libérer par g_free(). */
 char *widget_get_text_value(GtkWidget *widget, int type);
 FILE *widget_opencommand(const char *command);
 double widget_command_value(AttributeSet *Attr, double fallback);
 gchar *widget_input_text(AttributeSet *Attr);
+gint widget_input_bool(AttributeSet *Attr);   /* 1, 0, ou -1 si rien n'est lisible */
 gchar **widget_input_lines(AttributeSet *Attr);
+gchar *widget_input_line(AttributeSet *Attr);   /* 1re ligne sans CR/LF, NULL si rien */
 char *widgets_to_str(int itype);
 gboolean widget_connect_signals(GtkWidget *widget, AttributeSet *Attr);
 void widget_visibility_list_add(GtkWidget *widget, tag_attr *attr);

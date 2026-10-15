@@ -604,6 +604,9 @@ main(int argc, char *argv[])
 	window_id = 0;
 
 	setlocale(LC_ALL, "");
+#ifdef _WIN32
+	sermo_win32_utf8();   /* caractères et console en UTF-8 (sermo_win32.c) */
+#endif
 	/*
 	 * 
 	 */

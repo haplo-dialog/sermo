@@ -19,6 +19,11 @@ void   widget_checkbox_refresh(variable *var);
 void   widget_checkbox_fileselect(variable *var, const char *n, const char *v);
 void   widget_checkbox_removeselected(variable *var);
 void   widget_checkbox_save(variable *var);
+/* Widgets à bascule (case, bouton à bascule, radio) : joue leurs actions à
+ * chaque changement d'état ; connus du crochet « activate: ». */
+void   qt6_bascule_brancher(GtkWidget *bouton, AttributeSet *Attr);
+void   qt6_interrupteur_brancher(GtkWidget *bouton, AttributeSet *Attr);   /* <switch> */
+void   qt6_bascule_lire(variable *var);   /* <input> d'une bascule, à chaque refresh */
 #ifdef __cplusplus
 }
 #endif

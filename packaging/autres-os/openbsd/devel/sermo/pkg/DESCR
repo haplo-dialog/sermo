@@ -1,0 +1,4 @@
+sermo turns an XML description into a dialog box for shell scripts: windows,
+entries, lists, buttons, timers. It is the successor of gtkdialog. This port
+builds the terminal front end (ncurses); the values chosen by the user come
+back on standard output as shell variables.

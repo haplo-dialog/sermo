@@ -5,6 +5,44 @@ Ce fichier résume les changements du point de vue de l'utilisateur.
 Pour l'historique technique complet, voir CHANGELOG.md.
 
 ──────────────────────────────────────────────────
+Version 3.0.0
+──────────────────────────────────────────────────
+
+Deux nouveautés : le port ncurses sort de Linux, et sermo lit un
+automate depuis le XML. Les dialogues existants marchent tels quels.
+
+* <input modbus> et <input opcua> : une jauge ou un texte affiche en
+  direct la valeur d'un automate Modbus ou d'un serveur OPC UA
+  (certificats possibles), en LECTURE SEULE. Paquets à part :
+  sermo-source-modbus, sermo-source-opcua. Un équipement injoignable ne
+  fige pas la fenêtre.
+
+* Exemples Modbus et OPC UA (examples/modbus, examples/opcua, paquet
+  sermo-doc), avec un faux automate et un faux serveur pour essayer
+  sans matériel.
+
+* « refresh » relit l'<input> d'une jauge, d'un curseur, d'une case à
+  cocher… sur les neuf ports, comme gtk3sermo (sept ports l'ignoraient).
+
+* ncursessermo tourne sous Windows 10/11 (un seul .exe, rien à
+  installer), sous Android dans Termux, sous FreeBSD et sous OpenBSD.
+  Sous Termux, les ports graphiques se construisent aussi (sauf efl1).
+
+* SERMO_SHELL choisit le shell qui lance les commandes à syntaxe shell
+  (chemin absolu d'un programme exécutable) ; /bin/sh par défaut.
+
+* Construit par clang, un dialogue rangeait ses widgets à l'envers :
+  corrigé.
+
+* gtk4sermo refuse une propriété en lecture seule, comme gtk3sermo.
+
+* efl1sermo et lvglsermo ne plantent plus quand l'écran est
+  injoignable : ils disent « cannot open display » et rendent le code 1.
+
+* Durcissement : protection du flot de contrôle sur x86 (CET) et sur
+  ARM64 (BTI/PAC) ; FORTIFY agit dans sermoia-mcp.
+
+──────────────────────────────────────────────────
 Version 2.8.2
 ──────────────────────────────────────────────────
 

@@ -121,7 +121,7 @@ Faites passer **les trois portes** (voir [MANUEL_DEVELOPPEUR.md](MANUEL_DEVELOPP
 ```bash
 BIN=sermo-backend-qt6/_build/qt6sermo
 TIMEOUT=5 bash tests/xml/run_tests.sh "$BIN"                       # 55 PASS
-bash tests/comportement/run.sh "$BIN"                             # 61 au vert
+bash tests/comportement/run.sh "$BIN"                             # 75 au vert
 xvfb-run -a bash tests/garde_echappement_sortie.sh "$BIN"          # OK — 4 cas
 ```
 

@@ -35,5 +35,9 @@ void widget_progressbar_fileselect(
 void widget_progressbar_refresh(variable *var);
 void widget_progressbar_removeselected(variable *var);
 void widget_progressbar_save(variable *var);
+/* Barres dont la commande n'a encore rien montre (attendues par --render-png). */
+gint widget_progressbar_en_attente(void);
+/* Barres dont la commande a demarre (--render-png laisse alors passer quelques trames). */
+gint widget_progressbar_lancees(void);
 
 #endif

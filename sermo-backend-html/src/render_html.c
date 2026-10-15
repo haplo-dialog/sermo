@@ -18,12 +18,26 @@
 
 #include "render_html.h"
 #include "dialog_state.h"
+#include "variables.h"   /* variables_get_by_name() : valeur des champs grisés */
+#include "widgets.h"     /* widget_get_text_value() */
 
 /* --space-expand / --space-fill du programme (cœur, gtkdialog.c) : -1 = non dit. */
 extern gint project_space_expand;
 extern gint project_space_fill;
 
 /* ─── Échappement HTML ───────────────────────────────────────────────────── */
+/* Un nombre pour la page : toujours avec un point. fprintf(« %g ») suit la
+ * langue du système et écrivait « 0,65 » sous fr_FR — que les navigateurs
+ * refusent dans value=, min=, max=, step= (attribut ignoré : barre vide,
+ * curseur au début). Quatre tampons tournants : plusieurs nombres par appel. */
+static const char *nb(double v)
+{
+    static char t[4][40];
+    static int i;
+    i = (i + 1) % 4;
+    return g_ascii_formatd(t[i], sizeof t[i], "%g", v);
+}
+
 static void html_escape(FILE *out, const char *s)
 {
     if (!s) return;
@@ -305,7 +319,42 @@ static void render_enfants_boite(FILE *out, WidgetNode *n, int depth)
     free(etire); free(remplit);
 }
 
+/* En mode serve, un champ désactivé n'est pas envoyé par le navigateur : sa
+ * variable manquerait à la sortie, que l'étalon imprime. Chaque variable d'un
+ * sous-arbre grisé part donc dans un champ caché, avec la valeur qu'exporte le
+ * cœur — placé AVANT le <fieldset disabled>, sinon il serait désactivé aussi. */
+static void champs_caches(FILE *out, WidgetNode *n)
+{
+    if (!n) return;
+    if (n->var_name && *n->var_name) {
+        variable *v = variables_get_by_name(n->var_name);
+        if (v && v->Widget == (GtkWidget *)n && !v->autonamed) {
+            char *valeur = widget_get_text_value((GtkWidget *)n, v->Type);
+            fputs("<input type=\"hidden\" name=\"", out); html_escape(out, n->var_name);
+            fputs("\" value=\"", out); html_escape(out, valeur ? valeur : ""); fputs("\">", out);
+            g_free(valeur);
+        }
+    }
+    for (int i = 0; i < n->child_count; i++) champs_caches(out, n->children[i]);
+}
+
+static void render_node_corps(FILE *out, WidgetNode *n, int depth);
+
+/* Grisé (sensitive="false", <sensitive>false</sensitive>, disable:) : comme
+ * GTK, le widget et tout ce qu'il contient refusent la saisie. Un <fieldset
+ * disabled> désactive les champs qu'il contient ; display:contents le laisse
+ * hors de la mise en page. Jusqu'ici la page ignorait l'état. */
 static void render_node(FILE *out, WidgetNode *n, int depth)
+{
+    if (!n || !n->visible) return;
+    if (n->sensitive) { render_node_corps(out, n, depth); return; }
+    if (html_mode() == MODE_SERVE) champs_caches(out, n);
+    fputs("<fieldset class=\"sermo-grise\" disabled>", out);
+    render_node_corps(out, n, depth);
+    fputs("</fieldset>\n", out);
+}
+
+static void render_node_corps(FILE *out, WidgetNode *n, int depth)
 {
     if (!n || !n->visible) return;
     const char *lbl = safe_label(n);
@@ -716,24 +765,29 @@ static void render_node(FILE *out, WidgetNode *n, int depth)
         fprintf(out, "<label class=\"sermo-field\">");
         html_escape(out, lbl);
         fprintf(out, " <input type=\"number\"%s", ro()); fld_name(out, n);
-        fprintf(out, " value=\"%g\" min=\"%g\" max=\"%g\"></label>\n",
-                n->state.spin.value, n->state.spin.min, n->state.spin.max);
+        fprintf(out, " value=\"%s\" min=\"%s\" max=\"%s\"></label>\n",
+                nb(n->state.spin.value), nb(n->state.spin.min), nb(n->state.spin.max));
         return;
 
     case WT_HSCALE: case WT_VSCALE:
         fprintf(out, "<label class=\"sermo-field%s\">", n->type == WT_VSCALE ? " sermo-vscale" : "");
         html_escape(out, lbl);
         fprintf(out,
-                " <input type=\"range\" disabled value=\"%g\" min=\"%g\" max=\"%g\" step=\"%g\">"
-                " <output>%g</output></label>\n",
-                n->state.scale.value, n->state.scale.min, n->state.scale.max,
-                n->state.scale.step > 0 ? n->state.scale.step : 1.0, n->state.scale.value);
+                " <input type=\"range\" disabled value=\"%s\" min=\"%s\" max=\"%s\" step=\"%s\">"
+                " <output>%s</output></label>\n",
+                nb(n->state.scale.value), nb(n->state.scale.min), nb(n->state.scale.max),
+                nb(n->state.scale.step > 0 ? n->state.scale.step : 1.0), nb(n->state.scale.value));
         return;
 
     case WT_PROGRESSBAR: case WT_LEVELBAR: {
-        double mx = (n->state.scale.max > n->state.scale.min) ? n->state.scale.max : 1.0;
+        /* <progressbar> : une fraction 0..1 (state.progress, écrite par
+         * widget_progressbar.c) ; <levelbar> : une valeur entre min et max
+         * (state.scale). Les deux partagent une union : lire le bon membre. */
+        double val = n->type == WT_PROGRESSBAR ? n->state.progress.value : n->state.scale.value;
+        double mx = n->type == WT_PROGRESSBAR ? 1.0
+                  : (n->state.scale.max > n->state.scale.min) ? n->state.scale.max : 1.0;
         if (*lbl) { fputs("<label class=\"sermo-field\">", out); html_escape(out, lbl); fputs(" ", out); }
-        fprintf(out, "<progress class=\"sermo-progress\" value=\"%g\" max=\"%g\"></progress>", n->state.scale.value, mx);
+        fprintf(out, "<progress class=\"sermo-progress\" value=\"%s\" max=\"%s\"></progress>", nb(val), nb(mx));
         if (*lbl) fputs("</label>", out);
         fputc('\n', out);
         return;
@@ -873,9 +927,9 @@ static void render_node(FILE *out, WidgetNode *n, int depth)
         return;
 
     case WT_DRAWINGAREA:
-        fprintf(out, "<div class=\"sermo-drawingarea\" style=\"width:%gpx;height:%gpx\"></div>\n",
-                n->state.drawing.width > 0 ? n->state.drawing.width : 100,
-                n->state.drawing.height > 0 ? n->state.drawing.height : 100);
+        fprintf(out, "<div class=\"sermo-drawingarea\" style=\"width:%spx;height:%spx\"></div>\n",
+                nb(n->state.drawing.width > 0 ? n->state.drawing.width : 100),
+                nb(n->state.drawing.height > 0 ? n->state.drawing.height : 100));
         return;
 
     case WT_SPINNER:
@@ -983,6 +1037,8 @@ static void write_style(FILE *out)
         ".sermo-vbox>meter,.sermo-etire>meter,.sermo-frame>meter{width:100%;}\n"
         ".sermo-separator{margin:.3rem 0;align-self:stretch;border:0;border-top:1px solid var(--sermo-border);}\n"
         ".sermo-icone-absente{display:inline-block;flex:none;}\n"
+        ".sermo-grise{display:contents;}\n"
+        ".sermo-grise :is(label,button,select,textarea,input,progress,meter):not(label *){opacity:.55;}\n"
         /* Place d'un enfant étiré (sermo-etire) ou case d'une boîte homogène
          * (sermo-case, toutes de même taille) : orientée comme la boîte ; un
          * enfant qui remplit (space-fill) en prend toute la longueur, sinon

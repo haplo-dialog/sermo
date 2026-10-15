@@ -12,6 +12,9 @@
 # Codes : 0 = tout est construit · 1 = au moins une cible a échoué
 
 set -uo pipefail
+# Messages des outils en anglais : le compte des avertissements cherche
+# « warning: », et bison les écrit « avertissement : » sous une locale française.
+export LC_ALL=C
 RACINE=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 J="${SERMO_JOURNAUX:-$RACINE/_journaux}"
 PORTS=("$@"); [ ${#PORTS[@]} -gt 0 ] || PORTS=(gtk3 gtk4 qt6 fltk1 efl1 sdl3 lvgl ncurses html)
@@ -74,6 +77,31 @@ if { cmake -S "$RACINE/sermoia-mcp" -B "$RACINE/sermoia-mcp/_build" \
     printf 'OK     %-8s (%s avertissement(s))\n' sermoia "$(grep -c 'warning:' "$journal")"
 else
     printf 'ÉCHEC  %-8s — voir %s\n' sermoia "$journal"; tail -20 "$journal"
+    echecs=$((echecs + 1))
+fi
+
+# lvgl léger (paquet sermo-backend-lvgl-leger) : même port, sans ThorVG/Lottie.
+case " ${PORTS[*]} " in *" lvgl "*)
+    journal="$J/backend-lvgl-leger.log"
+    if { PKG_CONFIG_PATH="$RACINE/libsermocore/_install/lib/pkgconfig" cmake -S "$RACINE/sermo-backend-lvgl" -B "$RACINE/sermo-backend-lvgl/_build_leger" -DSERMO_LVGL_LEGER=ON \
+         && PKG_CONFIG_PATH="$RACINE/libsermocore/_install/lib/pkgconfig" cmake --build "$RACINE/sermo-backend-lvgl/_build_leger" -j"$N"; } > "$journal" 2>&1 \
+       && [ -x "$RACINE/sermo-backend-lvgl/_build_leger/lvglsermo" ]; then
+        printf 'OK     %-8s (%s avertissement(s))\n' lvgl-leg "$(grep -c 'warning:' "$journal")"
+    else
+        printf 'ÉCHEC  %-8s — voir %s\n' lvgl-leg "$journal"; tail -20 "$journal"
+        echecs=$((echecs + 1))
+    fi
+    ;;
+esac
+
+# Les programmes d'aide de <input modbus> / <input opcua> (sermo_source.h).
+journal="$J/sermo-source.log"
+if { cmake -S "$RACINE/sermo-source" -B "$RACINE/sermo-source/_build" -DSERMO_SOURCE_EXIGER=ON \
+     && cmake --build "$RACINE/sermo-source/_build" -j"$N"; } > "$journal" 2>&1 \
+   && [ -x "$RACINE/sermo-source/_build/sermo-source-modbus" ] && [ -x "$RACINE/sermo-source/_build/sermo-source-opcua" ]; then
+    printf 'OK     %-8s (%s avertissement(s))\n' source "$(grep -c 'warning:' "$journal")"
+else
+    printf 'ÉCHEC  %-8s — voir %s\n' source "$journal"; tail -20 "$journal"
     echecs=$((echecs + 1))
 fi
 

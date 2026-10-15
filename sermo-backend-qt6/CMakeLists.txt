@@ -180,6 +180,31 @@ target_include_directories(qt6sermo PRIVATE
   ${QTERMWIDGET_INCLUDE_DIRS}
 )
 
+# Protection du flot de contrôle selon le processeur : CET sur x86
+# (-fcf-protection), BTI/PAC sur ARM64 (-mbranch-protection). Écrite en dur,
+# -fcf-protection arrêtait toute construction ARM64 : « option 'cf-protection'
+# cannot be specified on this target » (clang 21, Termux, mesuré le 2026-10-12).
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag(-fcf-protection=full SERMO_A_CF_PROTECTION)
+check_cxx_compiler_flag(-mbranch-protection=standard SERMO_A_BRANCH_PROTECTION)
+if(SERMO_A_CF_PROTECTION)
+  set(SERMO_FLOT_CONTROLE -fcf-protection=full)
+elseif(SERMO_A_BRANCH_PROTECTION)
+  set(SERMO_FLOT_CONTROLE -mbranch-protection=standard)
+else()
+  set(SERMO_FLOT_CONTROLE "")
+endif()
+# Deux réglages d'avertissement propres à gcc : clang les refuse
+# (« unknown warning option », une fois par fichier). Posés s'ils sont acceptés,
+# après -Wformat, qui sinon ramènerait -Wformat-overflow au niveau 1.
+set(SERMO_AVERTISSEMENTS_GCC "")
+foreach(option -Wimplicit-fallthrough=3 -Wformat-overflow=2)
+  string(MAKE_C_IDENTIFIER "SERMO_A${option}" variable)
+  check_cxx_compiler_flag(${option} ${variable})
+  if(${variable})
+    list(APPEND SERMO_AVERTISSEMENTS_GCC ${option})
+  endif()
+endforeach()
 target_compile_options(qt6sermo PRIVATE
   -Wall -Wextra -Wno-unused-parameter
   -Wno-deprecated-declarations
@@ -187,19 +212,22 @@ target_compile_options(qt6sermo PRIVATE
   $<$<COMPILE_LANGUAGE:C>:-Wno-missing-prototypes>
   -Wshadow
   -Wnull-dereference
-  -Wimplicit-fallthrough=3
-  -Wformat -Wformat-overflow=2 -Werror=format-security
+  -Wformat ${SERMO_AVERTISSEMENTS_GCC} -Werror=format-security
   -D_FORTIFY_SOURCE=3
   -D_POSIX_C_SOURCE=200809L
   -fstack-protector-strong
   -fstack-clash-protection
-  -fcf-protection=full
+  ${SERMO_FLOT_CONTROLE}
   -fPIE
   # Note: CMAKE_POSITION_INDEPENDENT_CODE est géré via -fPIE/-pie explicites
   # Force-include le header de compatibilité dans chaque unité C
   $<$<COMPILE_LANGUAGE:C>:-include ${CMAKE_CURRENT_SOURCE_DIR}/src/qt6-compat.h>
 )
 
+# Marquage CET (-z ibt/shstk) : x86 seulement, comme -fcf-protection.
+if(SERMO_A_CF_PROTECTION)
+  set(SERMO_CET_LIEN -Wl,-z,ibt -Wl,-z,shstk)
+endif()
 target_link_options(qt6sermo PRIVATE
   -pie -Wl,-z,relro -Wl,-z,now
   -Wl,-z,noexecstack
@@ -209,9 +237,9 @@ target_link_options(qt6sermo PRIVATE
   # binaire lié la perdait, -fcf-protection=full ou pas (mesuré au readelf le
   # 2026-09-03 : les .o l'avaient tous, le binaire non ; un main() trivial la
   # perdait aussi). Les ports GTK posent ces mêmes drapeaux (leurs CMakeLists.txt).
-  -Wl,-z,ibt -Wl,-z,shstk
+  ${SERMO_CET_LIEN}
   # Répétés au lien pour la recompilation LTO :
-  -fcf-protection=full -fstack-protector-strong -fstack-clash-protection
+  ${SERMO_FLOT_CONTROLE} -fstack-protector-strong -fstack-clash-protection
 )
 
 target_link_libraries(qt6sermo PRIVATE
@@ -282,6 +310,7 @@ if(GLIB_FOUND)
   add_executable(test_safe_exec
     ${CMAKE_CURRENT_SOURCE_DIR}/../tests/unit/test_safe_exec.c
     ${CMAKE_CURRENT_SOURCE_DIR}/../libsermocore/src/safe_exec.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../libsermocore/src/sermo_lanceur.c   # sermo_shell
     ${CMAKE_CURRENT_SOURCE_DIR}/../libsermocore/src/sermo_input.c
   )
   target_include_directories(test_safe_exec PRIVATE
@@ -293,6 +322,18 @@ if(GLIB_FOUND)
     -Wall -Wextra -Wno-unused-parameter
   )
   target_link_libraries(test_safe_exec PRIVATE ${GLIB_LIBRARIES})
+  # sermo_input.c, compilé ici hors du cœur, a besoin du même choix que lui :
+  # fopencookie, sinon funopen (bionic d'Android, macOS, BSD).
+  include(CheckSymbolExists)
+  set(CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
+  check_symbol_exists(fopencookie "stdio.h" SERMO_A_FOPENCOOKIE)
+  if(NOT SERMO_A_FOPENCOOKIE)
+    check_symbol_exists(funopen "stdio.h" SERMO_A_FUNOPEN)
+    if(SERMO_A_FUNOPEN)
+      target_compile_definitions(test_safe_exec PRIVATE SERMO_HAVE_FUNOPEN=1)
+    endif()
+  endif()
+  unset(CMAKE_REQUIRED_DEFINITIONS)
   add_test(NAME safe_exec COMMAND test_safe_exec)
 
   # test_compat : compile qt6-compat.h uniquement, test C++

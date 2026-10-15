@@ -1,0 +1,28 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: <input> au premier passage (juste apres la creation) puis aux refresh, regles de l etalon : un <default> l emporte au premier passage pour calendar (date valide), colorbutton, fontbutton et searchentry, <label> pour statusbar, expanded= pour expander ; notebook : -1 donne la derniere page et un numero trop grand ne change rien ; dates et lignes CR/LF bornees comme l etalon -->
+<window><vbox>
+<expander expanded="false"><vbox><text><label>x</label></text></vbox><label>e</label><variable>EX1</variable><input>sh donnees/sequence.sh c-ex1 true true</input></expander>
+<expander expanded="true"><vbox><text><label>x</label></text></vbox><label>e</label><variable>EX2</variable><input>echo non</input></expander>
+<expander><vbox><text><label>x</label></text></vbox><label>e</label><variable>EX3</variable><input>echo YES</input></expander>
+<notebook><text><label>x</label></text><text><label>y</label></text><text><label>z</label></text><variable>NB1</variable><input>sh donnees/sequence.sh c-nb1 1 -1</input></notebook>
+<notebook><text><label>x</label></text><text><label>y</label></text><text><label>z</label></text><variable>NB2</variable><input>sh donnees/sequence.sh c-nb2 0 9</input></notebook>
+<calendar><variable>CA1</variable><default>2001-03-07</default><input>sh donnees/sequence.sh c-ca1 2021-05-06 2021-01-31</input></calendar>
+<calendar><variable>CA2</variable><input>echo 2021-13-40</input></calendar>
+<calendar><variable>CA3</variable><default>xx</default><input>echo 2021-05-06</input></calendar>
+<colorbutton><variable>CO1</variable><input>echo "#112233|30000"</input></colorbutton>
+<colorbutton><variable>CO2</variable><default>#ff0000</default><input>sh donnees/sequence.sh c-co2 "#000001" ""</input></colorbutton>
+<colorbutton><variable>CO3</variable><default>#ff0000</default><input>echo "pasunecouleur"</input></colorbutton>
+<statusbar><variable>SB1</variable><label>lbl</label><input>sh donnees/sequence.sh c-sb1 a b</input></statusbar>
+<statusbar><variable>SB2</variable><input>printf 'a\r\nb\n'</input></statusbar>
+<entry type="search"><variable>SE1</variable><default>def</default><input>echo in</input></entry>
+<searchentry><variable>SE2</variable><default>d</default><input>sh donnees/sequence.sh c-se2 a b</input></searchentry>
+<searchentry><variable>SE3</variable><input>echo</input></searchentry>
+<infobar><variable>IN1</variable><label>lbl</label><input>echo in</input></infobar>
+<fontbutton><variable>FO1</variable><default>Sans 12</default><input>sh donnees/sequence.sh c-fo1 "Serif 9" "Serif 10"</input></fontbutton>
+<fontbutton><variable>FO2</variable><input>echo Monospace 15</input></fontbutton>
+<statusbar><variable>SB3</variable><label>lbl</label><input>echo in</input></statusbar>
+<fontbutton><variable>FO3</variable><default>Sans 12</default><input>echo Serif 9</input></fontbutton>
+<calendar><variable>CA4</variable><default>2001-03-07</default><input>echo 2021-05-06</input></calendar>
+<linkbutton><variable>LI1</variable><label>L</label><default>https://a.invalid/</default><input>echo https://b.invalid/</input></linkbutton>
+<linkbutton><variable>LI2</variable><input>printf ''</input></linkbutton>
+<timer visible="false"><variable>_T</variable><action>refresh:EX1</action><action>refresh:NB1</action><action>refresh:NB2</action><action>refresh:CA1</action><action>refresh:CO2</action><action>refresh:SB1</action><action>refresh:SE2</action><action>refresh:FO1</action><action>exit:fin</action></timer></vbox></window>

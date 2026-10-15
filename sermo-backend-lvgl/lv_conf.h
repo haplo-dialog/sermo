@@ -230,17 +230,29 @@
  *
  *  Enable: LV_USE_MATRIX
  */
+#ifdef SERMO_LVGL_LEGER   /* paquet sermo-backend-lvgl-leger : sans icônes SVG */
+#define LV_USE_VECTOR_GRAPHIC 0
+#else
 #define LV_USE_VECTOR_GRAPHIC 1   /* sermo : requis par ThorVG (icônes SVG des thèmes) */
+#endif
 
 /** Render a widget and its children into an image buffer with lv_snapshot_take(). */
 #define LV_USE_SNAPSHOT 0
 
 /** Backend that gives the SW renderer vector graphics support. */
+#ifdef SERMO_LVGL_LEGER   /* paquet sermo-backend-lvgl-leger : sans icônes SVG */
+#define LV_USE_THORVG 0
+#else
 #define LV_USE_THORVG 1   /* sermo : la copie embarquée (LV_USE_THORVG_INTERNAL) */
+#endif
 
 #if LV_USE_THORVG
 /** Build the ThorVG copy shipped with LVGL instead of linking an external one. */
+#ifdef SERMO_LVGL_LEGER   /* paquet sermo-backend-lvgl-leger : sans icônes SVG */
+#define LV_USE_THORVG_INTERNAL 0
+#else
 #define LV_USE_THORVG_INTERNAL 1
+#endif
 
 #endif /*LV_USE_THORVG*/
 
@@ -1481,8 +1493,12 @@
  *
  *  Enable: LV_USE_VECTOR_GRAPHIC
  */
+#ifdef SERMO_LVGL_LEGER   /* paquet sermo-backend-lvgl-leger : sans icônes SVG */
+#define LV_USE_LOTTIE 0
+#else
 #define LV_USE_LOTTIE 1   /* sermo : compile le lecteur SVG de ThorVG (THORVG_SVG_LOADER_SUPPORT
                            * suit LV_USE_LOTTIE dans tiers/lvgl/src/libs/thorvg/config.h) */
+#endif
 
 #endif /*LV_USE_THORVG*/
 

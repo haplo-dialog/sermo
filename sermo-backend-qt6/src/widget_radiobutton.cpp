@@ -11,6 +11,7 @@
 #include "widgets.h"
 #include "tag_attributes.h"
 #include "widget_radiobutton.h"
+#include "widget_checkbox.h"   /* qt6_bascule_brancher() */
 #include <QtWidgets/QRadioButton>
 #include <QtWidgets/QButtonGroup>
 #include <string.h>
@@ -53,6 +54,7 @@ GtkWidget *widget_radiobutton_create(AttributeSet *Attr, tag_attr *attr, gint Ty
         if (def && (g_ascii_strcasecmp(def, "true") == 0 || strcmp(def, "1") == 0))
             rb->setChecked(true);
     }
+    qt6_bascule_brancher((GtkWidget *)rb, Attr);   /* ses actions : widget_checkbox.cpp */
     return (GtkWidget *)rb;
 }
 
@@ -64,7 +66,7 @@ gchar *widget_radiobutton_envvar_construct(GtkWidget *widget)
 }
 gchar *widget_radiobutton_envvar_all_construct(variable *var) { if (!var || !var->Widget) return nullptr; return widget_radiobutton_envvar_construct(var->Widget); }
 void   widget_radiobutton_clear(variable *var) { if (var && var->Widget) static_cast<QRadioButton*>(var->Widget)->setChecked(false); }
-void   widget_radiobutton_refresh(variable *var) { if (var && var->Widget) static_cast<QWidget*>(var->Widget)->update(); }
+void   widget_radiobutton_refresh(variable *var) { qt6_bascule_lire(var); }   /* widget_checkbox.cpp */
 void   widget_radiobutton_fileselect(variable *var, const char *n, const char *v) {}
 void   widget_radiobutton_removeselected(variable *var) {}
 void   widget_radiobutton_save(variable *var) {}

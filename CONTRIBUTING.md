@@ -65,7 +65,7 @@ backends touchés :
 
 ```sh
 TIMEOUT=5 bash tests/xml/run_tests.sh <BIN>                       # 55 PASS
-bash tests/comportement/run.sh <BIN>                              # 61 au vert
+bash tests/comportement/run.sh <BIN>                              # 75 au vert
 xvfb-run -a bash tests/garde_echappement_sortie.sh <BIN>          # OK — 4 cas
 ```
 

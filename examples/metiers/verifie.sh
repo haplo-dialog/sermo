@@ -16,6 +16,13 @@
 #      les minuteurs : il rend EXIT="abort", accepté ; ses variables comptent.
 #
 # Usage : examples/metiers/verifie.sh [--images DOSSIER] [--ports "gtk3 qt6 …"] [script…]
+#         [--garder DOSSIER]   range la passe (dialogues extraits, valeurs de chaque
+#                              port) dans DOSSIER ; sur un système sans GTK (macOS),
+#                              avec --ports "ncurses", rien n'est comparé ici ;
+#         [--rejouer DOSSIER]  reprend une passe gardée sans réextraire : les ports
+#                              de --ports (gtk3) y jouent les MÊMES dialogues, et
+#                              leurs valeurs sont comparées à celles déjà là.
+#   Sans xvfb-run, les dialogues se jouent sans écran virtuel (ncurses, html).
 #   Binaires : sermo-backend-<port>/_build/<port>sermo, sinon /usr/bin/<port>sermo.
 #   --images : une image par dialogue (gtk3sermo), pour la relecture.
 # Codes : 0 tout concorde · 1 un écart · 77 gtk3sermo absent, rien vérifié.
@@ -30,6 +37,8 @@ while [ $# -gt 0 ]; do
 	case "$1" in
 	--images) IMAGES=$2; shift 2 ;;
 	--ports)  PORTS=$2; shift 2 ;;
+	--garder)  GARDER=$2; shift 2 ;;
+	--rejouer) REJOUER=$2; shift 2 ;;
 	*)        SCRIPTS+=("$1"); shift ;;
 	esac
 done
@@ -43,7 +52,15 @@ binaire() {
 	b=/usr/bin/$1sermo; [ -x "$b" ] && echo "$b"
 }
 ETALON=$(binaire gtk3)
-[ -n "$ETALON" ] || { echo "IGNORÉ : gtk3sermo introuvable, rien vérifié." >&2; exit 77; }
+GARDER=${GARDER:-}; REJOUER=${REJOUER:-}
+# Sans gtk3sermo, on peut encore jouer et garder la passe (--garder), pour la
+# comparer ailleurs (--rejouer) ; sinon, rien n'est vérifiable.
+if [ -z "$ETALON" ] && [ -z "$GARDER" ]; then
+	echo "IGNORÉ : gtk3sermo introuvable, rien vérifié." >&2; exit 77
+fi
+if [ -n "$REJOUER" ] && [ ! -s "$REJOUER/liste" ]; then
+	echo "IGNORÉ : passe à rejouer introuvable : $REJOUER" >&2; exit 77
+fi
 
 # Travail sous _build (ignoré par git), jamais sous /tmp : rien n'y est exécuté,
 # mais le banc ne sème pas de fichiers ailleurs que dans l'arbre de construction.
@@ -62,6 +79,14 @@ ko() { echo "ÉCART  $*"; ecarts=$((ecarts + 1)); }
 # ── 1 et extraction des dialogues ─────────────────────────────────────────────
 n_scripts=0; n_dialogues=0
 : > "$T/liste"
+if [ -n "$REJOUER" ]; then
+	# Reprise : mêmes dialogues, chemins relatifs rendus absolus sous $T.
+	cp -R "$REJOUER"/. "$T"/
+	while IFS='|' read -r nom rel; do echo "$nom|$T/$rel"; done < "$REJOUER/liste" > "$T/liste"
+	n_dialogues=$(wc -l < "$T/liste" | tr -d ' ')
+	n_scripts=$(cut -d'|' -f1 "$T/liste" | sort -u | wc -l | tr -d ' ')
+	SCRIPTS=()
+fi
 for s in "${SCRIPTS[@]}"; do
 	n_scripts=$((n_scripts + 1))
 	nom=$(basename "$(dirname "$s")")/$(basename "$s" .sh)
@@ -139,7 +164,38 @@ for p in $PORTS; do
 	done < "$T/liste"
 done
 # shellcheck disable=SC2086
-xvfb-run -a -s "-screen 0 1280x1024x24" bash "$T/joue.sh" "$T" "$RACINE" $PORTS 2>/dev/null
+if command -v xvfb-run >/dev/null 2>&1; then
+	xvfb-run -a -s "-screen 0 1280x1024x24" bash "$T/joue.sh" "$T" "$RACINE" $PORTS 2>/dev/null
+else
+	bash "$T/joue.sh" "$T" "$RACINE" $PORTS 2>/dev/null   # sans écran : ncurses, html
+fi
+
+# Passe gardée : chemins relatifs, pour être rejouée ailleurs.
+if [ -n "$GARDER" ]; then
+	mkdir -p "$GARDER" && cp -R "$T"/. "$GARDER"/
+	while IFS='|' read -r nom x; do echo "$nom|${x#"$T"/}"; done < "$T/liste" > "$GARDER/liste"
+	echo "passe gardée : $GARDER ($(wc -l < "$GARDER/liste" | tr -d ' ') dialogues)"
+fi
+# Sans étalon ici : la comparaison se fera par --rejouer.
+if [ -z "$ETALON" ] || ! echo " $PORTS " | grep -q ' gtk3 '; then
+	if [ -z "$REJOUER" ]; then
+		for p in $PORTS; do
+			[ -n "${ok_port[$p]+x}" ] && echo "port $p : ${ok_port[$p]} dialogue(s) analysé(s), ${ko_port[$p]} refusé(s)"
+		done
+		echo "scripts : $n_scripts · dialogues : $n_dialogues · écarts : $ecarts (pas d'étalon ici)"
+		[ "$ecarts" -eq 0 ] && { echo "verifie : joué, à comparer par --rejouer"; exit 0; }
+		echo "verifie : $ecarts écart(s)"; exit 1
+	fi
+fi
+# Reprise : les ports joués ailleurs (valeurs déjà là) se comparent aussi.
+if [ -n "$REJOUER" ]; then
+	for v in $(sed 's/.*|//' "$T/liste" | while read -r x; do ls "$x".*.vals 2>/dev/null; done \
+	           | sed 's/.*\.\([a-z0-9]*\)\.vals$/\1/' | sort -u); do
+		[ "$v" = gtk3 ] && continue
+		echo " $PORTS " | grep -q " $v " && continue
+		PORTS="$PORTS $v"; ok_port[$v]=0; ko_port[$v]=0
+	done
+fi
 
 for p in $PORTS; do
 	[ -n "${ok_port[$p]+x}" ] || continue
@@ -150,7 +206,9 @@ for p in $PORTS; do
 		if ! grep -q '^EXIT="essai"$' "$e"; then
 			continue   # l'étalon lui-même n'a pas fini : signalé plus bas
 		fi
-		attendu=$(grep -v '^EXIT=' "$e"); obtenu=$(grep -v '^EXIT=' "$v")
+		# Tri en locale C des deux côtés : l'ordre de « sort » dépend de la
+		# langue et du système (macOS et la glibc ne rangent pas pareil).
+		attendu=$(grep -v '^EXIT=' "$e" | LC_ALL=C sort); obtenu=$(grep -v '^EXIT=' "$v" | LC_ALL=C sort)
 		sortie=$(grep '^EXIT=' "$v")
 		if [ "$p" != html ] && [ "$sortie" != 'EXIT="essai"' ]; then
 			ko "$p $nom/$dn : le dialogue n'a pas fini par le minuteur (${sortie:-aucune sortie})"

@@ -1,0 +1,13 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: interrupteur : ses actions jouent quand il bascule (activate:), if true / if false, et signal="changed" -->
+<window><vbox>
+<entry><variable>A</variable><default>a</default></entry>
+<entry><variable>B</variable><default>b</default></entry>
+<entry><variable>C</variable><default>c</default></entry>
+<entry><variable>D</variable><default>d</default></entry>
+<switch><variable>SW</variable>
+<action>clear:A</action><action>if true clear:B</action><action>if false clear:C</action>
+<action signal="changed">clear:D</action></switch>
+<timer visible="false" interval="2"><variable>_T1</variable><action>activate:SW</action></timer>
+<timer visible="false" interval="3"><variable>_T2</variable><action>exit:fin</action></timer>
+</vbox></window>

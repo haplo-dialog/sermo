@@ -802,7 +802,15 @@ instruction_execute(instruction command)
 		 ** push the result to the stack, so the upper element will 
 		 ** contain all the widgets.
 		 */
-		push(_sum(pop(), pop()));
+		/* Les deux pop() en DEUX instructions : dans _sum(pop(), pop()), l'ordre
+		 * d'évaluation des arguments n'est pas fixé par le C (gcc : de droite à
+		 * gauche, clang : de gauche à droite) et clang rangeait les widgets frères
+		 * à l'envers. Le haut de pile est le dernier widget lu, il va à la fin. */
+		{
+			stackelement suivants = pop();
+			stackelement premiers = pop();
+			push(_sum(premiers, suivants));
+		}
 		break;
 	/*
 	 * The imperative instructions.
@@ -864,6 +872,30 @@ instruction_execute(instruction command)
 
 	PIP_DEBUG("Instruction executed.");
 	return 0;
+}
+
+/* Met le widget dans un GtkViewport, lui-même dans la fenêtre de défilement.
+ * gtk_scrolled_window_add_with_viewport() est dépréciée depuis GTK 3.8, mais
+ * gtk_container_add(), qu'elle conseille, n'est pas équivalente : elle ne met
+ * pas de viewport autour d'un enfant défilable (le GtkTreeView des <list>).
+ * On refait donc ce qu'elle faisait (comparé propriété par propriété sous
+ * GTK 3.24.52, viewport à ombre GTK_SHADOW_IN dans les deux cas). Les ports
+ * sans GTK gardent l'appel de leur en-tête. */
+static void sermo_ajoute_avec_viewport(GtkWidget *scrolledwindow, GtkWidget *widget)
+{
+#ifdef QT6_COMPAT_H
+	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolledwindow), widget);
+#else
+	GtkAdjustment *hadj = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(scrolledwindow));
+	GtkAdjustment *vadj = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(scrolledwindow));
+	GtkWidget *viewport = gtk_viewport_new(hadj, vadj);
+
+	gtk_container_set_focus_hadjustment(GTK_CONTAINER(viewport), hadj);
+	gtk_container_set_focus_vadjustment(GTK_CONTAINER(viewport), vadj);
+	gtk_container_add(GTK_CONTAINER(scrolledwindow), viewport);
+	gtk_widget_show(viewport);
+	gtk_container_add(GTK_CONTAINER(viewport), widget);
+#endif
 }
 
 /***********************************************************************
@@ -931,8 +963,7 @@ static GtkWidget *put_in_the_scrolled_window(GtkWidget *widget,
 			/* Set the size */
 			gtk_widget_set_size_request(scrolledwindow, width, height);
 			/* Pack the widget */
-			gtk_scrolled_window_add_with_viewport(
-				GTK_SCROLLED_WINDOW(scrolledwindow), widget);
+			sermo_ajoute_avec_viewport(scrolledwindow, widget);
 			break;
 		case WIDGET_TERMINAL:
 #if HAVE_VTE
@@ -970,8 +1001,7 @@ static GtkWidget *put_in_the_scrolled_window(GtkWidget *widget,
 			gtk_widget_set_size_request(scrolledwindow, width, height);
 			/* Pack the widget */
 			if (Type == WIDGET_LIST || Type == WIDGET_TERMINAL) {
-				gtk_scrolled_window_add_with_viewport(
-					GTK_SCROLLED_WINDOW(scrolledwindow), widget);
+				sermo_ajoute_avec_viewport(scrolledwindow, widget);
 			} else {
 				gtk_container_add(GTK_CONTAINER(scrolledwindow), widget);
 			}
@@ -1183,6 +1213,26 @@ create_chooser(AttributeSet *Attr)
 	return chooser;
 }
 #endif /* !QT6_COMPAT_H */
+
+#ifdef QT6_COMPAT_H
+/* « false », « no », « 0 » (et « disabled », dépréciée), comme GTK et les
+ * widgets de l'étalon (attributeset_cmp_left(…, ATTR_SENSITIVE, …)). */
+static int valeur_fausse(const char *v)
+{
+	return v && (g_ascii_strcasecmp(v, "false") == 0 || g_ascii_strcasecmp(v, "no") == 0 ||
+	             strcmp(v, "0") == 0 || g_ascii_strcasecmp(v, "disabled") == 0);
+}
+
+/* sensitive="false" (attribut de balise) ou <sensitive>false</sensitive>. */
+static int widget_insensible_a_la_creation(AttributeSet *Attr, tag_attr *tags)
+{
+	GList *el = NULL;
+	if (tags && valeur_fausse(get_tag_attribute(tags, "sensitive")))
+		return 1;
+	return Attr && attributeset_is_avail(Attr, ATTR_SENSITIVE)
+	       && valeur_fausse(attributeset_get_first(&el, Attr, ATTR_SENSITIVE));
+}
+#endif
 
 static gint 
 instruction_execute_push(
@@ -1546,6 +1596,16 @@ instruction_execute_push(
 	variables_set_attributes(attributeset_get_first(&element, Attr,
 		ATTR_VARIABLE), Attr);
 
+#ifdef QT6_COMPAT_H
+	/* Ports sans GTK : grisé dès la création. GTK le fait de lui-même
+	 * (propriété « sensitive » posée au realize, directive <sensitive> lue
+	 * par chaque widget) ; ces ports ignoraient les deux écritures et le
+	 * widget restait actif (cas de comportement 70). Même porte que
+	 * disable: — sermo_be_widget_set_sensitive() du port. */
+	if (Widget && widget_insensible_a_la_creation(Attr, tag_attributes))
+		gtk_widget_set_sensitive(Widget, FALSE);
+#endif
+
 	/* Thunor: At this point Widget and possibly scrolled_window will
 	 * be non-NULL and they require registering in a list (actually two)
 	 * for later hiding or showing in run_program() */
@@ -1575,12 +1635,10 @@ instruction_execute_push(
    Miert nem kapja meg az adatokat parameterben es foglalkozik
    a veremmel a hivo?
  */
-#ifdef __arm__
-/* 120701 BK Puppy Linux forum member jamesbond fixed this for arm cpus...*/
-stackelement _sum(stackelement b, stackelement a)
-#else
+/* a : les widgets déjà lus, b : ceux qui suivent. (L'ancien #ifdef __arm__,
+ * qui échangeait a et b, compensait l'ordre d'évaluation de _sum(pop(), pop())
+ * d'un compilateur ARM ; l'appel le fixe désormais lui-même.) */
 stackelement _sum(stackelement a, stackelement b)
-#endif
 {
 	int n;
 	/* Guard: widgets[]/widgettypes[] are fixed-size (MAXWIDGETS). Refuse to

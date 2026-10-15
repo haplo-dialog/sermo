@@ -45,11 +45,9 @@ GtkWidget *widget_vscale_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     elm_slider_step_set(sl, vstep / (vmax - vmin > 0 ? vmax - vmin : 1.0));
     elm_slider_value_set(sl, vval);
     evas_object_show(sl);
-    /* <input> (ex. echo 40) : valeur initiale par commande */
-    {
-        gchar *itext = widget_input_text(Attr);
-        if (itext) { elm_slider_value_set(sl, g_ascii_strtod(g_strchomp(itext), NULL)); g_free(itext); }
-    }
+    /* <input> : lu par widget_hscale_refresh() — le cœur y route aussi <vscale> —
+     * appelé juste après la création : le lire aussi ici exécuterait la
+     * commande deux fois. */
     return (GtkWidget *)sl;
 }
 

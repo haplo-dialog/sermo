@@ -15,6 +15,7 @@
 #include "widgets.h"
 #include "tag_attributes.h"
 #include "widget_switch.h"
+#include "widget_checkbox.h"   /* qt6_interrupteur_brancher() */
 #include <QtWidgets/QCheckBox>
 #include <string.h>
 #include <stdlib.h>
@@ -43,6 +44,7 @@ GtkWidget *widget_switch_create(AttributeSet *Attr, tag_attr *attr, gint Type)
             if (v && *v) cb->setToolTip(QString::fromUtf8(v));
         }
     }
+    qt6_interrupteur_brancher((GtkWidget *)cb, Attr);   /* ses actions : widget_checkbox.cpp */
     return (GtkWidget *)cb;
 }
 gchar *widget_switch_envvar_construct(GtkWidget *w)
@@ -51,8 +53,7 @@ gchar *widget_switch_envvar_all_construct(variable *v)
 { return v && v->Widget ? widget_switch_envvar_construct(v->Widget) : NULL; }
 void widget_switch_clear(variable *v)
 { if (v && v->Widget) static_cast<QCheckBox*>(v->Widget)->setChecked(false); }
-void widget_switch_refresh(variable *v)
-{ if (v && v->Widget) static_cast<QCheckBox*>(v->Widget)->update(); }
+void   widget_switch_refresh(variable *var) { qt6_bascule_lire(var); }   /* widget_checkbox.cpp */
 void widget_switch_fileselect(variable *v, const char*, const char*) {}
 void widget_switch_removeselected(variable *v) {}
 void widget_switch_save(variable *v) {}

@@ -16,6 +16,7 @@
 #include "widgets.h"
 #include "tag_attributes.h"
 #include "widget_switch.h"
+#include "widget_checkbox.h"   /* efl_interrupteur_brancher() */
 #include <Elementary.h>
 #include <string.h>
 
@@ -35,6 +36,7 @@ GtkWidget *widget_switch_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         if (def && (strcmp(def,"true")==0||strcmp(def,"1")==0||strcmp(def,"on")==0))
             elm_check_state_set(sw, EINA_TRUE);
     }
+    efl_interrupteur_brancher(sw, Attr);   /* ses actions : widget_checkbox.c */
     evas_object_show(sw);
     return (GtkWidget *)sw;
 }
@@ -44,7 +46,7 @@ gchar *widget_switch_envvar_all_construct(variable *v)
 { return v && v->Widget ? widget_switch_envvar_construct(v->Widget) : NULL; }
 void widget_switch_clear(variable *v)
 { if (v && v->Widget) elm_check_state_set((Evas_Object *)v->Widget, EINA_FALSE); }
-void widget_switch_refresh(variable *v) {}
+void widget_switch_refresh(variable *v) { efl_bascule_lire(v); }   /* widget_checkbox.c */
 void widget_switch_fileselect(variable *v, const char *n, const char *val) {}
 void widget_switch_removeselected(variable *v) {}
 void widget_switch_save(variable *v) {}

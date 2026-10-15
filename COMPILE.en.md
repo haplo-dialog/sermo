@@ -124,7 +124,7 @@ French):
 ```bash
 BIN=sermo-backend-qt6/_build/qt6sermo
 TIMEOUT=5 bash tests/xml/run_tests.sh "$BIN"                       # 55 PASS
-bash tests/comportement/run.sh "$BIN"                             # 61 green
+bash tests/comportement/run.sh "$BIN"                             # 75 green
 xvfb-run -a bash tests/garde_echappement_sortie.sh "$BIN"          # OK — 4 cases
 ```
 

@@ -41,8 +41,23 @@ gchar *widget_searchentry_envvar_all_construct(variable *v)
 { return v && v->Widget ? widget_searchentry_envvar_construct(v->Widget) : NULL; }
 void widget_searchentry_clear(variable *v)
 { if (v && v->Widget) static_cast<QLineEdit*>(v->Widget)->clear(); }
+/* <input> à chaque « refresh », comme l'étalon : la première ligne est le
+ * texte (une ligne vide vide le champ). Au premier passage, un <default>
+ * l'emporte (la commande tourne quand même). Aucune <action> n'est branchée
+ * sur ce widget dans ce port. Jusqu'au 2026-10-13, l'<input> n'était jamais lu. */
 void widget_searchentry_refresh(variable *v)
-{ if (v && v->Widget) static_cast<QLineEdit*>(v->Widget)->update(); }
+{
+    if (!v || !v->Widget) return;
+    QLineEdit *le = static_cast<QLineEdit *>(v->Widget);
+    bool premier = !le->property("sermoLu").toBool();
+    le->setProperty("sermoLu", true);
+    gchar *ligne = widget_input_line(v->Attributes);
+    if (!ligne) return;
+    GList *el = NULL;
+    if (!(premier && attributeset_get_first(&el, v->Attributes, ATTR_DEFAULT)))
+        le->setText(QString::fromUtf8(ligne));
+    g_free(ligne);
+}
 void widget_searchentry_fileselect(variable *v, const char*, const char*) {}
 void widget_searchentry_removeselected(variable *v) {}
 void widget_searchentry_save(variable *v) {}

@@ -19,6 +19,7 @@
 #include "widgets.h"
 #include "tag_attributes.h"
 #include "widget_radiobutton.h"
+#include "widget_checkbox.h"   /* efl_bascule_brancher() */
 
 extern GtkWidget *lastradiowidget;   /* groupe radio ouvert (cœur, automaton.c) */
 #include <string.h>
@@ -60,6 +61,7 @@ GtkWidget *widget_radiobutton_create(AttributeSet *Attr, tag_attr *attr, gint Ty
             elm_radio_value_set(rd, elm_radio_state_value_get(rd));
     }
 
+    efl_bascule_brancher(rd, Attr, (Evas_Object *)lastradiowidget);   /* widget_checkbox.c */
     evas_object_show(rd);
     return (GtkWidget *)rd;
 }
@@ -77,7 +79,7 @@ gchar *widget_radiobutton_envvar_all_construct(variable *var)
     return widget_radiobutton_envvar_construct(var->Widget);
 }
 void widget_radiobutton_clear(variable *var) {}
-void widget_radiobutton_refresh(variable *var) {}
+void widget_radiobutton_refresh(variable *var) { efl_bascule_lire(var); }   /* widget_checkbox.c */
 void widget_radiobutton_fileselect(variable *var, const char *n, const char *v) {}
 void widget_radiobutton_removeselected(variable *var) {}
 void widget_radiobutton_save(variable *var) {}

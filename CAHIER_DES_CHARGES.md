@@ -75,7 +75,7 @@ cloisonnement de processus (IPC), nouveaux backends.
 - ENF1 — **Sécurité** : `safe_system`/`safe_popen`, pas de shell hors
   métacaractères, échappement de sortie, durcissement (FORTIFY=3, PIE, RELRO,
   CET) — voir [SECURITY.md](SECURITY.md).
-- ENF2 — **Vérifiabilité** : trois bancs rejouables (XML 55, comportement 61,
+- ENF2 — **Vérifiabilité** : trois bancs rejouables (XML 55, comportement 75,
   et les gardes `tests/garde_*.sh`) gardent chaque étape.
 - ENF3 — **Légèreté** : `sermo-core-dev` n'a aucune dépendance (bibliothèque
   statique) ; chaque

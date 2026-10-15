@@ -1371,21 +1371,23 @@ int _tree_insert(variable *new, variable *actual)
 		exit(EXIT_FAILURE);
 	}
 
-	if (compare < 0)
+	if (compare < 0) {
 		if (actual->left == NULL) {
 			actual->left = new;
 			return (0);
 		} else {
 			return (_tree_insert(new, actual->left));
 		}
+	}
 
-	if (compare > 0)
+	if (compare > 0) {
 		if (actual->right == NULL) {
 			actual->right = new;
 			return (0);
 		} else {
 			return (_tree_insert(new, actual->right));
 		}
+	}
 
 	return (0);
 }
@@ -1410,17 +1412,19 @@ static variable *_tree_find(const char *name, variable *actual)
 	if (compare == 0)
 		return (actual);
 
-	if (compare < 0)
+	if (compare < 0) {
 		if (actual->left != NULL)
 			return _tree_find(name, actual->left);
 		else
 			return NULL;
+	}
 
-	if (compare > 0)
+	if (compare > 0) {
 		if (actual->right != NULL)
 			return _tree_find(name, actual->right);
 		else
 			return NULL;
+	}
 
 	return NULL;
 }
@@ -1788,6 +1792,8 @@ static void _variables_export(variable *actual)
 		 * g_setenv() handles memory safely (copies both name and value). */
 		if (value != NULL)
 			g_setenv(actual->Name, value, TRUE);
+		/* widget_get_text_value() rend une chaîne allouée (contrat, widgets.h). */
+		g_free(value);
 
 		/* Thunor: I've disabled this for performance reasons. Zigbert was
 		 * experiencing terrible table performance which I've tested too.
@@ -1902,16 +1908,15 @@ void print_variables(variable *actual)
 					   actual->row, 0, &value);
 		} */
 
-		if (value == NULL)
-			value = "";
 		{
 			/* Le shell developpe $ et ` entre guillemets doubles : sans
 			 * echappement, une valeur saisie par l'utilisateur devient du
 			 * code des que la ligne passe a eval. */
-			gchar *escaped = shell_escape_value(value);
+			gchar *escaped = shell_escape_value(value ? value : "");
 			printf("%s=\"%s\"\n", actual->Name, escaped);
 			g_free(escaped);
 		}
+		g_free(value);
 
 		/* Thunor: I've disabled this for performance reasons. Zigbert was
 		 * experiencing terrible table performance which I've tested too.
@@ -1997,10 +2002,14 @@ int append_fromto_variable(const char *from, const char *to)
 		return FALSE;
 	}
 
-	value = g_strdup(widget_get_text_value(var_from->Widget, var_from->Type));
+	/* Chaîne allouée (contrat, widgets.h) : libérée en sortie, sauf pour
+	 * WIDGET_LIST qui la garde en user_data de la ligne. */
+	value = widget_get_text_value(var_from->Widget, var_from->Type);
 
-	if (strlen(value) == 0)
+	if (value == NULL || *value == '\0') {
+		g_free(value);
 		return FALSE;
+	}
 
 	switch (var_to->Type) {
 		case WIDGET_LIST:
@@ -2012,6 +2021,7 @@ int append_fromto_variable(const char *from, const char *to)
 				gtk_container_add(GTK_CONTAINER(item), label);
 			}
 			g_object_set_data(G_OBJECT(item), "user_data", (gpointer) value);
+			value = NULL;	/* cédée à la ligne */
 			/* gtk_list_prepend_items → prepend a row at index 0 */
 			gtk_list_box_prepend(GTK_LIST_BOX(var_to->Widget), item);
 			gtk_widget_show_all(item);
@@ -2042,8 +2052,10 @@ int append_fromto_variable(const char *from, const char *to)
 		break;
 	default:
 		yywarning("Copy not implemented for this widget.");
+		g_free(value);
 		return FALSE;
 	}
+	g_free(value);
 	return TRUE;
 }
 

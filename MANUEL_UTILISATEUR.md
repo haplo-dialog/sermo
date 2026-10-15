@@ -2,7 +2,7 @@
 
 [English](MANUEL_UTILISATEUR.en.md)
 
-**Version :** 2.8.2
+**Version :** 3.0.0
 **Licence :** GPL-2.0-or-later | **Distributeur :** haplo-dialog (devel@haplo-dialog.fr)
 
 ---
@@ -81,9 +81,9 @@ joints à chaque publication, avec le fichier `SHA256SUMS` et sa signature
 gpg --import cle-haplo-dialog.asc            # https://haplo-dialog.fr/cle-haplo-dialog.asc
 gpg --verify SHA256SUMS.asc SHA256SUMS       # « Bonne signature de haplo-dialog <devel@haplo-dialog.fr> »
 sha256sum --ignore-missing -c SHA256SUMS
-sudo apt install ./sermo-backend-gtk3_2.8.2-3_amd64.deb     # GTK 3
-sudo apt install ./sermo-backend-fltk1_2.8.2-3_amd64.deb    # FLTK, sans tirer GTK ni Qt
-sudo apt install ./sermo-gtkdialog_2.8.2-3_all.deb          # + la commande gtkdialog
+sudo apt install ./sermo-backend-gtk3_3.0.0-1_amd64.deb     # GTK 3
+sudo apt install ./sermo-backend-fltk1_3.0.0-1_amd64.deb    # FLTK, sans tirer GTK ni Qt
+sudo apt install ./sermo-gtkdialog_3.0.0-1_all.deb          # + la commande gtkdialog
 ```
 
 L'empreinte de la clé doit être
@@ -1000,6 +1000,62 @@ avertissement sur la sortie d'erreur. La variable d'environnement
 progression n'est pas plafonnée. Voir
 [SECURITY.md](SECURITY.md#taille-de-ce-que-lit-un-input).
 
+#### Lire un automate : `<input modbus>`, `<input opcua>`
+
+```xml
+<levelbar range-min="0" range-max="100">
+  <variable>TEMP</variable>
+  <input modbus>tcp://automate:502?esclave=1&registre=1&diviseur=10</input>
+</levelbar>
+<text>
+  <variable>PIECES</variable>
+  <input opcua>opc.tcp://serveur:4840?noeud=ns=1;s=pieces</input>
+</text>
+```
+
+Une **adresse tout-en-un** décrit ce qu'il faut lire ; le widget reçoit la
+valeur, comme d'une commande. **Lecture seule** : rien n'est jamais écrit vers
+l'équipement. Ces balises demandent leur paquet : `sermo-source-modbus` ou
+`sermo-source-opcua` (programmes d'aide de `/usr/libexec/sermo`).
+
+| Modbus (`tcp://hôte[:port]` ou `rtu:///dev/ttyUSB0`) | |
+|---|---|
+| `registre` | obligatoire, numéroté à partir de 1 |
+| `type` | `maintien` (défaut), `entree`, `bobine`, `discret` |
+| `esclave`, `nombre` | défauts 1 et 1 (une valeur par ligne) |
+| `format`, `ordre` | `entier` (défaut), `signe`, `entier32`, `signe32`, `flottant` ; `abcd` (défaut), `cdab`, `badc`, `dcba` |
+| `diviseur`, `delai` | défauts 1 et 1500 ms |
+| `cache`, `perime` | fraîcheur du cache commun, défaut 900 ms (`0` : lecture directe, rien gardé) ; ancienneté au-delà de laquelle une valeur n'est plus montrée, défaut 10 000 ms |
+| `vitesse`, `parite`, `bits`, `arret` | RTU : défauts 19200, `E`, 8, 1 |
+
+| OPC UA (`opc.tcp://hôte:port`) | |
+|---|---|
+| `noeud` | obligatoire : `ns=1;s=nom`, `ns=0;i=2258`… |
+| `delai`, `cache`, `perime` | défauts 1500, 900 et 10 000 ms |
+| `mode` | `none` (défaut), `sign`, `chiffre` |
+| `certificat`, `cle`, `confiance`, `uri` | avec `sign`/`chiffre` : fichiers du poste, certificat(s) de serveur admis (répétable), ApplicationUri |
+
+Un paramètre inconnu est refusé (une faute de frappe ne passe pas pour la
+valeur par défaut). Un `&` ou un `%` voulu dans une valeur s'écrit `%26` ou
+`%25`. Après un échec, le même équipement n'est plus interrogé pendant 5 s : un
+automate injoignable ne fige pas la fenêtre à chaque rafraîchissement. Une
+réponse est gardée 900 ms (`cache=`) et les lectures vers un même équipement
+passent une à une : une jauge et son texte sur la même adresse ne font qu'UNE
+connexion par tour. Des adresses différentes en font une chacune : pour
+beaucoup de valeurs, préférer un seul `<input modbus>` avec `nombre=` dans un
+`<tree>`.
+
+**La fenêtre ne se fige jamais.** Une valeur gardée depuis moins de 10 s
+(`perime=`) est montrée tout de suite, et relue en arrière-plan : le tour
+suivant montre la nouvelle. Au-delà, la case se vide plutôt que de montrer une
+valeur ancienne comme si elle était présente. Seule la **toute première**
+lecture d'une adresse attend l'équipement (au plus `delai=`), pour qu'un
+dialogue sans minuteur ait sa valeur. Si un équipement lent est lu à beaucoup
+d'adresses, un tour complet peut dépasser `perime=` et les valeurs se vider :
+regroupez-les (`nombre=`) ou augmentez `perime=`. Avec `SERMO_ALLOWED_CMDS`,
+nommer le programme d'aide (`/usr/libexec/sermo/sermo-source-modbus`) ;
+`SERMO_SOURCE_DIR` change son dossier.
+
 ### 7.4 Inclusion d'un fichier de fonctions
 
 ```bash
@@ -1124,6 +1180,29 @@ export MONITEUR='
 
 sermo --program=MONITEUR
 ```
+
+### 8.4 Lire un automate (Modbus, OPC UA)
+
+Deux exemples complets, **en lecture seule**, montrent des valeurs d'atelier
+en direct (jauge + valeur, rafraîchies par un `<timer>`) :
+
+- `examples/modbus/modbus-lecture.sh` : registres d'un automate Modbus/TCP,
+  lus par `mbpoll` (paquet `mbpoll`). Réglages : `MODBUS_HOTE`, `MODBUS_PORT`,
+  `MODBUS_ESCLAVE` ; les registres se décrivent dans le tableau `REGISTRES`.
+- `examples/opcua/opcua-lecture.sh` : variables d'un serveur OPC UA, lues par
+  `opcua-lire`, un petit client C du même dossier (`make`, paquet
+  `libopen62541-1.4-dev`). Réglage : `OPCUA_ADRESSE` ; les variables se
+  décrivent dans le tableau `VARIABLES`. Pour un serveur qui exige des
+  certificats : `OPCUA_MODE=sign` ou `chiffre`, `OPCUA_CERTIFICAT` et
+  `OPCUA_CLE` (ceux du poste), `OPCUA_CONFIANCE` (le certificat du serveur ;
+  aucun autre n'est accepté). `certificats-essai.sh` en fabrique pour l'essai.
+
+Ces deux exemples passent par un script ; les balises `<input modbus>` et
+`<input opcua>` (section 7.3) font la même lecture directement dans le XML.
+Sans matériel, `faux-automate.py` (paquet `python3-pymodbus`) et
+`faux-serveur-opcua` simulent l'équipement sur la machine même. Aucun des deux
+exemples n'écrit vers l'équipement. La lecture part en fond : un équipement
+injoignable affiche « pas de réponse » sans figer la fenêtre.
 
 ---
 

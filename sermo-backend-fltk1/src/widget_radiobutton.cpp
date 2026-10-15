@@ -26,6 +26,7 @@
 #include "widgets.h"
 #include "tag_attributes.h"
 #include "widget_radiobutton.h"
+#include "widget_checkbox.h"   /* fltk1_bascule_brancher() */
 
 #include <string.h>
 #include <stdlib.h>
@@ -70,6 +71,7 @@ GtkWidget *widget_radiobutton_create(AttributeSet *Attr, tag_attr *attr, gint Ty
         }
     }
 
+    fltk1_bascule_brancher((GtkWidget *)rb, Attr, lastradiowidget);   /* widget_checkbox.cpp */
     return (GtkWidget *)rb;
 }
 
@@ -92,10 +94,14 @@ void widget_radiobutton_clear(variable *var)
     ((Fl_Round_Button *)var->Widget)->value(0);
 }
 
-void widget_radiobutton_refresh(variable *var)
+void widget_radiobutton_refresh(variable *var) { fltk1_bascule_lire(var); }   /* widget_checkbox.cpp */
+
+/* Le premier « refresh » vient de cocher ce bouton par son <input>
+ * (fltk1_bascule_lire) : il devient le coché du groupe ouvert, pour qu'un
+ * <default> plus loin dans le groupe le décoche bien. */
+void fltk1_radio_coche(GtkWidget *rb)
 {
-    if (!var || !var->Widget) return;
-    ((Fl_Widget *)var->Widget)->redraw();
+    coche_du_groupe = (Fl_Round_Button *)rb;
 }
 
 void widget_radiobutton_fileselect(variable *var, const char *n, const char *v) {}

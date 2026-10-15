@@ -34,10 +34,20 @@ typedef struct {
 static void _tab_selected(void *data, Evas_Object *obj, void *event_info)
 {
     Elm_Object_Item *it = (Elm_Object_Item *)event_info;
-    Evas_Object *nb = (Evas_Object *)data;
+    /* Elementary passe à la fonction d'un élément de barre la DONNÉE de
+     * l'élément (ici son numéro, posé par elm_object_item_data_set), pas celle
+     * donnée à elm_toolbar_item_append : le carnet se retrouve par la barre
+     * (obj). Jusqu'au 2026-10-13, data valait le numéro et le carnet était
+     * pris pour l'objet 0x1 (« Eo ID 0x1 is not a valid object »). */
+    Evas_Object *nb = (Evas_Object *)evas_object_data_get(obj, "sermo_notebook");
+    (void)data;
+    if (!nb) return;
     /* Cacher toutes les pages, montrer la sélectionnée */
     int idx = (int)(intptr_t)elm_object_item_data_get(it);
     int n = (int)(intptr_t)evas_object_data_get(nb, "page_count");
+    /* Déjà la page courante (et montrée) : rien à refaire. Évite aussi de
+     * réempaqueter la page quand refresh choisit l'onglet puis l'appelle. */
+    if (idx == (int)(intptr_t)evas_object_data_get(nb, "current_page")) return;
     /* Une box elm reserve la place de ses enfants CACHES : toutes les
      * pages s'empilaient. On ne garde empaquetee que la page courante. */
     Evas_Object *content = (Evas_Object *)evas_object_data_get(nb, "content");
@@ -116,6 +126,7 @@ GtkWidget *widget_notebook_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     evas_object_show(content);
 
     evas_object_data_set(vbox, "toolbar", tb);
+    evas_object_data_set(tb, "sermo_notebook", vbox);   /* lu par _tab_selected */
     evas_object_data_set(vbox, "content", content);
     evas_object_data_set(vbox, "page_count", (void *)(intptr_t)npages);
     evas_object_data_set(vbox, "current_page", (void *)(intptr_t)0);
@@ -162,7 +173,43 @@ gchar *widget_notebook_envvar_all_construct(variable *var)
     return widget_notebook_envvar_construct(var->Widget);
 }
 void widget_notebook_clear(variable *var) {}
-void widget_notebook_refresh(variable *var) {}
+/* <input> : rejoué à chaque « refresh », comme l'étalon gtk3sermo. Première
+ * ligne = numéro de page (atoi) → onglet choisi, page montrée, valeur
+ * exportée. Comme gtk_notebook_set_current_page() : négatif = dernière page,
+ * au-delà du nombre de pages = rien. Au premier passage la commande tourne
+ * mais la page ne change pas, comme chez l'étalon. Aucune action n'est
+ * branchée sur les onglets : la pose n'en joue pas. Jusqu'au 2026-10-13 il
+ * n'était jamais lu. */
+void widget_notebook_refresh(variable *var)
+{
+    Evas_Object *nb, *tb;
+    Elm_Object_Item *it;
+    gchar *ligne;
+    gboolean premier;
+    int idx, n, i;
+
+    if (!var || !var->Widget) return;
+    nb = (Evas_Object *)var->Widget;
+    premier = widget_input_premier(var->Widget);
+    ligne = widget_input_line(var->Attributes);
+    if (!ligne) return;
+    idx = atoi(ligne);
+    g_free(ligne);
+    if (premier) return;
+    n = (int)(intptr_t)evas_object_data_get(nb, "page_count");
+    if (n <= 0) return;
+    if (idx < 0) idx = n - 1;
+    if (idx >= n) return;
+    tb = (Evas_Object *)evas_object_data_get(nb, "toolbar");
+    if (!tb) return;
+    for (it = elm_toolbar_first_item_get(tb), i = 0; it && i < idx;
+         it = elm_toolbar_item_next_get(it), i++)
+        ;
+    if (!it) return;
+    elm_toolbar_item_selected_set(it, EINA_TRUE);
+    /* Onglet déjà choisi dans la barre : son rappel n'a pas joué. */
+    _tab_selected(nb, tb, it);
+}
 void widget_notebook_fileselect(variable *var, const char *n, const char *v) {}
 void widget_notebook_removeselected(variable *var) {}
 void widget_notebook_save(variable *var) {}

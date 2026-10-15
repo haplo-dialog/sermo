@@ -29,6 +29,7 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -36,6 +37,7 @@
 #include <glib.h>
 #include "safe_exec.h"
 #include "sermo_input.h"
+#include "sermo_lanceur.h"   /* sermo_shell : le shell du repli « -c » */
 
 /* Shell metacharacters that require /bin/sh -c fallback. */
 #define SHELL_METACHARACTERS "|&;<>(){}$`\\\"'~*?"
@@ -293,7 +295,8 @@ static void _reap_child_cb(GPid pid, gint status, gpointer user_data)
 /*
  * safe_system:
  * Execute a shell command safely.  Uses g_spawn_sync() with direct exec()
- * when no metacharacters are present; falls back to /bin/sh -c otherwise.
+ * when no metacharacters are present; falls back to <shell> -c otherwise
+ * (sermo_shell() : SERMO_SHELL, or /bin/sh).
  * Returns the exit status, or -1 on error.
  */
 gint safe_system(const gchar *command)
@@ -303,6 +306,7 @@ gint safe_system(const gchar *command)
     GError  *error       = NULL;
     gint     exit_status = -1;
     gboolean use_shell;
+    gboolean repli_introuvable = FALSE;   /* Windows : relance par le shell */
 
     if (!command || *command == '\0') {
         g_warning("safe_system: empty command");
@@ -314,13 +318,19 @@ gint safe_system(const gchar *command)
     }
 
     use_shell = _has_shell_metacharacters(command);
+#ifdef _WIN32
+reessai:
+#endif
 
     if (use_shell) {
         /* Fait, pas alarme. La commande vient de l'auteur du script, qui a deja le
 		 * droit de lancer des commandes : c'est le modele de confiance assume.
 		 * Dire "injection risk" a chaque --do normal banalisait le message et le
 		 * rendait inaudible le jour ou il compte. Le refus, lui, reste une alarme. */
-		g_message("safe_system: '%s' contient de la syntaxe shell -- execution via /bin/sh -c", command);
+		g_message("safe_system: '%s' %s -- execution via %s %s", command,
+		          repli_introuvable ? "n'est pas un programme (commande du shell ?)"
+		                            : "contient de la syntaxe shell",
+		          sermo_shell(), sermo_shell_option());
         if (_no_shell_fallback()) {
             g_critical("safe_system: shell fallback refused (SERMO_NO_SHELL_FALLBACK set)");
             return -1;
@@ -330,8 +340,8 @@ gint safe_system(const gchar *command)
             return -1;
         }
         argv = g_new(gchar *, 4);
-        argv[0] = g_strdup("/bin/sh");
-        argv[1] = g_strdup("-c");
+        argv[0] = g_strdup(sermo_shell());   /* SERMO_SHELL, sinon /bin/sh */
+        argv[1] = g_strdup(sermo_shell_option());   /* « -c », « /C » pour cmd.exe */
         argv[2] = g_strdup(command);
         argv[3] = NULL;
     } else {
@@ -355,6 +365,22 @@ gint safe_system(const gchar *command)
                       NULL, NULL,
                       &exit_status,
                       &error)) {
+#ifdef _WIN32
+        int introuvable = (errno == ENOENT);
+        /* Windows : echo, dir, type… sont des commandes de cmd.exe, pas des
+         * programmes. Introuvable en direct, la commande passe par le shell,
+         * avec les mêmes garde-fous que le repli ordinaire. */
+        if (!use_shell && introuvable) {
+            g_error_free(error);
+            error = NULL;
+            g_strfreev(envp);
+            g_strfreev(argv);
+            argv = NULL;
+            use_shell = TRUE;
+            repli_introuvable = TRUE;
+            goto reessai;
+        }
+#endif
         g_warning("safe_system: spawn failed for '%s': %s",
                   command, error->message);
         g_error_free(error);
@@ -374,7 +400,8 @@ gint safe_system(const gchar *command)
  * closes with fclose() — NOT pclose().
  *
  * Uses g_spawn_async_with_pipes() with direct exec() when possible; falls
- * back to /bin/sh -c when the command contains shell metacharacters.
+ * back to <shell> -c (sermo_shell()) when the command contains shell
+ * metacharacters.
  * The child is reaped automatically via g_child_watch_add() to prevent
  * zombie accumulation.
  */
@@ -387,6 +414,7 @@ FILE *safe_popen(const gchar *command)
     GPid      child_pid;
     FILE     *stream;
     gboolean  use_shell;
+    gboolean  repli_introuvable = FALSE;   /* Windows : relance par le shell */
 
     if (!command || *command == '\0') {
         g_warning("safe_popen: empty command");
@@ -398,9 +426,15 @@ FILE *safe_popen(const gchar *command)
     }
 
     use_shell = _has_shell_metacharacters(command);
+#ifdef _WIN32
+reessai:
+#endif
 
     if (use_shell) {
-        g_message("safe_popen: '%s' contient de la syntaxe shell -- execution via /bin/sh -c", command);
+        g_message("safe_popen: '%s' %s -- execution via %s %s", command,
+                  repli_introuvable ? "n'est pas un programme (commande du shell ?)"
+                                    : "contient de la syntaxe shell",
+                  sermo_shell(), sermo_shell_option());
         if (_no_shell_fallback()) {
             g_critical("safe_popen: shell fallback refused (SERMO_NO_SHELL_FALLBACK set)");
             return NULL;
@@ -410,8 +444,8 @@ FILE *safe_popen(const gchar *command)
             return NULL;
         }
         argv = g_new(gchar *, 4);
-        argv[0] = g_strdup("/bin/sh");
-        argv[1] = g_strdup("-c");
+        argv[0] = g_strdup(sermo_shell());   /* SERMO_SHELL, sinon /bin/sh */
+        argv[1] = g_strdup(sermo_shell_option());   /* « -c », « /C » pour cmd.exe */
         argv[2] = g_strdup(command);
         argv[3] = NULL;
     } else {
@@ -438,6 +472,22 @@ FILE *safe_popen(const gchar *command)
                 &stdout_fd,   /* stdout — we read from here */
                 NULL,         /* stderr — inherit */
                 &error)) {
+#ifdef _WIN32
+        int introuvable = (errno == ENOENT);
+        /* Windows : echo, dir, type… sont des commandes de cmd.exe, pas des
+         * programmes. Introuvable en direct, la commande passe par le shell,
+         * avec les mêmes garde-fous que le repli ordinaire. */
+        if (!use_shell && introuvable) {
+            g_error_free(error);
+            error = NULL;
+            g_strfreev(envp);
+            g_strfreev(argv);
+            argv = NULL;
+            use_shell = TRUE;
+            repli_introuvable = TRUE;
+            goto reessai;
+        }
+#endif
         g_warning("safe_popen: spawn failed for '%s': %s",
                   command, error->message);
         g_error_free(error);

@@ -1,0 +1,17 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Plafond de poids par port (E08, décision de S. Cage le 14/10 : une cible
+# PAR PORT). Unité : Kio du binaire après « strip --strip-unneeded » (comme
+# dans le paquet). Mesuré le 15/10 sur la 3.0.0, plafond = mesure + ~10 %.
+# Relever un plafond est un choix écrit ici, jamais un réflexe pour faire
+# passer le banc.
+# port   mesuré   plafond
+gtk3      455      500
+gtk4      463      510
+qt6       507      560
+fltk1     447      490
+efl1      343      380
+sdl3     1167     1290
+lvgl     2399     2640
+lvgl-leger 1663   1830
+ncurses   347      380
+html      367      400

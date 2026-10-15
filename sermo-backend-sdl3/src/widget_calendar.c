@@ -81,7 +81,39 @@ void widget_calendar_clear(variable *var)
     n->state.calendar.month = 1;
     n->state.calendar.year = 2026;
 }
-void widget_calendar_refresh(variable *var) {}
+/* « AAAA-MM-JJ » → date choisie, comme calendar_set_date_from_string() de
+ * l'étalon : sscanf %d-%d-%d, mois borné à 1..12 et jour à 1..31 ; une chaîne
+ * illisible ne change rien. */
+static void calendar_poser(WidgetNode *n, const char *texte)
+{
+    int y = 0, m = 0, d = 0;
+
+    if (!texte || sscanf(texte, "%d-%d-%d", &y, &m, &d) != 3) return;
+    n->state.calendar.year  = y;
+    n->state.calendar.month = m < 1 ? 1 : (m > 12 ? 12 : m);   /* pas de CLAMP ici */
+    n->state.calendar.day   = d < 1 ? 1 : (d > 31 ? 31 : d);
+}
+
+void widget_calendar_refresh(variable *var)
+{
+    WidgetNode *n;
+    gchar      *ligne;
+    GList      *el = NULL;
+
+    if (!var || !var->Widget) return;
+    /* <input> : rejoué à chaque « refresh », comme l'étalon gtk3sermo (sa
+     * première ligne, « AAAA-MM-JJ »), sans jouer d'action. Au premier passage,
+     * un <default> lisible l'emporte : l'étalon l'applique après (mesuré).
+     * Jusqu'au 2026-10-13 il n'était jamais lu. */
+    n = (WidgetNode *)var->Widget;
+    ligne = widget_input_ligne(var->Attributes);
+    calendar_poser(n, ligne);
+    g_free(ligne);
+    if (!n->initialised) {
+        n->initialised = TRUE;
+        calendar_poser(n, attributeset_get_first(&el, var->Attributes, ATTR_DEFAULT));
+    }
+}
 void widget_calendar_fileselect(variable *var, const char *nm, const char *v) {}
 void widget_calendar_removeselected(variable *var) {}
 void widget_calendar_save(variable *var) {}

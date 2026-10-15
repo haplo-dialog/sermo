@@ -167,7 +167,8 @@ gchar *widget_list_envvar_construct(GtkWidget *widget)
 	{
 		GtkListBoxRow *row = gtk_list_box_get_selected_row(GTK_LIST_BOX(widget));
 		if (row != NULL) {
-			string = g_object_get_data(G_OBJECT(row), "user_data");
+			/* Copie : user_data appartient à la ligne (contrat, widgets.h). */
+			string = g_strdup(g_object_get_data(G_OBJECT(row), "user_data"));
 		} else {
 			string = g_strdup("");
 		}

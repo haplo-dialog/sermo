@@ -85,14 +85,22 @@ void widget_entry_clear(variable *var)
 void widget_entry_refresh(variable *var)
 {
     gchar *text;
+    gboolean premier;
+    GList *el = NULL;
     if (!var || !var->Widget) return;
+    premier = widget_input_premier(var->Widget);
     /* Alimenter depuis <input> (Command:/file: decodes par le helper) */
     text = widget_input_text(var->Attributes);
     if (text) {
         /* la PREMIÈRE ligne, sans CR/LF — étalon gtk3sermo (elm_entry recollait
          * les lignes bout à bout : « un » + « deux » rendait « undeux ») */
         text[strcspn(text, "\r\n")] = '\0';
-        texte_poser((Evas_Object *)var->Widget, text);
+        /* Au premier passage un <default> l'emporte : l'étalon l'applique
+         * après l'<input>. <entry type="search"> arrive ici (le cœur ne le
+         * route pas vers searchentry) : jusqu'au 2026-10-13 son <input>
+         * écrasait le <default> (cas 78, SE1). */
+        if (!(premier && attributeset_get_first(&el, var->Attributes, ATTR_DEFAULT)))
+            texte_poser((Evas_Object *)var->Widget, text);
         g_free(text);
     }
 }

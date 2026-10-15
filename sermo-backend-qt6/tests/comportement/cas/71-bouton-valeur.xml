@@ -1,0 +1,12 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: valeur exportee d un bouton : "" pour un bouton ordinaire, true/false pour un bouton a bascule -->
+<window><vbox>
+<button><label>avec action</label><variable>B1</variable><action>echo</action></button>
+<button ok><variable>B2</variable></button>
+<button cancel><variable>B3</variable></button>
+<button><variable>B4</variable><action>echo</action></button>
+<button><label>icone</label><variable>B5</variable><input file icon="document-open"></input><action>echo</action></button>
+<togglebutton><label>bascule</label><variable>B6</variable><default>true</default></togglebutton>
+<togglebutton><label>bascule</label><variable>B7</variable></togglebutton>
+<timer visible="false" interval="2"><variable>_T</variable><action>exit:fin</action></timer>
+</vbox></window>

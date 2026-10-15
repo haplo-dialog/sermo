@@ -81,7 +81,39 @@ void widget_calendar_clear(variable *var)
     n->state.calendar.month = 1;
     n->state.calendar.year = 2026;
 }
-void widget_calendar_refresh(variable *var) {}
+/* « AAAA-MM-JJ » → date choisie, règle de l'étalon (calendar_set_date_from_
+ * string) : trois nombres lus par sscanf, mois borné à 1..12 et jour à 1..31,
+ * sans contrôle de la longueur du mois (mesuré : 2021-02-31 reste tel quel).
+ * Une chaîne illisible ne change rien. */
+static void calendrier_poser(WidgetNode *n, const char *s)
+{
+    int y = 0, m = 0, d = 0;
+    if (!s || sscanf(s, "%d-%d-%d", &y, &m, &d) != 3) return;
+    n->state.calendar.year  = y;
+    /* (la couche de compatibilité n'a pas CLAMP) */
+    n->state.calendar.month = m < 1 ? 1 : m > 12 ? 12 : m;
+    n->state.calendar.day   = d < 1 ? 1 : d > 31 ? 31 : d;
+}
+
+void widget_calendar_refresh(variable *var)
+{
+    /* <input> (commande ou fichier) : rejoué à chaque « refresh », comme
+     * l'étalon gtk3sermo — sa PREMIÈRE ligne, CR/LF ôtés ; rien de lisible,
+     * rien ne change ; aucune action ne joue. Jusqu'au 2026-10-13 il n'était
+     * jamais lu. */
+    if (!var || !var->Widget) return;
+    WidgetNode *n = (WidgetNode *)var->Widget;
+    gchar *ligne = widget_input_ligne(var->Attributes);
+    if (ligne) { calendrier_poser(n, ligne); g_free(ligne); }
+    /* Premier passage : <default> l'emporte, l'étalon l'applique APRÈS
+     * l'<input> (mesuré : <default> 2020-01-02 + <input> 2021-03-03 → 2020-01-02). */
+    if (!n->initialised) {
+        GList *el = NULL;
+        gchar *def = attributeset_get_first(&el, var->Attributes, ATTR_DEFAULT);
+        n->initialised = TRUE;
+        if (def) calendrier_poser(n, def);
+    }
+}
 void widget_calendar_fileselect(variable *var, const char *nm, const char *v) {}
 void widget_calendar_removeselected(variable *var) {}
 void widget_calendar_save(variable *var) {}

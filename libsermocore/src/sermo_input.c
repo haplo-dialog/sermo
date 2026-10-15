@@ -8,7 +8,9 @@
  *
  * La limite est posée sur le FLUX, par un flux « cookie » de la glibc
  * (fopencookie) : les lecteurs existants de chaque port — fgets, getline,
- * fread, fgetc — lisent comme avant, sans rien savoir de la limite.
+ * fread, fgetc — lisent comme avant, sans rien savoir de la limite. Les libc
+ * sans fopencookie mais avec funopen (bionic d'Android, macOS, BSD) passent
+ * par funopen : SERMO_HAVE_FUNOPEN, posé par CMake après essai.
  *
  * La lecture passe par read() sur le descripteur, pas par fread() sur le flux
  * d'origine : fread() attendrait d'avoir rempli tout le tampon demandé par la
@@ -173,9 +175,26 @@ static char *nommer(const char *source)
 	return nom;
 }
 
+#ifdef SERMO_HAVE_FUNOPEN
+/* funopen (BSD) : mêmes fonctions, longueurs en int. lire() ne rend jamais
+ * plus que la taille demandée, la conversion ne perd rien. */
+static int lire_bsd(void *cookie, char *tampon, int taille)
+{
+	return (int) lire(cookie, tampon, taille > 0 ? (size_t) taille : 0);
+}
+#endif
+
 FILE *sermo_input_wrap(FILE *flux, const char *source)
 {
+#if defined(_WIN32) && !defined(SERMO_HAVE_FUNOPEN)
+	/* Windows : pas de fopencookie. La limite des <input> n'y est
+	 * pas encore posée. */
+	(void)source;
+	return flux;
+#else
+#ifndef SERMO_HAVE_FUNOPEN
 	cookie_io_functions_t fonctions = { lire, NULL, NULL, fermer };
+#endif
 	Plafond *p;
 	size_t   max;
 
@@ -192,7 +211,11 @@ FILE *sermo_input_wrap(FILE *flux, const char *source)
 	p->max = max;
 	p->source = nommer(source);
 
+#ifdef SERMO_HAVE_FUNOPEN
+	p->enveloppe = funopen(p, lire_bsd, NULL, NULL, fermer);
+#else
 	p->enveloppe = fopencookie(p, "r", fonctions);
+#endif
 	if (p->enveloppe == NULL) {
 		free(p->source);
 		free(p);
@@ -204,6 +227,7 @@ FILE *sermo_input_wrap(FILE *flux, const char *source)
 	ouverts = p;
 	pthread_mutex_unlock(&verrou);
 	return p->enveloppe;
+#endif
 }
 
 FILE *sermo_fopen_input(const char *chemin)

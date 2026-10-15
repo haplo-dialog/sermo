@@ -20,6 +20,12 @@ void       widget_checkbox_fileselect(variable *var, const char *name, const cha
 void       widget_checkbox_refresh(variable *var);
 void       widget_checkbox_removeselected(variable *var);
 void       widget_checkbox_save(variable *var);
+/* Widgets à bascule (case, bouton à bascule, radio) : joue leurs actions à
+ * chaque changement d'état. chef = 1er radio du groupe, NULL sinon. */
+void       fltk1_bascule_brancher(GtkWidget *bouton, AttributeSet *Attr, GtkWidget *chef);
+void       fltk1_interrupteur_brancher(GtkWidget *bouton, AttributeSet *Attr);   /* <switch> */
+void       fltk1_bascule_lire(variable *var);   /* <input> d'une bascule, à chaque refresh */
+void       fltk1_radio_coche(GtkWidget *rb);   /* widget_radiobutton.cpp : le coché du groupe ouvert */
 #ifdef __cplusplus
 }
 #endif

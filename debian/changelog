@@ -1,3 +1,37 @@
+sermo (3.0.0-1) unstable; urgency=medium
+
+  * Nouvelle version amont 3.0.0.
+  * <input modbus> et <input opcua> : lecture seule d'un automate depuis
+    le XML, par des programmes d'aide ; nouveaux paquets
+    sermo-source-modbus (libmodbus) et sermo-source-opcua (open62541).
+  * sermo-doc : exemples Modbus et OPC UA (sources).
+  * « refresh » relit l'<input> des widgets sur les neuf ports.
+  * Modbus et OPC UA : la fenêtre ne se fige jamais (valeur gardée rendue
+    tout de suite, relue en fond).
+  * Nouveau paquet sermo-backend-lvgl-leger : lvglsermo sans ThorVG,
+    environ un tiers plus léger, sans icônes SVG ; remplace
+    sermo-backend-lvgl.
+  * Fuite de mémoire à chaque rafraîchissement d'un widget corrigée.
+  * lvglsermo : l'écran X ouvert une seule fois ; plus de plantage quand
+    son ouverture échoue.
+  * macOS : formule Homebrew pour le port ncurses.
+  * Le port ncurses se construit hors Debian : Windows 10/11 en natif
+    (UCRT), Termux (Android), FreeBSD et OpenBSD.
+  * Un seul lanceur de commandes ; le shell du repli se règle par
+    SERMO_SHELL.
+  * Widgets frères dans l'ordre du document quel que soit le compilateur :
+    construit par clang, chaque conteneur les rangeait à l'envers.
+  * Protection du flot de contrôle choisie après essai (CET sur x86,
+    BTI/PAC sur ARM64), objets à part durcis comme le binaire ; FORTIFY
+    agit enfin dans sermoia-mcp.
+  * GTK 4 : une propriété en lecture seule est refusée, comme en GTK 3.
+  * efl1 et lvgl : écran injoignable, un message et le code 1 au lieu d'un
+    plantage.
+  * fltk1 exige FLTK 1.4 dès la configuration, lvgl wayland-protocols ;
+    construction sans aucun avertissement.
+
+ -- s.cage <devel@haplo-dialog.fr>  Thu, 15 Oct 2026 14:40:04 +0200
+
 sermo (2.8.2-3) unstable; urgency=medium
 
   * ncursessermo : les variables de sortie restent à l'écran après le

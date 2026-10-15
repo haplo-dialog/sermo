@@ -31,6 +31,13 @@ GtkWidget *widget_togglebutton_create(AttributeSet *Attr, tag_attr *attr, gint T
         if (def) node->state.toggle.active =
             (strcasecmp(def,"true")==0 || strcmp(def,"1")==0);
     }
+    /* Ses actions, jouées chaque fois qu'il bascule (clic ou « activate: ») :
+     * voir jouer_actions_bascule(). Elles n'étaient pas gardées, donc jamais jouées. */
+    if (Attr) {
+        GList *ea = NULL;
+        gchar *act = attributeset_get_first(&ea, Attr, ATTR_ACTION);
+        if (act && *act) { node->action = strdup(act); node->actions_attr = (void *)Attr; }
+    }
     return (GtkWidget *)node;
 }
 

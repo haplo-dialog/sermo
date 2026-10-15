@@ -12,7 +12,13 @@ sermo follows **semantic versioning**, `MAJOR.MINOR.PATCH`:
 
 ## Current version
 
-`2.8.2`. The **first published 2.x release** was `2.7.3`. What each version brings:
+`3.0.0`. The **first published 2.x release** was `2.7.3`.
+
+**Why 3 without a break.** 3.0.0 breaks neither the XML language nor the contract between
+the core and the ports: the contract gains three optional functions, which by the rule
+above would make a MINOR release. Moving to 3 is the maintainer's choice: it marks leaving
+Linux (Windows, Android, BSD) and reading PLCs. A script or a port written for 2.x works
+with 3.0.0. What each version brings:
 [CHANGELOG.en.md](CHANGELOG.en.md).
 
 The 2.x line started at `2.0.0`, a version that stayed internal, like every
@@ -59,10 +65,10 @@ time, the binary simply shipped announcing a wrong number.
   long as they are shipped together. An incompatible change to the
   `sermo-contract.h` contract requires a MAJOR bump, because an older backend
   would no longer link against the core.
-- `sermocore.pc` carries the version (`Version: 2.8.2`): a backend built
+- `sermocore.pc` carries the version (`Version: 3.0.0`): a backend built
   separately can require a minimum core with
   `pkg_check_modules(SERMOCORE REQUIRED sermocore>=2.7)`.
-- Debian packages add a revision: `2.8.2-1` is the first Debian build of 2.8.2.
+- Debian packages add a revision: `3.0.0-1` is the first Debian build of 3.0.0.
 
 ## Script compatibility
 

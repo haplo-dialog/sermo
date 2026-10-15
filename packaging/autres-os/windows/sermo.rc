@@ -1,0 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+// Ressource Windows de sermo : le manifeste (type 24, identifiant 1).
+#include <winuser.h>
+CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "sermo.manifest"

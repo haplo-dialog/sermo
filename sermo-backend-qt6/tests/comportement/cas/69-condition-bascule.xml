@@ -1,0 +1,17 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: condition= sur les actions d une case qui se coche : il faut le prefixe if true / if false ET la condition -->
+<window><vbox>
+<entry><variable>A</variable><default>a</default></entry>
+<entry><variable>B</variable><default>b</default></entry>
+<entry><variable>C</variable><default>c</default></entry>
+<entry><variable>D</variable><default>d</default></entry>
+<entry><variable>E</variable><default>e</default></entry>
+<checkbox><label>x</label><variable>CASE</variable>
+<action condition="command_is_false(echo true)">if true clear:A</action>
+<action condition="command_is_true(echo true)">if false clear:B</action>
+<action condition="command_is_false(echo true)">clear:C</action>
+<action condition="command_is_true(echo true)">clear:D</action>
+<action condition="command_is_true(echo true)">if true clear:E</action></checkbox>
+<timer visible="false" interval="2"><variable>_T1</variable><action>activate:CASE</action></timer>
+<timer visible="false" interval="3"><variable>_T2</variable><action>exit:fin</action></timer>
+</vbox></window>

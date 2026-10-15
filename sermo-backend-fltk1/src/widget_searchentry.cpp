@@ -18,6 +18,13 @@
 #include <FL/Fl_Input.H>
 #include <string.h>
 
+/* Fl_Input + repère du premier passage (faux jusqu'au premier refresh).
+ * Membre du widget : rien à libérer. */
+struct SearchInput : Fl_Input {
+    bool lu;
+    SearchInput(int X, int Y, int W, int H) : Fl_Input(X, Y, W, H), lu(false) {}
+};
+
 GtkWidget *widget_searchentry_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
     int ww = 200, hh = 30;
@@ -25,7 +32,7 @@ GtkWidget *widget_searchentry_create(AttributeSet *Attr, tag_attr *attr, gint Ty
         const char *v;
         if ((v = get_tag_attribute(attr, "width-request"))) ww = atoi(v);
     }
-    Fl_Input *inp = new Fl_Input(0, 0, ww, hh);   /* pas de label externe : FLTK le dessine HORS du champ, sur le voisin */
+    Fl_Input *inp = new SearchInput(0, 0, ww, hh);   /* pas de label externe : FLTK le dessine HORS du champ, sur le voisin */
     inp->value("");
     if (Attr) {
         GList *el = NULL;
@@ -40,8 +47,29 @@ gchar *widget_searchentry_envvar_all_construct(variable *v)
 { return v && v->Widget ? widget_searchentry_envvar_construct(v->Widget) : NULL; }
 void widget_searchentry_clear(variable *v)
 { if (v && v->Widget) ((Fl_Input *)v->Widget)->value(""); }
+/* <input> : rejoué à chaque « refresh », comme l'étalon gtk3sermo. Jusqu'au
+ * 2026-10-13 il n'était jamais lu. La première ligne devient le texte (une
+ * ligne vide l'efface, comme l'étalon) ; posé sans jouer d'action. */
 void widget_searchentry_refresh(variable *v)
-{ if (v && v->Widget) ((Fl_Input *)v->Widget)->redraw(); }
+{
+    if (!v || !v->Widget) return;
+    SearchInput *si = (SearchInput *)v->Widget;
+    bool premier = !si->lu;
+    si->lu = true;
+    gchar *ligne = widget_input_line(v->Attributes);
+    if (ligne) {
+        ((Fl_Input *)v->Widget)->value(ligne);
+        g_free(ligne);
+    }
+    /* Premier passage (2026-10-13) : l'étalon pose l'<input> PUIS le <default> ;
+     * un <default> l'emporte donc (la commande a tourné quand même). */
+    if (premier && v->Attributes) {
+        GList *el = NULL;
+        gchar *def = attributeset_get_first(&el, v->Attributes, ATTR_DEFAULT);
+        if (def) ((Fl_Input *)v->Widget)->value(def);
+    }
+    ((Fl_Input *)v->Widget)->redraw();
+}
 void widget_searchentry_fileselect(variable *v, const char*, const char*) {}
 void widget_searchentry_removeselected(variable *v) {}
 void widget_searchentry_save(variable *v) {}

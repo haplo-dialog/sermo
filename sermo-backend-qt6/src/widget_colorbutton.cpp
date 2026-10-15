@@ -60,6 +60,21 @@ private:
     }
 };
 
+/* Couleur lue comme l'étalon gtk3sermo : la partie avant « | » (après, c'est
+ * l'alpha), espaces ôtés, puis l'analyse du toolkit (« #rrggbb », « #rgb »…).
+ * La forme Qt « #aarrggbb », que gdk_rgba_parse refuse, est refusée aussi.
+ * Faux si illisible : rien ne change. */
+static bool couleur_lire(const char *texte, QColor *couleur)
+{
+    if (!texte) return false;
+    QString s = QString::fromUtf8(texte).section('|', 0, 0).trimmed();
+    if (s.isEmpty() || (s.startsWith('#') && s.size() == 9)) return false;
+    QColor c = QColor::fromString(s);
+    if (!c.isValid()) return false;
+    *couleur = c;
+    return true;
+}
+
 GtkWidget *widget_colorbutton_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
     QColor initial(Qt::white);
@@ -67,10 +82,7 @@ GtkWidget *widget_colorbutton_create(AttributeSet *Attr, tag_attr *attr, gint Ty
     if (Attr) {
         GList *element = NULL;
         gchar *def = attributeset_get_first(&element, Attr, ATTR_DEFAULT);
-        if (def && *def) {
-            QColor c(QString::fromUtf8(def));
-            if (c.isValid()) initial = c;
-        }
+        couleur_lire(def, &initial);
     }
 
     ColorButton *btn = new ColorButton(initial);
@@ -103,10 +115,30 @@ void widget_colorbutton_clear(variable *var)
     static_cast<ColorButton *>(var->Widget)->setCurrentColor(QColor(Qt::white));
 }
 
+/* <input> à chaque « refresh », comme l'étalon : la première ligne est une
+ * couleur. Au premier passage, un <default> lisible l'emporte (la commande
+ * tourne quand même). Une ligne illisible ou vide ne change rien. Aucune
+ * <action> n'est branchée sur ce widget dans ce port. Jusqu'au 2026-10-13,
+ * l'<input> n'était jamais lu (CO restait #ffffff). */
 void widget_colorbutton_refresh(variable *var)
 {
     if (!var || !var->Widget) return;
-    static_cast<QWidget *>(var->Widget)->update();
+    ColorButton *btn = static_cast<ColorButton *>(var->Widget);
+    bool premier = !btn->property("sermoLu").toBool();
+    btn->setProperty("sermoLu", true);
+    gchar *ligne = widget_input_line(var->Attributes);
+    if (!ligne) return;
+    QColor c;
+    if (premier) {
+        GList *el = NULL;
+        if (couleur_lire(attributeset_get_first(&el, var->Attributes, ATTR_DEFAULT), &c)) {
+            g_free(ligne);
+            return;
+        }
+    }
+    if (couleur_lire(ligne, &c))
+        btn->setCurrentColor(c);
+    g_free(ligne);
 }
 
 void widget_colorbutton_fileselect(variable *var, const char *n, const char *v) {}

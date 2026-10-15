@@ -166,6 +166,48 @@ widget_input_text(AttributeSet *Attr)
     return NULL;
 }
 
+/*
+ * Règle de l'étalon gtk3sermo pour les widgets à valeur unique (calendar,
+ * colorbutton, fontbutton, searchentry, statusbar, infobar, linkbutton,
+ * expander, notebook) : seule la PREMIÈRE ligne compte, sans CR/LF. NULL si
+ * rien n'est lisible ou si le contenu est vide (fgets n'y lit aucune ligne) :
+ * la valeur ne change pas. Sinon une chaîne à libérer par g_free (« » si la
+ * première ligne est vide).
+ */
+gchar *
+widget_input_line(AttributeSet *Attr)
+{
+    gchar *texte = widget_input_text(Attr);
+
+    if (texte == NULL)
+        return NULL;
+    if (texte[0] == '\0') {
+        g_free(texte);
+        return NULL;
+    }
+    /* fgets(line, 512, …) chez l'étalon : au plus 511 octets */
+    if (strlen(texte) > 511)
+        texte[511] = '\0';
+    texte[strcspn(texte, "\r\n")] = '\0';
+    return texte;
+}
+
+/*
+ * Vrai au PREMIER appel pour ce widget (le cœur appelle refresh juste après
+ * la création), faux ensuite. Sert à laisser un <default> l'emporter sur
+ * l'<input> au premier passage, comme l'étalon qui l'applique après.
+ */
+gboolean
+widget_input_premier(GtkWidget *widget)
+{
+    if (widget == NULL)
+        return FALSE;
+    if (evas_object_data_get((Evas_Object *)widget, "sermo_input_lu") != NULL)
+        return FALSE;
+    evas_object_data_set((Evas_Object *)widget, "sermo_input_lu", (void *)1);
+    return TRUE;
+}
+
 /* ------------------------------------------------------------------- */
 /* Fonction 2 bis — <input> découpé en lignes                          */
 /* ------------------------------------------------------------------- */
@@ -178,6 +220,28 @@ widget_input_text(AttributeSet *Attr)
  * aucune directive n'est lisible ; sinon un tableau terminé par NULL, à
  * libérer par g_strfreev.
  */
+gint widget_input_bool(AttributeSet *Attr)
+{
+    /* Règle de l'étalon gtk3sermo pour <checkbox>, <radiobutton>, <switch> et
+     * <togglebutton> : la PREMIÈRE ligne, sans CR/LF, vaut vrai si elle dit
+     * « true » ou « yes » (sans casse) ou si atoi() y lit 1 ; toute autre
+     * ligne vaut faux. Rien de lisible (ni ligne) : -1, l'état ne change pas. */
+    gchar *texte = widget_input_text(Attr);
+    gint   vrai;
+
+    if (texte == NULL)
+        return -1;
+    if (texte[0] == '\0') {
+        g_free(texte);
+        return -1;
+    }
+    texte[strcspn(texte, "\r\n")] = '\0';
+    vrai = (g_ascii_strcasecmp(texte, "true") == 0 ||
+            g_ascii_strcasecmp(texte, "yes") == 0 || atoi(texte) == 1);
+    g_free(texte);
+    return vrai ? 1 : 0;
+}
+
 gchar **
 widget_input_lines(AttributeSet *Attr)
 {
@@ -214,7 +278,7 @@ widget_get_text_value(GtkWidget *widget, int type)
 {
     if (widget == NULL) {
         g_warning("widget_get_text_value: widget NULL (type %d)", type);
-        return "NULL WIDGET";
+        return g_strdup("NULL WIDGET");
     }
 
     switch (type) {

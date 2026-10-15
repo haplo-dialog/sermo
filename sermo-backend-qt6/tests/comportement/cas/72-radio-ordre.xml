@@ -1,0 +1,11 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: choisir un autre radio : celui qui se decoche joue ses actions d abord, puis celui qui se coche (ordre GTK) -->
+<window><vbox>
+<radiobutton><label>un</label><variable>R1</variable>
+<action>if true echo R1-vrai >> ordre.txt</action><action>if false echo R1-faux >> ordre.txt</action></radiobutton>
+<radiobutton><label>deux</label><variable>R2</variable>
+<action>if true echo R2-vrai >> ordre.txt</action><action>if false echo R2-faux >> ordre.txt</action></radiobutton>
+<entry><variable>ORDRE</variable><input>cat ordre.txt 2>/dev/null | tr '\n' ' '</input></entry>
+<timer visible="false" interval="2"><variable>_T1</variable><action>activate:R2</action></timer>
+<timer visible="false" interval="3"><variable>_T2</variable><action>refresh:ORDRE</action><action>exit:fin</action></timer>
+</vbox></window>

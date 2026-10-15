@@ -15,6 +15,7 @@
 #include "widgets.h"
 #include "tag_attributes.h"
 #include "widget_switch.h"
+#include "widget_checkbox.h"   /* fltk1_interrupteur_brancher() */
 #include <FL/Fl_Light_Button.H>
 #include <string.h>
 
@@ -22,10 +23,6 @@ GtkWidget *widget_switch_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
     Fl_Light_Button *btn = new Fl_Light_Button(0, 0, 120, 30, "OFF");
     btn->color2(fl_rgb_color(137, 180, 250));  /* Catppuccin blue */
-    btn->callback([](Fl_Widget *w, void*){
-        Fl_Light_Button *b = (Fl_Light_Button *)w;
-        b->copy_label(b->value() ? "ON" : "OFF");
-    });
     if (Attr) {
         GList *el = NULL;
         gchar *lbl = attributeset_get_first(&el, Attr, ATTR_LABEL);
@@ -35,6 +32,8 @@ GtkWidget *widget_switch_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         if (def && (strcmp(def,"true")==0||strcmp(def,"1")==0||strcmp(def,"on")==0))
             btn->value(1);
     }
+    /* Libellé ON/OFF au clic et actions : widget_checkbox.cpp */
+    fltk1_interrupteur_brancher((GtkWidget *)btn, Attr);
     return (GtkWidget *)btn;
 }
 gchar *widget_switch_envvar_construct(GtkWidget *w)
@@ -43,8 +42,7 @@ gchar *widget_switch_envvar_all_construct(variable *v)
 { return v && v->Widget ? widget_switch_envvar_construct(v->Widget) : NULL; }
 void widget_switch_clear(variable *v)
 { if (v && v->Widget) { ((Fl_Light_Button *)v->Widget)->value(0); ((Fl_Light_Button *)v->Widget)->copy_label("OFF"); } }
-void widget_switch_refresh(variable *v)
-{ if (v && v->Widget) ((Fl_Light_Button *)v->Widget)->redraw(); }
+void widget_switch_refresh(variable *v) { fltk1_bascule_lire(v); }   /* widget_checkbox.cpp */
 void widget_switch_fileselect(variable *v, const char*, const char*) {}
 void widget_switch_removeselected(variable *v) {}
 void widget_switch_save(variable *v) {}

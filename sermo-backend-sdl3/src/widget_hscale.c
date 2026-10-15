@@ -44,10 +44,9 @@ GtkWidget *widget_hscale_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         gchar *def = attributeset_get_first(&el, Attr, ATTR_DEFAULT);
         if (def && *def) node->state.scale.value = g_ascii_strtod(def, NULL);
     }
-    {   /* <input> : valeur initiale par commande */
-        gchar *itext = widget_input_text(Attr);
-        if (itext) { node->state.scale.value = g_ascii_strtod(g_strchomp(itext), NULL); g_free(itext); }
-    }
+    /* <input> : lu par widget_hscale_refresh(), que le cœur appelle juste
+     * après la création — le lire aussi ici exécuterait la commande deux
+     * fois. */
     return (GtkWidget *)node;
 }
 
@@ -74,7 +73,16 @@ void widget_hscale_clear(variable *var)
     if (!var || !var->Widget) return;
     ((WidgetNode *)var->Widget)->state.scale.value = 0.0;
 }
-void widget_hscale_refresh(variable *var) {}
+void widget_hscale_refresh(variable *var)
+{
+    if (!var || !var->Widget) return;
+    /* <input> (commande ou fichier) : rejoué à chaque « refresh », comme
+     * l'étalon gtk3sermo. Jusqu'au 2026-10-13 il n'était lu qu'à la création :
+     * un <timer> qui rafraîchissait ce widget ne le changeait pas. */
+    WidgetNode *n = (WidgetNode *)var->Widget;
+    gchar *itext = widget_input_text(var->Attributes);
+    if (itext) { n->state.scale.value = g_ascii_strtod(g_strchomp(itext), NULL); g_free(itext); }
+}
 void widget_hscale_fileselect(variable *var, const char *n, const char *v) {}
 void widget_hscale_removeselected(variable *var) {}
 void widget_hscale_save(variable *var) {}

@@ -26,6 +26,7 @@
 #include "widgets.h"
 #include "tag_attributes.h"
 #include "widget_timer.h"
+#include "jouer_actions.h"    /* condition_vraie() */
 #include "actions.h"
 #include "safe_exec.h"
 
@@ -91,7 +92,8 @@ GtkWidget *widget_timer_create(AttributeSet *Attr, tag_attr *attr, gint Type)
             if (!function)
                 function = attributeset_get_this_tagattr(&ae, acap, ATTR_ACTION, (gchar *)"type");
             gchar *signal = attributeset_get_this_tagattr(&ae, acap, ATTR_ACTION, (gchar *)"signal");
-            if (!signal || g_ascii_strcasecmp(signal, "tick") == 0)
+            if ((!signal || g_ascii_strcasecmp(signal, "tick") == 0)
+                && condition_vraie(&ae, acap))   /* condition= : voir jouer_actions.h */
                 execute_action(nullptr, cmd, function);
             cmd = attributeset_get_next(&ae, acap, ATTR_ACTION);
         }

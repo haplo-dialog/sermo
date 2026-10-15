@@ -86,10 +86,25 @@ void widget_statusbar_clear(variable *var)
     if (lbl) lbl->clear();
 }
 
+/* <input> à chaque « refresh », comme l'étalon : la première ligne est le
+ * message. Au premier passage, un <label> ou un <default> l'emporte (l'étalon
+ * les pousse après) ; la commande tourne quand même. Aucune <action> n'est
+ * branchée sur ce widget dans ce port. Jusqu'au 2026-10-13, l'<input> n'était
+ * jamais lu (ST restait vide). */
 void widget_statusbar_refresh(variable *var)
 {
     if (!var || !var->Widget) return;
-    static_cast<QWidget *>(var->Widget)->update();
+    QStatusBar *sb = static_cast<QStatusBar *>(var->Widget);
+    bool premier = !sb->property("sermoLu").toBool();
+    sb->setProperty("sermoLu", true);
+    gchar *ligne = widget_input_line(var->Attributes);
+    if (!ligne) return;
+    GList *el = NULL, *el_def = NULL;
+    QLabel *lbl = qobject_cast<QLabel *>(sb->property("labelWidget").value<QObject *>());
+    if (lbl && !(premier && (attributeset_get_first(&el, var->Attributes, ATTR_LABEL) ||
+                             attributeset_get_first(&el_def, var->Attributes, ATTR_DEFAULT))))
+        lbl->setText(QString::fromUtf8(ligne));
+    g_free(ligne);
 }
 
 void widget_statusbar_fileselect(variable *var, const char *n, const char *v) {}

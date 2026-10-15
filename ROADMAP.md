@@ -43,5 +43,5 @@
       sommes de contrôle signées (`SHA256SUMS.asc`, depuis la 2.8.2).
 - [ ] Dépôt apt (il n'y en a pas aujourd'hui).
 
-> La progression est **gardée par les trois bancs** (XML 55 · comportement 61 ·
+> La progression est **gardée par les trois bancs** (XML 55 · comportement 75 ·
 > gardes) : aucune phase n'avance en laissant un banc rouge.

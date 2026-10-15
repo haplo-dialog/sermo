@@ -45,6 +45,20 @@ static void niveau_poser(Evas_Object *pb, double v)
                                   ? (v - nv->min) / (nv->max - nv->min) : 0.0);
 }
 
+/* <input> (commande ou fichier) : la valeur absolue, lue au début du contenu.
+ * Lue à chaque « refresh » (le cœur en fait un juste après la création),
+ * comme l'étalon gtk3sermo : jusqu'au 2026-10-13, elle n'était lue qu'à la
+ * création, widget_levelbar_refresh était vide, et une jauge pilotée par un
+ * <timer> restait figée. */
+static void niveau_lire(Evas_Object *pb, AttributeSet *Attr)
+{
+    gchar *itext = widget_input_text(Attr);
+    if (itext) {
+        niveau_poser(pb, g_ascii_strtod(itext, NULL));
+        g_free(itext);
+    }
+}
+
 GtkWidget *widget_levelbar_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
     Evas_Object *win = efl_main_win_get();
@@ -70,16 +84,9 @@ GtkWidget *widget_levelbar_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         if (def)
             niveau_poser(pb, g_ascii_strtod(def, NULL));
     }
-    /* <input> (commande ou fichier) : la valeur absolue, lue au début du
-     * contenu. Lue ici seulement (widget_levelbar_refresh est vide) : la
-     * commande ne s'exécute qu'une fois. */
-    {
-        gchar *itext = widget_input_text(Attr);
-        if (itext) {
-            niveau_poser(pb, g_ascii_strtod(itext, NULL));
-            g_free(itext);
-        }
-    }
+    /* <input> : lu par widget_levelbar_refresh(), que le cœur appelle juste
+     * après la création — le lire aussi ici exécuterait la commande deux
+     * fois. */
     evas_object_show(pb);
     return (GtkWidget *)pb;
 }
@@ -97,7 +104,8 @@ gchar *widget_levelbar_envvar_all_construct(variable *v)
 { return v && v->Widget ? widget_levelbar_envvar_construct(v->Widget) : NULL; }
 void widget_levelbar_clear(variable *v)
 { if (v && v->Widget) niveau_poser((Evas_Object *)v->Widget, 0.0); }
-void widget_levelbar_refresh(variable *v) {}
+void widget_levelbar_refresh(variable *v)
+{ if (v && v->Widget) niveau_lire((Evas_Object *)v->Widget, v->Attributes); }
 void widget_levelbar_fileselect(variable *v, const char *n, const char *val) {}
 void widget_levelbar_removeselected(variable *v) {}
 void widget_levelbar_save(variable *v) {}

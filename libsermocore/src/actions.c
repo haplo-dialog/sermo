@@ -32,7 +32,11 @@
 
 #ifndef G_OS_WIN32
 #include <sys/types.h>
+#ifndef _WIN32
 #include <regex.h>
+#else
+#include <ctype.h>
+#endif
 #endif
 
 #include "gtk3d.h"
@@ -496,7 +500,7 @@ void action_removeselected(GtkWidget *widget, char *string)
 
 int action_append(GtkWidget *widget, char *string)
 {
-#ifndef G_OS_WIN32
+#ifndef _WIN32
 	regex_t twoparams;
 	regmatch_t matched[3];
 	char *regular = "[ ]*([A-Za-z_]+),[ ]*([A-Za-z_]+)";
@@ -527,7 +531,24 @@ int action_append(GtkWidget *widget, char *string)
 
 	return append_fromto_variable(from, to);
 #else
-	g_warning("%s(): Unimplemented.", __func__);
+	/* Windows : pas de <regex.h>. Lecture à la main du même motif,
+	 * « [ ]*([A-Za-z_]+),[ ]*([A-Za-z_]+) », cherché comme regexec : au
+	 * premier départ qui convient. */
+	g_assert(string != NULL);
+	for (const char *d = string; *d; d++) {
+		const char *a = d, *b, *c, *e;
+		while (*a == ' ') a++;
+		for (b = a; isalpha((unsigned char)*b) || *b == '_'; b++) ;
+		if (b == a || *b != ',') continue;
+		for (c = b + 1; *c == ' '; c++) ;
+		for (e = c; isalpha((unsigned char)*e) || *e == '_'; e++) ;
+		if (e == c) continue;
+		char *from = g_strndup(a, (size_t)(b - a));
+		char *to = g_strndup(c, (size_t)(e - c));
+		return append_fromto_variable(from, to);
+	}
+	g_warning("%s(): Insert action needs two parameters.", __func__);
+	return FALSE;
 #endif
 }
 

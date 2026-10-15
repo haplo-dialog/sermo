@@ -61,7 +61,34 @@ void widget_fontbutton_clear(variable *var)
     n->label = strdup("Sans 12");
 }
 
-void widget_fontbutton_refresh(variable *var) {}
+/* Le nom de police vit dans node->label (le bouton l'affiche tel quel). */
+static void fontbutton_poser(WidgetNode *n, const char *police)
+{
+    if (!police) return;
+    free(n->label);
+    n->label = strdup(police);
+}
+
+void widget_fontbutton_refresh(variable *var)
+{
+    WidgetNode *n;
+    gchar      *ligne;
+    GList      *el = NULL;
+
+    if (!var || !var->Widget) return;
+    /* <input> : rejoué à chaque « refresh », comme l'étalon gtk3sermo (sa
+     * première ligne = le nom de police, « Sans 13 »), sans jouer d'action.
+     * Au premier passage, un <default> l'emporte : l'étalon l'applique après
+     * (mesuré). Jusqu'au 2026-10-13 il n'était jamais lu. */
+    n = (WidgetNode *)var->Widget;
+    ligne = widget_input_ligne(var->Attributes);
+    fontbutton_poser(n, ligne);
+    g_free(ligne);
+    if (!n->initialised) {
+        n->initialised = TRUE;
+        fontbutton_poser(n, attributeset_get_first(&el, var->Attributes, ATTR_DEFAULT));
+    }
+}
 void widget_fontbutton_fileselect(variable *var, const char *name, const char *value) {}
 void widget_fontbutton_removeselected(variable *var) {}
 void widget_fontbutton_save(variable *var) {}

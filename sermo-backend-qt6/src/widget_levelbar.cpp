@@ -23,6 +23,21 @@
 #include <string.h>
 #include <cstdio>
 
+/* La barre Qt ne retient qu'une FRACTION entière sur 1000 ; l'étalon, lui,
+ * exporte la VALEUR écrite dans le script. On la garde donc à part, dans une
+ * propriété Qt, comme l'URI d'un <linkbutton> — et l'intervalle aussi, pour
+ * qu'un « refresh » puisse reposer la valeur après la création. */
+static void niveau_poser(QProgressBar *pb, double val)
+{
+    double rmin = pb->property("sermoMin").toDouble();
+    double rmax = pb->property("sermoMax").toDouble();
+    double frac = (rmax > rmin) ? (val - rmin) / (rmax - rmin) : 0.0;
+    if (frac < 0.0) frac = 0.0;
+    if (frac > 1.0) frac = 1.0;
+    pb->setValue((int)(frac * 1000));
+    pb->setProperty("sermoValue", val);
+}
+
 GtkWidget *widget_levelbar_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
     QProgressBar *pb = new QProgressBar();
@@ -46,15 +61,12 @@ GtkWidget *widget_levelbar_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         GList *el = NULL;
         gchar *def = attributeset_get_first(&el, Attr, ATTR_DEFAULT);
         if (def && *def) val = g_ascii_strtod(def, NULL);
-        val = widget_command_value(Attr, val);          /* <input> prioritaire */
-        double frac = (rmax > rmin) ? (val - rmin) / (rmax - rmin) : 0.0;
-        if (frac < 0.0) frac = 0.0;
-        if (frac > 1.0) frac = 1.0;
-        pb->setValue((int)(frac * 1000));
-        /* La barre Qt ne retient qu'une FRACTION entière sur 1000 ; l'étalon,
-         * lui, exporte la VALEUR écrite dans le script. On la garde donc à
-         * part, dans une propriété Qt, comme l'URI d'un <linkbutton>. */
-        pb->setProperty("sermoValue", val);
+        /* <input> : lu par widget_levelbar_refresh(), que le cœur appelle
+         * juste après la création — le lire aussi ici exécuterait la
+         * commande deux fois. */
+        pb->setProperty("sermoMin", rmin);
+        pb->setProperty("sermoMax", rmax);
+        niveau_poser(pb, val);
     }
     return (GtkWidget *)pb;
 }
@@ -73,8 +85,17 @@ gchar *widget_levelbar_envvar_all_construct(variable *v)
 { return v && v->Widget ? widget_levelbar_envvar_construct(v->Widget) : NULL; }
 void widget_levelbar_clear(variable *v)
 { if (v && v->Widget) static_cast<QProgressBar*>(v->Widget)->setValue(0); }
+/* « refresh » rejoue l'<input>, comme l'étalon gtk3sermo. Jusqu'au 2026-10-13
+ * la barre n'était que redessinée : la commande ne tournait qu'à la création,
+ * et une jauge pilotée par un <timer> restait figée. */
 void widget_levelbar_refresh(variable *v)
-{ if (v && v->Widget) static_cast<QProgressBar*>(v->Widget)->update(); }
+{
+    if (!v || !v->Widget) return;
+    QProgressBar *pb = static_cast<QProgressBar*>(v->Widget);
+    QVariant brut = pb->property("sermoValue");
+    double val = brut.isValid() ? brut.toDouble() : 0.0;
+    niveau_poser(pb, widget_command_value(v->Attributes, val));
+}
 void widget_levelbar_fileselect(variable *v, const char*, const char*) {}
 void widget_levelbar_removeselected(variable *v) {}
 void widget_levelbar_save(variable *v) {}

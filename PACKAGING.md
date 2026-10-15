@@ -11,7 +11,7 @@ testing vierge.
 
 | Paquet | Contenu | Dépend de |
 |---|---|---|
-| `sermo-doc` | manuel Texinfo (`info sermo-doc`), documentation commune (copyright, changelog Debian), les soixante scripts métier (`examples/metiers`) et les quatre boîtes à outils (`examples/boites-a-outils`) | aucune dépendance |
+| `sermo-doc` | manuel Texinfo (`info sermo-doc`), documentation commune (copyright, changelog Debian), les soixante scripts métier (`examples/metiers`) et les quatre boîtes à outils (`examples/boites-a-outils`), les exemples Modbus et OPC UA (`examples/modbus`, `examples/opcua`) | aucune dépendance |
 | `sermo-core-dev` | `libsermocore.a`, en-têtes (`/usr/include/sermo`), `sermocore.pc` | aucune dépendance |
 | `sermo-backend-gtk3` | binaire `gtk3sermo`, page de manuel, manuel Texinfo | GTK 3, VTE (`<terminal>`), gtk-layer-shell (ancrage Wayland) |
 | `sermo-backend-gtk4` | binaire `gtk4sermo`, page de manuel, manuel Texinfo | GTK 4, VTE (`<terminal>`) |
@@ -20,14 +20,17 @@ testing vierge.
 | `sermo-backend-efl1` | binaire `efl1sermo`, page de manuel, manuel Texinfo | Enlightenment/Elementary |
 | `sermo-backend-sdl3` | binaire `sdl3sermo`, page de manuel, manuel Texinfo | SDL 3 |
 | `sermo-backend-lvgl` | binaire `lvglsermo` (LVGL embarqué), page de manuel, manuel Texinfo | X11, Wayland, xkbcommon, libpng |
+| `sermo-backend-lvgl-leger` | le même `lvglsermo` sans le moteur vectoriel ThorVG : environ un tiers plus léger, mêmes dialogues et mêmes valeurs, mais sans les icônes SVG des thèmes (les PNG restent) ; remplace `sermo-backend-lvgl`, on installe l'un ou l'autre | X11, Wayland, xkbcommon, libpng |
 | `sermo-backend-ncurses` | binaire `ncursessermo`, page de manuel, manuel Texinfo | ncursesw (terminal) |
 | `sermo-backend-html` | binaire `htmlsermo` (export en page HTML), page de manuel, manuel Texinfo | aucune bibliothèque graphique |
 | `sermo-gtkdialog` | commande `gtkdialog` et page `gtkdialog(1)`, liens vers gtk3sermo | `sermo-backend-gtk3` |
 | `gtk3sermo`, `gtk4sermo`, `qt6sermo`, `gtksermo` | paquets de transition, vides | le paquet 2.x qui les remplace, et `sermo-doc` |
 | `sermoia-mcp` | serveur MCP qui fait écrire, vérifier et voir un dialogue ; son catalogue d'exemples | GLib, json-glib, un port de sermo (`sermo-backend-qt6` recommandé) |
 | `sermoman-mcp` | serveur MCP du manuel, en lecture seule | `python3` |
+| `sermo-source-modbus` | programme d'aide de `<input modbus>` (`/usr/libexec/sermo`), lecture seule | libmodbus |
+| `sermo-source-opcua` | programme d'aide de `<input opcua>` (`/usr/libexec/sermo`), lecture seule, certificats | open62541 |
 
-Soit **18 paquets**, plus un paquet `-dbgsym` (symboles de débogage) par backend et pour `sermoia-mcp`.
+Soit **21 paquets**, plus un paquet `-dbgsym` (symboles de débogage) par backend, pour `sermoia-mcp` et pour chaque `sermo-source-*`.
 Les dépendances sont calculées par `dh_shlibdeps` à partir des bibliothèques
 réellement liées : elles ne sont ni devinées ni recopiées à la main.
 
@@ -132,7 +135,7 @@ La 1.x était livrée sous les noms `gtk3sermo`, `gtk4sermo`, `qt6sermo` et
 voulus depuis leurs fichiers retire les paquets 1.x qu'ils remplacent :
 
 ```sh
-sudo apt install ./sermo-backend-gtk3_2.8.2-3_amd64.deb ./sermo-gtkdialog_2.8.2-3_all.deb
+sudo apt install ./sermo-backend-gtk3_3.0.0-1_amd64.deb ./sermo-gtkdialog_3.0.0-1_all.deb
 ```
 
 Éprouvé le 2026-09-17 dans un conteneur Debian testing vierge, sans réseau, depuis
@@ -226,9 +229,9 @@ détaillée dans [LICENCES.md](LICENCES.md).
 ## Installer et désinstaller
 
 ```sh
-sudo apt install ./sermo-backend-gtk3_2.8.2-3_amd64.deb      # GTK 3
-sudo apt install ./sermo-gtkdialog_2.8.2-3_all.deb           # + la commande gtkdialog
-sudo apt install ./sermo-core-dev_2.8.2-3_amd64.deb          # pour compiler un backend
+sudo apt install ./sermo-backend-gtk3_3.0.0-1_amd64.deb      # GTK 3
+sudo apt install ./sermo-gtkdialog_3.0.0-1_all.deb           # + la commande gtkdialog
+sudo apt install ./sermo-core-dev_3.0.0-1_amd64.deb          # pour compiler un backend
 
 sudo apt purge sermo-gtkdialog sermo-backend-gtk3            # tout retirer
 ```

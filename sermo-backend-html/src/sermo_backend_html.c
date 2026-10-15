@@ -97,6 +97,87 @@ static void declencher(WidgetNode *n, const char *signal1, const char *signal2)
         execute_action((GtkWidget *)n, n->action, NULL);
 }
 
+/* Widgets à bascule (case à cocher, bouton radio, bouton à bascule,
+ * interrupteur) : leurs actions jouent à chaque changement d'état, « if true »/
+ * « if false » compris. */
+static void bascule_jouer(WidgetNode *n, int actif)
+{
+    if (n->actions_attr && n->type == WT_SWITCH)
+        jouer_actions_interrupteur((GtkWidget *)n, (AttributeSet *)n->actions_attr, actif);
+    else if (n->actions_attr)
+        jouer_actions_bascule((GtkWidget *)n, (AttributeSet *)n->actions_attr, actif);
+    else if (n->action && *n->action)
+        execute_action((GtkWidget *)n, n->action, NULL);
+}
+
+/* Pour widget_radiobutton.c : le bouton radio qu'un autre remplace au départ
+ * (son <default> ou son <input>) joue ses actions « décoché », comme chez
+ * l'étalon, où elles sont déjà branchées. */
+void sermo_be_bascule_jouer(void *w, int actif)
+{
+    if (w) bascule_jouer((WidgetNode *)w, actif);
+}
+
+/* Bascule comme un clic de l'étalon. Un bouton radio choisi le reste ; en
+ * choisir un décoche ses frères de la même boîte (le groupe du cœur), qui
+ * jouent leurs actions « décoché » d'abord, comme GTK. */
+static void basculer(WidgetNode *n)
+{
+    if (n->type == WT_RADIOBUTTON) {
+        if (n->state.toggle.active) return;
+        n->state.toggle.active = TRUE;
+        if (n->parent)
+            for (int i = 0; i < n->parent->child_count; i++) {
+                WidgetNode *f = n->parent->children[i];
+                if (f == n || f->type != WT_RADIOBUTTON || !f->state.toggle.active) continue;
+                f->state.toggle.active = FALSE;
+                bascule_jouer(f, FALSE);
+            }
+        bascule_jouer(n, TRUE);
+        return;
+    }
+    n->state.toggle.active = !n->state.toggle.active;
+    bascule_jouer(n, n->state.toggle.active);
+}
+
+/* Crochet du contrat : « activate:NOM » bascule les widgets à bascule (le shim
+ * fait de gtk_widget_activate() un FALSE). La page porte l'état d'après. */
+int sermo_be_widget_activate(void *w)
+{
+    WidgetNode *n = (WidgetNode *)w;
+    if (!n) return 0;
+    switch (n->type) {
+    case WT_CHECKBOX: case WT_RADIOBUTTON: case WT_TOGGLEBUTTON: case WT_SWITCH:
+        basculer(n);
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+/* Crochet du contrat : l'état d'un widget pour condition="active_is_…/
+ * sensitive_is_…/visible_is_…(NOM)" (le shim ne sait rien des nœuds).
+ * quoi : 0 = actif, 1 = sensible, 2 = visible ; -1 = je ne sais pas. */
+int sermo_be_widget_etat(void *w, int quoi)
+{
+    WidgetNode *n = (WidgetNode *)w;
+    if (!n) return -1;
+    switch (quoi) {
+    case 0:
+        switch (n->type) {
+        case WT_CHECKBOX: case WT_RADIOBUTTON: case WT_TOGGLEBUTTON: case WT_SWITCH:
+            return n->state.toggle.active ? 1 : 0;
+        case WT_EXPANDER:
+            return n->state.expander.open ? 1 : 0;
+        default:
+            return -1;
+        }
+    case 1: return n->sensitive ? 1 : 0;
+    case 2: return n->visible ? 1 : 0;
+    default: return -1;
+    }
+}
+
 /* La sélection posée au chargement d'une <list> est jouée une fois, l'arbre
  * entier construit : les variables que l'action vise existent alors. Seule une
  * vraie <list> garde son jeu d'actions ; un <tree> (WT_LIST aussi) non. */
@@ -145,6 +226,15 @@ static void fire_timers_once(WidgetNode *root)
  * nombre de lectures encore ouvertes. Sans écran, rien ne presse : on lit
  * chaque commande jusqu'au bout (la première ligne à 100 déclenche ses
  * actions, un « exit:… » sort ici). */
+static int a_des_barres(WidgetNode *node)
+{
+    if (!node) return 0;
+    if (node->type == WT_PROGRESSBAR) return 1;
+    for (int i = 0; i < node->child_count; i++)
+        if (a_des_barres(node->children[i])) return 1;
+    return 0;
+}
+
 static int servir_barres(WidgetNode *node)
 {
     int ouvertes = 0;
@@ -190,8 +280,18 @@ int sermo_be_run_loop(void)
      * Si l'un déclenche « exit:... », action_exitprogram imprime les
      * variables et termine ici — on ne revient pas. */
     listes_chargees(root);
-    while (servir_barres(root) > 0)
+    int barres = servir_barres(root);
+    while (barres > 0) {
         usleep(20000);
+        barres = servir_barres(root);
+    }
+    /* Les barres ont fini de lire leur commande : la page est réécrite avec
+     * leurs vraies valeurs. Écrite d'abord sans elles (promesse ci-dessus,
+     * une barre à 100 % peut faire sortir par « exit:… »), elle montrait
+     * toujours 0 % — « Progression (doit afficher 65 %) » vide dans la
+     * galerie du site. */
+    if (a_des_barres(root))
+        render_html_export(root, title);
     fire_timers_once(root);
 
     /* 3) Repli si aucun timer n'a fait sortir le programme : mêmes lignes

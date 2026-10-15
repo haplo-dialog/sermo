@@ -103,7 +103,23 @@ gchar *widget_linkbutton_envvar_all_construct(variable *var)
     return widget_linkbutton_envvar_construct(var->Widget);
 }
 void widget_linkbutton_clear(variable *var)          { (void) var; }
-void widget_linkbutton_refresh(variable *var)        { (void) var; }
+/* <input> : rejoué à chaque « refresh », comme l'étalon gtk3sermo. Première
+ * ligne = l'URI (info-bulle, ouverture, valeur exportée) ; le libellé ne
+ * change pas, comme gtk_link_button_set_uri(). Jusqu'au 2026-10-13 il n'était
+ * jamais lu. */
+void widget_linkbutton_refresh(variable *var)
+{
+    Evas_Object *btn;
+    gchar *ligne;
+
+    if (!var || !var->Widget) return;
+    btn = (Evas_Object *) var->Widget;
+    ligne = widget_input_line(var->Attributes);
+    if (!ligne) return;
+    g_free(evas_object_data_del(btn, LINK_URI_KEY));
+    evas_object_data_set(btn, LINK_URI_KEY, ligne);   /* garde la chaîne */
+    elm_object_tooltip_text_set(btn, ligne);
+}
 void widget_linkbutton_fileselect(variable *var, const char *name, const char *value)
 {   (void) var; (void) name; (void) value; }
 void widget_linkbutton_removeselected(variable *var) { (void) var; }

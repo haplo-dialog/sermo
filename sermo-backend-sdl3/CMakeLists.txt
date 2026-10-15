@@ -104,24 +104,51 @@ target_include_directories(sdl3sermo BEFORE PRIVATE
   ${IMGUI_DIR}/backends
 )
 
+# Protection du flot de contrôle selon le processeur : CET sur x86
+# (-fcf-protection), BTI/PAC sur ARM64 (-mbranch-protection). Écrite en dur,
+# -fcf-protection arrêtait toute construction ARM64 : « option 'cf-protection'
+# cannot be specified on this target » (clang 21, Termux, mesuré le 2026-10-12).
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag(-fcf-protection=full SERMO_A_CF_PROTECTION)
+check_cxx_compiler_flag(-mbranch-protection=standard SERMO_A_BRANCH_PROTECTION)
+if(SERMO_A_CF_PROTECTION)
+  set(SERMO_FLOT_CONTROLE -fcf-protection=full)
+elseif(SERMO_A_BRANCH_PROTECTION)
+  set(SERMO_FLOT_CONTROLE -mbranch-protection=standard)
+else()
+  set(SERMO_FLOT_CONTROLE "")
+endif()
+# Les objets à part sont liés dans le même binaire : un seul objet sans la
+# protection du flot de contrôle et le lieur la retire du binaire entier
+# (mesuré sur ARM64 avec -z bti-report). Même durcissement que le binaire.
+target_compile_options(sermo_neutral_glist PRIVATE
+  -D_FORTIFY_SOURCE=3 -fstack-protector-strong -fstack-clash-protection ${SERMO_FLOT_CONTROLE})
+target_compile_options(sermo_image_load PRIVATE
+  -D_FORTIFY_SOURCE=3 -fstack-protector-strong -fstack-clash-protection ${SERMO_FLOT_CONTROLE})
+target_compile_options(imgui PRIVATE
+  -D_FORTIFY_SOURCE=3 -fstack-protector-strong -fstack-clash-protection ${SERMO_FLOT_CONTROLE})
 target_compile_options(sdl3sermo PRIVATE
   -D_FORTIFY_SOURCE=3
   -D_POSIX_C_SOURCE=200809L
   -fstack-protector-strong
   -fstack-clash-protection
-  -fcf-protection=full
+  ${SERMO_FLOT_CONTROLE}
   -fPIE
   # Force-include du shim du port sur les unites C (comme le port d'origine) ;
   # render.cpp (C++) voit la vraie ImGui et n'en veut pas.
   $<$<COMPILE_LANGUAGE:C>:-include ${CMAKE_CURRENT_SOURCE_DIR}/src/sdl3-compat.h>
 )
 
+# Marquage CET (-z ibt/shstk) : x86 seulement, comme -fcf-protection.
+if(SERMO_A_CF_PROTECTION)
+  set(SERMO_CET_LIEN -Wl,-z,ibt -Wl,-z,shstk)
+endif()
 target_link_options(sdl3sermo PRIVATE
   -pie -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack
   # CET IBT/SHSTK forcés : les crt de la glibc testing ne portent plus la note et
   # la fusion du lieur est un ET (cf. qt6). Vérifié par garde_durcissement.
-  -Wl,-z,ibt -Wl,-z,shstk
-  -fcf-protection=full -fstack-protector-strong -fstack-clash-protection)
+  ${SERMO_CET_LIEN}
+  ${SERMO_FLOT_CONTROLE} -fstack-protector-strong -fstack-clash-protection)
 
 target_link_libraries(sdl3sermo PRIVATE
   ${SERMOCORE_LINK_LIBRARIES}        # coeur partage via pkg-config (lien statique)

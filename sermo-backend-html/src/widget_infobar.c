@@ -68,7 +68,19 @@ void widget_infobar_clear(variable *var)
     free(n->label); n->label = strdup("");
     n->state.infobar.revealed = FALSE;
 }
-void widget_infobar_refresh(variable *var) {}
+void widget_infobar_refresh(variable *var)
+{
+    /* <input> : rejoué à chaque « refresh », comme l'étalon gtk3sermo (le
+     * texte de son étiquette), sans jouer d'action. Jusqu'au 2026-10-13 il
+     * n'était jamais lu. Le message vit dans node->label (export et page). */
+    WidgetNode *n;
+    gchar      *ligne;
+
+    if (!var || !var->Widget) return;
+    n = (WidgetNode *)var->Widget;
+    ligne = widget_input_line(var->Attributes);
+    if (ligne) { free(n->label); n->label = strdup(ligne); g_free(ligne); }
+}
 void widget_infobar_fileselect(variable *var, const char *nm, const char *v) {}
 void widget_infobar_removeselected(variable *var) {}
 void widget_infobar_save(variable *var) {}

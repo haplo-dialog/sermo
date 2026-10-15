@@ -11,6 +11,7 @@
 #include "widgets.h"
 #include "tag_attributes.h"
 #include "widget_togglebutton.h"
+#include "widget_checkbox.h"   /* qt6_bascule_brancher() */
 #include <QtWidgets/QPushButton>
 #include <string.h>
 #include <stdlib.h>
@@ -35,6 +36,7 @@ GtkWidget *widget_togglebutton_create(AttributeSet *Attr, tag_attr *attr, gint T
         if (def && (g_ascii_strcasecmp(def, "true") == 0 || strcmp(def, "1") == 0))
             btn->setChecked(true);
     }
+    qt6_bascule_brancher((GtkWidget *)btn, Attr);   /* ses actions : widget_checkbox.cpp */
     return (GtkWidget *)btn;
 }
 

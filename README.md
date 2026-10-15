@@ -30,7 +30,7 @@ par fichier dans [LICENCES.md](LICENCES.md).
 
 ## État du projet
 
-- Version **2.8.2**. sermo est tenu par **un seul mainteneur**, S. Cage. Il n'y a
+- Version **3.0.0**. sermo est tenu par **un seul mainteneur**, S. Cage. Il n'y a
   pas d'équipe derrière : une réponse peut prendre du temps.
 - Une partie du code, de la documentation et des tests a été écrite avec l'aide
   d'une IA (Claude, d'Anthropic), sous la direction du mainteneur. Il l'essaie et
@@ -105,20 +105,20 @@ ncurses a été ajouté sans changer une ligne du cœur. Architecture :
 ## Installer
 
 Il n'y a pas de dépôt apt. Les paquets Debian sont joints à la publication
-[**v2.8.2**](https://gitlab.com/haplo-dialog/sermo/-/releases/v2.8.2), avec leurs
+[**v3.0.0**](https://gitlab.com/haplo-dialog/sermo/-/releases/v3.0.0), avec leurs
 sommes de contrôle : on télécharge, on vérifie, on installe.
 
 ```sh
-U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/2.8.2
-for f in sermo-backend-gtk3_2.8.2-3_amd64.deb sermo-gtkdialog_2.8.2-3_all.deb SHA256SUMS SHA256SUMS.asc; do
+U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/3.0.0
+for f in sermo-backend-gtk3_3.0.0-1_amd64.deb sermo-gtkdialog_3.0.0-1_all.deb SHA256SUMS SHA256SUMS.asc; do
     curl -fLO "$U/$f"
 done
 curl -fLO https://haplo-dialog.fr/cle-haplo-dialog.asc
 gpg --import cle-haplo-dialog.asc
 gpg --verify SHA256SUMS.asc SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
-sudo apt install ./sermo-backend-gtk3_2.8.2-3_amd64.deb \
-                 ./sermo-gtkdialog_2.8.2-3_all.deb
+sudo apt install ./sermo-backend-gtk3_3.0.0-1_amd64.deb \
+                 ./sermo-gtkdialog_3.0.0-1_all.deb
 ```
 
 Pour un autre port, remplacez `gtk3` par `gtk4`, `qt6`, `fltk1`, `efl1`, `sdl3`,

@@ -66,11 +66,9 @@ GtkWidget *widget_vscale_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         if (def && *def) sl->value(g_ascii_strtod(def, NULL));
     }
 
-    /* <input> (ex. echo 65) : valeur initiale par commande */
-    {
-        gchar *itext = widget_input_text(Attr);
-        if (itext) { sl->value(g_ascii_strtod(g_strchomp(itext), NULL)); g_free(itext); }
-    }
+    /* <input> : lu par widget_hscale_refresh() — le cœur y route aussi <vscale> —
+     * appelé juste après la création : le lire aussi ici exécuterait la
+     * commande deux fois. */
     return (GtkWidget *)sl;
 }
 

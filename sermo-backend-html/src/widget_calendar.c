@@ -27,6 +27,18 @@
 #include <stdlib.h>
 #include <time.h>
 
+/* « AAAA-MM-JJ » → date, comme calendar_set_date_from_string() de l'étalon :
+ * trois entiers lus par sscanf, mois borné à 1..12, jour à 1..31 ; une chaîne
+ * illisible ne change rien. */
+static void calendar_poser(WidgetNode *n, const char *s)
+{
+    int y = 0, m = 0, d = 0;
+    if (!s || sscanf(s, "%d-%d-%d", &y, &m, &d) != 3) return;
+    n->state.calendar.year  = y;
+    n->state.calendar.month = m < 1 ? 1 : m > 12 ? 12 : m;
+    n->state.calendar.day   = d < 1 ? 1 : d > 31 ? 31 : d;
+}
+
 GtkWidget *widget_calendar_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
     WidgetNode *node = widget_node_new(WT_CALENDAR, NULL, "Date");
@@ -43,16 +55,7 @@ GtkWidget *widget_calendar_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         gchar *lbl = attributeset_get_first(&el, Attr, ATTR_LABEL);
         if (lbl && *lbl) { free(node->label); node->label = strdup(lbl); }
         el = NULL;
-        gchar *def = attributeset_get_first(&el, Attr, ATTR_DEFAULT);
-        if (def && strlen(def) >= 10) {
-            /* Format YYYY-MM-DD */
-            int y = 0, m = 0, d = 0;
-            if (sscanf(def, "%d-%d-%d", &y, &m, &d) == 3) {
-                node->state.calendar.year  = y;
-                node->state.calendar.month = m;
-                node->state.calendar.day   = d;
-            }
-        }
+        calendar_poser(node, attributeset_get_first(&el, Attr, ATTR_DEFAULT));
     }
     widget_node_bind_variable(node, Attr, attr);
 
@@ -83,7 +86,25 @@ void widget_calendar_clear(variable *var)
     n->state.calendar.month = 1;
     n->state.calendar.year = 2026;
 }
-void widget_calendar_refresh(variable *var) {}
+void widget_calendar_refresh(variable *var)
+{
+    /* <input> : rejoué à chaque « refresh », comme l'étalon gtk3sermo, sans
+     * jouer d'action. Jusqu'au 2026-10-13 il n'était jamais lu. Au premier
+     * passage, <default> l'emporte : l'étalon l'applique après l'<input>. */
+    WidgetNode *n;
+    gchar      *ligne;
+    GList      *el = NULL;
+
+    if (!var || !var->Widget) return;
+    n = (WidgetNode *)var->Widget;
+    ligne = widget_input_line(var->Attributes);
+    if (ligne) { calendar_poser(n, ligne); g_free(ligne); }
+    if (!n->initialised) {
+        n->initialised = TRUE;
+        if (attributeset_is_avail(var->Attributes, ATTR_DEFAULT))
+            calendar_poser(n, attributeset_get_first(&el, var->Attributes, ATTR_DEFAULT));
+    }
+}
 void widget_calendar_fileselect(variable *var, const char *nm, const char *v) {}
 void widget_calendar_removeselected(variable *var) {}
 void widget_calendar_save(variable *var) {}

@@ -79,7 +79,35 @@ void widget_notebook_clear(variable *var)
     ((WidgetNode *)var->Widget)->state.notebook.current_tab = 0;
 }
 
-void widget_notebook_refresh(variable *var) {}
+void widget_notebook_refresh(variable *var)
+{
+    WidgetNode *n;
+    gchar      *ligne;
+    int         page;
+
+    if (!var || !var->Widget) return;
+    /* <input> : rejoué à chaque « refresh », comme l'étalon gtk3sermo (sa
+     * première ligne, atoi = numéro de page), sans jouer d'action. Règles de
+     * gtk_notebook_set_current_page, mesurées : page négative → la dernière,
+     * page hors bornes → rien ne change. Au premier passage la commande tourne
+     * mais la page reste 0 : GtkNotebook refuse de changer de page tant que
+     * ses enfants ne sont pas montrés (mesuré, et dit dans le code de
+     * l'étalon). Jusqu'au 2026-10-13 il n'était jamais lu. */
+    n = (WidgetNode *)var->Widget;
+    ligne = widget_input_ligne(var->Attributes);
+    if (!n->initialised) {
+        n->initialised = TRUE;
+        g_free(ligne);
+        return;
+    }
+    if (!ligne) return;
+    page = atoi(ligne);
+    g_free(ligne);
+    if (page < 0) page = n->child_count - 1;
+    if (page < 0 || page >= n->child_count) return;
+    n->state.notebook.current_tab = page;
+    n->state.notebook.demande = page + 1;
+}
 void widget_notebook_fileselect(variable *var, const char *name, const char *value) {}
 void widget_notebook_removeselected(variable *var) {}
 void widget_notebook_save(variable *var) {}

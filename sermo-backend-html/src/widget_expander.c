@@ -68,7 +68,27 @@ void widget_expander_clear(variable *var)
     if (!var || !var->Widget) return;
     ((WidgetNode *)var->Widget)->state.expander.open = FALSE;
 }
-void widget_expander_refresh(variable *var) {}
+void widget_expander_refresh(variable *var)
+{
+    /* <input> : rejoué à chaque « refresh », comme l'étalon gtk3sermo, sans
+     * jouer d'action. Jusqu'au 2026-10-13 il n'était jamais lu. 1re ligne
+     * « true », « yes » (sans casse) ou atoi()==1 : déplié ; autre : replié.
+     * Au premier passage, l'attribut expanded= l'emporte (mesuré sur l'étalon,
+     * 2026-10-13 : expanded="false" + « true » lu reste replié). */
+    WidgetNode *n;
+    gint        v;
+
+    if (!var || !var->Widget) return;
+    n = (WidgetNode *)var->Widget;
+    v = widget_input_bool(var->Attributes);
+    if (v >= 0) n->state.expander.open = (v == 1);
+    if (!n->initialised) {
+        n->initialised = TRUE;
+        if (var->widget_tag_attr &&
+            get_tag_attribute(var->widget_tag_attr, "expanded"))
+            n->state.expander.open = expander_ouvert_au_depart(var->widget_tag_attr);
+    }
+}
 void widget_expander_fileselect(variable *var, const char *n, const char *v) {}
 void widget_expander_removeselected(variable *var) {}
 void widget_expander_save(variable *var) {}

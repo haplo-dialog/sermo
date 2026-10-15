@@ -59,7 +59,25 @@ void widget_statusbar_clear(variable *var)
     if (!var || !var->Widget) return;
     elm_object_text_set((Evas_Object *)var->Widget, "");
 }
-void widget_statusbar_refresh(variable *var) {}
+/* <input> : rejoué à chaque « refresh », comme l'étalon gtk3sermo. Première
+ * ligne = message affiché et exporté. Au premier passage, un <label> ou un
+ * <default> l'emporte : l'étalon les applique après. Jusqu'au 2026-10-13 il
+ * n'était jamais lu. */
+void widget_statusbar_refresh(variable *var)
+{
+    gchar *ligne;
+    gboolean premier;
+    GList *el = NULL, *el2 = NULL;
+
+    if (!var || !var->Widget) return;
+    premier = widget_input_premier(var->Widget);
+    ligne = widget_input_line(var->Attributes);
+    if (!ligne) return;
+    if (!(premier && (attributeset_get_first(&el, var->Attributes, ATTR_LABEL) ||
+                      attributeset_get_first(&el2, var->Attributes, ATTR_DEFAULT))))
+        elm_object_text_set((Evas_Object *)var->Widget, ligne);
+    g_free(ligne);
+}
 void widget_statusbar_fileselect(variable *var, const char *n, const char *v) {}
 void widget_statusbar_removeselected(variable *var) {}
 void widget_statusbar_save(variable *var) {}

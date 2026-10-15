@@ -1,0 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: action refresh : l <input> d une <levelbar> est rejoue a chaque refresh et la nouvelle valeur ressort (qt6, fltk1, efl1, sdl3, lvgl, html, ncurses rendaient 1 jusqu au 2026-10-13 : la commande ne tournait qu a la creation) -->
+<window><vbox>
+<levelbar range-min="0" range-max="10"><variable>JAUGE</variable><input>sh donnees/compteur.sh</input></levelbar>
+<timer visible="false"><variable>_T</variable><action>refresh:JAUGE</action><action>refresh:JAUGE</action><action>exit:fin</action></timer></vbox></window>

@@ -8,7 +8,10 @@
 
 /* pclose()/strcasecmp()/strncasecmp() sont POSIX : en -std=c11 strict, il
  * faut le demander explicitement avant tout en-tete systeme. */
-#define _POSIX_C_SOURCE 200809L
+#if !defined(_POSIX_C_SOURCE) || _POSIX_C_SOURCE < 200809L
+#  undef _POSIX_C_SOURCE
+#  define _POSIX_C_SOURCE 200809L
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -181,6 +184,76 @@ gchar *widget_input_text(AttributeSet *Attr)
     return NULL;
 }
 
+/* La PREMIÈRE ligne de l'<input>, comme la lit l'étalon gtk3sermo pour les
+ * widgets à une seule valeur (calendar, colorbutton, fontbutton, searchentry,
+ * statusbar, infobar, linkbutton, expander, notebook) : un fgets() de 512
+ * octets, puis les CR/LF ôtés. NULL si rien n'est lisible (commande ou fichier
+ * absent, sortie vide) : l'état du widget ne change pas. Une sortie qui
+ * commence par un saut de ligne rend "" (l'étalon pose alors une valeur vide).
+ * À libérer par g_free. */
+gchar *widget_input_ligne(AttributeSet *Attr)
+{
+    gchar *texte = widget_input_text(Attr);
+
+    if (texte == NULL)
+        return NULL;
+    if (texte[0] == '\0') {
+        g_free(texte);
+        return NULL;
+    }
+    /* fgets(line, 512, …) : au plus 511 octets, coupés au premier LF */
+    if (strlen(texte) > 511)
+        texte[511] = '\0';
+    texte[strcspn(texte, "\r\n")] = '\0';
+    return texte;
+}
+
+gint widget_input_bool(AttributeSet *Attr)
+{
+    /* Règle de l'étalon gtk3sermo pour <checkbox>, <radiobutton>, <switch> et
+     * <togglebutton> : la PREMIÈRE ligne, sans CR/LF, vaut vrai si elle dit
+     * « true » ou « yes » (sans casse) ou si atoi() y lit 1 ; toute autre
+     * ligne vaut faux. Rien de lisible (ni ligne) : -1, l'état ne change pas. */
+    gchar *texte = widget_input_text(Attr);
+    gint   vrai;
+
+    if (texte == NULL)
+        return -1;
+    if (texte[0] == '\0') {
+        g_free(texte);
+        return -1;
+    }
+    texte[strcspn(texte, "\r\n")] = '\0';
+    vrai = (g_ascii_strcasecmp(texte, "true") == 0 ||
+            g_ascii_strcasecmp(texte, "yes") == 0 || atoi(texte) == 1);
+    g_free(texte);
+    return vrai ? 1 : 0;
+}
+
+/* <input> d'un widget à bascule (case à cocher, interrupteur, bouton à
+ * bascule), à chaque « refresh », comme l'étalon gtk3sermo. Au premier passage
+ * — le cœur appelle refresh juste après la création — l'état lu est posé sans
+ * jouer d'action, et un <default> l'emporte (l'étalon l'applique après). Aux
+ * suivants, un changement d'état bascule comme un clic : les actions jouent.
+ * Jusqu'au 2026-10-13, l'<input> de ces widgets n'était jamais lu. */
+void widget_bascule_lire(variable *var)
+{
+    WidgetNode *n;
+    gint        v;
+
+    if (!var || !var->Widget) return;
+    n = (WidgetNode *)var->Widget;
+    v = widget_input_bool(var->Attributes);
+    if (!n->initialised) {
+        n->initialised = TRUE;
+        if (v >= 0 && !attributeset_is_avail(var->Attributes, ATTR_DEFAULT))
+            n->state.toggle.active = v;
+        return;
+    }
+    if (v >= 0 && v != (n->state.toggle.active ? 1 : 0))
+        sermo_be_widget_activate(n);
+}
+
 /* -------------------------------------------------------------------- */
 /* Fonction 2 bis — la même directive, découpée en lignes               */
 /* -------------------------------------------------------------------- */
@@ -232,7 +305,7 @@ char *widget_get_text_value(GtkWidget *widget, int type)
 {
     if (widget == NULL) {
         g_warning("widget_get_text_value: widget NULL");
-        return "NULL WIDGET";
+        return g_strdup("NULL WIDGET");
     }
 
     switch (type) {

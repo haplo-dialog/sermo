@@ -58,14 +58,9 @@ GtkWidget *widget_spinbutton_create(AttributeSet *Attr, tag_attr *attr, gint Typ
         GList *el = NULL;
         gchar *def = attributeset_get_first(&el, Attr, ATTR_DEFAULT);
         if (def && *def) sp->value(g_ascii_strtod(def, NULL));
-        /* <input> (ex. echo 30) : valeur initiale par commande */
-        {
-            gchar *itext = widget_input_text(Attr);
-            if (itext) {
-                sp->value(g_ascii_strtod(g_strchomp(itext), NULL));
-                g_free(itext);
-            }
-        }
+        /* <input> : lu par widget_spinbutton_refresh(), que le cœur appelle juste
+         * après la création — le lire aussi ici exécuterait la commande deux
+         * fois. */
     }
 
     if (attr) {
@@ -128,7 +123,13 @@ void widget_spinbutton_clear(variable *var)
 void widget_spinbutton_refresh(variable *var)
 {
     if (!var || !var->Widget) return;
-    ((Fl_Widget *)var->Widget)->redraw();
+    /* <input> (commande ou fichier) : rejoué à chaque « refresh », comme
+     * l'étalon gtk3sermo. Jusqu'au 2026-10-13 il n'était lu qu'à la création :
+     * un <timer> qui rafraîchissait ce widget ne le changeait pas. */
+    Fl_Spinner *sp = (Fl_Spinner *)var->Widget;
+    gchar *itext = widget_input_text(var->Attributes);
+    if (itext) { sp->value(g_ascii_strtod(g_strchomp(itext), NULL)); g_free(itext); }
+    sp->redraw();
 }
 
 void widget_spinbutton_fileselect(variable *var, const char *n, const char *v) {}

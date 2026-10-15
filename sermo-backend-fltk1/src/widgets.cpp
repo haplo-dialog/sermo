@@ -185,6 +185,45 @@ gchar *widget_input_text(AttributeSet *Attr)
 /* Fonction 2 bis — <input> découpé en lignes (widgets à éléments).     */
 /* ------------------------------------------------------------------ */
 
+gchar *widget_input_line(AttributeSet *Attr)
+{
+    /* Règle de l'étalon gtk3sermo pour les widgets à valeur unique : seule la
+     * PREMIÈRE ligne compte, coupée au premier CR ou LF (l'étalon les efface en
+     * place). Une ligne vide vaut "" ; rien de lisible (pas une ligne) : NULL. */
+    gchar *texte = widget_input_text(Attr);
+
+    if (texte == NULL)
+        return NULL;
+    if (texte[0] == '\0') {
+        g_free(texte);
+        return NULL;
+    }
+    texte[strcspn(texte, "\r\n")] = '\0';
+    return texte;
+}
+
+gint widget_input_bool(AttributeSet *Attr)
+{
+    /* Règle de l'étalon gtk3sermo pour <checkbox>, <radiobutton>, <switch> et
+     * <togglebutton> : la PREMIÈRE ligne, sans CR/LF, vaut vrai si elle dit
+     * « true » ou « yes » (sans casse) ou si atoi() y lit 1 ; toute autre
+     * ligne vaut faux. Rien de lisible (ni ligne) : -1, l'état ne change pas. */
+    gchar *texte = widget_input_text(Attr);
+    gint   vrai;
+
+    if (texte == NULL)
+        return -1;
+    if (texte[0] == '\0') {
+        g_free(texte);
+        return -1;
+    }
+    texte[strcspn(texte, "\r\n")] = '\0';
+    vrai = (g_ascii_strcasecmp(texte, "true") == 0 ||
+            g_ascii_strcasecmp(texte, "yes") == 0 || atoi(texte) == 1);
+    g_free(texte);
+    return vrai ? 1 : 0;
+}
+
 gchar **widget_input_lines(AttributeSet *Attr)
 {
     gchar *text = widget_input_text(Attr);
@@ -226,7 +265,7 @@ char *widget_get_text_value(GtkWidget *widget, int type)
 {
     if (widget == NULL) {
         g_warning("widget_get_text_value: NULL widget");
-        return (char *)"NULL WIDGET";
+        return g_strdup("NULL WIDGET");
     }
 
     switch (type) {

@@ -1,0 +1,10 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: bouton a bascule enfonce par defaut, relache par activate: : if false joue -->
+<window><vbox>
+<entry><variable>B</variable><default>b</default></entry>
+<entry><variable>C</variable><default>c</default></entry>
+<togglebutton><label>x</label><variable>TB</variable><default>true</default>
+<action>if true clear:B</action><action>if false clear:C</action></togglebutton>
+<timer visible="false" interval="2"><variable>_T1</variable><action>activate:TB</action></timer>
+<timer visible="false" interval="3"><variable>_T2</variable><action>exit:fin</action></timer>
+</vbox></window>

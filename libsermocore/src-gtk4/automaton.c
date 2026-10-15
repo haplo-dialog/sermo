@@ -430,6 +430,11 @@ print_program()
 /* --render-png FILE : rendu offscreen déterministe (gtkdialog.c). */
 extern gchar *option_render_png;
 
+/* Fourni par le port gtk4 (widget_progressbar.c) : barres dont la commande n'a
+ * encore rien montré. Symbole FAIBLE, comme les crochets facultatifs du
+ * contrat : un autre port qui lie ce cœur n'a rien à fournir. */
+extern gint widget_progressbar_en_attente(void) __attribute__((weak));
+
 /*
 ** Rendu offscreen de la fenêtre en PNG (l'IA « voit » le dialogue), sans
 ** capture externe fragile. GTK4 n'a plus GtkOffscreenWindow : on présente la
@@ -478,9 +483,24 @@ static gboolean sermo_render_window_png(GtkWidget *window, const char *path)
 	if (w <= 0) w = 1;
 	if (h <= 0) h = 1;
 
-	snapshot = gtk_snapshot_new();
-	gdk_paintable_snapshot(paintable, GDK_SNAPSHOT(snapshot), (double) w, (double) h);
-	node = gtk_snapshot_free_to_node(snapshot);
+	/* L'arbre de dessin peut être encore vide : une <progressbar> fait
+	 * redemander une mise en page à chaque ligne lue, et la capture tombait
+	 * entre deux trames (node NULL, « échec du rendu offscreen », aucune
+	 * image — mesuré le 2026-10-13). Laisser tourner la boucle, une seconde au
+	 * plus, jusqu'à ce que les barres aient lu leur première ligne et que
+	 * l'arbre existe. */
+	node = NULL;
+	for (i = 0; i < 200; ++i) {
+		if (!widget_progressbar_en_attente || widget_progressbar_en_attente() == 0) {
+			snapshot = gtk_snapshot_new();
+			gdk_paintable_snapshot(paintable, GDK_SNAPSHOT(snapshot), (double) w, (double) h);
+			node = gtk_snapshot_free_to_node(snapshot);
+			if (node != NULL)
+				break;
+		}
+		g_main_context_iteration(NULL, FALSE);
+		g_usleep(5000);
+	}
 
 	renderer = gtk_native_get_renderer(GTK_NATIVE(window));
 	if (node != NULL && renderer != NULL) {
@@ -888,7 +908,15 @@ instruction_execute(instruction command)
 		 ** push the result to the stack, so the upper element will 
 		 ** contain all the widgets.
 		 */
-		push(_sum(pop(), pop()));
+		/* Les deux pop() en DEUX instructions : dans _sum(pop(), pop()), l'ordre
+		 * d'évaluation des arguments n'est pas fixé par le C (gcc : de droite à
+		 * gauche, clang : de gauche à droite) et clang rangeait les widgets frères
+		 * à l'envers. Le haut de pile est le dernier widget lu, il va à la fin. */
+		{
+			stackelement suivants = pop();
+			stackelement premiers = pop();
+			push(_sum(premiers, suivants));
+		}
 		break;
 	/*
 	 * The imperative instructions.
@@ -1624,12 +1652,10 @@ instruction_execute_push(
    Miert nem kapja meg az adatokat parameterben es foglalkozik
    a veremmel a hivo?
  */
-#ifdef __arm__
-/* 120701 BK Puppy Linux forum member jamesbond fixed this for arm cpus...*/
-stackelement _sum(stackelement b, stackelement a)
-#else
+/* a : les widgets déjà lus, b : ceux qui suivent. (L'ancien #ifdef __arm__,
+ * qui échangeait a et b, compensait l'ordre d'évaluation de _sum(pop(), pop())
+ * d'un compilateur ARM ; l'appel le fixe désormais lui-même.) */
 stackelement _sum(stackelement a, stackelement b)
-#endif
 {
 	int n;
 	/* Guard: widgets[]/widgettypes[] are fixed-size (MAXWIDGETS). Refuse to

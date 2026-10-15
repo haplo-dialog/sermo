@@ -20,6 +20,16 @@
 #   3. à la fin — y compris quand le banc est interrompu (timeout) — Xvfb est
 #      arrêté et ATTENDU : aucun serveur ne survit à son essai.
 #
+# 2026-10-14 — la cause est trouvée : Xvfb sans -noreset se RÉINITIALISE dès
+# que son dernier client se déconnecte (xdpyinfo de la sonde, chaque xdotool,
+# ou le programme qui ouvre puis referme l'écran) ; une connexion qui arrive
+# pendant ce temps échoue (« cannot open display »), et la réinitialisation
+# est lente. Mesuré : ouvrir, fermer, rouvrir aussitôt, 200 ouvertures —
+# 7 ratées et 8,8 s sans -noreset ; 0 sur 14 000 et 0,04 s pour 200 avec.
+# C'est ce qui plantait lvglsermo (pfeme, spinbutton) et faisait manquer
+# l'écran à qt6 (2026-09-30) et gtk4 (2026-10-13). D'où -noreset, ajouté
+# toujours (même quand -s remplace les autres arguments).
+#
 # Codes : celui de la commande · 1 = Xvfb n'a pas démarré (le dit sur stderr)
 
 set -u
@@ -52,7 +62,7 @@ trap 'exit 143' TERM
 trap 'exit 130' INT
 
 # shellcheck disable=SC2086  # ARGS se découpe en arguments, comme dans xvfb-run
-Xvfb -displayfd 3 $ARGS -nolisten tcp 3>"$T/num" >"$T/xvfb.log" 2>&1 &
+Xvfb -displayfd 3 $ARGS -nolisten tcp -noreset 3>"$T/num" >"$T/xvfb.log" 2>&1 &
 XPID=$!
 for i in $(seq 1 100); do
     [ -s "$T/num" ] && break

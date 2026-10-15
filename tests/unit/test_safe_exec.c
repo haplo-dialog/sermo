@@ -68,8 +68,9 @@ int main(void)
     /* SERMO_ALLOWED_CMDS : la commande telle qu'elle sera lancée, pas un nom de
      * base. Un faux « true » posé hors du PATH ne doit pas franchir la liste. */
     {
-        char modele[] = "/tmp/sermo-test-XXXXXX";
-        char *dossier = mkdtemp(modele);
+        /* Dossier temporaire du système (TMPDIR) : Android n'a pas de /tmp. */
+        gchar *modele = g_build_filename(g_get_tmp_dir(), "sermo-test-XXXXXX", NULL);
+        char *dossier = g_mkdtemp(modele);
         char faux[256];
         gchar *resolu = g_find_program_in_path("true");
 
@@ -111,6 +112,7 @@ int main(void)
             unlink(faux);
             rmdir(dossier);
         }
+        g_free(modele);
         g_free(resolu);
     }
 

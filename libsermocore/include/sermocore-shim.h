@@ -44,6 +44,7 @@ typedef unsigned long GType;
 #include <fcntl.h>      /* pipe2 O_CLOEXEC */
 #include <sys/stat.h>   /* g_file_test */
 #include <unistd.h>     /* access, pipe */
+#include "sermo_win32.h"  /* Windows : setenv, getline… (vide ailleurs) */
 typedef size_t       gsize;
 typedef ptrdiff_t    gssize;
 
@@ -99,7 +100,14 @@ char *_qt6_strdup(const char *s) {
 static inline __attribute__((warn_unused_result, malloc))
 char *_qt6_strndup(const char *s, size_t n) {
     if (!s) return NULL;
+#ifdef _WIN32
+    /* mingw-w64 n'a pas strndup (portage Windows). */
+    size_t len = strnlen(s, n);
+    char *r = (char *)malloc(len + 1); if (!r) abort();
+    memcpy(r, s, len); r[len] = '\0';
+#else
     char *r = strndup(s, n); if (!r) abort();
+#endif
     return r;
 }
 #define g_strndup(s, n)           _qt6_strndup((s), (n))
@@ -134,13 +142,39 @@ static inline gsize g_strlcat(char *dst, const char *src, gsize size) {
  * et à 2500 ms sous C — même binaire, même XML. Le correctif force la locale
  * « C » via strtod_l, sans toucher la locale du processus. */
 #include <locale.h>
+#if defined(__has_include)
+#  if __has_include(<xlocale.h>)
+#    include <xlocale.h>   /* FreeBSD, macOS : strtod_l, newlocale (absent de la glibc récente) */
+#  endif
+#endif
 static inline double _compat_ascii_strtod(const char *s, char **end) {
+#ifdef _WIN32
+    /* CRT Windows : même idée, autres noms (_create_locale, _strtod_l). */
+    static _locale_t loc_c = NULL;
+    if (loc_c == NULL)
+        loc_c = _create_locale(LC_ALL, "C");
+    if (loc_c != NULL)
+        return _strtod_l(s, end, loc_c);
+    return strtod(s, end);   /* repli si _create_locale échoue — garde:primitive-locale */
+#else
     static locale_t loc_c = (locale_t)0;
     if (loc_c == (locale_t)0)
         loc_c = newlocale(LC_ALL_MASK, "C", (locale_t)0);
+#ifdef SERMO_SANS_STRTOD_L
+    /* OpenBSD n'a pas strtod_l : la locale C le temps d'un strtod, pour ce
+     * fil d'exécution seulement (uselocale), puis on rend la précédente. */
+    if (loc_c != (locale_t)0) {
+        locale_t avant = uselocale(loc_c);
+        double v = strtod(s, end);   /* sous la locale C — garde:primitive-locale */
+        uselocale(avant);
+        return v;
+    }
+#else
     if (loc_c != (locale_t)0)
         return strtod_l(s, end, loc_c);
+#endif
     return strtod(s, end);   /* repli si newlocale échoue — garde:primitive-locale */
+#endif
 }
 /* g_strtod ≠ g_ascii_strtod : GLib essaie la locale COURANTE puis la locale C
  * et garde la conversion la plus longue — sous fr_FR, g_strtod("2,5") vaut 2.5.
@@ -272,8 +306,10 @@ typedef int GFileTest;
 #define G_FILE_TEST_EXISTS        (1 << 4)
 static inline gboolean g_file_test(const char *f, GFileTest t) {
     struct stat st;
+#ifndef _WIN32   /* Windows : ni lstat ni S_ISLNK dans le CRT ; pas de lien symbolique vu */
     if ((t & G_FILE_TEST_IS_SYMLINK) && lstat(f, &st) == 0 && S_ISLNK(st.st_mode))
         return TRUE;
+#endif
     if (stat(f, &st) != 0) return FALSE;
     if (t & G_FILE_TEST_EXISTS) return TRUE;
     if ((t & G_FILE_TEST_IS_REGULAR) && S_ISREG(st.st_mode)) return TRUE;
@@ -501,14 +537,14 @@ typedef void GObjectClass;
 #define g_object_get_data(o,k)            NULL
 #define g_object_unref(o)                 ((void)(o))   /* no-op qui consomme son argument : un no-op nu laissait « if (x) ; » — corps vide signalé par le compilateur */
 
-/* ─── Exécution de processus (g_spawn / g_shell) — POSIX ──────────────────────
- * Le port Qt6 utilise QApplication, pas une boucle GLib : safe_exec.c
- * (durcissement sécurité) est réimplémenté au-dessus de fork/exec/pipe.
- * g_child_watch_add est inutile — le double fork de g_spawn_async_with_pipes
- * réattache l'enfant à init, qui le récupère automatiquement (zéro zombie). */
+/* ─── Exécution de processus (g_spawn / g_shell) ──────────────────────────────
+ * Le cœur neutre n'a pas de boucle GLib : safe_exec.c (durcissement sécurité)
+ * s'appuie sur le lanceur unique sermo_lanceur.c. g_child_watch_add est
+ * inutile — son double fork réattache l'enfant à init, qui le récupère
+ * automatiquement (zéro zombie). */
 #include <unistd.h>
 #include <sys/types.h>
-#include <sys/wait.h>
+#include "sermo_lanceur.h"
 
 #define G_SPAWN_SEARCH_PATH         (1 << 2)
 #define G_SPAWN_STDOUT_TO_DEV_NULL  (1 << 3)
@@ -567,7 +603,9 @@ static inline gboolean g_shell_parse_argv(const char *line, int *argcp,
 
 /* Exécution synchrone : statut wait() brut renvoyé dans *exit_status. */
 /* ─── Environnement & tableau de pointeurs (requis par le tronc durci 1.1.3) ─── */
+#ifndef _WIN32   /* mingw-w64 : environ est déjà une macro de <stdlib.h> */
 extern char **environ;
+#endif
 static inline char **g_get_environ(void) {
     int n=0; while(environ && environ[n]) n++;
     char **out=(char**)malloc((size_t)(n+1)*sizeof(char*));
@@ -587,102 +625,44 @@ static inline void *g_ptr_array_free(GPtrArray *a, int free_seg) {
     void **d=a->pdata; if(free_seg){ free(d); d=NULL; } free(a); return d;
 }
 
+/* Les deux lancements passent par le lanceur unique du cœur
+ * (sermo_lanceur.c) : le code fork/exec n'existe plus qu'à un endroit.
+ * Contrat GLib gardé : commande introuvable ⇒ FALSE + GError, et *child_pid
+ * reçoit le pid du vrai processus, pas celui de l'intermédiaire. */
 static inline gboolean g_spawn_sync(const char *wd, char **argv, char **envp,
         int flags, void *setup, void *data,
         char **out_str, char **err_str, int *exit_status, GError **error) {
     (void)wd; (void)flags; (void)setup; (void)data;
     (void)out_str; (void)err_str;
-    if (!argv || !argv[0]) { _qt6_set_gerror(error, "no argv"); return FALSE; }
-    /* ⚠️ Contrat GLib : commande introuvable ⇒ FALSE + GError — l'appelant est
-     * AVERTI. L'ancien shim rendait TRUE avec exit_status 127<<8, comme si la
-     * commande avait tourné : l'échec d'exec était invisible. Technique GLib
-     * reproduite : un tube O_CLOEXEC que l'enfant n'écrit QUE si exec échoue —
-     * fermé tout seul (donc EOF côté parent) si exec réussit. (2026-09-03) */
-    int ep[2];
-    if (pipe2(ep, O_CLOEXEC) != 0) { _qt6_set_gerror(error, "pipe failed"); return FALSE; }
-    pid_t pid = fork();
-    if (pid < 0) { close(ep[0]); close(ep[1]);
-        _qt6_set_gerror(error, "fork failed"); return FALSE; }
-    if (pid == 0) {
-        close(ep[0]);
-        if (envp) execvpe(argv[0], argv, envp); else execvp(argv[0], argv);
-        int err = errno;
-        ssize_t w = write(ep[1], &err, sizeof err); (void)w;
-        _exit(127);
+    char *msg = NULL;
+    int statut = 0;
+    if (sermo_lance_sync(argv, envp, &statut, &msg) != 0) {
+        int e = errno;   /* ENOENT : programme introuvable (lu par safe_exec) */
+        _qt6_set_gerror(error, msg);
+        free(msg);
+        errno = e;
+        return FALSE;
     }
-    close(ep[1]);
-    int execerr = 0;
-    ssize_t r;
-    while ((r = read(ep[0], &execerr, sizeof execerr)) < 0 && errno == EINTR) { }
-    close(ep[0]);
-    int status = 0;
-    while (waitpid(pid, &status, 0) < 0) { /* retry on EINTR */ }
-    if (r > 0) { _qt6_set_gerror(error, strerror(execerr)); return FALSE; }
-    if (exit_status) *exit_status = status;
+    if (exit_status) *exit_status = statut;
     return TRUE;
 }
 
-/* Exécution asynchrone avec pipe stdout. Double fork → l'enfant réel est
- * réattaché à init (réapé automatiquement, zéro zombie). */
 static inline gboolean g_spawn_async_with_pipes(const char *wd, char **argv,
         char **envp, int flags, void *setup, void *data, GPid *child_pid,
         int *stdin_fd, int *stdout_fd, int *stderr_fd, GError **error) {
-    (void)wd; (void)envp; (void)flags; (void)setup; (void)data;
-    if (!argv || !argv[0]) { _qt6_set_gerror(error, "no argv"); return FALSE; }
-    int outpipe[2] = { -1, -1 };
-    if (stdout_fd && pipe(outpipe) != 0) {
-        _qt6_set_gerror(error, "pipe failed"); return FALSE; }
-    pid_t pid = fork();
-    if (pid < 0) {
-        if (stdout_fd) { close(outpipe[0]); close(outpipe[1]); }
-        _qt6_set_gerror(error, "fork failed");
-        return FALSE;
-    }
-    /* Mêmes deux écarts de contrat que g_spawn_sync, corrigés (2026-09-03) :
-     * (a) échec d'exec rapporté par un tube O_CLOEXEC (EOF = exec réussi) —
-     *     l'ancien shim rendait TRUE et le lecteur du pipe voyait juste EOF ;
-     * (b) *child_pid recevait le pid de l'INTERMÉDIAIRE, déjà moissonné — le
-     *     vrai pid du petit-fils transite maintenant par le même tube. */
-    int ep[2];
-    if (pipe2(ep, O_CLOEXEC) != 0) {
-        if (stdout_fd) { close(outpipe[0]); close(outpipe[1]); }
-        _qt6_set_gerror(error, "pipe failed"); return FALSE;
-    }
-    if (pid == 0) {
-        close(ep[0]);
-        pid_t grandchild = fork();
-        if (grandchild == 0) {
-            if (stdout_fd) {
-                dup2(outpipe[1], STDOUT_FILENO);
-                close(outpipe[0]); close(outpipe[1]);
-            }
-            if(envp) execvpe(argv[0], argv, envp); else execvp(argv[0], argv);
-            int err = errno;
-            ssize_t w = write(ep[1], &err, sizeof err); (void)w;
-            _exit(127);
-        }
-        /* pid du petit-fils vers le parent, par un canal qui survit à _exit */
-        ssize_t w = write(ep[1], &grandchild, sizeof grandchild); (void)w;
-        _exit(0);
-    }
-    close(ep[1]);
-    if (stdout_fd) { close(outpipe[1]); *stdout_fd = outpipe[0]; }
+    (void)wd; (void)flags; (void)setup; (void)data;
+    char *msg = NULL;
+    int pid = -1;
     if (stdin_fd)  *stdin_fd  = -1;
     if (stderr_fd) *stderr_fd = -1;
-    int dummy = 0;
-    while (waitpid(pid, &dummy, 0) < 0) { /* reap intermediate */ }
-    pid_t vrai_pid = -1;
-    ssize_t r;
-    while ((r = read(ep[0], &vrai_pid, sizeof vrai_pid)) < 0 && errno == EINTR) { }
-    int execerr = 0; ssize_t r2;
-    while ((r2 = read(ep[0], &execerr, sizeof execerr)) < 0 && errno == EINTR) { }
-    close(ep[0]);
-    if (r2 > 0) {   /* le petit-fils a écrit son errno : exec a échoué */
-        if (stdout_fd) { close(*stdout_fd); *stdout_fd = -1; }
-        _qt6_set_gerror(error, strerror(execerr));
+    if (sermo_lance_async(argv, envp, stdout_fd, &pid, &msg) != 0) {
+        int e = errno;   /* ENOENT : programme introuvable (lu par safe_exec) */
+        _qt6_set_gerror(error, msg);
+        free(msg);
+        errno = e;
         return FALSE;
     }
-    if (child_pid) *child_pid = (GPid)(r > 0 ? vrai_pid : pid);
+    if (child_pid) *child_pid = (GPid)pid;
     return TRUE;
 }
 

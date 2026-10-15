@@ -577,6 +577,13 @@ Files: contrib/trousses/CHARTE.md
        tests/xml/53_label_vide.xml
        tests/xml/54_window_layer_shell.xml
        tests/xml/55_window_headerbar.xml
+       examples/modbus/faux-automate.py
+       examples/modbus/modbus-lecture.sh
+       examples/opcua/Makefile
+       examples/opcua/certificats-essai.sh
+       examples/opcua/faux-serveur-opcua.c
+       examples/opcua/opcua-lecture.sh
+       examples/opcua/opcua-lire.c
 Copyright: 2026 S. Cage <devel@haplo-dialog.fr>
 License: CC0-1.0
 Comment: Cas de test XML, démos qt6 et exemples écrits pour sermo, qui le déclarent

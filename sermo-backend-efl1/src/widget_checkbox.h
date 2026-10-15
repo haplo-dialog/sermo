@@ -23,4 +23,10 @@ void       widget_checkbox_fileselect(variable *var, const char *name, const cha
 void       widget_checkbox_removeselected(variable *var);
 void       widget_checkbox_save(variable *var);
 
+/* Widgets à bascule (case, bouton à bascule, radio) : garde les actions et les
+ * joue à chaque changement d'état. chef = 1er radio du groupe, NULL sinon. */
+void       efl_bascule_brancher(Evas_Object *o, AttributeSet *Attr, Evas_Object *chef);
+void       efl_interrupteur_brancher(Evas_Object *o, AttributeSet *Attr);   /* <switch> */
+void       efl_bascule_lire(variable *var);   /* <input> d'une bascule, à chaque refresh */
+
 #endif /* WIDGET_CHECKBOX_H */

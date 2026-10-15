@@ -7,6 +7,194 @@ Versioning: see [VERSIONING.en.md](VERSIONING.en.md).
 internal; they are described below to keep track of what changed since 1.x. To
 move from 1.x to 2.x: [MIGRATION.en.md](MIGRATION.en.md).
 
+## [3.0.0] — 2026-10-15
+
+It joins two lines of work. The ncurses port leaves Linux: Windows 10/11,
+Android (Termux), FreeBSD and OpenBSD; commands go through a single launcher,
+whose shell is set by `SERMO_SHELL`. And sermo reads a PLC from the XML,
+read-only: `<input modbus>`, `<input opcua>`. Neither the XML language nor the
+contract between the core and the ports is broken (three optional functions
+are added to the contract): moving to 3 is the maintainer's choice of number,
+see [VERSIONING.en.md](VERSIONING.en.md).
+
+### Added
+
+- **`<input modbus>` and `<input opcua>`: read a PLC from the XML, read-only.**
+  `<input modbus>tcp://host:502?registre=1&diviseur=10</input>`,
+  `<input opcua>opc.tcp://host:4840?noeud=ns=1;s=name</input>` (certificates:
+  `mode=chiffre&certificat=…&cle=…&confiance=…`). The core turns the tag into a
+  command that runs a helper (`/usr/libexec/sermo`, new packages
+  `sermo-source-modbus` and `sermo-source-opcua`), the address encoded as a
+  single argument with no metacharacter: never `/bin/sh`, the
+  `SERMO_ALLOWED_CMDS` allowlist applies, and the nine ports read it unchanged.
+  Unknown parameter refused; 5 s pause after a failure; **the window never
+  freezes**: a value under 10 s old (`perime=`) is shown at once and reread in
+  the background, only the very first read of an address waits for the device
+  (measured, device that never answers: 10 clicks on "Fermer", 10 closes in
+  103 to 135 ms; before, 1 in 10 at 1.2 s); shared cache (`cache=`, 900 ms) and one read
+  at a time per device: six widgets on the same address, one connection
+  (measured through a counting relay). Benches: `garde_input_source.sh` (nine ports),
+  `garde_sermo_source.sh` (helpers against a fake PLC and a fake server), unit
+  test `test_sermo_source.c`.
+- **`sermo-backend-lvgl-leger`**: the same `lvglsermo` built without ThorVG
+  (option `SERMO_LVGL_LEGER`): 1,663 KiB instead of 2,399 (−31 %), same values
+  (behaviour bench at parity), without SVG icons from themes. It replaces
+  `sermo-backend-lvgl`: install one or the other.
+- **Quality benches**: `garde_poids.sh` (weight ceiling per port,
+  `tests/poids-plafonds.txt`) in `ci/bancs.sh`; `garde_sanitizers.sh` (nine
+  ports under ASan + UBSan, fatal errors, a faulty witness that must stop), on
+  request: `SERMO_BANC_SANITIZERS=1`.
+- **Modbus and OPC UA examples shipped in `sermo-doc`** (sources only:
+  `/usr/share/doc/sermo-doc/examples/modbus`, `…/opcua`).
+- **Two industrial examples, read-only**: `examples/modbus/`
+  (`modbus-lecture.sh` reads a Modbus/TCP PLC's registers through `mbpoll`)
+  and `examples/opcua/` (`opcua-lecture.sh` and `opcua-lire`, a small open62541
+  C client with no write service at all). Gauges and values refresh every
+  second; a fake PLC (`faux-automate.py`, python3-pymodbus) and a fake server
+  (`faux-serveur-opcua`) let you try them without hardware. Reading runs in the
+  background: an unreachable device does not freeze the window.
+- **OPC UA with certificates**: `opcua-lire -m sign|chiffre -c … -k … -T …`
+  (and `OPCUA_MODE`, `OPCUA_CERTIFICAT`, `OPCUA_CLE`, `OPCUA_CONFIANCE` in the
+  window). The client only trusts the certificates given with `-T`: there is no
+  "accept everything" mode. `faux-serveur-opcua PORT --securise` and
+  `certificats-essai.sh` let you try it.
+
+- **Windows 10/11, native** (ncurses port): a single `ncursessermo.exe`,
+  cross-compiled from Debian (mingw-w64, UCRT) and statically linked. UTF-8 text
+  and console; commands through `CreateProcess` (default shell: cmd.exe, or
+  busybox-w32 named by `SERMO_SHELL`); links through `ShellExecute`, for
+  `http`, `https` and `mailto` only. The `<input>` limit (`SERMO_INPUT_MAX`)
+  does not exist on Windows yet. Details:
+  [packaging/autres-os/README.md](packaging/autres-os/README.md) (French only).
+- **Termux (Android)**: a recipe for the ncurses port in termux-packages
+  format. The graphical ports build there by hand, eight out of nine (not efl1:
+  EFL does not exist in Termux); the steps are in the same README.
+- **FreeBSD and OpenBSD**: a system port for the ncurses port.
+- **`SERMO_SHELL`**: the shell that runs a command with shell syntax, until now
+  a hard-coded `/bin/sh`. Used when it names an executable program by an
+  absolute path; otherwise the one chosen at build time (`SERMO_SHELL_DEFAUT`,
+  `/bin/sh` by default). A rejected value is reported once on stderr. Applies
+  to all nine ports; the code that runs commands now lives in one place
+  (`libsermocore/src/sermo_lanceur.c`).
+
+### Security
+
+- **Control-flow protection chosen by trial**: CET on x86, BTI/PAC on ARM64.
+  Hard-coded, the x86 option stopped every ARM64 build. Objects compiled
+  separately (`neutral_glist.c`, `image_load.c`, ImGui) are now hardened like
+  the binary: on x86, the CET marking was set on a binary whose objects lacked
+  the instructions; on ARM64, they made the whole binary lose the BTI/PAC
+  marking.
+- **sermoia-mcp: FORTIFY had no effect.** With no build type, CMake passed no
+  optimisation and `_FORTIFY_SOURCE` did nothing. Release by default, like the
+  ports.
+
+### Fixed
+
+- **`refresh` replays the `<input>` on all nine ports, like the reference.** On
+  qt6, fltk1, efl1, sdl3, lvgl, html and ncurses, most widgets read their
+  `<input>` only at creation (`<levelbar>`, `<hscale>`, `<vscale>`,
+  `<spinbutton>`) or never (`<checkbox>`, `<switch>`, `<radiobutton>`,
+  `<togglebutton>`, `<calendar>`, `<colorbutton>`, `<fontbutton>`,
+  `<searchentry>`, `<statusbar>`, `<infobar>`, `<linkbutton>`, `<expander>`,
+  `<notebook>`): a gauge driven by a `<timer>` stayed frozen while the
+  neighbouring `<text>` widgets followed (seen on the Modbus example). Measured
+  on 2026-10-13: 0 or 1 run of the command instead of 3. Reading now lives in
+  `refresh`, which the core calls right after creation and on each `refresh:`;
+  the measured rules of the gtk3sermo reference are followed: first line of the
+  output; on the first pass a `<default>` wins over the `<input>` (calendar,
+  colorbutton, fontbutton, searchentry and **every `<entry>`**), `<label>` for
+  statusbar, `expanded=` for expander; toggle widgets set their state without
+  playing actions on the first pass, then toggle like a click (actions
+  included, the unchecked radio sibling first); a radio button is never
+  unchecked by its `<input>`. Benches: behaviour cases 73 to 78, green on all
+  nine ports. Remaining gaps: colour names ("blue") not read outside gtk;
+  "2021-02-31" becomes 2021-02-28 on qt6; several `<input>` on one widget: only
+  the first is read outside gtk.
+- **qt6sermo no longer crashes on exit when a plain `<menuitem>` carries a
+  `<variable>`** (segmentation fault on every `exit`); sdl3, lvgl, html and
+  ncurses exported `false` for that menu item, the reference gives an empty value.
+- **A `<progressbar>`'s value reaches the picture and the page.** Found by the
+  website gallery ("Progress (should show 65 %)": empty bar). htmlsermo wrote
+  the page before the bar had read its command: it now rewrites it once the bars
+  are done. With `--render-png`, gtk3sermo, gtk4sermo, qt6sermo and efl1sermo
+  captured before the first line; they wait for it, one second at most
+  (`sermo_progress_en_attente()` in the core, and the same rule in the gtk3 and
+  gtk4 bars). gtk4sermo did not even write a picture when a bar was present.
+- **htmlsermo: numbers in the page are written with a dot.** Under a
+  comma-decimal locale (fr_FR), `value="0,65"`, `step="0,5"`: browsers rejected
+  them (empty bar, slider at the start).
+- Two tests: `garde_html_valeurs_page.sh` (bar and slider in the page, under
+  fr_FR) and `garde_render_barre.sh` (the 65 % bar does not look like the 0 %
+  bar, on the seven graphical ports); each is red on the 2.8.2 binaries.
+- **ncursessermo: `<edit>` is a multi-line area.** It fitted on one line
+  ("[text]") and a multi-line text only showed its beginning. It is now a box of
+  at least three lines, ten at most, that takes all its room when its column
+  stretches it, like the reference's white area. Typing is still one line at
+  the bottom of the screen.
+- **Slackware 15.0: gtk3 and lvgl build.** Without gtk-layer-shell (missing from
+  Slackware 15.0), the SlackBuild builds gtk3 without the Wayland anchoring and
+  says so; lvgl takes `linux-dmabuf` from `unstable/` when wayland-protocols is
+  old, and links `librt` when `shm_open` is not in libc (glibc 2.33). Man pages
+  are no longer duplicated in the packages (`/usr/man` and `/usr/share/man`).
+  Built, installed and run in a container.
+
+- **Widgets in reverse with clang.** `push(_sum(pop(), pop()))` left the order
+  of the two `pop()` calls to the compiler, which C does not fix. Built by clang
+  (Termux, BSD, macOS…), every container laid out its children in reverse:
+  initial focus on the last widget, notebook opened on the last tab, `<list>`
+  never selected. The old `#ifdef __arm__` workaround is removed.
+- **GTK 4: a read-only property** was never refused (`!flags &
+  G_PARAM_WRITABLE` is always 0); it now is, as with GTK 3.
+- **efl1 and lvgl with no reachable display**: abort (efl1), segmentation
+  fault (lvgl). Now "cannot open display" and exit code 1, like GTK. lvgl
+  opens the display only once: its connection is handed to LVGL's X11 driver
+  (the first guard opened, closed, then LVGL reopened unchecked — occasional
+  crash under the test benches).
+- **lvgl on Android**: `shm_open`/`shm_unlink`, missing from bionic, are
+  provided through `memfd_create` to LVGL's Wayland driver, without touching
+  its code.
+- **fltk1**: FLTK 1.4 required at configure time (with FLTK 1.3 the failure
+  only came at compile time); `<terminal>` found with a separately installed
+  FLTK; an `-include` coming from `fltk-config` no longer breaks the build.
+- **Decimal numbers on FreeBSD and OpenBSD**: `strtod_l` was not declared
+  (FreeBSD) or does not exist (OpenBSD); every decimal number in an XML would
+  have been wrong.
+- **Build without a single warning**, with gcc and with clang, for the core,
+  the nine ports and sermoia-mcp. `ci/construire.sh` counts warnings whatever
+  the language (bison's, in French, counted as zero). lvgl requires
+  `wayland-protocols` at configure time.
+- **Test benches**: `test_safe_exec` no longer assumes `/tmp` or `fopencookie`;
+  the unreachable virtual display of GTK 4 and SDL 3 is recognised and the run
+  retried. Its cause is found: Xvfb, started without `-noreset`, reset itself
+  when its last client left and refused connections meanwhile; the benches now
+  start it with `-noreset`.
+
+### Measured
+
+- Debian (gcc), `ci/bancs.sh` (14/10): 208 benches; on the joined line, 207
+  green, then 208 out of 208 at 3.0.0. The first run's red one comes back now
+  and then: lvglsermo stops on a segmentation fault when the X display does
+  not open (LVGL does not check the opening); a defect older than this
+  release, being fixed.
+- ASan and UBSan (15/10): the nine ports built under both, behaviour bench
+  run with fatal errors: **no error**, parity on all nine (the lvgl UBSan
+  error, an integer overflow in a grid, seen on 14/10, is fixed). Leaks,
+  measured on ncurses and html: about 31 bytes per widget refresh (variable
+  export), being fixed.
+- Weight (binary without symbols, as in the package): from 343 KiB (efl1) to
+  1,167 KiB (sdl3) and 2,399 KiB (lvgl); one ceiling per port, checked by a
+  bench.
+- Android 15 arm64 (Termux, clang 21): nine targets out of ten built;
+  behaviour bench 61/61 for gtk3, gtk4, qt6, sdl3, lvgl, ncurses, html and
+  fltk1, under Xvfb.
+- FreeBSD 15.1 and OpenBSD 7.9, in a virtual machine: ncurses 61/61; job
+  scripts and toolboxes, 187 dialogs identical to gtk3sermo.
+- Windows: behaviour bench 61/61 under Wine 10. On a real Windows 11: display,
+  accents and output to a file. On a real Windows 10: commands (`cmd.exe`, and
+  busybox-w32 through `SERMO_SHELL`), accents and opening an `https` link; a
+  `calc.exe` is refused.
+
 ## [2.8.2] — 2026-10-11
 
 PATCH release. Sixty job scripts and four toolboxes, now the acceptance test of

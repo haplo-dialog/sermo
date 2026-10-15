@@ -26,7 +26,10 @@
 
 struct CalGroup : Fl_Group {
     Fl_Spinner *day, *month, *year;
-    CalGroup(int X,int Y,int W,int H) : Fl_Group(X,Y,W,H) {
+    /* Repère du premier passage (refresh juste après la création) : faux
+     * jusqu'au premier refresh. Membre du widget : rien à libérer. */
+    bool lu;
+    CalGroup(int X,int Y,int W,int H) : Fl_Group(X,Y,W,H), lu(false) {
         day  = new Fl_Spinner(X,      Y, 60, 30, "J");
         day->range(1,31); day->step(1);
         month = new Fl_Spinner(X+70,  Y, 60, 30, "M");
@@ -68,7 +71,40 @@ void widget_calendar_clear(variable *v) {
     time_t t=time(NULL); struct tm *tm=localtime(&t);
     if (tm) { cg->day->value(tm->tm_mday); cg->month->value(tm->tm_mon+1); cg->year->value(tm->tm_year+1900); }
 }
-void widget_calendar_refresh(variable *v) { if (v && v->Widget) ((Fl_Group *)v->Widget)->redraw(); }
+/* <input> : rejoué à chaque « refresh », comme l'étalon gtk3sermo. Jusqu'au
+ * 2026-10-13 il n'était jamais lu. Première ligne « AAAA-MM-JJ » (mois borné
+ * à 1..12, jour à 1..31, comme l'étalon) ; illisible : la date ne bouge pas.
+ * Posée sans jouer d'action. */
+/* « AAAA-MM-JJ » → date, mois borné à 1..12, jour à 1..31 (comme l'étalon) ;
+ * faux si illisible (la date ne bouge pas). */
+static bool calendar_pose_date(CalGroup *cg, const char *s)
+{
+    int y = 0, m = 0, d = 0;
+    if (!s || sscanf(s, "%d-%d-%d", &y, &m, &d) != 3) return false;
+    cg->year->value(y);
+    cg->month->value(m < 1 ? 1 : m > 12 ? 12 : m);
+    cg->day->value(d < 1 ? 1 : d > 31 ? 31 : d);
+    return true;
+}
+
+/* Premier passage (2026-10-13) : l'étalon pose l'<input> PUIS le <default> ;
+ * un <default> lisible l'emporte donc sur l'<input> (la commande tourne quand
+ * même). Ce port appliquait l'<input> par-dessus le <default>. */
+void widget_calendar_refresh(variable *v)
+{
+    if (!v || !v->Widget) return;
+    CalGroup *cg = (CalGroup *)v->Widget;
+    bool premier = !cg->lu;
+    cg->lu = true;
+    gchar *ligne = widget_input_line(v->Attributes);
+    calendar_pose_date(cg, ligne);
+    g_free(ligne);
+    if (premier && v->Attributes) {
+        GList *el = NULL;
+        calendar_pose_date(cg, attributeset_get_first(&el, v->Attributes, ATTR_DEFAULT));
+    }
+    cg->redraw();
+}
 void widget_calendar_fileselect(variable *v, const char*, const char*) {}
 void widget_calendar_removeselected(variable *v) {}
 void widget_calendar_save(variable *v) {}

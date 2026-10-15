@@ -39,9 +39,11 @@ GtkWidget *widget_menuitem_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     if (attr) {
         const char *v = get_tag_attribute(attr, "checkbox");
         if (!v) v = get_tag_attribute(attr, "radiobutton");
-        if (v)
+        if (v) {
+            node->state.checkbox.cochable = TRUE;
             node->state.checkbox.checked =
                 (strcasecmp(v, "true") == 0 || strcmp(v, "1") == 0);
+        }
     }
     if (Attr) {
         GList *el = NULL;
@@ -72,10 +74,10 @@ GtkWidget *widget_menuitem_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 
 gchar *widget_menuitem_envvar_construct(GtkWidget *widget)
 {
-    /* menuitem cochable : exporte son etat (les menuitems simples n'ont
-     * en pratique pas de <variable>, donc ne passent pas par ici) */
+    /* menuitem cochable : exporte son etat ; un menuitem simple nommé rend
+     * "" comme l'étalon gtk3sermo (il rendait "false" jusqu'au 2026-10-13). */
     WidgetNode *n = (WidgetNode *)widget;
-    if (!n) return g_strdup("");
+    if (!n || !n->state.checkbox.cochable) return g_strdup("");
     return g_strdup(n->state.checkbox.checked ? "true" : "false");
 }
 

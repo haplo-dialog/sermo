@@ -51,9 +51,18 @@ gchar *widget_infobar_envvar_all_construct(variable *var)
     return widget_infobar_envvar_construct((GtkWidget *)var->Widget);
 }
 void widget_infobar_clear(variable *var) {}
+/* <input> : rejoué à chaque « refresh », comme l'étalon gtk3sermo. Jusqu'au
+ * 2026-10-13 il n'était jamais lu. La première ligne devient le texte du
+ * message (et la valeur exportée) ; une ligne vide l'efface. */
 void widget_infobar_refresh(variable *var)
 {
-    if (var && var->Widget) ((Fl_Widget *)var->Widget)->redraw();
+    if (!var || !var->Widget) return;
+    gchar *ligne = widget_input_line(var->Attributes);
+    if (ligne) {
+        ((Fl_Widget *)var->Widget)->copy_label(ligne);
+        g_free(ligne);
+    }
+    ((Fl_Widget *)var->Widget)->redraw();
 }
 void widget_infobar_fileselect(variable *var, const char *n, const char *v) {}
 void widget_infobar_removeselected(variable *var) {}

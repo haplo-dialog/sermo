@@ -15,7 +15,9 @@ Build-Depends: debhelper-compat (= 14),
                libgtk-4-dev,
                libgtk-layer-shell-dev,
                libjson-glib-dev,
+               libmodbus-dev,
                libncurses-dev,
+               libopen62541-1.4-dev,
                libpng-dev,
                libsdl3-dev,
                libvte-2.91-dev,
@@ -134,6 +136,7 @@ Package: sermo-backend-lvgl
 Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}
 Provides: sermo-backend
+Conflicts: sermo-backend-lvgl-leger
 Description: sermo dialog boxes for shell scripts - LVGL backend
  sermo builds native windows from an XML description, so that a shell script
  can show a real graphical interface without any toolkit knowledge. It succeeds
@@ -144,6 +147,23 @@ Description: sermo dialog boxes for shell scripts - LVGL backend
  drawn with LVGL (embedded in the package, not an external library). It opens a
  Wayland or X11 window, or draws on a framebuffer console when asked to. It also
  offers the sermo command through update-alternatives.
+
+Package: sermo-backend-lvgl-leger
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Provides: sermo-backend
+Conflicts: sermo-backend-lvgl
+Replaces: sermo-backend-lvgl
+Description: sermo dialog boxes for shell scripts - LVGL backend, light build
+ sermo builds native windows from an XML description, so that a shell script
+ can show a real graphical interface without any toolkit knowledge. It succeeds
+ gtkdialog and keeps its XML language. One hardened core parses the description
+ and runs the actions; each backend draws it with one toolkit.
+ .
+ This package provides lvglsermo built without the ThorVG vector engine: about
+ a third smaller than sermo-backend-lvgl, with the same dialogs and values, but
+ SVG icons from icon themes are not shown (PNG icons are). It replaces
+ sermo-backend-lvgl; install one or the other.
 
 Package: sermo-backend-ncurses
 Architecture: any
@@ -239,6 +259,34 @@ Depends: ${misc:Depends}, sermo-doc (= ${source:Version}), sermo-gtkdialog (>= $
 Description: transitional package - use sermo-gtkdialog
  The 1.x package gtksermo has become sermo-gtkdialog, in the modular edition of
  sermo 2. This transitional package can safely be removed.
+
+Package: sermo-source-modbus
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Enhances: sermo-backend-gtk3, sermo-backend-gtk4, sermo-backend-qt6, sermo-backend-fltk1, sermo-backend-efl1, sermo-backend-sdl3, sermo-backend-lvgl, sermo-backend-ncurses, sermo-backend-html
+Description: sermo dialog boxes for shell scripts - read-only Modbus input
+ sermo opens a dialog box described in XML from a shell script, and returns the
+ values entered.
+ .
+ This package lets a dialog show live values read from a Modbus PLC (TCP or
+ RTU serial line), with <input modbus>tcp://host:502?registre=1</input>. It
+ installs the helper that every sermo backend runs for that tag. It is
+ read-only by construction: it only calls the libmodbus read functions
+ (codes 1 to 4) and contains no write code.
+
+Package: sermo-source-opcua
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Enhances: sermo-backend-gtk3, sermo-backend-gtk4, sermo-backend-qt6, sermo-backend-fltk1, sermo-backend-efl1, sermo-backend-sdl3, sermo-backend-lvgl, sermo-backend-ncurses, sermo-backend-html
+Description: sermo dialog boxes for shell scripts - read-only OPC UA input
+ sermo opens a dialog box described in XML from a shell script, and returns the
+ values entered.
+ .
+ This package lets a dialog show live values read from an OPC UA server, with
+ <input opcua>opc.tcp://host:4840?noeud=ns=1;s=name</input>, unencrypted or
+ signed and encrypted with certificates (only the server certificates given
+ are trusted). It installs the helper that every sermo backend runs for that
+ tag. It is read-only: it calls no write or method service.
 
 Package: sermoia-mcp
 Architecture: any

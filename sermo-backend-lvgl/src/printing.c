@@ -5,7 +5,10 @@
  * Copyright (C) 2026 S. Cage
  * haplo-dialog <devel@haplo-dialog.fr>
  */
-#define _POSIX_C_SOURCE 200809L
+#if !defined(_POSIX_C_SOURCE) || _POSIX_C_SOURCE < 200809L
+#  undef _POSIX_C_SOURCE
+#  define _POSIX_C_SOURCE 200809L
+#endif
 
 #include "gtkdialog.h"
 #include "printing.h"

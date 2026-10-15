@@ -22,6 +22,7 @@
 #include "widgets.h"
 #include "tag_attributes.h"
 #include "widget_button.h"
+#include "widget_checkbox.h"   /* efl_bascule_lire() */
 #include "jouer_actions.h"
 #include "widget_togglebutton.h"
 #include "safe_exec.h"
@@ -158,9 +159,10 @@ GtkWidget *widget_button_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 
 gchar *widget_button_envvar_construct(GtkWidget *widget)
 {
-    if (!widget) return g_strdup("NULL");
-    const char *lbl = evas_object_data_get((Evas_Object *)widget, "label");
-    return g_strdup(lbl ? lbl : "button");
+    /* Comme l'étalon (gtk3 widget_button.c) : un bouton ordinaire exporte "",
+     * un bouton à bascule son état (widget_togglebutton.c ici). Ce port exportait le libellé (cas 71). */
+    (void)widget;
+    return g_strdup("");
 }
 
 gchar *widget_button_envvar_all_construct(variable *var)
@@ -173,6 +175,10 @@ void widget_button_clear(variable *var) {}
 void widget_button_refresh(variable *var)
 {
     if (!var || !var->Widget) return;
+    /* Le cœur route <togglebutton> ici : son <input> se lit comme celui d'une
+     * case à cocher (widget_checkbox.c). Un bouton simple n'en fait rien,
+     * comme l'étalon. */
+    if (var->Type == WIDGET_TOGGLEBUTTON) { efl_bascule_lire(var); return; }
     evas_object_show((Evas_Object *)var->Widget);
 }
 void widget_button_fileselect(variable *var, const char *n, const char *v) {}

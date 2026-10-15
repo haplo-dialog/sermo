@@ -181,6 +181,28 @@ extern "C" gchar *widget_input_text(AttributeSet *Attr)
     return NULL;
 }
 
+extern "C" gint widget_input_bool(AttributeSet *Attr)
+{
+    /* Règle de l'étalon gtk3sermo pour <checkbox>, <radiobutton>, <switch> et
+     * <togglebutton> : la PREMIÈRE ligne, sans CR/LF, vaut vrai si elle dit
+     * « true » ou « yes » (sans casse) ou si atoi() y lit 1 ; toute autre
+     * ligne vaut faux. Rien de lisible (ni ligne) : -1, l'état ne change pas. */
+    gchar *texte = widget_input_text(Attr);
+    gint   vrai;
+
+    if (texte == NULL)
+        return -1;
+    if (texte[0] == '\0') {
+        g_free(texte);
+        return -1;
+    }
+    texte[strcspn(texte, "\r\n")] = '\0';
+    vrai = (g_ascii_strcasecmp(texte, "true") == 0 ||
+            g_ascii_strcasecmp(texte, "yes") == 0 || atoi(texte) == 1);
+    g_free(texte);
+    return vrai ? 1 : 0;
+}
+
 /* ---------------------------------------------------------------------- */
 /* Fonction 1 ter — les mêmes directives <input>, ligne par ligne          */
 /* ---------------------------------------------------------------------- */
@@ -215,6 +237,30 @@ extern "C" gchar **widget_input_lines(AttributeSet *Attr)
     for (gchar **ligne = lignes; *ligne != NULL; ligne++)
         (*ligne)[strcspn(*ligne, "\r")] = '\0';
     return lignes;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Fonction 1 quater — la PREMIÈRE ligne des directives <input>            */
+/* ---------------------------------------------------------------------- */
+/* Règle de l'étalon gtk3sermo pour les widgets à une valeur (calendar,
+ * colorbutton, fontbutton, searchentry, statusbar, infobar, linkbutton,
+ * notebook, entry) : la première ligne, coupée au premier CR ou LF. Une ligne
+ * vide est une ligne (rendue ""). NULL si rien n'est lisible : pas de
+ * directive, ou une sortie VIDE (aucune ligne) — le widget ne change pas.
+ * Chaîne à libérer par g_free. (2026-10-13 : jusque-là, aucun de ces widgets
+ * sauf <entry> ne lisait son <input> dans ce port.) */
+extern "C" gchar *widget_input_line(AttributeSet *Attr)
+{
+    gchar *texte = widget_input_text(Attr);
+
+    if (texte == NULL)
+        return NULL;
+    if (texte[0] == '\0') {
+        g_free(texte);
+        return NULL;
+    }
+    texte[strcspn(texte, "\r\n")] = '\0';
+    return texte;
 }
 
 /* ---------------------------------------------------------------------- */

@@ -53,15 +53,26 @@ void widget_entry_clear(variable *var)
 void widget_entry_refresh(variable *var)
 {
     if (!var || !var->Widget) return;
-    /* <input> (commande ou fichier) : la PREMIÈRE ligne, sans CR/LF, et elle
-     * prime sur <default> — règle de l'étalon gtk3sermo (g_strchomp gardait
-     * les lignes suivantes). */
+    /* <input> (commande ou fichier) : la PREMIÈRE ligne, sans CR/LF — règle
+     * de l'étalon gtk3sermo (g_strchomp gardait les lignes suivantes). */
+    WidgetNode *node = (WidgetNode *)var->Widget;
     gchar *text = widget_input_text(var->Attributes);
     if (text) {
         text[strcspn(text, "\r\n")] = '\0';
-        WidgetNode *node = (WidgetNode *)var->Widget;
         snprintf(node->state.entry.buf, sizeof(node->state.entry.buf), "%s", text);
         g_free(text);
+    }
+    /* Premier passage : l'étalon gtk3sermo (widget_entry_refresh) applique
+     * <default> APRÈS l'<input>, qui ne l'emporte donc qu'aux refresh
+     * suivants. <entry type="search"> passe par ici (le cœur le route vers
+     * widget_entry) : <default>def</default><input>echo in</input> rendait
+     * "in" au lieu de "def" jusqu'au 2026-10-13. */
+    if (!node->initialised) {
+        GList *el = NULL;
+        gchar *def = attributeset_get_first(&el, var->Attributes, ATTR_DEFAULT);
+        node->initialised = TRUE;
+        if (def)
+            snprintf(node->state.entry.buf, sizeof(node->state.entry.buf), "%s", def);
     }
 }
 void widget_entry_fileselect(variable *var, const char *n, const char *v) {}

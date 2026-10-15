@@ -41,6 +41,10 @@ GtkWidget *widget_expander_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     Evas_Object *parent = efl_main_win_get();
     Evas_Object *fr = elm_frame_add(parent ? parent : elm_win_add(NULL,"tmp",ELM_WIN_BASIC));
     elm_frame_collapse_go(fr, expander_ouvert_au_depart(attr) ? EINA_FALSE : EINA_TRUE);
+    /* Lu par refresh : l'attribut expanded= l'emporte sur l'<input> au
+     * premier passage (l'étalon le pose après). */
+    if (attr && get_tag_attribute(attr, "expanded"))
+        evas_object_data_set(fr, "sermo_expanded_attr", (void *)1);
 
     if (Attr) {
         GList *el = NULL;
@@ -76,7 +80,25 @@ void widget_expander_clear(variable *var)
     if (!var || !var->Widget) return;
     elm_frame_collapse_go((Evas_Object *)var->Widget, EINA_TRUE);
 }
-void widget_expander_refresh(variable *var) {}
+/* <input> : rejoué à chaque « refresh », comme l'étalon gtk3sermo. Première
+ * ligne true/yes/1 (sans casse, ou atoi()==1) → déplié, toute autre → replié.
+ * Au premier passage, l'attribut expanded= l'emporte (la commande tourne
+ * quand même) : l'étalon le pose après. Aucune action n'est branchée sur le
+ * cadre dans ce port : la pose n'en joue pas. Jusqu'au 2026-10-13 il n'était
+ * jamais lu. */
+void widget_expander_refresh(variable *var)
+{
+    gint v;
+    gboolean premier;
+
+    if (!var || !var->Widget) return;
+    premier = widget_input_premier(var->Widget);
+    v = widget_input_bool(var->Attributes);
+    if (v < 0) return;
+    if (premier && evas_object_data_get((Evas_Object *)var->Widget, "sermo_expanded_attr"))
+        return;
+    elm_frame_collapse_go((Evas_Object *)var->Widget, v ? EINA_FALSE : EINA_TRUE);
+}
 void widget_expander_fileselect(variable *var, const char *n, const char *v) {}
 void widget_expander_removeselected(variable *var) {}
 void widget_expander_save(variable *var) {}

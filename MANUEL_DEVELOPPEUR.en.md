@@ -177,7 +177,7 @@ binary:
 TIMEOUT=5 bash tests/xml/run_tests.sh <binary>           # expected: 55 PASS
 
 # 2. Behaviour — exported values == those of the gtk3sermo reference
-bash tests/comportement/run.sh <binary>                  # expected: 61/61
+bash tests/comportement/run.sh <binary>                  # expected: 75/75
 
 # 3. Guard — values at risk do not go back through the shell
 xvfb-run -a bash tests/garde_echappement_sortie.sh <binary>        # OK — 4 cases

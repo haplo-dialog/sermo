@@ -34,9 +34,13 @@ extern "C" {
 #endif
 
 extern int SERMO_FLEX_TAG;   /* user_data() des conteneurs Fl_Flex du port */
+/* Contrat : rend une chaîne ALLOUÉE (ou NULL), à libérer par g_free(). */
 char    *widget_get_text_value(GtkWidget *widget, int type);
 FILE    *widget_opencommand(const char *command);
 gchar   *widget_input_text(AttributeSet *Attr);
+gint widget_input_bool(AttributeSet *Attr);   /* 1, 0, ou -1 si rien n'est lisible */
+/* Première ligne de l'<input>, sans CR/LF ; g_free ; NULL si aucune ligne. */
+gchar   *widget_input_line(AttributeSet *Attr);
 /* Lignes du texte de widget_input_text(), sans CR/LF ; g_strfreev ; NULL si rien. */
 gchar  **widget_input_lines(AttributeSet *Attr);
 char    *widgets_to_str(int itype);

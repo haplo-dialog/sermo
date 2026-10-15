@@ -42,6 +42,13 @@ GtkWidget *widget_switch_create(AttributeSet *Attr, tag_attr *attr, gint Type)
                 node->state.toggle.active = TRUE;
         }
     }
+    /* Ses actions, jouées chaque fois qu'il bascule (clic ou « activate: ») :
+     * voir jouer_actions_interrupteur(). Elles n'étaient pas gardées, donc jamais jouées. */
+    if (Attr) {
+        GList *ea = NULL;
+        gchar *act = attributeset_get_first(&ea, Attr, ATTR_ACTION);
+        if (act && *act) { node->action = strdup(act); node->actions_attr = (void *)Attr; }
+    }
     return (GtkWidget *)node;
 }
 
@@ -61,7 +68,7 @@ void widget_switch_clear(variable *var)
     if (!var || !var->Widget) return;
     ((WidgetNode *)var->Widget)->state.toggle.active = FALSE;
 }
-void widget_switch_refresh(variable *var) {}
+void widget_switch_refresh(variable *var) { widget_bascule_lire(var); }   /* widgets.c */
 void widget_switch_fileselect(variable *var, const char *n, const char *v) {}
 void widget_switch_removeselected(variable *var) {}
 void widget_switch_save(variable *var) {}

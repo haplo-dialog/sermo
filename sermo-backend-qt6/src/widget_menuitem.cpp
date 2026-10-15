@@ -204,7 +204,13 @@ GtkWidget *widget_menu_create(AttributeSet *Attr, tag_attr *attr, gint Type)
                 continue;   /* NE PAS detruire ce porteur */
             }
         }
-        holder->deleteLater();   /* porteur consommé */
+        /* Le porteur reste vivant, parenté au menu : un <menuitem> qui porte
+         * une <variable> garde ce pointeur, et print_variables() le lit à la
+         * sortie. Jusqu'au 2026-10-13 il était détruit ici (deleteLater) et
+         * qt6sermo tombait sur une erreur de segmentation à chaque « exit »
+         * d'un dialogue dont un menuitem simple était nommé. */
+        holder->setParent(menu);
+        holder->hide();
     }
 
     return (GtkWidget *)menu;

@@ -61,7 +61,25 @@ void widget_fontbutton_clear(variable *var)
     n->label = strdup("Sans 12");
 }
 
-void widget_fontbutton_refresh(variable *var) {}
+void widget_fontbutton_refresh(variable *var)
+{
+    /* <input> (commande ou fichier) : rejoué à chaque « refresh », comme
+     * l'étalon gtk3sermo — sa PREMIÈRE ligne, CR/LF ôtés ; rien de lisible,
+     * rien ne change ; aucune action ne joue. Jusqu'au 2026-10-13 il n'était
+     * jamais lu. */
+    if (!var || !var->Widget) return;
+    WidgetNode *n = (WidgetNode *)var->Widget;
+    gchar *ligne = widget_input_ligne(var->Attributes);
+    if (ligne) { free(n->label); n->label = strdup(ligne); g_free(ligne); }
+    /* Premier passage : <default> l'emporte, l'étalon l'applique APRÈS
+     * l'<input> (mesuré : <default> Mono 9 + <input> Sans 13 → Mono 9). */
+    if (!n->initialised) {
+        GList *el = NULL;
+        gchar *def = attributeset_get_first(&el, var->Attributes, ATTR_DEFAULT);
+        n->initialised = TRUE;
+        if (def && *def) { free(n->label); n->label = strdup(def); }
+    }
+}
 void widget_fontbutton_fileselect(variable *var, const char *name, const char *value) {}
 void widget_fontbutton_removeselected(variable *var) {}
 void widget_fontbutton_save(variable *var) {}

@@ -1,0 +1,70 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# sermo sur macOS : le port ncurses, construit, son banc de comportement joué,
+# les dialogues des scripts métier joués et GARDÉS (artefact « passe-macos ») —
+# la comparaison à l'étalon gtk3sermo se fait sur Linux, sur les mêmes
+# dialogues : examples/metiers/verifie.sh --ports gtk3 --rejouer passe-macos —
+# puis installé par la formule Homebrew.
+name: macOS (port ncurses)
+on:
+  push:
+  workflow_dispatch:
+permissions:
+  contents: read
+defaults:
+  run:
+    shell: bash   # bash -eo pipefail : un « | tee » ne masque pas un échec
+jobs:
+  macos:
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Outils (Homebrew)
+        run: |
+          brew install cmake bison flex ncurses pkgconf bash coreutils
+          {
+            echo "$(brew --prefix bison)/bin"
+            echo "$(brew --prefix flex)/bin"
+            echo "$(brew --prefix coreutils)/libexec/gnubin"
+            echo "$(brew --prefix)/bin"
+          } >> "$GITHUB_PATH"
+          echo "PKG_CONFIG_PATH=$(brew --prefix ncurses)/lib/pkgconfig" >> "$GITHUB_ENV"
+      - name: Système
+        run: |
+          sw_vers; uname -m; cc --version | head -1; bash --version | head -1
+          bison --version | head -1; flex --version; pkg-config --modversion ncursesw
+      - name: Construire (construire-os.sh)
+        run: |
+          sh packaging/autres-os/construire-os.sh construire . _os ncurses 2>&1 | tee construire.log
+          grep -E "Looking for|Performing Test" construire.log || true
+          echo "avertissements : $(grep -c 'warning:' construire.log || true)"
+          _os/ncurses/ncursessermo --version
+      - name: Banc de comportement
+        run: bash tests/comportement/run.sh "$PWD/_os/ncurses/ncursessermo" 2>&1 | tee comportement.log
+      - name: Scripts métier et boîtes à outils (joués, gardés)
+        run: |
+          mkdir -p sermo-backend-ncurses/_build
+          ln -sf "$PWD/_os/ncurses/ncursessermo" sermo-backend-ncurses/_build/ncursessermo
+          bash examples/metiers/verifie.sh --ports ncurses --garder passe-macos 2>&1 | tee metiers.log
+      - name: Formule Homebrew
+        run: |
+          git archive --format=tar.gz --prefix=sermo-v3.0.0/ -o "$RUNNER_TEMP/sermo-v3.0.0.tar.gz" HEAD
+          somme=$(shasum -a 256 "$RUNNER_TEMP/sermo-v3.0.0.tar.gz" | cut -d' ' -f1)
+          brew tap-new --no-git local/essai
+          f="$(brew --repository)/Library/Taps/local/homebrew-essai/Formula/sermo.rb"
+          sed -e "s#^  url .*#  url \"file://$RUNNER_TEMP/sermo-v3.0.0.tar.gz\"#" \
+              -e "s#^  sha256 .*#  sha256 \"$somme\"#" packaging/autres-os/homebrew/sermo.rb > "$f"
+          brew install --build-from-source local/essai/sermo 2>&1 | tee formule.log
+          brew test local/essai/sermo 2>&1 | tee -a formule.log
+          sermo --version | tee -a formule.log
+      - name: Journaux
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: journaux-macos
+          path: |
+            construire.log
+            comportement.log
+            metiers.log
+            formule.log
+            passe-macos/

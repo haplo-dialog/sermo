@@ -23,6 +23,13 @@
 #include <string.h>
 #include <stdlib.h>
 
+/* Fl_Input + repère du premier passage (faux jusqu'au premier refresh).
+ * Membre du widget : rien à libérer. */
+struct EntryInput : Fl_Input {
+    bool lu;
+    EntryInput(int X, int Y, int W, int H) : Fl_Input(X, Y, W, H, nullptr), lu(false) {}
+};
+
 GtkWidget *widget_entry_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
     GList *element = NULL;
@@ -34,7 +41,7 @@ GtkWidget *widget_entry_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         if ((v = get_tag_attribute(attr, "height-request"))) h = atoi(v);
     }
 
-    Fl_Input *inp = new Fl_Input(0, 0, w, h, nullptr);
+    Fl_Input *inp = new EntryInput(0, 0, w, h);
 
     /* Valeur par défaut */
     if (Attr) {
@@ -75,6 +82,17 @@ void widget_entry_refresh(variable *var)
         text[strcspn(text, "\r\n")] = '\0';
         ((Fl_Input *)var->Widget)->value(text);
         g_free(text);
+    }
+    /* Premier passage (2026-10-13) : l'étalon pose l'<input> PUIS le <default> ;
+     * un <default> l'emporte donc (la commande a tourné quand même). Mesuré
+     * sur <entry type="search">, qui est une <entry> pour le cœur. */
+    EntryInput *ei = (EntryInput *)var->Widget;
+    if (!ei->lu) {
+        ei->lu = true;
+        GList *el = NULL;
+        gchar *def = var->Attributes
+            ? attributeset_get_first(&el, var->Attributes, ATTR_DEFAULT) : NULL;
+        if (def) ei->value(def);
     }
     ((Fl_Widget *)var->Widget)->redraw();
 }

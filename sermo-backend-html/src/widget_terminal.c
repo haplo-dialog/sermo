@@ -116,7 +116,7 @@ gchar *widget_terminal_envvar_construct(GtkWidget *widget)
     for (int i = 0; i < n->state.terminal.count; i++)
         total += strlen(terminal_get_line(&n->state.terminal, i)) + 1;
 
-    char *buf = (char *)malloc(total + 1);
+    char *buf = (char *)g_malloc(total + 1);
     if (!buf) return g_strdup("");
     buf[0] = '\0';
     for (int i = 0; i < n->state.terminal.count; i++) {

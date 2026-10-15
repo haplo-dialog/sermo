@@ -35,6 +35,14 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 
 # ─── Cœur partagé via pkg-config (variante NEUTRE) ─────────────────────────
 find_package(PkgConfig REQUIRED)
+if(WIN32)
+  # Windows : tout en statique, le .exe ne dépend que de DLL du
+  # système. Sans ceci, « -lpthread » se résout en libpthread.dll.a et le
+  # programme exige libwinpthread-1.dll (mesuré le 2026-10-11).
+  # Posé ICI : la plateforme Windows de CMake réécrit ce réglage après le
+  # fichier de chaîne.
+  set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
+endif()
 pkg_check_modules(SERMOCORE REQUIRED sermocore)
 pkg_check_modules(NCURSES   REQUIRED ncursesw)
 
@@ -64,18 +72,98 @@ target_include_directories(ncursessermo BEFORE PRIVATE
   ${SERMOCORE_INCLUDE_DIRS}
   ${NCURSES_INCLUDE_DIRS})
 
+# Protection du flot de contrôle selon le processeur : CET sur x86
+# (-fcf-protection), BTI/PAC sur ARM64 (-mbranch-protection). Écrite en dur,
+# -fcf-protection arrêtait toute construction ARM64 : « option 'cf-protection'
+# cannot be specified on this target » (clang 21, Termux, mesuré le 2026-10-12).
+include(CheckCCompilerFlag)
+check_c_compiler_flag(-fcf-protection=full SERMO_A_CF_PROTECTION)
+check_c_compiler_flag(-mbranch-protection=standard SERMO_A_BRANCH_PROTECTION)
+if(SERMO_A_CF_PROTECTION)
+  set(SERMO_FLOT_CONTROLE -fcf-protection=full)
+elseif(SERMO_A_BRANCH_PROTECTION)
+  set(SERMO_FLOT_CONTROLE -mbranch-protection=standard)
+else()
+  set(SERMO_FLOT_CONTROLE "")
+endif()
+# -fstack-clash-protection : gardé si le compilateur l'accepte (clang d'OpenBSD
+# l'ignorait avec un avertissement par fichier ; celui d'Apple peut le refuser).
+# clang l'accepte à l'essai puis l'ignore fichier par fichier (« argument
+# unused », 79 fois sous macOS le 2026-10-13) : chez lui, cet avertissement
+# compte comme un refus.
+if(CMAKE_C_COMPILER_ID MATCHES "Clang")
+  set(CMAKE_REQUIRED_FLAGS "-Werror=unused-command-line-argument")
+endif()
+check_c_compiler_flag(-fstack-clash-protection SERMO_A_STACK_CLASH)
+unset(CMAKE_REQUIRED_FLAGS)
+if(SERMO_A_STACK_CLASH)
+  set(SERMO_PILE_CLASH -fstack-clash-protection)
+else()
+  set(SERMO_PILE_CLASH "")
+endif()
+# strtod_l (nombres d'un XML lus en locale C) : glibc, musl, FreeBSD et macOS
+# (par <xlocale.h>) l'ont, OpenBSD non. Sans lui, les shims passent par
+# uselocale (SERMO_SANS_STRTOD_L). Essayé, pas deviné.
+include(CheckIncludeFile)
+include(CheckSymbolExists)
+check_include_file(xlocale.h SERMO_A_XLOCALE_H)
+set(_sermo_entetes_strtod "stdlib.h;locale.h")
+if(SERMO_A_XLOCALE_H)
+  list(APPEND _sermo_entetes_strtod "xlocale.h")
+endif()
+set(CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
+check_symbol_exists(strtod_l "${_sermo_entetes_strtod}" SERMO_A_STRTOD_L)
+unset(CMAKE_REQUIRED_DEFINITIONS)
+if(NOT SERMO_A_STRTOD_L AND NOT WIN32)
+  target_compile_definitions(ncursessermo PRIVATE SERMO_SANS_STRTOD_L=1)
+endif()
+if(APPLE)
+  # Extensions de macOS (strtod_l…) malgré _POSIX_C_SOURCE.
+  target_compile_definitions(ncursessermo PRIVATE _DARWIN_C_SOURCE=1)
+endif()
+
+# Les objets à part sont liés dans le même binaire : un seul objet sans la
+# protection du flot de contrôle et le lieur la retire du binaire entier
+# (mesuré sur ARM64 avec -z bti-report). Même durcissement que le binaire.
+target_compile_options(sermo_neutral_glist PRIVATE
+  -D_FORTIFY_SOURCE=3 -fstack-protector-strong -fstack-clash-protection ${SERMO_FLOT_CONTROLE})
 target_compile_options(ncursessermo PRIVATE
   -std=gnu11
   # ncurses-compat.h : shim GLib auto-suffisant (GList, g_*), pas de glib réelle
   -include ${CMAKE_CURRENT_SOURCE_DIR}/src/ncurses-compat.h
-  -D_FORTIFY_SOURCE=3 -fstack-protector-strong -fstack-clash-protection -fcf-protection=full
+  -D_FORTIFY_SOURCE=3 -fstack-protector-strong ${SERMO_PILE_CLASH} ${SERMO_FLOT_CONTROLE}
   ${NCURSES_CFLAGS_OTHER})
 
 # Durcissement au lien : PIE/RELRO/BIND_NOW/NX + CET (IBT/SHSTK forcés, cf. qt6).
-target_link_options(ncursessermo PRIVATE
-  -pie -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack
-  -Wl,-z,ibt -Wl,-z,shstk
-  -fcf-protection=full -fstack-protector-strong -fstack-clash-protection)
+if(WIN32)
+  # Windows : les options -z sont propres à ELF. Équivalents PE :
+  # ASLR haute entropie et DEP, que mingw-w64 pose par défaut ; on les exige
+  # quand même. -lssp : le protecteur de pile de mingw vit à part. Lien
+  # statique de libgcc : le .exe ne dépend que de DLL du système.
+  target_link_options(ncursessermo PRIVATE
+    -Wl,--dynamicbase -Wl,--high-entropy-va -Wl,--nxcompat
+    -fstack-protector-strong -static -static-libgcc)
+  target_link_libraries(ncursessermo PRIVATE ssp)
+  # Manifeste : page de code UTF-8 pour tout le programme (environnement,
+  # chemins accentués), Windows 10/11 déclarés.
+  enable_language(RC)
+  target_sources(ncursessermo PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../packaging/autres-os/windows/sermo.rc)
+elseif(APPLE)
+  # macOS : le lieur d'Apple ne connaît pas -z (RELRO n'existe pas en Mach-O) ;
+  # PIE et pile non exécutable y sont le défaut.
+  target_link_options(ncursessermo PRIVATE
+    ${SERMO_FLOT_CONTROLE} -fstack-protector-strong ${SERMO_PILE_CLASH})
+else()
+  # Marquage CET (-z ibt/shstk) : x86 seulement, comme -fcf-protection.
+  if(SERMO_A_CF_PROTECTION)
+    set(SERMO_CET_LIEN -Wl,-z,ibt -Wl,-z,shstk)
+  endif()
+  target_link_options(ncursessermo PRIVATE
+    -pie -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack
+    ${SERMO_CET_LIEN}
+    ${SERMO_FLOT_CONTROLE} -fstack-protector-strong ${SERMO_PILE_CLASH})
+endif()
 
 target_link_libraries(ncursessermo PRIVATE
   ${SERMOCORE_LINK_LIBRARIES}     # cœur via pkg-config (variante neutre, lien statique)

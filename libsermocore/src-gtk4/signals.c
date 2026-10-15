@@ -1320,12 +1320,22 @@ void widget_signal_executor(GtkWidget *widget, AttributeSet *Attr,
 /* GtkWidget--->GtkContainer--->GtkBin--->GtkButton--->GtkToggleButton */
 			if (GTK_IS_TOGGLE_BUTTON(widget)) {
 				is_active = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+/* GTK 4 : GtkWidget--->GtkCheckButton, qui n'est plus un GtkToggleButton.
+ * Sans cette branche, la case à cocher et le bouton radio ne jouaient jamais
+ * leurs actions (« if true … », « if false … »). */
+			} else if (GTK_IS_CHECK_BUTTON(widget)) {
+				is_active = gtk_check_button_get_active(GTK_CHECK_BUTTON(widget));
 /* GtkWidget--->GtkContainer--->GtkBin--->GtkExpander */
 			} else if (GTK_IS_EXPANDER(widget)) {
 				is_active = gtk_expander_get_expanded(GTK_EXPANDER(widget));
 /* GtkWidget--->GtkContainer--->GtkBin--->GtkItem--->GtkMenuItem--->GtkCheckMenuItem */
 			} else if (GTK_IS_CHECK_MENU_ITEM(widget)) {
 				is_active = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(widget));
+#ifdef GTK_IS_SWITCH
+/* GtkWidget--->GtkSwitch : « if true »/« if false » aussi avec signal="changed" */
+			} else if (GTK_IS_SWITCH(widget)) {
+				is_active = gtk_switch_get_active(GTK_SWITCH(widget));
+#endif
 			} else {
 				execute = widget_signal_executor_eval_condition(condition);
 			}
@@ -1334,15 +1344,16 @@ void widget_signal_executor(GtkWidget *widget, AttributeSet *Attr,
 			 * prefix within the action in addition to a possible condition
 			 * tag attribute in which case the latter is applied last */
 			if (is_active > -1) {
+				/* Le préfixe ET la condition : jusqu'à la 2.8.2, une condition=
+				 * décidait seule et l'état n'était plus testé (« if false … »
+				 * jouait sur une case qu'on venait de cocher). */
 				if (strncasecmp(command, "if true ", 8) == 0) {
 					command += 8;
-					if (is_active) execute = TRUE;
-					if (condition)
+					if (is_active)
 						execute = widget_signal_executor_eval_condition(condition);
 				} else if (strncasecmp(command, "if false ", 9) == 0) {
 					command += 9;
-					if (!is_active) execute = TRUE;
-					if (condition)
+					if (!is_active)
 						execute = widget_signal_executor_eval_condition(condition);
 				} else {
 					execute = widget_signal_executor_eval_condition(condition);
@@ -1365,6 +1376,11 @@ void widget_signal_executor(GtkWidget *widget, AttributeSet *Attr,
 			if (GTK_IS_TOGGLE_BUTTON(widget)) {
 				if (strcasecmp(signal_name, "toggled") == 0) {
 					is_active = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget));
+				}
+/* GTK 4 : GtkWidget--->GtkCheckButton (case à cocher, bouton radio) */
+			} else if (GTK_IS_CHECK_BUTTON(widget)) {
+				if (strcasecmp(signal_name, "toggled") == 0) {
+					is_active = gtk_check_button_get_active(GTK_CHECK_BUTTON(widget));
 				}
 /* GtkWidget--->GtkContainer--->GtkBin--->GtkButton--->GtkColorButton */
 			} else if (GTK_IS_COLOR_BUTTON(widget)) {
@@ -1391,6 +1407,17 @@ void widget_signal_executor(GtkWidget *widget, AttributeSet *Attr,
 				if (strcasecmp(signal_name, "toggled") == 0) {
 					is_active = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(widget));
 				}
+#ifdef GTK_IS_SWITCH
+/* GtkWidget--->GtkSwitch : son rappel notify::active appelle « changed ».
+ * Aucune branche ne le prenait : une <action> sans signal= ne jouait jamais, ni
+ * « if true … »/« if false … » (examples/switch/switch les utilise). Seule
+ * <action signal="changed"> passait, et passe toujours. Le #ifdef garde le cœur
+ * sans GTK, dont le shim ne connaît pas GtkSwitch. */
+			} else if (GTK_IS_SWITCH(widget)) {
+				if (strcasecmp(signal_name, "changed") == 0) {
+					is_active = gtk_switch_get_active(GTK_SWITCH(widget));
+				}
+#endif
 /* GtkWidget--->GtkContainer--->GtkBin--->GtkItem--->GtkMenuItem */
 			} else if (GTK_IS_MENU_ITEM(widget)) {
 				if (strcasecmp(signal_name, "activate") == 0) {
@@ -1457,15 +1484,16 @@ void widget_signal_executor(GtkWidget *widget, AttributeSet *Attr,
 			 * prefix within the action in addition to a possible condition
 			 * tag attribute in which case the latter is applied last */
 			if (is_active > -1) {
+				/* Le préfixe ET la condition : jusqu'à la 2.8.2, une condition=
+				 * décidait seule et l'état n'était plus testé (« if false … »
+				 * jouait sur une case qu'on venait de cocher). */
 				if (strncasecmp(command, "if true ", 8) == 0) {
 					command += 8;
-					if (is_active) execute = TRUE;
-					if (condition)
+					if (is_active)
 						execute = widget_signal_executor_eval_condition(condition);
 				} else if (strncasecmp(command, "if false ", 9) == 0) {
 					command += 9;
-					if (!is_active) execute = TRUE;
-					if (condition)
+					if (!is_active)
 						execute = widget_signal_executor_eval_condition(condition);
 				} else {
 					execute = widget_signal_executor_eval_condition(condition);
@@ -1579,6 +1607,12 @@ gboolean widget_signal_executor_eval_condition(gchar *condition)
 /* GtkWidget--->GtkContainer--->GtkBin--->GtkItem--->GtkMenuItem--->GtkCheckMenuItem */
 					} else if (GTK_IS_CHECK_MENU_ITEM(var->Widget)) {
 						state = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(var->Widget));
+/* GTK 4 : GtkCheckButton n'est plus un GtkToggleButton ; active_is_true(NOM)
+ * d'une case à cocher ou d'un bouton radio valait toujours faux. */
+					} else if (GTK_IS_CHECK_BUTTON(var->Widget)) {
+						state = gtk_check_button_get_active(GTK_CHECK_BUTTON(var->Widget));
+					} else if (GTK_IS_SWITCH(var->Widget)) {
+						state = gtk_switch_get_active(GTK_SWITCH(var->Widget));
 					} else {
 						state = -1;
 					}

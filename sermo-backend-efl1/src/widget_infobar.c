@@ -26,6 +26,7 @@ GtkWidget *widget_infobar_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     elm_box_horizontal_set(box, EINA_TRUE);
     Evas_Object *lbl = elm_label_add(box);
     elm_label_line_wrap_set(lbl, ELM_WRAP_WORD);
+    evas_object_data_set(box, "ib_label", lbl);   /* repris par refresh */
 
     if (Attr) {
         GList *el = NULL;
@@ -54,7 +55,32 @@ gchar *widget_infobar_envvar_construct(GtkWidget *w)
 gchar *widget_infobar_envvar_all_construct(variable *v)
 { return v && v->Widget ? widget_infobar_envvar_construct(v->Widget) : NULL; }
 void widget_infobar_clear(variable *v) {}
-void widget_infobar_refresh(variable *v) {}
+/* <input> : rejoué à chaque « refresh », comme l'étalon gtk3sermo. Première
+ * ligne = message affiché (après la pastille ℹ) et exporté brut. L'étalon
+ * n'applique pas de <default> après : l'<input> l'emporte dès la création.
+ * Jusqu'au 2026-10-13 il n'était jamais lu. */
+void widget_infobar_refresh(variable *v)
+{
+    Evas_Object *box, *lbl;
+    gchar *ligne, *markup;
+
+    if (!v || !v->Widget) return;
+    box = (Evas_Object *)v->Widget;
+    ligne = widget_input_line(v->Attributes);
+    if (!ligne) return;
+    lbl = evas_object_data_get(box, "ib_label");
+    if (lbl) {
+        /* la ligne vient d'une commande : texte brut, pas du balisage */
+        char *brut = elm_entry_utf8_to_markup(ligne);
+        markup = g_strdup_printf("<info>ℹ</info> %s", brut ? brut : "");
+        free(brut);
+        elm_object_text_set(lbl, markup);
+        g_free(markup);
+    }
+    free(evas_object_data_del(box, "ib_text"));   /* posé par strdup */
+    evas_object_data_set(box, "ib_text", strdup(ligne));
+    g_free(ligne);
+}
 void widget_infobar_fileselect(variable *v, const char *n, const char *val) {}
 void widget_infobar_removeselected(variable *v) {}
 void widget_infobar_save(variable *v) {}

@@ -171,10 +171,25 @@ void widget_notebook_clear(variable *var)
     static_cast<QTabWidget *>(var->Widget)->setCurrentIndex(0);
 }
 
+/* <input> à chaque « refresh », comme l'étalon : atoi() de la première ligne
+ * est la page ; négatif → dernière page ; au-delà du nombre de pages → rien.
+ * Au premier passage, la page ne change PAS (la commande tourne quand même).
+ * Aucune <action> n'est branchée sur ce widget dans ce port. Jusqu'au
+ * 2026-10-13, l'<input> n'était jamais lu (NO restait 0). */
 void widget_notebook_refresh(variable *var)
 {
     if (!var || !var->Widget) return;
-    static_cast<QWidget *>(var->Widget)->update();
+    QTabWidget *tabs = static_cast<QTabWidget *>(var->Widget);
+    bool premier = !tabs->property("sermoLu").toBool();
+    tabs->setProperty("sermoLu", true);
+    gchar *ligne = widget_input_line(var->Attributes);
+    if (!ligne) return;
+    int page = atoi(ligne);
+    g_free(ligne);
+    if (premier) return;
+    if (page < 0) page = tabs->count() - 1;
+    if (page >= 0 && page < tabs->count())
+        tabs->setCurrentIndex(page);
 }
 
 void widget_notebook_fileselect(variable *var, const char *n, const char *v) {}

@@ -58,6 +58,11 @@ int sermo_progress_poll(sermo_progress *p);
  * NULL accepté. */
 void sermo_progress_free(sermo_progress *p);
 
+/* Nombre de barres dont la commande n'a encore rien montré (ni ligne, ni fin).
+ * --render-png fait tourner la boucle du port tant qu'il n'est pas nul, une
+ * seconde au plus, avant de capturer : sinon l'image montrait la barre vide. */
+int sermo_progress_en_attente(void);
+
 #ifdef __cplusplus
 }
 #endif

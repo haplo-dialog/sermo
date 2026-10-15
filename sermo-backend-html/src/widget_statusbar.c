@@ -61,7 +61,30 @@ void widget_statusbar_clear(variable *var)
     n->label = strdup("");
 }
 
-void widget_statusbar_refresh(variable *var) {}
+void widget_statusbar_refresh(variable *var)
+{
+    /* <input> : rejoué à chaque « refresh », comme l'étalon gtk3sermo, sans
+     * jouer d'action. Jusqu'au 2026-10-13 il n'était jamais lu. Le message vit
+     * dans node->label (export et page). Au premier passage, <label> puis
+     * <default> l'emportent : l'étalon les applique après l'<input>. */
+    WidgetNode *n;
+    gchar      *ligne;
+    GList      *el = NULL;
+
+    if (!var || !var->Widget) return;
+    n = (WidgetNode *)var->Widget;
+    ligne = widget_input_line(var->Attributes);
+    if (ligne) { free(n->label); n->label = strdup(ligne); g_free(ligne); }
+    if (!n->initialised) {
+        gchar *v;
+        n->initialised = TRUE;
+        v = attributeset_get_first(&el, var->Attributes, ATTR_LABEL);
+        if (v) { free(n->label); n->label = strdup(v); }
+        el = NULL;
+        v = attributeset_get_first(&el, var->Attributes, ATTR_DEFAULT);
+        if (v) { free(n->label); n->label = strdup(v); }
+    }
+}
 void widget_statusbar_fileselect(variable *var, const char *name, const char *value) {}
 void widget_statusbar_removeselected(variable *var) {}
 void widget_statusbar_save(variable *var) {}

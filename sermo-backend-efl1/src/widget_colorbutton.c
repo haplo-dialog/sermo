@@ -107,7 +107,61 @@ void widget_colorbutton_clear(variable *var)
     ColorData *cd = (ColorData *)evas_object_data_get((Evas_Object *)var->Widget, "color_data");
     if (cd) { cd->r=255; cd->g=255; cd->b=255; snprintf(cd->hex,8,"#ffffff"); }
 }
-void widget_colorbutton_refresh(variable *var) {}
+/* Couleur « #rrggbb » ou « #rgb » (sans casse). 1 si elle se lit. */
+static int couleur_lire(const char *s, int *r, int *g, int *b)
+{
+    size_t n = s ? strlen(s) : 0;
+    if (n < 4 || s[0] != '#' || strspn(s + 1, "0123456789abcdefABCDEF") != n - 1)
+        return 0;
+    if (n == 7) return sscanf(s + 1, "%02x%02x%02x", r, g, b) == 3;
+    if (n == 4) {
+        if (sscanf(s + 1, "%1x%1x%1x", r, g, b) != 3) return 0;
+        *r *= 17; *g *= 17; *b *= 17;
+        return 1;
+    }
+    return 0;
+}
+
+/* <input> : rejoué à chaque « refresh », comme l'étalon gtk3sermo. Première
+ * ligne « couleur|alpha » : la couleur (#rrggbb ou #rgb) repeint la pastille et
+ * fait la valeur exportée ; l'alpha (0-65535 chez l'étalon) est gardé pour le
+ * sélecteur, l'export de ce port n'en porte pas. Au premier passage, un
+ * <default> lisible l'emporte sur la couleur : l'étalon l'applique après.
+ * Jusqu'au 2026-10-13 il n'était jamais lu. */
+void widget_colorbutton_refresh(variable *var)
+{
+    ColorData *cd;
+    gchar *ligne, **champs;
+    gboolean premier;
+    int r, g, b;
+    unsigned int alpha;
+
+    if (!var || !var->Widget) return;
+    cd = (ColorData *)evas_object_data_get((Evas_Object *)var->Widget, "color_data");
+    premier = widget_input_premier(var->Widget);
+    ligne = widget_input_line(var->Attributes);
+    if (!ligne) return;
+    if (!cd) { g_free(ligne); return; }
+    champs = g_strsplit(ligne, "|", 3);
+    if (champs[0]) {
+        GList *el = NULL;
+        gchar *def = premier ? attributeset_get_first(&el, var->Attributes, ATTR_DEFAULT)
+                             : NULL;
+        int dr, dg, db;
+        int defaut = def && def[0] == '#' && strlen(def) == 7 &&
+                     sscanf(def + 1, "%02x%02x%02x", &dr, &dg, &db) == 3;
+        if (!defaut && couleur_lire(g_strstrip(champs[0]), &r, &g, &b)) {
+            Evas_Object *sw = evas_object_data_get((Evas_Object *)var->Widget, "swatch");
+            cd->r = r; cd->g = g; cd->b = b;
+            snprintf(cd->hex, sizeof(cd->hex), "#%02x%02x%02x", r, g, b);
+            if (sw) evas_object_color_set(sw, r, g, b, 255);
+        }
+        if (champs[1] && sscanf(champs[1], "%u", &alpha) == 1)
+            cd->a = (int)((alpha & 0xffffu) >> 8);
+    }
+    g_strfreev(champs);
+    g_free(ligne);
+}
 void widget_colorbutton_fileselect(variable *var, const char *n, const char *v) {}
 void widget_colorbutton_removeselected(variable *var) {}
 void widget_colorbutton_save(variable *var) {}

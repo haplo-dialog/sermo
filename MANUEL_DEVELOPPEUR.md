@@ -173,7 +173,7 @@ Aucune étape n'avance avec un banc rouge. Les trois portes, pour un binaire
 TIMEOUT=5 bash tests/xml/run_tests.sh <binaire>          # attendu : 55 PASS
 
 # 2. Comportement — les valeurs exportées == celles de l'étalon gtk3sermo
-bash tests/comportement/run.sh <binaire>                 # attendu : 61/61
+bash tests/comportement/run.sh <binaire>                 # attendu : 75/75
 
 # 3. Garde — les valeurs à risque ne repassent pas par le shell
 xvfb-run -a bash tests/garde_echappement_sortie.sh <binaire>        # OK — 4 cas

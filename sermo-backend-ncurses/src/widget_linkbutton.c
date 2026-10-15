@@ -30,11 +30,10 @@
 #include "widget_linkbutton.h"
 #include "sermo_open_uri.h"
 #include <stdlib.h>
-#include <unistd.h>
-#include <sys/wait.h>
+#include "sermo_lanceur.h"
 
 /* Ouvre l'URI dans l'application par défaut, sans passer par un shell.
- * Double fork : le petit-fils est adopté par init, aucun zombie à récolter. */
+ * Le lanceur unique du cœur détache l'enfant : aucun zombie à récolter. */
 void sermo_open_uri(const char *uri)
 {
     if (!uri || !*uri) return;
@@ -42,18 +41,21 @@ void sermo_open_uri(const char *uri)
         fprintf(stderr, "sermo: URI refusée (commence par « - ») : %s\n", uri);
         return;
     }
-    pid_t pid = fork();
-    if (pid == 0) {
-        pid_t petit = fork();
-        if (petit == 0) {
-            execlp("xdg-open", "xdg-open", uri, (char *) NULL);
-            _exit(127);             /* xdg-open absent : échec silencieux */
-        }
-        _exit(0);
-    } else if (pid > 0) {
-        int st;
-        waitpid(pid, &st, 0);       /* le fils intermédiaire sort tout de suite */
+#ifdef _WIN32
+    /* Windows : ShellExecute LANCERAIT un .exe qu'on lui désigne, ce que
+     * xdg-open ne fait pas. Seules les adresses http, https et mailto
+     * passent (sermo_win32.c). */
+    if (sermo_win32_ouvrir_uri(uri) != 0)
+        fprintf(stderr, "sermo: lien refusé ou impossible à ouvrir sous Windows "
+                "(seuls http, https et mailto) : %s\n", uri);
+#else
+    char *argv[] = { "xdg-open", (char *) uri, NULL };
+    char *erreur = NULL;
+    if (sermo_lance_async(argv, NULL, NULL, NULL, &erreur) != 0) {
+        fprintf(stderr, "sermo: xdg-open n'a pas pu être lancé : %s\n", erreur ? erreur : "?");
+        free(erreur);
     }
+#endif
 }
 
 GtkWidget *widget_linkbutton_create(AttributeSet *Attr, tag_attr *attr, gint Type)
@@ -93,7 +95,22 @@ void widget_linkbutton_clear(variable *var)
     if (!var || !var->Widget) return;
     ((WidgetNode *) var->Widget)->state.entry.buf[0] = '\0';
 }
-void widget_linkbutton_refresh(variable *var)        { (void) var; }
+void widget_linkbutton_refresh(variable *var)
+{
+    /* <input> (commande ou fichier) : rejoué à chaque « refresh », comme
+     * l'étalon gtk3sermo — sa PREMIÈRE ligne, CR/LF ôtés ; rien de lisible,
+     * rien ne change ; aucune action ne joue. Jusqu'au 2026-10-13 il n'était
+     * jamais lu. */
+    /* La ligne devient l'URI (gtk_link_button_set_uri), PAS le libellé :
+     * celui-ci reste ce que create a posé, comme chez l'étalon. */
+    if (!var || !var->Widget) return;
+    WidgetNode *n = (WidgetNode *) var->Widget;
+    gchar *ligne = widget_input_ligne(var->Attributes);
+    if (ligne) {
+        snprintf(n->state.entry.buf, sizeof(n->state.entry.buf), "%s", ligne);
+        g_free(ligne);
+    }
+}
 void widget_linkbutton_fileselect(variable *var, const char *name, const char *value)
 {   (void) var; (void) name; (void) value; }
 void widget_linkbutton_removeselected(variable *var) { (void) var; }

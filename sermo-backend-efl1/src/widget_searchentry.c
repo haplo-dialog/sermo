@@ -61,7 +61,25 @@ gchar *widget_searchentry_envvar_all_construct(variable *v)
 { return v && v->Widget ? widget_searchentry_envvar_construct(v->Widget) : NULL; }
 void widget_searchentry_clear(variable *v)
 { if (v && v->Widget) elm_entry_entry_set((Evas_Object *)v->Widget, ""); }
-void widget_searchentry_refresh(variable *v) {}
+/* <input> : rejoué à chaque « refresh », comme l'étalon gtk3sermo. Première
+ * ligne = texte du champ (posé en texte brut). Au premier passage, un <default>
+ * l'emporte : l'étalon l'applique après. Aucune action n'est branchée sur
+ * « changed » dans ce port : la pose n'en joue pas. Jusqu'au 2026-10-13 il
+ * n'était jamais lu. */
+void widget_searchentry_refresh(variable *v)
+{
+    gchar *ligne;
+    gboolean premier;
+    GList *el = NULL;
+
+    if (!v || !v->Widget) return;
+    premier = widget_input_premier(v->Widget);
+    ligne = widget_input_line(v->Attributes);
+    if (!ligne) return;
+    if (!(premier && attributeset_get_first(&el, v->Attributes, ATTR_DEFAULT)))
+        texte_poser((Evas_Object *)v->Widget, ligne);
+    g_free(ligne);
+}
 void widget_searchentry_fileselect(variable *v, const char *n, const char *val) {}
 void widget_searchentry_removeselected(variable *v) {}
 void widget_searchentry_save(variable *v) {}

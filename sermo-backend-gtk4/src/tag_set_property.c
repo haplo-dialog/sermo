@@ -72,7 +72,9 @@ static gboolean try_set_property(GtkWidget *widget, namevalue  *nameval)
 		return FALSE;
 	}
 	
-	if (!paramspec->flags & G_PARAM_WRITABLE) {
+	/* !x & y vaut (!x) & y : sans les parenthèses, le refus d'une propriété
+	 * en lecture seule ne se déclenchait jamais (corrigé de même en GTK3). */
+	if (!(paramspec->flags & G_PARAM_WRITABLE)) {
 		if (!option_no_warning)
 			g_warning("%s(): Property '%s' is not writable.", 
 				__func__, nameval->name);

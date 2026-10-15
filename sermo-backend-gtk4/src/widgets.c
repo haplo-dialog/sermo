@@ -123,7 +123,7 @@ char *widget_get_text_value(GtkWidget *widget, int type)
 #endif
 	if (widget == NULL) {
 		g_warning("%s(): NULL Widget", __func__);
-		return ("NULL WIDGET");
+		return g_strdup("NULL WIDGET");
 	}
 
 	switch (type) {

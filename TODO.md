@@ -21,6 +21,12 @@ Trouvé le 2026-09-16 par les bancs réparés (`ci/bancs.sh`), **ouvert** :
       écrivent `Error in line N, near token '<window>': syntax error` — le cœur
       relance l'analyse d'un texte déjà consommé. Rien avec `--file` ; rien sur
       gtk3, gtk4, fltk1, sdl3.
+- [ ] **`<notebook>` : l'`<input>` lu au premier passage ne change pas de page
+      sur gtk3sermo** (mesuré le 2026-10-13 : `echo 1` à l'ouverture laisse la
+      page 0 ; aux `refresh` suivants la page suit). gtk4sermo change bien de
+      page. Les sept autres ports suivent l'étalon gtk3. Effet de bord de GTK 3
+      (carnet pas encore montré) ou règle voulue ? À trancher par SC ; le cas
+      78 évite exprès ce point.
 - [x] **CET sans effet à l'exécution** : les notes IBT/SHSTK sont forcées au
       lien (`-Wl,-z,ibt -Wl,-z,shstk`), mais ni la glibc ni les bibliothèques des
       toolkits de Debian testing n'en portent (mesuré au `readelf`). Dit dans
@@ -61,8 +67,22 @@ l'étalon gtk3sermo mesurés (ou lus, quand c'est dit) pendant la réparation de
       `<pixmap>` d'efl1 (« file:… » passé tel quel), et, lu dans le code de qt6
       [NON VÉRIFIÉ] : `<image>`/`<button>` comparent « file: » en tenant compte de
       la casse alors que le cœur stocke « File: », `<linkbutton>` prend la valeur
-      brute pour adresse. qt6 : `<checkbox>` ne suit ni `refresh:` d'un `<input>`
-      ni `activate:` (mesuré).
+      brute pour adresse. qt6 : `<checkbox>` ne suit pas `refresh:` d'un `<input>`
+      (mesuré) ; `activate:` est suivi depuis les cas 62 à 65 du banc de
+      comportement.
+- [ ] **Actions des widgets à bascule, ce qui reste** : depuis les cas 62 à 67,
+      la case à cocher, le bouton radio, le bouton à bascule et l'interrupteur
+      jouent leurs actions sur les neuf ports (« if true »/« if false » compris,
+      au clic et par `activate:`). L'interrupteur ne les jouait sur AUCUN port,
+      l'étalon compris : seul `signal="changed"` passait (corrigé dans les deux
+      cœurs GTK). `condition=` est lu par les neuf ports depuis les cas 68 et 69.
+      L'ordre entre le radio décoché et le radio choisi est celui de GTK sur les
+      neuf ports (le décoché d'abord, cas 72). Reste : les commandes des menus
+      (rangées en chaîne) perdent leur `condition=` (lu dans
+      action_avec_fonction() [NON VÉRIFIÉ]).
+      Avec `condition=` derrière « if true »/« if false », il faut désormais le
+      préfixe ET la condition, partout, l'étalon compris (cas 69) : l'étalon
+      laissait la condition seule décider.
 - [ ] **Deuxième fenêtre aux noms de variables déjà pris** (`launch:`) : le cœur
       l'enregistre sous « NOM__W<id> » ; mesuré juste sur gtk3 (chaque `<input>`
       une fois). Sur les ports sans GTK, désormais lus au refresh [NON VÉRIFIÉ] :
@@ -218,7 +238,7 @@ Trouvé le 2026-09-16, **fermé en 2.7.0** (voir [CHANGELOG.md](CHANGELOG.md)) :
 
 ## Toujours vrai (garde-fous)
 
-- Ne jamais régresser ce que joue **`ci/bancs.sh`** (XML 55 · comportement 61 ·
+- Ne jamais régresser ce que joue **`ci/bancs.sh`** (XML 55 · comportement 75 ·
   gardes · exemples réels · scripts métier et boîtes à outils sur les neuf
   ports).
 - Ne jamais retirer un drapeau de durcissement (voir [SECURITY.md](SECURITY.md)).

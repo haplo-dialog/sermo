@@ -61,6 +61,87 @@ static void declencher(WidgetNode *n, const char *signal1, const char *signal2)
         execute_action((GtkWidget *)n, n->action, NULL);
 }
 
+/* Widgets à bascule (case à cocher, bouton radio, bouton à bascule,
+ * interrupteur) : leurs actions jouent à chaque changement d'état, « if true »/
+ * « if false » compris. */
+static void bascule_jouer(WidgetNode *n, int actif)
+{
+    if (n->actions_attr && n->type == WT_SWITCH)
+        jouer_actions_interrupteur((GtkWidget *)n, (AttributeSet *)n->actions_attr, actif);
+    else if (n->actions_attr)
+        jouer_actions_bascule((GtkWidget *)n, (AttributeSet *)n->actions_attr, actif);
+    else if (n->action && *n->action)
+        execute_action((GtkWidget *)n, n->action, NULL);
+}
+
+/* Pour widget_radiobutton.c : le bouton radio qu'un autre remplace au départ
+ * (son <default> ou son <input>) joue ses actions « décoché », comme chez
+ * l'étalon, où elles sont déjà branchées. */
+void sermo_be_bascule_jouer(void *w, int actif)
+{
+    if (w) bascule_jouer((WidgetNode *)w, actif);
+}
+
+/* Bascule comme un clic de l'étalon. Un bouton radio choisi le reste ; en
+ * choisir un décoche ses frères de la même boîte (le groupe du cœur), qui
+ * jouent leurs actions « décoché » d'abord, comme GTK. */
+static void basculer(WidgetNode *n)
+{
+    if (n->type == WT_RADIOBUTTON) {
+        if (n->state.toggle.active) return;
+        n->state.toggle.active = TRUE;
+        if (n->parent)
+            for (int i = 0; i < n->parent->child_count; i++) {
+                WidgetNode *f = n->parent->children[i];
+                if (f == n || f->type != WT_RADIOBUTTON || !f->state.toggle.active) continue;
+                f->state.toggle.active = FALSE;
+                bascule_jouer(f, FALSE);
+            }
+        bascule_jouer(n, TRUE);
+        return;
+    }
+    n->state.toggle.active = !n->state.toggle.active;
+    bascule_jouer(n, n->state.toggle.active);
+}
+
+/* Crochet du contrat : « activate:NOM » bascule les widgets à bascule (le shim
+ * fait de gtk_widget_activate() un FALSE). Le prochain tour redessine. */
+int sermo_be_widget_activate(void *w)
+{
+    WidgetNode *n = (WidgetNode *)w;
+    if (!n) return 0;
+    switch (n->type) {
+    case WT_CHECKBOX: case WT_RADIOBUTTON: case WT_TOGGLEBUTTON: case WT_SWITCH:
+        basculer(n);
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+/* Crochet du contrat : l'état d'un widget pour condition="active_is_…/
+ * sensitive_is_…/visible_is_…(NOM)" (le shim ne sait rien des nœuds).
+ * quoi : 0 = actif, 1 = sensible, 2 = visible ; -1 = je ne sais pas. */
+int sermo_be_widget_etat(void *w, int quoi)
+{
+    WidgetNode *n = (WidgetNode *)w;
+    if (!n) return -1;
+    switch (quoi) {
+    case 0:
+        switch (n->type) {
+        case WT_CHECKBOX: case WT_RADIOBUTTON: case WT_TOGGLEBUTTON: case WT_SWITCH:
+            return n->state.toggle.active ? 1 : 0;
+        case WT_EXPANDER:
+            return n->state.expander.open ? 1 : 0;
+        default:
+            return -1;
+        }
+    case 1: return n->sensitive ? 1 : 0;
+    case 2: return n->visible ? 1 : 0;
+    default: return -1;
+    }
+}
+
 /* <list> : joue ses actions (signal « selection-changed » de l'étalon). Seule
  * une vraie <list> garde son jeu d'actions ; un <tree> (WT_LIST aussi) non. */
 static void liste_selection_changee(WidgetNode *n)
@@ -175,8 +256,11 @@ static int run_headless(WidgetNode *root)
      * (la première ligne à 100 déclenche ses actions, un « exit:… » sort ici),
      * puis les minuteries partent une fois. Une commande sans fin bloque, comme
      * la lecture d'un seul tenant le faisait déjà jusqu'à la 2.6.8. */
+    /* nanosleep, pas usleep : retiré de POSIX 2008, que ce port demande
+     * (_POSIX_C_SOURCE 200809L) ; FreeBSD le cache alors. */
+    const struct timespec pause = { 0, 20000000L };   /* 20 ms */
     while (servir_barres(root) > 0)
-        usleep(20000);
+        nanosleep(&pause, NULL);
     fire_timers_une_fois(root);   /* un « exit:… » sort ici via action_exitprogram */
     return export_abort();
 }
@@ -506,8 +590,8 @@ static int colonne(WidgetNode *n, int y, int x, int w, int cible)
             int zone = c->pack_fill && (c->type == WT_LIST || c->type == WT_TREE ||
                        c->type == WT_TABLE || c->type == WT_EDIT ||
                        c->type == WT_TERMINAL_W || c->type == WT_NOTEBOOK);
-            if (place > h[i] && remplit) {
-                g_haut = place;
+            if (place > h[i] && (remplit || (c->pack_fill && c->type == WT_EDIT))) {
+                g_haut = place;   /* la zone de texte prend toute sa place */
                 draw_node(c, oy, x, w);
             } else if (zone) {
                 draw_node(c, oy, x, w);
@@ -524,7 +608,40 @@ static int colonne(WidgetNode *n, int y, int x, int w, int cible)
 
 /* Dessine un nœud à (y,x) dans une largeur w ; renvoie le nombre de lignes
  * consommées. Récursif : gère conteneurs et feuilles. */
+/* Grisé (sensitive="false", <sensitive>false</sensitive>, disable:) : comme
+ * GTK, le widget — ou tout ce que contient un conteneur grisé — ne prend ni le
+ * focus ni les touches, et se dessine atténué. Jusqu'ici ce port n'en tenait
+ * aucun compte : un bouton grisé s'activait. */
+static int insensible(const WidgetNode *n)
+{
+    for (; n; n = n->parent)
+        if (!n->sensitive) return 1;
+    return 0;
+}
+
+/* Prochain widget qui accepte le focus, dans le sens pas (+1 ou -1) ; depart
+ * s'il n'y en a aucun. */
+static int focus_suivant(int depart, int pas)
+{
+    for (int k = 1; k <= g_nfocus; k++) {
+        int i = ((depart + pas * k) % g_nfocus + g_nfocus) % g_nfocus;
+        if (!insensible(g_focus[i].n)) return i;
+    }
+    return depart;
+}
+
+static int draw_node_corps(WidgetNode *n, int y, int x, int w);
+
 static int draw_node(WidgetNode *n, int y, int x, int w)
+{
+    int grise = n && !n->sensitive, used;
+    if (grise) attron(A_DIM);
+    used = draw_node_corps(n, y, x, w);
+    if (grise) attroff(A_DIM);
+    return used;
+}
+
+static int draw_node_corps(WidgetNode *n, int y, int x, int w)
 {
     int etirer = g_etirer, cible = g_haut;
     g_etirer = 0; g_haut = 0;
@@ -897,6 +1014,44 @@ static int draw_node(WidgetNode *n, int y, int x, int w)
             }
             return rows;
         }
+        if (n->type == WT_EDIT) {
+            /* Zone de texte : un cadre de plusieurs lignes, comme la zone
+             * blanche de l'étalon — au moins 3 lignes de contenu, 10 au plus,
+             * toute la hauteur reçue quand la colonne l'étire. Jusqu'ici elle
+             * tenait sur une ligne « [texte] » et un texte de plusieurs lignes
+             * n'en montrait que le début. Le contenu vit dans
+             * state.text.content (voir ligne_feuille). */
+            const char *contenu = n->state.text.content ? n->state.text.content : "";
+            int nl = 1;
+            for (const char *p = contenu; *p; p++)
+                if (*p == '\n' && p[1]) nl++;
+            int dedans = nl < 3 ? 3 : (nl > 10 ? 10 : nl);
+            int h = dedans + 2;
+            if (cible > h) h = cible;
+            int focused = 0;
+            if (g_nfocus < 256) {
+                g_focus[g_nfocus] = (Focusable){ n, y + 1, x + 1, w - 2 };
+                if (g_nfocus == g_focus_idx) focused = 1;
+                g_nfocus++;
+            }
+            if (focused) attron(A_BOLD);
+            mvhline(y, x, ACS_HLINE, w); mvhline(y + h - 1, x, ACS_HLINE, w);
+            mvvline(y, x, ACS_VLINE, h); mvvline(y, x + w - 1, ACS_VLINE, h);
+            mvaddch(y, x, ACS_ULCORNER); mvaddch(y, x + w - 1, ACS_URCORNER);
+            mvaddch(y + h - 1, x, ACS_LLCORNER); mvaddch(y + h - 1, x + w - 1, ACS_LRCORNER);
+            if (focused) attroff(A_BOLD);
+            const char *p = contenu;
+            for (int i = 0; i < h - 2 && *p; i++) {
+                const char *fin = strchr(p, '\n');
+                int lg = fin ? (int)(fin - p) : (int)strlen(p);
+                if (focused && i == 0) attron(A_REVERSE);
+                mvprintw(y + 1 + i, x + 1, "%-*.*s", w - 2 > 0 ? w - 2 : 0, lg < w - 2 ? lg : w - 2, p);
+                if (focused && i == 0) attroff(A_REVERSE);
+                p = fin ? fin + 1 : p + lg;
+            }
+            if (!*contenu && focused) mvprintw(y + 1, x + 1, "%*s", w - 2 > 0 ? w - 2 : 0, "");
+            return h;
+        }
         ligne_feuille(n, w, etirer, line, sizeof line);
 
         int focused = 0;
@@ -1202,7 +1357,12 @@ static int ecran_ouvrir(void)
 {
     FILE *sortie = stdout;
     if (!isatty(STDOUT_FILENO)) {
+#ifdef _WIN32
+        /* Windows : le terminal de contrôle s'appelle CONOUT$. */
+        g_tty = fopen("CONOUT$", "w");
+#else
         g_tty = fopen("/dev/tty", "w");
+#endif
         if (!g_tty) return 0;
         sortie = g_tty;
     }
@@ -1230,6 +1390,10 @@ static int run_interactive(WidgetNode *root, const char *title)
         g_nfocus = 0;
         draw_node(root, 1, 2, COLS - 4);
         if (g_focus_idx >= g_nfocus) g_focus_idx = g_nfocus ? g_nfocus - 1 : 0;
+        if (g_nfocus && insensible(g_focus[g_focus_idx].n)) {
+            int i = focus_suivant(g_focus_idx, 1);
+            if (i != g_focus_idx) { g_focus_idx = i; continue; }   /* redessiner là */
+        }
         mvprintw(LINES - 1, 2, " Tab/fleches: naviguer  Entree/Espace: activer  q: quitter ");
         refresh();
 
@@ -1241,8 +1405,10 @@ static int run_interactive(WidgetNode *root, const char *title)
         if (c == ERR) continue;
         if (c == 'q' || c == 27) { endwin(); return export_abort(); }
 
-        if (c == '\t' || c == KEY_DOWN)      g_focus_idx = g_nfocus ? (g_focus_idx + 1) % g_nfocus : 0;
-        else if (c == KEY_UP || c == KEY_BTAB) g_focus_idx = g_nfocus ? (g_focus_idx + g_nfocus - 1) % g_nfocus : 0;
+        if (c == '\t' || c == KEY_DOWN)      g_focus_idx = g_nfocus ? focus_suivant(g_focus_idx, 1) : 0;
+        else if (c == KEY_UP || c == KEY_BTAB) g_focus_idx = g_nfocus ? focus_suivant(g_focus_idx, -1) : 0;
+        else if (g_nfocus && insensible(g_focus[g_focus_idx].n))
+            continue;   /* tout est grisé : aucune touche n'agit */
         else if ((c == '\n' || c == ' ' || c == KEY_ENTER) && g_nfocus > 0) {
             WidgetNode *n = g_focus[g_focus_idx].n;
             switch (n->type) {
@@ -1267,9 +1433,8 @@ static int run_interactive(WidgetNode *root, const char *title)
                 n->state.expander.open = !n->state.expander.open;
                 if (n->action && *n->action) declencher(n, "activate", NULL);
                 break;
-            case WT_CHECKBOX: case WT_TOGGLEBUTTON: case WT_SWITCH: case WT_RADIOBUTTON:
-                n->state.toggle.active = !n->state.toggle.active;
-                if (n->action && *n->action) declencher(n, "toggled", "clicked");
+            case WT_CHECKBOX: case WT_TOGGLEBUTTON: case WT_RADIOBUTTON: case WT_SWITCH:
+                basculer(n);   /* exit:… peut sortir ici */
                 break;
             case WT_ENTRY: case WT_EDIT: case WT_PASSWORD:
                 edit_field(n); break;

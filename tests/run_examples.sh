@@ -60,6 +60,12 @@ export GSK_RENDERER="${GSK_RENDERER:-cairo}"
 # Plateformes offscreen des backends neutres (qt6/efl1/sdl3) : sans display réel,
 # le binaire s'ouvre quand même ; xvfb-run leur en donne un de toute façon.
 export QT_QPA_PLATFORM="${QT_QPA_PLATFORM:-xcb}"
+# efl1 : moteur logiciel imposé (s'il n'est pas déjà choisi). Sous Xvfb chargé,
+# Elementary choisit parfois le moteur opengl_x11, qui échoue faute de DRI3 : pas
+# de fenêtre, abandon au démarrage — un widget ou un exemple différent à chaque
+# passe de ci/bancs.sh. Mesuré le 2026-10-12, 300 lancements, tous les cœurs
+# occupés : 7 morts sans, 0 avec. ELM_ACCEL=none ne suffit pas (10 sur 300).
+[ "$PORT" = efl1 ] && export ELM_ENGINE="${ELM_ENGINE:-software_x11}"
 
 # Quelques exemples ne sont pas des dialogues autonomes mais des visionneuses :
 # sans argument ils affichent leur aide et sortent. Leur en fournir un est la
@@ -114,9 +120,19 @@ DELAY="${EXAMPLE_DELAY:-10}"
 # NODISPLAY sinon ; le programme qui dit ne pas joindre l'écran rend NODISPLAY
 # aussi. Dans les deux cas l'essai est refait UNE fois avec un écran neuf, et le
 # banc le dit : c'est l'outil qui a manqué, pas le programme.
+#
+# 2026-10-13 — GTK 4 dit « Failed to open display », SDL 3 « No available video
+# device » : absents de la liste, leur écran manquant comptait comme un échec
+# du port, sans essai refait (vu deux fois sur gtk4 au banc complet ; ce qui
+# rend l'écran injoignable n'a pas été reproduit en 1 765 lancements).
+#
+# 2026-10-14 — trouvé : sans -noreset, Xvfb se réinitialise à chaque départ de
+# son dernier client (xdpyinfo ci-dessous, chaque xdotool) et refuse les
+# connexions pendant ce temps (détail : tests/outils/xvfb-run). -noreset est
+# passé ici aussi pour le vrai xvfb-run, quand ce banc est lancé seul.
 probe() {
     local script="$1" log="$2" arg="${3:-}"
-    xvfb-run -a --server-args="-screen 0 800x600x24" bash -c '
+    xvfb-run -a --server-args="-screen 0 800x600x24 -noreset" bash -c '
         cd "$(dirname "$0")" || exit 1
         for j in $(seq 1 50); do xdpyinfo >/dev/null 2>&1 && break; sleep 0.1; done
         xdpyinfo >/dev/null 2>&1 || { echo NODISPLAY; exit 0; }
@@ -133,7 +149,7 @@ probe() {
         [ -f "$1.vu" ] || cp "$1" "$1.vu"
         # Aucune fenêtre, programme arrêté faute de joindre l écran : NODISPLAY.
         if [ ! -f "$1.fen" ] && ! kill -0 -- -$pid 2>/dev/null &&
-           grep -qiE "could not connect to display|cannot open display|can.t open display|unable to open display" "$1"; then
+           grep -qiE "could not connect to display|cannot open display|can.t open display|unable to open display|failed to open display|no available video device" "$1"; then
             cp "$1" "$1.ecran"; echo NODISPLAY
         fi
         # Aucune fenêtre, programme arrêté : son code et la fin de sa sortie.
@@ -192,6 +208,22 @@ for dir in $(find "$EXAMPLES" -maxdepth 1 -mindepth 1 -type d | sort); do
         fi
     fi
     [[ -n "$script" && -f "$script" ]] || { printf '  %-16s %s\n' "$name" "(aucun script)"; continue; }
+
+    # Exemples d'automates (examples/modbus, examples/opcua) : ils s'arrêtent
+    # avant toute fenêtre si leur outil manque (mbpoll, client opcua-lire à
+    # compiler). On leur donne l'outil : sans équipement, la fenêtre s'ouvre
+    # quand même et dit « pas de réponse ». Le client se compile dans le
+    # dossier de construction du dépôt, jamais sous /tmp (exécutable surveillé).
+    if [[ "$name" = opcua && -z "${OPCUA_LIRE:-}" ]]; then
+        bac_opcua="$(dirname "$EXAMPLES")/_build/run-examples-opcua"
+        mkdir -p "$bac_opcua"
+        if cc -O1 -o "$bac_opcua/opcua-lire" "$dir/opcua-lire.c" $(pkg-config --cflags --libs open62541 2>/dev/null) 2>"$bac_opcua/cc.log"; then
+            export OPCUA_LIRE="$bac_opcua/opcua-lire"
+        else
+            printf '  %-16s %s\n' "$name" "ÉCHEC : opcua-lire ne se compile pas (libopen62541-1.4-dev ?)"
+            NOWIN=$((NOWIN+1)); DETAIL+=("$name : opcua-lire ne se compile pas (voir $bac_opcua/cc.log)"); continue
+        fi
+    fi
 
     # Un exemple qui ne vaut que pour certains ports le dit dans PORTS (ex. glade :
     # --glade-xml est GTK). Ailleurs il est annoncé « réservé », visiblement, et

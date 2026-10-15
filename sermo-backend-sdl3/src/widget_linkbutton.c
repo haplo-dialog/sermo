@@ -67,7 +67,22 @@ void widget_linkbutton_clear(variable *var)
     if (!var || !var->Widget) return;
     ((WidgetNode *) var->Widget)->state.entry.buf[0] = '\0';
 }
-void widget_linkbutton_refresh(variable *var)        { (void) var; }
+void widget_linkbutton_refresh(variable *var)
+{
+    gchar *ligne;
+
+    if (!var || !var->Widget) return;
+    /* <input> : rejoué à chaque « refresh », comme l'étalon gtk3sermo (sa
+     * première ligne = l'URI, gtk_link_button_set_uri ; le libellé ne bouge
+     * pas), sans jouer d'action. Il passe après le <default> de la création,
+     * comme chez l'étalon. Jusqu'au 2026-10-13 il n'était jamais lu. */
+    ligne = widget_input_ligne(var->Attributes);
+    if (ligne) {
+        snprintf(((WidgetNode *) var->Widget)->state.entry.buf,
+                 sizeof(((WidgetNode *) var->Widget)->state.entry.buf), "%s", ligne);
+        g_free(ligne);
+    }
+}
 void widget_linkbutton_fileselect(variable *var, const char *name, const char *value)
 {   (void) var; (void) name; (void) value; }
 void widget_linkbutton_removeselected(variable *var) { (void) var; }

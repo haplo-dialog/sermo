@@ -50,6 +50,7 @@ struct ExpanderData {
      * clic : un expander nommé « Détails » devenait anonyme dès qu'on l'ouvrait.
      * Le titre est donc gardé ici pour être réécrit à chaque bascule. */
     char       titre[256];
+    bool       lu;       /* repère du premier passage : faux jusqu'au premier refresh */
 };
 
 /* Flèche + titre : une seule façon de composer l'en-tête, utilisée à la
@@ -119,13 +120,14 @@ static void expander_replace_les_voisins(Fl_Widget *grp, int delta)
     }
 }
 
-static void expander_cb(Fl_Widget *w, void *data)
+/* Déplier ou replier : corps, hauteur, en-tête, voisins. Commun au clic et à
+ * l'<input> (refresh) ; n'appelle aucun rappel. */
+static void expander_pose_etat(Fl_Button *w, ExpanderData *ed, bool ouvert)
 {
-    ExpanderData *ed  = (ExpanderData *)data;
-    Fl_Button    *btn = (Fl_Button *)w;
+    Fl_Button    *btn = w;
     Fl_Group     *grp = w->parent();
 
-    ed->expanded = !ed->expanded;
+    ed->expanded = ouvert;
 
     if (ed->expanded) ed->body->show();
     else              ed->body->hide();
@@ -143,6 +145,12 @@ static void expander_cb(Fl_Widget *w, void *data)
     } else {
         w->redraw();
     }
+}
+
+static void expander_cb(Fl_Widget *w, void *data)
+{
+    ExpanderData *ed = (ExpanderData *)data;
+    expander_pose_etat((Fl_Button *)w, ed, !ed->expanded);
 }
 
 
@@ -207,6 +215,7 @@ GtkWidget *widget_expander_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     ed->body     = body;
     ed->expanded = expander_ouvert_au_depart(attr);
     ed->body_h   = h_body;
+    ed->lu       = false;
     snprintf(ed->titre, sizeof(ed->titre), "%s", label ? label : "");
     /* Le groupe ne redistribue rien tout seul : c'est expander_place_interieur()
      * qui écrit la géométrie, à la création comme à chaque bascule. */
@@ -252,10 +261,26 @@ void widget_expander_clear(variable *var)
     }
 }
 
+/* <input> : rejoué à chaque « refresh », comme l'étalon gtk3sermo. Jusqu'au
+ * 2026-10-13 il n'était jamais lu. Première ligne true/yes/1 (sans casse, ou
+ * atoi()==1) : déplié ; toute autre ligne : replié ; rien de lisible : rien ne
+ * change. Posé sans jouer d'action (le rappel du bouton n'est pas appelé). */
 void widget_expander_refresh(variable *var)
 {
     if (!var || !var->Widget) return;
-    ((Fl_Widget *)var->Widget)->redraw();
+    Fl_Group *grp = (Fl_Group *)var->Widget;
+    ExpanderData *ed = (ExpanderData *)grp->user_data();
+    gint v = widget_input_bool(var->Attributes);
+    /* Premier passage (2026-10-13) : l'attribut expanded= l'emporte sur
+     * l'<input>, comme chez l'étalon (la commande a tourné quand même). */
+    if (ed && !ed->lu) {
+        ed->lu = true;
+        if (var->widget_tag_attr && get_tag_attribute(var->widget_tag_attr, "expanded"))
+            v = -1;
+    }
+    if (ed && v >= 0 && (v == 1) != ed->expanded && grp->children() > 0)
+        expander_pose_etat((Fl_Button *)grp->child(0), ed, v == 1);
+    grp->redraw();
 }
 
 void widget_expander_fileselect(variable *var, const char *n, const char *v) {}

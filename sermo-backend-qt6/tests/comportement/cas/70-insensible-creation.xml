@@ -1,0 +1,28 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: grise des la creation, par l attribut sensitive="false" ou la directive <sensitive>false</sensitive> -->
+<window><vbox>
+<entry><variable>M1</variable><default>m1</default></entry>
+<entry><variable>M2</variable><default>m2</default></entry>
+<entry><variable>M3</variable><default>m3</default></entry>
+<entry><variable>M4</variable><default>m4</default></entry>
+<entry><variable>M5</variable><default>m5</default></entry>
+<entry><variable>M6</variable><default>m6</default></entry>
+<entry><variable>M7</variable><default>m7</default></entry>
+<entry sensitive="false"><variable>E1</variable><default>e1</default></entry>
+<entry><variable>E2</variable><default>e2</default><sensitive>false</sensitive></entry>
+<button sensitive="false"><label>b</label><variable export="false">B1</variable><action>echo</action></button>
+<button><label>b</label><variable export="false">B2</variable><sensitive>false</sensitive><action>echo</action></button>
+<checkbox sensitive="false"><label>c</label><variable>C1</variable></checkbox>
+<checkbox><label>c</label><variable>C2</variable><sensitive>false</sensitive></checkbox>
+<entry><variable>TEMOIN</variable><default>t</default></entry>
+<timer visible="false" interval="2"><variable>_T1</variable>
+<action condition="sensitive_is_false(E1)">clear:M1</action>
+<action condition="sensitive_is_false(E2)">clear:M2</action>
+<action condition="sensitive_is_false(B1)">clear:M3</action>
+<action condition="sensitive_is_false(B2)">clear:M4</action>
+<action condition="sensitive_is_false(C1)">clear:M5</action>
+<action condition="sensitive_is_false(C2)">clear:M6</action>
+<action condition="sensitive_is_false(TEMOIN)">clear:M7</action>
+</timer>
+<timer visible="false" interval="3"><variable>_T2</variable><action>exit:fin</action></timer>
+</vbox></window>

@@ -5,6 +5,42 @@ This file summarises changes from the user's point of view.
 For the full technical history, see CHANGELOG.en.md.
 
 ──────────────────────────────────────────────────
+Version 3.0.0
+──────────────────────────────────────────────────
+
+Two new things: the ncurses port leaves Linux, and sermo reads a PLC
+from the XML. Existing dialogs work as they are.
+
+* <input modbus> and <input opcua>: a gauge or a text shows the live
+  value of a Modbus PLC or an OPC UA server (certificates possible),
+  READ-ONLY. Separate packages: sermo-source-modbus, sermo-source-opcua.
+  An unreachable device does not freeze the window.
+
+* Modbus and OPC UA examples (examples/modbus, examples/opcua, package
+  sermo-doc), with a fake PLC and a fake server to try them without
+  hardware.
+
+* "refresh" rereads the <input> of a gauge, a slider, a check box… on
+  the nine ports, like gtk3sermo (seven ports ignored it).
+
+* ncursessermo runs on Windows 10/11 (a single .exe, nothing to
+  install), on Android in Termux, on FreeBSD and on OpenBSD. In Termux,
+  the graphical ports build too (except efl1).
+
+* SERMO_SHELL chooses the shell that runs commands with shell syntax
+  (absolute path of an executable program); /bin/sh by default.
+
+* Built by clang, a dialog laid out its widgets in reverse: fixed.
+
+* gtk4sermo refuses a read-only property, like gtk3sermo.
+
+* efl1sermo and lvglsermo no longer crash when the display cannot be
+  reached: they say "cannot open display" and return exit code 1.
+
+* Hardening: control-flow protection on x86 (CET) and on ARM64
+  (BTI/PAC); FORTIFY takes effect in sermoia-mcp.
+
+──────────────────────────────────────────────────
 Version 2.8.2
 ──────────────────────────────────────────────────
 

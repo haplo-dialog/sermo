@@ -39,6 +39,9 @@ override_dh_auto_build:
 	    dh_auto_configure --sourcedirectory=sermo-backend-$$p --builddirectory=$(B)/$$p -- -DCMAKE_SKIP_RPATH=ON; \
 	    dh_auto_build --sourcedirectory=sermo-backend-$$p --builddirectory=$(B)/$$p; \
 	done
+	# lvgl léger (sermo-backend-lvgl-leger) : même port, sans ThorVG/Lottie.
+	PKG_CONFIG_PATH=$(S)/neutre/lib/pkgconfig dh_auto_configure --sourcedirectory=sermo-backend-lvgl --builddirectory=$(B)/lvgl-leger -- -DCMAKE_SKIP_RPATH=ON -DSERMO_LVGL_LEGER=ON
+	dh_auto_build --sourcedirectory=sermo-backend-lvgl --builddirectory=$(B)/lvgl-leger
 	# Le cœur distribué (sermo-core-dev) : variante neutre, préfixe /usr,
 	# bibliothèque et sermocore.pc dans le répertoire multiarch.
 	dh_auto_configure --sourcedirectory=libsermocore --builddirectory=$(B)/coeur-paquet -- -DSERMOCORE_LIBDIR=$(LIBDIR)
@@ -48,6 +51,10 @@ override_dh_auto_build:
 	sed 's/@PACKAGE_VERSION@/$(DEB_VERSION_UPSTREAM)/' doc/sermo.texi.in > $(B)/sermo.texi
 	makeinfo --no-split -o $(B)/sermo.info $(B)/sermo.texi
 	sed 's/@PACKAGE_VERSION@/$(DEB_VERSION_UPSTREAM)/' doc/sermo.1.in > $(B)/sermo.1
+	# Les programmes d'aide de <input modbus> / <input opcua> (sermo-source/) ;
+	# une bibliothèque absente arrête la construction.
+	dh_auto_configure --sourcedirectory=sermo-source --builddirectory=$(B)/source -- -DSERMO_SOURCE_EXIGER=ON
+	dh_auto_build --sourcedirectory=sermo-source --builddirectory=$(B)/source
 	# Le serveur MCP sermoia (C) : préfixe /usr, catalogue dans <datadir>.
 	dh_auto_configure --sourcedirectory=sermoia-mcp --builddirectory=$(B)/sermoia
 	dh_auto_build --sourcedirectory=sermoia-mcp --builddirectory=$(B)/sermoia
@@ -70,6 +77,9 @@ override_dh_auto_install:
 	set -e; for p in gtk3 gtk4 fltk1 efl1 sdl3 lvgl ncurses html; do \
 	    install -D -m 0755 $(B)/$$p/$${p}sermo debian/sermo-backend-$$p/usr/bin/$${p}sermo; \
 	done
+	install -D -m 0755 $(B)/lvgl-leger/lvglsermo debian/sermo-backend-lvgl-leger/usr/bin/lvglsermo
+	install -D -m 0644 $(B)/sermo.1 debian/sermo-backend-lvgl-leger/usr/share/man/man1/lvglsermo.1
+	install -D -m 0644 $(B)/sermo.info debian/sermo-backend-lvgl-leger/usr/share/info/lvglsermo.info
 	# Pages de manuel : propres à gtk3 et gtk4 ; la page générique pour les autres.
 	set -e; for p in gtk3 gtk4; do \
 	    sed 's/@PACKAGE_VERSION@/$(DEB_VERSION_UPSTREAM)/' sermo-backend-$$p/src/$${p}sermo.1.in > $(B)/$${p}sermo.1; \
@@ -98,6 +108,21 @@ override_dh_auto_install:
 	# jouables sur une machine où sermo est installé.
 	mkdir -p debian/sermo-doc/usr/share/doc/sermo-doc/examples
 	cp -a examples/metiers examples/boites-a-outils debian/sermo-doc/usr/share/doc/sermo-doc/examples/
+	# Lire un automate en lecture seule (Modbus par mbpoll, OPC UA par un petit
+	# client C à compiler) : les SOURCES seulement, fichier par fichier — un
+	# opcua-lire ou un faux-serveur-opcua compilé sur le poste n'entre pas.
+	set -e; for f in modbus/faux-automate.py modbus/modbus-lecture.sh opcua/certificats-essai.sh \
+	    opcua/opcua-lecture.sh; do \
+	    install -D -m 0755 examples/$$f debian/sermo-doc/usr/share/doc/sermo-doc/examples/$$f; \
+	done
+	set -e; for f in opcua/Makefile opcua/faux-serveur-opcua.c opcua/opcua-lire.c; do \
+	    install -D -m 0644 examples/$$f debian/sermo-doc/usr/share/doc/sermo-doc/examples/$$f; \
+	done
+	# Un programme d'aide par paquet, dans le dossier que lit le cœur
+	# (SERMO_SOURCE_DIR_DEFAUT = /usr/libexec/sermo).
+	set -e; for p in modbus opcua; do \
+	    install -D -m 0755 $(B)/source/sermo-source-$$p debian/sermo-source-$$p/usr/libexec/sermo/sermo-source-$$p; \
+	done
 	# sermoia-mcp : binaire et catalogue (règles d'installation de son CMake).
 	dh_auto_install --sourcedirectory=sermoia-mcp --builddirectory=$(B)/sermoia --destdir=debian/sermoia-mcp
 	sed 's/@PACKAGE_VERSION@/$(DEB_VERSION_UPSTREAM)/' sermoia-mcp/sermoia-mcp.1.in > $(B)/sermoia-mcp.1
@@ -130,18 +155,21 @@ override_dh_auto_install:
 #
 # ⚠️ --link-doc ne franchit pas la frontière « all » / « any » : debhelper
 # refuse activement la combinaison depuis le niveau de compatibilité 10. Les
-# onze paquets « any » (le cœur, les neuf backends et sermoia-mcp) gardent leur propre
+# treize paquets « any » (le cœur, les neuf backends, sermoia-mcp et les deux
+# programmes d'aide sermo-source-*) gardent leur propre
 # copyright ; pour eux, le gain vient du changelog amont retiré ci-dessus.
 override_dh_installdocs:
 	dh_installdocs -psermo-doc
 	dh_installdocs -Nsermo-doc -Nsermo-core-dev -Nsermo-backend-gtk3 \
 	  -Nsermo-backend-gtk4 -Nsermo-backend-qt6 -Nsermo-backend-fltk1 \
-	  -Nsermo-backend-efl1 -Nsermo-backend-sdl3 -Nsermo-backend-lvgl \
-	  -Nsermo-backend-ncurses -Nsermo-backend-html -Nsermoia-mcp -Nsermoman-mcp --link-doc=sermo-doc
+	  -Nsermo-backend-efl1 -Nsermo-backend-sdl3 -Nsermo-backend-lvgl -Nsermo-backend-lvgl-leger \
+	  -Nsermo-backend-ncurses -Nsermo-backend-html -Nsermoia-mcp -Nsermoman-mcp \
+	  -Nsermo-source-modbus -Nsermo-source-opcua --link-doc=sermo-doc
 	dh_installdocs -psermo-core-dev -psermo-backend-gtk3 -psermo-backend-gtk4 \
 	  -psermo-backend-qt6 -psermo-backend-fltk1 -psermo-backend-efl1 \
-	  -psermo-backend-sdl3 -psermo-backend-lvgl -psermo-backend-ncurses \
-	  -psermo-backend-html -psermoia-mcp -psermoman-mcp
+	  -psermo-backend-sdl3 -psermo-backend-lvgl -psermo-backend-lvgl-leger -psermo-backend-ncurses \
+	  -psermo-backend-html -psermoia-mcp -psermoman-mcp \
+	  -psermo-source-modbus -psermo-source-opcua
 
 override_dh_installchangelogs:
 	dh_installchangelogs -XCHANGELOG

@@ -1,0 +1,15 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: action refresh sur les widgets a bascule : l <input> est lu juste apres la creation sans jouer d action (un <default> l emporte, sauf <default>false sur un radio), puis chaque refresh qui change l etat bascule comme un clic et joue les actions ; un radio ne se decoche pas par son <input>. Jusqu au 2026-10-13, qt6, fltk1, efl1, sdl3, lvgl, html et ncurses ne lisaient jamais cet <input> -->
+<window><vbox>
+<checkbox><label>c</label><variable>C</variable><input>sh donnees/bascule.sh cpt-c</input><action>echo "C $C" >> journal</action></checkbox>
+<switch><variable>I</variable><input>sh donnees/bascule.sh cpt-i</input><action>echo "I $I" >> journal</action></switch>
+<togglebutton><label>b</label><variable>B</variable><input>sh donnees/bascule.sh cpt-b</input><action>echo "B $B" >> journal</action></togglebutton>
+<radiobutton><label>r1</label><variable>R1</variable><action>echo "R1 $R1" >> journal</action></radiobutton>
+<radiobutton><label>r2</label><variable>R2</variable><input>sh donnees/vrai-ensuite.sh cpt-r2</input><action>echo "R2 $R2" >> journal</action></radiobutton>
+<text><label>-</label></text>
+<radiobutton><label>r3</label><variable>R3</variable><input>sh donnees/bascule.sh cpt-r3</input><action>echo "R3 $R3" >> journal</action></radiobutton>
+<checkbox><label>d</label><variable>D</variable><default>false</default><input>echo true</input></checkbox>
+<radiobutton><label>r4</label><variable>R4</variable></radiobutton>
+<radiobutton><label>r5</label><variable>R5</variable><default>false</default><input>echo true</input></radiobutton>
+<text><variable>J</variable><input>cat journal 2>/dev/null | tr "\n" ";"</input></text>
+<timer visible="false"><variable>_T</variable><action>echo tic >> journal</action><action>refresh:C</action><action>refresh:I</action><action>refresh:B</action><action>refresh:R2</action><action>refresh:R3</action><action>refresh:J</action><action>exit:fin</action></timer></vbox></window>

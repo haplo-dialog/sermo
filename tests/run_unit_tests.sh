@@ -8,6 +8,8 @@
 #    variante GTK4 le compile aussi depuis src/) ;
 #  - tests/unit/test_sermo_input.c : la limite des <input> (2.7.3), contre
 #    libsermocore/src/sermo_input.c ;
+#  - tests/unit/test_sermo_source.c : la traduction de <input modbus> et
+#    <input opcua> (sermo_source.h), contre libsermocore/src/sermo_source.c ;
 #  - tests/unit/test_stringman.c contre libsermocore/src/stringman.c (libcheck) :
 #    source unique elle aussi depuis l'étape 3a.
 #
@@ -45,6 +47,7 @@ else
     bin="$TMP/test_safe_exec"
     if gcc -D_GNU_SOURCE $(pkg-config --cflags glib-2.0) -I"$dossier" -I"$RACINE/libsermocore/include" \
            "$ICI/unit/test_safe_exec.c" "$dossier/safe_exec.c" "$RACINE/libsermocore/src/sermo_input.c" \
+           "$RACINE/libsermocore/src/sermo_lanceur.c" \
            $(pkg-config --libs glib-2.0) -o "$bin" 2>"$TMP/cc.log"; then
         lancer "safe_exec" "$bin"
     else
@@ -55,10 +58,20 @@ fi
 bin="$TMP/test_sermo_input"
 if gcc -D_GNU_SOURCE $(pkg-config --cflags glib-2.0) -I"$RACINE/libsermocore/include" \
        "$ICI/unit/test_sermo_input.c" "$RACINE/libsermocore/src/sermo_input.c" "$RACINE/libsermocore/src/safe_exec.c" \
+       "$RACINE/libsermocore/src/sermo_lanceur.c" \
        $(pkg-config --libs glib-2.0) -o "$bin" 2>"$TMP/cc.log"; then
     lancer "sermo_input" "$bin"
 else
     echo "ÉCHEC DE COMPILATION : sermo_input"; cat "$TMP/cc.log"; echecs=$((echecs + 1))
+fi
+
+bin="$TMP/test_sermo_source"
+if gcc -D_GNU_SOURCE $(pkg-config --cflags glib-2.0) -I"$RACINE/libsermocore/include" \
+       "$ICI/unit/test_sermo_source.c" "$RACINE/libsermocore/src/sermo_source.c" \
+       $(pkg-config --libs glib-2.0) -o "$bin" 2>"$TMP/cc.log"; then
+    lancer "sermo_source" "$bin"
+else
+    echo "ÉCHEC DE COMPILATION : sermo_source"; cat "$TMP/cc.log"; echecs=$((echecs + 1))
 fi
 
 if pkg-config --exists check gtk+-3.0; then

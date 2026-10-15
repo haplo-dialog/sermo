@@ -167,7 +167,8 @@ typedef struct WidgetNode {
 
     /* État persistant (mis à jour par ImGui à chaque frame) */
     union {
-        struct { gboolean checked; }              checkbox;
+        struct { gboolean checked;
+                 gboolean cochable; }             checkbox;   /* cochable : <menuitem checkbox=|radiobutton=> */
         struct { int selected; }                  radio;
         struct { char buf[1024]; }                entry;
         struct { char *content; int len; int cap; } text;
@@ -177,8 +178,12 @@ typedef struct WidgetNode {
             int      digits;       /* <hscale>/<vscale> : décimales exportées,
                                     * comme l'attribut digits= de l'étalon */
         } scale;
-        struct { int current_tab; char **tab_labels; int tab_count; int side; } notebook;   /* side = onglets a gauche */
-        struct { gboolean open; }                 expander;
+        struct { int current_tab; char **tab_labels; int tab_count; int side;
+                 int demande; } notebook;   /* side = onglets a gauche ; demande = page
+                                             * posée par <input> + 1 (0 : aucune), que
+                                             * render.cpp fait choisir à la barre */
+        struct { gboolean open;
+                 gboolean impose, ouvert_impose; } expander;   /* attribut expanded= */
         struct {
             int    selected_index;
             char **items;

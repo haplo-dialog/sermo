@@ -160,7 +160,8 @@ typedef struct WidgetNode {
 
     /* État persistant (mis à jour par ImGui à chaque frame) */
     union {
-        struct { gboolean checked; }              checkbox;
+        struct { gboolean checked;
+                 gboolean cochable; }             checkbox;   /* cochable : <menuitem checkbox=|radiobutton=> */
         struct { int selected; }                  radio;
         struct { char buf[1024]; }                entry;
         struct { char *content; int len; int cap; } text;

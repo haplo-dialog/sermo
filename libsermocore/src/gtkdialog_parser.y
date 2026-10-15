@@ -51,6 +51,7 @@
 #include "attributes.h"
 #include "gtkdialog_parser.h"
 #include "tag_attributes.h"
+#include "sermo_source.h"
 
 int linenumber = 1;
 extern gchar *Token;
@@ -65,6 +66,23 @@ void yyerror_simple(char *c);
 int gtkdialog_lex(void);
 int gtkdialog_error(char *c);
 
+/* <input modbus> / <input opcua> : une commande ordinaire qui lance le
+ * programme d'aide (sermo_source.h) ; une adresse refusée arrête l'analyse. */
+static void
+input_source(const char *protocole, const char *adresse)
+{
+	char raison[160];
+	char message[256];
+	char *commande = sermo_source_commande(protocole, adresse, raison, sizeof raison);
+	if (!commande) {
+		snprintf(message, sizeof message, "<input %s>: %s", protocole, raison);
+		gtkdialog_error(message);
+		return;
+	}
+	token_store_with_argument(SET|ATTR_INPUT|SUB_ATTR_SHELL, commande);
+	free(commande);
+}
+
 static inline void
 start_up(void) 
 {
@@ -78,6 +96,12 @@ start_up(void)
 }
 
 %}
+
+/* Six conflits décalage/réduction attendus, tous sur « != », écrit en deux
+ * jetons ('!' puis '=') sans priorité : bison décale, donc « a + b != c » se lit
+ * « a + (b != c) ». C'est le comportement hérité de gtkdialog ; le changer
+ * changerait le résultat de scripts existants. */
+%expect 6
 
 %union { 
   double     dval;
@@ -123,6 +147,7 @@ start_up(void)
 %token         WIDTH EWIDTH
 %token         HEIGHT EHEIGHT
 %token         INPUT INPUTFILE EINPUT PART_INPUT PART_INPUTFILE
+%token         INPUTMODBUS INPUTOPCUA
 %token         OUTPUT OUTPUTFILE EOUTPUT
 
 %token         ACTION EACTION PART_ACTION 
@@ -1106,6 +1131,19 @@ input
 	}
   | INPUTFILE EINPUT {
 		gtkdialog_error("the <input file> element is empty; it requires a file name.");
+	}
+  | INPUTMODBUS STRING EINPUT {
+		/* Lecture seule d'un automate : voir sermo_source.h. */
+		input_source("modbus", $2);
+	}
+  | INPUTOPCUA STRING EINPUT {
+		input_source("opcua", $2);
+	}
+  | INPUTMODBUS EINPUT {
+		gtkdialog_error("the <input modbus> element is empty; it requires an address (tcp://host:502?registre=1).");
+	}
+  | INPUTOPCUA EINPUT {
+		gtkdialog_error("the <input opcua> element is empty; it requires an address (opc.tcp://host:4840?noeud=…).");
 	}
   ;
 

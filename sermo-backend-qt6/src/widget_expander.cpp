@@ -84,10 +84,22 @@ void widget_expander_clear(variable *var)
     static_cast<QGroupBox *>(var->Widget)->setChecked(false);
 }
 
+/* <input> à chaque « refresh », comme l'étalon : la première ligne vaut
+ * « déplié » si elle dit true/yes (sans casse) ou si atoi() y lit 1, sinon
+ * « replié ». Au premier passage, l'attribut expanded= l'emporte (la commande
+ * tourne quand même). Aucune <action> n'est branchée sur ce widget dans ce
+ * port. Jusqu'au 2026-10-13, l'<input> n'était jamais lu. */
 void widget_expander_refresh(variable *var)
 {
     if (!var || !var->Widget) return;
-    static_cast<QWidget *>(var->Widget)->update();
+    QGroupBox *gb = static_cast<QGroupBox *>(var->Widget);
+    bool premier = !gb->property("sermoLu").toBool();
+    gb->setProperty("sermoLu", true);
+    gint v = widget_input_bool(var->Attributes);
+    if (v < 0) return;
+    if (premier && var->widget_tag_attr && get_tag_attribute(var->widget_tag_attr, "expanded"))
+        return;
+    gb->setChecked(v == 1);
 }
 
 void widget_expander_fileselect(variable *var, const char *n, const char *v) {}

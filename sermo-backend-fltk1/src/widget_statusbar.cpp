@@ -27,6 +27,13 @@
 #include <string.h>
 #include <stdlib.h>
 
+/* Fl_Output + repère du premier passage (faux jusqu'au premier refresh).
+ * Membre du widget : rien à libérer. */
+struct StatusOutput : Fl_Output {
+    bool lu;
+    StatusOutput(int X, int Y, int W, int H) : Fl_Output(X, Y, W, H, nullptr), lu(false) {}
+};
+
 GtkWidget *widget_statusbar_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
     GList *element = NULL;
@@ -38,7 +45,7 @@ GtkWidget *widget_statusbar_create(AttributeSet *Attr, tag_attr *attr, gint Type
         if ((v = get_tag_attribute(attr, "height-request"))) h = atoi(v);
     }
 
-    Fl_Output *sb = new Fl_Output(0, 0, w, h, nullptr);
+    Fl_Output *sb = new StatusOutput(0, 0, w, h);
     sb->box(FL_FLAT_BOX);
     sb->color(FL_BACKGROUND_COLOR);
     sb->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
@@ -76,9 +83,31 @@ void widget_statusbar_clear(variable *var)
     ((Fl_Output *)var->Widget)->value("");
 }
 
+/* <input> : rejoué à chaque « refresh », comme l'étalon gtk3sermo. Jusqu'au
+ * 2026-10-13 il n'était jamais lu. La première ligne devient le message
+ * affiché (et la valeur exportée) ; une ligne vide l'efface. */
 void widget_statusbar_refresh(variable *var)
 {
     if (!var || !var->Widget) return;
+    StatusOutput *so = (StatusOutput *)var->Widget;
+    bool premier = !so->lu;
+    so->lu = true;
+    gchar *ligne = widget_input_line(var->Attributes);
+    /* Premier passage (2026-10-13) : l'étalon pose l'<input> PUIS <label> et
+     * <default> ; s'il y en a un, il l'emporte (la commande a tourné quand
+     * même). La création les a déjà posés : on n'y touche pas. */
+    if (ligne && premier && var->Attributes) {
+        GList *el = NULL, *el2 = NULL;
+        if (attributeset_get_first(&el, var->Attributes, ATTR_LABEL) ||
+            attributeset_get_first(&el2, var->Attributes, ATTR_DEFAULT)) {
+            g_free(ligne);
+            ligne = NULL;
+        }
+    }
+    if (ligne) {
+        ((Fl_Output *)var->Widget)->value(ligne);
+        g_free(ligne);
+    }
     ((Fl_Widget *)var->Widget)->redraw();
 }
 

@@ -46,7 +46,9 @@ GtkWidget *widget_vscale_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         gchar *def = attributeset_get_first(&element, Attr, ATTR_DEFAULT);
         if (def && *def) vval = g_ascii_strtod(def, NULL);
     }
-    vval = widget_command_value(Attr, vval);   /* <input>echo N</input> prioritaire */
+    /* <input> : lu par widget_hscale_refresh() — le cœur y route aussi <vscale> —
+     * appelé juste après la création : le lire aussi ici exécuterait la
+     * commande deux fois. */
 
     /* Voir widget_hscale.cpp : QSlider est entier, on met l'axe à l'échelle
      * de 10^digits pour honorer l'attribut digits=. */

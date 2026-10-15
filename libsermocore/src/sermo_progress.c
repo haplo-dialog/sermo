@@ -51,9 +51,28 @@ struct sermo_progress {
 	int                         actions_faites;
 	int                         en_lecture;
 	int                         a_liberer;
+	int                         en_attente;   /* compté dans barres_en_attente */
 	sermo_progress_fraction_cb  on_fraction;
 	sermo_progress_text_cb      on_text;
 };
+
+/* Barres dont la commande n'a encore rien montré : --render-png les attend
+ * (sermo_progress_en_attente). La capture partait sinon avant la première
+ * ligne — « Progression (doit afficher 65 %) » vide sous qt6 et efl1. */
+static int barres_en_attente = 0;
+
+static void quitter_attente(sermo_progress *p)
+{
+	if (p->en_attente) {
+		p->en_attente = 0;
+		barres_en_attente--;
+	}
+}
+
+int sermo_progress_en_attente(void)
+{
+	return barres_en_attente;
+}
 
 static void fermer(sermo_progress *p)
 {
@@ -99,6 +118,7 @@ static void appliquer_ligne(sermo_progress *p)
 
 	p->ligne[p->lg] = '\0';
 	p->lg = 0;
+	quitter_attente(p);
 
 	valeur = strtol(p->ligne, &fin, 0);
 	fraction = valeur / 100.0;
@@ -159,6 +179,12 @@ sermo_progress *sermo_progress_start(void *widget, void *Attr,
 	p->on_fraction = on_fraction;
 	p->on_text = on_text;
 
+#ifdef _WIN32
+	/* Windows : pas de O_NONBLOCK sur un tube anonyme. sermo_progress_poll
+	 * demande d'abord combien d'octets sont prêts (PeekNamedPipe). */
+	(void)drapeaux;
+	return p;
+#else
 	drapeaux = fcntl(p->fd, F_GETFL);
 	if (drapeaux == -1 || fcntl(p->fd, F_SETFL, drapeaux | O_NONBLOCK) == -1) {
 		/* Un tube bloquant figerait la boucle du toolkit : on refuse. */
@@ -166,7 +192,10 @@ sermo_progress *sermo_progress_start(void *widget, void *Attr,
 		free(p);
 		return NULL;
 	}
+	p->en_attente = 1;
+	barres_en_attente++;
 	return p;
+#endif
 }
 
 int sermo_progress_poll(sermo_progress *p)
@@ -180,7 +209,18 @@ int sermo_progress_poll(sermo_progress *p)
 
 	p->en_lecture = 1;
 	while (!fini && !p->a_liberer && lus < LECTURE_MAX_PAR_POLL) {
-		ssize_t n = read(p->fd, tampon, sizeof tampon);
+		size_t demande = sizeof tampon;
+#ifdef _WIN32
+		/* Sans O_NONBLOCK : ne lire que ce qui est prêt. -1 = l'autre bout
+		 * est fermé (fin) ; -2 = un fichier, qui se lit sans attendre. */
+		long prets = sermo_win32_octets_prets(p->fd);
+
+		if (prets == 0)
+			break;   /* rien de plus pour l'instant */
+		if (prets > 0 && (size_t)prets < demande)
+			demande = (size_t)prets;
+#endif
+		ssize_t n = read(p->fd, tampon, demande);
 
 		if (n > 0) {
 			lus += (size_t)n;
@@ -210,6 +250,7 @@ int sermo_progress_poll(sermo_progress *p)
 	p->en_lecture = 0;
 
 	if (fini || p->a_liberer) {
+		quitter_attente(p);
 		fermer(p);
 		free(p);
 		return 0;
@@ -225,6 +266,7 @@ void sermo_progress_free(sermo_progress *p)
 		p->a_liberer = 1;
 		return;
 	}
+	quitter_attente(p);
 	fermer(p);
 	free(p);
 }

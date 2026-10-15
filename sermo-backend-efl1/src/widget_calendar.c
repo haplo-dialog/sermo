@@ -107,7 +107,41 @@ void widget_calendar_clear(variable *v) {
     cal_store_date((Evas_Object *)v->Widget, t.tm_year+1900, t.tm_mon+1, t.tm_mday);
     elm_calendar_selected_time_set((Evas_Object *)v->Widget, &t);
 }
-void widget_calendar_refresh(variable *v) {}
+/* <input> : rejoué à chaque « refresh », comme l'étalon gtk3sermo. Première
+ * ligne « AAAA-MM-JJ » (mois et jour bornés) → date choisie et exportée. Au
+ * premier passage, un <default> lisible l'emporte : l'étalon l'applique après.
+ * Le rappel « changed » est retiré pendant la pose : il relirait la date par le
+ * round-trip bogué décrit en tête. Jusqu'au 2026-10-13 il n'était jamais lu. */
+void widget_calendar_refresh(variable *v)
+{
+    Evas_Object *cal;
+    gchar *ligne;
+    gboolean premier;
+    int y = 0, m = 0, d = 0;
+
+    if (!v || !v->Widget) return;
+    cal = (Evas_Object *)v->Widget;
+    premier = widget_input_premier(v->Widget);
+    ligne = widget_input_line(v->Attributes);
+    if (!ligne) return;
+    if (sscanf(ligne, "%d-%d-%d", &y, &m, &d) == 3) {
+        GList *el = NULL;
+        gchar *def = premier ? attributeset_get_first(&el, v->Attributes, ATTR_DEFAULT)
+                             : NULL;
+        int py, pm, pd;
+        if (!(def && strlen(def) >= 10 && sscanf(def, "%d-%d-%d", &py, &pm, &pd) == 3)) {
+            struct tm t = {0};
+            m = CLAMP(m, 1, 12);
+            d = CLAMP(d, 1, 31);
+            t.tm_year = y - 1900; t.tm_mon = m - 1; t.tm_mday = d; t.tm_isdst = -1;
+            evas_object_smart_callback_del(cal, "changed", cal_changed_cb);
+            elm_calendar_selected_time_set(cal, &t);
+            evas_object_smart_callback_add(cal, "changed", cal_changed_cb, NULL);
+            cal_store_date(cal, y, m, d);
+        }
+    }
+    g_free(ligne);
+}
 void widget_calendar_fileselect(variable *v, const char *n, const char *val) {}
 void widget_calendar_removeselected(variable *v) {}
 void widget_calendar_save(variable *v) {}

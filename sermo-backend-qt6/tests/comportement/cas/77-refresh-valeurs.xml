@@ -1,0 +1,17 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: action refresh : l <input> de calendar, colorbutton, fontbutton, searchentry, statusbar, infobar, linkbutton, expander et notebook est rejoue a chaque refresh, et la valeur suit sans jouer d action (qt6, fltk1, efl1, sdl3, lvgl, html, ncurses ne lisaient jamais cet <input> jusqu au 2026-10-13) -->
+<window><vbox>
+<calendar><variable>CA</variable><input>sh donnees/valeur.sh date cpt-ca</input><action>echo CA >> journal</action></calendar>
+<colorbutton><variable>CO</variable><input>sh donnees/valeur.sh couleur cpt-co</input><action>echo CO >> journal</action></colorbutton>
+<fontbutton><variable>FO</variable><input>sh donnees/valeur.sh police cpt-fo</input><action>echo FO >> journal</action></fontbutton>
+<searchentry><variable>SE</variable><input>sh donnees/valeur.sh texte cpt-se</input></searchentry>
+<statusbar><variable>ST</variable><input>sh donnees/valeur.sh texte cpt-st</input><action>echo ST >> journal</action></statusbar>
+<infobar><variable>IN</variable><input>sh donnees/valeur.sh texte cpt-in</input><action>echo IN >> journal</action></infobar>
+<linkbutton><label>lien</label><variable>LI</variable><input>sh donnees/valeur.sh uri cpt-li</input><action>echo LI >> journal</action></linkbutton>
+<expander><vbox><text><label>x</label></text></vbox><label>e</label><variable>EX</variable><input>sh donnees/valeur.sh bascule cpt-ex</input><action>echo EX >> journal</action></expander>
+<notebook labels="a|b|c"><text><label>x</label></text><text><label>y</label></text><text><label>z</label></text><variable>NO</variable><input>sh donnees/valeur.sh page cpt-no</input><action>echo NO >> journal</action></notebook>
+<text><variable>J</variable><input>cat journal 2>/dev/null | tr "\n" ";"</input></text>
+<timer visible="false"><variable>_T</variable><action>echo tic >> journal</action>
+<action>refresh:CA</action><action>refresh:CO</action><action>refresh:FO</action><action>refresh:SE</action><action>refresh:ST</action><action>refresh:IN</action><action>refresh:LI</action><action>refresh:EX</action><action>refresh:NO</action>
+<action>refresh:CA</action><action>refresh:CO</action><action>refresh:FO</action><action>refresh:SE</action><action>refresh:ST</action><action>refresh:IN</action><action>refresh:LI</action><action>refresh:EX</action><action>refresh:NO</action>
+<action>refresh:J</action><action>exit:fin</action></timer></vbox></window>

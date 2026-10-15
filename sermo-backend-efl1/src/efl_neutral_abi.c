@@ -17,6 +17,8 @@
  * haplo-dialog <devel@haplo-dialog.fr>
  */
 #include "efl-compat.h"   /* Evas/Elementary + helpers efl_container_add / efl_scrolled_new */
+#include "sermo_progress.h"   /* sermo_progress_en_attente() : --render-png */
+#include <unistd.h>
 #include <Ecore_Evas.h>   /* moteur buffer : ecore_evas_manual_render, *_buffer_pixels_get */
 #include "efl-globals.h"  /* g_efl_main_win */
 #include <stdio.h>
@@ -70,6 +72,14 @@ static int efl_render_png(const char *path)
         ecore_main_loop_iterate();
         evas_smart_objects_calculate(e);
     }
+    /* Une <progressbar> lit sa commande par une minuterie : attendre sa
+     * première ligne, une seconde au plus (sermo_progress_en_attente). */
+    for (i = 0; i < 200 && sermo_progress_en_attente() > 0; i++) {
+        ecore_main_loop_iterate();
+        usleep(5000);
+    }
+    evas_smart_objects_calculate(e);
+    ecore_main_loop_iterate();
     ecore_evas_manual_render(ee);
 
     /* Pixels du moteur buffer : ARGB32 prémultiplié, w*h*4 octets. */

@@ -27,6 +27,13 @@ for t in xvfb-run xdotool timeout; do
 	command -v "$t" >/dev/null || { echo "outil manquant : $t" >&2; exit 2; }
 done
 
+# efl1 : moteur logiciel imposé (s'il n'est pas déjà choisi). Sous Xvfb chargé,
+# Elementary choisit parfois le moteur opengl_x11, qui échoue faute de DRI3 : pas
+# de fenêtre, abandon au démarrage — un widget ou un exemple différent à chaque
+# passe de ci/bancs.sh. Mesuré le 2026-10-12, 300 lancements, tous les cœurs
+# occupés : 7 morts sans, 0 avec. ELM_ACCEL=none ne suffit pas (10 sur 300).
+case "$(basename "$BIN")" in efl1*) export ELM_ENGINE="${ELM_ENGINE:-software_x11}" ;; esac
+
 # Attente maximale de la fenêtre, en secondes (sondée toutes les 0,2 s). La CI
 # la relève : ses exécuteurs partagés sont parfois beaucoup plus lents.
 DELAI="${CLIC_DELAY:-12}"
@@ -56,7 +63,7 @@ clic() {
 			sleep 0.2
 		done
 		if [ -z "$WID" ] && ! kill -0 $pid 2>/dev/null &&
-		   grep -qiE "could not connect to display|cannot open display|can.t open display|unable to open display" "$3"; then
+		   grep -qiE "could not connect to display|cannot open display|can.t open display|unable to open display|failed to open display|no available video device" "$3"; then
 			echo NODISPLAY; exit 0
 		fi
 		[ -z "$WID" ] && { kill $pid 2>/dev/null; echo NOWIN; exit 0; }

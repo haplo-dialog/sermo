@@ -41,9 +41,15 @@
 #include "variables.h"
 #include "automaton.h"
 
+/* Contrat : rend une chaîne ALLOUÉE (ou NULL), à libérer par g_free(). */
 char *widget_get_text_value(GtkWidget *widget, int type);
 FILE *widget_opencommand(const char *command);
 gchar *widget_input_text(AttributeSet *Attr);
+gchar *widget_input_ligne(AttributeSet *Attr); /* 1re ligne sans CR/LF, NULL si rien n'est lisible */
+gint widget_input_bool(AttributeSet *Attr);   /* 1, 0, ou -1 si rien n'est lisible */
+void widget_bascule_lire(variable *var);     /* <input> d'une case, d'un interrupteur, d'un bouton à bascule */
+int  sermo_be_widget_activate(void *w);       /* bascule comme un clic (render) */
+void sermo_be_bascule_jouer(void *w, int actif);   /* joue ses actions de bascule (render) */
 gchar **widget_input_lines(AttributeSet *Attr);
 char *widgets_to_str(int itype);
 gboolean widget_connect_signals(GtkWidget *widget, AttributeSet *Attr);

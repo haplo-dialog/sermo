@@ -41,9 +41,13 @@
 #include "variables.h"
 #include "automaton.h"
 
+/* Contrat : rend une chaîne ALLOUÉE (ou NULL), à libérer par g_free(). */
 char *widget_get_text_value(GtkWidget *widget, int type);
 FILE *widget_opencommand(const char *command);
 gchar *widget_input_text(AttributeSet *Attr);
+gint widget_input_bool(AttributeSet *Attr);   /* 1, 0, ou -1 si rien n'est lisible */
+gchar *widget_input_line(AttributeSet *Attr); /* 1re ligne sans CR/LF, NULL si aucune */
+gboolean widget_input_premier(GtkWidget *widget); /* vrai au 1er refresh du widget */
 gchar **widget_input_lines(AttributeSet *Attr);
 char *widgets_to_str(int itype);
 gboolean widget_connect_signals(GtkWidget *widget, AttributeSet *Attr);

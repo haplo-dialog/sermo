@@ -1,0 +1,13 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: radio : choisir R2 joue ses actions (if true) et celles de R1 qui se decoche (if false) -->
+<window><vbox>
+<entry><variable>A</variable><default>a</default></entry>
+<entry><variable>B</variable><default>b</default></entry>
+<entry><variable>C</variable><default>c</default></entry>
+<radiobutton><label>un</label><variable>R1</variable>
+<action>if false clear:A</action><action>if true clear:C</action></radiobutton>
+<radiobutton><label>deux</label><variable>R2</variable>
+<action>if true clear:B</action></radiobutton>
+<timer visible="false" interval="2"><variable>_T1</variable><action>activate:R2</action></timer>
+<timer visible="false" interval="3"><variable>_T2</variable><action>exit:fin</action></timer>
+</vbox></window>

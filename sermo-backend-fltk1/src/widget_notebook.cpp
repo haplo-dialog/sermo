@@ -54,7 +54,8 @@
  * On repositionne chaque page nous-memes : barre toujours en haut. */
 class SermoTabs : public Fl_Tabs {
 public:
-    SermoTabs(int X, int Y, int W, int H) : Fl_Tabs(X, Y, W, H, nullptr) {}
+    bool lu;   /* repère du premier passage : faux jusqu'au premier refresh */
+    SermoTabs(int X, int Y, int W, int H) : Fl_Tabs(X, Y, W, H, nullptr), lu(false) {}
     void resize(int X, int Y, int W, int H) override {
         Fl_Widget::resize(X, Y, W, H);
         for (int i = 0; i < children(); i++) {
@@ -75,7 +76,8 @@ public:
     Fl_Flex   *col;
     Fl_Wizard *wiz;
     int        colw;
-    SermoSideTabs(int X, int Y, int W, int H, int cw) : Fl_Group(X, Y, W, H, nullptr), colw(cw) {
+    bool       lu;   /* repère du premier passage : faux jusqu'au premier refresh */
+    SermoSideTabs(int X, int Y, int W, int H, int cw) : Fl_Group(X, Y, W, H, nullptr), colw(cw), lu(false) {
         col = new Fl_Flex(X, Y, cw, H, Fl_Flex::COLUMN);
         col->gap(2); col->margin(2, 2); col->end();
         wiz = new Fl_Wizard(X + cw + 4, Y, W - cw - 4, H);
@@ -267,9 +269,39 @@ void widget_notebook_clear(variable *var)
         tabs->value(tabs->child(0));
 }
 
+/* <input> : rejoué à chaque « refresh », comme l'étalon gtk3sermo. Jusqu'au
+ * 2026-10-13 il n'était jamais lu. La première ligne, par atoi(), donne la
+ * page courante (base 0). Règle de gtk_notebook_set_current_page() : négatif
+ * = dernière page, au-delà du nombre de pages = rien. Posée sans jouer
+ * d'action (value() de FLTK n'appelle pas le rappel). */
 void widget_notebook_refresh(variable *var)
 {
     if (!var || !var->Widget) return;
+    gchar *ligne = widget_input_line(var->Attributes);
+    /* Premier passage (2026-10-13) : la page ne change PAS, comme chez
+     * l'étalon (la commande a tourné quand même). */
+    bool *lu = ((Fl_Widget *)var->Widget)->user_data() == &SERMO_SIDETABS_TAG
+        ? &((SermoSideTabs *)var->Widget)->lu : &((SermoTabs *)var->Widget)->lu;
+    if (!*lu) {
+        *lu = true;
+        g_free(ligne);
+        ligne = NULL;
+    }
+    if (ligne) {
+        int page = atoi(ligne);
+        g_free(ligne);
+        if (((Fl_Widget *)var->Widget)->user_data() == &SERMO_SIDETABS_TAG) {
+            SermoSideTabs *st = (SermoSideTabs *)var->Widget;
+            int n = st->wiz->children();
+            if (page < 0) page = n - 1;
+            if (page >= 0 && page < n) st->select(page);
+        } else {
+            Fl_Tabs *tabs = (Fl_Tabs *)var->Widget;
+            int n = tabs->children();
+            if (page < 0) page = n - 1;
+            if (page >= 0 && page < n) tabs->value(tabs->child(page));
+        }
+    }
     ((Fl_Widget *)var->Widget)->redraw();
 }
 

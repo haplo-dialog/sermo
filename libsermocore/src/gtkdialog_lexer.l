@@ -765,6 +765,8 @@ gchar *Token;
 \<input\>        			{ Token="<input>"; return(INPUT);   			}
 \<\/input\>      			{ Token="</input>"; return(EINPUT);   			}
 \<\input\ file\> 			{ Token="<input file>"; return(INPUTFILE);   		}
+\<input\ modbus\> 			{ Token="<input modbus>"; return(INPUTMODBUS);   	}
+\<input\ opcua\>  			{ Token="<input opcua>"; return(INPUTOPCUA);   		}
 \<\input\ file[ ]+ 			{ Token="<input file>"; 
 					  BEGIN(ST_TAG_ATTR);
 					  return(PART_INPUTFILE);   				}

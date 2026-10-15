@@ -67,19 +67,23 @@ if(SERMOCORE_GTK4)
     # journalisation g_* est disponible en GTK4. (étapes 3a-3b)
     ${CMAKE_CURRENT_SOURCE_DIR}/src/actions.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/safe_exec.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/sermo_lanceur.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/stack.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/attributes.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/stringman.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/sermo_icon_theme.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/sermo_input.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/sermo_source.c
     ${CMAKE_CURRENT_SOURCE_DIR}/src/sermo_focus.c
     ${FLEX_SermoLexer_OUTPUTS} ${BISON_SermoParser_OUTPUTS})
 else()
   set(CORE_SRC
     src/gtkdialog.c
-    src/safe_exec.c src/variables.c src/stack.c src/automaton.c src/attributes.c
+    src/safe_exec.c src/sermo_lanceur.c
+    src/variables.c src/stack.c src/automaton.c src/attributes.c
     src/signals.c src/stringman.c src/actions.c src/tag_attributes.c src/sermo_icon_theme.c
     src/sermo_input.c
+    src/sermo_source.c
     src/sermo_focus.c
     ${FLEX_SermoLexer_OUTPUTS} ${BISON_SermoParser_OUTPUTS})
   if(NOT SERMOCORE_GLIB)
@@ -90,6 +94,71 @@ else()
 endif()
 
 add_library(sermocore STATIC ${CORE_SRC})
+
+# La limite des <input> (sermo_input.c) enveloppe le flux lu : fopencookie
+# (glibc, musl), sinon funopen (bionic d'Android, macOS, BSD). Essayé ici, pas
+# deviné d'après le nom du système. Sans l'un ni l'autre (Windows), pas de
+# limite pour l'instant.
+include(CheckSymbolExists)
+set(CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
+check_symbol_exists(fopencookie "stdio.h" SERMO_A_FOPENCOOKIE)
+if(NOT SERMO_A_FOPENCOOKIE)
+  check_symbol_exists(funopen "stdio.h" SERMO_A_FUNOPEN)
+  if(SERMO_A_FUNOPEN)
+    target_compile_definitions(sermocore PRIVATE SERMO_HAVE_FUNOPEN=1)
+  endif()
+endif()
+unset(CMAKE_REQUIRED_DEFINITIONS)
+
+# strtod_l (nombres d'un XML lus en locale C) : glibc, musl, FreeBSD et macOS
+# (par <xlocale.h>) l'ont, OpenBSD non. Sans lui, les shims passent par
+# uselocale (SERMO_SANS_STRTOD_L). Essayé, pas deviné.
+include(CheckIncludeFile)
+include(CheckSymbolExists)
+check_include_file(xlocale.h SERMO_A_XLOCALE_H)
+set(_sermo_entetes_strtod "stdlib.h;locale.h")
+if(SERMO_A_XLOCALE_H)
+  list(APPEND _sermo_entetes_strtod "xlocale.h")
+endif()
+set(CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
+check_symbol_exists(strtod_l "${_sermo_entetes_strtod}" SERMO_A_STRTOD_L)
+unset(CMAKE_REQUIRED_DEFINITIONS)
+if(NOT SERMO_A_STRTOD_L AND NOT WIN32)
+  target_compile_definitions(sermocore PRIVATE SERMO_SANS_STRTOD_L=1)
+endif()
+
+# Lanceur (sermo_lanceur.c) : pipe2 et execvpe manquent à macOS ; sans eux,
+# pipe + FD_CLOEXEC et environ + execvp. Essayé, pas deviné.
+if(NOT WIN32)
+  set(CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
+  check_symbol_exists(pipe2 "unistd.h;fcntl.h" SERMO_A_PIPE2)
+  check_symbol_exists(execvpe "unistd.h" SERMO_A_EXECVPE)
+  unset(CMAKE_REQUIRED_DEFINITIONS)
+  if(NOT SERMO_A_PIPE2)
+    target_compile_definitions(sermocore PRIVATE SERMO_SANS_PIPE2=1)
+  endif()
+  if(NOT SERMO_A_EXECVPE)
+    target_compile_definitions(sermocore PRIVATE SERMO_SANS_EXECVPE=1)
+  endif()
+endif()
+# macOS : avec _POSIX_C_SOURCE, ses en-têtes cachent leurs extensions
+# (strtod_l, funopen…) ; _DARWIN_C_SOURCE les rend.
+if(APPLE)
+  target_compile_definitions(sermocore PRIVATE _DARWIN_C_SOURCE=1)
+endif()
+
+# Le shell du repli « sh -c » quand SERMO_SHELL n'est pas posée. /bin/sh
+# partout où il existe ; un système qui le range ailleurs (Termux…) le dit ici.
+set(SERMO_SHELL_DEFAUT "/bin/sh" CACHE STRING "Shell du repli « -c » de safe_system/safe_popen, sans SERMO_SHELL")
+set_source_files_properties(src/sermo_lanceur.c ${CMAKE_CURRENT_SOURCE_DIR}/src/sermo_lanceur.c
+  PROPERTIES COMPILE_DEFINITIONS "SERMO_SHELL_DEFAUT=\"${SERMO_SHELL_DEFAUT}\"")
+
+# Windows : réglages de console, dans un objet à part compilé SANS le shim
+# (<windows.h> y entrerait en collision avec les noms du cœur).
+if(WIN32)
+  add_library(sermocore_win32 OBJECT src/sermo_win32.c)
+  target_sources(sermocore PRIVATE $<TARGET_OBJECTS:sermocore_win32>)
+endif()
 
 # VTE pour <terminal> (variantes GLib et GTK4) — voir l'option SERMOCORE_VTE.
 function(sermocore_vte module paquet)
@@ -112,9 +181,38 @@ set_target_properties(sermocore PROPERTIES OUTPUT_NAME sermocore POSITION_INDEPE
 target_include_directories(sermocore PUBLIC include ${CMAKE_CURRENT_BINARY_DIR})
 # Une seule source pour le numéro de version : project(VERSION) ci-dessus.
 target_compile_definitions(sermocore PRIVATE PACKAGE_VERSION="${PROJECT_VERSION}")
+# Protection du flot de contrôle selon le processeur : CET sur x86
+# (-fcf-protection), BTI/PAC sur ARM64 (-mbranch-protection). Écrite en dur,
+# -fcf-protection arrêtait toute construction ARM64 : « option 'cf-protection'
+# cannot be specified on this target » (clang 21, Termux, mesuré le 2026-10-12).
+include(CheckCCompilerFlag)
+check_c_compiler_flag(-fcf-protection=full SERMO_A_CF_PROTECTION)
+check_c_compiler_flag(-mbranch-protection=standard SERMO_A_BRANCH_PROTECTION)
+if(SERMO_A_CF_PROTECTION)
+  set(SERMO_FLOT_CONTROLE -fcf-protection=full)
+elseif(SERMO_A_BRANCH_PROTECTION)
+  set(SERMO_FLOT_CONTROLE -mbranch-protection=standard)
+else()
+  set(SERMO_FLOT_CONTROLE "")
+endif()
+# -fstack-clash-protection : gardé si le compilateur l'accepte (clang d'OpenBSD
+# l'ignorait avec un avertissement par fichier ; celui d'Apple peut le refuser).
+# clang l'accepte à l'essai puis l'ignore fichier par fichier (« argument
+# unused », 79 fois sous macOS le 2026-10-13) : chez lui, cet avertissement
+# compte comme un refus.
+if(CMAKE_C_COMPILER_ID MATCHES "Clang")
+  set(CMAKE_REQUIRED_FLAGS "-Werror=unused-command-line-argument")
+endif()
+check_c_compiler_flag(-fstack-clash-protection SERMO_A_STACK_CLASH)
+unset(CMAKE_REQUIRED_FLAGS)
+if(SERMO_A_STACK_CLASH)
+  set(SERMO_PILE_CLASH -fstack-clash-protection)
+else()
+  set(SERMO_PILE_CLASH "")
+endif()
 target_compile_options(sermocore PRIVATE
   -std=gnu11
-  -D_FORTIFY_SOURCE=3 -fstack-protector-strong -fstack-clash-protection -fcf-protection=full
+  -D_FORTIFY_SOURCE=3 -fstack-protector-strong ${SERMO_PILE_CLASH} ${SERMO_FLOT_CONTROLE}
   -fPIC)
 
 if(SERMOCORE_GTK4)

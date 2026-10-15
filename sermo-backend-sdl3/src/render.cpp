@@ -452,6 +452,88 @@ static void export_bool(const char *var, bool val)
     set_widget_env_var(var, val ? "true" : "false");
 }
 
+/* Widgets à bascule (case à cocher, bouton radio, bouton à bascule,
+ * interrupteur) : leurs actions jouent à chaque changement d'état, « if true »/
+ * « if false » compris. */
+static void bascule_jouer(WidgetNode *n, int actif)
+{
+    if (n->var_name) export_bool(n->var_name, actif);   /* pour --do et les commandes */
+    if (n->actions_attr && n->type == WT_SWITCH)
+        jouer_actions_interrupteur((GtkWidget *)n, (AttributeSet *)n->actions_attr, actif);
+    else if (n->actions_attr)
+        jouer_actions_bascule((GtkWidget *)n, (AttributeSet *)n->actions_attr, actif);
+    else if (n->action && *n->action)
+        execute_action((GtkWidget *)n, n->action, NULL);
+}
+
+/* Pour widget_radiobutton.c : le bouton radio qu'un autre remplace au départ
+ * (son <default> ou son <input>) joue ses actions « décoché », comme chez
+ * l'étalon, où elles sont déjà branchées. */
+extern "C" void sermo_be_bascule_jouer(void *w, int actif)
+{
+    if (w) bascule_jouer((WidgetNode *)w, actif);
+}
+
+/* Bascule comme un clic de l'étalon. Un bouton radio choisi le reste ; en
+ * choisir un décoche ses frères de la même boîte (le groupe du cœur), qui
+ * jouent leurs actions « décoché » d'abord, comme GTK. */
+static void basculer(WidgetNode *n)
+{
+    if (n->type == WT_RADIOBUTTON) {
+        if (n->state.toggle.active) return;
+        n->state.toggle.active = TRUE;
+        if (n->parent)
+            for (int i = 0; i < n->parent->child_count; i++) {
+                WidgetNode *f = n->parent->children[i];
+                if (f == n || f->type != WT_RADIOBUTTON || !f->state.toggle.active) continue;
+                f->state.toggle.active = FALSE;
+                bascule_jouer(f, FALSE);
+            }
+        bascule_jouer(n, TRUE);
+        return;
+    }
+    n->state.toggle.active = !n->state.toggle.active;
+    bascule_jouer(n, n->state.toggle.active);
+}
+
+/* Crochet du contrat : « activate:NOM » bascule les widgets à bascule (le shim
+ * fait de gtk_widget_activate() un FALSE). La prochaine image suit l'état. */
+extern "C" int sermo_be_widget_activate(void *w)
+{
+    WidgetNode *n = (WidgetNode *)w;
+    if (!n) return 0;
+    switch (n->type) {
+    case WT_CHECKBOX: case WT_RADIOBUTTON: case WT_TOGGLEBUTTON: case WT_SWITCH:
+        basculer(n);
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+/* Crochet du contrat : l'état d'un widget pour condition="active_is_…/
+ * sensitive_is_…/visible_is_…(NOM)" (le shim ne sait rien des nœuds).
+ * quoi : 0 = actif, 1 = sensible, 2 = visible ; -1 = je ne sais pas. */
+extern "C" int sermo_be_widget_etat(void *w, int quoi)
+{
+    WidgetNode *n = (WidgetNode *)w;
+    if (!n) return -1;
+    switch (quoi) {
+    case 0:
+        switch (n->type) {
+        case WT_CHECKBOX: case WT_RADIOBUTTON: case WT_TOGGLEBUTTON: case WT_SWITCH:
+            return n->state.toggle.active ? 1 : 0;
+        case WT_EXPANDER:
+            return n->state.expander.open ? 1 : 0;
+        default:
+            return -1;
+        }
+    case 1: return n->sensitive ? 1 : 0;
+    case 2: return n->visible ? 1 : 0;
+    default: return -1;
+    }
+}
+
 static void export_float(const char *var, float val)
 {
     char buf[32];
@@ -689,23 +771,18 @@ static void render_widget(WidgetNode *node)
     /* ── CHECKBOX ────────────────────────────────────────────────────────── */
     case WT_CHECKBOX: {
         bool checked = node->state.toggle.active;
-        if (ImGui::Checkbox(label, &checked)) {
-            node->state.toggle.active = checked;
-            if (node->var_name)
-                export_bool(node->var_name, node->state.toggle.active);
-        }
+        if (ImGui::Checkbox(label, &checked) && checked != (bool)node->state.toggle.active)
+            basculer(node);   /* exit:… peut sortir ici */
         break;
     }
 
     /* ── RADIOBUTTON ─────────────────────────────────────────────────────── */
     case WT_RADIOBUTTON: {
-        /* Les radiobuttons du même groupe partagent var_name */
+        /* Le groupe : les boutons radio de la même boîte (basculer()). Chacun
+         * a sa variable, "true" pour le choisi, comme l'étalon. */
         bool selected = node->state.toggle.active;
-        if (ImGui::RadioButton(label, selected)) {
-            node->state.toggle.active = true;
-            if (node->var_name)
-                set_widget_env_var(node->var_name, node->label ? node->label : "");
-        }
+        if (ImGui::RadioButton(label, selected) && !selected)
+            basculer(node);   /* exit:… peut sortir ici */
         break;
     }
 
@@ -833,11 +910,8 @@ static void render_widget(WidgetNode *node)
         snprintf(sw_label, sizeof(sw_label), "%s  %s%s",
                  node->label ? node->label : "",
                  on ? "●" : "○", id);
-        if (ImGui::Button(sw_label, {sz.x > 0 ? sz.x : 80.0f, 24.0f})) {
-            node->state.toggle.active = !on;
-            if (node->var_name)
-                export_bool(node->var_name, node->state.toggle.active);
-        }
+        if (ImGui::Button(sw_label, {sz.x > 0 ? sz.x : 80.0f, 24.0f}))
+            basculer(node);   /* exit:… peut sortir ici */
         ImGui::PopStyleColor(3);
         break;
     }
@@ -1180,7 +1254,10 @@ static void render_widget(WidgetNode *node)
     /* ── NOTEBOOK (tabs) ─────────────────────────────────────────────────── */
     case WT_NOTEBOOK: {
         if (node->state.notebook.side) {
-            /* tab-pos="left" : colonne de selecteurs + contenu a droite */
+            /* tab-pos="left" : colonne de selecteurs + contenu a droite. Les
+             * selecteurs lisent current_tab : la page posee par <input> s'y
+             * voit sans autre demande (2026-10-13). */
+            node->state.notebook.demande = 0;
             float colw = 90.0f;
             for (int i = 0; i < node->child_count; i++) {
                 const char *l = (node->state.notebook.tab_labels && i < node->state.notebook.tab_count)
@@ -1212,10 +1289,21 @@ static void render_widget(WidgetNode *node)
             break;
         }
         if (ImGui::BeginTabBar(id)) {
+            /* Page posee par <input> (widget_notebook_refresh, +1 ; 0 : aucune).
+             * La barre ImGui garde son propre choix : SetSelected le lui fait
+             * prendre, mais seulement a l'image suivante. Tant que la demande
+             * court, l'onglet encore montre ne doit donc pas ecraser
+             * current_tab ; elle s'eteint quand la page demandee est montree.
+             * Hors demande, l'onglet montre (clic) devient current_tab, que
+             * l'export rend. Jusqu'au 2026-10-13 la barre ignorait current_tab
+             * et un clic ne le changeait pas. */
+            const int demande = node->state.notebook.demande;
             for (int i = 0; i < node->child_count; i++) {
                 WidgetNode *tab = node->children[i];
                 char tl_buf[32];
                 const char *tab_label = NULL;
+                ImGuiTabItemFlags tf = (demande == i + 1) ? ImGuiTabItemFlags_SetSelected
+                                                          : ImGuiTabItemFlags_None;
                 /* libelles d'onglets : tab-labels="A|B|C" du notebook */
                 if (node->state.notebook.tab_labels &&
                     i < node->state.notebook.tab_count)
@@ -1226,7 +1314,11 @@ static void render_widget(WidgetNode *node)
                     snprintf(tl_buf, sizeof(tl_buf), "Onglet %d", i + 1);
                     tab_label = tl_buf;
                 }
-                if (ImGui::BeginTabItem(tab_label)) {
+                if (ImGui::BeginTabItem(tab_label, NULL, tf)) {
+                    if (demande == 0)
+                        node->state.notebook.current_tab = i;
+                    else if (demande == i + 1)
+                        node->state.notebook.demande = 0;
                     for (int j = 0; j < tab->child_count; j++)
                         render_widget(tab->children[j]);
                     ImGui::EndTabItem();
@@ -1699,8 +1791,12 @@ static void render_widget(WidgetNode *node)
     }
     case WT_EXPANDER: {
         /* expanded="true" : ouvert au départ, comme l'étalon. CollapsingHeader
-         * démarrait toujours replié (vu sur la capture du site, 2026-10-10). */
-        ImGui::SetNextItemOpen(node->state.expander.open, ImGuiCond_Once);
+         * démarrait toujours replié (vu sur la capture du site, 2026-10-10).
+         * ImGuiCond_Always (et non plus Once, 2026-10-13) : l'<input> peut
+         * changer state.expander.open après la première image
+         * (widget_expander_refresh) ; un clic reste pris, ImGui bascule après
+         * avoir posé l'état, et la ligne suivante le recopie. */
+        ImGui::SetNextItemOpen(node->state.expander.open, ImGuiCond_Always);
         bool ouvert = ImGui::CollapsingHeader(label);
         node->state.expander.open = ouvert;
         if (ouvert) {
@@ -1773,11 +1869,8 @@ static void render_widget(WidgetNode *node)
             node->nat_h = ts.y + st.FramePadding.y * 2.0f;
         }
         ImVec2 tsz(sz.x > 0 ? sz.x : fill_w, sz.y > 0 ? sz.y : fill_h);
-        if (ImGui::Button(label, tsz)) {
-            node->state.toggle.active = !on;
-            if (node->var_name)
-                export_bool(node->var_name, node->state.toggle.active);
-        }
+        if (ImGui::Button(label, tsz))
+            basculer(node);   /* exit:… peut sortir ici */
         if (on) ImGui::PopStyleColor(2);
         break;
     }

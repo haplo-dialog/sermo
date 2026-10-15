@@ -25,7 +25,10 @@ extern "C" {
 #ifndef _GNU_SOURCE
 #  define _GNU_SOURCE 1   /* strtod_l */
 #endif
-#define _POSIX_C_SOURCE 200809L
+#if !defined(_POSIX_C_SOURCE) || _POSIX_C_SOURCE < 200809L
+#  undef _POSIX_C_SOURCE
+#  define _POSIX_C_SOURCE 200809L
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -37,6 +40,12 @@ extern "C" {
 #include <math.h>
 #include <time.h>
 #include <locale.h>    /* newlocale, strtod_l, uselocale, LC_ALL_MASK */
+#if defined(__has_include)
+#  if __has_include(<xlocale.h>)
+#    include <xlocale.h>   /* FreeBSD, macOS : strtod_l, newlocale (absent de la glibc récente) */
+#  endif
+#endif
+#include "sermo_win32.h"  /* Windows : setenv, getline, strndup… (vide ailleurs) */
 
 /* ─── Types GLib de base ────────────────────────────────────────────────── */
 typedef int           gint;
@@ -87,14 +96,63 @@ static inline void *_sdl3_malloc_check(size_t n) {
 #define g_strcmp0(a,b)    strcmp((a)?(a):"",(b)?(b):"")
 /* Analyse numérique indépendante de la locale : un nombre écrit dans un XML
  * utilise le point décimal « C », jamais la virgule de LC_NUMERIC. */
+#ifdef _WIN32
+/* CRT Windows : _create_locale / _strtod_l / _snprintf_l. */
+static inline _locale_t _sermo_locale_c(void) {
+    static _locale_t loc_c = NULL;
+    if (loc_c == NULL) loc_c = _create_locale(LC_ALL, "C");
+    return loc_c;
+}
 static inline double _sermo_ascii_strtod(const char *s, char **end) {
-    static locale_t loc_c = (locale_t)0;
-    if (loc_c == (locale_t)0) loc_c = newlocale(LC_ALL_MASK, "C", (locale_t)0);
-    return strtod_l(s, end, loc_c ? loc_c : uselocale((locale_t)0));
+    _locale_t c = _sermo_locale_c();
+    return c ? _strtod_l(s, end, c) : strtod(s, end);   /* repli si _create_locale échoue — garde:primitive-locale */
 }
 static inline double _sermo_strtod_current(const char *s, char **end) {
     char *e1 = NULL, *e2 = NULL;
+    double v1 = strtod(s, &e1);   /* volontairement locale — garde:primitive-locale */
+    double v2 = _sermo_ascii_strtod(s, &e2);              /* locale C */
+    if (e2 > e1) { if (end) *end = e2; return v2; }
+    if (end) *end = e1; return v1;
+}
+/* PAS _snprintf_l : il passe par le printf du CRT Microsoft, qui arrondit
+ * 2,5 en « 3 » avec %.0f là où la glibc écrit « 2 » (arrondi au pair). Mesuré
+ * le 2026-10-11 sous Wine, cas 32-echelles-decimales. snprintf est ici celui de
+ * mingw-w64 (__USE_MINGW_ANSI_STDIO=1, posé par le fichier de chaîne), conforme
+ * C99 ; on remet ensuite le point décimal si la locale en met un autre. */
+static inline char *_sermo_ascii_formatd(char *buf, size_t n, const char *fmt, double d) {
+    snprintf(buf, n, fmt, d);
+    const struct lconv *lc = localeconv();
+    const char *dp = lc ? lc->decimal_point : NULL;
+    if (dp && dp[0] && dp[0] != '.' && dp[1] == '\0') {
+        char *v = strchr(buf, dp[0]);
+        if (v) *v = '.';
+    }
+    return buf;
+}
+#define g_strtod(s,e)       _sermo_strtod_current((s),(e))
+#define g_ascii_strtod(s,e) _sermo_ascii_strtod((s),(e))
+#else
+static inline double _sermo_ascii_strtod(const char *s, char **end) {
+    static locale_t loc_c = (locale_t)0;
+    if (loc_c == (locale_t)0) loc_c = newlocale(LC_ALL_MASK, "C", (locale_t)0);
+#ifdef SERMO_SANS_STRTOD_L
+    /* OpenBSD n'a pas strtod_l : la locale C le temps d'un strtod, pour ce
+     * fil d'exécution seulement (uselocale), puis on rend la précédente. */
+    locale_t avant = loc_c ? uselocale(loc_c) : (locale_t)0;
+    double v = strtod(s, end);   /* sous la locale C — garde:primitive-locale */
+    if (avant) uselocale(avant);
+    return v;
+#else
+    return strtod_l(s, end, loc_c ? loc_c : uselocale((locale_t)0));
+#endif
+}
+static inline double _sermo_strtod_current(const char *s, char **end) {
+    char *e1 = NULL, *e2 = NULL;
+#ifdef SERMO_SANS_STRTOD_L
+    double v1 = strtod(s, &e1);   /* locale courante — garde:primitive-locale */
+#else
     double v1 = strtod_l(s, &e1, uselocale((locale_t)0)); /* locale courante */
+#endif
     double v2 = _sermo_ascii_strtod(s, &e2);              /* locale C */
     if (e2 > e1) { if (end) *end = e2; return v2; }
     if (end) *end = e1; return v1;
@@ -116,6 +174,7 @@ static inline char *_sermo_ascii_formatd(char *buf, size_t n, const char *fmt, d
     if (prec) uselocale(prec);
     return buf;
 }
+#endif
 #define g_ascii_formatd(b,n,f,d) _sermo_ascii_formatd((b),(n),(f),(d))
 #define g_str_has_prefix(s,p) (strncmp((s),(p),strlen(p))==0)
 #define g_str_has_suffix(s,x) (strlen(s)>=strlen(x) && strcmp((s)+strlen(s)-strlen(x),(x))==0)
@@ -531,111 +590,14 @@ typedef struct _GError { int domain; int code; char *message; } GError;
 static inline void g_error_free(GError *e) { if (e) { free(e->message); free(e); } }
 #endif
 
-/* ─── Exécution de processus (g_spawn / g_shell) — POSIX ──────────────────────
- * Le port SDL3 n'a pas de boucle GLib : safe_exec.c (durcissement sécurité) est
- * réimplémenté au-dessus de fork/exec/pipe. g_child_watch_add est inutile ici —
- * le double fork de g_spawn_async_with_pipes réattache l'enfant à init, qui le
- * récupère automatiquement (aucun zombie, même sans boucle d'événements). */
+/* ─── Exécution de processus ─────────────────────────────────────────────────
+ * Ce port ne lance rien lui-même : ses commandes passent par safe_exec.c et le
+ * lanceur unique du cœur (sermo_lanceur.c). La copie fork/exec qui vivait ici
+ * n'était appelée par aucun fichier du port ; elle est retirée. */
 #include <unistd.h>
 #include <sys/types.h>
-#include <sys/wait.h>
 
 #define g_getenv(name)             getenv(name)
-typedef int GPid;
-#define G_SPAWN_SEARCH_PATH        (1 << 2)
-#define G_SPAWN_DO_NOT_REAP_CHILD  (1 << 1)
-#define g_spawn_close_pid(pid)     ((void)(pid))
-
-static inline void _sdl3_set_gerror(GError **error, const char *msg) {
-    if (!error) return;
-    GError *e = (GError *)calloc(1, sizeof(GError));
-    if (e) { e->message = strdup(msg ? msg : "error"); *error = e; }
-}
-
-/* Découpe une ligne SANS métacaractères en argv (séparateurs : blancs).
- * safe_exec.c ne l'appelle que pour des commandes déjà filtrées : pas de
- * guillemets ni d'expansion à gérer ici. */
-static inline gboolean g_shell_parse_argv(const char *line, int *argcp,
-        char ***argvp, GError **error) {
-    if (!line || !argvp) { _sdl3_set_gerror(error, "empty command"); return FALSE; }
-    int cap = 8, n = 0;
-    char **argv = (char **)malloc((size_t)cap * sizeof(char *));
-    char *copy  = strdup(line);
-    if (!argv || !copy) { free(argv); free(copy);
-        _sdl3_set_gerror(error, "out of memory"); return FALSE; }
-    char *save = NULL;
-    for (char *tok = strtok_r(copy, " \t\n\r\f\v", &save); tok;
-             tok = strtok_r(NULL, " \t\n\r\f\v", &save)) {
-        if (n + 1 >= cap) { cap *= 2;
-            argv = (char **)realloc(argv, (size_t)cap * sizeof(char *)); }
-        argv[n++] = strdup(tok);
-    }
-    argv[n] = NULL;
-    free(copy);
-    if (n == 0) { free(argv); _sdl3_set_gerror(error, "empty command"); return FALSE; }
-    if (argcp) *argcp = n;
-    *argvp = argv;
-    return TRUE;
-}
-
-/* Exécution synchrone : statut wait() brut renvoyé dans *exit_status. */
-static inline gboolean g_spawn_sync(const char *wd, char **argv, char **envp,
-        int flags, void *setup, void *data,
-        char **out_str, char **err_str, int *exit_status, GError **error) {
-    (void)wd; (void)envp; (void)flags; (void)setup; (void)data;
-    (void)out_str; (void)err_str;
-    if (!argv || !argv[0]) { _sdl3_set_gerror(error, "no argv"); return FALSE; }
-    pid_t pid = fork();
-    if (pid < 0) { _sdl3_set_gerror(error, "fork failed"); return FALSE; }
-    if (pid == 0) { execvp(argv[0], argv); _exit(127); }
-    int status = 0;
-    while (waitpid(pid, &status, 0) < 0) { /* retry on EINTR */ }
-    if (exit_status) *exit_status = status;
-    return TRUE;
-}
-
-/* Exécution asynchrone avec pipe stdout. Double fork → l'enfant réel est
- * réattaché à init (réapé automatiquement, zéro zombie). */
-static inline gboolean g_spawn_async_with_pipes(const char *wd, char **argv,
-        char **envp, int flags, void *setup, void *data, GPid *child_pid,
-        int *stdin_fd, int *stdout_fd, int *stderr_fd, GError **error) {
-    (void)wd; (void)envp; (void)flags; (void)setup; (void)data;
-    if (!argv || !argv[0]) { _sdl3_set_gerror(error, "no argv"); return FALSE; }
-    int outpipe[2] = { -1, -1 };
-    if (stdout_fd && pipe(outpipe) != 0) {
-        _sdl3_set_gerror(error, "pipe failed"); return FALSE; }
-    pid_t pid = fork();
-    if (pid < 0) {
-        if (stdout_fd) { close(outpipe[0]); close(outpipe[1]); }
-        _sdl3_set_gerror(error, "fork failed");
-        return FALSE;
-    }
-    if (pid == 0) {
-        pid_t grandchild = fork();
-        if (grandchild == 0) {
-            if (stdout_fd) {
-                dup2(outpipe[1], STDOUT_FILENO);
-                close(outpipe[0]); close(outpipe[1]);
-            }
-            execvp(argv[0], argv);
-            _exit(127);
-        }
-        _exit(0);
-    }
-    if (stdout_fd) { close(outpipe[1]); *stdout_fd = outpipe[0]; }
-    if (stdin_fd)  *stdin_fd  = -1;
-    if (stderr_fd) *stderr_fd = -1;
-    int dummy = 0;
-    while (waitpid(pid, &dummy, 0) < 0) { /* reap intermediate */ }
-    if (child_pid) *child_pid = (GPid)pid;
-    return TRUE;
-}
-
-static inline unsigned g_child_watch_add(GPid pid,
-        void (*cb)(GPid, int, void *), void *data) {
-    (void)pid; (void)cb; (void)data;  /* double fork → rien à surveiller */
-    return 0;
-}
 
 /* ─── UTF-8 helpers manquants ────────────────────────────────────────────── */
 /* Suffisant pour l'ASCII employé par le parsing d'options. */

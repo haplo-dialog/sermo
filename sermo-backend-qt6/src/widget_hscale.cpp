@@ -52,7 +52,9 @@ GtkWidget *widget_hscale_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         gchar *def = attributeset_get_first(&element, Attr, ATTR_DEFAULT);
         if (def && *def) vval = g_ascii_strtod(def, NULL);
     }
-    vval = widget_command_value(Attr, vval);   /* <input>echo N</input> prioritaire */
+    /* <input> : lu par widget_hscale_refresh(), que le cœur appelle juste
+     * après la création — le lire aussi ici exécuterait la commande deux
+     * fois. */
 
     /* ⚠️ QSlider ne connaît que des ENTIERS. Ce port posait donc
      * setValue((int)vval) : <hscale digits="2"><default>2.5</default>
@@ -115,7 +117,15 @@ void widget_hscale_clear(variable *var)
 void widget_hscale_refresh(variable *var)
 {
     if (!var || !var->Widget) return;
-    static_cast<QWidget *>(var->Widget)->update();
+    /* <input> (commande ou fichier) : rejoué à chaque « refresh », comme
+     * l'étalon gtk3sermo. Jusqu'au 2026-10-13 le widget n'était que redessiné :
+     * un <timer> qui rafraîchissait ce widget ne le changeait pas. */
+    QSlider *sl = static_cast<QSlider *>(var->Widget);
+    int digits = sl->property("sermoDigits").toInt();
+    double facteur = 1.0;
+    for (int i = 0; i < digits; ++i) facteur *= 10.0;
+    double v = widget_command_value(var->Attributes, sl->value() / facteur);
+    sl->setValue((int) nearbyint(v * facteur));   /* nearbyint : voir la création */
 }
 
 void widget_hscale_fileselect(variable *var, const char *n, const char *v) {}

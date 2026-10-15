@@ -2,7 +2,7 @@
 
 [Français](MANUEL_UTILISATEUR.md)
 
-**Version:** 2.8.2
+**Version:** 3.0.0
 **Licence:** GPL-2.0-or-later | **Distributor:** haplo-dialog (devel@haplo-dialog.fr)
 
 ---
@@ -81,9 +81,9 @@ attached to each release, with the `SHA256SUMS` file and its signature
 gpg --import cle-haplo-dialog.asc            # https://haplo-dialog.fr/cle-haplo-dialog.asc
 gpg --verify SHA256SUMS.asc SHA256SUMS       # "Good signature from haplo-dialog <devel@haplo-dialog.fr>"
 sha256sum --ignore-missing -c SHA256SUMS
-sudo apt install ./sermo-backend-gtk3_2.8.2-3_amd64.deb     # GTK 3
-sudo apt install ./sermo-backend-fltk1_2.8.2-3_amd64.deb    # FLTK, without pulling in GTK or Qt
-sudo apt install ./sermo-gtkdialog_2.8.2-3_all.deb          # + the gtkdialog command
+sudo apt install ./sermo-backend-gtk3_3.0.0-1_amd64.deb     # GTK 3
+sudo apt install ./sermo-backend-fltk1_3.0.0-1_amd64.deb    # FLTK, without pulling in GTK or Qt
+sudo apt install ./sermo-gtkdialog_3.0.0-1_all.deb          # + the gtkdialog command
 ```
 
 The key fingerprint must be
@@ -999,6 +999,60 @@ on standard error. The `SERMO_INPUT_MAX` environment variable changes this
 limit, in bytes; `0` removes it. The progress bar is not capped. See
 [SECURITY.en.md](SECURITY.en.md#size-of-what-an-input-reads).
 
+#### Reading a PLC: `<input modbus>`, `<input opcua>`
+
+```xml
+<levelbar range-min="0" range-max="100">
+  <variable>TEMP</variable>
+  <input modbus>tcp://plc:502?esclave=1&registre=1&diviseur=10</input>
+</levelbar>
+<text>
+  <variable>PIECES</variable>
+  <input opcua>opc.tcp://server:4840?noeud=ns=1;s=pieces</input>
+</text>
+```
+
+An **all-in-one address** says what to read; the widget gets the value, as
+from a command. **Read-only**: nothing is ever written to the device. These
+tags need their package: `sermo-source-modbus` or `sermo-source-opcua`
+(helpers in `/usr/libexec/sermo`). Parameter names are French.
+
+| Modbus (`tcp://host[:port]` or `rtu:///dev/ttyUSB0`) | |
+|---|---|
+| `registre` (register) | required, numbered from 1 |
+| `type` | `maintien` (holding, default), `entree` (input), `bobine` (coil), `discret` (discrete) |
+| `esclave` (slave), `nombre` (count) | defaults 1 and 1 (one value per line) |
+| `format`, `ordre` (word order) | `entier` (default), `signe`, `entier32`, `signe32`, `flottant`; `abcd` (default), `cdab`, `badc`, `dcba` |
+| `diviseur` (divisor), `delai` (timeout) | defaults 1 and 1500 ms |
+| `cache`, `perime` | shared cache freshness, default 900 ms (`0`: direct read, nothing kept); age beyond which a value is no longer shown, default 10,000 ms |
+| `vitesse`, `parite`, `bits`, `arret` | RTU: defaults 19200, `E`, 8, 1 |
+
+| OPC UA (`opc.tcp://host:port`) | |
+|---|---|
+| `noeud` (node) | required: `ns=1;s=name`, `ns=0;i=2258`… |
+| `delai` (timeout), `cache`, `perime` | defaults 1500, 900 and 10,000 ms |
+| `mode` | `none` (default), `sign`, `chiffre` (sign and encrypt) |
+| `certificat`, `cle`, `confiance`, `uri` | with `sign`/`chiffre`: this machine's files, trusted server certificate(s) (repeatable), ApplicationUri |
+
+An unknown parameter is refused (a typo does not pass for the default). A
+literal `&` or `%` in a value is written `%26` or `%25`. After a failure, the
+same device is not asked again for 5 s: an unreachable PLC does not freeze
+the window on every refresh. An answer is kept 900 ms (`cache=`) and reads
+to the same device go one at a time: a gauge and its text on the same
+address make only ONE connection per round. Different addresses make one
+each: for many values, prefer one `<input modbus>` with `nombre=` in a
+`<tree>`.
+
+**The window never freezes.** A value kept for less than 10 s (`perime=`) is
+shown at once and reread in the background: the next round shows the new one.
+Beyond that, the field is emptied rather than showing an old value as if it
+were current. Only the **very first** read of an address waits for the device
+(at most `delai=`), so that a dialog without a timer gets its value. If a slow
+device is read at many addresses, a full round can exceed `perime=` and the
+values empty out: group them (`nombre=`) or raise `perime=`. With
+`SERMO_ALLOWED_CMDS`, name the helper (`/usr/libexec/sermo/sermo-source-modbus`);
+`SERMO_SOURCE_DIR` changes its folder.
+
 ### 7.4 Including a file of functions
 
 ```bash
@@ -1123,6 +1177,29 @@ export MONITOR='
 
 sermo --program=MONITOR
 ```
+
+### 8.4 Reading a PLC (Modbus, OPC UA)
+
+Two complete examples, **read-only**, show live shop-floor values (gauge +
+value, refreshed by a `<timer>`):
+
+- `examples/modbus/modbus-lecture.sh`: a Modbus/TCP PLC's registers, read by
+  `mbpoll` (package `mbpoll`). Settings: `MODBUS_HOTE`, `MODBUS_PORT`,
+  `MODBUS_ESCLAVE`; registers are described in the `REGISTRES` table.
+- `examples/opcua/opcua-lecture.sh`: an OPC UA server's variables, read by
+  `opcua-lire`, a small C client in the same folder (`make`, package
+  `libopen62541-1.4-dev`). Setting: `OPCUA_ADRESSE`; variables are described
+  in the `VARIABLES` table. For a server that requires certificates:
+  `OPCUA_MODE=sign` or `chiffre`, `OPCUA_CERTIFICAT` and `OPCUA_CLE` (this
+  machine's), `OPCUA_CONFIANCE` (the server's certificate; no other is
+  accepted). `certificats-essai.sh` makes test ones.
+
+These two examples go through a script; the `<input modbus>` and
+`<input opcua>` tags (section 7.3) do the same reading directly in the XML.
+Without hardware, `faux-automate.py` (package `python3-pymodbus`) and
+`faux-serveur-opcua` simulate the device on the machine itself. Neither
+example writes to the device. Reading runs in the background: an unreachable
+device shows "pas de réponse" (no answer) without freezing the window.
 
 ---
 

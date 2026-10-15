@@ -5,5 +5,5 @@
 <text><variable>TEXTE_FICHIER</variable><input file>donnees/une-ligne.txt</input></text>
 <entry><variable>ENTREE_COMMANDE</variable><input>printf "cmd un\ncmd deux\n"</input></entry>
 <text><variable>TEXTE_COMMANDE</variable><input>echo passage >> compteur; echo commande</input></text>
-<text><variable>PASSAGES</variable><input>cat compteur | wc -l</input></text>
+<text><variable>PASSAGES</variable><input>cat compteur | wc -l | tr -d ' '</input></text>
 <timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

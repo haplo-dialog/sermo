@@ -61,7 +61,40 @@ void widget_statusbar_clear(variable *var)
     n->label = strdup("");
 }
 
-void widget_statusbar_refresh(variable *var) {}
+/* Le message vit dans node->label (render.cpp l'affiche, l'export le rend). */
+static void statusbar_poser(WidgetNode *n, const char *texte)
+{
+    if (!texte) return;
+    free(n->label);
+    n->label = strdup(texte);
+}
+
+void widget_statusbar_refresh(variable *var)
+{
+    WidgetNode *n;
+    gchar      *ligne;
+    GList      *el = NULL;
+    gchar      *v;
+
+    if (!var || !var->Widget) return;
+    /* <input> : rejoué à chaque « refresh », comme l'étalon gtk3sermo (sa
+     * première ligne = le message), sans jouer d'action. Au premier passage,
+     * <label> puis <default> l'emportent, comme dans widget_statusbar_create() :
+     * l'étalon les pousse après (mesuré). Jusqu'au 2026-10-13 il n'était
+     * jamais lu. */
+    n = (WidgetNode *)var->Widget;
+    ligne = widget_input_ligne(var->Attributes);
+    statusbar_poser(n, ligne);
+    g_free(ligne);
+    if (!n->initialised) {
+        n->initialised = TRUE;
+        v = attributeset_get_first(&el, var->Attributes, ATTR_LABEL);
+        if (v && *v) statusbar_poser(n, v);
+        el = NULL;
+        v = attributeset_get_first(&el, var->Attributes, ATTR_DEFAULT);
+        if (v && *v) statusbar_poser(n, v);
+    }
+}
 void widget_statusbar_fileselect(variable *var, const char *name, const char *value) {}
 void widget_statusbar_removeselected(variable *var) {}
 void widget_statusbar_save(variable *var) {}

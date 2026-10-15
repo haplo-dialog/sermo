@@ -1,0 +1,7 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: action refresh : l <input> d une <hscale>, d une <vscale> et d un <spinbutton> est rejoue a chaque refresh (qt6, fltk1, efl1, sdl3, lvgl, html, ncurses rendaient 1 jusqu au 2026-10-13) -->
+<window><vbox>
+<hscale range-min="0" range-max="10" range-step="1"><variable>H</variable><input>sh donnees/compteur.sh cpt-h</input></hscale>
+<vscale range-min="0" range-max="10" range-step="1"><variable>V</variable><input>sh donnees/compteur.sh cpt-v</input></vscale>
+<spinbutton range-min="0" range-max="10" range-step="1"><variable>S</variable><input>sh donnees/compteur.sh cpt-s</input></spinbutton>
+<timer visible="false"><variable>_T</variable><action>refresh:H</action><action>refresh:V</action><action>refresh:S</action><action>refresh:H</action><action>refresh:V</action><action>refresh:S</action><action>exit:fin</action></timer></vbox></window>

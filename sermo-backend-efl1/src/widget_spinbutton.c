@@ -65,14 +65,9 @@ GtkWidget *widget_spinbutton_create(AttributeSet *Attr, tag_attr *attr, gint Typ
     snprintf(fmt, sizeof(fmt), "%%.%df", decimals);
     elm_spinner_label_format_set(sp, fmt);
     evas_object_show(sp);
-    /* <input> (ex. echo 30) : valeur initiale par commande */
-    if (Attr) {
-        gchar *itext = widget_input_text(Attr);
-        if (itext) {
-            elm_spinner_value_set(sp, g_ascii_strtod(g_strchomp(itext), NULL));
-            g_free(itext);
-        }
-    }
+    /* <input> : lu par widget_spinbutton_refresh(), que le cœur appelle juste
+     * après la création — le lire aussi ici exécuterait la commande deux
+     * fois. */
     return (GtkWidget *)sp;
 }
 
@@ -98,7 +93,16 @@ void widget_spinbutton_clear(variable *var)
     if (!var || !var->Widget) return;
     elm_spinner_value_set((Evas_Object *)var->Widget, 0.0);
 }
-void widget_spinbutton_refresh(variable *var) {}
+void widget_spinbutton_refresh(variable *var)
+{
+    if (!var || !var->Widget) return;
+    /* <input> (commande ou fichier) : rejoué à chaque « refresh », comme
+     * l'étalon gtk3sermo. Jusqu'au 2026-10-13 il n'était lu qu'à la création :
+     * un <timer> qui rafraîchissait ce widget ne le changeait pas. */
+    Evas_Object *sp = (Evas_Object *)var->Widget;
+    gchar *itext = widget_input_text(var->Attributes);
+    if (itext) { elm_spinner_value_set(sp, g_ascii_strtod(g_strchomp(itext), NULL)); g_free(itext); }
+}
 void widget_spinbutton_fileselect(variable *var, const char *n, const char *v) {}
 void widget_spinbutton_removeselected(variable *var) {}
 void widget_spinbutton_save(variable *var) {}

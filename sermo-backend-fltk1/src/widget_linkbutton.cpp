@@ -71,6 +71,7 @@ public:
         callback(clic, this);
     }
     const std::string &uri() const { return uri_; }
+    void uri(const char *u) { uri_ = u ? u : ""; }
 
 private:
     static void clic(Fl_Widget *, void *v)
@@ -122,9 +123,18 @@ gchar *widget_linkbutton_envvar_all_construct(variable *var)
     return widget_linkbutton_envvar_construct(var->Widget);
 }
 void widget_linkbutton_clear(variable *var) { (void) var; }
+/* <input> : rejoué à chaque « refresh », comme l'étalon gtk3sermo. Jusqu'au
+ * 2026-10-13 il n'était jamais lu. La première ligne devient l'URI (celle que
+ * le clic ouvre et que le dialogue exporte) ; le libellé ne change pas,
+ * comme gtk_link_button_set_uri() chez l'étalon. Rien n'est ouvert ici. */
 void widget_linkbutton_refresh(variable *var)
 {
-    if (var && var->Widget) ((Fl_Widget *) var->Widget)->redraw();
+    if (!var || !var->Widget) return;
+    SermoLink *l = dynamic_cast<SermoLink *>((Fl_Widget *) var->Widget);
+    gchar *ligne = widget_input_line(var->Attributes);
+    if (ligne && l) l->uri(ligne);
+    g_free(ligne);
+    ((Fl_Widget *) var->Widget)->redraw();
 }
 void widget_linkbutton_fileselect(variable *var, const char *name, const char *value)
 {   (void) var; (void) name; (void) value; }

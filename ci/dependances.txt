@@ -34,6 +34,14 @@ libxkbcommon-dev
 wayland-protocols
 # serveur MCP sermoia
 libjson-glib-dev
+# programmes d'aide de <input modbus> / <input opcua> (sermo-source/) ; le
+# faux automate et le faux serveur de leur banc (python3-pymodbus, openssl)
+libmodbus-dev
+libopen62541-1.4-dev
+python3-pymodbus
+# examples/modbus lit par mbpoll (banc des exemples réels)
+mbpoll
+openssl
 # bancs
 xvfb
 xauth

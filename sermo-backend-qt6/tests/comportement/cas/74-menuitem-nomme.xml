@@ -1,0 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: un menuitem simple qui porte une <variable> : le dialogue se ferme et la variable ressort vide (qt6 tombait sur une erreur de segmentation a la sortie jusqu au 2026-10-13 ; sdl3, lvgl, html, ncurses rendaient false) -->
+<window><vbox>
+<menubar><menu><menuitem><label>Simple</label><variable>SIMPLE</variable></menuitem><menuitem checkbox="true"><label>Coche</label><variable>COCHE</variable></menuitem><label>Menu</label></menu></menubar>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

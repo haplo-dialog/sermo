@@ -1,0 +1,10 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: case cochee par defaut, decochee par activate: : seule l action if false joue -->
+<window><vbox>
+<entry><variable>B</variable><default>b</default></entry>
+<entry><variable>C</variable><default>c</default></entry>
+<checkbox><label>x</label><variable>CASE</variable><default>true</default>
+<action>if true clear:B</action><action>if false clear:C</action></checkbox>
+<timer visible="false" interval="2"><variable>_T1</variable><action>activate:CASE</action></timer>
+<timer visible="false" interval="3"><variable>_T2</variable><action>exit:fin</action></timer>
+</vbox></window>

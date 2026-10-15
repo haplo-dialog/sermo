@@ -187,7 +187,7 @@ Aucune étape n'avance avec un banc rouge. Trois portes gardent chaque backend
   sans affichage. Attendu : **55 PASS**.
 - **Comportement** — `tests/comportement/` (aussi via `run_all.sh`) : les valeurs
   exportées (`VAR="valeur"`) doivent être **identiques** à celles de l'étalon
-  `gtk3sermo`. Attendu : **61/61**. Chaque cas se ferme seul, par un `<timer>`
+  `gtk3sermo`. Attendu : **75/75**. Chaque cas se ferme seul, par un `<timer>`
   déclenchant `exit:fin` ou (cas 41-42) par une barre de progression arrivée à 100 ; ncurses joue ce banc en mode **batch headless**, html en écrivant sa page vers `/dev/null`.
 - **Garde** — jeu de scripts `tests/garde_*.sh` : durcissement du binaire,
   échappement de la sortie (les valeurs à risque ne repassent pas par le shell),

@@ -64,8 +64,19 @@ gchar *widget_infobar_envvar_construct(GtkWidget *w)
 }
 gchar *widget_infobar_envvar_all_construct(variable *v) { return NULL; }
 void widget_infobar_clear(variable *v) {}
+/* <input> à chaque « refresh », premier passage compris (il l'emporte sur
+ * <label>, comme chez l'étalon) : la première ligne est le texte. Aucune
+ * <action> n'est branchée sur ce widget dans ce port. Jusqu'au 2026-10-13,
+ * l'<input> n'était jamais lu (IN restait vide). */
 void widget_infobar_refresh(variable *v)
-{ if (v && v->Widget) static_cast<QFrame*>(v->Widget)->update(); }
+{
+    if (!v || !v->Widget) return;
+    QLabel *lbl = static_cast<QWidget *>(v->Widget)->findChild<QLabel *>("ib_label");
+    gchar *ligne = widget_input_line(v->Attributes);
+    if (!ligne) return;
+    if (lbl) lbl->setText(QString::fromUtf8(ligne));
+    g_free(ligne);
+}
 void widget_infobar_fileselect(variable *v, const char*, const char*) {}
 void widget_infobar_removeselected(variable *v) {}
 void widget_infobar_save(variable *v) {}

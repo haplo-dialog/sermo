@@ -182,7 +182,32 @@ gchar *widget_fontbutton_envvar_all_construct(variable *var)
     return widget_fontbutton_envvar_construct(var->Widget);
 }
 void widget_fontbutton_clear(variable *var) {}
-void widget_fontbutton_refresh(variable *var) {}
+/* <input> : rejoué à chaque « refresh », comme l'étalon gtk3sermo. Première
+ * ligne = nom de police (« Sans 13 ») : libellé du bouton et valeur exportée.
+ * Au premier passage, un <default> l'emporte : l'étalon l'applique après.
+ * Jusqu'au 2026-10-13 il n'était jamais lu. */
+void widget_fontbutton_refresh(variable *var)
+{
+    FontData *fd;
+    gchar *ligne;
+    gboolean premier;
+
+    if (!var || !var->Widget) return;
+    fd = (FontData *)evas_object_data_get((Evas_Object *)var->Widget, "font_data");
+    premier = widget_input_premier(var->Widget);
+    ligne = widget_input_line(var->Attributes);
+    if (!ligne) return;
+    if (fd) {
+        GList *el = NULL;
+        gchar *def = premier ? attributeset_get_first(&el, var->Attributes, ATTR_DEFAULT)
+                             : NULL;
+        if (!(def && *def)) {
+            snprintf(fd->font_desc, sizeof(fd->font_desc), "%s", ligne);
+            elm_object_text_set(fd->btn, fd->font_desc);
+        }
+    }
+    g_free(ligne);
+}
 void widget_fontbutton_fileselect(variable *var, const char *n, const char *v) {}
 void widget_fontbutton_removeselected(variable *var) {}
 void widget_fontbutton_save(variable *var) {}

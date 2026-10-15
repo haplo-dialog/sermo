@@ -69,11 +69,9 @@ GtkWidget *widget_levelbar_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         if (txt && *txt) lb->copy_label(txt);
     }
 
-    /* <input> (ex. echo 65) : valeur initiale par commande */
-    {
-        gchar *itext = widget_input_text(Attr);
-        if (itext) { lb->value((float)g_ascii_strtod(g_strchomp(itext), NULL)); g_free(itext); }
-    }
+    /* <input> : lu par widget_levelbar_refresh(), que le cœur appelle juste
+     * après la création — le lire aussi ici exécuterait la commande deux
+     * fois. */
     return (GtkWidget *)lb;
 }
 
@@ -101,10 +99,16 @@ void widget_levelbar_clear(variable *var)
     lb->value(lb->minimum());
 }
 
+/* « refresh » rejoue l'<input>, comme l'étalon gtk3sermo. Jusqu'au 2026-10-13
+ * la jauge n'était que redessinée : la commande ne tournait qu'à la création,
+ * et une jauge pilotée par un <timer> restait figée. */
 void widget_levelbar_refresh(variable *var)
 {
     if (!var || !var->Widget) return;
-    ((Fl_Widget *)var->Widget)->redraw();
+    Fl_Progress *lb = (Fl_Progress *)var->Widget;
+    gchar *itext = widget_input_text(var->Attributes);
+    if (itext) { lb->value((float)g_ascii_strtod(g_strchomp(itext), NULL)); g_free(itext); }
+    lb->redraw();
 }
 
 void widget_levelbar_fileselect(variable *var, const char *n, const char *v) {}

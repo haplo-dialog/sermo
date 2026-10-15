@@ -59,8 +59,9 @@ GtkWidget *widget_spinbutton_create(AttributeSet *Attr, tag_attr *attr, gint Typ
         GList *element = NULL;
         gchar *def = attributeset_get_first(&element, Attr, ATTR_DEFAULT);
         if (def && *def) sb->setValue(g_ascii_strtod(def, NULL));
-        /* <input>echo N</input> prioritaire (NaN-safe : fallback = valeur actuelle). */
-        sb->setValue(widget_command_value(Attr, sb->value()));
+        /* <input> : lu par widget_spinbutton_refresh(), que le cœur appelle juste
+         * après la création — le lire aussi ici exécuterait la commande deux
+         * fois. */
     }
 
     return (GtkWidget *)sb;
@@ -91,7 +92,12 @@ void widget_spinbutton_clear(variable *var)
 void widget_spinbutton_refresh(variable *var)
 {
     if (!var || !var->Widget) return;
-    static_cast<QWidget *>(var->Widget)->update();
+    /* <input> (commande ou fichier) : rejoué à chaque « refresh », comme
+     * l'étalon gtk3sermo. Jusqu'au 2026-10-13 le widget n'était que redessiné :
+     * un <timer> qui rafraîchissait ce widget ne le changeait pas. */
+    QDoubleSpinBox *sb = static_cast<QDoubleSpinBox *>(var->Widget);
+    /* NaN-safe : sans valeur lisible, la valeur actuelle reste. */
+    sb->setValue(widget_command_value(var->Attributes, sb->value()));
 }
 
 void widget_spinbutton_fileselect(variable *var, const char *n, const char *v) {}

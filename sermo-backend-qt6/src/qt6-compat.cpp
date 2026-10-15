@@ -147,6 +147,10 @@ void *sermo_be_scroll_new(int w, int h) {
 #include <QtGui/QPixmap>
 #include <QtGui/QIcon>
 #include <QtGui/QPalette>
+#include <unistd.h>
+extern "C" {
+#include "sermo_progress.h"   /* sermo_progress_en_attente() : --render-png */
+}
 #include <QtGui/QColor>
 #include <QtCore/QDir>
 #include <QtCore/QFile>
@@ -275,6 +279,13 @@ int sermo_be_run_loop(void) {
                 win->adjustSize();
             win->show();
             QApplication::processEvents();
+            QApplication::processEvents();
+            /* Une <progressbar> lit sa commande par une minuterie (40 ms) :
+             * attendre sa première ligne, une seconde au plus. */
+            for (int i = 0; i < 200 && sermo_progress_en_attente() > 0; i++) {
+                QApplication::processEvents(QEventLoop::AllEvents, 5);
+                usleep(5000);
+            }
             QApplication::processEvents();
             QPixmap pm = win->grab();
             if (!pm.save(QString::fromUtf8(option_render_png), "PNG")) {

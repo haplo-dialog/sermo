@@ -34,6 +34,13 @@ GtkWidget *widget_checkbox_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     }
     widget_node_bind_variable(node, Attr, attr);
 
+    /* Ses actions, jouées chaque fois qu'il bascule (clic ou « activate: ») :
+     * voir jouer_actions_bascule(). Elles n'étaient pas gardées, donc jamais jouées. */
+    if (Attr) {
+        GList *ea = NULL;
+        gchar *act = attributeset_get_first(&ea, Attr, ATTR_ACTION);
+        if (act && *act) { node->action = strdup(act); node->actions_attr = (void *)Attr; }
+    }
     return (GtkWidget *)node;
 }
 
@@ -53,7 +60,7 @@ void widget_checkbox_clear(variable *var)
     if (!var || !var->Widget) return;
     ((WidgetNode *)var->Widget)->state.checkbox.checked = FALSE;
 }
-void widget_checkbox_refresh(variable *var) {}
+void widget_checkbox_refresh(variable *var) { widget_bascule_lire(var); }   /* widgets.c */
 void widget_checkbox_fileselect(variable *var, const char *n, const char *v) {}
 void widget_checkbox_removeselected(variable *var) {}
 void widget_checkbox_save(variable *var) {}

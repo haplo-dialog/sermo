@@ -62,7 +62,18 @@ void widget_infobar_clear(variable *var)
     free(n->label); n->label = strdup("");
     n->state.infobar.revealed = FALSE;
 }
-void widget_infobar_refresh(variable *var) {}
+void widget_infobar_refresh(variable *var)
+{
+    /* <input> (commande ou fichier) : rejoué à chaque « refresh », comme
+     * l'étalon gtk3sermo — sa PREMIÈRE ligne, CR/LF ôtés ; rien de lisible,
+     * rien ne change ; aucune action ne joue. Jusqu'au 2026-10-13 il n'était
+     * jamais lu. */
+    /* La ligne devient le texte du message (le _label de l'étalon). */
+    if (!var || !var->Widget) return;
+    WidgetNode *n = (WidgetNode *)var->Widget;
+    gchar *ligne = widget_input_ligne(var->Attributes);
+    if (ligne) { free(n->label); n->label = strdup(ligne); g_free(ligne); }
+}
 void widget_infobar_fileselect(variable *var, const char *nm, const char *v) {}
 void widget_infobar_removeselected(variable *var) {}
 void widget_infobar_save(variable *var) {}

@@ -11,7 +11,7 @@ Debian testing system.
 
 | Package | Contents | Depends on |
 |---|---|---|
-| `sermo-doc` | Texinfo manual (`info sermo-doc`), the common documentation (copyright, Debian changelog), the sixty job scripts (`examples/metiers`) and the four toolboxes (`examples/boites-a-outils`) | no dependency |
+| `sermo-doc` | Texinfo manual (`info sermo-doc`), the common documentation (copyright, Debian changelog), the sixty job scripts (`examples/metiers`) and the four toolboxes (`examples/boites-a-outils`), the Modbus and OPC UA examples (`examples/modbus`, `examples/opcua`) | no dependency |
 | `sermo-core-dev` | `libsermocore.a`, headers (`/usr/include/sermo`), `sermocore.pc` | no dependency |
 | `sermo-backend-gtk3` | `gtk3sermo` binary, man page, Texinfo manual | GTK 3, VTE (`<terminal>`), gtk-layer-shell (Wayland anchoring) |
 | `sermo-backend-gtk4` | `gtk4sermo` binary, man page, Texinfo manual | GTK 4, VTE (`<terminal>`) |
@@ -20,14 +20,17 @@ Debian testing system.
 | `sermo-backend-efl1` | `efl1sermo` binary, man page, Texinfo manual | Enlightenment/Elementary |
 | `sermo-backend-sdl3` | `sdl3sermo` binary, man page, Texinfo manual | SDL 3 |
 | `sermo-backend-lvgl` | `lvglsermo` binary (LVGL embedded), man page, Texinfo manual | X11, Wayland, xkbcommon, libpng |
+| `sermo-backend-lvgl-leger` | the same `lvglsermo` without the ThorVG vector engine: about a third smaller, same dialogs and values, but no SVG icons from themes (PNG ones remain); replaces `sermo-backend-lvgl`, install one or the other | X11, Wayland, xkbcommon, libpng |
 | `sermo-backend-ncurses` | `ncursessermo` binary, man page, Texinfo manual | ncursesw (terminal) |
 | `sermo-backend-html` | `htmlsermo` binary (export as an HTML page), man page, Texinfo manual | no graphics library |
 | `sermo-gtkdialog` | the `gtkdialog` command and the `gtkdialog(1)` page, links to gtk3sermo | `sermo-backend-gtk3` |
 | `gtk3sermo`, `gtk4sermo`, `qt6sermo`, `gtksermo` | transitional packages, empty | the 2.x package that replaces them, and `sermo-doc` |
 | `sermoia-mcp` | MCP server to write, check and see a dialog; its example catalogue | GLib, json-glib, one sermo port (`sermo-backend-qt6` recommended) |
 | `sermoman-mcp` | MCP server for the manual, read-only | `python3` |
+| `sermo-source-modbus` | helper for `<input modbus>` (`/usr/libexec/sermo`), read-only | libmodbus |
+| `sermo-source-opcua` | helper for `<input opcua>` (`/usr/libexec/sermo`), read-only, certificates | open62541 |
 
-That is **18 packages**, plus one `-dbgsym` package (debug symbols) per backend and for `sermoia-mcp`.
+That is **21 packages**, plus one `-dbgsym` package (debug symbols) per backend, for `sermoia-mcp` and for each `sermo-source-*`.
 The dependencies are computed by `dh_shlibdeps` from the libraries actually
 linked: they are neither guessed nor copied by hand.
 
@@ -130,7 +133,7 @@ as `.deb` files attached to the release. Installing the wanted 2.x packages from
 their files removes the 1.x packages they replace:
 
 ```sh
-sudo apt install ./sermo-backend-gtk3_2.8.2-3_amd64.deb ./sermo-gtkdialog_2.8.2-3_all.deb
+sudo apt install ./sermo-backend-gtk3_3.0.0-1_amd64.deb ./sermo-gtkdialog_3.0.0-1_all.deb
 ```
 
 Tested on 2026-09-17 in a clean Debian testing container, without network,
@@ -224,9 +227,9 @@ upstream…). Provenance, port by port, is detailed in
 ## Installing and uninstalling
 
 ```sh
-sudo apt install ./sermo-backend-gtk3_2.8.2-3_amd64.deb      # GTK 3
-sudo apt install ./sermo-gtkdialog_2.8.2-3_all.deb           # + the gtkdialog command
-sudo apt install ./sermo-core-dev_2.8.2-3_amd64.deb          # to build a backend
+sudo apt install ./sermo-backend-gtk3_3.0.0-1_amd64.deb      # GTK 3
+sudo apt install ./sermo-gtkdialog_3.0.0-1_all.deb           # + the gtkdialog command
+sudo apt install ./sermo-core-dev_3.0.0-1_amd64.deb          # to build a backend
 
 sudo apt purge sermo-gtkdialog sermo-backend-gtk3            # remove everything
 ```

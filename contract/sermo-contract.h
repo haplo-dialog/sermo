@@ -98,6 +98,21 @@ extern const char *sermo_port_details;   /* « gtk3sermo 2.7.1 (haplo-dialog) »
  * avec l'écran alterné. Les ports graphiques n'ont rien à fournir. */
 void          sermo_be_before_export(void);
 
+/* « activate:NOM » (action du cœur). FACULTATIF, déclaré FAIBLE par le cœur.
+ * Rend 1 si le port a activé le widget, 0 sinon (le cœur retombe alors sur
+ * gtk_widget_activate()). Les ports sans GTK y basculent la case à cocher, le
+ * bouton radio et le bouton à bascule, et jouent leurs actions comme au clic —
+ * ce que fait GTK. Les ports GTK n'ont rien à fournir. */
+int           sermo_be_widget_activate(sermo_widget *w);
+
+/* État d'un widget, pour condition="active_is_…/sensitive_is_…/visible_is_…(NOM)".
+ * FACULTATIF, déclaré FAIBLE par le cœur. quoi : 0 = actif (coché, enfoncé,
+ * déplié), 1 = sensible, 2 = visible (le drapeau du widget lui-même, comme
+ * gtk_widget_get_visible()). Rend 0 ou 1, ou -1 si le port ne sait pas : le
+ * cœur retombe alors sur GTK (ou sur le shim). Les ports GTK n'ont rien à
+ * fournir. */
+int           sermo_be_widget_etat(sermo_widget *w, int quoi);
+
 /* Applique les attributs de balise à un widget natif (spécifique au toolkit :
  * introspection GObject pour GTK, réimplémentation pour les backends neutres). */
 gint          widget_set_tag_attributes(sermo_widget *widget, tag_attr *attr);

@@ -29,6 +29,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+/* Le niveau (couleur) qui découle de la valeur. */
+static void niveau_calculer(WidgetNode *node)
+{
+    double range = node->state.levelbar.max - node->state.levelbar.min;
+    if (range > 0) {
+        double ratio = (node->state.levelbar.value - node->state.levelbar.min) / range;
+        node->state.levelbar.level = (ratio < 0.33) ? 0 : (ratio < 0.66) ? 1 : 2;
+    }
+}
+
 GtkWidget *widget_levelbar_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
     WidgetNode *node = widget_node_new(WT_LEVELBAR, NULL, "");
@@ -48,18 +58,11 @@ GtkWidget *widget_levelbar_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         GList *el = NULL;
         gchar *def = attributeset_get_first(&el, Attr, ATTR_DEFAULT);
         if (def) node->state.levelbar.value = g_ascii_strtod(def, NULL);
-        {   /* <input> : valeur initiale par commande */
-            gchar *itext = widget_input_text(Attr);
-            if (itext) { node->state.levelbar.value = g_ascii_strtod(g_strchomp(itext), NULL); g_free(itext); }
-        }
     }
-
-    /* Calculer le niveau */
-    double range = node->state.levelbar.max - node->state.levelbar.min;
-    if (range > 0) {
-        double ratio = (node->state.levelbar.value - node->state.levelbar.min) / range;
-        node->state.levelbar.level = (ratio < 0.33) ? 0 : (ratio < 0.66) ? 1 : 2;
-    }
+    /* <input> : lu par widget_levelbar_refresh(), que le cœur appelle juste
+     * après la création — le lire aussi ici exécuterait la commande deux
+     * fois. */
+    niveau_calculer(node);
     return (GtkWidget *)node;
 }
 
@@ -84,7 +87,18 @@ void widget_levelbar_clear(variable *var)
     n->state.levelbar.value = n->state.levelbar.min;
     n->state.levelbar.level = 0;
 }
-void widget_levelbar_refresh(variable *var) {}
+void widget_levelbar_refresh(variable *var)
+{
+    if (!var || !var->Widget) return;
+    /* <input> (commande ou fichier) : rejoué à chaque « refresh », comme
+     * l'étalon gtk3sermo. Jusqu'au 2026-10-13 il n'était lu qu'à la création
+     * et cette fonction était vide : une jauge pilotée par un <timer>
+     * restait figée. */
+    WidgetNode *n = (WidgetNode *)var->Widget;
+    gchar *itext = widget_input_text(var->Attributes);
+    if (itext) { n->state.levelbar.value = g_ascii_strtod(g_strchomp(itext), NULL); g_free(itext); }
+    niveau_calculer(n);
+}
 void widget_levelbar_fileselect(variable *var, const char *nm, const char *v) {}
 void widget_levelbar_removeselected(variable *var) {}
 void widget_levelbar_save(variable *var) {}

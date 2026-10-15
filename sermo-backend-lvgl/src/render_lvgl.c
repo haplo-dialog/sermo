@@ -30,7 +30,9 @@
  * TTF du système (DejaVu Sans) ; à défaut, Montserrat 14.
  */
 #include "lvgl.h"
+#if LV_USE_THORVG
 #include "src/libs/thorvg/thorvg_capi.h"   /* lecteur SVG de ThorVG (icônes) */
+#endif
 
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
@@ -75,6 +77,96 @@ static void declencher(WidgetNode *n, const char *signal1, const char *signal2)
         jouer_actions((GtkWidget *)n, (AttributeSet *)n->actions_attr, signal1, signal2);
     else if (n->action && *n->action)
         execute_action((GtkWidget *)n, n->action, NULL);
+}
+
+/* Widgets à bascule (case à cocher, bouton radio, bouton à bascule,
+ * interrupteur) : leurs actions jouent à chaque changement d'état, « if true »/
+ * « if false » compris. */
+static void bascule_jouer(WidgetNode *n, int actif)
+{
+    if (n->actions_attr && n->type == WT_SWITCH)
+        jouer_actions_interrupteur((GtkWidget *)n, (AttributeSet *)n->actions_attr, actif);
+    else if (n->actions_attr)
+        jouer_actions_bascule((GtkWidget *)n, (AttributeSet *)n->actions_attr, actif);
+    else if (n->action && *n->action)
+        execute_action((GtkWidget *)n, n->action, NULL);
+}
+
+/* Pour widget_radiobutton.c : le bouton radio qu'un autre remplace au départ
+ * (son <default> ou son <input>) joue ses actions « décoché », comme chez
+ * l'étalon, où elles sont déjà branchées. */
+void sermo_be_bascule_jouer(void *w, int actif)
+{
+    if (w) bascule_jouer((WidgetNode *)w, actif);
+}
+
+/* Bascule comme un clic de l'étalon. Un bouton radio choisi le reste ; en
+ * choisir un décoche ses frères de la même boîte (le groupe du cœur), qui
+ * jouent leurs actions « décoché » d'abord, comme GTK. */
+static void basculer(WidgetNode *n)
+{
+    if (n->type == WT_RADIOBUTTON) {
+        if (n->state.toggle.active) return;
+        n->state.toggle.active = TRUE;
+    if (n->lv) {
+        if (n->state.toggle.active) lv_obj_add_state((lv_obj_t *)n->lv, LV_STATE_CHECKED);
+        else                        lv_obj_remove_state((lv_obj_t *)n->lv, LV_STATE_CHECKED);
+    }
+        if (n->parent)
+            for (int i = 0; i < n->parent->child_count; i++) {
+                WidgetNode *f = n->parent->children[i];
+                if (f == n || f->type != WT_RADIOBUTTON || !f->state.toggle.active) continue;
+                f->state.toggle.active = FALSE;
+                if (f->lv) lv_obj_remove_state((lv_obj_t *)f->lv, LV_STATE_CHECKED);
+                bascule_jouer(f, FALSE);
+            }
+        bascule_jouer(n, TRUE);
+        return;
+    }
+    n->state.toggle.active = !n->state.toggle.active;
+    if (n->lv) {
+        if (n->state.toggle.active) lv_obj_add_state((lv_obj_t *)n->lv, LV_STATE_CHECKED);
+        else                        lv_obj_remove_state((lv_obj_t *)n->lv, LV_STATE_CHECKED);
+    }
+    bascule_jouer(n, n->state.toggle.active);
+}
+
+/* Crochet du contrat : « activate:NOM » bascule les widgets à bascule (le shim
+ * fait de gtk_widget_activate() un FALSE). La case affichée suit l'état. */
+int sermo_be_widget_activate(void *w)
+{
+    WidgetNode *n = (WidgetNode *)w;
+    if (!n) return 0;
+    switch (n->type) {
+    case WT_CHECKBOX: case WT_RADIOBUTTON: case WT_TOGGLEBUTTON: case WT_SWITCH:
+        basculer(n);
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+/* Crochet du contrat : l'état d'un widget pour condition="active_is_…/
+ * sensitive_is_…/visible_is_…(NOM)" (le shim ne sait rien des nœuds).
+ * quoi : 0 = actif, 1 = sensible, 2 = visible ; -1 = je ne sais pas. */
+int sermo_be_widget_etat(void *w, int quoi)
+{
+    WidgetNode *n = (WidgetNode *)w;
+    if (!n) return -1;
+    switch (quoi) {
+    case 0:
+        switch (n->type) {
+        case WT_CHECKBOX: case WT_RADIOBUTTON: case WT_TOGGLEBUTTON: case WT_SWITCH:
+            return n->state.toggle.active ? 1 : 0;
+        case WT_EXPANDER:
+            return n->state.expander.open ? 1 : 0;
+        default:
+            return -1;
+        }
+    case 1: return n->sensitive ? 1 : 0;
+    case 2: return n->visible ? 1 : 0;
+    default: return -1;
+    }
 }
 
 /* <list> : joue ses actions (signal « selection-changed » de l'étalon). Seule
@@ -553,11 +645,12 @@ static void bascule_change(lv_event_t *e)
                 if (f == n || f->type != WT_RADIOBUTTON || !f->state.toggle.active) continue;
                 f->state.toggle.active = FALSE;
                 if (f->lv) lv_obj_remove_state((lv_obj_t *)f->lv, LV_STATE_CHECKED);
+                bascule_jouer(f, FALSE);   /* le frère décoché joue « if false » */
             }
     }
     if (actif == n->state.toggle.active) return;
     n->state.toggle.active = actif;
-    if (n->action && *n->action) declencher(n, "toggled", "clicked");
+    bascule_jouer(n, actif);   /* exit:… peut sortir ici */
 }
 
 static void champ_change(lv_event_t *e)
@@ -650,6 +743,20 @@ static void spin_pas(lv_event_t *e, int sens)
 }
 static void spin_moins(lv_event_t *e) { spin_pas(e, -1); }
 static void spin_plus(lv_event_t *e)  { spin_pas(e, +1); }
+
+/* <colorbutton> : le bouton montre la couleur retenue, texte clair ou foncé
+ * selon la clarté du fond pour rester lisible. À la construction et à chaque
+ * synchronisation : un « refresh » rejoue l'<input> (widget_colorbutton.c,
+ * 2026-10-13). Composantes arrondies (× 255 + 0,5), comme l'export. */
+static void couleur_peindre(WidgetNode *n, lv_obj_t *o)
+{
+    lv_color_t c = lv_color_make((uint8_t)(n->state.color.r * 255.0f + 0.5f),
+                                 (uint8_t)(n->state.color.g * 255.0f + 0.5f),
+                                 (uint8_t)(n->state.color.b * 255.0f + 0.5f));
+    if (lv_color_eq(lv_obj_get_style_bg_color(o, 0), c)) return;
+    lv_obj_set_style_bg_color(o, c, 0);
+    lv_obj_set_style_text_color(o, lv_color_luminance(c) > 140 ? lv_color_black() : lv_color_white(), 0);
+}
 
 /* <expander> : titre et visibilité du corps suivent state.expander.open. */
 static void expander_titre(WidgetNode *n, lv_obj_t *titre, lv_obj_t *corps)
@@ -804,6 +911,18 @@ static lv_obj_t *boite(lv_obj_t *parent, lv_flex_flow_t sens)
 }
 
 static void construire(WidgetNode *n, lv_obj_t *parent);
+
+/* <levelbar> : la valeur, ramenée entre min et max, en pour cent de la barre.
+ * À la construction et à chaque synchronisation : un « refresh » rejoue
+ * l'<input> (widget_levelbar.c) et la barre doit suivre. */
+static void niveau_afficher(WidgetNode *n, lv_obj_t *o)
+{
+    double r = n->state.levelbar.max - n->state.levelbar.min;
+    double f = r > 0 ? (n->state.levelbar.value - n->state.levelbar.min) / r : 0;
+    if (f < 0) f = 0;
+    if (f > 1) f = 1;
+    lv_bar_set_value(o, (int32_t)(f * 100.0 + 0.5), LV_ANIM_OFF);
+}
 
 /* Boîtes qui empilent leurs enfants en colonne. Chez l'étalon (GtkBox
  * verticale), chaque enfant y prend TOUTE la largeur ; le texte d'un <text>
@@ -1178,6 +1297,7 @@ static int rangee(const WidgetNode *p)
  * (hauteur au ratio). Rend le descripteur (à garder tant que l'image vit), ou
  * NULL. L'analyseur SVG de LVGL plante sur les icônes d'Adwaita : ThorVG a le
  * sien, solide. */
+#if LV_USE_THORVG
 static lv_image_dsc_t *icone_svg(const char *chemin, int px)
 {
     Tvg_Paint *pic = tvg_picture_new();
@@ -1210,6 +1330,16 @@ static lv_image_dsc_t *icone_svg(const char *chemin, int px)
     d->data_size = (uint32_t)pw * (uint32_t)ph * 4;
     return d;
 }
+#else
+/* Version légère (SERMO_LVGL_LEGER, sans ThorVG) : pas d'icône SVG ; les
+ * icônes PNG restent affichées. */
+static lv_image_dsc_t *icone_svg(const char *chemin, int px)
+{
+    (void)chemin;
+    (void)px;
+    return NULL;
+}
+#endif
 
 static void icone_liberer(lv_event_t *e)
 {
@@ -1612,14 +1742,8 @@ static void construire(WidgetNode *n, lv_obj_t *parent)
         lv_label_set_text(lv_label_create(o), lbl[0] ? lbl
                           : n->type == WT_FILECHOOSER ? (n->state.entry.buf[0] ? n->state.entry.buf : "…") : "OK");
         lv_obj_add_event_cb(o, bouton_clic, LV_EVENT_CLICKED, n);
-        if (n->type == WT_COLORBUTTON) {
-            /* le bouton montre la couleur retenue ; texte clair ou foncé selon
-             * la clarté du fond, pour rester lisible */
-            lv_color_t c = lv_color_make((uint8_t)(n->state.color.r * 255), (uint8_t)(n->state.color.g * 255),
-                                         (uint8_t)(n->state.color.b * 255));
-            lv_obj_set_style_bg_color(o, c, 0);
-            lv_obj_set_style_text_color(o, lv_color_luminance(c) > 140 ? lv_color_black() : lv_color_white(), 0);
-        }
+        if (n->type == WT_COLORBUTTON)
+            couleur_peindre(n, o);
         break;
     }
     case WT_TOGGLEBUTTON:
@@ -1718,13 +1842,8 @@ static void construire(WidgetNode *n, lv_obj_t *parent)
         lv_bar_set_range(o, 0, 100);
         if (n->type == WT_PROGRESSBAR)   /* fraction 0..1 du cœur, dès l'ouverture (et dans --render-png) */
             lv_bar_set_value(o, (int32_t)(n->state.progress.value * 100.0 + 0.5), LV_ANIM_OFF);
-        if (n->type == WT_LEVELBAR) {    /* valeur entre min et max ; elle restait vide */
-            double r = n->state.levelbar.max - n->state.levelbar.min;
-            double f = r > 0 ? (n->state.levelbar.value - n->state.levelbar.min) / r : 0;
-            if (f < 0) f = 0;
-            if (f > 1) f = 1;
-            lv_bar_set_value(o, (int32_t)(f * 100.0 + 0.5), LV_ANIM_OFF);
-        }
+        if (n->type == WT_LEVELBAR)      /* valeur entre min et max ; elle restait vide */
+            niveau_afficher(n, o);
         break;
     case WT_SPINNER:
         o = lv_spinner_create(parent);
@@ -1823,10 +1942,14 @@ static void finir(WidgetNode *n, lv_obj_t *o)
                 n->lv_hauteur |= H_GRANDIT;   /* hauteurs_poser */
             }
         }
-        if (n->parent && (n->parent->type == WT_HBOX || n->parent->type == WT_TOOLBAR)) {
+        if (rangee(n->parent)) {
             /* La hauteur d'une rangée : ci-dessus (remplit_rangee), et seulement
              * si la rangée en a une — taillée sur son contenu, un 100 % devient
-             * circulaire et LVGL écrase le champ (mesuré sur 01-formulaire). */
+             * circulaire et LVGL écrase le champ (mesuré sur 01-formulaire).
+             * <grid> et <flowbox> sont aussi des rangées : jusqu'ici, une <entry>
+             * de <grid> y recevait 100 % de largeur d'une rangée taillée sur son
+             * contenu — la rangée gonflait jusqu'à 25 millions de px et
+             * débordait l'int de LVGL (UBSan, cas 29-grid-flot, 2026-10-14). */
         } else if (largeur_connue(n->parent))
             /* Même piège en largeur : 100 % d'une colonne taillée sur son
              * contenu vaut 0 px — les boutons de « Actions rapides » de
@@ -1857,6 +1980,61 @@ static void synchroniser(WidgetNode *n)
             if (strcmp(lv_label_get_text(o), t) != 0) lv_label_set_text(o, t);
             break;
         }
+        /* Famille C (2026-10-13) : un « refresh » rejoue l'<input> de ces
+         * widgets (widget_*.c) ; l'écran suit ici. Aucune de ces poses n'appelle
+         * un rappel qui joue des actions : lv_tabview_set_active n'envoie pas
+         * VALUE_CHANGED (la fin de défilement qu'il cause non plus : l'onglet
+         * courant est déjà posé ; onglet_change ne joue rien), lv_calendar_*
+         * n'en envoie qu'aux en-têtes enfants du calendrier (il n'en a pas ici,
+         * calendrier_change n'est pas touché), lv_label_set_text et les styles
+         * n'en envoient aucun. Statusbar, infobar et searchentry passent
+         * par les cas déjà là (texte_poser, libellé, champ : champ_change ne
+         * fait que recopier le texte). Le linkbutton montre son libellé,
+         * que l'<input> ne change pas (seule l'URI change, comme l'étalon). */
+        case WT_COLORBUTTON:
+            couleur_peindre(n, o);
+            break;
+        case WT_BUTTON: case WT_FONTBUTTON:
+            /* <fontbutton> : un bouton marqué __fontbutton__ dont le libellé
+             * est la police (widget_fontbutton.c) ; le libellé est le dernier
+             * enfant du bouton (une icône peut le précéder) */
+            if (n->type == WT_FONTBUTTON || (n->var_name && strcmp(n->var_name, "__fontbutton__") == 0)) {
+                uint32_t k = lv_obj_get_child_count(o);
+                lv_obj_t *l = k ? lv_obj_get_child(o, (int32_t)k - 1) : NULL;
+                const char *t = n->label && n->label[0] ? n->label : "OK";
+                if (l && lv_obj_check_type(l, &lv_label_class) && strcmp(lv_label_get_text(l), t) != 0)
+                    lv_label_set_text(l, t);
+            }
+            break;
+        case WT_CALENDAR:
+            /* la boîte : la barre « ‹ mois › » d'abord, puis le calendrier */
+            if (lv_obj_get_child_count(o) == 2 && lv_obj_check_type(lv_obj_get_child(o, 1), &lv_calendar_class)) {
+                lv_obj_t *cal = lv_obj_get_child(o, 1);
+                const lv_calendar_date_t *j = lv_calendar_get_today_date(cal);
+                if (j->year != n->state.calendar.year || j->month != n->state.calendar.month
+                    || j->day != n->state.calendar.day) {
+                    lv_calendar_set_today_date(cal, (uint32_t)n->state.calendar.year,
+                                               (uint32_t)n->state.calendar.month, (uint32_t)n->state.calendar.day);
+                    lv_calendar_set_month_shown(cal, (uint32_t)n->state.calendar.year,
+                                                (uint32_t)n->state.calendar.month);
+                    calendrier_titre(cal, lv_obj_get_child(lv_obj_get_child(o, 0), 1));
+                }
+            }
+            break;
+        case WT_EXPANDER: {
+            /* le titre, puis le corps (caché quand l'expander est replié) */
+            lv_obj_t *corps = lv_obj_get_child(o, 1);
+            if (corps && lv_obj_is_hidden(corps) == (bool)n->state.expander.open)
+                expander_titre(n, lv_obj_get_child(o, 0), corps);
+            break;
+        }
+        case WT_NOTEBOOK: {
+            int p = n->state.notebook.current_tab;
+            if (lv_obj_check_type(o, &lv_tabview_class) && p >= 0 && p < n->child_count
+                && lv_tabview_get_tab_active(o) != (uint32_t)p)
+                lv_tabview_set_active(o, (uint32_t)p, LV_ANIM_OFF);
+            break;
+        }
         case WT_ENTRY: case WT_PASSWORD: case WT_SEARCHENTRY: {
             const char *t = n->type == WT_SEARCHENTRY ? n->state.list.filter : n->state.entry.buf;
             if (strcmp(lv_textarea_get_text(o), t) != 0) lv_textarea_set_text(o, t);
@@ -1874,9 +2052,17 @@ static void synchroniser(WidgetNode *n)
         case WT_SPINBUTTON:
             spin_afficher(n, lv_obj_get_child(o, 1));   /* « − », le champ, « + » */
             break;
+        case WT_HSCALE: case WT_VSCALE: {   /* un « refresh » rejoue l'<input> */
+            double pas = n->state.scale.step > 0 ? n->state.scale.step : 1;
+            lv_slider_set_value(o, (int32_t)((n->state.scale.value - n->state.scale.min) / pas), LV_ANIM_OFF);
+            break;
+        }
         case WT_PROGRESSBAR:
             /* le cœur pose une fraction 0..1 (widget_progressbar.c) */
             lv_bar_set_value(o, (int32_t)(n->state.progress.value * 100.0 + 0.5), LV_ANIM_OFF);
+            break;
+        case WT_LEVELBAR:
+            niveau_afficher(n, o);
             break;
         case WT_LIST:
             if ((int)lv_obj_get_child_count(o) != n->state.list.item_count + liste_entete(n)) {
@@ -2171,6 +2357,40 @@ static int run_fbdev(WidgetNode *root, const char *fb)
     return 0;   /* jamais atteint : on sort par une action exit:… du cœur */
 }
 
+/* ─── Écran X11 : ouvert UNE fois, par le port, puis remis à LVGL ───────────
+ *
+ * lv_x11_window_create (LVGL embarqué, tiers/ sans retouche) appelle
+ * XOpenDisplay sans tester le retour : un écran injoignable plantait dans
+ * XDefaultScreen (pile relevée le 2026-10-14 sous ci/bancs.sh). L'ancien
+ * garde (6075a35) ouvrait l'écran, le refermait, puis laissait LVGL le
+ * rouvrir : la seconde ouverture restait sans garde, et la fermeture d'un
+ * client peut faire réinitialiser un serveur X lancé sans -noreset (Xvfb des
+ * bancs) — la connexion suivante tombe alors en pleine réinitialisation.
+ *
+ * Le lien passe -Wl,--wrap=XOpenDisplay (CMakeLists.txt) : tout appel à
+ * XOpenDisplay du binaire, LVGL compris, arrive ici. La connexion ouverte par
+ * run_window est remise telle quelle au pilote de LVGL (qui la refermera à la
+ * destruction de l'écran) ; toute autre ouverture ratée s'arrête proprement,
+ * comme GTK. Sans --wrap, __real_XOpenDisplay manque : le lien échoue, le
+ * garde ne peut pas disparaître en silence. */
+static Display *g_ecran_x11;           /* ouvert par run_window, pas encore remis */
+Display *__real_XOpenDisplay(const char *nom);
+Display *__wrap_XOpenDisplay(const char *nom);
+Display *__wrap_XOpenDisplay(const char *nom)
+{
+    if (g_ecran_x11) {
+        Display *d = g_ecran_x11;
+        g_ecran_x11 = NULL;
+        return d;
+    }
+    Display *d = __real_XOpenDisplay(nom);
+    if (!d) {
+        fprintf(stderr, "lvglsermo: cannot open display: %s\n", XDisplayName(nom));
+        exit(EXIT_FAILURE);
+    }
+    return d;
+}
+
 static int run_window(WidgetNode *root, const char *title, int win_w, int win_h)
 {
     lv_init();
@@ -2192,7 +2412,16 @@ static int run_window(WidgetNode *root, const char *title, int win_w, int win_h)
     }
     if (!d) {
         const char *x = getenv("DISPLAY");
-        if (x && *x) d = lv_x11_window_create(title, win_w, win_h);
+        if (x && *x) {
+            /* une seule connexion : ouverte ici (l'échec s'arrête dans
+             * __wrap_XOpenDisplay), remise à LVGL par la même enveloppe */
+            g_ecran_x11 = XOpenDisplay(NULL);
+            d = lv_x11_window_create(title, win_w, win_h);
+            if (g_ecran_x11) {             /* pas remise : création ratée avant */
+                XCloseDisplay(g_ecran_x11);
+                g_ecran_x11 = NULL;
+            }
+        }
         if (!d) return run_headless(root);
         lv_x11_inputs_create(d, NULL);
         lv_display_add_event_cb(d, ecran_ferme, LV_EVENT_DELETE, NULL);

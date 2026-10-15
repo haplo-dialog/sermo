@@ -28,6 +28,7 @@
 #include "signals.h"
 #include "tag_attributes.h"
 #include "widget_button.h"
+#include "widget_checkbox.h"   /* fltk1_bascule_brancher() */
 #include "jouer_actions.h"
 #include "sermo_icon_theme.h"
 #include <FL/Fl_Shared_Image.H>
@@ -116,10 +117,9 @@ GtkWidget *widget_button_create(AttributeSet *Attr, tag_attr *attr, gint Type)
             if (def && (strcasecmp(def, "true") == 0 || strcmp(def, "1") == 0))
                 tb->value(1);
         }
-        /* Un togglebutton ne SORT pas au clic : il bascule. On ne câble que ses
-         * <action> éventuelles (au basculement) ; pas de sémantique de sortie. */
-        if (action && *action)
-            tb->callback(button_cb, (void *)Attr);
+        /* Un togglebutton ne SORT pas au clic : il bascule. Ses <action> jouent
+         * au basculement, « if true »/« if false » compris (widget_checkbox.cpp). */
+        fltk1_bascule_brancher((GtkWidget *)tb, Attr, NULL);
         return (GtkWidget *)tb;
     }
 
@@ -133,8 +133,8 @@ GtkWidget *widget_button_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         gchar *inp = attributeset_get_first(&el, Attr, ATTR_INPUT);
         while (inp) {
             if (strncasecmp(inp, "file:", 5) == 0) {
-                gchar *icon = attributeset_get_this_tagattr(&el, Attr, ATTR_INPUT, "icon");
-                if (!icon) icon = attributeset_get_this_tagattr(&el, Attr, ATTR_INPUT, "stock");
+                gchar *icon = attributeset_get_this_tagattr(&el, Attr, ATTR_INPUT, (gchar *)"icon");
+                if (!icon) icon = attributeset_get_this_tagattr(&el, Attr, ATTR_INPUT, (gchar *)"stock");
                 if (icon && *icon) {
                     int px = 20;
                     const char *v = attr ? get_tag_attribute(attr, "theme-icon-size") : NULL;
@@ -188,10 +188,12 @@ GtkWidget *widget_button_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 /* ── widget_button_envvar_construct ──────────────────────────────────────── */
 gchar *widget_button_envvar_construct(GtkWidget *widget)
 {
-    /* Convention gtkdialog : retourne le label du bouton */
+    /* Comme l'étalon (gtk3 widget_button.c) : un bouton ordinaire exporte "",
+     * un bouton à bascule son état. Ce port exportait le libellé (cas 71). */
     Fl_Button *btn = (Fl_Button *)widget;
-    if (!btn || !btn->label()) return g_strdup("");
-    return g_strdup(btn->label());
+    if (btn && btn->type() == FL_TOGGLE_BUTTON)
+        return g_strdup(btn->value() ? "true" : "false");
+    return g_strdup("");
 }
 
 gchar *widget_button_envvar_all_construct(variable *var)
@@ -202,7 +204,15 @@ gchar *widget_button_envvar_all_construct(variable *var)
 
 /* ── Stubs ───────────────────────────────────────────────────────────────── */
 void widget_button_clear(variable *var) {}
-void widget_button_refresh(variable *var) { if (var && var->Widget) ((Fl_Widget *)var->Widget)->redraw(); }
+void widget_button_refresh(variable *var)
+{
+    if (!var || !var->Widget) return;
+    /* Le cœur route <togglebutton> ici : son <input> se lit comme celui d'une
+     * case à cocher (widget_checkbox.cpp). Un bouton simple n'en fait rien,
+     * comme l'étalon. */
+    if (var->Type == WIDGET_TOGGLEBUTTON) fltk1_bascule_lire(var);
+    else ((Fl_Widget *)var->Widget)->redraw();
+}
 void widget_button_fileselect(variable *var, const char *n, const char *v) {}
 void widget_button_removeselected(variable *var) {}
 void widget_button_save(variable *var) {}

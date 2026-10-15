@@ -1,0 +1,35 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: attribut condition= d une action : command, file, active, sensitive, visible (vrai et faux) -->
+<window><vbox>
+<entry><variable>A</variable><default>a</default></entry>
+<entry><variable>B</variable><default>b</default></entry>
+<entry><variable>C</variable><default>c</default></entry>
+<entry><variable>D</variable><default>d</default></entry>
+<entry><variable>E</variable><default>e</default></entry>
+<entry><variable>F</variable><default>f</default></entry>
+<entry><variable>G</variable><default>g</default></entry>
+<entry><variable>H</variable><default>h</default></entry>
+<entry><variable>I</variable><default>i</default></entry>
+<entry><variable>J</variable><default>j</default></entry>
+<entry><variable>K</variable><default>k</default></entry>
+<entry><variable>L</variable><default>l</default></entry>
+<entry visible="false"><variable>CACHE</variable><default>cache</default></entry>
+<checkbox><label>x</label><variable>CASE</variable><default>true</default></checkbox>
+<entry><variable>GRIS</variable><default>gris</default></entry>
+<timer visible="false" interval="2"><variable>_T1</variable>
+<action>disable:GRIS</action>
+<action condition="command_is_true(echo true)">clear:A</action>
+<action condition="command_is_false(echo true)">clear:B</action>
+<action condition="file_is_true(donnees/sept.txt)">clear:C</action>
+<action condition="file_is_false(donnees/sept.txt)">clear:D</action>
+<action condition="active_is_true(CASE)">clear:E</action>
+<action condition="active_is_false(CASE)">clear:F</action>
+<action condition="sensitive_is_false(GRIS)">clear:G</action>
+<action condition="sensitive_is_true(GRIS)">clear:H</action>
+<action condition="visible_is_true(A)">clear:I</action>
+<action condition="visible_is_false(A)">clear:J</action>
+<action condition="visible_is_false(CACHE)">clear:K</action>
+<action condition="visible_is_true(CACHE)">clear:L</action>
+</timer>
+<timer visible="false" interval="3"><variable>_T2</variable><action>exit:fin</action></timer>
+</vbox></window>

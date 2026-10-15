@@ -14,6 +14,9 @@
 #                            contributeurs) : l'arbre seul, identité non
 #                            contrôlée — une contribution garde le nom de son
 #                            auteur.
+#   SERMO_BANC_SANITIZERS=1  construit les ports sous ASan + UBSan et rejoue le
+#                            banc de comportement, erreurs fatales (~40 min),
+#                            puis le banc de fuite à l'export (ncurses, html).
 #   SERMO_BANC_DELAI         secondes avant d'arrêter un banc figé (défaut : 1800)
 # Codes : 0 = tout est vert · 1 = au moins un banc rouge, figé ou qui n'a rien vérifié
 
@@ -70,10 +73,10 @@ echo "── Sources et cœur"
 banc "tests unitaires du cœur" bash tests/run_unit_tests.sh
 banc "version unique" bash tests/garde_version.sh
 banc "liens de langue" bash tests/garde_liens_langue.sh
-for d in libsermocore contract tests examples sermo-backend-*; do
+for d in libsermocore contract tests examples sermo-backend-* sermo-source; do
     banc "spdx $d" bash tests/garde_spdx.sh "$d"
 done
-for d in libsermocore/src libsermocore/src-gtk4 libsermocore/include contract sermo-backend-*/src; do
+for d in libsermocore/src libsermocore/src-gtk4 libsermocore/include contract sermo-backend-*/src sermo-source; do
     banc "fonctions interdites $d" bash tests/garde_fonctions_interdites.sh "$d"
 done
 for p in gtk3 gtk4; do
@@ -82,6 +85,24 @@ for p in gtk3 gtk4; do
 done
 banc "en-têtes de poste" bash tests/garde_pas_de_poste.sh "$RACINE"
 banc "lectures d'<input> plafonnées" bash tests/garde_lecture_input.sh "$RACINE"
+banc "programmes d'aide modbus/opcua" bash tests/garde_sermo_source.sh "$RACINE"
+case " ${PORTS[*]} " in *" lvgl "*)
+    banc "lvgl léger : comportement" env TIMEOUT=60 sh tests/comportement/run.sh "$RACINE/sermo-backend-lvgl/_build_leger/lvglsermo"
+    banc "poids par port" bash tests/garde_poids.sh "$RACINE" "${PORTS[@]}" lvgl-leger ;;
+*)  banc "poids par port" bash tests/garde_poids.sh "$RACINE" "${PORTS[@]}" ;;
+esac
+# ASan + UBSan fatals sur le banc de comportement (~40 min pour les neuf) : sur
+# demande, avant une livraison (SERMO_BANC_SANITIZERS=1).
+if [ "${SERMO_BANC_SANITIZERS:-0}" = 1 ]; then
+    BANC_DELAI=5400 banc "ASan + UBSan (comportement)" bash tests/garde_sanitizers.sh "$RACINE" "${PORTS[@]}"
+    # Fuite à l'export des variables, sur les builds ASan qu'il vient de faire
+    # (ports sans toolkit : pas de bruit de toolkit).
+    for p in ncurses html; do
+        case " ${PORTS[*]} " in *" $p "*)
+            banc "fuite export $p" bash tests/garde_fuite_refresh.sh "$RACINE/sermo-backend-$p/_build_asan/${p}sermo" ;;
+        esac
+    done
+fi
 if [ "${SERMO_BANC_PUBLICATION:-0}" = 1 ]; then
     banc "façade avant publication (arbre)" bash tests/verifie-facade.sh --strict
     banc "façade avant publication (historique)" bash tests/verifie-facade.sh --strict --historique HEAD
@@ -111,18 +132,22 @@ for p in "${PORTS[@]}"; do
     # html est un exportateur : il écrit une page, il n'ouvre aucune fenêtre.
     case "$p" in
         ncurses|html) ;;
-        *) banc "$p taille de fenêtre" bash tests/garde_taille_fenetre.sh "$b" ;;
+        *) banc "$p taille de fenêtre" bash tests/garde_taille_fenetre.sh "$b"
+           banc "$p barre dans l'image" bash tests/garde_render_barre.sh "$b" ;;
     esac
     banc "$p calendrier" bash tests/garde_calendrier_date_du_jour.sh "$b"
     banc "$p durcissement" bash tests/garde_durcissement.sh "$b"
     banc "$p allowed_cmds" bash tests/garde_allowed_cmds.sh "$b"
     banc "$p source sans fin" bash tests/garde_input_sans_fin.sh "$b"
+    banc "$p input modbus/opcua" bash tests/garde_input_source.sh "$b"
     banc "$p option --do" bash tests/garde_option_do.sh "$b"
+    banc "$p SERMO_SHELL" bash tests/garde_sermo_shell.sh "$b"
     banc "$p maxwidgets" bash tests/garde_maxwidgets.sh "$b"
     banc "$p include" bash tests/garde_include.sh "$b"
     banc "$p glade" bash tests/garde_glade.sh "$b"
     banc "$p terminal" bash tests/garde_terminal.sh "$b"
     [ "$p" = gtk3 ] && banc "$p layer-shell" bash tests/garde_layer_shell.sh "$b"
+    [ "$p" = efl1 ] && banc "$p sans fenêtre" bash tests/garde_efl1_sans_fenetre.sh "$b"
     # Fenêtres homonymes : gtk3 et gtk4 seulement. L'étalon est ce que rend gtk3 ;
     # les cinq autres ports ouvrent une seconde fenêtre autrement (mesuré le
     # 2026-10-04 : valeur de NOM__W2 différente, sortie vide ou dialogue figé) —
@@ -135,6 +160,7 @@ for p in "${PORTS[@]}"; do
     elif [ "$p" = html ]; then
         # Ni clic ni fenêtre à détecter (xdotool) : seule la sortie compte.
         banc "$p échappement" bash tests/garde_echappement_sortie.sh "$b"
+        banc "$p valeurs de la page" bash tests/garde_html_valeurs_page.sh "$b"
     else
         banc "$p échappement" bash tests/garde_echappement_sortie.sh "$b"
         banc "$p clic widgets" bash tests/garde_clic_widgets.sh "$b"

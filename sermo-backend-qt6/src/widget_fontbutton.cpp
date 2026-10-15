@@ -58,6 +58,23 @@ private:
     }
 };
 
+/* Nom de police « Famille Taille » (ex. « Sans 12 ») : le dernier mot, s'il
+ * est un nombre positif, est la taille ; sinon tout est la famille. */
+static void police_lire(const QString &qs, QFont *police)
+{
+    int sp = qs.lastIndexOf(' ');
+    if (sp > 0) {
+        bool ok;
+        int  sz = qs.mid(sp + 1).toInt(&ok);
+        if (ok && sz > 0) {
+            police->setFamily(qs.left(sp));
+            police->setPointSize(sz);
+            return;
+        }
+    }
+    police->setFamily(qs);
+}
+
 GtkWidget *widget_fontbutton_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
     QFont initial;
@@ -65,18 +82,8 @@ GtkWidget *widget_fontbutton_create(AttributeSet *Attr, tag_attr *attr, gint Typ
     if (Attr) {
         GList *element = NULL;
         gchar *def = attributeset_get_first(&element, Attr, ATTR_DEFAULT);
-        if (def && *def) {
-            QString qs = QString::fromUtf8(def);
-            int     sp = qs.lastIndexOf(' ');
-            if (sp > 0) {
-                initial.setFamily(qs.left(sp));
-                bool ok;
-                int  sz = qs.mid(sp+1).toInt(&ok);
-                if (ok && sz > 0) initial.setPointSize(sz);
-            } else {
-                initial.setFamily(qs);
-            }
-        }
+        if (def && *def)
+            police_lire(QString::fromUtf8(def), &initial);
     }
 
     FontButton *btn = new FontButton(initial);
@@ -114,10 +121,25 @@ void widget_fontbutton_clear(variable *var)
     static_cast<FontButton *>(var->Widget)->setCurrentFont(QFont());
 }
 
+/* <input> à chaque « refresh », comme l'étalon : la première ligne est le nom
+ * de la police. Au premier passage, un <default> l'emporte (la commande tourne
+ * quand même). Aucune <action> n'est branchée sur ce widget dans ce port.
+ * Jusqu'au 2026-10-13, l'<input> n'était jamais lu. */
 void widget_fontbutton_refresh(variable *var)
 {
     if (!var || !var->Widget) return;
-    static_cast<QWidget *>(var->Widget)->update();
+    FontButton *btn = static_cast<FontButton *>(var->Widget);
+    bool premier = !btn->property("sermoLu").toBool();
+    btn->setProperty("sermoLu", true);
+    gchar *ligne = widget_input_line(var->Attributes);
+    if (!ligne) return;
+    GList *el = NULL;
+    if (!(premier && attributeset_get_first(&el, var->Attributes, ATTR_DEFAULT))) {
+        QFont f = btn->currentFont();
+        police_lire(QString::fromUtf8(ligne), &f);
+        btn->setCurrentFont(f);
+    }
+    g_free(ligne);
 }
 
 void widget_fontbutton_fileselect(variable *var, const char *n, const char *v) {}

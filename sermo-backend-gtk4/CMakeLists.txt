@@ -54,18 +54,36 @@ set(BACKEND_SRC
 add_executable(gtk4sermo ${BACKEND_SRC})
 target_include_directories(gtk4sermo PRIVATE
   src/ ${SERMOCORE_INCLUDE_DIRS} ${GTK4_INCLUDE_DIRS} ${VTE_INCLUDE_DIRS})
+# Protection du flot de contrôle selon le processeur : CET sur x86
+# (-fcf-protection), BTI/PAC sur ARM64 (-mbranch-protection). Écrite en dur,
+# -fcf-protection arrêtait toute construction ARM64 : « option 'cf-protection'
+# cannot be specified on this target » (clang 21, Termux, mesuré le 2026-10-12).
+include(CheckCCompilerFlag)
+check_c_compiler_flag(-fcf-protection=full SERMO_A_CF_PROTECTION)
+check_c_compiler_flag(-mbranch-protection=standard SERMO_A_BRANCH_PROTECTION)
+if(SERMO_A_CF_PROTECTION)
+  set(SERMO_FLOT_CONTROLE -fcf-protection=full)
+elseif(SERMO_A_BRANCH_PROTECTION)
+  set(SERMO_FLOT_CONTROLE -mbranch-protection=standard)
+else()
+  set(SERMO_FLOT_CONTROLE "")
+endif()
 target_compile_options(gtk4sermo PRIVATE
   -std=gnu11 ${GTK4_CFLAGS_OTHER}
   -Wno-deprecated-declarations   # appels GTK 4 dépréciés : chantier suivi à part
   -include ${CMAKE_CURRENT_SOURCE_DIR}/src/gtk4-compat.h
   -DHAVE_VTE=${HAVE_VTE}
-  -D_FORTIFY_SOURCE=3 -fstack-protector-strong -fstack-clash-protection -fcf-protection=full)
+  -D_FORTIFY_SOURCE=3 -fstack-protector-strong -fstack-clash-protection ${SERMO_FLOT_CONTROLE})
 # Durcissement au lien : PIE/RELRO/BIND_NOW/NX + CET (IBT/SHSTK forcés, cf. qt6).
 # Vérifié par tests/garde_durcissement.sh.
+# Marquage CET (-z ibt/shstk) : x86 seulement, comme -fcf-protection.
+if(SERMO_A_CF_PROTECTION)
+  set(SERMO_CET_LIEN -Wl,-z,ibt -Wl,-z,shstk)
+endif()
 target_link_options(gtk4sermo PRIVATE
   -pie -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack
-  -Wl,-z,ibt -Wl,-z,shstk
-  -fcf-protection=full -fstack-protector-strong -fstack-clash-protection)
+  ${SERMO_CET_LIEN}
+  ${SERMO_FLOT_CONTROLE} -fstack-protector-strong -fstack-clash-protection)
 target_link_libraries(gtk4sermo ${SERMOCORE_LINK_LIBRARIES} ${GTK4_LIBRARIES} ${VTE_LIBRARIES})
 target_link_directories(gtk4sermo PRIVATE ${GTK4_LIBRARY_DIRS} ${VTE_LIBRARY_DIRS})
 

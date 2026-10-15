@@ -19,6 +19,7 @@
 #include "widgets.h"
 #include "tag_attributes.h"
 #include "widget_togglebutton.h"
+#include "widget_checkbox.h"   /* efl_bascule_brancher() */
 #include <string.h>
 #include <stdlib.h>
 
@@ -36,6 +37,7 @@ GtkWidget *widget_togglebutton_create(AttributeSet *Attr, tag_attr *attr, gint T
         gchar *def = attributeset_get_first(&el, Attr, ATTR_DEFAULT);
         if (def) elm_check_state_set(chk, strcasecmp(def,"true")==0 || strcmp(def,"1")==0);
     }
+    efl_bascule_brancher(chk, Attr, NULL);   /* ses actions : widget_checkbox.c */
     evas_object_show(chk);
     return (GtkWidget *)chk;
 }

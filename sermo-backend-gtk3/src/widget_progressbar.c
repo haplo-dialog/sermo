@@ -54,10 +54,44 @@ struct _progr_descr {
 	gchar        *texte_attente;    /* le dernier texte, NULL sinon */
 	guint         actions_attente;  /* passages à 100 pas encore servis */
 	gboolean      idle_prevu;       /* un widget_progressbar_apply() est prévu */
+	gboolean      en_attente;       /* compté dans barres_en_attente */
 };
 typedef struct _progr_descr progr_descr;
 
 G_LOCK_DEFINE_STATIC(any_progress_bar);
+
+/* Barres dont la commande n'a encore rien montré (sous G_LOCK). --render-png
+ * attend qu'elles aient affiché leur première ligne, une seconde au plus :
+ * sans cela, la capture partait avant que « echo 65 » ait écrit, et la barre
+ * était vide (« Progression (doit afficher 65 %) », galerie du site). */
+static gint barres_en_attente = 0;
+static gint barres_lancees = 0;   /* toutes celles dont la commande a démarré */
+
+static void sortir_de_l_attente(progr_descr *descr)   /* sous G_LOCK */
+{
+	if (descr->en_attente) {
+		descr->en_attente = FALSE;
+		barres_en_attente--;
+	}
+}
+
+gint widget_progressbar_lancees(void)
+{
+	gint n;
+	G_LOCK(any_progress_bar);
+	n = barres_lancees;
+	G_UNLOCK(any_progress_bar);
+	return n;
+}
+
+gint widget_progressbar_en_attente(void)
+{
+	gint n;
+	G_LOCK(any_progress_bar);
+	n = barres_en_attente;
+	G_UNLOCK(any_progress_bar);
+	return n;
+}
 
 /* Local function prototypes, located at file bottom */
 static void widget_progressbar_input_by_command(variable *var, char *command);
@@ -432,6 +466,7 @@ static gboolean widget_progressbar_apply(gpointer data)
 				text);
 	}
 	descr->a_fraction = FALSE;
+	sortir_de_l_attente(descr);
 	G_UNLOCK(any_progress_bar);
 
 	if (alive)
@@ -492,6 +527,10 @@ static gpointer widget_progressbar_thread_entry(progr_descr *descr)
 	}
 
 	fclose(descr->pipe);
+	G_LOCK(any_progress_bar);
+	if (descr->en_attente && !descr->idle_prevu)
+		sortir_de_l_attente(descr);   /* fin sans rien écrire */
+	G_UNLOCK(any_progress_bar);
 	return NULL;
 }
 
@@ -558,6 +597,11 @@ void widget_progressbar_realized_callback(GtkWidget *widget, AttributeSet *Attr)
 			"descriptor",
 			descr, 
 			(GDestroyNotify)widget_progressbar_descriptor_destroy_notify);
+	G_LOCK(any_progress_bar);
+	descr->en_attente = TRUE;
+	barres_en_attente++;
+	barres_lancees++;
+	G_UNLOCK(any_progress_bar);
 	/*
 	 * Now we can fire up the reader thread.
 	 */

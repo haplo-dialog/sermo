@@ -123,7 +123,7 @@ char *widget_get_text_value(GtkWidget *widget, int type)
 #endif
 	if (widget == NULL) {
 		g_warning("%s(): NULL Widget", __func__);
-		return ("NULL WIDGET");
+		return g_strdup("NULL WIDGET");
 	}
 
 	switch (type) {
@@ -773,6 +773,25 @@ void widget_show_all(void)
 			gtk_widget_show_now(win);
 			while (gtk_events_pending())
 				gtk_main_iteration_do(FALSE);
+			/* Une barre de progression lit sa commande dans un fil à part :
+			 * attendre sa première ligne, une seconde au plus. */
+			for (gint64 fin = g_get_monotonic_time() + G_USEC_PER_SEC;
+			     widget_progressbar_en_attente() > 0 && g_get_monotonic_time() < fin; ) {
+				while (gtk_events_pending())
+					gtk_main_iteration_do(FALSE);
+				g_usleep(5000);
+			}
+			while (gtk_events_pending())
+				gtk_main_iteration_do(FALSE);
+			/* La barre changée n'est redessinée qu'à la trame suivante
+			 * (horloge de trames de GTK 3) : en laisser passer quelques-unes. */
+			if (widget_progressbar_lancees() > 0)
+				for (gint64 fin = g_get_monotonic_time() + 100 * 1000;
+				     g_get_monotonic_time() < fin; ) {
+					while (gtk_events_pending())
+						gtk_main_iteration_do(FALSE);
+					g_usleep(5000);
+				}
 			GdkWindow *gw = gtk_widget_get_window(win);
 			if (gw) {
 				gdk_window_process_updates(gw, TRUE);

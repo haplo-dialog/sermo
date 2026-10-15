@@ -100,6 +100,19 @@ char *condexpr_bare[] = {
 /* Local function prototypes */
 gboolean widget_signal_executor_eval_condition(gchar *condition);
 
+/* Crochet FACULTATIF du contrat (contract/sermo-contract.h) : l'état d'un widget
+ * pour condition="active_is_…/sensitive_is_…/visible_is_…(NOM)". Sur un port
+ * sans GTK, le shim répond « inconnu » (active) ou « vrai » (sensible, visible)
+ * quel que soit le widget. Déclaré FAIBLE : sans lui, rien ne change.
+ * quoi : 0 = actif (coché, enfoncé, déplié), 1 = sensible, 2 = visible.
+ * Rend 0 ou 1, ou -1 si le port ne sait pas. */
+__attribute__((weak)) int sermo_be_widget_etat(GtkWidget *widget, int quoi);
+
+static gint etat_par_le_port(GtkWidget *widget, int quoi)
+{
+	return sermo_be_widget_etat ? sermo_be_widget_etat(widget, quoi) : -1;
+}
+
 /* Notes: */
 
 /***********************************************************************
@@ -1379,6 +1392,11 @@ void widget_signal_executor(GtkWidget *widget, AttributeSet *Attr,
 /* GtkWidget--->GtkContainer--->GtkBin--->GtkItem--->GtkMenuItem--->GtkCheckMenuItem */
 			} else if (GTK_IS_CHECK_MENU_ITEM(widget)) {
 				is_active = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(widget));
+#ifdef GTK_IS_SWITCH
+/* GtkWidget--->GtkSwitch : « if true »/« if false » aussi avec signal="changed" */
+			} else if (GTK_IS_SWITCH(widget)) {
+				is_active = gtk_switch_get_active(GTK_SWITCH(widget));
+#endif
 			} else {
 				execute = widget_signal_executor_eval_condition(condition);
 			}
@@ -1387,15 +1405,16 @@ void widget_signal_executor(GtkWidget *widget, AttributeSet *Attr,
 			 * prefix within the action in addition to a possible condition
 			 * tag attribute in which case the latter is applied last */
 			if (is_active > -1) {
+				/* Le préfixe ET la condition : jusqu'à la 2.8.2, une condition=
+				 * décidait seule et l'état n'était plus testé (« if false … »
+				 * jouait sur une case qu'on venait de cocher). */
 				if (strncasecmp(command, "if true ", 8) == 0) {
 					command += 8;
-					if (is_active) execute = TRUE;
-					if (condition)
+					if (is_active)
 						execute = widget_signal_executor_eval_condition(condition);
 				} else if (strncasecmp(command, "if false ", 9) == 0) {
 					command += 9;
-					if (!is_active) execute = TRUE;
-					if (condition)
+					if (!is_active)
 						execute = widget_signal_executor_eval_condition(condition);
 				} else {
 					execute = widget_signal_executor_eval_condition(condition);
@@ -1444,6 +1463,17 @@ void widget_signal_executor(GtkWidget *widget, AttributeSet *Attr,
 				if (strcasecmp(signal_name, "toggled") == 0) {
 					is_active = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(widget));
 				}
+#ifdef GTK_IS_SWITCH
+/* GtkWidget--->GtkSwitch : son rappel notify::active appelle « changed ».
+ * Aucune branche ne le prenait : une <action> sans signal= ne jouait jamais, ni
+ * « if true … »/« if false … » (examples/switch/switch les utilise). Seule
+ * <action signal="changed"> passait, et passe toujours. Le #ifdef garde le cœur
+ * sans GTK, dont le shim ne connaît pas GtkSwitch. */
+			} else if (GTK_IS_SWITCH(widget)) {
+				if (strcasecmp(signal_name, "changed") == 0) {
+					is_active = gtk_switch_get_active(GTK_SWITCH(widget));
+				}
+#endif
 /* GtkWidget--->GtkContainer--->GtkBin--->GtkItem--->GtkMenuItem */
 			} else if (GTK_IS_MENU_ITEM(widget)) {
 				if (strcasecmp(signal_name, "activate") == 0) {
@@ -1510,15 +1540,16 @@ void widget_signal_executor(GtkWidget *widget, AttributeSet *Attr,
 			 * prefix within the action in addition to a possible condition
 			 * tag attribute in which case the latter is applied last */
 			if (is_active > -1) {
+				/* Le préfixe ET la condition : jusqu'à la 2.8.2, une condition=
+				 * décidait seule et l'état n'était plus testé (« if false … »
+				 * jouait sur une case qu'on venait de cocher). */
 				if (strncasecmp(command, "if true ", 8) == 0) {
 					command += 8;
-					if (is_active) execute = TRUE;
-					if (condition)
+					if (is_active)
 						execute = widget_signal_executor_eval_condition(condition);
 				} else if (strncasecmp(command, "if false ", 9) == 0) {
 					command += 9;
-					if (!is_active) execute = TRUE;
-					if (condition)
+					if (!is_active)
 						execute = widget_signal_executor_eval_condition(condition);
 				} else {
 					execute = widget_signal_executor_eval_condition(condition);
@@ -1651,8 +1682,10 @@ gboolean widget_signal_executor_eval_condition(gchar *condition)
 					var = variables_get_by_name(argument);
 
 					/* There's a class hierarchy to be aware of here */
+					if ((state = etat_par_le_port(var->Widget, 0)) >= 0) {
+						/* le port l'a dit (ports sans GTK) */
 /* GtkWidget--->GtkContainer--->GtkBin--->GtkButton--->GtkToggleButton */
-					if (GTK_IS_TOGGLE_BUTTON(var->Widget)) {
+					} else if (GTK_IS_TOGGLE_BUTTON(var->Widget)) {
 						state = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(var->Widget));
 /* GtkWidget--->GtkContainer--->GtkBin--->GtkExpander */
 					} else if (GTK_IS_EXPANDER(var->Widget)) {
@@ -1660,6 +1693,11 @@ gboolean widget_signal_executor_eval_condition(gchar *condition)
 /* GtkWidget--->GtkContainer--->GtkBin--->GtkItem--->GtkMenuItem--->GtkCheckMenuItem */
 					} else if (GTK_IS_CHECK_MENU_ITEM(var->Widget)) {
 						state = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(var->Widget));
+#ifdef GTK_IS_SWITCH
+/* GtkWidget--->GtkSwitch : active_is_true(NOM) d'un interrupteur */
+					} else if (GTK_IS_SWITCH(var->Widget)) {
+						state = gtk_switch_get_active(GTK_SWITCH(var->Widget));
+#endif
 					} else {
 						state = -1;
 					}
@@ -1759,7 +1797,8 @@ gboolean widget_signal_executor_eval_condition(gchar *condition)
 				if (variables_is_avail_by_name(argument)) {
 					var = variables_get_by_name(argument);
 
-					state = gtk_widget_get_sensitive(var->Widget);
+					if ((state = etat_par_le_port(var->Widget, 1)) < 0)
+						state = gtk_widget_get_sensitive(var->Widget);
 
 					if (not) {
 						if (state == 0) {
@@ -1780,7 +1819,8 @@ gboolean widget_signal_executor_eval_condition(gchar *condition)
 				if (variables_is_avail_by_name(argument)) {
 					var = variables_get_by_name(argument);
 
-					state = gtk_widget_get_visible(var->Widget);
+					if ((state = etat_par_le_port(var->Widget, 2)) < 0)
+						state = gtk_widget_get_visible(var->Widget);
 
 					if (not) {
 						if (state == 0) {

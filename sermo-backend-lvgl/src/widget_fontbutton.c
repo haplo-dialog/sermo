@@ -61,7 +61,27 @@ void widget_fontbutton_clear(variable *var)
     n->label = strdup("Sans 12");
 }
 
-void widget_fontbutton_refresh(variable *var) {}
+void widget_fontbutton_refresh(variable *var)
+{
+    /* <input> : rejoué à chaque « refresh », comme l'étalon gtk3sermo, sans
+     * jouer d'action. La police vit dans node->label (export, et libellé du
+     * bouton que render_lvgl.c remet à jour). Jusqu'au 2026-10-13 il n'était
+     * jamais lu. Au premier passage, <default> l'emporte : l'étalon
+     * l'applique après l'<input>. */
+    WidgetNode *n;
+    gchar      *ligne, *def;
+    GList      *el = NULL;
+
+    if (!var || !var->Widget) return;
+    n = (WidgetNode *)var->Widget;
+    ligne = widget_input_line(var->Attributes);
+    if (ligne) { free(n->label); n->label = strdup(ligne); g_free(ligne); }
+    if (!n->initialised) {
+        n->initialised = TRUE;
+        def = attributeset_get_first(&el, var->Attributes, ATTR_DEFAULT);
+        if (def && *def) { free(n->label); n->label = strdup(def); }
+    }
+}
 void widget_fontbutton_fileselect(variable *var, const char *name, const char *value) {}
 void widget_fontbutton_removeselected(variable *var) {}
 void widget_fontbutton_save(variable *var) {}

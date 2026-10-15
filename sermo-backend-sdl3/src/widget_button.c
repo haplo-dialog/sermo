@@ -110,9 +110,12 @@ GtkWidget *widget_button_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 
 gchar *widget_button_envvar_construct(GtkWidget *widget)
 {
+    /* Comme l'étalon (gtk3 widget_button.c) : un bouton ordinaire exporte "",
+     * un bouton à bascule son état. Ce port exportait le libellé (cas 71). */
     WidgetNode *n = (WidgetNode *)widget;
-    if (!n) return g_strdup("NULL");
-    return g_strdup(n->label ? n->label : "button");
+    if (n && n->type == WT_TOGGLEBUTTON)
+        return g_strdup(n->state.toggle.active ? "true" : "false");
+    return g_strdup("");
 }
 gchar *widget_button_envvar_all_construct(variable *var)
 {
@@ -120,7 +123,14 @@ gchar *widget_button_envvar_all_construct(variable *var)
     return widget_button_envvar_construct(var->Widget);
 }
 void widget_button_clear(variable *var) {}
-void widget_button_refresh(variable *var) {}
+void widget_button_refresh(variable *var)
+{
+    /* Le cœur route <togglebutton> ici : son <input> se lit comme celui d'une
+     * case à cocher (widgets.c). Un bouton simple n'en fait rien, comme
+     * l'étalon. */
+    if (var && var->Widget && ((WidgetNode *)var->Widget)->type == WT_TOGGLEBUTTON)
+        widget_bascule_lire(var);
+}
 void widget_button_fileselect(variable *var, const char *n, const char *v) {}
 void widget_button_removeselected(variable *var) {}
 void widget_button_save(variable *var) {}

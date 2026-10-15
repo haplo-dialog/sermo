@@ -71,12 +71,21 @@ void widget_entry_clear(variable *var) { if (var && var->Widget) static_cast<QLi
 void widget_entry_refresh(variable *var)
 {
     if (!var || !var->Widget) return;
-    /* <input> (commande ou fichier) : la PREMIÈRE ligne, sans CR/LF, et elle
-     * prime sur <default> — règle de l'étalon gtk3sermo. */
-    gchar *text = widget_input_text(var->Attributes);
+    /* <input> (commande ou fichier) : la PREMIÈRE ligne, sans CR/LF ; une
+     * sortie vide ne change rien. Au premier passage (juste après la
+     * création), un <default> l'emporte : l'étalon gtk3sermo le pose APRÈS
+     * l'<input> (widget_entry.c). Jusqu'au 2026-10-13, ce port faisait
+     * l'inverse (cas 78 : <entry type="search"> — routé ici, comme chez
+     * l'étalon — rendait « in » au lieu de « def »). La commande tourne
+     * quand même. */
+    QLineEdit *le = static_cast<QLineEdit *>(var->Widget);
+    bool premier = !le->property("sermoLu").toBool();
+    le->setProperty("sermoLu", true);
+    gchar *text = widget_input_line(var->Attributes);
     if (text) {
-        text[strcspn(text, "\r\n")] = '\0';
-        static_cast<QLineEdit *>(var->Widget)->setText(QString::fromUtf8(text));
+        GList *el = NULL;
+        if (!(premier && attributeset_get_first(&el, var->Attributes, ATTR_DEFAULT)))
+            le->setText(QString::fromUtf8(text));
         g_free(text);
     }
 }

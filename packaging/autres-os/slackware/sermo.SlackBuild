@@ -1,19 +1,20 @@
+#!/bin/bash
 # SPDX-License-Identifier: GPL-2.0-or-later
 # Copyright (C) 2026 S. Cage
 # haplo-dialog <devel@haplo-dialog.fr>
-#!/bin/bash
+#
 # sermo.SlackBuild — construit un paquet .txz par backend demandé.
 #
 #   PORTS="ncurses html" ./sermo.SlackBuild
 #
 # Ports : gtk3 gtk4 qt6 fltk1 efl1 sdl3 lvgl ncurses html (et « coeur-dev » pour la bibliothèque statique).
-# Défaut : gtk3 ncurses html — les seuls dont les bibliothèques sont dans
-# Slackware 15.0 ; qt6, sdl3, efl1 et fltk1 (1.4) demandent -current ou SlackBuilds.org.
+# Défaut : ncurses html — construits, installés et lancés sur Slackware 15.0
+# (conteneur, 12/10/2026). gtk3 se demande : Slackware 15.0 n'a pas
+# gtk-layer-shell, le script construit alors sans l'ancrage Wayland et le dit.
+# qt6, sdl3, efl1 et fltk1 (1.4) demandent -current ou SlackBuilds.org.
 # Le résultat est déposé dans $OUTPUT (défaut : /tmp). Les répertoires de travail
 # sont neufs (mktemp) : le script n'efface rien.
 #
-# ⚠️ Écrit sans Slackware sous la main : la suite des gestes de construction est
-# rejouée (packaging/autres-os/README.md), pas les paquets de la distribution.
 # Pas de mécanisme « alternatives » : chaque backend livre /usr/bin/<port>sermo.
 
 cd "$(dirname "$0")" || exit 1
@@ -42,6 +43,17 @@ BUILDDIR=$WORK/construit
 
 # Le cœur et les ports (« coeur-dev » est à part).
 ports=""
+# gtk3 exige gtk-layer-shell (ancrage Wayland), sauf si on y renonce
+# explicitement. Slackware 15.0 ne l'a pas : y renoncer, et le dire.
+case " $PORTS " in
+  *" gtk3 "*)
+    if ! pkg-config --exists gtk-layer-shell-0 2>/dev/null; then
+      echo "gtk-layer-shell absent : gtk3sermo est construit SANS l'ancrage Wayland (-DSERMO_LAYER_SHELL=OFF)."
+      CMAKE_EXTRA="${CMAKE_EXTRA:-} -DSERMO_LAYER_SHELL=OFF"
+      export CMAKE_EXTRA
+    fi ;;
+esac
+
 for p in $PORTS; do [ "$p" = coeur-dev ] || ports="$ports $p"; done
 if [ -n "$ports" ]; then
   # shellcheck disable=SC2086
@@ -88,10 +100,12 @@ for p in $PORTS; do
       ;;
     *)
       sh "$SRCDIR/packaging/autres-os/construire-os.sh" installer "$SRCDIR" "$BUILDDIR" "$p" "$PKG" /usr
-      # Slackware range les pages de manuel dans /usr/man, compressées.
-      if [ -d "$PKG/usr/share/man" ]; then
-        mkdir -p "$PKG/usr/man"
-        cp -a "$PKG/usr/share/man/." "$PKG/usr/man/"
+      # Slackware range les pages de manuel dans /usr/man, compressées. Les
+      # DÉPLACER : une copie laissait aussi /usr/share/man non compressé, en
+      # double dans le paquet (makepkg le signalait, vu le 10/10/2026).
+      if [ -d "$PKG/usr/share/man" ] && [ ! -e "$PKG/usr/man" ]; then
+        mv "$PKG/usr/share/man" "$PKG/usr/man"
+        rmdir "$PKG/usr/share" 2>/dev/null || true   # seulement s'il est vide
         find "$PKG/usr/man" -type f -exec gzip -9 {} +
       fi
       strip --strip-unneeded "$PKG/usr/bin/${p}sermo" 2>/dev/null || true
