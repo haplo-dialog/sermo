@@ -76,9 +76,10 @@ Ce que Windows change :
 
 Rejoué sous Wine 10 (12/10/2026) : banc de comportement 61/61 avec busybox-w32
 comme `SERMO_SHELL`, scripts métier et boîtes à outils 187 dialogues sur 187
-identiques à gtk3sermo, garde-fous de la relance vérifiés. Sur un vrai Windows 11
-(PC de S. Cage) : affichage, accents, sortie vers un fichier (jalon précédent) ;
-les commandes restent à y essayer. Les accents ne se vérifient pas sous Wine (son
+identiques à gtk3sermo, garde-fous de la relance vérifiés ; banc de comportement
+78/78 pour la 3.0.0. Sur un vrai Windows 11 : affichage, accents, sortie vers un
+fichier. Sur un vrai Windows 10 : commandes par cmd (accents justes) et par
+busybox-w32, lien `https` ouvert, programme (`calc.exe`) refusé. Les accents ne se vérifient pas sous Wine (son
 `mbrtowc` UTF-8 rend U+FFFD).
 
 ## Termux : les ports graphiques, à la main
@@ -240,8 +241,8 @@ shims lisent alors les nombres sous la locale C par `uselocale` le temps d'un
 
 **Non vérifié, ou à reprendre** :
 - une installation sur un système réel, hors conteneur ;
-- les sommes de contrôle (`SKIP`) : elles ne se posent qu'à la publication de
-  l'étiquette — geste de S. Cage.
+- les sommes de contrôle de Termux, FreeBSD et OpenBSD (`SKIP`, `distinfo`) ;
+  celle de la formule Homebrew est posée (archive de l'étiquette `v3.0.0`).
 - Termux : la construction croisée de la ferme termux-packages (seule la
   construction sur l'appareil est rejouée) ; les ports graphiques sur un
   vrai écran (Termux:X11), le banc ne les ayant joués que sous Xvfb ; le
@@ -250,6 +251,7 @@ shims lisent alors les nombres sous la locale C par `uselocale` le temps d'un
   `portlint`).
 - OpenBSD : le cadre des ports lui-même (`bsd.port.mk`, `make port-lib-depends-check`,
   `distinfo`).
-- macOS : tout, tant que le workflow `.github/workflows/macos.yml` n'a pas tourné
-  sur un runner macOS (construction, banc, scripts métier gardés puis comparés par
-  `examples/metiers/verifie.sh --ports gtk3 --rejouer passe-macos`, formule).
+- macOS : une installation sur un vrai Mac. Sur un runner macOS de GitHub
+  (`.github/workflows/macos.yml`) : construction, banc de comportement 61/61,
+  187 dialogues identiques à gtk3sermo (`examples/metiers/verifie.sh --ports gtk3
+  --rejouer passe-macos`), formule installée et son test vert.
