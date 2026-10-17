@@ -14,7 +14,7 @@
 %global _lto_cflags %{nil}
 
 Name:           sermo
-Version:        2.8.2
+Version:        3.0.0
 Release:        1%{?dist}
 Summary:        Dialog boxes for shell scripts, described in XML (gtkdialog successor)
 License:        GPL-2.0-or-later

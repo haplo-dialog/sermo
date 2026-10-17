@@ -11,7 +11,7 @@ Elles remplacent l'ancien kit `sermo-backend-qt6/packaging/`, écrit pour un
 |---|---|---|---|
 | Arch Linux | `arch/PKGBUILD` | 11 (paquets scindés d'un seul PKGBUILD) | non : `<port>sermo` |
 | Fedora / RPM | `rpm/sermo.spec` | 11 sous-paquets | oui : `alternatives` |
-| Gentoo | `gentoo/dev-util/sermo/sermo-2.8.2.ebuild` | 1, un drapeau USE par port | non : `<port>sermo` |
+| Gentoo | `gentoo/dev-util/sermo/sermo-3.0.0.ebuild` | 1, un drapeau USE par port | non : `<port>sermo` |
 | Slackware | `slackware/sermo.SlackBuild` | un `.txz` par port demandé | non : `<port>sermo` |
 | Alpine | `alpine/APKBUILD` | 8 sous-paquets (sans efl1 ni fltk1 : EFL absent, FLTK en 1.3), `provider_priority` | non : `<port>sermo` |
 | NixOS | `nix/default.nix` | une dérivation par port + `all` | non : `<port>sermo` |
