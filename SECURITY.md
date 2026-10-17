@@ -109,7 +109,8 @@ passe pas par `safe_exec.c` : la liste et le refus de repli y sont sans effet.
   (`sermo-backend-gtk3/src/widget_terminal.c`), et la sortie de son `<input>`
   y est **tapée** comme au clavier (`vte_terminal_feed_child`). Une commande
   autorisée qui imprime une ligne fait donc exécuter cette ligne par le shell
-  du terminal. Mesuré le 2026-09-19 sur le binaire du paquet 2.7.1, avec
+  du terminal. Mesuré le 2026-09-19 sur le binaire du paquet 2.7.1, puis le
+  2026-10-17 sur gtk3sermo et gtk4sermo des paquets 3.0.0-1, avec
   `SERMO_ALLOWED_CMDS` **et** `SERMO_NO_SHELL_FALLBACK` posés : une `<action>`
   ordinaire est refusée au même moment où le `<terminal>` écrit son fichier
   témoin. **Un dialogue qui contient un `<terminal>` donne un shell** : ne le
@@ -124,7 +125,8 @@ passe pas par `safe_exec.c` : la liste et le refus de repli y sont sans effet.
   `/bin/sh -c`, même une commande sans le moindre métacaractère. Et comme le
   repli est refusé dès que `SERMO_ALLOWED_CMDS` est posée, `--include` avec une
   liste blanche n'exécute plus rien du tout. Les deux mesures ont été faites le
-  2026-09-19 sur le binaire du paquet 2.7.1.
+  2026-09-19 sur le binaire du paquet 2.7.1, et refaites le 2026-10-17 sur
+  gtk3sermo du paquet 3.0.0-1.
 
 ## Durcissement du binaire
 
@@ -142,7 +144,8 @@ apporte ses propres appels fortifiés et masquerait un cœur qui ne l'est pas.
 ⚠️ **CET est posé, pas actif.** Les notes IBT et SHSTK sont forcées à l'édition
 de liens (`-Wl,-z,ibt -Wl,-z,shstk`), et le banc les trouve. Mais sur Debian testing,
 ni les objets de démarrage de la glibc, ni la glibc, ni les bibliothèques des
-toolkits n'en portent (mesuré au `readelf` le 2026-09-16). Sur ce système, CET ne
+toolkits n'en portent (mesuré au `readelf` le 2026-09-16, refait le 2026-10-17 sur les paquets
+3.0.0-1 avec la glibc 2.43, GTK 3.24.52 et Qt 6.11.2). Sur ce système, CET ne
 peut donc pas agir à l'exécution — déduit de l'absence des notes, pas mesuré en
 exécution.
 
@@ -188,8 +191,12 @@ signé). Commande complète : [README.md](README.md#installer).
 - **Pas de bac à sable.** Une commande lancée par un dialogue a les droits de
   l'utilisateur qui l'a ouvert. sermo borne *comment* elle est lancée, pas *ce
   qu'elle fait*.
-- **Pas d'élévation de privilèges** : pas de `pkexec`, rien qui demande un mot de
-  passe administrateur.
+- **sermo n'élève jamais ses droits** : il n'appelle ni `pkexec` ni `sudo`, n'est pas
+  setuid et ne demande aucun mot de passe administrateur. Un **script** qu'il
+  exécute peut, lui, en demander : l'exemple `examples/system-tools` appelle
+  `pkexec` (terminal root, édition d'un fichier système, mise à jour des paquets),
+  et le dit dans son en-tête. Cette élévation est alors celle de l'auteur du
+  script, hors de ce que sermo borne.
 - **Pas de liste de commandes imposée par défaut** : la confiance va à l'auteur du
   script. La liste optionnelle `SERMO_ALLOWED_CMDS` reste disponible (voir plus
   haut).
@@ -202,7 +209,7 @@ signé). Commande complète : [README.md](README.md#installer).
   rafraîchies sans `clear:` accumulent leurs rangées.
 - **`<terminal>` donne un shell** (gtk3sermo, gtk4sermo) : il lance `/bin/sh`
   par VTE, hors de `SERMO_ALLOWED_CMDS` et de `SERMO_NO_SHELL_FALLBACK`, et la
-  sortie de son `<input>` y est tapée comme au clavier (mesuré le 2026-09-19 ;
+  sortie de son `<input>` y est tapée comme au clavier (mesuré le 2026-09-19, refait le 2026-10-17 en 3.0.0 ;
   voir plus haut).
 - **`--include` fait tout passer par `/bin/sh -c`**, et n'exécute plus rien si
   une liste de commandes est posée (voir plus haut).
@@ -223,7 +230,7 @@ signé). Commande complète : [README.md](README.md#installer).
 - **Délais** — sermo a un seul mainteneur : accusé de réception sous **14 jours** ;
   correctif, ou avis public avec contournement, au plus tard **90 jours** après
   le signalement, plus tôt si la faille est déjà publique.
-- **Versions suivies** : seule la dernière version publiée (2.8.x aujourd'hui)
+- **Versions suivies** : seule la dernière version publiée (3.0.x aujourd'hui)
   reçoit des correctifs. La ligne 1.x n'en reçoit plus : passez à la 2.x
   ([MIGRATION.md](MIGRATION.md)).
 - Si vous le souhaitez, votre nom figure dans le [CHANGELOG.md](CHANGELOG.md) avec

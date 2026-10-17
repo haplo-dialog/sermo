@@ -103,7 +103,8 @@ applies.
   (`sermo-backend-gtk3/src/widget_terminal.c`), and the output of its `<input>`
   is **typed into it** as if on a keyboard (`vte_terminal_feed_child`). An
   allowed command that prints a line therefore has that line run by the
-  terminal's shell. Measured on 2026-09-19 on the 2.7.1 package binary, with
+  terminal's shell. Measured on 2026-09-19 on the 2.7.1 package binary, then on
+  2026-10-17 on gtk3sermo and gtk4sermo from the 3.0.0-1 packages, with
   both `SERMO_ALLOWED_CMDS` and `SERMO_NO_SHELL_FALLBACK` set: a plain
   `<action>` is refused at the very moment the `<terminal>` writes its witness
   file. **A dialog containing a `<terminal>` hands out a shell**: do not deploy
@@ -117,7 +118,7 @@ applies.
   `/bin/sh -c`, even a command without a single metacharacter. And since the
   fallback is refused as soon as `SERMO_ALLOWED_CMDS` is set, `--include` plus
   an allow-list runs nothing at all. Both measured on 2026-09-19 on the 2.7.1
-  package binary.
+  package binary, and again on 2026-10-17 on gtk3sermo from the 3.0.0-1 package.
 
 ## Binary hardening
 
@@ -135,7 +136,8 @@ brings its own fortified calls and would hide a core that is not.
 ⚠️ **CET is marked, not active.** The IBT and SHSTK notes are forced at link
 time (`-Wl,-z,ibt -Wl,-z,shstk`), and the bench finds them. But on Debian testing,
 neither glibc's startup objects, nor glibc itself, nor the toolkit libraries carry
-them (measured with `readelf` on 2026-09-16). On that system CET therefore cannot
+them (measured with `readelf` on 2026-09-16, redone on 2026-10-17 on the 3.0.0-1
+packages with glibc 2.43, GTK 3.24.52 and Qt 6.11.2). On that system CET therefore cannot
 act at run time — deduced from the missing notes, not measured at run time.
 
 ## MCP servers
@@ -180,8 +182,11 @@ repository (so no signed repository). Full command:
 
 - **No sandbox.** A command started by a dialog has the rights of the user who
   opened it. sermo bounds *how* it is started, not *what it does*.
-- **No privilege escalation**: no `pkexec`, nothing that asks for an
-  administrator password.
+- **sermo never raises its own privileges**: it calls neither `pkexec` nor
+  `sudo`, is not setuid and asks for no administrator password. A **script** it
+  runs may: the `examples/system-tools` example calls `pkexec` (root terminal,
+  editing a system file, updating packages) and says so in its header. That
+  escalation is the script author's, outside what sermo bounds.
 - **No command list enforced by default**: trust goes to the script author. The
   optional `SERMO_ALLOWED_CMDS` list remains available (see above).
 - **The cap applies to each `<input>`, not to the whole dialog.** A dialog that
@@ -194,7 +199,7 @@ repository (so no signed repository). Full command:
 - **`<terminal>` hands out a shell** (gtk3sermo, gtk4sermo): it spawns
   `/bin/sh` through VTE, outside `SERMO_ALLOWED_CMDS` and
   `SERMO_NO_SHELL_FALLBACK`, and the output of its `<input>` is typed into it as
-  if on a keyboard (measured on 2026-09-19; see above).
+  if on a keyboard (measured on 2026-09-19, redone on 2026-10-17 on 3.0.0; see above).
 - **`--include` sends everything through `/bin/sh -c`**, and runs nothing at all
   when a command list is set (see above).
 - **A Glade file is code**, and **`<linkbutton>`** opens its address outside the
@@ -214,7 +219,7 @@ repository (so no signed repository). Full command:
 - **Timelines** — sermo has a single maintainer: acknowledgement within **14
   days**; a fix, or a public advisory with a workaround, no later than **90
   days** after the report, sooner if the vulnerability is already public.
-- **Supported versions**: only the latest published release (2.8.x today)
+- **Supported versions**: only the latest published release (3.0.x today)
   receives fixes. The 1.x line no longer does: move to 2.x
   ([MIGRATION.en.md](MIGRATION.en.md)).
 - If you wish, your name goes into the [CHANGELOG.en.md](CHANGELOG.en.md) with the
