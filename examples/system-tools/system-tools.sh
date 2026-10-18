@@ -460,7 +460,7 @@ handle_action() {
         # ── Onglet Paquets ──────────────────────────────────────────────────
 
         pkg-update)
-            dans_terminal "pkexec apt update && pkexec apt full-upgrade -y"
+            dans_terminal "pkexec sh -c 'apt update && apt full-upgrade -y'"
             rm -f "$tmp" ;;
 
         pkg-list)

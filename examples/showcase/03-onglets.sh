@@ -17,7 +17,7 @@
 DIALOG="${1:-gtk3sermo}"
 
 export MAIN_DIALOG='
-<window title="Repere 3 - Onglets" default-width="560" default-height="400">
+<window title="Repère 3 - Onglets" default-width="560" default-height="400">
   <vbox space-expand="true" space-fill="true">
 
     <notebook tab-pos="top" tab-labels="Texte|Champs|Listes"
@@ -28,7 +28,7 @@ export MAIN_DIALOG='
           <vbox>
             <text><label>Premier onglet.</label></text>
             <text><label>Plusieurs lignes de texte simple</label></text>
-            <text><label>pour verifier la coherence typographique.</label></text>
+            <text><label>pour vérifier la cohérence typographique.</label></text>
           </vbox>
         </frame>
       </vbox>
@@ -53,7 +53,7 @@ export MAIN_DIALOG='
                 <item>Alpha</item><item>Bravo</item><item>Charlie</item><item>Delta</item>
               </comboboxtext>
             </hbox>
-            <edit space-expand="true" space-fill="true"><default>Contenu du troisieme onglet.</default></edit>
+            <edit space-expand="true" space-fill="true"><default>Contenu du troisième onglet.</default></edit>
           </vbox>
         </frame>
       </vbox>

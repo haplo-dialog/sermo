@@ -16,10 +16,10 @@
 DIALOG="${1:-gtk3sermo}"
 
 export MAIN_DIALOG='
-<window title="Repere 1 - Formulaire" default-width="480" default-height="420">
+<window title="Repère 1 - Formulaire" default-width="480" default-height="420">
   <vbox space-expand="true" space-fill="true">
 
-    <frame label="Identite" space-expand="false" space-fill="false">
+    <frame label="Identité" space-expand="false" space-fill="false">
       <vbox>
         <hbox><text><label>Nom :</label></text>
           <entry space-expand="true" space-fill="true"><default>Dupont</default><variable>NOM</variable></entry>
@@ -27,20 +27,20 @@ export MAIN_DIALOG='
         <hbox><text><label>Mot de passe :</label></text>
           <password space-expand="true" space-fill="true"><variable>MDP</variable></password>
         </hbox>
-        <hbox><text><label>Age :</label></text>
+        <hbox><text><label>Âge :</label></text>
           <spinbutton range-min="0" range-max="120" range-step="1"><input>echo 30</input><variable>AGE</variable></spinbutton>
         </hbox>
       </vbox>
     </frame>
 
-    <frame label="Preferences" space-expand="false" space-fill="false">
+    <frame label="Préférences" space-expand="false" space-fill="false">
       <vbox>
         <checkbox><label>Recevoir les notifications</label><variable>NOTIF</variable></checkbox>
         <checkbox><label>Mode sombre</label><default>true</default><variable>DARK</variable></checkbox>
         <hbox><text><label>Niveau :</label></text>
           <comboboxtext space-expand="true" space-fill="true">
             <variable>NIVEAU</variable>
-            <item>Faible</item><item>Moyen</item><item>Eleve</item>
+            <item>Faible</item><item>Moyen</item><item>Élevé</item>
           </comboboxtext>
         </hbox>
       </vbox>

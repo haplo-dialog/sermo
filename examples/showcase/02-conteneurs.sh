@@ -17,7 +17,7 @@
 DIALOG="${1:-gtk3sermo}"
 
 export MAIN_DIALOG='
-<window title="Repere 2 - Conteneurs" default-width="560" default-height="420">
+<window title="Repère 2 - Conteneurs" default-width="560" default-height="420">
   <vbox space-expand="true" space-fill="true">
 
     <hbox space-expand="true" space-fill="true">
@@ -38,15 +38,15 @@ export MAIN_DIALOG='
           </hbox>
           <hseparator></hseparator>
           <text><label>Zone extensible :</label></text>
-          <edit space-expand="true" space-fill="true"><default>Cette zone doit remplir l espace restant.</default></edit>
+          <edit space-expand="true" space-fill="true"><default>Cette zone doit remplir l’espace restant.</default></edit>
         </vbox>
       </frame>
     </hbox>
 
     <frame label="Bandeau bas (pleine largeur)" space-expand="false" space-fill="false">
       <hbox>
-        <text space-expand="true" space-fill="true"><label>Etiquette a gauche</label></text>
-        <button><label>Action a droite</label></button>
+        <text space-expand="true" space-fill="true"><label>Étiquette à gauche</label></text>
+        <button><label>Action à droite</label></button>
       </hbox>
     </frame>
 
