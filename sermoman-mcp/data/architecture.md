@@ -54,10 +54,16 @@ montre ni GTK, ni Qt, ni SDL. Les types graphiques passent par un *shim*
 Le cœur ne connaît **aucun** type graphique concret : il manipule des pointeurs
 opaques. Les widgets, eux, sont fabriqués par le backend.
 
-Fichiers du cœur : `gtkdialog.c` (orchestration + `main`), `safe_exec.c`,
-`variables.c`, `stack.c`, `automaton.c`, `attributes.c`, `signals.c`,
-`stringman.c`, `actions.c`, `tag_attributes.c`, `sermo_icon_theme.c`, plus la
-grammaire Flex/Bison.
+Fichiers du cœur (`libsermocore/CMakeLists.txt`) : `gtkdialog.c`
+(orchestration + `main`), `safe_exec.c`, `sermo_lanceur.c` (lancement des
+programmes, `SERMO_SHELL`), `variables.c`, `stack.c`, `automaton.c`,
+`attributes.c`, `signals.c`, `stringman.c`, `actions.c`, `tag_attributes.c`,
+`sermo_icon_theme.c`, `sermo_input.c`, `sermo_source.c` (programmes d'aide des
+`<input X>` / `<action X>`), `sermo_focus.c`, plus la grammaire Flex/Bison.
+S'y ajoutent `sermo_progress.c` dans la variante neutre (ports sans GTK),
+`sermo_win32.c` sous Windows, et, pour la variante GTK4, ses propres
+`gtkdialog.c`, `variables.c`, `automaton.c`, `signals.c`, `tag_attributes.c` et
+`gtk4-compat.c` (dossier `src-gtk4/`).
 
 ---
 
@@ -132,14 +138,15 @@ pointant `PKG_CONFIG_PATH` sur le préfixe d'install voulu (neutre / gtk3 / gtk4
 
 ---
 
-## 5. Packaging — 16 paquets .deb
+## 5. Packaging — 27 paquets .deb (3.1.0)
 
 sermo produit des paquets **séparés** : un cœur de développement, un backend par
-toolkit, et un paquet de compatibilité.
+toolkit, un paquet de compatibilité, un programme d'aide par source ou cible, et
+deux serveurs MCP.
 
 | Paquet | Contenu | Dépend de |
 |---|---|---|
-| `sermo-core-dev` | `libsermocore.a` + en-têtes + `sermocore.pc` | rien (aucun champ `Depends`) |
+| `sermo-core-dev` | `libsermocore.a` + en-têtes + `sermocore.pc` | aucune dépendance propre : `Depends: ${misc:Depends}` seulement |
 | `sermo-backend-gtk3` | binaire `gtk3sermo` | sa toolkit GTK 3 |
 | `sermo-backend-gtk4` | binaire `gtk4sermo` | sa toolkit GTK 4 |
 | `sermo-backend-qt6` | binaire `qt6sermo` | sa toolkit Qt 6 |
@@ -147,6 +154,7 @@ toolkit, et un paquet de compatibilité.
 | `sermo-backend-efl1` | binaire `efl1sermo` | Enlightenment / Elementary |
 | `sermo-backend-sdl3` | binaire `sdl3sermo` | SDL 3 |
 | `sermo-backend-lvgl` | binaire `lvglsermo` (LVGL embarqué) | X11, Wayland, xkbcommon, libpng |
+| `sermo-backend-lvgl-leger` | le même `lvglsermo`, construit sans ThorVG | ses bibliothèques ; en conflit avec `sermo-backend-lvgl` |
 | `sermo-backend-ncurses` | binaire `ncursessermo` | ncursesw (terminal) |
 | `sermo-backend-html` | binaire `htmlsermo` | aucune bibliothèque graphique |
 | `sermo-doc` | manuel Texinfo et documentation commune | rien |
@@ -155,10 +163,23 @@ toolkit, et un paquet de compatibilité.
 | `gtk4sermo` | vide — transition depuis la 1.x | `sermo-backend-gtk4` |
 | `qt6sermo` | vide — transition depuis la 1.x | `sermo-backend-qt6` |
 | `gtksermo` | vide — transition depuis la 1.x | `sermo-gtkdialog` |
+| `sermo-source-modbus` | `/usr/libexec/sermo/sermo-source-modbus`, pour `<input modbus>` | ses bibliothèques |
+| `sermo-source-opcua` | `/usr/libexec/sermo/sermo-source-opcua`, pour `<input opcua>` | ses bibliothèques |
+| `sermo-source-mqtt` | `/usr/libexec/sermo/sermo-source-mqtt`, pour `<input mqtt>` | ses bibliothèques |
+| `sermo-source-mavlink` | `/usr/libexec/sermo/sermo-source-mavlink`, pour `<input mavlink>` | ses bibliothèques |
+| `sermo-source-media` | `/usr/libexec/sermo/sermo-source-media`, pour `<input media>` | ses bibliothèques ; recommande `sermo-cible-media` |
+| `sermo-cible-mqtt` | `/usr/libexec/sermo/sermo-cible-mqtt`, pour `<action mqtt>` | ses bibliothèques |
+| `sermo-cible-mavlink` | `/usr/libexec/sermo/sermo-cible-mavlink`, pour `<action mavlink>` | ses bibliothèques |
+| `sermo-cible-media` | `/usr/libexec/sermo/sermo-cible-media`, pour `<action media>` | `mpv` ; recommande `bubblewrap` |
+| `sermoia-mcp` | serveur MCP qui fait vérifier et rendre un dialogue | un des neuf ports |
+| `sermoman-mcp` | ce serveur de documentation | `python3` |
 
-Soit **16 paquets** : `sermo-core-dev` + 9 backends + `sermo-doc` +
-`sermo-gtkdialog` + 4 paquets de transition depuis la 1.x, plus un `-dbgsym` par
-backend.
+Soit **27 paquets** (compte de `debian/control`, mesuré le 2026-10-18), dont 20
+« Architecture: any » (`sermo-core-dev` + 10 paquets de ports + 8 programmes
+d'aide + `sermoia-mcp`) et 7 « Architecture: all » (`sermo-doc`,
+`sermo-gtkdialog`, 4 paquets de transition depuis la 1.x, `sermoman-mcp`), plus
+les paquets `-dbgsym`. L'écriture (`sermo-cible-*`)
+vit dans ses propres paquets : qui n'installe que la lecture ne peut rien publier.
 
 **Le cœur est lié statiquement** dans chaque backend (`.a`). `ldd` d'un backend ne
 montre donc **aucun** `libsermocore` : le moteur est embarqué. Un backend ne
@@ -172,9 +193,9 @@ lvgl=8, ncurses=5, html=1) : gtk3 est le défaut, et html ne répond que s'il es
 seul installé.
 
 **Pont `gtkdialog`.** La commande `gtkdialog` (scripts historiques) vit dans le
-paquet séparé `sermo-gtkdialog` : `Provides`/`Conflicts`/`Replaces: gtkdialog`
-pour ne pas entrer en conflit de fichier avec un autre `/usr/bin/gtkdialog` déjà
-présent.
+paquet séparé `sermo-gtkdialog` : `Provides: gtkdialog`, et
+`Conflicts`/`Replaces: gtkdialog, gtk3dialog, haplo-dialog`, pour ne pas entrer
+en conflit de fichier avec un autre `/usr/bin/gtkdialog` déjà présent.
 
 ---
 
@@ -187,7 +208,7 @@ Aucune étape n'avance avec un banc rouge. Trois portes gardent chaque backend
   sans affichage. Attendu : **55 PASS**.
 - **Comportement** — `tests/comportement/` (aussi via `run_all.sh`) : les valeurs
   exportées (`VAR="valeur"`) doivent être **identiques** à celles de l'étalon
-  `gtk3sermo`. Attendu : **75/75**. Chaque cas se ferme seul, par un `<timer>`
+  `gtk3sermo`. Attendu : **78/78**. Chaque cas se ferme seul, par un `<timer>`
   déclenchant `exit:fin` ou (cas 41-42) par une barre de progression arrivée à 100 ; ncurses joue ce banc en mode **batch headless**, html en écrivant sa page vers `/dev/null`.
 - **Garde** — jeu de scripts `tests/garde_*.sh` : durcissement du binaire,
   échappement de la sortie (les valeurs à risque ne repassent pas par le shell),

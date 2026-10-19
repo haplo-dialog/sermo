@@ -73,7 +73,7 @@ void cache_garder(const char *protocole, const char *adresse, const char *donnee
 int verrou_prendre(const char *protocole, const char *base);
 void verrou_rendre(int fd);
 
-/* JAMAIS BLOQUANT (jalon R3). sermo attend la fin d'un <input> : une lecture
+/* JAMAIS BLOQUANT. sermo attend la fin d'un <input> : une lecture
  * lente fige la fenêtre. source_lire() décide :
  *  - réponse gardée et fraîche (< cache_ms) : rendue, fini ;
  *  - réponse gardée mais périmée (< perime_ms) : rendue TOUT DE SUITE, et une

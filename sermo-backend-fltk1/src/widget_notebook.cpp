@@ -278,14 +278,16 @@ void widget_notebook_refresh(variable *var)
 {
     if (!var || !var->Widget) return;
     gchar *ligne = widget_input_line(var->Attributes);
-    /* Premier passage (2026-10-13) : la page ne change PAS, comme chez
-     * l'étalon (la commande a tourné quand même). */
+    /* Premier passage : l'<input> pose la page, sauf si la balise porte
+     * page="…", qui l'emporte — règle de gtk4sermo, et de gtk3sermo depuis le
+     * 2026-10-18 (il perdait cette page, GtkNotebook la refusant avant
+     * l'affichage). Jusque-là ce port copiait cette perte. */
     bool *lu = ((Fl_Widget *)var->Widget)->user_data() == &SERMO_SIDETABS_TAG
         ? &((SermoSideTabs *)var->Widget)->lu : &((SermoTabs *)var->Widget)->lu;
     if (!*lu) {
+        const char *impose = (var->widget_tag_attr ? get_tag_attribute(var->widget_tag_attr, "page") : NULL);
         *lu = true;
-        g_free(ligne);
-        ligne = NULL;
+        if (impose) { g_free(ligne); ligne = g_strdup(impose); }
     }
     if (ligne) {
         int page = atoi(ligne);

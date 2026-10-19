@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
- * sermo_source.c — traduction de <input modbus> / <input opcua> en commande.
+ * sermo_source.c — traduction de <input modbus> / <input opcua> / <input mqtt> /
+ * <input mavlink> / <input media>, et de <action mqtt> / <action mavlink> /
+ * <action media>, en commande.
  * Contrat : include/sermo_source.h.
  *
  * Copyright (C) 2026 S. Cage
@@ -28,14 +30,12 @@ dire(char *erreur, size_t taille, const char *message)
 		snprintf(erreur, taille, "%s", message);
 }
 
-char *
-sermo_source_commande(const char *protocole, const char *adresse,
-                      char *erreur, size_t taille)
+/* @genre : "source" (lecture) ou "cible" (écriture) ; le programme lancé est
+ * <dossier>/sermo-<genre>-<protocole>. */
+static char *
+traduire(const char *genre, const char *protocole, const char *adresse,
+         char *erreur, size_t taille)
 {
-	if (!protocole || (strcmp(protocole, "modbus") != 0 && strcmp(protocole, "opcua") != 0)) {
-		dire(erreur, taille, "protocole inconnu (modbus ou opcua)");
-		return NULL;
-	}
 	if (!adresse || *adresse == '\0') {
 		dire(erreur, taille, "l'adresse est vide");
 		return NULL;
@@ -67,14 +67,14 @@ sermo_source_commande(const char *protocole, const char *adresse,
 		}
 	}
 
-	/* dossier + "/sermo-source-" + protocole + " " + adresse encodée (×3) + NUL */
-	size_t total = strlen(dossier) + 14 + strlen(protocole) + 1 + 3 * n + 1;
+	/* dossier + "/sermo-" + genre + "-" + protocole + " " + adresse encodée (×3) + NUL */
+	size_t total = strlen(dossier) + 7 + strlen(genre) + 1 + strlen(protocole) + 1 + 3 * n + 1;
 	char *commande = malloc(total);
 	if (!commande) {
 		dire(erreur, taille, "mémoire épuisée");
 		return NULL;
 	}
-	int ecrit = snprintf(commande, total, "%s/sermo-source-%s ", dossier, protocole);
+	int ecrit = snprintf(commande, total, "%s/sermo-%s-%s ", dossier, genre, protocole);
 	if (ecrit < 0 || (size_t)ecrit >= total) {
 		free(commande);
 		dire(erreur, taille, "commande trop longue");
@@ -94,4 +94,32 @@ sermo_source_commande(const char *protocole, const char *adresse,
 	}
 	*q = '\0';
 	return commande;
+}
+
+char *
+sermo_source_commande(const char *protocole, const char *adresse,
+                      char *erreur, size_t taille)
+{
+	if (!protocole || (strcmp(protocole, "modbus") != 0 && strcmp(protocole, "opcua") != 0
+	                   && strcmp(protocole, "mqtt") != 0 && strcmp(protocole, "mavlink") != 0
+	                   && strcmp(protocole, "media") != 0)) {
+		dire(erreur, taille, "protocole inconnu (modbus, opcua, mqtt, mavlink ou media)");
+		return NULL;
+	}
+	return traduire("source", protocole, adresse, erreur, taille);
+}
+
+char *
+sermo_cible_commande(const char *protocole, const char *adresse,
+                     char *erreur, size_t taille)
+{
+	/* Écriture : MQTT, MAVLink, et la commande d'un lecteur son/vidéo (media,
+	 *). Jamais Modbus ni OPC UA (lecture seule, par construction) ;
+	 * ces protocoles n'ont pas de programme d'écriture. */
+	if (!protocole || (strcmp(protocole, "mqtt") != 0 && strcmp(protocole, "mavlink") != 0
+	                   && strcmp(protocole, "media") != 0)) {
+		dire(erreur, taille, "écriture permise vers mqtt, mavlink et media seulement");
+		return NULL;
+	}
+	return traduire("cible", protocole, adresse, erreur, taille);
 }

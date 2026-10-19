@@ -2,7 +2,7 @@
 .\" haplo-dialog <devel@haplo-dialog.fr>
 .\" Installed as /usr/share/man/man1/sermo.1
 .\"
-.TH SERMO 1 "September 2026" "sermo @PACKAGE_VERSION@" "sermo User Commands"
+.TH SERMO 1 "October 2026" "sermo @PACKAGE_VERSION@" "sermo User Commands"
 .SH NAME
 sermo \- toolkit-agnostic dialog box creator for shell scripts
 .SH SYNOPSIS
@@ -60,9 +60,17 @@ a file
 or standard input
 .RB ( \-\-stdin ).
 .PP
-When a button action produces output (EXIT, REFRESH, etc.), sermo prints the
-current value of each named widget to standard output in the form
+When an
+.B exit:
+action ends the dialog, sermo prints the current value of each named widget
+to standard output in the form
 \fINAME\fR=\(dq\fIvalue\fR\(dq.
+.PP
+Nothing else prints them. A
+.B closewindow:
+action that closes the last window prints only
+\fBEXIT=\(dqclosewindow\(dq\fR, and closing the window from the window
+manager prints only \fBEXIT=\(dqabort\(dq\fR.
 .PP
 Those lines escape the four characters the shell expands inside double quotes
 .RB ( \e ,
@@ -107,9 +115,11 @@ command the program runs: a direct
 .BR exec ()
 without a shell when
 .I CMD
-carries no shell metacharacter, a logged
-.B /bin/sh \-c
-fallback otherwise, and a clean refusal when
+carries no shell metacharacter, a logged fallback to the shell
+.RB ( SERMO_SHELL ,
+or
+.B /bin/sh
+by default) when it does, and a clean refusal when
 .B SERMO_NO_SHELL_FALLBACK=1
 is set.
 .TP
@@ -123,6 +133,24 @@ so the file is sourced afresh in every action's sub-shell. A relative
 is resolved against the directory the program was started from.
 .B \-\-do
 is the exception: its command is not prefixed.
+.TP
+.BI \-e " FILE" "\fR,\fP \-\-event-driven=" FILE
+Event-driven program. The shell first reads
+.I FILE
+.RB ( ". \fIFILE\fP" ),
+then the program runs again with
+.BI \-\-include= FILE\fR,
+keeping
+.BR \-d ,
+.BR \-w ,
+.BR \-c ,
+.B \-\-print-ir
+and
+.BR \-\-program .
+So
+.I FILE
+can set the variable that holds the dialog and define the shell functions its
+actions call.
 .TP
 .BI \-g " FILE" "\fR,\fP \-\-glade-xml=" FILE
 gtk3sermo and gtk4sermo only: build the dialog from a GtkBuilder (Glade)
@@ -149,6 +177,16 @@ Centre all windows on the screen.
 Parse the GUI description, print the internal representation, and exit without
 displaying any window. Useful for debugging XML and for headless testing.
 .TP
+.BI \-\-render-png= FILE
+Draw the dialog off screen, write it to the PNG image
+.IR FILE ,
+and exit. Available on gtk3sermo, gtk4sermo, qt6sermo, fltk1sermo, efl1sermo,
+sdl3sermo and lvglsermo. gtk3sermo, gtk4sermo and fltk1sermo still need a
+display (a virtual one such as
+.B xvfb\-run
+will do). ncursessermo draws in a terminal and htmlsermo writes a page: neither
+makes an image.
+.TP
 .BI \-\-space-expand= STATE
 Set the default
 .I expand
@@ -165,7 +203,8 @@ The XML dialog language supports the following tags on every backend (rendered
 with native widgets where the toolkit provides them, reimplemented otherwise).
 .SS Layout containers
 .BR window ", " vbox ", " hbox ", " frame ", " notebook ", " expander ,
-.BR eventbox ", " aspectframe
+.BR eventbox ", " aspectframe ", " grid ", " paned ", " stack ", " flowbox ,
+.BR overlay ", " revealer ", " wizard ", " toolbar
 .SS Display widgets
 .BR text ", " image ", " pixmap ", " statusbar ", " infobar ", " drawingarea
 .SS Input widgets
@@ -177,7 +216,7 @@ with native widgets where the toolkit provides them, reimplemented otherwise).
 .SS Progress and activity indicators
 .BR progressbar ", " pulse ", " spinner ", " levelbar
 .SS Button widgets
-.BR button ", " linkbutton .
+.BR button ", " linkbutton ", " menubutton .
 The
 .B button
 tag also accepts the stock short forms
@@ -194,12 +233,21 @@ and
 .PP
 The
 .B terminal
-widget requires VTE and is available on the GTK backends only.
+widget is an interactive shell on gtk3sermo and gtk4sermo (VTE), and on
+qt6sermo built with QTermWidget. On the other backends it runs its
+.B <input>
+command and shows the output, read-only.
 .SS Timers
 .BR timer
 .PP
-Each widget exports its current value as a shell environment variable when the
-dialog exits or an action requests a refresh.
+Each named widget gives its value as a line
+\fINAME\fR=\(dq\fIvalue\fR\(dq
+on standard output when an \fBexit:\fR action ends the dialog. Nothing is exported to the calling
+shell: read the lines with
+.B eval
+or, safer, use
+.BR \-\-do ,
+whose command gets the values in its environment.
 .SS Backend-specific features
 Some capabilities depend on the toolkit. Wayland
 .I wlr\-layer\-shell
@@ -208,6 +256,119 @@ anchoring (the
 window attributes, for bars and docks) is provided by the GTK 3 backend; on
 other backends or under X11 the attributes are ignored and an ordinary window
 is shown, leaving the script unaffected.
+.SH SOURCES AND TARGETS
+.nh
+Some tags read a device or a service instead of running a command. The text of
+the tag is an all\-in\-one address:
+.PP
+.RS 4
+.nf
+<input modbus>tcp://plc:502?esclave=1&registre=1</input>
+<input opcua>opc.tcp://server:4840?noeud=ns=1;s=pieces</input>
+<input mqtt>mqtt://broker:1883?sujet=maison/salon/temperature</input>
+<input mavlink>udp://:14550?champ=batterie</input>
+<input media>media://lounge?donnee=etat</input>
+<action mqtt>mqtt://broker?sujet=maison/salon/lampe&valeur=on</action>
+<action mavlink>tcp://127.0.0.1:5760?ordre=rtl</action>
+<action media>media://lounge?commande=pause</action>
+<action media>media://cam?commande=lire&source=v4l2:///dev/video0</action>
+.fi
+.RE
+.IP \(bu 2
+An
+.RB < input >
+of this kind only reads: nothing is written to the device.
+.IP \(bu 2
+.RB < "action mqtt" >,
+.RB < "action mavlink" >
+and
+.RB < "action media" >
+are the only writes. They are allowed only in a
+.RB < button >
+or a
+.RB < menuitem >
+(a write needs a click); anywhere else the dialog is refused when it is read.
+A command that names a
+.B sermo\-cible\-
+program by hand is refused too.
+.IP \(bu 2
+The tag becomes a command that runs a helper program,
+.BI /usr/libexec/sermo/sermo\-source\- PROTOCOL
+(reading) or
+.BI /usr/libexec/sermo/sermo\-cible\- PROTOCOL
+(writing). The address is passed as one argument, percent\-encoded, never
+through the shell.
+.B SERMO_SOURCE_DIR
+changes the folder; it must be an absolute path. With
+.BR SERMO_ALLOWED_CMDS ,
+name the helper (for example
+.BR /usr/libexec/sermo/sermo\-source\-modbus ).
+.IP \(bu 2
+Each helper comes in its own package:
+.BR sermo\-source\-modbus ,
+.BR sermo\-source\-opcua ,
+.BR sermo\-source\-mqtt ,
+.BR sermo\-source\-mavlink ,
+.BR sermo\-source\-media ,
+.BR sermo\-cible\-mqtt ,
+.BR sermo\-cible\-mavlink ,
+.BR sermo\-cible\-media .
+.IP \(bu 2
+MQTT and MAVLink writes go only to what an allow\-list names:
+.I ~/.config/sermo/cibles\-mqtt
+or
+.IR /etc/sermo/cibles\-mqtt ,
+.I ~/.config/sermo/cibles\-mavlink
+or
+.IR /etc/sermo/cibles\-mavlink .
+Without a list, nothing is sent.
+.IP \(bu 2
+MQTT: credentials
+.RB ( identifiants= )
+on
+.B mqtt://
+(not encrypted) are refused before any connection, unless the address carries
+.BR clair=oui .
+.B mqtts://
+requires
+.B confiance=
+(the authority that signed the server certificate).
+.IP \(bu 2
+MAVLink: telemetry; a click sets one parameter while the drone is disarmed,
+gives a safety order
+.RB ( rtl ", " land ,
+or
+.B terminaison
+to cut the motors, which needs a second press within 5 s), or sends a mission
+that is never started. No piloting: no arming, takeoff, mode change or
+movement.
+.IP \(bu 2
+Media: sound and video played by mpv. A network source plays only inside
+.BR bwrap ;
+a local file plays inside
+.B bwrap
+when it is installed, and otherwise without a sandbox (a message says so).
+.IP \(bu 2
+Media inside the window: the
+.BI dans=$ VAR
+key of
+.RB < "action media" >
+.RI ( VAR ,
+the variable of a
+.RB < "drawingarea embed=\(dqtrue\(dq" >)
+shows the video in that area. gtk3 under X11 only; otherwise (empty variable,
+Wayland, another port) the video opens in a separate window, and the message
+says so. A
+.B dans=
+that is not of the form
+.BI $ NAME ,
+or a value that is not a number, is refused: mpv is not started.
+.PP
+Details (every parameter, every refusal): the user manual,
+.B MANUEL_UTILISATEUR.en.md
+section 7.3, in the sources at
+.IR https://gitlab.com/haplo\-dialog/sermo .
+.hy
 .SH EXIT STATUS
 sermo exits with status
 .B 0
@@ -216,8 +377,13 @@ a string, not a numeric exit code.
 .SH ENVIRONMENT
 .TP
 .B SERMO_DARK
-Force the dark (set to a true value) or light variant, overriding system theme
-detection. Otherwise sermo follows the current system theme.
+Force the dark or the light variant, overriding system theme detection: a
+value that starts with
+.B 0
+gives the light one, any other non\-empty value the dark one. Otherwise sermo
+follows the current system theme. On the GTK backends an explicit
+.B GTK_THEME
+takes precedence.
 .TP
 .B GTK_THEME
 Override the GTK theme on GTK backends, e.g.
@@ -234,9 +400,9 @@ number of bytes is reported, and the default applies. The progress bar is not
 capped: it keeps one line at a time.
 .TP
 .B SERMO_NO_SHELL_FALLBACK
-When set, refuse the
-.B /bin/sh \-c
-fallback used for
+When set, refuse the shell fallback (see
+.BR SERMO_SHELL )
+used for
 .RB < input >/< action >
 commands that contain shell metacharacters, and fail closed instead. Commands
 without shell metacharacters still run via direct
@@ -249,9 +415,9 @@ Unset by default. Meant for deploying a dialog into a less-trusted context (a
 kiosk, a guest session). An entry without a slash allows that name and the path
 .B PATH
 resolves it to; an entry with a slash allows exactly that path. A program that
-bears an allowed name but lives elsewhere is refused. While set, the
-.B /bin/sh \-c
-fallback is refused as well.
+bears an allowed name but lives elsewhere is refused. While set, the shell
+fallback is refused as well. The tags of SOURCES AND TARGETS run a helper
+program: name it in the list.
 .IP
 The 1.x names
 .B HAPLO_ALLOWED_CMDS
@@ -260,6 +426,31 @@ and
 are still read, with a warning, when the
 .B SERMO_
 name is not set.
+.TP
+.B SERMO_SHELL
+The shell used for the fallback: the absolute path of an executable program
+(for example
+.BR SERMO_SHELL=/bin/bash ).
+Unset or empty: the default shell,
+.B /bin/sh
+(under Windows,
+.B %ComSpec%
+or else
+.BR cmd.exe ).
+A relative path, or a file that cannot be run, is reported once on standard
+error and the default shell is used.
+.TP
+.B SERMO_SOURCE_DIR
+The folder of the helper programs that
+.RB < "input modbus" >,
+.RB < "input mqtt" >,
+.RB < "action mqtt" >...
+run (see SOURCES AND TARGETS):
+.B /usr/libexec/sermo
+by default. It must be an absolute path made of safe characters (letters,
+digits and
+.BR ._:/=,+@\- );
+otherwise the dialog is refused when it is read.
 .TP
 .B GTKDIALOG_PIXMAP_PATH
 Colon-separated list of directories searched for image files not found at the
@@ -298,11 +489,34 @@ The update-alternatives link to the default backend.
 .TP
 .I /usr/bin/gtk3sermo\fR, \fI/usr/bin/qt6sermo\fR, ...
 The individual backend executables.
+.TP
+.I /usr/libexec/sermo/
+The helper programs of SOURCES AND TARGETS
+.RB ( sermo\-source\-* ", " sermo\-cible\-* ),
+one package each.
+.TP
+.I ~/.config/sermo/cibles\-mqtt\fR, \fI/etc/sermo/cibles\-mqtt
+The allow\-list of
+.RB < "action mqtt" >:
+yours (mode 600) and root's (mode 644). Without a list, nothing is sent.
+.TP
+.I ~/.config/sermo/cibles\-mavlink\fR, \fI/etc/sermo/cibles\-mavlink
+The allow\-list of
+.RB < "action mavlink" >,
+same rules.
+.TP
+.I /usr/share/doc/sermo\-doc/examples/
+Example scripts (package
+.BR sermo\-doc ).
 .SH COMPATIBILITY
-The GTK 3 backend
-.RB ( sermo\-backend\-gtk3 )
-provides the virtual package
-.BR gtkdialog ,
+The
+.B sermo\-gtkdialog
+package (which depends on
+.BR sermo\-backend\-gtk3 )
+makes
+.I /usr/bin/gtkdialog
+a link to
+.BR gtk3sermo ,
 so legacy dialogs that invoke
 .BR gtkdialog (1)
 continue to work unchanged.
@@ -311,6 +525,12 @@ The full manual is installed by the package:
 .IP
 .B info sermo
 .PP
+.BR haplo\-dialog\-xml (5)
+(package
+.BR sermo\-backend\-gtk3 ),
+.BR gtk4sermo\-xml (5)
+(package
+.BR sermo\-backend\-gtk4 ),
 .BR gtkdialog (1),
 .BR bash (1),
 .BR zenity (1),

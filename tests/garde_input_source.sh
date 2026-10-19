@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 # tests/garde_input_source.sh — haplo-dialog — 2026 — GPL-2.0-or-later
 #
-# <input modbus> et <input opcua> (libsermocore/include/sermo_source.h) : le
+# <input modbus>, <input opcua>, <input mqtt> et <input mavlink> (sermo_source.h) : le
 # cœur traduit la balise en une commande qui lance un programme d'aide de
 # SERMO_SOURCE_DIR, l'adresse encodée en UN argument sans métacaractère.
 #
@@ -11,7 +11,7 @@
 #  1. la valeur arrive dans le widget, l'adresse encodée telle que prévu, en un
 #     seul argument, et SANS repli /bin/sh (aucun « syntaxe shell » journalisé) ;
 #  2. elle arrive encore avec SERMO_NO_SHELL_FALLBACK=1 (preuve qu'il n'y a pas
-#     de shell), et avec SERMO_ALLOWED_CMDS qui nomme les deux programmes ;
+#     de shell), et avec SERMO_ALLOWED_CMDS qui nomme les programmes ;
 #  3. SERMO_ALLOWED_CMDS qui ne les nomme pas : rien n'est lancé, le refus est
 #     dit sur la sortie d'erreur, le dialogue se ferme quand même ;
 #  4. TÉMOIN : sans programme d'aide dans le dossier, aucune valeur — sans quoi
@@ -48,7 +48,7 @@ T=$(mktemp -d -p "$(dirname -- "$BIN")" banc-input-source.XXXXXX) || exit 2
 trap 'rm -rf -- "$T"' EXIT
 case "$T" in *[!A-Za-z0-9._:/=,+@-]*) echo "chemin du bac inutilisable pour SERMO_SOURCE_DIR : $T" >&2; exit 2 ;; esac
 mkdir "$T/aide" "$T/vide"
-for p in modbus opcua; do
+for p in modbus opcua mqtt mavlink; do
     printf '#!/bin/sh\nprintf "TEMOIN-%s:%%s:%%s\\n" "$#" "$1"\n' "$p" > "$T/aide/sermo-source-$p"
     chmod 755 "$T/aide/sermo-source-$p"
 done
@@ -56,10 +56,14 @@ done
 XML='<window title="source"><vbox>
 <entry><variable>M</variable><input modbus>tcp://127.0.0.1:5020?esclave=1&registre=1</input></entry>
 <entry><variable>O</variable><input opcua>opc.tcp://h:4840?noeud=ns=1;s=a b</input></entry>
+<entry><variable>Q</variable><input mqtt>mqtt://127.0.0.1:1883?sujet=maison/salon/temperature&delai=900</input></entry>
+<entry><variable>D</variable><input mavlink>serie:///dev/ttyUSB0?champ=tension&vitesse=57600</input></entry>
 <timer interval="1"><variable>T</variable><action>exit:OK</action></timer>
 </vbox></window>'
 M_ATTENDU='TEMOIN-modbus:1:tcp://127.0.0.1:5020%3Fesclave=1%26registre=1'
 O_ATTENDU='TEMOIN-opcua:1:opc.tcp://h:4840%3Fnoeud=ns=1%3Bs=a%20b'
+Q_ATTENDU='TEMOIN-mqtt:1:mqtt://127.0.0.1:1883%3Fsujet=maison/salon/temperature%26delai=900'
+D_ATTENDU='TEMOIN-mavlink:1:serie:///dev/ttyUSB0%3Fchamp=tension%26vitesse=57600'
 
 echecs=0
 ko() { echo "ECHEC : $*"; echecs=$((echecs + 1)); }
@@ -78,28 +82,35 @@ valeur() { sed -n "s/^$1=\"\\(.*\\)\"\$/\\1/p" "$T/out" | head -n 1; }
 jouer "$XML" SERMO_SOURCE_DIR="$T/aide"
 [ "$(valeur M)" = "$M_ATTENDU" ] || ko "modbus : M=« $(valeur M) », attendu « $M_ATTENDU » (code $RC)"
 [ "$(valeur O)" = "$O_ATTENDU" ] || ko "opcua : O=« $(valeur O) », attendu « $O_ATTENDU » (code $RC)"
+[ "$(valeur Q)" = "$Q_ATTENDU" ] || ko "mqtt : Q=« $(valeur Q) », attendu « $Q_ATTENDU » (code $RC)"
+[ "$(valeur D)" = "$D_ATTENDU" ] || ko "mavlink : D=« $(valeur D) », attendu « $D_ATTENDU » (code $RC)"
 grep -q 'syntaxe shell' "$T/err" && ko "le programme d'aide est passé par /bin/sh"
 
 # 2. Sans repli shell possible, puis sous liste blanche qui nomme les programmes.
 jouer "$XML" SERMO_SOURCE_DIR="$T/aide" SERMO_NO_SHELL_FALLBACK=1
 [ "$(valeur M)" = "$M_ATTENDU" ] || ko "SERMO_NO_SHELL_FALLBACK=1 : M=« $(valeur M) »"
-jouer "$XML" SERMO_SOURCE_DIR="$T/aide" SERMO_ALLOWED_CMDS="$T/aide/sermo-source-modbus,$T/aide/sermo-source-opcua"
+[ "$(valeur Q)" = "$Q_ATTENDU" ] || ko "SERMO_NO_SHELL_FALLBACK=1 : Q=« $(valeur Q) »"
+jouer "$XML" SERMO_SOURCE_DIR="$T/aide" SERMO_ALLOWED_CMDS="$T/aide/sermo-source-modbus,$T/aide/sermo-source-opcua,$T/aide/sermo-source-mqtt,$T/aide/sermo-source-mavlink"
 [ "$(valeur M)" = "$M_ATTENDU" ] || ko "liste blanche qui les nomme : M=« $(valeur M) »"
 [ "$(valeur O)" = "$O_ATTENDU" ] || ko "liste blanche qui les nomme : O=« $(valeur O) »"
+[ "$(valeur Q)" = "$Q_ATTENDU" ] || ko "liste blanche qui les nomme : Q=« $(valeur Q) »"
+[ "$(valeur D)" = "$D_ATTENDU" ] || ko "liste blanche qui les nomme : D=« $(valeur D) »"
 
 # 3. Liste blanche qui ne les nomme pas.
 jouer "$XML" SERMO_SOURCE_DIR="$T/aide" SERMO_ALLOWED_CMDS=ls
-case "$(valeur M)$(valeur O)" in *TEMOIN*) ko "liste blanche sans eux : un programme d'aide a tourné" ;; esac
+case "$(valeur M)$(valeur O)$(valeur Q)$(valeur D)" in *TEMOIN*) ko "liste blanche sans eux : un programme d'aide a tourné" ;; esac
 grep -q 'SERMO_ALLOWED_CMDS' "$T/err" || ko "liste blanche sans eux : refus non dit sur la sortie d'erreur"
 [ "$RC" = 124 ] && ko "liste blanche sans eux : le dialogue ne s'est pas fermé"
 
 # 4. Témoin : dossier sans programme d'aide.
 jouer "$XML" SERMO_SOURCE_DIR="$T/vide"
-case "$(valeur M)$(valeur O)" in *TEMOIN*) ko "témoin : une valeur est venue sans programme d'aide" ;; esac
+case "$(valeur M)$(valeur O)$(valeur Q)$(valeur D)" in *TEMOIN*) ko "témoin : une valeur est venue sans programme d'aide" ;; esac
 
 # 5. Adresse vide.
 jouer '<window><vbox><entry><input modbus></input></entry></vbox></window>' SERMO_SOURCE_DIR="$T/aide"
 { [ "$RC" != 0 ] && grep -q 'input modbus' "$T/err"; } || ko "adresse vide : code $RC, message absent"
+jouer '<window><vbox><entry><input mqtt></input></entry></vbox></window>' SERMO_SOURCE_DIR="$T/aide"
+{ [ "$RC" != 0 ] && grep -q 'input mqtt' "$T/err"; } || ko "adresse mqtt vide : code $RC, message absent"
 
-[ "$echecs" = 0 ] && echo "OK : <input modbus>/<input opcua> sur $(basename -- "$BIN")"
+[ "$echecs" = 0 ] && echo "OK : <input modbus>/<input opcua>/<input mqtt>/<input mavlink> sur $(basename -- "$BIN")"
 [ "$echecs" = 0 ]

@@ -22,7 +22,7 @@ Puppy Linux (accès refusé), le serveur FTP de l'auteur et la Wayback Machine.
 | 2024 – 2025 | **Mick Amadio (01micko)** : gtk3dialog | `01micko/gtk3dialog` | 0.1.0 → 0.1.2 |
 | 2025 | **BunsenLabs** : empaquetage de gtk3dialog | `BunsenLabs/gtk3dialog` | 0.1.2 (paquet Debian) |
 | 2026 | **gtkdialog3**, publié sous le nom de László Pere | `laszlopere/gtkdialog3` | 0.9.0 annoncée |
-| 2026 | **sermo** (ce projet), fork de 0.8.3 | `haplo-dialog/sermo` | 2.x |
+| 2026 | **sermo** (ce projet), fork de 0.8.3 | `haplo-dialog/sermo` | 2.x puis 3.x |
 
 ```
 László Pere 0.58 … 0.7.20 (2004-2007)
@@ -31,7 +31,7 @@ László Pere 0.58 … 0.7.20 (2004-2007)
         │    └─ 01micko : gtk3dialog 0.1.x (2024-2025)
         │         └─ BunsenLabs : paquet Debian de gtk3dialog (2025)
         ├─ gtkdialog3 « GtkDialog2/3 » 0.9.0 (2026, compte laszlopere)
-        └─ sermo 2.x (2026, haplo-dialog)
+        └─ sermo 2.x puis 3.x (2026, haplo-dialog)
 ```
 
 ## 1. László Pere, l'auteur (2003/2004 – 2007)

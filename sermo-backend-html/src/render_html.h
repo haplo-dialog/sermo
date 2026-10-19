@@ -14,7 +14,7 @@ extern "C" {
 /* Sérialise l'arbre `root` en une page HTML autonome (CSS embarqué, un seul
  * fichier). Écrit dans le fichier désigné par la variable d'environnement
  * SERMO_HTML_OUT ("-" = stdout ; défaut "sermo-output.html"). Ne dessine rien
- * à l'écran, n'exécute aucune action : pur jalon de faisabilité (export
+ * à l'écran, n'exécute aucune action : pure étape de faisabilité (export
  * statique), pas encore d'interactivité ni de protocole live. */
 void render_html_write(FILE *out, WidgetNode *root, const char *title);
 int render_html_export(WidgetNode *root, const char *title);

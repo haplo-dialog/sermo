@@ -460,7 +460,7 @@ handle_action() {
         # ── Onglet Paquets ──────────────────────────────────────────────────
 
         pkg-update)
-            dans_terminal "pkexec apt update && pkexec apt full-upgrade -y"
+            dans_terminal "pkexec sh -c 'apt update && apt full-upgrade -y'"
             rm -f "$tmp" ;;
 
         pkg-list)
@@ -914,7 +914,7 @@ create_dialog() {
         <action>bash "$SCRIPT_PATH" --do about</action>
       </button>
       <text space-expand="true" space-fill="true">
-        <label>gtk3sermo — haplo-dialog · devel@haplo-dialog.fr</label>
+        <label>$PORT_ID — haplo-dialog · devel@haplo-dialog.fr</label>
       </text>
       <button space-expand="false" space-fill="false">
         <label>Quitter</label>
@@ -930,10 +930,41 @@ XMLEOF
 
 # ── Vérification des dépendances ────────────────────────────────────────────
 
+# Le binaire : premier argument, sinon le premier port à fenêtre (ou ncurses) trouvé dans le
+# PATH, sinon l'alias « sermo » posé par update-alternatives. Le script codait
+# « gtk3sermo » en dur : il ne démarrait pas là où un autre port était installé.
+choisir_dialogue() {
+    if [ -n "${1:-}" ] && command -v "$1" &>/dev/null; then DIALOG="$1"; return 0; fi
+    local d
+    for d in sermo gtk3sermo gtk4sermo qt6sermo fltk1sermo efl1sermo sdl3sermo \
+             lvglsermo ncursessermo gtkdialog; do
+        if command -v "$d" &>/dev/null; then DIALOG="$d"; return 0; fi
+    done
+    return 1
+}
+
+# Le pied de page nommait « gtk3sermo » en dur : les captures des sept ports
+# annonçaient toutes gtk3sermo, y compris celles de qt6 et de sdl3. Le script
+# sait pourtant quel binaire il emploie — choisir_dialogue l'a posé dans
+# $DIALOG. On le résout (l'alias « sermo » d'update-alternatives pointe un port
+# réel) et on lui demande son numéro de version.
+#
+# ⚠️ Le NOM vient du binaire, pas de « --version » : jusqu'à la 2.7.1, tous les
+# ports s'y annoncent « sermocore », le nom du cœur qui imprime la ligne. Seul
+# le numéro y est juste.
+identite_port() {
+    local bin nom version
+    bin=$(command -v "$DIALOG" 2>/dev/null) || { printf 'haplo-dialog'; return; }
+    bin=$(readlink -f "$bin" 2>/dev/null || printf '%s' "$bin")
+    nom=$(basename "$bin")
+    version=$("$DIALOG" --version 2>/dev/null \
+              | sed -n '1s/.*version \([0-9][0-9.]*\).*/\1/p')
+    if [ -n "$version" ]; then printf '%s %s' "$nom" "$version"; else printf '%s' "$nom"; fi
+}
+
 check_deps() {
     local missing=()
-    command -v gtk3sermo &>/dev/null || command -v gtkdialog &>/dev/null \
-        || missing+=("gtk3sermo")
+    choisir_dialogue "${DIALOG_DEMANDE:-}" || missing+=("sermo (un de ses ports)")
     command -v pkexec &>/dev/null || missing+=("pkexec")
     [ -n "$TERMINAL" ] || missing+=("un terminal graphique")
     [ -n "$EDITEUR" ]  || missing+=("un editeur graphique")
@@ -951,9 +982,14 @@ if [[ "${1:-}" == "--do" && -n "${2:-}" ]]; then
     exit 0
 fi
 
+# Premier argument : le port à employer (« ./system-tools.sh qt6sermo »), comme
+# pour les exemples de showcase. Sans lui, choisir_dialogue prend le premier trouvé.
+DIALOG_DEMANDE="${1:-}"
+
 check_deps
+PORT_ID=$(identite_port)
 create_dialog
 
-# NE PAS utiliser set -e ici : gtk3sermo renvoie un code non-zéro normal
+# NE PAS utiliser set -e ici : sermo renvoie un code non-zéro normal
 # à la fermeture de la fenêtre, ce qui déclencherait un arrêt prématuré.
-gtk3sermo --program=MAIN_DIALOG --center
+"$DIALOG" --program=MAIN_DIALOG --center

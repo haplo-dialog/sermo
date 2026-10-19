@@ -11,7 +11,7 @@ sermo suit un **versionnage sémantique** `MAJEUR.MINEUR.CORRECTIF` :
 
 ## Version courante
 
-`3.0.0`. La **première version 2.x publiée** a été la `2.7.3`.
+`3.1.2`. La **première version 2.x publiée** a été la `2.7.3`.
 
 **Pourquoi 3 sans rupture.** La 3.0.0 ne rompt ni le langage XML ni le contrat entre le cœur
 et les ports : le contrat y gagne trois fonctions facultatives, ce qui, selon la règle
@@ -34,7 +34,7 @@ En 1.x, chaque port avait son numéro : gtk3sermo et gtk4sermo 1.1.4, qt6sermo
 
 ## Où le numéro est écrit — un seul endroit
 
-Le fichier **`VERSION`**, à la racine, est la seule source. Les onze projets
+Le fichier **`VERSION`**, à la racine, est la seule source. Onze projets
 CMake (le cœur, les neuf backends et `sermoia-mcp`) le lisent avant `project(...)` :
 
 ```cmake
@@ -42,6 +42,10 @@ file(READ "${CMAKE_CURRENT_SOURCE_DIR}/../VERSION" SERMO_VERSION)
 string(STRIP "${SERMO_VERSION}" SERMO_VERSION)
 project(gtk3sermo VERSION ${SERMO_VERSION} LANGUAGES C)
 ```
+
+Le douzième, `sermo-source` (les programmes d'aide), ne le lit pas :
+`project(sermo-source C)` n'a pas de numéro, et ses programmes n'en affichent
+aucun ; ils suivent le numéro de leur paquet.
 
 De là, le numéro descend tout seul : `sermocore.pc`, les `config.h` engendrés
 depuis leur `config.h.in`, et les pages de manuel substituées à la construction.
@@ -63,11 +67,11 @@ voyait pas à la compilation, le binaire sortait en annonçant un numéro faux.
   qu'ils sont livrés ensemble. Un changement incompatible du contrat
   `sermo-contract.h` impose un bump MAJEUR, car un backend plus ancien ne se lierait
   plus au cœur.
-- `sermocore.pc` porte la version (`Version: 3.0.0`) : un backend construit à part
+- `sermocore.pc` porte la version (`Version: 3.1.2`) : un backend construit à part
   peut exiger un cœur minimal avec
   `pkg_check_modules(SERMOCORE REQUIRED sermocore>=2.7)`.
-- Les paquets Debian ajoutent une révision : `3.0.0-1` est la première
-  construction Debian de la 3.0.0.
+- Les paquets Debian ajoutent une révision : `3.1.2-1` est la première
+  construction Debian de la 3.1.2.
 
 ## Compatibilité des scripts
 

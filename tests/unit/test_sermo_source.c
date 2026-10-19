@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * test_sermo_source.c — Tests de COMPORTEMENT de la traduction de
- * <input modbus> / <input opcua> (libsermocore/include/sermo_source.h).
+ * <input modbus> / <input opcua> / <input mqtt> / <input mavlink>, <action mqtt> /
+ * <action mavlink> (libsermocore/include/sermo_source.h).
  * haplo-dialog — cœur partagé (GPL-2.0-or-later)
  *
  * Vérifie, contre safe_exec.c lui-même, que la commande produite n'a AUCUN
@@ -98,6 +99,52 @@ main(void)
 	}
 
 	free(traduire("modbus", "tcp://h?registre=1", erreur));
+	/* <input mqtt> : même traduction ; « / » du sujet tel quel, « # » encodé. */
+	c = traduire("mqtt", "mqtt://h:1883?sujet=maison/salon/temperature", erreur);
+	EXPECT(c && strcmp(c, "/usr/libexec/sermo/sermo-source-mqtt mqtt://h:1883%3Fsujet=maison/salon/temperature") == 0,
+	       "mqtt traduit vers sermo-source-mqtt");
+	free(c);
+	c = traduire("mqtt", "mqtt://h?sujet=a/#;rm -rf ~", erreur);
+	EXPECT(c && !strpbrk(c + strlen("/usr/libexec/sermo/sermo-source-mqtt "), " ;#~"),
+	       "mqtt : joker et métacaractères encodés (le refus du joker est au programme d'aide)");
+	free(c);
+	/* <input mavlink> : lecture de télémétrie ; jamais d'écriture mavlink ici. */
+	c = traduire("mavlink", "udp://:14550?champ=tension", erreur);
+	EXPECT(c && strcmp(c, "/usr/libexec/sermo/sermo-source-mavlink udp://:14550%3Fchamp=tension") == 0,
+	       "mavlink traduit vers sermo-source-mavlink");
+	free(c);
+	/* <action mavlink> : vers le programme d'ÉCRITURE à part (sermo-cible-mavlink),
+	 * jamais vers le lecteur. */
+	c = sermo_cible_commande("mavlink", "tcp://h:5760?ordre=rtl", erreur, sizeof erreur);
+	EXPECT(c && strcmp(c, "/usr/libexec/sermo/sermo-cible-mavlink tcp://h:5760%3Fordre=rtl") == 0,
+	       "action mavlink traduite vers sermo-cible-mavlink");
+	free(c);
+	c = sermo_cible_commande("mavlink", "tcp://h:5760?parametre=WP_SPD&valeur=$V;id", erreur, sizeof erreur);
+	EXPECT(c && !strpbrk(c + strlen("/usr/libexec/sermo/sermo-cible-mavlink "), " ;$&"),
+	       "action mavlink : $, & et ; encodés");
+	free(c);
+	/* <input media> / <action media> : lecteur son/vidéo ; la commande
+	 * part vers sermo-cible-media, l'état se lit par sermo-source-media. */
+	c = traduire("media", "media://salon?donnee=etat", erreur);
+	EXPECT(c && strcmp(c, "/usr/libexec/sermo/sermo-source-media media://salon%3Fdonnee=etat") == 0,
+	       "media traduit vers sermo-source-media");
+	free(c);
+	c = sermo_cible_commande("media", "media://salon?commande=lire&source=file:///a b.ogg;id", erreur, sizeof erreur);
+	EXPECT(c && strncmp(c, "/usr/libexec/sermo/sermo-cible-media media://salon%3Fcommande=lire%26source=", 75) == 0
+	       && !strpbrk(c + strlen("/usr/libexec/sermo/sermo-cible-media "), " ;&?"),
+	       "action media traduite vers sermo-cible-media, espace ; & ? encodés");
+	free(c);
+	/* <action mqtt> : vers le programme d'ÉCRITURE ; mqtt, mavlink et media seulement. */
+	c = sermo_cible_commande("mqtt", "mqtt://h?sujet=a/b&valeur=on", erreur, sizeof erreur);
+	EXPECT(c && strcmp(c, "/usr/libexec/sermo/sermo-cible-mqtt mqtt://h%3Fsujet=a/b%26valeur=on") == 0,
+	       "action mqtt traduite vers sermo-cible-mqtt");
+	free(c);
+	c = sermo_cible_commande("modbus", "tcp://h?registre=1", erreur, sizeof erreur);
+	EXPECT(c == NULL && strstr(erreur, "mqtt"), "écriture modbus refusée (industrie en lecture seule)");
+	c = sermo_cible_commande("opcua", "opc.tcp://h", erreur, sizeof erreur);
+	EXPECT(c == NULL, "écriture opcua refusée");
+	c = sermo_cible_commande("mqtt", "mqtt://h?sujet=a\nb", erreur, sizeof erreur);
+	EXPECT(c == NULL && strstr(erreur, "contrôle"), "action mqtt : fin de ligne refusée");
 	c = traduire("http", "x", erreur);
 	EXPECT(c == NULL && strstr(erreur, "protocole"), "protocole inconnu refusé");
 	c = traduire("modbus", "", erreur);

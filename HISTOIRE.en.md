@@ -22,7 +22,7 @@ Launchpad. Three sources did not answer that day: the old Puppy Linux forum
 | 2024 – 2025 | **Mick Amadio (01micko)**: gtk3dialog | `01micko/gtk3dialog` | 0.1.0 → 0.1.2 |
 | 2025 | **BunsenLabs**: packaging of gtk3dialog | `BunsenLabs/gtk3dialog` | 0.1.2 (Debian package) |
 | 2026 | **gtkdialog3**, published under László Pere's name | `laszlopere/gtkdialog3` | 0.9.0 announced |
-| 2026 | **sermo** (this project), fork of 0.8.3 | `haplo-dialog/sermo` | 2.x |
+| 2026 | **sermo** (this project), fork of 0.8.3 | `haplo-dialog/sermo` | 2.x then 3.x |
 
 ```
 László Pere 0.58 … 0.7.20 (2004-2007)
@@ -31,7 +31,7 @@ László Pere 0.58 … 0.7.20 (2004-2007)
         │    └─ 01micko: gtk3dialog 0.1.x (2024-2025)
         │         └─ BunsenLabs: Debian package of gtk3dialog (2025)
         ├─ gtkdialog3 "GtkDialog2/3" 0.9.0 (2026, laszlopere account)
-        └─ sermo 2.x (2026, haplo-dialog)
+        └─ sermo 2.x then 3.x (2026, haplo-dialog)
 ```
 
 ## 1. László Pere, the author (2003/2004 – 2007)

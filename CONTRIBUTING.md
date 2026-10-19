@@ -65,7 +65,7 @@ backends touchés :
 
 ```sh
 TIMEOUT=5 bash tests/xml/run_tests.sh <BIN>                       # 55 PASS
-bash tests/comportement/run.sh <BIN>                              # 75 au vert
+bash tests/comportement/run.sh <BIN>                              # 78 au vert
 xvfb-run -a bash tests/garde_echappement_sortie.sh <BIN>          # OK — 4 cas
 ```
 
@@ -85,6 +85,11 @@ Debian testing avec les paquets de [`ci/dependances.txt`](ci/dependances.txt) :
 bash ci/construire.sh      # le cœur et les neuf backends (ou quelques-uns : ci/construire.sh qt6 ncurses)
 bash ci/bancs.sh           # tous les bancs ; un journal par banc dans _journaux/
 ```
+
+`ci/construire.sh` construit aussi, à chaque fois, le serveur `sermoia-mcp` et
+les huit programmes d'aide de `sermo-source/` (toutes leurs bibliothèques
+exigées), et la variante légère de lvgl quand lvgl fait partie des ports
+demandés.
 
 `ci/bancs.sh` joue tout avant de conclure, affiche une ligne par banc, et rend 1
 dès qu'un banc est rouge, figé, ou n'a rien vérifié. Il contrôle aussi qu'aucun

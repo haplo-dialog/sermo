@@ -7,6 +7,318 @@ Versioning: see [VERSIONING.en.md](VERSIONING.en.md).
 internal; they are described below to keep track of what changed since 1.x. To
 move from 1.x to 2.x: [MIGRATION.en.md](MIGRATION.en.md).
 
+## [3.1.2] — 2026-10-20
+
+Security fix.
+
+### Fixed
+
+- **mpv's cage (`sermo-cible-media`): session sockets reachable.** Under
+  `--ro-bind / /`, `connect()` to a socket of `/run/user/<uid>` succeeded inside
+  the cage (measured): D-Bus session bus, agents. Now `--tmpfs /run/user` (and
+  the session folder if it lives elsewhere); only the player's folder, pulse
+  and Wayland are mounted back; `DBUS_SESSION_BUS_ADDRESS` is removed. PipeWire
+  is not mounted (`pipewire-0` also gives the screen and cameras):
+  `--ao=pulse,null` (otherwise mpv hung after PipeWire failed). Still open:
+  abstract sockets, reachable for a network source (no `--unshare-net`), see
+  [SECURITY.en.md](SECURITY.en.md).
+
+- **efl1sermo: `<drawingarea>` takes the requested size.** The size read was
+  set with `evas_object_resize`; inside a box the minimum size is what counts,
+  and the area fell back to zero. Test `garde_render_zone.sh` (seven ports that
+  render an image; old efl1: red).
+
+### Changed
+
+- **Documentation reread a second time against the code**, in French and
+  English (camera, `<notebook>`, `width-request` port by port, XML pages,
+  `<terminal>` port by port, `dans=` and `embed="true"`).
+- When paused, the position read by `<input media>` may lag by 0.1 to 0.2 s
+  (pulse subtracts its latency; 1.86 for a seek to 2, measured).
+
+### Tests
+
+- `garde_sermo_media.sh`: probe inside the cage (a session socket refused,
+  pulse reached, bus variable absent), 4 red twins; step 16 at ±0.25 s.
+
+## [3.1.1] — 2026-10-19
+
+Fix release: video inside the dialog window.
+
+### Added
+
+- **`<action media>`: `dans=$VARIABLE` key**, the variable of a
+  `<drawingarea embed="true">`. gtk3 under X11 exports the area's X11 id into it; mpv draws
+  there (`--wid`), inside its bubblewrap cage when bwrap is installed, outside
+  the sermo process.
+  Empty or missing variable, or no X11 display: **fallback** to the separate
+  window of 3.1.0, with the message "fenêtre séparée". A value that is not a
+  number from 1 to 2³²−1: refused, mpv is not started. Embedded, mpv reads
+  neither mouse nor keyboard from the window (measured under xfwm4: otherwise a
+  click left on the button re-ran the action two or three times). Embedded
+  camera: `CAMÉRA ACTIVE — <name>` written in the picture, since the title is
+  no longer visible.
+
+### Changed
+
+- **`<drawingarea embed="true">` (gtk3, X11)**: the variable holds the area's
+  X11 id once shown (empty string before, and under Wayland). Without `embed`
+  nothing changes: the variable stays empty (the behaviour test required it: a
+  number that changes at every run would be printed when the dialog closes).
+- **`<drawingarea>` (gtk4)**: reads `width-request` and `height-request`, like
+  gtk3, qt6, fltk1 and efl1 (sdl3, lvgl, ncurses and html read `<width>` and
+  `<height>`); `width` and `height` are still accepted. Manual fixed (it
+  said `width=`).
+
+### Tests
+
+- `garde_sermo_media.sh`: embedding, fallback, `dans=` refusals, camera
+  indicator, mpv input switched off; number read under a French locale.
+
+## [3.1.0] — 2026-10-19
+
+Home automation, drones, sound and video, field by field; reading before
+writing in each field. Done so far:
+
+### Added
+
+- **`<input mqtt>`: read home automation from the XML, read-only.**
+  `<input mqtt>mqtt://host:1883?sujet=maison/salon/temperature</input>` shows
+  the topic's retained message, otherwise the next one (at most `delai=`).
+  Helper `sermo-source-mqtt` (libmosquitto), new package of the same name; same
+  mechanics as Modbus and OPC UA (cache, `perime=`, pause after a failure,
+  window never frozen). It subscribes and reads, it never publishes. `+` and
+  `#` wildcards refused. **Credentials**: `identifiants=/path` to a
+  `user:password` file, refused unless owned by the user and unreadable by
+  others — never in the address, which `ps` shows. On `mqtt://`
+  (unencrypted), credentials are **refused before any connection**: they
+  would cross the network in clear. Only exception: the address carries
+  `clair=oui`, written by the dialog's author for a trusted local network;
+  `clair=` only accepts "oui" and only applies to `mqtt://`. The rule applies
+  to `sermo-source-mqtt` as to `sermo-cible-mqtt`
+  (`sermo-source/mqtt-commun.c`). Tests:
+  `garde_sermo_source_mqtt.sh` (against two mosquitto brokers started for the
+  test and a silent server; four mutations, all caught), `garde_input_source.sh`
+  (nine ports) and the core unit test.
+- **Encrypted `<input mqtt>`: `mqtts://`** (port 8883). `confiance=` (certificate
+  of the authority that signed the server) is required: no "accept everything"
+  mode; the server name is checked against its certificate. `certificat=` and
+  `cle=` (key in `chmod 600`) for a server that requires a client certificate.
+  Tests: three encrypted brokers started for the test (right authority,
+  certificate for another name, client certificate required); eight mutations,
+  all caught.
+- **`<action mqtt>`: control home automation with a click** — sermo's only
+  write, program `sermo-cible-mqtt` in its own package. Refused when the XML is
+  read outside a `<button>` or a `<menuitem>` (timer, field, checkbox…), and
+  the name `sermo-cible-` written by hand in an `<input>` or an `<action>`.
+  Closed allow-list in a file (`~/.config/sermo/cibles-mqtt` in 600,
+  `/etc/sermo/cibles-mqtt` owned by root) — the home folder comes from the
+  account database, not `$HOME`; values bounded per topic (`on|off`,
+  `18..24`); `valeur=$NAME` for a dialog variable; QoS 1, never repeated.
+  Tests: `garde_sermo_cible_mqtt.sh` (witness subscribed to everything, lists in
+  an isolated namespace; in CI, a throwaway root container),
+  `garde_action_cible.sh` (nine ports: refused when read, nothing without a
+  click, one click = one call; click not measurable under Xvfb for efl1 and
+  html); eight mutations of the program, two of the XML reader, all caught. The
+  code shared by reading and writing lives in `sermo-source/mqtt-commun.c`.
+- **`<input mavlink>`: drone telemetry, read-only.** `udp://`,
+  `tcp://` (simulator), `serie://` (USB radio); fourteen fields (voltage,
+  battery, position, height, armed, mode…). Only the autopilot is listened to
+  (ground station, camera ignored); nothing is sent on the link. Program
+  `sermo-source-mavlink`, new package; MAVLink C headers bundled
+  (`sermo-source/tiers/mavlink`: LGPL-3 with the MAVLink exception, MIT once
+  built into the binary; Heimdal SHA-256 under BSD-3). Dashboard
+  example and fake drone (pymavlink, an independent implementation) in
+  `examples/mavlink/`. Test `garde_sermo_source_mavlink.sh` (three links, the
+  drone receives no byte; six mutations caught).
+- **`<action mavlink>`: drone ground settings and safety orders.** A click sets **one** autopilot parameter (drone disarmed), or gives
+  **one** order: `rtl` (return to launch), `land` (land in place),
+  `terminaison` (cut the motors, **two presses within 5 s**). Closed allow-list
+  `cibles-mavlink` (parameter and range, allowed orders); families `ARMING_*`,
+  `FLTMODE*`, `SERVOn_FUNCTION`, `BRD_SAFETY*`, `FENCE_*` never set, even when
+  written in the list; refused while another ground station talks to the
+  drone; success only on the drone's own proof (value read back, order
+  "accepted"); no heartbeat sent. Program `sermo-cible-mavlink`, new package;
+  the link code is shared with reading (`sermo-source/mavlink-commun.c`).
+  Tests: `garde_sermo_cible_mavlink.sh` (fake drone, everywhere) and
+  `garde_sermo_cible_mavlink_sitl.sh` (simulated ArduPilot Copter 4.7.2:
+  setting read back, refusal in flight, return, landing, motor cut). Example
+  `examples/mavlink/drone-commande.sh`.
+- **`<action mavlink>`: sending a waypoint mission.**
+  `mission=/path/flight.waypoints`, a "QGC WPL 110" file from Mission Planner
+  or QGroundControl; waypoints only (height above home, wait 0 to 60 s), 100
+  at most; allow-list line `mission rayon R hauteur H` (R m around the drone's
+  current position, 0 to H m, H ≤ 120); drone disarmed; the mission is **read
+  back from the drone** and compared point by point before reporting success;
+  it is not started. Separate file reader (`sermo-source/mission-wpl.c`).
+  Tests: 18 more fake-drone cases, 6 simulator cases.
+- **`<action media>` and `<input media>`: sound and video.** A button plays
+  a sound or a video with mpv:
+  `<action media>media://name?commande=lire&source=file:///path/sound.ogg</action>`,
+  then `pause`, `reprendre`, `arreter`, `aller` (0 to 86,400 s), `volume`
+  (0 to 100), `muet`, `son`; `valeur=$NAME` for a dialog variable.
+  `<input media>media://name?donnee=etat</input>` returns `stopped`,
+  `playing`, `paused` or `error`, and on request `position` and `duree`; it
+  only asks. Two programs, each in its own package: `sermo-cible-media`
+  (starts and commands, depends on mpv, recommends bubblewrap) and
+  `sermo-source-media` (reads the state, recommends `sermo-cible-media`).
+  Like `<action mqtt>`, `<action media>` is refused outside a `<button>` or a
+  `<menuitem>`. **Closed list of commands**: the program only sends mpv fixed
+  requests and bounded numbers it writes itself (mpv's "run" command would
+  start a shell). **Sources filtered before mpv**, which has no allow-list:
+  `file://` (real path, regular file), `http(s)://`, `rtsp(s)://`,
+  `v4l2://` (a camera, see below); never
+  credentials in the address; HTTP(S) password through `identifiants=`, a
+  file in 600, never as an argument; password-protected RTSP refused. **mpv
+  runs in a bubblewrap cage**: system read-only, empty home folder, network
+  cut for a local file or a camera. bwrap is required for a network source;
+  for a local file or a camera, it is used when present, otherwise mpv runs
+  without a cage and a message says so. mpv stops when the dialog closes; 4 players at most.
+  Limits: the video shows in mpv's window, not yet in the dialog's; tried
+  under X11, **Wayland not tried**. Test `garde_sermo_media.sh` (fake mpv,
+  real mpv on a generated silent sound, real gtk3 window: a click starts,
+  closing stops mpv); eleven mutations out of twelve caught (the twelfth,
+  credentials in the address, is also refused by another check).
+- **`<action media>`: the camera as a source.**
+  `source=v4l2:///dev/videoN`; the node must be a real `/dev/videoN`, a
+  character device, and the camera's image node (not a metadata node). The
+  address given to mpv is built by the program from the real node, never
+  copied from the text received. `taille=` (320x240, 640x480, 1280x720,
+  1920x1080) and `format=` (mjpeg, yuyv422) in closed lists, refused for any
+  other source. mpv's window carries the title "CAMÉRA ACTIVE". The cage only
+  receives that node and has no network. A busy camera is refused, never
+  forced: one single new attempt 1.5 s later, then a message
+  (`sermo-source/sermo-cible-media.c`).
+- **Fifteen ready-to-use examples**, shipped by `sermo-doc` under
+  `/usr/share/doc/sermo-doc/examples/<folder>/`:
+  - `approbation`: a human approval gate; before a risky action, a
+    *Refuse* / *Allow* window, and the exit code gives the answer;
+  - `bluetooth-scan`: the Bluetooth devices in range and those the machine
+    already knows, read-only;
+  - `bus-can`: listen to a CAN bus; a frame is only sent after the approval
+    window;
+  - `camera-apercu`: view a webcam or an IP camera on a click, recording
+    nothing;
+  - `certificat-tls`: a server's TLS certificate (chain, name, days before
+    expiry), without privileges;
+  - `dns-testeur`: resolve a name and compare up to six resolvers;
+  - `domotique-mqtt`: read sensors and command with a click, in native MQTT
+    tags, with a fake house for testing;
+  - `gnss-moniteur`: the state of a GNSS/GPS receiver through gpsd
+    (position, quality, satellites), with a demo mode;
+  - `heure-ntp`: is the clock right? NTP, offset, time zone, read-only;
+  - `journal-direct`: follow the systemd journal live, filtered by priority
+    and by unit;
+  - `lecteur-media`: play a sound or a video (play, pause, resume, stop,
+    volume; state, position and duration);
+  - `liaison-serie`: listen to a serial port; a line is only sent after
+    approval;
+  - `reseau-testeur`: TCP connections, port test, frame, HTTP, UDP datagram
+    and ping, without special privileges;
+  - `usb-moniteur`: the USB devices plugged in and live plug events,
+    changing nothing;
+  - `wifi-scan`: the Wi-Fi networks in range and channel use, read-only.
+- **`tests/garde_spdx_scripts.sh`**: each tracked script (`.sh`, `.py`,
+  executable with a shebang) must carry in its SPDX header the licence that
+  `debian/copyright` gives it.
+
+### Changed
+
+- **system-tools only asks for one password** for the upgrade: a single
+  `pkexec sh -c '…'` instead of two `pkexec`. The five showcase examples
+  write their texts with their accents (Identité, Âge, Préférences…).
+- **Recipes outside Debian** (Arch, Fedora/RPM, Alpine, Gentoo, Slackware,
+  Nix): they build 3.0.0; they still targeted the 2.8.2 archive.
+- **Documentation**: Windows, Android, BSD and macOS (ncurses port)
+  described in the README, COMPILE, SECURITY and the user manual; SECURITY
+  measured again on 2026-10-17 on the 3.0.0-1 packages (sermo never raises
+  its privileges; system-tools, for its part, calls pkexec); the manual says
+  that a `<text>` keeps the line ending of its `<input>`, while an `<entry>`
+  removes it (behaviour inherited from gtkdialog, kept, with the workaround).
+
+### Fixed
+
+- **htmlsermo in serve mode now returns only the dialog's variables.** The
+  small server printed, and put in the environment, every field it received:
+  whoever fills in the page could add one (`PATH`, `LD_PRELOAD`…) with the
+  browser's tools, and a script doing `eval "$(htmlsermo …)"` took it. The
+  output is now that of the other ports: the variables declared by the dialog
+  (value received, otherwise the starting value) and `EXIT`. And six fields
+  had no name (`<comboboxtext>`, `<password>`, `<searchentry>`, `<switch>`,
+  `<list>` with a child `<variable>`), and a `<togglebutton>` had no state: a
+  browser never sent them. Test `garde_html_serve.sh` (red on the old binary:
+  ten defects).
+- **gtk4sermo: `<levelbar>` follows `range-min` and `range-max`**, like the
+  reference port and the seven others; a 0..100 gauge stayed on 0..1, full
+  from 1. Test `garde_render_jauge.sh` on the seven ports that render an image.
+- **`g_strdup` safe on `NULL` in five ports** (sdl3, lvgl, html, ncurses,
+  efl1), like GLib: these ports imitated it with a bare `strdup`, which
+  crashes on `NULL` where GLib returns `NULL` (qt6 and fltk1 already had the
+  guard). Seen by gcc (`-Wnonnull`) on the `<notebook>` code. Running out of
+  memory stops at once, like GLib.
+- **gtk4sermo: `<drawingarea>` reads `width-request` and `height-request`**,
+  like the other ports; `width` and `height`, the old spelling, are still
+  read.
+- **`<notebook>`: the `<input>` read at startup selects the page on every
+  port.** gtk3sermo lost it: GtkNotebook refuses to switch to a page that is not
+  shown yet, and the first pass comes before the window is displayed (`echo 1`
+  left page 0); the page is now kept and applied once shown, as gtk4sermo
+  already did. The seven other ports had copied that loss: they now apply the
+  page read, and the `page="…"` attribute, which they ignored, wins on the first
+  pass as in GTK. lvglsermo: resizing the view no longer switches tabs (LVGL
+  recomputed the tab at the end of scrolling and landed on the wrong one in a
+  large dialog); a user's click on a tab still counts. Bench: case 78.
+- **`<input mqtt>` refused a broker reachable on only one of its addresses**
+  ("localhost": ::1, where nothing listens, before 127.0.0.1). The non-blocking
+  connect only tried the first address; it now tries them all, bounded by
+  `delai=`.
+- `sermo-source-mqtt` could end killed by SIGPIPE (exit 141) after a successful
+  encrypted read.
+- The `<input mqtt>` test would not have run in CI: started as root, mosquitto
+  switched to the "mosquitto" account and could no longer read the test keys.
+  It now keeps the account that started it.
+- **XML language man pages shipped**: `haplo-dialog-xml(5)` (package
+  `sermo-backend-gtk3`) and `gtk4sermo-xml(5)` (package `sermo-backend-gtk4`).
+  The section 1 pages pointed to them, but they were not installed.
+- **Player packages**: `sermo-cible-media` depends on mpv (without it,
+  nothing plays); `sermo-source-media` recommends `sermo-cible-media`, not
+  mpv. `ci/construire.sh` checks the eight helpers, not five.
+- **The player code no longer uses `strcpy` or `strtod`**: bounded copy by
+  `memcpy` (the length is checked just before); numbers read in the C locale
+  (`strtod_l`): "12.5" reads the same whatever the machine's language.
+- **`debian/copyright`**: sixteen files written for sermo under CC0 were
+  declared GPL-2+ (examples block inherited from gtkdialog). The file is again
+  produced by its generator (`packaging/copyright-dep5.py`) and completed:
+  MAVLink declared as its text says (LGPL-3 in source form, MIT by exception
+  once built into the binary); code built into `lvglsermo` and not declared:
+  ThorVG's SVG parser (EFL BSD-2), Lottie interpolation (MPL-2.0), rapidjson
+  (Expat), Montserrat and Font Awesome fonts (OFL-1.1); `lv_conf.h` under MIT;
+  the TJpgDec text is its licence (`LICENSE.txt`), no longer its whole source.
+
+### Security
+
+- **The helpers were not hardened** (`sermo-source-modbus` and
+  `sermo-source-opcua` in the published 3.0.0): no CET (IBT, SHSTK) and no
+  FORTIFY, for lack of the options the ports carry. The hardening test only
+  covered the ports, so it never saw it. The eight helpers now have the 8
+  guarantees, and `ci/bancs.sh` checks them.
+
+### Measured
+
+- Full `ci/bancs.sh`: 262 tests, 0 failures (final run of 3.1.2, 2026-10-19).
+- 2026-10-18: in the full run, one test was red, the forbidden-functions
+  test on the player code (`strcpy`, `strtod`); fixed, then run again green.
+  Behaviour: 78 cases, at parity on the 9
+  ports. Build of the nine ports, light lvgl, sermoia-mcp and the eight
+  helpers: 0 warnings (cc 16.2, cmake 4.3.4). 27 binary packages
+  (`debian/control`), 20 of them architecture-specific.
+
+### Not in this release, planned for 3.2.0
+
+- Piloting a drone: arming, taking off, changing mode, moving.
+- Video embedded in the dialog's window.
+- Trying the sound and video player under Wayland.
+
 ## [3.0.0] — 2026-10-15
 
 It joins two lines of work. The ncurses port leaves Linux: Windows 10/11,

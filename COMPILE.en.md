@@ -100,11 +100,42 @@ Ports without a page of their own (fltk1, efl1, sdl3, lvgl, ncurses, html) get t
 `doc/sermo.1.in` under their own name, exactly as `debian/rules` does: both
 paths ship the same thing.
 
+### Helper programs (`sermo-source/`)
+
+`<input modbus>`, `<input opcua>`, `<input mqtt>`, `<input mavlink>`,
+`<input media>` and `<action mqtt>`, `<action mavlink>`, `<action media>` go
+through eight small separate programs. They are built on their own, without
+the core:
+
+```bash
+cmake -S sermo-source -B sermo-source/_build
+cmake --build sermo-source/_build
+# → sermo-source/_build/sermo-source-modbus, … , sermo-cible-media
+```
+
+Each one is built only if its library is there: `libmodbus-dev`
+(`sermo-source-modbus`), `libopen62541-1.4-dev` (`sermo-source-opcua`),
+`libmosquitto-dev` (`sermo-source-mqtt` and `sermo-cible-mqtt`). Otherwise
+CMake warns and skips that program. With `-DSERMO_SOURCE_EXIGER=ON`, a missing
+library stops the build: the CI and the packages set it. MAVLink needs nothing
+installed: its C headers are bundled (`sermo-source/tiers/mavlink`). The two
+media programs have no library: at run time, `sermo-cible-media` starts the
+`mpv` program (in a `bwrap` sandbox when it is there), and `sermo-source-media`
+queries it.
+
+`cmake --install` puts them in `<prefix>/libexec/sermo`. The core looks for
+them in `/usr/libexec/sermo`; the `SERMO_SOURCE_DIR` variable (an absolute
+path) points to another directory, for instance `sermo-source/_build` for a
+test.
+
 ## 4. Hardening
 
 The core and the backends compile with `-D_FORTIFY_SOURCE=3`,
-`-fstack-protector-strong`, `-fstack-clash-protection`, `-fcf-protection=full`,
-and link as PIE/RELRO/BIND_NOW. Do not remove these flags: the
+`-fstack-protector-strong`, `-fstack-clash-protection` and control-flow
+protection, and link as PIE/RELRO/BIND_NOW. CMake picks the control-flow
+protection after a test: `-fcf-protection=full` (CET) on x86,
+`-mbranch-protection=standard` (BTI/PAC) on ARM64; `-fstack-clash-protection` is
+kept only if the compiler actually uses it. Do not remove these flags: the
 `tests/garde_durcissement.sh` bench checks them. See
 [SECURITY.en.md](SECURITY.en.md).
 
@@ -124,7 +155,7 @@ French):
 ```bash
 BIN=sermo-backend-qt6/_build/qt6sermo
 TIMEOUT=5 bash tests/xml/run_tests.sh "$BIN"                       # 55 PASS
-bash tests/comportement/run.sh "$BIN"                             # 75 green
+bash tests/comportement/run.sh "$BIN"                             # 78 green
 xvfb-run -a bash tests/garde_echappement_sortie.sh "$BIN"          # OK — 4 cases
 ```
 
@@ -141,7 +172,61 @@ bash packaging/construire-paquets.sh    # in a clean Debian testing system (Dock
 ```
 
 Or directly on Debian testing: `sudo apt build-dep ./` then
-`dpkg-buildpackage -us -uc -b`. Eighteen packages: `sermo-core-dev`, the nine
-`sermo-backend-*`, `sermo-doc`, `sermo-gtkdialog`, the two MCP servers
-(`sermoia-mcp`, `sermoman-mcp`) and four transitional packages from 1.x. See
+`dpkg-buildpackage -us -uc -b`. Twenty-seven packages: `sermo-core-dev`, the
+ten `sermo-backend-*` (including `sermo-backend-lvgl-leger`), `sermo-doc`,
+`sermo-gtkdialog`, the two MCP servers (`sermoia-mcp`, `sermoman-mcp`), four
+transitional packages from 1.x, and the eight helper programs
+(`sermo-source-modbus`, `-opcua`, `-mqtt`, `-mavlink`, `-media`;
+`sermo-cible-mqtt`, `-mavlink`, `-media`). See
 [PACKAGING.en.md](PACKAGING.en.md).
+
+## 7. Other systems (ncurses port)
+
+Outside Linux, only the ncurses port is built. One script serves everywhere,
+`packaging/autres-os/construire-os.sh`: the core, then the port. CMake tests what
+the system provides and chooses on its own: `funopen` when the C library has no
+`fopencookie`, a fallback when `strtod_l`, `pipe2` or `execvpe` are missing, the
+right control-flow protection.
+
+**Android (Termux)**, inside Termux:
+
+```bash
+pkg install clang cmake make flex bison pkg-config ncurses
+CMAKE_EXTRA="-DSERMO_SHELL_DEFAUT=$PREFIX/bin/sh" \
+    sh packaging/autres-os/construire-os.sh construire . _os ncurses
+```
+
+`SERMO_SHELL_DEFAUT`: Android's `/bin/sh` is not Termux's shell. The recipe
+`packaging/autres-os/termux/build.sh` does the same in termux-packages format.
+
+**FreeBSD** and **OpenBSD** (curses from the base system):
+
+```bash
+pkg install cmake bison pkgconf gmake          # FreeBSD
+pkg_add cmake bison gmake                      # OpenBSD
+sh packaging/autres-os/construire-os.sh construire . _os ncurses
+```
+
+The ports `packaging/autres-os/freebsd/devel/sermo/` and `openbsd/devel/sermo/`
+call that same script.
+
+**macOS** (ncurses, bison and flex from Homebrew; macOS's own are too old):
+
+```bash
+brew install cmake bison flex ncurses pkgconf
+export PATH="$(brew --prefix bison)/bin:$(brew --prefix flex)/bin:$PATH"
+export PKG_CONFIG_PATH="$(brew --prefix ncurses)/lib/pkgconfig"
+sh packaging/autres-os/construire-os.sh construire . _os ncurses
+```
+
+The formula `packaging/autres-os/homebrew/sermo.rb` does the same; no tap is
+published.
+
+**Windows**: cross-compiled from Debian (`gcc-mingw-w64-ucrt64`), with the
+toolchain file `packaging/autres-os/windows/mingw-w64.cmake` and an ncurses built
+for the same target. The commands and the ncurses settings are in
+[packaging/autres-os/README.md](packaging/autres-os/README.md) (French only),
+Windows section.
+
+In every case the binary is `_os/ncurses/ncursessermo`, and
+`bash tests/comportement/run.sh "$PWD/_os/ncurses/ncursessermo"` checks it.

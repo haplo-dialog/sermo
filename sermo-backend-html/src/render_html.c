@@ -662,6 +662,20 @@ static void render_node_corps(FILE *out, WidgetNode *n, int depth)
         return;
 
     case WT_BUTTON: case WT_TOGGLEBUTTON:
+        /* En mode serve, un bouton à bascule doit RENDRE son état : un
+         * <button> n'en garde aucun, le navigateur n'envoyait rien et la
+         * variable gardait sa valeur de départ (vu le 2026-10-18). Il est donc
+         * servi comme une case, avec le même champ caché « false » d'abord. */
+        if (n->type == WT_TOGGLEBUTTON && html_mode() == MODE_SERVE && n->var_name && *n->var_name) {
+            fputs("<input type=\"hidden\" name=\"", out);
+            html_escape(out, n->var_name); fputs("\" value=\"false\">", out);
+            fputs("<label class=\"sermo-checkbox sermo-toggle\"><input type=\"checkbox\"", out);
+            fld_name(out, n);
+            fputs(" value=\"true\"", out);
+            if (n->state.toggle.active) fputs(" checked", out);
+            fputs("> ", out); html_escape(out, *lbl ? lbl : "Bouton"); fputs("</label>\n", out);
+            return;
+        }
         if (html_mode() == MODE_EXPORT) {
             fputs("<button class=\"sermo-button\" type=\"button\" disabled", out);
         } else {

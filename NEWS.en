@@ -5,6 +5,109 @@ This file summarises changes from the user's point of view.
 For the full technical history, see CHANGELOG.en.md.
 
 ──────────────────────────────────────────────────
+Version 3.1.2 (2026-10-20)
+──────────────────────────────────────────────────
+
+Security fix for the sound and video player: mpv's cage no longer lets it
+reach the D-Bus session bus nor the other sockets of your session, except
+"abstract" sockets, still reachable for a network source (no
+--unshare-net), see SECURITY.en.md; only sound, the display and the player's
+folder remain. Sound goes through pulse.
+When paused, the position shown may lag by 0.1 to 0.2 s (pulse latency).
+Also: efl1sermo gives a <drawingarea> the requested size; the documentation
+was reread a second time against the code.
+
+──────────────────────────────────────────────────
+Version 3.1.1 (2026-10-19)
+──────────────────────────────────────────────────
+
+Video inside the dialog window: with gtk3 under X11, a
+<drawingarea embed="true"><variable>SCREEN</variable></drawingarea> area can hold the
+picture of <action media> (key dans=$SCREEN). Elsewhere (Wayland, other ports)
+the video opens in its own window, as in 3.1.0, and the message says so. An
+embedded camera shows "CAMÉRA ACTIVE" written in the picture.
+
+<drawingarea> reads width-request and height-request with gtk4, like gtk3,
+qt6, fltk1 and efl1 (gtk4 only read width and height; both names are still
+accepted). sdl3, lvgl, ncurses and html read <width> and <height>.
+
+──────────────────────────────────────────────────
+Version 3.1.0 (2026-10-19)
+──────────────────────────────────────────────────
+
+Read home automation: <input mqtt>mqtt://host?sujet=maison/salon/temperature</input>
+shows the value of an MQTT topic, read-only (package sermo-source-mqtt). The
+password lives in a file only you can read (identifiants=/path), never in the
+XML. Encrypted: mqtts://host?sujet=…&confiance=/path/authority.pem.
+On mqtt:// (unencrypted), credentials are refused before any connection,
+because they would cross the network in clear; add clair=oui to the address
+to allow them on a trusted local network. Applies to reading as to
+<action mqtt>.
+
+Control home automation with a click: <action mqtt>mqtt://host?sujet=…&valeur=on</action>
+in a button (package sermo-cible-mqtt). Nothing is sent without an allow-list
+written on purpose (~/.config/sermo/cibles-mqtt) that bounds the allowed values.
+
+Read a drone: <input mavlink>udp://:14550?champ=batterie</input> shows the
+autopilot's telemetry (battery, position, height, armed), read-only — nothing
+is sent to the drone (package sermo-source-mavlink).
+
+Command a drone with a click: <action mavlink>tcp://host:5760?ordre=rtl</action>
+brings the drone home; parametre=WP_SPD&valeur=5 sets a parameter, disarmed
+drone only (package sermo-cible-mavlink). Nothing is sent without an
+allow-list written on purpose (~/.config/sermo/cibles-mavlink); cutting the
+motors needs two presses. Tried against a simulated autopilot, not a real drone.
+mission=/path/flight.waypoints sends a waypoint mission prepared in Mission
+Planner or QGroundControl, bounded by the list (mission rayon 500 hauteur 120),
+then reads it back from the drone; without starting it.
+
+Sound and video: <action media>media://name?commande=lire&source=file:///path/sound.ogg</action>
+in a button plays a sound or a video with mpv; pause, reprendre, arreter,
+aller, volume, muet, son command it (package sermo-cible-media, which
+depends on mpv). <input media>media://name?donnee=etat</input> shows the
+state, the position or the duration (package sermo-source-media). Only a
+closed list of commands reaches mpv; sources are filtered before it (file,
+http(s), rtsp(s), never credentials in the address); mpv runs in a
+bubblewrap cage, required for a network source (without bwrap, a local
+file or a camera is played without a cage, and a message says so). A camera is a source
+too: source=v4l2:///dev/video0 (size and format from closed lists); mpv's
+window says "CAMÉRA ACTIVE", nothing is recorded, a busy camera is refused
+without forcing anything. Limits: the video
+shows in mpv's window, not yet in the dialog; Wayland not tried.
+
+Fifteen new ready-to-use examples (package sermo-doc):
+approbation (a Refuse / Allow window before a risky action),
+bluetooth-scan (Bluetooth devices in range), bus-can (listen to a CAN bus,
+send a frame after approval), camera-apercu (view a camera on a click,
+recording nothing), certificat-tls (a server's certificate), dns-testeur
+(compare resolvers), domotique-mqtt (MQTT sensors and commands),
+gnss-moniteur (GNSS receiver through gpsd), heure-ntp (is the clock
+right?), journal-direct (the systemd journal live), lecteur-media (play a
+sound or a video), liaison-serie (listen to a serial port, write after
+approval), reseau-testeur (TCP, port, HTTP, UDP, ping), usb-moniteur (USB
+devices and live plug events), wifi-scan (Wi-Fi networks in range).
+
+Fixed: htmlsermo in serve mode returns only the dialog's variables (a field
+added to the page, PATH for example, came out and an eval took it), and every
+form field carries its name; the gtk4sermo gauge follows range-min and
+range-max; <notebook>: the <input> read at startup selects the page, on the
+nine ports; g_strdup no longer crashes on an empty value (NULL) in five
+ports (sdl3, lvgl, html, ncurses, efl1); the gtk4sermo <drawingarea> reads
+width-request and height-request, like the other ports.
+
+Also: system-tools only asks for one password for the upgrade; the XML
+language man pages (section 5) are shipped; the documentation describes
+Windows, Android, BSD and macOS.
+
+Measured: full ci/bancs.sh, 262 tests, 0 failures (final run of 3.1.2, 2026-10-19). On 2026-10-18: one test red on
+the first run (fixed, run again green); 78 behaviour cases, at parity on
+the 9 ports; build with no warning at all.
+
+Not in this release, planned for 3.2.0: piloting a drone (arming, taking
+off, changing mode, moving), video in the dialog's window, trying the
+player under Wayland.
+
+──────────────────────────────────────────────────
 Version 3.0.0
 ──────────────────────────────────────────────────
 

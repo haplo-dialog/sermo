@@ -1,5 +1,7 @@
 # Job scripts
 
+[Français](README.md)
+
 Sixty ready-to-run scripts, five per job, that show what sermo is for in real work:
 backing up a folder, filing an expense claim, entering measurements in a workshop,
 converting a video, configuring a server over SSH…
@@ -56,7 +58,8 @@ The rules are in [CONVENTION.md](CONVENTION.md) (French only). In short:
 - `EXIT` tells which button was clicked: only the action button means consent;
 - every action goes through `agir`, which prints it in dry-run mode.
 
-They are public domain (CC0-1.0): copy and adapt them.
+They are public domain (CC0-1.0): copy and adapt them. The `verifie.sh` test
+itself is under GPL-2.0 or later.
 
 ## The test
 
@@ -64,7 +67,17 @@ They are public domain (CC0-1.0): copy and adapt them.
 examples/metiers/verifie.sh                       # every script, nine ports
 examples/metiers/verifie.sh --images folder/      # plus one picture per dialog
 examples/metiers/verifie.sh --ports "gtk3 lvgl" examples/metiers/05-bornes-ecrans/*.sh
+examples/metiers/verifie.sh --garder passe/ --ports ncurses   # keep the run, to compare it elsewhere
+examples/metiers/verifie.sh --rejouer passe/ --ports gtk3     # replay a kept run, and compare
 ```
+
+- `--garder DIR` stores the run (extracted dialogs, each port's values) in `DIR`. On a system without GTK,
+  with `--ports "ncurses"`, nothing is compared on the spot.
+- `--rejouer DIR` resumes a kept run without extracting again: the ports given by `--ports` play the
+  **same** dialogs, and their values are compared with those already there.
+
+Exit codes: `0` everything matches · `1` a difference · `77` nothing checked (gtk3sermo missing, or run to
+replay not found).
 
 It checks each script's header and structure, has each dialog parsed by the nine
 ports, then **plays** each dialog on each port. An invisible timer closes the dialog,

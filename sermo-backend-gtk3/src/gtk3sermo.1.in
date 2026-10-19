@@ -2,7 +2,7 @@
 .\" haplo-dialog <devel@haplo-dialog.fr>
 .\" This file is installed as /usr/share/man/man1/gtk3sermo.1
 .\"
-.TH GTK3SERMO 1 "June 2026" "sermo @PACKAGE_VERSION@" "sermo User Commands"
+.TH GTK3SERMO 1 "October 2026" "sermo @PACKAGE_VERSION@" "sermo User Commands"
 .SH NAME
 gtk3sermo \- GTK3 dialog box creator for shell scripts
 .SH SYNOPSIS
@@ -35,10 +35,17 @@ a file
 or standard input
 .RB ( \-\-stdin ).
 .PP
-When a button action produces output (EXIT, REFRESH, etc.), gtk3sermo
-prints the current value of each named widget to standard output in the
-form
+When an
+.B exit:
+action ends the dialog, gtk3sermo prints the current value of each named
+widget to standard output in the form
 \fINAME\fR=\(dq\fIvalue\fR\(dq.
+.PP
+Nothing else prints them. A
+.B closewindow:
+action that closes the last window prints only
+\fBEXIT=\(dqclosewindow\(dq\fR, and closing the window from the window
+manager prints only \fBEXIT=\(dqabort\(dq\fR.
 .PP
 Those lines escape the four characters the shell expands inside double quotes
 .RB ( \e ,
@@ -82,7 +89,7 @@ The interpreter path must be one a package actually installs \(em
 The name
 .B gtkdialog
 exists only if the separate
-.B gtksermo
+.B sermo\-gtkdialog
 package is installed as well, so do not rely on it in a shebang.
 .SH OPTIONS
 .TP
@@ -123,9 +130,11 @@ command the program runs: a direct
 .BR exec ()
 without a shell when
 .I CMD
-carries no shell metacharacter, a logged
-.B /bin/sh \-c
-fallback otherwise, and a clean refusal when
+carries no shell metacharacter, a logged fallback to the shell
+.RB ( SERMO_SHELL ,
+or
+.B /bin/sh
+by default) when it does, and a clean refusal when
 .B SERMO_NO_SHELL_FALLBACK=1
 is set. The exit status of the dialog is not replaced by that of
 .IR CMD ;
@@ -156,12 +165,22 @@ is the exception: the command it runs is
 prefixed, so it does not see the included file.
 .TP
 .BI \-e " FILE" "\fR,\fP \-\-event-driven=" FILE
-Execute
+Event-driven program. The shell first reads
 .I FILE
-as an event-driven program. In this mode gtk3sermo acts as a dispatcher,
-re-invoking
+.RB ( ". \fIFILE\fP" ),
+then gtk3sermo runs again with
+.BI \-\-include= FILE\fR,
+keeping
+.BR \-d ,
+.BR \-w ,
+.BR \-c ,
+.B \-\-print-ir
+and
+.BR \-\-program .
+So
 .I FILE
-for each widget event.
+can set the variable that holds the dialog and define the shell functions its
+actions call.
 .TP
 .BR \-w ", " \-\-no-warning
 Suppress non-fatal warning messages.
@@ -179,6 +198,14 @@ Centre all windows on the screen.
 .B \-\-print-ir
 Parse the GUI description, print the internal representation, and exit
 without displaying any window. Useful for debugging XML syntax errors.
+.TP
+.BI \-\-render-png= FILE
+Draw the dialog, write it to the PNG image
+.IR FILE ,
+and exit without entering the event loop. gtk3sermo still needs a display for
+this: a virtual one
+.RB ( "xvfb\-run \-a" )
+will do.
 .TP
 .BI \-\-space-expand= STATE
 Set the default
@@ -226,7 +253,8 @@ gtk3sermo renders every widget with a native GTK 3 widget. The XML dialog
 description language supports the following tags.
 .SS Layout containers
 .BR window ", " vbox ", " hbox ", " frame ", " notebook ", " expander ,
-.BR eventbox ", " aspectframe
+.BR eventbox ", " aspectframe ", " grid ", " paned ", " stack ", " flowbox ,
+.BR overlay ", " revealer ", " wizard ", " toolbar
 .SS Display widgets
 .BR text ", " image ", " pixmap ", " statusbar ", " infobar ", " drawingarea
 .SS Input widgets
@@ -238,7 +266,7 @@ description language supports the following tags.
 .SS Progress and activity indicators
 .BR progressbar ", " pulse ", " spinner ", " levelbar
 .SS Button widgets
-.BR button ", " linkbutton
+.BR button ", " linkbutton ", " menubutton
 .br
 The
 .B button
@@ -256,16 +284,20 @@ and
 .SS Timers
 .BR timer
 .PP
-Each widget exports its current value as a shell environment variable
-(via
-.BR eval )
-when the dialog exits or an action requests a refresh.
+Each named widget gives its value as a line
+\fINAME\fR=\(dq\fIvalue\fR\(dq
+on standard output when an \fBexit:\fR action ends the dialog. Nothing is exported to the calling
+shell: read the lines with
+.B eval
+or, safer, use
+.BR \-\-do ,
+whose command gets the values in its environment.
 .SS Wayland anchoring
 Under a Wayland compositor that implements the
 .I wlr\-layer\-shell
 protocol (sway, Hyprland, river, labwc, wayfire), the
 .B window
-tag accepts three extra attributes that turn the dialog into a layer\-shell
+tag accepts four extra attributes that turn the dialog into a layer\-shell
 surface, so that a shell script can draw a bar, a dock or a desktop widget.
 .TP
 .B layer
@@ -309,13 +341,125 @@ instead of covering the windows:
 .PP
 Under X11, or under a Wayland compositor without the protocol (GNOME), the
 four attributes are ignored, a diagnostic is printed on standard error and an
-ordinary window is shown; the script itself is unaffected. The support is
-compiled in only when gtk\-layer\-shell was available at build time
-.RB ( ./configure " " \-\-without\-layer\-shell " disables it)."
+ordinary window is shown; the script itself is unaffected. The support needs
+gtk\-layer\-shell at build time: if the library is missing, the CMake build
+stops, unless it is turned off on purpose with
+.BR \-DSERMO_LAYER_SHELL=OFF .
 .PP
-See
-.B examples/layer\-shell
-in the documentation directory.
+An example is in the source tree:
+.BR examples/layer\-shell .
+.SH SOURCES AND TARGETS
+.nh
+Some tags read a device or a service instead of running a command. The text of
+the tag is an all\-in\-one address:
+.PP
+.RS 4
+.nf
+<input modbus>tcp://plc:502?esclave=1&registre=1</input>
+<input opcua>opc.tcp://server:4840?noeud=ns=1;s=pieces</input>
+<input mqtt>mqtt://broker:1883?sujet=maison/salon/temperature</input>
+<input mavlink>udp://:14550?champ=batterie</input>
+<input media>media://lounge?donnee=etat</input>
+<action mqtt>mqtt://broker?sujet=maison/salon/lampe&valeur=on</action>
+<action mavlink>tcp://127.0.0.1:5760?ordre=rtl</action>
+<action media>media://lounge?commande=pause</action>
+.fi
+.RE
+.IP \(bu 2
+An
+.RB < input >
+of this kind only reads: nothing is written to the device.
+.IP \(bu 2
+.RB < "action mqtt" >,
+.RB < "action mavlink" >
+and
+.RB < "action media" >
+are the only writes. They are allowed only in a
+.RB < button >
+or a
+.RB < menuitem >
+(a write needs a click); anywhere else the dialog is refused when it is read.
+A command that names a
+.B sermo\-cible\-
+program by hand is refused too.
+.IP \(bu 2
+The tag becomes a command that runs a helper program,
+.BI /usr/libexec/sermo/sermo\-source\- PROTOCOL
+(reading) or
+.BI /usr/libexec/sermo/sermo\-cible\- PROTOCOL
+(writing). The address is passed as one argument, percent\-encoded, never
+through the shell.
+.B SERMO_SOURCE_DIR
+changes the folder; it must be an absolute path. With
+.BR SERMO_ALLOWED_CMDS ,
+name the helper (for example
+.BR /usr/libexec/sermo/sermo\-source\-modbus ).
+.IP \(bu 2
+Each helper comes in its own package:
+.BR sermo\-source\-modbus ,
+.BR sermo\-source\-opcua ,
+.BR sermo\-source\-mqtt ,
+.BR sermo\-source\-mavlink ,
+.BR sermo\-source\-media ,
+.BR sermo\-cible\-mqtt ,
+.BR sermo\-cible\-mavlink ,
+.BR sermo\-cible\-media .
+.IP \(bu 2
+MQTT and MAVLink writes go only to what an allow\-list names:
+.I ~/.config/sermo/cibles\-mqtt
+or
+.IR /etc/sermo/cibles\-mqtt ,
+.I ~/.config/sermo/cibles\-mavlink
+or
+.IR /etc/sermo/cibles\-mavlink .
+Without a list, nothing is sent.
+.IP \(bu 2
+MQTT: credentials
+.RB ( identifiants= )
+on
+.B mqtt://
+(not encrypted) are refused before any connection, unless the address carries
+.BR clair=oui .
+.B mqtts://
+requires
+.B confiance=
+(the authority that signed the server certificate).
+.IP \(bu 2
+MAVLink: telemetry; a click sets one parameter while the drone is disarmed,
+gives a safety order
+.RB ( rtl ", " land ,
+or
+.B terminaison
+to cut the motors, which needs a second press within 5 s), or sends a mission
+that is never started. No piloting: no arming, takeoff, mode change or
+movement.
+.IP \(bu 2
+Media: sound and video played by mpv. A network source plays only inside
+.BR bwrap ;
+a local file plays inside
+.B bwrap
+when it is installed, and otherwise without a sandbox (a message says so).
+.IP \(bu 2
+Media inside the window: the
+.BI dans=$ VAR
+key of
+.RB < "action media" >
+.RI ( VAR ,
+the variable of a
+.RB < "drawingarea embed=\(dqtrue\(dq" >)
+shows the video in that area. gtk3 under X11 only; otherwise (empty variable,
+Wayland, another port) the video opens in a separate window, and the message
+says so. A
+.B dans=
+that is not of the form
+.BI $ NAME ,
+or a value that is not a number, is refused: mpv is not started.
+.PP
+Details (every parameter, every refusal): the user manual,
+.B MANUEL_UTILISATEUR.en.md
+section 7.3, in the sources at
+.IR https://gitlab.com/haplo\-dialog/sermo .
+.hy
 .SH EXIT STATUS
 gtk3sermo exits with status
 .B 0
@@ -339,6 +483,17 @@ Open the GTK Inspector inside the running window
 Override the GTK theme, e.g.
 .BR GTK_THEME=Adwaita:dark .
 .TP
+.B SERMO_DARK
+Force the dark or the light Adwaita variant: a value that starts with
+.B 0
+gives
+.BR GTK_THEME=Adwaita ,
+any other non\-empty value
+.BR GTK_THEME=Adwaita:dark .
+It has no effect when
+.B GTK_THEME
+is already set.
+.TP
 .B SERMO_INPUT_MAX
 The most bytes one
 .RB < input >
@@ -350,9 +505,9 @@ number of bytes is reported, and the default applies. The progress bar is not
 capped: it keeps one line at a time.
 .TP
 .B SERMO_NO_SHELL_FALLBACK
-When set (to any value), refuse the
-.B /bin/sh \-c
-fallback used for
+When set (to any value), refuse the shell fallback (see
+.BR SERMO_SHELL )
+used for
 .RB < input >/< action >
 commands that contain shell metacharacters, and fail closed instead. Commands
 without shell metacharacters still run via direct
@@ -382,12 +537,36 @@ alone: an entry without a slash allows that name and the path
 .B PATH
 resolves it to, an entry with a slash allows exactly that path, and a program
 that bears an allowed name but lives elsewhere is refused. While the list is
-set, the
-.B /bin/sh \-c
-fallback is refused as well \(em otherwise
+set, the shell fallback is refused as well \(em otherwise
 .B sh \-c \(aq...\(aq
 would walk straight through the list by calling itself
 .BR sh .
+The tags of SOURCES AND TARGETS run a helper program: name it in the list.
+.TP
+.B SERMO_SHELL
+The shell used for the fallback: the absolute path of an executable program
+(for example
+.BR SERMO_SHELL=/bin/bash ).
+Unset or empty: the default shell,
+.B /bin/sh
+(under Windows,
+.B %ComSpec%
+or else
+.BR cmd.exe ).
+A relative path, or a file that cannot be run, is reported once on standard
+error and the default shell is used.
+.TP
+.B SERMO_SOURCE_DIR
+The folder of the helper programs that
+.RB < "input modbus" >,
+.RB < "input mqtt" >,
+.RB < "action mqtt" >...
+run (see SOURCES AND TARGETS):
+.B /usr/libexec/sermo
+by default. It must be an absolute path made of safe characters (letters,
+digits and
+.BR ._:/=,+@\- );
+otherwise the dialog is refused when it is read.
 .TP
 .B GTKDIALOG_PIXMAP_PATH
 Colon\-separated list of directories in which gtk3sermo searches for image
@@ -438,31 +617,56 @@ cat my_form.xml | gtk3sermo --stdin
 .I /usr/bin/gtk3sermo
 The gtk3sermo executable.
 .TP
-.I /usr/share/doc/gtk3sermo/examples/
-Shell script examples for each supported widget type.
+.I /usr/share/doc/sermo\-doc/examples/
+Example scripts (package
+.BR sermo\-doc ).
+.TP
+.I /usr/libexec/sermo/
+The helper programs of SOURCES AND TARGETS
+.RB ( sermo\-source\-* ", " sermo\-cible\-* ),
+one package each.
+.TP
+.I ~/.config/sermo/cibles\-mqtt\fR, \fI/etc/sermo/cibles\-mqtt
+The allow\-list of
+.RB < "action mqtt" >:
+yours (mode 600) and root's (mode 644). Without a list, nothing is sent.
+.TP
+.I ~/.config/sermo/cibles\-mavlink\fR, \fI/etc/sermo/cibles\-mavlink
+The allow\-list of
+.RB < "action mavlink" >,
+same rules.
 .SH COMPATIBILITY
 .B gtk3sermo
 is upward compatible with the original
 .BR gtkdialog (1).
-On installation,
-.B make install
-creates a
-.B gtkdialog
-symlink to
+The
+.B sermo\-gtkdialog
+package makes
+.I /usr/bin/gtkdialog
+a link to
 .B gtk3sermo
-and a
+and
 .I gtkdialog.1
-manual-page alias, so legacy dialogs (XML, command-line options, and the
+a link to this page, so legacy dialogs (XML, command-line options, and the
 .B \-\-program
 environment-variable invocation) continue to work unchanged and print their
 output in the historical
 .IR NAME =\(dq value \(dq
-form. Only gtk3sermo provides this alias, so there is no conflict between
-packages.
+form. Only
+.B sermo\-gtkdialog
+provides this command; it replaces the original
+.B gtkdialog
+and
+.B gtk3dialog
+packages, which install the same one.
 .SH SEE ALSO
 The full manual, with examples, is installed by the package:
 .IP
 .B info gtk3sermo
+.PP
+.BR haplo\-dialog\-xml (5),
+the reference of the XML language, shipped by the same package
+.RB ( sermo\-backend\-gtk3 ).
 .PP
 .BR gtkdialog (1),
 .BR bash (1),

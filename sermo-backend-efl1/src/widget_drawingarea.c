@@ -32,6 +32,10 @@ GtkWidget *widget_drawingarea_create(AttributeSet *Attr, tag_attr *attr, gint Ty
         if ((v = get_tag_attribute(attr, "height-request"))) hh = atoi(v);
     }
     evas_object_resize(rect, ww, hh);
+    /* Dans une boîte, c'est la taille MINIMALE qui compte : sans elle, la zone
+     * retombait à zéro et width-request était sans effet (mesuré le 2026-10-19 :
+     * fenêtre de 36x42 pour une zone de 200x120). */
+    evas_object_size_hint_min_set(rect, ww, hh);
     evas_object_show(rect);
     return (GtkWidget *)rect;
 }

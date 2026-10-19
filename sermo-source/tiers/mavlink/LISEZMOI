@@ -1,0 +1,17 @@
+En-têtes C de MAVLink (protocole v2), dialectes common, standard et minimal.
+
+Origine : https://github.com/mavlink/c_library_v2
+Commit  : 8c63a49fe35aead7f9ef14031381c5e076ff743a (poussé le 2026-10-12)
+Archive : https://codeload.github.com/mavlink/c_library_v2/tar.gz/8c63a49fe35aead7f9ef14031381c5e076ff743a
+SHA-256 : c192167675c9022b6382942c3a31eb1f89452e0bbcd9581105504cf2bff871e9 (1 203 131 octets)
+Copié le 2026-10-17, sans modification : les en-têtes de la racine, common/, standard/, minimal/.
+Retiré : les autres dialectes et message_definitions/ (non utilisés).
+
+Licence : code engendré par le générateur MAVLink. Une fois intégré à un
+binaire, il est sous licence MIT (exception écrite dans COPYING.generateur,
+copié de https://github.com/mavlink/mavlink/blob/master/COPYING).
+Exception : mavlink_sha256.h (signature des messages) vient de Heimdal,
+Copyright 1995-2001 Kungliga Tekniska Högskolan, licence BSD à 3 clauses
+(texte en tête du fichier).
+Utilisé seulement par sermo-source-mavlink (lecture) et sermo-cible-mavlink
+(écriture) ; ni le cœur ni les ports n'en dépendent.

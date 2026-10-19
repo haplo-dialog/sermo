@@ -14,16 +14,19 @@ Chacun est autonome : rien à installer, rien à configurer.
 |---|---|
 | `01-formulaire.sh` | `entry`, `password`, `spinbutton`, `checkbox`, `comboboxtext`, boutons, imbrication `frame` > `vbox` > `hbox` |
 | `02-conteneurs.sh` | colonnes, zone extensible, bandeau pleine largeur, répartition de l'espace |
-| `03-onglets.sh` | `notebook`, onglets latéraux, contenu multiligne |
+| `03-onglets.sh` | `notebook` à trois onglets placés en haut (`tab-pos="top"`), changement de page, contenu multiligne |
 | `04-indicateurs.sh` | `progressbar`, `hscale`, `vscale`, jauge de niveau, compteur, `spinner` |
 | `05-boutons-icones.sh` | icônes du thème par nom, boutons à icône, alignements |
 
-Les cinq acceptent un nom de binaire en argument : `./01-formulaire.sh gtkdialog`
-fonctionne aussi, puisque `gtkdialog` est l'alias de `gtk3sermo` posé à
-l'installation.
+Les cinq acceptent un nom de binaire en argument (défaut `gtk3sermo`) :
+`./01-formulaire.sh qt6sermo`. `./01-formulaire.sh gtkdialog` fonctionne aussi
+quand le paquet `sermo-gtkdialog` est installé : il pose `gtkdialog` comme
+alias de `gtk3sermo`.
 
 ## Licence
 
-Domaine public (**CC0-1.0**) : ces cinq scripts sont écrits par le projet. Le
-reste d'`examples/` vient de gtkdialog et suit la GPL. Copiez, modifiez,
-republiez sans condition et sans mention.
+Domaine public (**CC0-1.0**) : ces cinq scripts sont écrits pour sermo.
+Copiez, modifiez, republiez sans condition et sans mention.
+
+Une partie d'`examples/` vient de gtkdialog (GPL) ; chaque fichier dit sa
+licence.

@@ -1,5 +1,7 @@
 # Feuille de route — sermo
 
+[English](ROADMAP.en.md)
+
 ## Phase 1 — Modularisation ✅ (faite)
 
 - [x] Extraire le cœur `libsermocore` (analyse + exécution durcie, sans toolkit).
@@ -43,5 +45,22 @@
       sommes de contrôle signées (`SHA256SUMS.asc`, depuis la 2.8.2).
 - [ ] Dépôt apt (il n'y en a pas aujourd'hui).
 
-> La progression est **gardée par les trois bancs** (XML 55 · comportement 75 ·
+## Sources et cibles — lire, puis écrire sur un clic
+
+- [x] **3.0.0** (publiée le 2026-10-15) : lire un automate, en lecture seule —
+      `<input modbus>`, `<input opcua>`.
+- [x] **3.1.0** (2026-10-19) : MQTT (`<input mqtt>`, `<action mqtt>`),
+      MAVLink (`<input mavlink>` ; `<action mavlink>` : réglage au sol, ordres
+      de sécurité, envoi d'une mission sans la lancer), son et vidéo
+      (`<input media>`, `<action media>`, mpv en cage bubblewrap).
+- [x] **3.1.1** (2026-10-19) : la vidéo dans la fenêtre du dialogue (gtk3
+      sous X11, `dans=$ZONE`), repli sur une fenêtre séparée ailleurs.
+- [x] **3.1.2** (2026-10-20) : sécurité du lecteur, la cage de mpv ne
+      laisse plus joindre les sockets de session (bus D-Bus…).
+- [ ] **3.2.0** : piloter un drone (armer, décoller, changer de mode, se
+      déplacer) ; la vidéo dans la fenêtre du dialogue sur les autres ports et
+      sous Wayland (déjà faite en 3.1.1 pour gtk3 sous X11) ; le lecteur
+      essayé sous Wayland.
+
+> La progression est **gardée par les trois bancs** (XML 55 · comportement 78 ·
 > gardes) : aucune phase n'avance en laissant un banc rouge.

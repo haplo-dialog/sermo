@@ -199,6 +199,34 @@ void widget_notebook_fileselect(
 /***********************************************************************
  * Refresh                                                             *
  ***********************************************************************/
+
+/* GtkNotebook refuse de changer de page tant que la page n'est pas montrée
+ * (GTK 3 ; voir le commentaire de widget_notebook_input_by_command). Au
+ * premier passage, juste après la création, gtk_notebook_set_current_page()
+ * restait donc sans effet et l'<input> de départ était perdu : « echo 1 »
+ * laissait la page 0, alors que gtk4sermo allait en page 1 (mesuré le
+ * 2026-10-13 et le 2026-10-18). La page demandée est retenue et posée quand
+ * le carnet s'affiche. Rangée décalée de 2 : -1 (la dernière page) reste
+ * distinct de « rien de retenu ». */
+static void widget_notebook_montre(GtkWidget *widget, gpointer data)
+{
+	gint retenue = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(widget), "_page_retenue"));
+
+	if (retenue) {
+		g_object_set_data(G_OBJECT(widget), "_page_retenue", NULL);
+		gtk_notebook_set_current_page(GTK_NOTEBOOK(widget), retenue - 2);
+	}
+}
+
+static void widget_notebook_poser_page(variable *var, gint page)
+{
+	if (gtk_widget_get_mapped(var->Widget))
+		gtk_notebook_set_current_page(GTK_NOTEBOOK(var->Widget), page);
+	else
+		g_object_set_data(G_OBJECT(var->Widget), "_page_retenue",
+			GINT_TO_POINTER(page + 2));
+}
+
 void widget_notebook_refresh(variable *var)
 {
 	GList            *element;
@@ -253,6 +281,15 @@ void widget_notebook_refresh(variable *var)
 			(attributeset_cmp_left(var->Attributes, ATTR_SENSITIVE, "no")) ||
 			(attributeset_cmp_left(var->Attributes, ATTR_SENSITIVE, "0")))
 			gtk_widget_set_sensitive(var->Widget, FALSE);
+
+		/* La page lue au premier passage se pose à l'affichage — sauf si la
+		 * balise porte page="…", qui l'emporte (posée par
+		 * on_any_widget_realized ; règle mesurée sur gtk4sermo). */
+		if ((var->widget_tag_attr ? get_tag_attribute(var->widget_tag_attr, "page") : NULL))
+			g_object_set_data(G_OBJECT(var->Widget), "_page_retenue", NULL);
+		else
+			g_signal_connect(G_OBJECT(var->Widget), "map",
+				G_CALLBACK(widget_notebook_montre), NULL);
 
 		/* Connect signals */
 
@@ -364,8 +401,11 @@ static void widget_notebook_input_by_command(variable *var, char *command)
 			 * 
 			 * I'm not going to get involved in showing widgets because currently
 			 * on_any_widget_realized is setting the GTK+ properties and it'll set
-			 * things prematurely, so the initial refresh won't change the page */
-			gtk_notebook_set_current_page(GTK_NOTEBOOK(var->Widget), atoi(line));
+			 * things prematurely, so the initial refresh won't change the page
+			 *
+			 * 2026-10-18 : la page est retenue et posée à l'affichage, voir
+			 * widget_notebook_poser_page(). */
+			widget_notebook_poser_page(var, atoi(line));
 		}
 		/* Close the file */
 		fclose(infile);
@@ -408,8 +448,11 @@ static void widget_notebook_input_by_file(variable *var, char *filename)
 			 * 
 			 * I'm not going to get involved in showing widgets because currently
 			 * on_any_widget_realized is setting the GTK+ properties and it'll set
-			 * things prematurely, so the initial refresh won't change the page */
-			gtk_notebook_set_current_page(GTK_NOTEBOOK(var->Widget), atoi(line));
+			 * things prematurely, so the initial refresh won't change the page
+			 *
+			 * 2026-10-18 : la page est retenue et posée à l'affichage, voir
+			 * widget_notebook_poser_page(). */
+			widget_notebook_poser_page(var, atoi(line));
 		}
 		/* Close the file */
 		fclose(infile);

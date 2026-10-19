@@ -69,11 +69,15 @@ export QT_QPA_PLATFORM="${QT_QPA_PLATFORM:-xcb}"
 
 # Quelques exemples ne sont pas des dialogues autonomes mais des visionneuses :
 # sans argument ils affichent leur aide et sortent. Leur en fournir un est la
-# seule façon de les exercer.
+# seule façon de les exercer. Un argument par ligne.
 argument_pour() {
     case "$1" in
-        pfontview) find /usr/share/fonts -name '*.ttf' 2>/dev/null | head -1 ;;
-        *)         : ;;
+        pfontview)   find /usr/share/fonts -name '*.ttf' 2>/dev/null | head -1 ;;
+        approbation) printf '%s\n' --detail "essai du banc : aucune action derrière" ;;
+        # Sans récepteur ni gpsd sur le poste d'essai : le mode démo rejoue un
+        # enregistrement fourni avec l'exemple.
+        gnss-moniteur) printf '%s\n' --demo echantillons/demo.jsonl ;;
+        *)           : ;;
     esac
 }
 
@@ -136,7 +140,7 @@ probe() {
         cd "$(dirname "$0")" || exit 1
         for j in $(seq 1 50); do xdpyinfo >/dev/null 2>&1 && break; sleep 0.1; done
         xdpyinfo >/dev/null 2>&1 || { echo NODISPLAY; exit 0; }
-        if [ -n "$2" ]; then setsid "$0" "$2" >"$1" 2>&1 & else setsid "$0" >"$1" 2>&1 & fi
+        if [ -n "$2" ]; then mapfile -t A <<<"$2"; setsid "$0" "${A[@]}" >"$1" 2>&1 & else setsid "$0" >"$1" 2>&1 & fi
         pid=$!
         for i in $(seq 1 '"$DELAY"'0); do
             if [ -n "$(xdotool search --onlyvisible --name . 2>/dev/null)" ] ||
@@ -223,6 +227,16 @@ for dir in $(find "$EXAMPLES" -maxdepth 1 -mindepth 1 -type d | sort); do
             printf '  %-16s %s\n' "$name" "ÉCHEC : opcua-lire ne se compile pas (libopen62541-1.4-dev ?)"
             NOWIN=$((NOWIN+1)); DETAIL+=("$name : opcua-lire ne se compile pas (voir $bac_opcua/cc.log)"); continue
         fi
+    fi
+
+    # examples/domotique-mqtt : ses balises <input mqtt> passent par les programmes
+    # d'aide de sermo-source ; sans paquet installé, on prend ceux du dépôt s'ils
+    # sont construits (ci/construire.sh). Sinon l'exemple s'arrête, code 2, et le
+    # banc le compte « aucune fenêtre » : c'est vrai, il ne peut rien montrer.
+    if [[ ( "$name" = domotique-mqtt || "$name" = lecteur-media ) && -z "${SERMO_SOURCE_DIR:-}" \
+          && ! -x /usr/libexec/sermo/sermo-source-mqtt && ! -x /usr/libexec/sermo/sermo-cible-media \
+          && -x "$(dirname "$EXAMPLES")/sermo-source/_build/sermo-source-mqtt" ]]; then
+        export SERMO_SOURCE_DIR="$(dirname "$EXAMPLES")/sermo-source/_build"
     fi
 
     # Un exemple qui ne vaut que pour certains ports le dit dans PORTS (ex. glade :

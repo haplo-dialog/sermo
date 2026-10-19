@@ -1,5 +1,53 @@
 # Bilan de santé — sermo (édition modulaire)
 
+## 3.1.0 — mesuré le 18/10/2026
+
+Sur l'arbre de construction de la 3.1.0, mêmes commandes :
+
+- `bash ci/construire.sh` : tout construit — les neuf ports, lvgl léger,
+  sermoia-mcp et les huit programmes d'aide ; **0 avertissement** (cc 16.2,
+  cmake 4.3.4).
+- `bash ci/bancs.sh` complet, passage final de la 3.1.2 (2026-10-19) : 262 bancs, 0 échec.
+- Au passage complet du 18/10/2026, un banc était rouge : le
+  banc des fonctions interdites sur `sermo-source` (`strcpy` et `strtod` dans
+  le code du lecteur son et vidéo). Corrigé (copie bornée par `memcpy`,
+  nombres lus en locale C par `strtod_l`), puis rejoué : vert.
+- Comportement : **78 cas**, à parité sur les **9 ports sur 9**.
+- Paquets : **27** paquets binaires (`debian/control`), dont 20 propres à une
+  architecture.
+- Exemples : **76 dossiers** dans `examples/`, dont 15 nouveaux en 3.1.0,
+  livrés par `sermo-doc`.
+- Programmes d'aide : **8** (`sermo-source-modbus`, `-opcua`, `-mqtt`,
+  `-mavlink`, `-media` ; `sermo-cible-mqtt`, `-mavlink`, `-media`), installés
+  dans `/usr/libexec/sermo` ; chacun a les 8 garanties de durcissement,
+  mesurées par `ci/bancs.sh` sur le binaire.
+
+## 3.0.0 — mesuré du 14 au 15/10/2026
+
+Repris de la section « Mesuré » de la 3.0.0 dans [CHANGELOG.md](CHANGELOG.md) :
+
+- Debian (gcc), `ci/bancs.sh` (14/10) : 208 bancs ; sur la ligne réunie, 207
+  verts, puis 208 sur 208 en 3.0.0. Le rouge du premier passage revenait par
+  moments : lvglsermo s'arrêtait sur une erreur de segmentation quand l'écran
+  X ne s'ouvrait pas.
+- ASan et UBSan (15/10) : les neuf ports construits sous les deux, banc de
+  comportement joué erreurs fatales : aucune erreur, parité sur les neuf.
+  Fuites, mesurées sur ncurses et html : environ 31 octets par
+  rafraîchissement d'un widget (export des variables) ; corrigé avant la
+  publication de la 3.0.0 (banc `tests/garde_fuite_refresh.sh`).
+- Poids (binaire sans symboles, comme dans le paquet) : de 343 Kio (efl1) à
+  1 167 Kio (sdl3) et 2 399 Kio (lvgl) ; un plafond par port, vérifié par banc.
+- Android 15 arm64 (Termux, clang 21) : neuf cibles sur dix construites ; banc
+  de comportement 61/61 pour gtk3, gtk4, qt6, sdl3, lvgl, ncurses, html et
+  fltk1, sous Xvfb.
+- FreeBSD 15.1 et OpenBSD 7.9, en machine virtuelle : ncurses 61/61 ; scripts
+  métier et boîtes à outils, 187 dialogues identiques à gtk3sermo.
+- Windows : banc de comportement 61/61 sous Wine 10 ; essais sur un vrai
+  Windows 11 et un vrai Windows 10 (affichage, accents, commandes, liens).
+
+Les sections suivantes sont historiques : elles décrivent l'état mesuré à
+leur date.
+
 ## 2.8.2 — mesuré le 2026-10-11
 
 Sur l'arbre de construction de la 2.8.2 :
@@ -279,6 +327,12 @@ que GTK 4 fait diverger (`gtk_main`/`gtk_socket`/modèle d'évènements retirés
 
 ## Résumé
 
+**3.1.0** (voir la section en tête) : le même XML, le même comportement sur
+les **neuf ports** (78 cas à parité, mesuré le 18/10/2026), depuis un cœur
+unique et durci ; huit programmes d'aide durcis ; 27 paquets binaires ;
+`ci/bancs.sh` complet : 262 bancs, 0 échec (passage final de la 3.1.2, 2026-10-19).
+
+**Historique, état du 2026-09-30 (2.7.4)** — gardé tel quel :
 sermo remplit son objet : **le même XML, le même comportement, sur sept
 toolkits, depuis un cœur unique et durci**, avec des paquets légers et disjoints.
 Le 2026-09-30, `ci/bancs.sh` a joué ses 139 bancs sur les binaires des paquets

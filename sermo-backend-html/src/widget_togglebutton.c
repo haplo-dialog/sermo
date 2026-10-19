@@ -20,6 +20,7 @@
 GtkWidget *widget_togglebutton_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
     WidgetNode *node = widget_node_new(WT_TOGGLEBUTTON, NULL, "");
+    widget_node_bind_variable(node, Attr, attr);   /* nom du champ du formulaire (mode serve) */
     node->state.toggle.active = FALSE;
 
     if (Attr) {

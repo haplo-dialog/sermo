@@ -16,6 +16,7 @@ Build-Depends: debhelper-compat (= 14),
                libgtk-layer-shell-dev,
                libjson-glib-dev,
                libmodbus-dev,
+               libmosquitto-dev,
                libncurses-dev,
                libopen62541-1.4-dev,
                libpng-dev,
@@ -205,11 +206,14 @@ Description: sermo dialog boxes for shell scripts - manual and common documentat
  values entered. The same script runs on eight toolkits, or is written out
  as an HTML page.
  .
- This package carries the Texinfo manual ("info sermo-doc") and the common
- documentation — copyright and Debian changelog — that the architecture
- independent packages of this source link to instead of each carrying their own
- copy. Those files are identical in every binary package, and a transitional
- package holds nothing else.
+ This package carries the Texinfo manual ("info sermo-doc"), ready-to-use
+ example scripts under /usr/share/doc/sermo-doc/examples (trade scripts,
+ toolboxes, reading a PLC, home automation, drones, sound and video, network
+ and hardware monitors), and the common documentation — copyright and Debian
+ changelog — that the architecture independent packages of this source link to
+ instead of each carrying their own copy. Those files are identical in every
+ binary package, and the four packages kept for upgrades from sermo 1.x
+ hold nothing else.
 
 Package: sermo-gtkdialog
 Architecture: all
@@ -287,6 +291,109 @@ Description: sermo dialog boxes for shell scripts - read-only OPC UA input
  signed and encrypted with certificates (only the server certificates given
  are trusted). It installs the helper that every sermo backend runs for that
  tag. It is read-only: it calls no write or method service.
+
+Package: sermo-source-mqtt
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Enhances: sermo-backend-gtk3, sermo-backend-gtk4, sermo-backend-qt6, sermo-backend-fltk1, sermo-backend-efl1, sermo-backend-sdl3, sermo-backend-lvgl, sermo-backend-ncurses, sermo-backend-html
+Description: sermo dialog boxes for shell scripts - read-only MQTT input
+ sermo opens a dialog box described in XML from a shell script, and returns the
+ values entered.
+ .
+ This package lets a dialog show live values read from an MQTT broker (home
+ automation), with <input mqtt>mqtt://host:1883?sujet=home/room/temp</input>.
+ It installs the helper that every sermo backend runs for that tag. It is
+ read-only: it subscribes and reads one message, and never publishes.
+ Credentials are read from a file only its owner can read, never from the
+ address; topic wildcards are refused. Encrypted connections (mqtts://)
+ require the certificate of the trusted authority and check the server name;
+ there is no "accept everything" mode.
+
+Package: sermo-source-mavlink
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Enhances: sermo-backend-gtk3, sermo-backend-gtk4, sermo-backend-qt6, sermo-backend-fltk1, sermo-backend-efl1, sermo-backend-sdl3, sermo-backend-lvgl, sermo-backend-ncurses, sermo-backend-html
+Description: sermo dialog boxes for shell scripts - read-only drone telemetry (MAVLink)
+ sermo opens a dialog box described in XML from a shell script, and returns the
+ values entered.
+ .
+ This package lets a dialog show live telemetry from a drone autopilot
+ (battery, position, height, armed state), with
+ <input mavlink>udp://:14550?champ=tension</input>, over UDP, TCP or a serial
+ radio. It is read-only: it never sends anything on the link (no command, no
+ heartbeat, no stream request), and only the autopilot is listened to.
+
+Package: sermo-cible-mqtt
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Enhances: sermo-backend-gtk3, sermo-backend-gtk4, sermo-backend-qt6, sermo-backend-fltk1, sermo-backend-efl1, sermo-backend-sdl3, sermo-backend-lvgl, sermo-backend-ncurses, sermo-backend-html
+Description: sermo dialog boxes for shell scripts - MQTT commands (home automation)
+ sermo opens a dialog box described in XML from a shell script, and returns the
+ values entered.
+ .
+ This package lets a button of a dialog publish one value to an MQTT topic
+ (switch a light, set a thermostat), with
+ <action mqtt>mqtt://host?sujet=home/lamp&valeur=on</action>. Nothing is sent
+ unless the target is in an allow-list file the user or the administrator
+ wrote on purpose (~/.config/sermo/cibles-mqtt, /etc/sermo/cibles-mqtt),
+ with the values allowed for each topic (a closed list or a numeric range).
+ Only a click can trigger it: sermo refuses it on a timer, a field or a signal.
+ Without this package, sermo can read MQTT but never publish.
+
+Package: sermo-cible-mavlink
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Enhances: sermo-backend-gtk3, sermo-backend-gtk4, sermo-backend-qt6, sermo-backend-fltk1, sermo-backend-efl1, sermo-backend-sdl3, sermo-backend-lvgl, sermo-backend-ncurses, sermo-backend-html
+Description: sermo dialog boxes for shell scripts - drone ground settings and safety orders
+ sermo opens a dialog box described in XML from a shell script, and returns the
+ values entered.
+ .
+ This package lets a button of a dialog set one autopilot parameter of a
+ disarmed drone, or give it one safety order (return to launch, land, cut the
+ motors), with <action mavlink>tcp://host:5760?ordre=rtl</action>. Nothing is
+ sent unless the user or the administrator allowed it in a list written on
+ purpose (~/.config/sermo/cibles-mavlink, /etc/sermo/cibles-mavlink), with a
+ range for each parameter. Arming, flight modes, motor outputs, the safety
+ switch and the fence are never set. Nothing is sent while another ground
+ station talks to the drone; cutting the motors needs two presses within five
+ seconds. A waypoint mission (Mission Planner or QGroundControl file) can be
+ sent to a disarmed drone, bounded in distance and height by the list; it is
+ read back from the drone before success is reported, and never started.
+ Success is reported only on the drone's own confirmation.
+ Without this package, sermo can read a drone but never command it.
+
+Package: sermo-source-media
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Recommends: sermo-cible-media
+Enhances: sermo-backend-gtk3, sermo-backend-gtk4, sermo-backend-qt6, sermo-backend-fltk1, sermo-backend-efl1, sermo-backend-sdl3, sermo-backend-lvgl, sermo-backend-ncurses, sermo-backend-html
+Description: sermo dialog boxes for shell scripts - media player state
+ sermo opens a dialog box described in XML from a shell script, and returns the
+ values entered.
+ .
+ This package lets a dialog show the state of a sound or video player started
+ by sermo-cible-media, with <input media>media://name?donnee=etat</input>:
+ stopped, playing, paused or error, and on request the position and the
+ duration. It is read-only: it asks the player, and never starts or commands
+ it.
+
+Package: sermo-cible-media
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, mpv
+Recommends: bubblewrap
+Enhances: sermo-backend-gtk3, sermo-backend-gtk4, sermo-backend-qt6, sermo-backend-fltk1, sermo-backend-efl1, sermo-backend-sdl3, sermo-backend-lvgl, sermo-backend-ncurses, sermo-backend-html
+Description: sermo dialog boxes for shell scripts - sound and video player
+ sermo opens a dialog box described in XML from a shell script, and returns the
+ values entered.
+ .
+ This package lets a button of a dialog play a sound or a video with mpv, and
+ pause, seek, set the volume or stop it, with
+ <action media>media://name?commande=lire&source=file:///path</action>.
+ Sources are checked before mpv sees them (file, a camera with v4l2, http,
+ https, rtsp and rtsps only; no credentials in the address). Only a fixed set
+ of commands reaches the player. Network sources are played in a bubblewrap
+ sandbox, and refused without it; a camera window says so while it is on,
+ and nothing is recorded. The player stops when the dialog closes.
 
 Package: sermoia-mcp
 Architecture: any

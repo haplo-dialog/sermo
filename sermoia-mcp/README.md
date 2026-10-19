@@ -49,6 +49,10 @@ Sans argument. Rend un objet JSON :
 - les widgets, rangés par famille ; la liste est vérifiée par le banc contre les balises
   que l'analyseur du cœur reconnaît ;
 - les balises de contenu, les attributs communs, les actions et les signaux ;
+- les sources et cibles (`sources_cibles`) : `<input modbus>`, `<input opcua>`,
+  `<input mqtt>`, `<input mavlink>`, `<input media>` pour lire, `<action mqtt>`,
+  `<action mavlink>`, `<action media>` pour écrire, avec leur adresse, leur paquet et
+  un exemple ;
 - un exemple minimal et la forme de la sortie.
 
 Les attributs propres à chaque widget sont dans le manuel (sermoman-mcp).
@@ -174,7 +178,7 @@ Les paquets sont joints à chaque publication ; vérifiez d'abord les sommes sig
 (`SHA256SUMS.asc`), comme l'explique le [README](../README.md#installer).
 
 ```sh
-sudo apt install ./sermoia-mcp_2.8.2-3_amd64.deb ./sermo-backend-qt6_2.8.2-3_amd64.deb
+sudo apt install ./sermoia-mcp_3.1.2-2_amd64.deb ./sermo-backend-qt6_3.1.2-2_amd64.deb
 ```
 
 Le paquet installe `/usr/bin/sermoia-mcp` et son catalogue dans

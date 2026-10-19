@@ -11,10 +11,10 @@ testing vierge.
 
 | Paquet | Contenu | Dépend de |
 |---|---|---|
-| `sermo-doc` | manuel Texinfo (`info sermo-doc`), documentation commune (copyright, changelog Debian), les soixante scripts métier (`examples/metiers`) et les quatre boîtes à outils (`examples/boites-a-outils`), les exemples Modbus et OPC UA (`examples/modbus`, `examples/opcua`) | aucune dépendance |
+| `sermo-doc` | manuel Texinfo (`info sermo-doc`), documentation commune (copyright, changelog Debian), les soixante scripts métier (`examples/metiers`) et les quatre boîtes à outils (`examples/boites-a-outils`), les exemples Modbus, OPC UA et MAVLink (`examples/modbus`, `examples/opcua`, `examples/mavlink`), et les quinze exemples de la 3.1.0 (réseau, domotique, son et vidéo, matériel), sous `/usr/share/doc/sermo-doc/examples/` | aucune dépendance |
 | `sermo-core-dev` | `libsermocore.a`, en-têtes (`/usr/include/sermo`), `sermocore.pc` | aucune dépendance |
-| `sermo-backend-gtk3` | binaire `gtk3sermo`, page de manuel, manuel Texinfo | GTK 3, VTE (`<terminal>`), gtk-layer-shell (ancrage Wayland) |
-| `sermo-backend-gtk4` | binaire `gtk4sermo`, page de manuel, manuel Texinfo | GTK 4, VTE (`<terminal>`) |
+| `sermo-backend-gtk3` | binaire `gtk3sermo`, page de manuel, page `haplo-dialog-xml(5)` (le langage XML), manuel Texinfo | GTK 3, VTE (`<terminal>`), gtk-layer-shell (ancrage Wayland) |
+| `sermo-backend-gtk4` | binaire `gtk4sermo`, page de manuel, page `gtk4sermo-xml(5)` (le langage XML), manuel Texinfo | GTK 4, VTE (`<terminal>`) |
 | `sermo-backend-qt6` | binaire `qt6sermo`, page de manuel, manuel Texinfo, entrée de menu | Qt 6 |
 | `sermo-backend-fltk1` | binaire `fltk1sermo`, page de manuel, manuel Texinfo | FLTK 1.4 |
 | `sermo-backend-efl1` | binaire `efl1sermo`, page de manuel, manuel Texinfo | Enlightenment/Elementary |
@@ -29,8 +29,14 @@ testing vierge.
 | `sermoman-mcp` | serveur MCP du manuel, en lecture seule | `python3` |
 | `sermo-source-modbus` | programme d'aide de `<input modbus>` (`/usr/libexec/sermo`), lecture seule | libmodbus |
 | `sermo-source-opcua` | programme d'aide de `<input opcua>` (`/usr/libexec/sermo`), lecture seule, certificats | open62541 |
+| `sermo-source-mqtt` | programme d'aide de `<input mqtt>` (`/usr/libexec/sermo`), lecture seule (domotique) ; identifiants dans un fichier en 600 | libmosquitto |
+| `sermo-source-mavlink` | programme d'aide de `<input mavlink>` (`/usr/libexec/sermo`) : télémétrie d'un drone, lecture seule, rien n'est émis sur le lien | en-têtes MAVLink embarqués |
+| `sermo-cible-mqtt` | programme d'**écriture** de `<action mqtt>` (`/usr/libexec/sermo`) : un clic publie une valeur, si la liste blanche (`~/.config/sermo/cibles-mqtt`, `/etc/sermo/cibles-mqtt`) le permet | libmosquitto |
+| `sermo-cible-mavlink` | programme d'**écriture** de `<action mavlink>` (`/usr/libexec/sermo`) : un clic règle un paramètre d'un drone désarmé, lui envoie une mission de points de passage ou donne un ordre de sécurité, si la liste blanche (`~/.config/sermo/cibles-mavlink`, `/etc/sermo/cibles-mavlink`) le permet | en-têtes MAVLink embarqués |
+| `sermo-source-media` | programme d'aide de `<input media>` (`/usr/libexec/sermo`) : l'état d'un lecteur son ou vidéo (arrêté, en lecture, en pause, erreur ; position et durée sur demande), lecture seule | recommande `sermo-cible-media` |
+| `sermo-cible-media` | programme de **commande** de `<action media>` (`/usr/libexec/sermo`) : un clic lit un son ou une vidéo avec mpv, le met en pause, le déplace, règle le volume ou l'arrête ; une source réseau n'est lue que dans une cage bubblewrap | `mpv` ; recommande `bubblewrap` |
 
-Soit **21 paquets**, plus un paquet `-dbgsym` (symboles de débogage) par backend, pour `sermoia-mcp` et pour chaque `sermo-source-*`.
+Soit **27 paquets**, plus un paquet `-dbgsym` (symboles de débogage) par backend, pour `sermoia-mcp`, pour chaque `sermo-source-*` et pour chaque `sermo-cible-*`.
 Les dépendances sont calculées par `dh_shlibdeps` à partir des bibliothèques
 réellement liées : elles ne sont ni devinées ni recopiées à la main.
 
@@ -49,8 +55,9 @@ rattachent leur `/usr/share/doc` à celui de `sermo-doc` par un lien
 symbolique. Un paquet de transition ne contenait rien d'autre que ça :
 `gtk3sermo` est passé de 32 ko à **1,2 ko**.
 
-⚠️ Les onze paquets dépendants de l'architecture (le cœur, les neuf backends et
-`sermoia-mcp`) **gardent leur `copyright`**, comme la politique l'exige : `--link-doc` ne franchit pas la frontière
+⚠️ Les vingt paquets dépendants de l'architecture (le cœur, les dix backends
+dont `sermo-backend-lvgl-leger`, `sermoia-mcp` et les huit programmes d'aide
+`sermo-source-*` et `sermo-cible-*`) **gardent leur `copyright`**, comme la politique l'exige : `--link-doc` ne franchit pas la frontière
 « all » / « any », et `debhelper` refuse activement la combinaison depuis le
 niveau de compatibilité 10 (CAVEAT 2 de `dh_installdocs`). `sermoman-mcp`, qui
 ne dépend pas de `sermo-doc`, garde aussi le sien.
@@ -87,9 +94,9 @@ de code). Le modèle Debian idiomatique — un `.so` partagé `libsermocore1` (r
 + `libsermocore-dev` (en-têtes), les backends dépendant du runtime — n'est PAS
 possible aujourd'hui : le cœur rappelle des symboles du backend
 (`widget_*_create`, ponts `sermo_be_*`), donc une `.so` autonome aurait des symboles
-non résolus. C'est la cible de la **Part 3** (IR + inversion de la
-boucle d'évènements) ; elle rendra ce découpage `.so` + runtime possible et
-supprimera la duplication.
+non résolus. Une représentation intermédiaire et l'inversion de la
+boucle d'évènements rendraient ce découpage `.so` + runtime possible et
+supprimeraient la duplication.
 
 Trois variantes du cœur servent à la construction : neutre (qt6, fltk1, efl1,
 sdl3, lvgl, ncurses, html), GLib (gtk3) et GTK 4 (gtk4). Seule la variante neutre est livrée
@@ -100,7 +107,7 @@ dans `sermo-core-dev`.
 Chaque backend s'enregistre dans `update-alternatives` pour `/usr/bin/sermo`
 (`debian/sermo-backend-<t>.alternatives`, posé par `dh_installalternatives`).
 Priorités : gtk3=50, gtk4=45, qt6=40, fltk1=30, efl1=20, sdl3=10, lvgl=8,
-ncurses=5, html=1 ; le backend GTK 3 est donc le défaut quand plusieurs sont
+lvgl léger=7, ncurses=5, html=1 ; le backend GTK 3 est donc le défaut quand plusieurs sont
 installés, et html, qui n'ouvre pas de fenêtre, ne répond à « sermo » que s'il
 est seul installé. La page
 `sermo(1)` et le manuel Texinfo `sermo` suivent le même choix.
@@ -131,11 +138,11 @@ l'installation du backend GTK 3 pour ceux qui ont déjà un `gtkdialog`.
 ## Passage depuis la 1.x
 
 La 1.x était livrée sous les noms `gtk3sermo`, `gtk4sermo`, `qt6sermo` et
-`gtksermo`, en fichiers `.deb` joints à la publication. Installer les paquets 2.x
-voulus depuis leurs fichiers retire les paquets 1.x qu'ils remplacent :
+`gtksermo`, en fichiers `.deb` joints à la publication. Installer les paquets
+actuels (3.1.0) voulus depuis leurs fichiers retire les paquets 1.x qu'ils remplacent :
 
 ```sh
-sudo apt install ./sermo-backend-gtk3_3.0.0-1_amd64.deb ./sermo-gtkdialog_3.0.0-1_all.deb
+sudo apt install ./sermo-backend-gtk3_3.1.2-2_amd64.deb ./sermo-gtkdialog_3.1.2-2_all.deb
 ```
 
 Éprouvé le 2026-09-17 dans un conteneur Debian testing vierge, sans réseau, depuis
@@ -213,9 +220,11 @@ sudo apt build-dep ./
 dpkg-buildpackage -us -uc -b
 ```
 
-`debian/rules` construit les trois variantes du cœur, les neuf backends, et
-rejoue pendant la construction les tests unitaires et le banc XML sur chaque
-binaire (`DEB_BUILD_OPTIONS=nocheck` les saute). Les paquets arrivent dans le
+`debian/rules` construit les trois variantes du cœur, les neuf backends, la
+variante légère de lvgl, les huit programmes d'aide (`sermo-source/`, toutes
+leurs bibliothèques exigées) et `sermoia-mcp`. Il rejoue pendant la
+construction les tests unitaires, et le banc XML sur chacun des neuf binaires
+des backends (`DEB_BUILD_OPTIONS=nocheck` les saute). Les paquets arrivent dans le
 dossier parent.
 
 ### Licences : `debian/copyright`
@@ -229,9 +238,9 @@ détaillée dans [LICENCES.md](LICENCES.md).
 ## Installer et désinstaller
 
 ```sh
-sudo apt install ./sermo-backend-gtk3_3.0.0-1_amd64.deb      # GTK 3
-sudo apt install ./sermo-gtkdialog_3.0.0-1_all.deb           # + la commande gtkdialog
-sudo apt install ./sermo-core-dev_3.0.0-1_amd64.deb          # pour compiler un backend
+sudo apt install ./sermo-backend-gtk3_3.1.2-2_amd64.deb      # GTK 3
+sudo apt install ./sermo-gtkdialog_3.1.2-2_all.deb           # + la commande gtkdialog
+sudo apt install ./sermo-core-dev_3.1.2-2_amd64.deb          # pour compiler un backend
 
 sudo apt purge sermo-gtkdialog sermo-backend-gtk3            # tout retirer
 ```

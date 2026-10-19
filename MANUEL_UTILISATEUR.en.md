@@ -2,7 +2,7 @@
 
 [Français](MANUEL_UTILISATEUR.md)
 
-**Version:** 3.0.0
+**Version:** 3.1.2
 **Licence:** GPL-2.0-or-later | **Distributor:** haplo-dialog (devel@haplo-dialog.fr)
 
 ---
@@ -64,7 +64,8 @@ the `gtkdialog` command a link to the GTK 3 backend, so scripts calling
 
 - The look follows the **current system theme** (light/dark).
 - Colours are given as `rgba(r,g,b,a)` or `#RRGGBB`.
-- The embedded terminal requires VTE and exists only on gtk3sermo and gtk4sermo.
+- The interactive embedded terminal requires VTE (gtk3sermo, gtk4sermo); on the
+  other ports, `<terminal>` shows the output of its command (see §5).
 
 ---
 
@@ -81,10 +82,14 @@ attached to each release, with the `SHA256SUMS` file and its signature
 gpg --import cle-haplo-dialog.asc            # https://haplo-dialog.fr/cle-haplo-dialog.asc
 gpg --verify SHA256SUMS.asc SHA256SUMS       # "Good signature from haplo-dialog <devel@haplo-dialog.fr>"
 sha256sum --ignore-missing -c SHA256SUMS
-sudo apt install ./sermo-backend-gtk3_3.0.0-1_amd64.deb     # GTK 3
-sudo apt install ./sermo-backend-fltk1_3.0.0-1_amd64.deb    # FLTK, without pulling in GTK or Qt
-sudo apt install ./sermo-gtkdialog_3.0.0-1_all.deb          # + the gtkdialog command
+sudo apt install ./sermo-backend-gtk3_3.1.0-*_amd64.deb     # GTK 3
+sudo apt install ./sermo-backend-fltk1_3.1.0-*_amd64.deb    # FLTK, without pulling in GTK or Qt
+sudo apt install ./sermo-gtkdialog_3.1.0-*_all.deb          # + the gtkdialog command
 ```
+
+The `*` stands for the Debian revision of the release (the number after the
+dash, for example `3.1.0-10`): only one file of each package must be in the
+folder.
 
 The key fingerprint must be
 `66C7 F4AD 7A58 A037 967F  8339 3799 9F99 7570 F1ED`: compare it with the one in
@@ -194,7 +199,7 @@ this on every graphical port.
 ### 4.1 Structure of a document
 
 ```xml
-<window title="Window title" resizable="true" width="400" height="300">
+<window title="Window title" resizable="true" default-width="400" default-height="300">
   <vbox>
     <text><label>Your widgets here</label></text>
   </vbox>
@@ -210,9 +215,24 @@ Every sermo document starts with `<window>`. Widgets are nested inside container
 |----------|---------|-------------|
 | `sensitive` | `true` / `false` | Enable/disable the widget |
 | `visible` | `true` / `false` | Show/hide the widget |
-| `tooltip-text` | text | Tooltip on hover |
-| `width-request` | number | Minimum width in pixels |
-| `height-request` | number | Minimum height in pixels |
+| `tooltip-text` | text | Tooltip on hover (gtk3 and gtk4 only) |
+| `width-request` | number | Minimum width in pixels (depends on the port, see below) |
+| `height-request` | number | Minimum height in pixels (depends on the port, see below) |
+
+**`width-request` and `height-request` do not apply everywhere.** What each
+port reads (re-read in the code on 2026-10-19):
+
+- **gtk3, gtk4**: every widget (it is a property of every GTK widget).
+- **qt6, fltk1**: most input and display widgets (button, entry, list,
+  `<edit>`, `<drawingarea>`…), widget by widget; not `<hbox>`, `<paned>`,
+  `<switch>`, `<spinner>`, `<calendar>` or `<timer>`.
+- **efl1**: `<window>`, `<drawingarea>`, `<paned>` (to place the divider
+  `position=` given in pixels) and `height-request` of `<image>` (icon size).
+- **sdl3, lvgl, ncurses, html**: `<window>` only, plus `height-request` of
+  `<image>` (icon size). Their `<drawingarea>` reads the `<width>` and
+  `<height>` sub-elements.
+
+Elsewhere, the attribute is accepted and has no effect.
 
 ### 4.3 Common content tags
 
@@ -224,7 +244,7 @@ Every sermo document starts with `<window>`. Widgets are nested inside container
 | `<input>command</input>` | Shell command whose output feeds the widget |
 | `<action>ACTION:arg</action>` | Action triggered by an interaction |
 | `<sensitive>false</sensitive>` | Disable the widget at startup |
-| `<width>N</width>` and `<height>N</height>` | Sub-element form of `width-request` / `height-request` |
+| `<width>N</width>` and `<height>N</height>` | Size read by some widgets only: most gtk3 and gtk4 widgets, `<pixmap>` on qt6 and html, `<drawingarea>` on sdl3, lvgl, ncurses and html |
 
 **Every tag is written opened then closed.** The self-closing form is not
 recognised by the parser: `<separator></separator>` and not `<separator/>`,
@@ -240,15 +260,29 @@ a `<vbox>` must contain at least one widget.
 #### `<window>` — Main window
 
 ```xml
-<window title="My Application" resizable="true" width="500" height="400">
+<window title="My Application" resizable="true" default-width="500" default-height="400">
   <vbox>
     <text><label>Window content</label></text>
   </vbox>
 </window>
 ```
 
-Specific attributes: `title`, `resizable`, `width`, `height`, `decorated`,
-`icon-name`.
+Specific attributes:
+
+| Attribute | Read by |
+|----------|--------|
+| `title` | all nine ports |
+| `default-width`, `default-height` | all nine ports: starting size, in pixels |
+| `resizable` | gtk3, gtk4, qt6, fltk1 |
+| `decorated`, `icon-name` | gtk3 and gtk4 only |
+
+⚠️ `width` and `height` set **as attributes** on `<window>` are read by no
+port: the window keeps its natural size. Write `default-width` and
+`default-height`.
+
+gtk3 and gtk4 also apply, as a GTK property, any attribute named after a
+property of the widget (this is how `tooltip-text`, `decorated` or `icon-name`
+work there); the other ports only read the attributes they know.
 
 #### `<vbox>` and `<hbox>` — Layout boxes
 
@@ -281,6 +315,15 @@ Specific attributes: `title`, `resizable`, `width`, `height`, `decorated`,
 </notebook>
 ```
 
+The tab titles come from `tab-labels="A|B"`, in page order.
+
+Page shown at startup: the `page="1"` attribute (pages are counted from 0), or
+an `<input>` whose first line gives the page number. If both are present,
+`page=` wins at startup; a `refresh:` then re-reads the `<input>`. Same rule on
+all 9 ports.
+
+Variable: **the index of the visible page** (`0` for the first one).
+
 #### `<expander>` — Collapsible section
 
 ```xml
@@ -305,19 +348,24 @@ open, `false` otherwise.
 
 #### Scrollable area — the `scrollable` attribute
 
-There is **no** `<scrolledwindow>` tag. Scrolling is an **attribute** set on the
-widget itself:
+There is **no** `<scrolledwindow>` tag. Scrolling is an **attribute** set on a
+box, `<vbox>` or `<hbox>`:
 
 ```xml
-<tree scrollable="true">
-  <variable>CHOICE</variable>
-  <label>Name|Size</label>
-  <input>echo -e "a|1\nb|2"</input>
-</tree>
+<vbox scrollable="true" height-request="200">
+  <text><label>Line 1</label></text>
+  <text><label>Line 2</label></text>
+  <text><label>…</label></text>
+</vbox>
 ```
 
-The attribute is recognised by the core's automaton and wraps the widget in a
-scrollable area when it is created.
+`scrollable="true"` (or `yes`, or `1`) wraps the box in a scrollable area when
+it is created. The attribute is only read on `<vbox>` and `<hbox>`, and only by
+the automaton of the gtk3 and gtk4 ports; the other ports do not read it. On
+another widget, it has no effect.
+
+`<tree>`, `<list>`, `<table>` and `<terminal>` do not need it: on gtk3 and gtk4,
+they are **always** placed in a scrollable area.
 
 ---
 
@@ -491,6 +539,15 @@ whole (`gtkdialog_lexer.l`), there is no `<okbutton/>` tag.
 </text>
 ```
 
+⚠️ **A `<text>` keeps the trailing newline of its `<input>`.** With
+`<input>echo 21.5</input>` (or an `<input mqtt>` receiving `21.5`), the exported
+value is `"21.5⏎"`, newline included; an `<entry>` removes it. This is the
+behaviour inherited from gtkdialog, identical on gtk3, gtk4, qt6, fltk1, sdl3,
+efl1, lvgl and ncurses (measured on 2026-10-18, packages 3.1.0-6): it is kept so
+that the values existing scripts read do not change. For a value without a
+newline, use `printf` rather than `echo`, or strip it in the script that reads
+the output (`v=${TEMPERATURE%$'\n'}`).
+
 #### `<pixmap>` — Image
 
 ```xml
@@ -501,9 +558,10 @@ whole (`gtkdialog_lexer.l`), there is no `<okbutton/>` tag.
 
 #### Common rule for numeric values
 
-`<hscale>`, `<vscale>`, `<spinbutton>` and `<levelbar>` export their value
+`<hscale>`, `<vscale>` and `<spinbutton>` export their value
 according to the **`digits=`** attribute: `digits="0"` (the default) gives an
-integer, `digits="2"` gives two decimals.
+integer, `digits="2"` gives two decimals. `<levelbar>` does not read
+`digits=`: it writes its value in the shortest form (`0.5`, `1`).
 
 The number is **always written with a dot**, never a comma, whatever the
 machine's locale. A script comparing against `"2.50"` gets the same thing
@@ -563,7 +621,7 @@ gauge, see `<levelbar>`, which has its own `range-min` / `range-max`.
 </fontbutton>
 ```
 
-#### `<terminal>` — Embedded terminal (gtk3sermo and gtk4sermo, requires VTE)
+#### `<terminal>` — Embedded terminal
 
 ```xml
 <terminal width-request="600" height-request="300">
@@ -576,6 +634,12 @@ The terminal starts a shell (`/bin/sh`, or the `argv0`, `argv1`… attributes). 
 **output** of the `<input>` command is typed into that shell, as if from the
 keyboard: here, `ls -la` runs in the terminal. The variable returns the shell's
 PID.
+
+This interactive shell exists only on gtk3 and gtk4 (VTE), and on qt6 built
+with QTermWidget (the Debian package is not: it does not ask for
+qtermwidget6). Elsewhere (qt6 without QTermWidget, fltk1, efl1, sdl3, lvgl,
+ncurses, html), `<terminal>` runs the `<input>` command and shows its output,
+read-only; fltk1 shows it in an `Fl_Terminal`, which renders ANSI colours.
 
 #### `<timer>` — Timer
 
@@ -748,11 +812,22 @@ everywhere.
 #### drawingarea — Drawing area
 
 ```xml
-<drawingarea width="200" height="120"><variable>AREA</variable></drawingarea>
+<drawingarea width-request="200" height-request="120">
+  <width>200</width><height>120</height>
+  <variable>AREA</variable>
+</drawingarea>
 ```
 
-A free surface, reserved for drawing. **Variable: empty string** — a drawing area
-has no value to return.
+A free surface, reserved for drawing. **Variable: empty string.** With
+`embed="true"`, and only with gtk3 under X11, it holds the X11 id of the area once
+shown: this is what lets a video play inside it (`<action media>`, key
+`dans=$AREA`). The number changes at every run.
+
+Size: gtk3, gtk4, qt6, fltk1 and efl1 read the `width-request` /
+`height-request` attributes; sdl3, lvgl, ncurses and html read the `<width>` /
+`<height>` sub-elements. Writing both, as above, gives the same size on all 9
+ports. Without a size, the area is 300 × 200 on sdl3, lvgl, ncurses and html,
+200 × 150 on efl1.
 
 #### wizard — A sequence of steps
 
@@ -917,16 +992,29 @@ Variable: empty string (the `<action>` carries the effect).
 |--------|---------|-------------|
 | `EXIT` | `EXIT:value` | Closes the window, exports EXIT=value |
 | `CLOSEWINDOW` | `CLOSEWINDOW:WIDGET_NAME` | Closes the window holding the named widget. The prefix really is `closewindow`: an unknown prefix is not reported, it goes to the shell as an ordinary command. |
-| `LAUNCH` | `LAUNCH:WINDOW_NAME` | Opens a new window |
+| `LAUNCH` | `LAUNCH:VAR_NAME` | Opens the window described in the environment variable `VAR_NAME` (see §9.2) |
 | `REFRESH` | `REFRESH:WIDGET_NAME` | Re-runs a widget's `<input>` |
 | `SAVE` | `SAVE:WIDGET_NAME` | Saves a widget's state |
 | `CLEAR` | `CLEAR:WIDGET_NAME` | Empties a widget's content |
-| `APPEND` | `APPEND:WIDGET_NAME` | Appends content to a widget |
+| `APPEND` | `APPEND:SOURCE,TARGET` | Copies the value of widget `SOURCE` into widget `TARGET`: a new row for a list or a tree, inserted text for a field |
+| `INSERT` | `INSERT:SOURCE,TARGET` | Same effect as `APPEND` (the core calls the same function) |
+| `REMOVESELECTED` | `REMOVESELECTED:WIDGET_NAME` | Removes the selected row or rows of a list or a tree |
 | `FILESELECT` | `FILESELECT:VAR_NAME` | Opens a file picker |
 | `ENABLE` / `DISABLE` | `ENABLE:WIDGET_NAME` | Enables/disables a widget |
 | `SHOW` / `HIDE` | `SHOW:WIDGET_NAME` | Shows/hides a widget |
 | `GRABFOCUS` | `GRABFOCUS:WIDGET_NAME` | Gives keyboard focus |
 | `PRESENTWINDOW` | `PRESENTWINDOW:NAME` | Brings the window to the front |
+| `ACTIVATE` | `ACTIVATE:WIDGET_NAME` | Activates the widget, like a click on a button or the Enter key in a field: its own actions run |
+| `COMMAND` | `COMMAND:command` | Runs the command, like an action without a prefix (§6.3) |
+| `BREAK` | `BREAK:` | Stops the list: the following `<action>`s of the same signal do not run |
+| `PULSE` | `PULSE:WIDGET_NAME` | Moves the motion of a `<progressbar>` one step ("activity" mode, no percentage) |
+| `START` / `STOP` | `START:WIDGET_NAME` | Starts / stops the animation of a `<spinner>` |
+
+The prefix can be written in upper or lower case (`exit:` is `EXIT:`). It can
+also be given by the `function` attribute: `<action
+function="refresh">NAME</action>` is `<action>refresh:NAME</action>`. A
+widget's `<action>`s run in document order. After a `LAUNCH:`, the following
+actions do not run: the new window takes over.
 
 ### 6.2 Available signals
 
@@ -955,15 +1043,71 @@ Common signals: `activate`, `changed`, `clicked`, `toggled`, `value-changed`,
 Any action not recognised as a keyword is run as a shell command through the
 core's `safe_system()`.
 
+A command **without** shell syntax is started directly, without a shell. A
+command containing some (`|`, `;`, `$`, `>`…) goes through a shell:
+
+- the default shell: `/bin/sh`; on Windows, the one named by `%ComSpec%`
+  (usually `cmd.exe`);
+- or the program named by the **`SERMO_SHELL`** variable, by its absolute path
+  (for instance `SERMO_SHELL=/bin/bash`). Any other value (relative path,
+  non-executable file) is refused, a message says so, and the default shell is
+  used.
+
+With `SERMO_NO_SHELL_FALLBACK` or `SERMO_ALLOWED_CMDS` set, a command that
+contains shell syntax is **refused**: it goes through no shell, and a message
+says so on standard error.
+
+**On Windows**, the default shell is `cmd.exe`: commands are written in cmd syntax
+(`echo %NOM%`, `&` to chain them). cmd's built-in commands (`echo`, `dir`,
+`cd`…) also go through it. For commands written for `sh`, point `SERMO_SHELL` at a
+Unix shell, for instance busybox-w32 copied as `sh.exe` (sermo does not ship it):
+
+```bat
+set SERMO_SHELL=%CD%\sh.exe
+ncursessermo.exe --file=dialog.xml
+```
+
+In the values written to the output, a backslash is doubled
+(`C:\\Users\\…`): the line can then be read back by a script safely. See also
+[SECURITY.en.md](SECURITY.en.md), "Outside Linux".
+
 ### 6.4 Conditional actions
 
 ```xml
 <button>
   <label>Action depending on state</label>
-  <action condition="command_is_true(test $BOX = 1)">REFRESH:WIDGET_A</action>
-  <action condition="command_is_false(test $BOX = 1)">REFRESH:WIDGET_B</action>
+  <action condition="command_is_true(echo $BOX)">REFRESH:WIDGET_A</action>
+  <action condition="active_is_false(OPTION)">REFRESH:WIDGET_B</action>
 </button>
 ```
+
+Here, `WIDGET_A` is only refreshed if `BOX` holds a non-zero number (or
+`true`, `yes`), and `WIDGET_B` only if the `OPTION` checkbox is not ticked.
+
+The `condition` attribute decides whether the action runs. Five forms, each with
+its `_false` opposite:
+
+| Condition | True when |
+|-----------|-----------|
+| `command_is_true(command)` | the **first line printed** by the command is `true`, `yes` or a non-zero number. It is not the exit status: a command that prints nothing gives "false". |
+| `command_is_false(command)` | that first line is `false`, `no` or `0` |
+| `file_is_true(path)` / `file_is_false(path)` | same rule, on the first line of the file |
+| `active_is_true(NAME)` / `active_is_false(NAME)` | widget `NAME` is ticked, pressed or expanded (checkbox, toggle button, switch, `<expander>`) |
+| `sensitive_is_true(NAME)` / `sensitive_is_false(NAME)` | widget `NAME` is enabled (not greyed out) |
+| `visible_is_true(NAME)` / `visible_is_false(NAME)` | widget `NAME` is visible |
+
+An unknown condition still lets the action run. It is reported on standard
+error only if it has parentheses; without parentheses, it is ignored with no
+message (only `active_is_true` and `active_is_false` are accepted bare, for a
+`<timer>`). An unknown `NAME` makes the condition false.
+On a port that cannot tell a widget's state, `active_is_true` and
+`active_is_false` are both false, and `sensitive_is_…` / `visible_is_…` see it
+as enabled and visible.
+
+On a checkbox, a radio button, a toggle button, a switch (`<switch>`), an
+`<expander>` or a check menu item, an action can also start with `if true ` or
+`if false `: it only runs if the widget has just been ticked, or expanded (or
+the opposite). With a `condition` attribute, both must be true.
 
 ---
 
@@ -1017,25 +1161,27 @@ from a command. **Read-only**: nothing is ever written to the device. These
 tags need their package: `sermo-source-modbus` or `sermo-source-opcua`
 (helpers in `/usr/libexec/sermo`). Parameter names are French.
 
-| Modbus (`tcp://host[:port]` or `rtu:///dev/ttyUSB0`) | |
+| Modbus (`tcp://host[:port]`, port 502 by default, or `rtu:///dev/ttyUSB0`) | |
 |---|---|
-| `registre` (register) | required, numbered from 1 |
+| `registre` (register) | required, numbered from 1 (1 to 65536; the read must not go past register 65536) |
 | `type` | `maintien` (holding, default), `entree` (input), `bobine` (coil), `discret` (discrete) |
-| `esclave` (slave), `nombre` (count) | defaults 1 and 1 (one value per line) |
-| `format`, `ordre` (word order) | `entier` (default), `signe`, `entier32`, `signe32`, `flottant`; `abcd` (default), `cdab`, `badc`, `dcba` |
-| `diviseur` (divisor), `delai` (timeout) | defaults 1 and 1500 ms |
-| `cache`, `perime` | shared cache freshness, default 900 ms (`0`: direct read, nothing kept); age beyond which a value is no longer shown, default 10,000 ms |
-| `vitesse`, `parite`, `bits`, `arret` | RTU: defaults 19200, `E`, 8, 1 |
+| `esclave` (slave), `nombre` (count) | defaults 1 and 1 (one value per line); `esclave` from 0 to 255 (1 to 247 in RTU), `nombre` from 1 to 125 |
+| `format`, `ordre` (word order) | `entier` (default), `signe`, `entier32`, `signe32`, `flottant`; `abcd` (default), `cdab`, `badc`, `dcba` (neither for `bobine` and `discret`) |
+| `diviseur` (divisor), `delai` (timeout) | defaults 1 (a positive number, decimal point) and 1500 ms (from 10 to 60,000) |
+| `cache`, `perime` | shared cache freshness, default 900 ms, from 0 to 60,000 (`0`: direct read, nothing kept); age beyond which a value is no longer shown, default 10,000 ms, from 0 to 600,000 (a `perime` smaller than `cache` counts as `cache`) |
+| `vitesse`, `parite`, `bits`, `arret` | RTU only: defaults 19200 (from 50 to 4,000,000), `E` (`N`, `E` or `O`), 8 (7 or 8), 1 (1 or 2) |
 
 | OPC UA (`opc.tcp://host:port`) | |
 |---|---|
 | `noeud` (node) | required: `ns=1;s=name`, `ns=0;i=2258`… |
-| `delai` (timeout), `cache`, `perime` | defaults 1500, 900 and 10,000 ms |
+| `delai` (timeout), `cache`, `perime` | defaults 1500, 900 and 10,000 ms; same bounds as Modbus |
 | `mode` | `none` (default), `sign`, `chiffre` (sign and encrypt) |
-| `certificat`, `cle`, `confiance`, `uri` | with `sign`/`chiffre`: this machine's files, trusted server certificate(s) (repeatable), ApplicationUri |
+| `certificat`, `cle`, `confiance`, `uri` | with `sign`/`chiffre` only (refused with `none`): this machine's files, trusted server certificate(s) (repeatable, 16 at most), ApplicationUri (default `urn:sermo:opcua-lire`). `certificat`, `cle` and at least one `confiance` are **required** with `sign` and `chiffre` |
 
-An unknown parameter is refused (a typo does not pass for the default). A
-literal `&` or `%` in a value is written `%26` or `%25`. After a failure, the
+An unknown parameter is refused (a typo does not pass for the default). An
+address is 4096 bytes at most, with 32 parameters at most; an empty or too long
+address, or one containing a control character, is refused when the dialog is
+read. A literal `&` or `%` in a value is written `%26` or `%25`. After a failure, the
 same device is not asked again for 5 s: an unreachable PLC does not freeze
 the window on every refresh. An answer is kept 900 ms (`cache=`) and reads
 to the same device go one at a time: a gauge and its text on the same
@@ -1053,6 +1199,333 @@ values empty out: group them (`nombre=`) or raise `perime=`. With
 `SERMO_ALLOWED_CMDS`, name the helper (`/usr/libexec/sermo/sermo-source-modbus`);
 `SERMO_SOURCE_DIR` changes its folder.
 
+#### Reading home automation: `<input mqtt>`
+
+```xml
+<text>
+  <variable>SALON</variable>
+  <input mqtt>mqtt://broker:1883?sujet=maison/salon/temperature</input>
+</text>
+```
+
+The widget shows the message of an MQTT topic: the **retained** message if
+there is one (it arrives at once), otherwise the next one published, waited
+for at most `delai=`. Same mechanics as Modbus and OPC UA (cache, `perime=`,
+5 s pause after a failure, window never frozen). **Read-only**: the helper
+subscribes and reads, it never publishes. Package: `sermo-source-mqtt`.
+
+| MQTT (`mqtt://host[:port]`, port 1883; encrypted: `mqtts://host[:port]`, port 8883) | |
+|---|---|
+| `sujet` | required: one precise topic; the `+` and `#` wildcards are refused (a widget shows ONE value) |
+| `delai`, `cache`, `perime` | defaults 1500, 900 and 10,000 ms; same bounds as Modbus |
+| `identifiants` | **absolute** path of a file holding `user:password` on its first line. On `mqtt://` (unencrypted), refused without `clair=oui` |
+| `clair` | `mqtt://` only, the only value accepted: `oui` (yes). Allows `identifiants=` without encryption (see below) |
+| `confiance` | `mqtts://`: **required**, certificate (PEM) of the authority that signed the server; the server name is checked against its certificate |
+| `certificat`, `cle` | `mqtts://`, together: certificate and key of this machine, for a server that requires one; key in `chmod 600` |
+
+A message larger than 64 KiB (65,536 bytes) is refused, and the reason is
+given; so is an empty message.
+
+**The password is never in the address**: the address is a program argument,
+which any user of the machine can read (`ps`). It lives in the `identifiants`
+file, which is **refused** if it is not yours or if anyone else can read it:
+`chmod 600 file`. With `mqtts://` there is **no "accept everything" mode**: without
+`confiance=` the read is refused, and a server whose certificate is not signed by
+that authority, or bears another name, is refused.
+
+**No cleartext password without saying so.** On `mqtt://`, nothing is
+encrypted: the password would cross the network in clear. `identifiants=` is
+therefore **refused before any connection**, and a message suggests `mqtts://`.
+On a trusted local network, the dialog author can accept it themselves by
+adding `clair=oui` to the address:
+
+```xml
+<input mqtt>mqtt://broker?sujet=maison/salon/temperature&identifiants=/path/to/mqtt-id&clair=oui</input>
+```
+
+`clair=` only accepts `oui`, and is only accepted with `mqtt://` (with
+`mqtts://` it is refused: the connection is already encrypted). The rule holds
+for reading (`<input mqtt>`) and for writing (`<action mqtt>`).
+
+#### Controlling home automation: `<action mqtt>`
+
+```xml
+<button><label>Living room on</label>
+  <action mqtt>mqtt://broker?sujet=maison/salon/lampe&valeur=on</action>
+</button>
+<hscale range-min="15" range-max="25"><variable>CONSIGNE</variable></hscale>
+<button><label>Set</label>
+  <action mqtt>mqtt://broker?sujet=maison/salon/consigne&valeur=$CONSIGNE</action>
+</button>
+```
+
+A click publishes **one** value on **one** topic. It is one of sermo's three
+writes to a device, with `<action mavlink>` and `<action media>`, and it is
+framed:
+
+- **only a click**: `<action mqtt>` is accepted only in a `<button>` or a
+  `<menuitem>`. In a `<timer>`, a field, a checkbox… (which can play their
+  actions without a click), the dialog is **refused when read**;
+- **closed allow-list**, in a file written on purpose:
+  `~/.config/sermo/cibles-mqtt` (yours, `chmod 600`) and
+  `/etc/sermo/cibles-mqtt` (root's, `chmod 644`). Without a list nothing is
+  sent. A badly protected file is refused as a whole;
+- **bounded values** per topic: a list (`on|off`) or a range (`18..24`); a
+  value outside is refused, and the reason is given;
+- **separate package**: `sermo-cible-mqtt`. Without it, sermo reads home
+  automation but never publishes.
+
+One line of the list: `<server> <topic> <values>` (`#` comments).
+
+```
+mqtt://broker maison/salon/lampe     on|off
+mqtt://broker maison/salon/consigne  18..24
+```
+
+| `<action mqtt>` key | |
+|---|---|
+| `sujet` | required, one precise topic (`+` and `#` wildcards refused) |
+| `valeur` | required: the value to publish, or `$NAME` |
+| `delai` | total time limit (connection and server acknowledgement), default 1500 ms, from 10 to 60,000 |
+| `identifiants`, `clair`, `confiance`, `certificat`, `cle` | as for `<input mqtt>` |
+
+`valeur=$NAME` takes the dialog variable `NAME` (a slider, a list), checked like
+a hard-written value. Published with QoS 1, **not retained** (the broker does
+not keep it for future subscribers), never repeated.
+
+**Limit, said plainly**: a dialog author can still run a command of their own
+(for instance `mosquitto_pub`) in an action. This frame guarantees that **sermo
+itself** never writes without a click nor outside your list; it does not protect
+against a malicious dialog. The name `sermo-cible-` written by hand in an
+`<input>` or an `<action>` is refused.
+
+#### Reading a drone: `<input mavlink>`
+
+```xml
+<levelbar range-min="0" range-max="100">
+  <variable>BATT</variable>
+  <input mavlink>udp://:14550?champ=batterie</input>
+</levelbar>
+<text><variable>HAUT</variable><input mavlink>udp://:14550?champ=hauteur</input></text>
+```
+
+The widget shows a telemetry value from a drone's **autopilot** (MAVLink
+protocol). **Read-only**: nothing is sent on the link — no command, no
+heartbeat, no stream request. Package: `sermo-source-mavlink`.
+
+| Link | |
+|---|---|
+| `udp://[host]:port` | UDP listen (default `127.0.0.1`: a local relay such as MAVProxy sends there; `udp://0.0.0.0:14550` for the whole network) |
+| `tcp://host:port` | TCP connection (SITL simulator: `5760`) |
+| `serie:///dev/ttyUSB0` | USB radio; `vitesse=` (default 57600; accepted: 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600; refused outside `serie://`) |
+
+| Key | |
+|---|---|
+| `champ` | required: `tension` (V), `courant` (A), `batterie` (%), `latitude`, `longitude`, `altitude` (m, sea level), `hauteur` (m, above home), `cap` (°), `vitesse` (m/s), `montee` (m/s), `satellites`, `fix`, `arme` (1/0), `mode` |
+| `systeme` | the system to read (1 to 255); without it, the first autopilot heard |
+| `delai`, `cache`, `perime` | as for Modbus (defaults 1500, 900 and 10,000 ms) |
+
+Only the autopilot is listened to: a ground station, a camera or a gimbal
+talking on the same link are ignored. A value the autopilot reports as "not
+measured" is refused, and the reason is given. **Limit**: since sermo sends
+nothing, it does not request streams; on a bare radio, without a ground station
+or relay, only the heartbeat (`arme`, `mode`) arrives. The fix is on the drone:
+on ArduPilot 4.7, the parameters `MAV1_EXT_STAT`, `MAV1_POSITION` and
+`MAV1_EXTRA2` (for example at 2, twice a second) make it broadcast battery,
+position and speed on the first link; before 4.7 they were called `SR0_…`, and
+the old names are silently ignored. Full example and a fake drone (no
+hardware): `examples/mavlink/`.
+
+#### Commanding a drone: `<action mavlink>`
+
+```xml
+<button><label>Return to launch</label>
+  <action mavlink>tcp://127.0.0.1:5760?ordre=rtl</action>
+</button>
+<hscale range-min="1" range-max="15"><variable>VITESSE</variable></hscale>
+<button><label>Set the mission speed</label>
+  <action mavlink>tcp://127.0.0.1:5760?parametre=WP_SPD&valeur=$VITESSE</action>
+</button>
+```
+
+A click sets **one** autopilot parameter, gives it **one** safety order, or
+sends it **one** mission. No piloting: no takeoff, no arming, no mode change, no
+commanded movement other than the safety orders (`rtl` brings the drone back to
+its launch point, `land` sets it down in place). A mission is sent, **never
+started**. Same framework as `<action mqtt>`:
+
+- **only a click**: inside a `<button>` or a `<menuitem>`, refused anywhere else
+  when the dialog is read;
+- **closed allow-list**: `~/.config/sermo/cibles-mavlink` (yours, `chmod 600`)
+  and `/etc/sermo/cibles-mavlink` (root's, `chmod 644`);
+- **separate package**: `sermo-cible-mavlink`.
+
+One line of the list: `parametre NAME min..max`, `ordre rtl`, `ordre land`,
+`ordre terminaison`, or `mission rayon R hauteur H` (`#` comments).
+
+```
+parametre WP_SPD 1..15
+ordre rtl
+ordre land
+```
+
+| Key | |
+|---|---|
+| `parametre` + `valeur` | an exact name (`A-Z`, `0-9`, `_`, 16 characters at most) and a number (decimal point), or `$NAME` (dialog variable) |
+| `ordre` | `rtl` (return to launch), `land` (land in place), `terminaison` (cut the motors) |
+| `mission` | absolute path of a mission file (waypoints, see below) |
+| `systeme`, `vitesse` | as for `<input mavlink>` |
+| `delai` | total time limit in ms (default 5000, 20,000 for a mission; from 2000 to 60,000) |
+
+An address gives **exactly one** of the keys `parametre`, `ordre` or
+`mission`; `valeur` only goes with `parametre`.
+
+The safeguards, in the order they apply:
+
+- **families never set**, neither in the address nor in the list: `ARMING_*`,
+  `FLTMODE*`, `SERVOn_FUNCTION`, `BRD_SAFETY*`, `FENCE_*` (arming, modes, motor
+  outputs, safety switch, fence). A list containing one is refused as a whole;
+- **allow-list**: the permission must be there (for a parameter, with the value
+  inside its range); for a mission, the height of each point is checked here,
+  before any network;
+- **cutting the motors needs confirming**: the first press sends nothing, does
+  not even open the link, and says so; a second press **within 5 s**, towards
+  the same drone (same link, same `systeme=`), sends the order. The drone
+  falls. The confirmation needs `$XDG_RUNTIME_DIR` (absolute path, a directory
+  only you can use): without it, nothing is sent;
+- **a single sender**: sermo waits for the autopilot's heartbeat, sends it a
+  **read request** (ArduPilot only relays messages from other links to a link
+  that has already talked to it), then listens for a little over a second; if
+  another ground station is already talking to the drone, nothing is set or
+  ordered;
+- **settings on the ground only**: a parameter is set, and a mission sent, only
+  if the drone is disarmed, according to its heartbeat read just before
+  sending; the parameter must exist on the autopilot, and an integer refuses a
+  decimal value;
+- **proof from the drone**: a setting succeeds only if the drone sends back the
+  same value; an order, only if it answers "accepted". One attempt, never
+  repeated.
+
+sermo never sends a heartbeat: ArduPilot watches its ground station's heartbeat
+to trigger a failsafe, and a heartbeat that stops when the command ends could
+trigger it in flight.
+
+**Sending a mission** (waypoints, drone on the ground):
+
+```xml
+<button><label>Send the inspection flight</label>
+  <action mavlink>tcp://127.0.0.1:5760?mission=/srv/flights/roof.waypoints</action>
+</button>
+```
+
+The file is the one Mission Planner or QGroundControl save ("QGC WPL 110"),
+absolute path, yours, that nobody else can modify. Only **waypoints** are
+accepted: height above home, wait at the point from 0 to 60 s. A takeoff, a
+landing, a jump, a speed change or a camera order refuses the whole file, and
+the reason is given. 100 points at most. The file is 256 KiB at most, and a
+symbolic link is refused. The allow-list bounds the mission:
+
+```
+mission rayon 500 hauteur 120
+```
+
+Each point must be within 500 m of the **drone's current position**, and
+between 0 and 120 m high. In the list, `rayon` goes from 1 to 10,000 m and
+`hauteur` from 1 to 120 m; with two `mission` lines, the stricter one counts. After sending, sermo
+**reads the whole mission back from the drone** and compares it point by point:
+success is reported only if it is identical. The mission is **not started**:
+starting it is piloting. Without the drone's position (on ArduPilot 4.7:
+`MAV1_POSITION`), nothing is sent. `delai` defaults to 20,000 ms for a mission.
+
+Each call writes its conclusion, one line, to standard error and to
+`$XDG_RUNTIME_DIR/sermo-cible-mavlink/message` (if `XDG_RUNTIME_DIR` is an
+absolute path; otherwise, to standard error only). A dialog shows it with
+`<input file>` and a `refresh:` after the action (see
+`examples/mavlink/drone-commande.sh`).
+
+**Tried against a real simulated autopilot** (ArduPilot Copter 4.7.2 in SITL):
+setting read back, refusal in flight, return to launch, landing, confirmed
+motor cut. **Not tried on a real drone.** Parameter names change between
+ArduPilot versions (`WPNAV_SPEED` became `WP_SPD`): a name the drone does not
+know is refused, and the reason is given.
+
+#### Playing a sound or a video: `<input media>` / `<action media>`
+
+A button starts a player (mpv), other buttons command it, and an `<input>` reads
+its state. Two helper programs, each in its own package: `sermo-cible-media` (the
+commands) and `sermo-source-media` (the state). Packages: `sermo-cible-media`,
+`sermo-source-media`, and `mpv` (with `bubblewrap` for network streams).
+
+```xml
+<button><label>Play</label>
+  <action media>media://lounge?commande=lire&amp;source=file:///srv/sounds/notice.ogg</action></button>
+<button><label>Pause</label><action media>media://lounge?commande=pause</action></button>
+<hscale range-min="0" range-max="100"><variable>VOLUME</variable></hscale>
+<button><label>Volume</label><action media>media://lounge?commande=volume&amp;valeur=$VOLUME</action></button>
+<text><variable>STATE</variable><input media>media://lounge?donnee=etat</input></text>
+<timer interval="1" visible="false"><action>refresh:STATE</action></timer>
+```
+
+- **Player name** (`lounge`): letters, digits, `_` and `-`, 32 at most. One mpv per
+  name, **4 players at most** at a time. Running `lire` again on a name replaces
+  what it plays.
+- **Commands** (closed list; the keywords are French): `lire&source=…` (play),
+  `pause`, `reprendre` (resume), `arreter` (stop), `aller&valeur=SECONDS` (seek,
+  0 to 86400), `volume&valeur=0..100`, `muet` (mute), `son` (unmute).
+  `valeur=$NAME` takes the dialog variable `NAME` (a slider, a field).
+- **Data** from `<input media>`: `donnee=etat` (default) is always `stopped`,
+  `playing`, `paused` or `error`; `position` and `duree` (duration) in seconds
+  (`12.3`), empty when nothing plays.
+- **Sources**: `file:///path` (a readable regular file), `http://`, `https://`,
+  `rtsp://`, `rtsps://`, 2048 bytes at most. **Refused**: any other scheme (except `v4l2://` for a camera, below) (mpv
+  would accept `edl://`, `av://lavfi:…`: sermo does not), an address carrying
+  credentials (`u:pass@host`).
+- **Playlist**: it is not refused, but mpv does not follow its unsafe entries
+  (it is started with `--load-unsafe-playlists=no` and
+  `--access-references=no`).
+- **Camera**: `source=v4l2:///dev/video0`, optionally with `taille=` (size:
+  `320x240`, `640x480` by default, `1280x720`, `1920x1080`) and `format=` (`mjpeg`
+  by default, `yuyv422`). The node must be a real camera (not a metadata node).
+  mpv's window is titled "sermo — CAMÉRA ACTIVE — <name>". If `bwrap` is
+  installed, only the camera is visible inside the sandbox, with no network. `lire` answers only once the first
+  frame arrives. A camera **busy** with another program is refused after one
+  retry, nothing is forced; mpv does not tell "busy" from "unavailable", so the
+  message says both.
+- **Inside the window**: `dans=$AREA` (the variable of a `<drawingarea embed="true">`) shows the
+  picture in that area instead of a separate window. Only with gtk3 under X11.
+  Elsewhere (Wayland, other ports, area not shown yet) the variable is empty: the
+  video opens in its own window, and the message says so. An embedded camera shows
+  "CAMÉRA ACTIVE — <name>" written in the picture. A `dans=` that is not of the
+  form `$NAME`, or a variable whose value is not a number (from 1 to 2³²−1), is
+  refused: code 1, mpv is not started.
+  ```xml
+  <drawingarea width-request="320" height-request="240" embed="true"><variable>AREA</variable></drawingarea>
+  <button><label>Play</label>
+    <action media>media://film?commande=lire&source=file:///path/film.mp4&dans=$AREA</action>
+  </button>
+  ```
+- **HTTP(S) stream with a password**: `identifiants=/path` of a file you own, in
+  mode **exactly** `600` (`chmod 600`), holding one line `user:password`. It reaches mpv through a private
+  header file, deleted once read, **never as an argument**. RTSP with a password:
+  not supported (mpv only reads it from the address).
+- **Sandbox**: a network stream plays **only** inside `bwrap` (refused without it);
+  a local file or a camera plays inside it when `bwrap` is installed, with no
+  network. Without `bwrap`, a local file or a camera plays **without a sandbox**,
+  and only a message says so ("bwrap absent, mpv tourne sans bac à sable").
+  Inside the cage, sound goes through pulse (`--ao=pulse,null`): under PipeWire,
+  `pipewire-pulse` is needed, otherwise playback has no sound.
+- **`XDG_RUNTIME_DIR`** must be set, as an absolute path: each player has its
+  private folder there (`sermo-media/NAME/`). Without it, no player starts (a
+  message says so), and `<input media>` answers `stopped`.
+- **A gesture**: `<action media>` is only allowed on a button or a menu item (no
+  autoplay, no timer starting a sound).
+- **No end event**: a `<timer>` re-reading `etat` sees `playing` turn into
+  `stopped`.
+- When the window closes (even if sermo is killed), the player stops. A video is
+  shown in mpv's own window, except with `dans=` (gtk3, X11).
+
+Full example: `examples/lecteur-media/`.
+
 ### 7.4 Including a file of functions
 
 ```bash
@@ -1061,7 +1534,8 @@ sermo --include=/path/functions.sh --program=DIALOG
 
 Lets you use shell functions defined in `functions.sh` inside the `<input>` and
 `<action>` attributes. A relative path starts from the directory the program was
-launched in.
+launched in. The file is read **before every command**: put only functions in
+it, not the script itself (see §9.1).
 
 ### 7.5 An interface drawn with Glade (gtk3, gtk4)
 
@@ -1105,6 +1579,9 @@ A complete example, in GTK 3 and GTK 4: `examples/glade/`.
 
 ```bash
 #!/bin/bash
+FILE="$1"        # the file to delete, given as the script's argument
+[ -f "$FILE" ] || { echo "usage: $0 FILE" >&2; exit 1; }
+
 CONFIRM='
 <window title="Confirm" resizable="false">
   <vbox>
@@ -1125,7 +1602,7 @@ eval "$(echo "$CONFIRM" | sermo --stdin)"
 ```bash
 #!/bin/bash
 export FORM='
-<window title="New profile" width="350">
+<window title="New profile" default-width="350">
   <vbox>
     <frame label="Details">
       <vbox>
@@ -1161,7 +1638,7 @@ sermo --program=FORM --do='
 ```bash
 #!/bin/bash
 export MONITOR='
-<window title="Running processes" width="600" height="400">
+<window title="Running processes" default-width="600" default-height="400">
   <vbox>
     <tree column-header-active="true">
       <variable>PROC</variable>
@@ -1201,18 +1678,54 @@ Without hardware, `faux-automate.py` (package `python3-pymodbus`) and
 example writes to the device. Reading runs in the background: an unreachable
 device shows "pas de réponse" (no answer) without freezing the window.
 
+### 8.5 Ready-to-use examples
+
+Version 3.1.0 adds fifteen complete examples, one folder each, with its
+`README.md` (French only). The `sermo-doc` package installs them under
+`/usr/share/doc/sermo-doc/examples/<folder>/`; in the sources, they are under
+`examples/<folder>/`.
+
+| Folder | What it does |
+|--------|--------------|
+| `approbation` | a *Refuse* / *Allow* window before a risky action by an AI agent or a program; only a click on *Allow* counts as consent |
+| `bluetooth-scan` | the Bluetooth devices in range and those the machine knows, read-only |
+| `bus-can` | listen to a CAN bus; send a frame only after the approval window |
+| `camera-apercu` | watch a webcam or an IP camera, recording nothing |
+| `certificat-tls` | a server's TLS certificate: chain, name, days before expiry |
+| `dns-testeur` | resolve a name and compare up to 6 resolvers |
+| `domotique-mqtt` | read sensors (`<input mqtt>`) and control with a click (`<action mqtt>`), with a fake test broker |
+| `gnss-moniteur` | the state of a GNSS/GPS receiver (position, quality, satellites), with a demo mode |
+| `heure-ntp` | is the machine's clock right? (NTP, offset, summary) |
+| `journal-direct` | follow the systemd journal live, filtered by priority, unit or text |
+| `lecteur-media` | play a sound or a video (`<action media>`, `<input media>`) |
+| `liaison-serie` | listen to a serial port; write to it only after the approval window |
+| `reseau-testeur` | TCP connections, port test, ping, TCP or UDP frame, HTTP request |
+| `usb-moniteur` | the USB devices plugged in, and plug events live |
+| `wifi-scan` | the Wi-Fi networks in range and channel occupancy, read-only |
+
+Each folder's `README.md` says how to run the example, with which sermo binary,
+and what to install.
+
 ---
 
 ## 9. Integrating into a shell script
 
 ### 9.1 A complete script template
 
+The functions go in **a separate file**, `my_app-functions.sh`:
+
+```sh
+# my_app-functions.sh — loaded by sermo before every command
+load_config() { cat ~/.my_app/config 2>/dev/null || echo "No config"; }
+save_config() { mkdir -p ~/.my_app; printf '%s\n' "$1" > ~/.my_app/config; }
+```
+
 ```bash
 #!/bin/bash
 # my_app.sh — a sermo application
-
-load_config() { cat ~/.my_app/config 2>/dev/null || echo "No config"; }
-save_config() { mkdir -p ~/.my_app; echo "$1" > ~/.my_app/config; }
+DIR=$(dirname "$(readlink -f "$0")")
+FUNCTIONS="$DIR/my_app-functions.sh"
+. "$FUNCTIONS"          # the script uses them too, after the dialog
 
 export INTERFACE='
 <window title="My Application">
@@ -1225,7 +1738,7 @@ export INTERFACE='
   </vbox>
 </window>'
 
-eval "$(sermo --include="$0" --program=INTERFACE)"
+eval "$(sermo --include="$FUNCTIONS" --program=INTERFACE)"
 
 case "$EXIT" in
     save) save_config "$CONFIG"; echo "Saved." ;;
@@ -1233,27 +1746,48 @@ case "$EXIT" in
 esac
 ```
 
+⚠️ **Do not write `--include="$0"`.** sermo reads the included file **before
+every `<input>` and every action** (`. file; command`). Including the script
+itself would run it again in full each time, with its call to sermo. The
+included file is read by `/bin/sh` (or `SERMO_SHELL`): write functions in `sh`
+syntax there.
+
 ### 9.2 Multiple windows
+
+Each window has **its own environment variable**, exported before starting
+sermo:
 
 ```bash
 #!/bin/bash
-export MAIN_WINDOW='
-<window title="Main" name="MAIN">
+export MAIN='
+<window title="Main">
   <vbox>
     <button><label>Open settings</label><action>LAUNCH:SETTINGS</action></button>
     <button><label>Quit</label><action>EXIT:quit</action></button>
   </vbox>
-</window>
+  <variable>MAIN</variable>
+</window>'
 
-<window title="Settings" name="SETTINGS" visible="false">
+export SETTINGS='
+<window title="Settings">
   <vbox>
     <text><label>Settings window</label></text>
     <button><label>Close</label><action>closewindow:SETTINGS</action></button>
   </vbox>
+  <variable>SETTINGS</variable>
 </window>'
 
-sermo --program=MAIN_WINDOW
+sermo --program=MAIN
 ```
+
+- `LAUNCH:SETTINGS` reads the XML from the environment variable `SETTINGS`. If
+  a window already open holds a widget of that name, it is only brought back to
+  the front. A `LAUNCH:` works neither from a `<timer>`, nor before the first
+  window has fully loaded (a warning says so).
+- `closewindow:SETTINGS` looks for the **widget** named `SETTINGS` and closes
+  the window holding it. Hence the window's `<variable>SETTINGS</variable>`
+  (after its content): that is what the action finds. Closing the last window
+  ends sermo with `EXIT="closewindow"` (§3.2).
 
 ---
 
@@ -1265,8 +1799,8 @@ A: An SSH session without graphical forwarding. Run `export DISPLAY=:0` or
 
 **Q: Which backend is used when I call `sermo`?**
 A: The one chosen by `update-alternatives`. To force it, call the backend's
-binary: `gtk3sermo`, `qt6sermo`, `fltk1sermo`, `efl1sermo`, `sdl3sermo`,
-`gtk4sermo`.
+binary: `gtk3sermo`, `gtk4sermo`, `qt6sermo`, `fltk1sermo`, `efl1sermo`,
+`sdl3sermo`, `lvglsermo`, `ncursessermo` or `htmlsermo`.
 
 **Q: The `<terminal>` widget does not show**
 A: The terminal requires VTE and exists only on `gtk3sermo` and `gtk4sermo`.

@@ -4,7 +4,7 @@
 **Distribution cible :** Debian Testing
 **Lignée :** gtkdialog → sermo monolithique → sermo (édition modulaire) (GPL-2.0-or-later)
 **Distributeur :** haplo-dialog <devel@haplo-dialog.fr>
-**Statut :** Phase 1 & 2 terminées ; Phase 3 (frontière propre) en cours
+**Statut :** Phase 1 & 2 terminées ; Phase 3 (frontière propre) en cours ; 3.0.0 publiée le 2026-10-15 ; 3.1.0 (2026-10-19, MQTT, MAVLink, son et vidéo), 3.1.1 et 3.1.2
 
 ---
 
@@ -18,7 +18,7 @@
 6. [Contraintes techniques](#6-contraintes-techniques)
 7. [Architecture cible](#7-architecture-cible)
 8. [Livrables](#8-livrables)
-9. [Jalons](#9-jalons)
+9. [Étapes](#9-étapes)
 10. [Critères d'acceptation](#10-critères-dacceptation)
 11. [Risques](#11-risques)
 12. [Chantier proposé — deux conteneurs de disposition](#12-chantier-proposé--deux-conteneurs-de-disposition)
@@ -43,6 +43,23 @@ langage XML et du comportement observable.
 
 **Exclu de la Phase 1** : refonte de la frontière d'évènements (Part 3),
 cloisonnement de processus (IPC), nouveaux backends.
+
+**Sources et cibles** (depuis la 3.0.0) : un dialogue lit une source
+(automate, domotique, drone, lecteur son et vidéo :
+`<input modbus>`, `<input opcua>`, `<input mqtt>`, `<input mavlink>`,
+`<input media>`) et, en 3.1.0, peut écrire vers elle (`<action mqtt>`,
+`<action mavlink>`, `<action media>`). Règles :
+
+- **lecture seule par défaut** : un `<input>` ne fait que lire ;
+- **écriture seulement sur un clic** : une `<action>` d'écriture est refusée
+  à la lecture du XML hors d'un `<button>` ou d'un `<menuitem>` ;
+- **un programme d'aide par paquet à part** (`sermo-source-*` pour lire,
+  `sermo-cible-*` pour écrire), dans `/usr/libexec/sermo` ;
+- **liste blanche** : MQTT et MAVLink n'écrivent que ce qu'une liste écrite
+  exprès permet (`cibles-mqtt`, `cibles-mavlink`) ; le lecteur son et vidéo
+  n'envoie à mpv qu'une liste fermée de commandes, sur des sources filtrées ;
+- **exclu** : le pilotage d'un drone (armer, décoller, changer de mode, se
+  déplacer), prévu en 3.2.0.
 
 ## 3. Objectifs
 
@@ -75,7 +92,7 @@ cloisonnement de processus (IPC), nouveaux backends.
 - ENF1 — **Sécurité** : `safe_system`/`safe_popen`, pas de shell hors
   métacaractères, échappement de sortie, durcissement (FORTIFY=3, PIE, RELRO,
   CET) — voir [SECURITY.md](SECURITY.md).
-- ENF2 — **Vérifiabilité** : trois bancs rejouables (XML 55, comportement 75,
+- ENF2 — **Vérifiabilité** : trois bancs rejouables (XML 55, comportement 78,
   et les gardes `tests/garde_*.sh`) gardent chaque étape.
 - ENF3 — **Légèreté** : `sermo-core-dev` n'a aucune dépendance (bibliothèque
   statique) ; chaque
@@ -101,24 +118,36 @@ backends `sermo-backend-<t>` (rendu + boucle). Détail :
 - 7 backends (gtk4 et ncurses inclus) ; 9 paquets `.deb` (`sermo-core-dev` +
   7 backends + `sermo-gtkdialog`). Depuis : 9 backends (lvgl et html en 2.8.0) ;
   18 paquets en 2.8.2 (`sermo-core-dev`, 9 backends, `sermo-doc`,
-  `sermo-gtkdialog`, 4 paquets de transition, `sermoia-mcp`, `sermoman-mcp`).
+  `sermo-gtkdialog`, 4 paquets de transition, `sermoia-mcp`, `sermoman-mcp`) ;
+  21 en 3.0.0 (+ `sermo-backend-lvgl-leger`, `sermo-source-modbus`,
+  `sermo-source-opcua`) ; **27 en 3.1.0** (`debian/control`, compté le
+  2026-10-18) : `sermo-core-dev` ; les backends `sermo-backend-gtk3`, `-gtk4`,
+  `-qt6`, `-fltk1`, `-efl1`, `-sdl3`, `-lvgl`, `-lvgl-leger`, `-ncurses`,
+  `-html` ; `sermo-doc` ; `sermo-gtkdialog` ; 4 paquets de transition
+  (`gtk3sermo`, `gtk4sermo`, `qt6sermo`, `gtksermo`) ; les programmes d'aide
+  `sermo-source-modbus`, `-opcua`, `-mqtt`, `-mavlink`, `-media` et
+  `sermo-cible-mqtt`, `-mavlink`, `-media` ; `sermoia-mcp` ; `sermoman-mcp`.
 - Jeu documentaire complet (manuels, man page, Texinfo, bilan, changelog…).
 
-## 9. Jalons
+## 9. Étapes
 
 Voir [ROADMAP.md](ROADMAP.md). Phase 1 ✅ (cœur + 7 backends + packaging) ;
 Phase 2 (gtk4 24/24, doc, 9 .deb) ✅ ; Phase 3 (frontière propre) en cours
 (rename `sermo_be_*` fait ; gtk4 vendoré dans `src-gtk4/`, plus de dépendance
-à l'ancienne édition ; reste la source unique gtk3+gtk4 + l'IR).
+à l'ancienne édition ; reste la source unique gtk3+gtk4 + l'IR). Sources et
+cibles : 3.0.0 (Modbus, OPC UA, en lecture seule) ✅ ; 3.1.0 (MQTT, MAVLink,
+son et vidéo) ✅ (2026-10-19) ; 3.2.0 : pilotage d'un drone, vidéo dans la
+fenêtre du dialogue sur les autres ports et sous Wayland (déjà faite en 3.1.1
+pour gtk3 sous X11), lecteur essayé sous Wayland.
 
 ## 10. Critères d'acceptation
 
 - CA1 — Les sept backends lient et tournent sur `libsermocore`. ✅ (Neuf
   depuis la 2.8.0.)
-- CA2 — Chaque backend passe les trois bancs. ✅ **9/9** à 61/61 (comportement
+- CA2 — Chaque backend passe les trois bancs. ✅ **9/9** à 78/78 (comportement
   rejoué par `tests/comportement/run_all.sh`), XML 55/55, gardes — ncurses joue
   le comportement en mode batch headless — [BILAN_SANTE.md](BILAN_SANTE.md)
-  (2.8.0, 2026-10-10).
+  (3.1.0, 2026-10-18). Historique : 9/9 à 61/61 en 2.8.0 (2026-10-10).
 - CA3 — Dépendances runtime disjointes, prouvées. ✅
 - CA4 — Aucun banc rouge introduit par la modularisation. ✅
 

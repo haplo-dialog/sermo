@@ -30,7 +30,7 @@ What comes from upstream and what was written here is counted file by file in
 
 ## Project status
 
-- Version **3.0.0**. sermo has **a single maintainer**, S. Cage. There is no team
+- Version **3.1.2**. sermo has **a single maintainer**, S. Cage. There is no team
   behind it: an answer may take time.
 - Part of the code, documentation and tests was written with the help of an AI
   (Claude, by Anthropic), under the maintainer's direction. The maintainer tests
@@ -38,10 +38,20 @@ What comes from upstream and what was written here is counted file by file in
   line: checking relies mainly on the tests, which anyone can re-run
   ([AUTHORS.en](AUTHORS.en)).
 - **What is verified**: 178 benches (XML parsing, exported values, security,
-  clicks, opening the real examples, MCP servers) on the nine ports; the last
-  full run (2026-10-11) is detailed in
-  [BILAN_SANTE.md](BILAN_SANTE.md) (French only). Every figure can be replayed
-  with a command.
+  clicks, opening the real examples, MCP servers) on the nine ports in the full
+  run of 2026-10-11, detailed in [BILAN_SANTE.md](BILAN_SANTE.md) (French only).
+  In the full run (`ci/bancs.sh`, helper programs included):
+  262 tests, 0 failures (final run of 3.1.2, 2026-10-19). In the run of 2026-10-18, one bench was red (forbidden functions
+  in the sound and video player code); it was fixed and then replayed green.
+  Every figure can be replayed with a command.
+- **What sermo reads and writes outside**, through helper programs installed
+  separately: a PLC over Modbus or OPC UA (read-only); MQTT home automation
+  (read, and publish if an allow-list permits it); a MAVLink drone (read its
+  telemetry; set a parameter of the disarmed drone, send it a mission without
+  starting it, or give a safety order: return to launch, land, motor cut-off in
+  two presses); sound and video, played by mpv. sermo does not fly a drone: it
+  does not arm it, take it off or steer it, apart from the safety return to
+  launch and landing. The packages are under "Install".
 - **Known gaps**: the ports without GTK still differ from gtk3sermo on a few
   points (`auto-refresh`, the label of the Cancel button, `<terminal>`…). They are
   listed in [TODO.md](TODO.md) (French only).
@@ -50,7 +60,8 @@ What comes from upstream and what was written here is counted file by file in
 - The manuals are in French for now. The entry documents (this README,
   [SECURITY](SECURITY.en.md), [CONTRIBUTING](CONTRIBUTING.en.md),
   [MIGRATION](MIGRATION.en.md), [COMPILE](COMPILE.en.md),
-  [PACKAGING](PACKAGING.en.md), [VERSIONING](VERSIONING.en.md)) exist in English.
+  [PACKAGING](PACKAGING.en.md), [VERSIONING](VERSIONING.en.md),
+  [DEPENDENCIES](DEPENDENCIES.en.md), [LICENCES](LICENCES.en.md)) exist in English.
 
 ## Example
 
@@ -107,23 +118,43 @@ is linked into every binary; the backend only draws. The ncurses port was added
 without changing a single line of the core. Architecture:
 [MANUEL_DEVELOPPEUR.en.md](MANUEL_DEVELOPPEUR.en.md).
 
+## Other systems
+
+Outside Linux, a single port runs: **ncurses**, in a terminal.
+
+| System | How to get it | Verified |
+|---|---|---|
+| Windows 10 and 11 | `sermo-<version>-windows-x86_64.zip`, attached to the release: a single `ncursessermo.exe`, nothing to install | behaviour test under Wine; display and accented letters on a real Windows 11, commands and accented letters on a real Windows 10 |
+| Android (Termux) | recipe [`packaging/autres-os/termux/build.sh`](packaging/autres-os/termux/build.sh), built inside Termux | on a phone (Android 15, arm64) |
+| FreeBSD, OpenBSD | ports [`packaging/autres-os/freebsd/`](packaging/autres-os/freebsd/) and [`openbsd/`](packaging/autres-os/openbsd/) | in virtual machines (FreeBSD 15.1, OpenBSD 7.9) |
+| macOS | Homebrew formula [`packaging/autres-os/homebrew/sermo.rb`](packaging/autres-os/homebrew/sermo.rb) | on a macOS runner (Apple Silicon) |
+
+"Verified" means: the port returns the same values as gtk3sermo on the behaviour
+test and on the dialogs of the job scripts. Only Windows has a published binary;
+for Android, the BSDs and macOS there are only the recipes.
+
+- Building: [COMPILE.en.md](COMPILE.en.md) §7.
+- What changes for security (no `<input>` cap on Windows, hardening depending on
+  the processor): [SECURITY.en.md](SECURITY.en.md).
+- Details of each test: [packaging/autres-os/README.md](packaging/autres-os/README.md) (French only).
+
 ## Install
 
 There is no apt repository. The Debian packages are attached to the
-[**v3.0.0**](https://gitlab.com/haplo-dialog/sermo/-/releases/v3.0.0) release,
+[**v3.1.2**](https://gitlab.com/haplo-dialog/sermo/-/releases/v3.1.2) release,
 with their checksums: download, check, install.
 
 ```sh
-U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/3.0.0
-for f in sermo-backend-gtk3_3.0.0-1_amd64.deb sermo-gtkdialog_3.0.0-1_all.deb SHA256SUMS SHA256SUMS.asc; do
+U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/3.1.2
+for f in sermo-backend-gtk3_3.1.2-2_amd64.deb sermo-gtkdialog_3.1.2-2_all.deb SHA256SUMS SHA256SUMS.asc; do
     curl -fLO "$U/$f"
 done
 curl -fLO https://haplo-dialog.fr/cle-haplo-dialog.asc
 gpg --import cle-haplo-dialog.asc
 gpg --verify SHA256SUMS.asc SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
-sudo apt install ./sermo-backend-gtk3_3.0.0-1_amd64.deb \
-                 ./sermo-gtkdialog_3.0.0-1_all.deb
+sudo apt install ./sermo-backend-gtk3_3.1.2-2_amd64.deb \
+                 ./sermo-gtkdialog_3.1.2-2_all.deb
 ```
 
 For another port, replace `gtk3` with `gtk4`, `qt6`, `fltk1`, `efl1`, `sdl3`,
@@ -147,6 +178,20 @@ not be replaced everywhere at once.
 What is signed is the list of checksums (`SHA256SUMS`), not each `.deb` one by
 one: a package can be trusted because its checksum is in a list whose signature
 is good. There is no signed apt repository either.
+
+**Reading and writing outside**: each helper program has its own package, to
+install on top of the port (same download, same check):
+
+| For | Packages |
+|---|---|
+| reading a PLC | `sermo-source-modbus`, `sermo-source-opcua` |
+| MQTT home automation | `sermo-source-mqtt` (read), `sermo-cible-mqtt` (publish) |
+| a MAVLink drone | `sermo-source-mavlink` (read), `sermo-cible-mavlink` (set, mission, safety orders) |
+| sound and video | `sermo-cible-media` (play; pulls in `mpv`, recommends `bubblewrap`), `sermo-source-media` (follow the state) |
+
+Installing only the reading side cannot write anything. The allow-lists and
+the guards are in [SECURITY.en.md](SECURITY.en.md) and the
+[user manual](MANUEL_UTILISATEUR.en.md).
 
 **Build the packages yourself** (Debian testing, Docker):
 `bash packaging/construire-paquets.sh` builds in a clean container, runs lintian,
@@ -177,7 +222,7 @@ container). Compiled from source without `install`: delete the build directory.
 
 ## Coming from 1.x
 
-Install the 2.x packages of the ports you use (`sermo-backend-gtk3`,
+Install the current (3.1.0) packages of the ports you use (`sermo-backend-gtk3`,
 `sermo-gtkdialog`…): apt removes the 1.x packages they replace (`gtk3sermo`,
 `gtksermo`…). The commands keep their names. What changes and what to do:
 [MIGRATION.en.md](MIGRATION.en.md).
@@ -210,5 +255,6 @@ Install the 2.x packages of the ports you use (`sermo-backend-gtk3`,
 ## License
 
 GPL-2.0-or-later, like gtkdialog. A few files have another license (the boundary
-contract under MIT, Dear ImGui under MIT, some examples under CC0): see
+contract under MIT, Dear ImGui, LVGL and ThorVG under MIT, the MAVLink headers
+under MIT once compiled, some examples under CC0): see
 [LICENCES.en.md](LICENCES.en.md).

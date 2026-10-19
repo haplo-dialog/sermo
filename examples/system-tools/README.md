@@ -5,8 +5,13 @@ montre ce qu'on obtient quand on les assemble : un outil d'administration à six
 onglets, qui affiche de vraies données et fait un vrai travail.
 
 ```sh
-./system-tools.sh
+./system-tools.sh              # le premier port trouvé
+./system-tools.sh qt6sermo     # un port précis
 ```
+
+Sans argument, le script prend le premier binaire présent parmi `sermo`,
+`gtk3sermo`, `gtk4sermo`, `qt6sermo`, `fltk1sermo`, `efl1sermo`, `sdl3sermo`,
+`lvglsermo`, `ncursessermo` et `gtkdialog`.
 
 ## Debian seulement, et c'est dit au lancement
 
@@ -65,6 +70,8 @@ explique pourquoi le cadre est vide au lieu de le laisser vide.
 
 ## Licence
 
-Domaine public (**CC0-1.0**) : ce script est écrit par le projet. Le reste
-d'`examples/` vient de gtkdialog et suit la GPL. Copiez, découpez,
-republiez sans condition et sans mention.
+Domaine public (**CC0-1.0**) : ce script est écrit pour sermo. Copiez,
+découpez, republiez sans condition et sans mention.
+
+Une partie d'`examples/` vient de gtkdialog (GPL) ; chaque fichier dit sa
+licence.

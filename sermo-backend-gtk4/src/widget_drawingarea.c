@@ -67,8 +67,9 @@ GtkWidget *widget_drawingarea_create(AttributeSet *Attr, tag_attr *attr, gint Ty
     data->a = 1.0;
 
     if (attr) {
-        if ((v = get_tag_attribute(attr, "width")))  w = atoi(v);
-        if ((v = get_tag_attribute(attr, "height"))) h = atoi(v);
+        /* width-request comme les autres ports ; width gardé (ancienne écriture) */
+        if ((v = get_tag_attribute(attr, "width-request")) || (v = get_tag_attribute(attr, "width")))  w = atoi(v);
+        if ((v = get_tag_attribute(attr, "height-request")) || (v = get_tag_attribute(attr, "height"))) h = atoi(v);
         if ((v = get_tag_attribute(attr, "background-color"))) {
             GdkRGBA color;
             if (gdk_rgba_parse(&color, v)) {

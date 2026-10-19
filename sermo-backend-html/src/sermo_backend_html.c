@@ -268,7 +268,17 @@ int sermo_be_run_loop(void)
         fclose(mem);
         int rc = html_serve_once(buf, (unsigned long)blen);
         free(buf);
-        if (rc != 0) { printf("EXIT=\"abort\"\n"); g_setenv("EXIT", "abort", TRUE); fflush(stdout); }
+        /* Les variables du dialogue, comme les autres ports : la valeur reçue
+         * du navigateur si elle existe, sinon celle de départ. Jamais un nom
+         * que le dialogue ne déclare pas (voir serve_http.c, print_form). */
+        variables_export_all();
+        print_variables(NULL);
+        const char *sortie = rc == 0 ? html_valeur_soumise("EXIT") : NULL;
+        gchar *e = shell_escape_value(sortie ? sortie : "abort");
+        printf("EXIT=\"%s\"\n", e);
+        g_free(e);
+        g_setenv("EXIT", sortie ? sortie : "abort", TRUE);   /* --do lit EXIT dans l'environnement (manuel §3.2) */
+        fflush(stdout);
         exit(EXIT_SUCCESS);
     }
 

@@ -65,7 +65,7 @@ backend(s):
 
 ```sh
 TIMEOUT=5 bash tests/xml/run_tests.sh <BIN>                       # 55 PASS
-bash tests/comportement/run.sh <BIN>                              # 75 green
+bash tests/comportement/run.sh <BIN>                              # 78 green
 xvfb-run -a bash tests/garde_echappement_sortie.sh <BIN>          # OK — 4 cases
 ```
 
@@ -85,6 +85,10 @@ with the packages listed in [`ci/dependances.txt`](ci/dependances.txt):
 bash ci/construire.sh      # the core and the nine backends (or a few: ci/construire.sh qt6 ncurses)
 bash ci/bancs.sh           # every bench; one log per bench in _journaux/
 ```
+
+`ci/construire.sh` also builds, every time, the `sermoia-mcp` server and the
+eight helper programs of `sermo-source/` (all their libraries required), and
+the light variant of lvgl when lvgl is among the requested ports.
 
 `ci/bancs.sh` runs everything before concluding, prints one line per bench, and
 returns 1 as soon as a bench is red, hung, or verified nothing. It also checks

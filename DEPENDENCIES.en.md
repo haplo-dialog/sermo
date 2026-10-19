@@ -23,10 +23,13 @@ carries no `Depends` field (static library, nothing to load at runtime).
 | qt6 | `qt6-base-dev` |
 | fltk1 | `libfltk1.4-dev` |
 | efl1 | `libefl-all-dev` (Enlightenment/Elementary) |
-| sdl3 | `libsdl3-dev` |
+| sdl3 | `libsdl3-dev`, `libgl-dev` (OpenGL, the ImGui renderer), `libgdk-pixbuf-2.0-dev` (image loading) |
 | lvgl | `libx11-dev`, `libpng-dev`, `libwayland-dev`, `libxkbcommon-dev`, `wayland-protocols`, and a C++ compiler since 2.8.2 (ThorVG, the SVG engine embedded in LVGL); LVGL itself is embedded in `sermo-backend-lvgl/tiers/lvgl/` |
 | ncurses | `libncurses-dev` (provides `ncursesw.pc`) |
 | html | none |
+
+Building the packages (`debian/rules`) also needs `texinfo`: `makeinfo`
+produces the `info` manual there.
 
 ## Backends — runtime dependencies
 
@@ -58,9 +61,33 @@ complete list is recomputed on every package build
 | `sermoia-mcp` | `libglib2.0-dev`, `libjson-glib-dev` | GLib, json-glib, and at least one sermo port (`sermo-backend-qt6` recommended: it renders pictures without a display; gtk3, gtk4, fltk1 and lvgl need `xvfb`) |
 | `sermoman-mcp` | nothing (Python, standard library only) | `python3` |
 
+## Helper programs (`sermo-source/`)
+
+They serve `<input modbus>`, `<input opcua>`, `<input mqtt>`,
+`<input mavlink>`, `<input media>`, `<action mqtt>`, `<action mavlink>` and
+`<action media>`; they are installed separately (see
+[PACKAGING.en.md](PACKAGING.en.md)).
+
+| Programs | Build | Runtime |
+|---|---|---|
+| `sermo-source-modbus` | `libmodbus-dev` | libmodbus (`libmodbus5`) |
+| `sermo-source-opcua` | `libopen62541-1.4-dev` | open62541 (`libopen62541-1.4`) |
+| `sermo-source-mqtt`, `sermo-cible-mqtt` | `libmosquitto-dev` | libmosquitto (`libmosquitto1`) |
+| `sermo-source-mavlink`, `sermo-cible-mavlink` | nothing: the MAVLink C headers are bundled (`sermo-source/tiers/mavlink`) | none, apart from `libc6` |
+| `sermo-source-media`, `sermo-cible-media` | nothing | `sermo-cible-media` requires the `mpv` program and recommends `bubblewrap` (mpv's sandbox, required for a network source); `sermo-source-media` recommends `sermo-cible-media` |
+
+Without its library, a program is not built (CMake warns), unless
+`-DSERMO_SOURCE_EXIGER=ON` is set, which stops the build (see
+[COMPILE.en.md](COMPILE.en.md)). The runtime dependencies of the packages come
+from `dh_shlibdeps`, as for the backends.
+
 ## Checking / tests
 
 `xvfb` and `xdotool` (graphical guards: clicking, escaping; `run_examples.sh`),
 `imagemagick` (`import`, screenshots), `check` (libcheck: unit tests), `python3`
 (the ncurses password guard, in a pseudo-terminal). The XML bench itself runs
 without a display (`--print-ir`).
+
+The complete list of packages the CI installs, test tools included (the test
+servers `mosquitto` and `python3-pymodbus`, `mpv`, `bubblewrap` and `ffmpeg`
+for the player bench…), is [`ci/dependances.txt`](ci/dependances.txt).

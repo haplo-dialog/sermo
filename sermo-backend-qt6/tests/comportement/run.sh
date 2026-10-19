@@ -11,7 +11,7 @@
 #
 # LES .attendu SONT L'ÉTALON gtk3sermo. Ils ne sont PAS adaptés à qt6 : ce serait
 # consacrer la divergence au lieu de la corriger. Le banc est donc VOLONTAIREMENT
-# ROUGE tant que le port qt6 n'a pas atteint la parité (jalon M3). Chaque widget
+# ROUGE tant que le port qt6 n'a pas atteint la parité. Chaque widget
 # réparé le fait passer du rouge au vert. Vert = parité atteinte.
 #
 # ⛔ Ne JAMAIS « corriger » un .attendu vers ce que qt6 rend aujourd'hui pour

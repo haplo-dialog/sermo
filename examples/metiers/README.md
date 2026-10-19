@@ -55,7 +55,8 @@ Les règles sont dans [CONVENTION.md](CONVENTION.md). En bref :
 - `EXIT` dit quel bouton a été cliqué : seul le bouton d'action vaut accord ;
 - toute action passe par `agir`, qui l'affiche en mode à blanc.
 
-Ils sont en domaine public (CC0-1.0) : copiez-les et adaptez-les.
+Ils sont en domaine public (CC0-1.0) : copiez-les et adaptez-les. Le banc
+`verifie.sh`, lui, est sous GPL-2.0 ou plus récente.
 
 ## Le banc
 
@@ -63,7 +64,17 @@ Ils sont en domaine public (CC0-1.0) : copiez-les et adaptez-les.
 examples/metiers/verifie.sh                       # tous les scripts, neuf ports
 examples/metiers/verifie.sh --images dossier/     # plus une image par dialogue
 examples/metiers/verifie.sh --ports "gtk3 lvgl" examples/metiers/05-bornes-ecrans/*.sh
+examples/metiers/verifie.sh --garder passe/ --ports ncurses   # garder la passe, pour la comparer ailleurs
+examples/metiers/verifie.sh --rejouer passe/ --ports gtk3     # rejouer une passe gardée, et comparer
 ```
+
+- `--garder DOSSIER` range la passe (dialogues extraits, valeurs de chaque port) dans `DOSSIER`. Sur un
+  système sans GTK, avec `--ports "ncurses"`, rien n'est comparé sur place.
+- `--rejouer DOSSIER` reprend une passe gardée sans réextraire : les ports de `--ports` jouent les **mêmes**
+  dialogues, et leurs valeurs sont comparées à celles déjà là.
+
+Codes de sortie : `0` tout concorde · `1` un écart · `77` rien vérifié (gtk3sermo absent, ou passe à rejouer
+introuvable).
 
 Il vérifie l'en-tête et la structure de chaque script, fait analyser chaque dialogue
 par les neuf ports, puis **joue** chaque dialogue sur chaque port. Un minuteur

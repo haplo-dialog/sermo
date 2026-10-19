@@ -176,8 +176,7 @@ void widget_notebook_clear(variable *var) {}
 /* <input> : rejoué à chaque « refresh », comme l'étalon gtk3sermo. Première
  * ligne = numéro de page (atoi) → onglet choisi, page montrée, valeur
  * exportée. Comme gtk_notebook_set_current_page() : négatif = dernière page,
- * au-delà du nombre de pages = rien. Au premier passage la commande tourne
- * mais la page ne change pas, comme chez l'étalon. Aucune action n'est
+ * au-delà du nombre de pages = rien. Premier passage : voir le refresh. Aucune action n'est
  * branchée sur les onglets : la pose n'en joue pas. Jusqu'au 2026-10-13 il
  * n'était jamais lu. */
 void widget_notebook_refresh(variable *var)
@@ -192,10 +191,17 @@ void widget_notebook_refresh(variable *var)
     nb = (Evas_Object *)var->Widget;
     premier = widget_input_premier(var->Widget);
     ligne = widget_input_line(var->Attributes);
+    /* Premier passage : l'<input> pose la page, sauf si la balise porte
+     * page="…", qui l'emporte — règle de gtk4sermo, et de gtk3sermo depuis le
+     * 2026-10-18 (il perdait cette page, GtkNotebook la refusant avant
+     * l'affichage). Jusque-là ce port copiait cette perte. */
+    if (premier && (var->widget_tag_attr ? get_tag_attribute(var->widget_tag_attr, "page") : NULL)) {
+        g_free(ligne);
+        ligne = g_strdup((var->widget_tag_attr ? get_tag_attribute(var->widget_tag_attr, "page") : NULL));
+    }
     if (!ligne) return;
     idx = atoi(ligne);
     g_free(ligne);
-    if (premier) return;
     n = (int)(intptr_t)evas_object_data_get(nb, "page_count");
     if (n <= 0) return;
     if (idx < 0) idx = n - 1;

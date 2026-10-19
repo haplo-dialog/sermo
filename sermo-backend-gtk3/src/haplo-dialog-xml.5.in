@@ -2,7 +2,7 @@
 .\" sermo @PACKAGE_VERSION@ — sermo <devel@haplo-dialog.fr>
 .\" Licence : GPL-2.0-or-later
 .\"
-.TH HAPLO-DIALOG-XML 5 "27 August 2026" "sermo @PACKAGE_VERSION@" "sermo File Formats"
+.TH HAPLO-DIALOG-XML 5 "October 2026" "sermo @PACKAGE_VERSION@" "sermo File Formats"
 .SH NOM
 haplo-dialog-xml \- syntaxe XML des dialogues gtk3sermo
 .SH DESCRIPTION
@@ -15,7 +15,8 @@ La syntaxe est héritée de
 .BR gtkdialog (1)
 (László Pere, 2003\-2013). Là où gtkdialog est aujourd'hui abandonné,
 haplo-dialog le fait revivre : corrigé, durci et maintenu. Pour les scripts
-existants, gtk3sermo fournit un alias rétro-compatible nommé \fBgtkdialog\fR.
+existants, le paquet \fBsermo\-gtkdialog\fR fournit la commande
+\fBgtkdialog\fR, un lien vers gtk3sermo.
 
 .SH STRUCTURE GÉNÉRALE
 
@@ -177,7 +178,8 @@ message le signale sur la sortie d'erreur, le script continue.
 Cet ancrage a été écrit dans gtkdialog chez \fIwoof\-CE\fR (Puppy Linux) par
 Dima Krasner (2021), puis étendu par Mick Amadio (2021\(en2024), sous
 GPL\-2.0\-or\-later ; il est passé dans \fIgtk3dialog\fR (empaqueté par
-BunsenLabs), d'où il est porté ici. Voir \fBLICENCES.md\fR et \fBdebian/copyright\fR.
+BunsenLabs), d'où il est porté ici. Voir
+\fI/usr/share/doc/sermo\-backend\-gtk3/copyright\fR.
 .br
 \fBPort GTK\ 3 uniquement\fR : \fBgtk4sermo\fR ne contient aucun code
 layer-shell \(em voir \fBgtk4sermo-xml\fR(5).
@@ -224,16 +226,16 @@ signalée par un avertissement, et la valeur par défaut s'applique.
 .TP
 .B reserve="yes|no"
 Indique si le compositeur garde libre l'espace occupé par la surface. Par
-défaut BnoR : la surface flotte au-dessus des fenêtres ordinaires, qui
-occupent tout l'écran et passent dessous. Avec ByesR, le compositeur
+défaut \fBno\fR : la surface flotte au-dessus des fenêtres ordinaires, qui
+occupent tout l'écran et passent dessous. Avec \fByes\fR, le compositeur
 réserve la place et dispose les autres fenêtres à côté, ce qu'on attend d'une
 barre et rarement d'un dock ou d'un widget de bureau. L'attribut n'a d'effet
-qu'avec BedgeR ; sans lui, un avertissement le signale. Une valeur autre
-que ByesR, BtrueR, B1R, BnoR, BfalseR ou B0R est
-signalée et vaut BnoR.
+qu'avec \fBedge\fR ; sans lui, un avertissement le signale. Une valeur autre
+que \fByes\fR, \fBtrue\fR, \fB1\fR, \fBno\fR, \fBfalse\fR ou \fB0\fR est
+signalée et vaut \fBno\fR.
 .br
 La marge compte des deux côtés : mesuré sous sway, une barre de 48 pixels
-garde 48 pixels libres avec Bdist="0"R, et 88 avec Bdist="20"R.
+garde 48 pixels libres avec \fBdist="0"\fR, et 88 avec \fBdist="20"\fR.
 .PP
 Exemple : une barre de 40 pixels collée en haut de l'écran, sans marge, qui
 réserve sa place au lieu de recouvrir les fenêtres.
@@ -267,7 +269,15 @@ Sous-éléments : \fB<label>\fR pour le titre.
 .B <notebook>
 Onglets. Chaque enfant direct est une page.
 .br
-Sous-éléments : \fB<label>\fR pour le titre de chaque onglet.
+Titres des onglets : l'attribut \fBtab\-labels="A|B"\fR, dans l'ordre des
+pages (un \fB<label>\fR n'est pas lu ici).
+.br
+Page affichée à l'ouverture : l'attribut \fBpage=\fR\fIN\fR (pages comptées
+à partir de 0), ou un \fB<input>\fR dont la première ligne donne le numéro.
+Si les deux sont là, \fBpage=\fR l'emporte à l'ouverture ; \fBrefresh:\fR
+relit ensuite l'\fB<input>\fR.
+.br
+Valeur exportée : l'index de la page visible (\fB0\fR pour la première).
 .TP
 .B <expander>
 Section repliable/dépliable.
@@ -310,7 +320,9 @@ défaut, mais aucune action de sortie.
 Case à cocher. Exporte \fBtrue\fR ou \fBfalse\fR.
 .TP
 .B <radiobutton>
-Bouton radio. Groupe via \fB<variable>\fR commune.
+Bouton radio. Les boutons radio placés à la suite dans un même conteneur
+forment un groupe ; la fermeture d'un conteneur clôt le groupe. Chaque bouton
+a sa propre \fB<variable>\fR, qui exporte \fBtrue\fR ou \fBfalse\fR.
 .TP
 .B <togglebutton>
 Bouton avec état enfoncé/relâché.
@@ -369,44 +381,64 @@ Sous-éléments : \fB<item>texte</item>\fR.
 .B <list>
 Liste à défilement, sélection simple ou multiple.
 .br
-Sous-éléments : \fB<item>\fR, \fB<column-header>\fR.
+Sous-éléments : \fB<item>\fR. Une seule colonne, sans en\-tête.
 .TP
 .B <tree>
 Arbre hiérarchique.
 .br
-Sous-éléments : \fB<item>\fR (format \fIParent/Enfant\fR).
+Sous-éléments : \fB<item>\fR. Chaque \fB<item>\fR est une ligne à la racine
+de l'arbre ; ses colonnes sont séparées par \fB|\fR
+(\fB<item>doc.txt|12|lundi</item>\fR).
+.br
+En\-têtes de colonnes : un seul \fB<label>\fR, les titres séparés par
+\fB|\fR (\fB<label>Nom|Taille|Date</label>\fR) ; il fixe aussi le nombre de
+colonnes. L'attribut \fBcolumn\-header\-active\fR
+(\fBtrue|false|...\fR, une valeur par colonne) rend un en\-tête cliquable
+ou non.
 .TP
 .B <table>
 Grille de données tabulaires multi-colonnes.
 .br
-Sous-éléments : \fB<column-header>\fR, \fB<item>\fR.
+Sous-éléments : \fB<label>\fR pour les en\-têtes, séparés par \fB|\fR
+(\fB<label>Nom|Taille</label>\fR), puis \fB<item>\fR, colonnes séparées
+par \fB|\fR. Il n'y a pas de balise \fB<column\-header>\fR.
 
 .SS Valeurs numériques
 .TP
 .B <hscale>
 Glissière horizontale.
 .br
-Attributs : \fBvalue\fR, \fBmin\fR, \fBmax\fR, \fBstep\fR.
+Attributs : \fBrange\-min\fR, \fBrange\-max\fR, \fBrange\-step\fR,
+\fBrange\-value\fR (valeur de départ). Les anciens noms \fBscale\-min\fR,
+\fBscale\-max\fR, \fBscale\-step\fR, \fBscale\-value\fR sont encore lus.
 .TP
 .B <vscale>
-Glissière verticale.
+Glissière verticale. Mêmes attributs que \fB<hscale>\fR.
 .TP
 .B <spinbutton>
 Sélecteur numérique avec boutons +/\-.
 .br
-Attributs : \fBvalue\fR, \fBmin\fR, \fBmax\fR, \fBstep\fR, \fBdigits\fR.
+Attributs : \fBrange\-min\fR, \fBrange\-max\fR, \fBrange\-step\fR,
+\fBrange\-value\fR.
+.br
+Un attribut qui porte le nom d'une propriété du widget GTK (\fBdigits\fR, par
+exemple) lui est passé tel quel.
 .TP
 .B <levelbar>
 Barre de niveau (lecture seule).
 .br
-Attributs : \fBvalue\fR, \fBmin\fR, \fBmax\fR, \fBmode\fR (continuous|discrete).
+Attributs : \fBrange\-min\fR, \fBrange\-max\fR (0 et 1 par défaut),
+\fBmode\fR (continuous|discrete).
 
 .SS Progression et animation
 .TP
 .B <progressbar>
 Barre de progression.
 .br
-Attributs : \fBvalue\fR (0.0\-1.0), \fBtext\fR.
+Sa commande \fB<input>\fR écrit une ligne par étape : un entier de 0 à 100
+place la barre (au\-delà de 100, elle reste pleine) ; une ligne qui n'est pas
+un nombre devient le texte de la barre. À 100, les \fB<action>\fR de la barre
+sont jouées.
 .TP
 .B <spinner>
 Indicateur d'activité animé (roue de chargement).
@@ -439,6 +471,14 @@ Attributs : \fBicon-name\fR, \fBicon-size\fR.
 .TP
 .B <drawingarea>
 Zone de dessin personnalisée.
+.br
+Attributs : \fBwidth\-request\fR, \fBheight\-request\fR (taille demandée, en
+pixels), \fBembed\fR.
+.br
+Avec \fBembed="true"\fR, sous X11, la variable rend l'identifiant X11 de la
+zone une fois affichée ; elle est vide avant, sans \fBembed\fR, et sous
+Wayland. C'est la zone que nomme la clé \fBdans=\fR de
+\fB<action media>\fR (voir SOURCES ET CIBLES).
 .TP
 .B <colorbutton>
 Sélecteur de couleur.
@@ -468,7 +508,12 @@ Un \fB<menu>\fR sans libellé affiche un texte de repli.
 .B <menuitem>
 Entrée de menu.
 .br
-Attributs : \fBlabel\fR, \fBstock\fR, \fBaccel\fR.
+Attributs : \fBlabel\fR, \fBstock\fR, \fBaccel\-key\fR, \fBaccel\-mods\fR.
+.br
+Raccourci clavier : \fBaccel\-key\fR est le code de la touche (keyval GDK,
+en décimal ou en \fB0x\fR hexadécimal), \fBaccel\-mods\fR le masque des
+modificateurs (même écriture). \fBaccel\-mods\fR n'est lu qu'avec
+\fBaccel\-key\fR.
 
 .SS Terminal et séparateurs
 .TP
@@ -488,29 +533,145 @@ Séparateur vertical.
 .B <timer>
 Déclencheur temporel.
 .br
-Attributs : \fBinterval\fR (ms), \fBvisible\fR.
+Attributs : \fBinterval\fR, en \fBsecondes\fR (1 par défaut), sauf avec
+\fBmilliseconds="true"\fR : il compte alors en millisecondes (1000 par
+défaut) ; \fBvisible\fR.
 .br
 Sous-éléments : \fB<action>\fR exécutée à chaque tick.
 
-.SH VARIABLES D'ENVIRONNEMENT
+.SS Autres widgets
+.TP
+.B <grid>
+Mise en page en tableau.
+.TP
+.B <paned>
+Deux zones séparées par une poignée.
+.TP
+.B <wizard>
+Une suite d'étapes.
+.TP
+.B <menubutton>
+Un bouton qui ouvre un menu local.
+.TP
+.B <stack>
+Des pages sans onglets.
+.TP
+.B <flowbox>
+Des enfants qui se rangent seuls.
+.TP
+.B <overlay>
+Des enfants empilés.
+.TP
+.B <revealer>
+Un enfant qui se montre et se cache.
+.TP
+.B <toolbar>
+Barre d'actions.
+.PP
+Leurs attributs : manuel utilisateur, section 5.8.
+
+.SH SOURCES ET CIBLES
+.nh
+Certaines balises lisent un appareil ou un service au lieu de lancer une
+commande. Le texte de la balise est une adresse tout\-en\-un :
+.PP
+.RS 4
+.nf
+<input modbus>tcp://plc:502?esclave=1&registre=1</input>
+<input opcua>opc.tcp://server:4840?noeud=ns=1;s=pieces</input>
+<input mqtt>mqtt://broker:1883?sujet=maison/salon/temperature</input>
+<input mavlink>udp://:14550?champ=batterie</input>
+<input media>media://salon?donnee=etat</input>
+<action mqtt>mqtt://broker?sujet=maison/salon/lampe&valeur=on</action>
+<action mavlink>tcp://127.0.0.1:5760?ordre=rtl</action>
+<action media>media://salon?commande=pause</action>
+.fi
+.RE
+.IP \(bu 2
+Un \fB<input>\fR de ce genre ne fait que lire : rien n'est écrit dans
+l'appareil.
+.IP \(bu 2
+\fB<action mqtt>\fR, \fB<action mavlink>\fR et \fB<action media>\fR sont les
+seules écritures. Elles ne sont permises que dans un \fB<button>\fR ou un
+\fB<menuitem>\fR (une écriture demande un clic) ; ailleurs, le dialogue est
+refusé à la lecture. Une commande qui nomme à la main un programme
+\fBsermo\-cible\-\fR est refusée aussi.
+.IP \(bu 2
+La balise devient une commande qui lance un programme d'aide,
+\fB/usr/libexec/sermo/sermo\-source\-\fIPROTOCOLE\fR (lecture) ou
+\fB/usr/libexec/sermo/sermo\-cible\-\fIPROTOCOLE\fR (écriture). L'adresse part
+en un seul argument, encodée « pour cent », jamais par le shell.
+\fBSERMO_SOURCE_DIR\fR change le dossier ; il doit être un chemin absolu. Avec
+\fBSERMO_ALLOWED_CMDS\fR, il faut nommer le programme d'aide (par exemple
+\fB/usr/libexec/sermo/sermo\-source\-modbus\fR).
+.IP \(bu 2
+Chaque programme d'aide a son paquet : \fBsermo\-source\-modbus\fR,
+\fBsermo\-source\-opcua\fR, \fBsermo\-source\-mqtt\fR,
+\fBsermo\-source\-mavlink\fR, \fBsermo\-source\-media\fR,
+\fBsermo\-cible\-mqtt\fR, \fBsermo\-cible\-mavlink\fR, \fBsermo\-cible\-media\fR.
+.IP \(bu 2
+Les écritures MQTT et MAVLink ne vont que vers ce qu'une liste blanche nomme :
+\fI~/.config/sermo/cibles\-mqtt\fR ou \fI/etc/sermo/cibles\-mqtt\fR,
+\fI~/.config/sermo/cibles\-mavlink\fR ou \fI/etc/sermo/cibles\-mavlink\fR. Sans
+liste, rien n'est envoyé.
+.IP \(bu 2
+MQTT : des identifiants (\fBidentifiants=\fR) sur \fBmqtt://\fR (non chiffré)
+sont refusés avant toute connexion, sauf si l'adresse porte \fBclair=oui\fR.
+\fBmqtts://\fR exige \fBconfiance=\fR (l'autorité qui a signé le certificat du
+serveur).
+.IP \(bu 2
+MAVLink : télémétrie ; un clic règle un paramètre drone désarmé, donne un ordre
+de sécurité (\fBrtl\fR, \fBland\fR, ou \fBterminaison\fR pour couper les
+moteurs, qui demande un second appui dans les 5 s), ou envoie une mission
+jamais lancée. Pas de pilotage : ni armement, ni décollage, ni changement de
+mode, ni déplacement.
+.IP \(bu 2
+Média : son et vidéo joués par mpv. Une source réseau n'est lue que dans
+\fBbwrap\fR ; un fichier local est lu dans \fBbwrap\fR s'il est installé,
+sinon sans cage (un message le dit).
+.IP \(bu 2
+Média dans la fenêtre : la clé \fBdans=$\fR\fIVAR\fR de \fB<action media>\fR
+(\fIVAR\fR, la variable d'un \fB<drawingarea embed="true">\fR) affiche la
+vidéo dans cette zone. gtk3 sous X11 seulement ; sinon (variable vide,
+Wayland, autre port), la vidéo s'ouvre dans une fenêtre séparée, et le
+message le dit. Un \fBdans=\fR qui n'est pas de la forme \fB$\fR\fINOM\fR, ou
+une valeur qui n'est pas un nombre, est refusé : mpv n'est pas lancé.
+.PP
+Détail (chaque paramètre, chaque refus) : manuel utilisateur,
+\fBMANUEL_UTILISATEUR.md\fR section 7.3, dans les sources sur
+\fIhttps://gitlab.com/haplo\-dialog/sermo\fR.
+.hy
+
+.SH VALEURS RENDUES
 
 À la fermeture du dialogue (bouton \fBOK\fR ou \fBEXIT\fR), gtk3sermo
-exporte chaque widget ayant une \fB<variable>\fR dans l'environnement shell :
+\fBimprime\fR sur la sortie standard une ligne par widget qui a une
+\fB<variable>\fR :
 
 .RS 4
 .nf
-export MON_CHAMP="valeur saisie"
-export MA_CASE="true"
-export MON_SLIDER="0.75"
+MON_CHAMP="valeur saisie"
+MA_CASE="true"
+EXIT="OK"
 .fi
 .RE
 
-Le script appelant récupère ces valeurs directement :
+Rien n'est exporté vers le shell appelant : un enfant ne peut pas changer
+l'environnement de son parent. Le script lit ces lignes avec \fBeval\fR :
 
 .RS 4
 .nf
-gtk3sermo --program DIALOG_VAR
-echo "Nom saisi : $NOM"
+eval "$(gtk3sermo \-\-program=DIALOG_VAR)"
+echo "Nom saisi : $MON_CHAMP"
+.fi
+.RE
+
+Ou, plus sûr, avec \fB\-\-do\fR : la commande reçoit les valeurs dans son
+environnement, et une saisie n'est jamais relue comme du code :
+
+.RS 4
+.nf
+gtk3sermo \-\-program=DIALOG_VAR \-\-do='echo "Nom saisi : $MON_CHAMP"'
 .fi
 .RE
 
@@ -597,11 +758,14 @@ Vide le contenu du widget.
 .B removeselected:\fINOM\fR
 Retire du widget l'élément sélectionné.
 .TP
-.B insert:\fINOM\fR
-Insère un élément dans le widget.
+.B insert:\fISOURCE\fR,\fICIBLE\fR
+Copie la valeur du widget \fISOURCE\fR dans le widget \fICIBLE\fR : une
+ligne en tête d'une \fB<list>\fR, une ligne d'un \fB<tree>\fR, le texte
+d'une \fB<entry>\fR, du texte au curseur d'un \fB<edit>\fR. Les deux noms
+sont obligatoires.
 .TP
-.B append:\fINOM\fR
-Ajoute un élément à la fin du widget.
+.B append:\fISOURCE\fR,\fICIBLE\fR
+Même effet que \fBinsert:\fR.
 .TP
 .B break:
 Interrompt la liste d'actions du widget : les actions suivantes ne sont pas
@@ -611,10 +775,10 @@ exécutées.
 Fait avancer d'un cran une barre de progression en mode indéterminé.
 .TP
 .B start:\fINOM\fR
-Démarre le widget — un \fB<timer>\fR, par exemple.
+Lance l'animation d'un \fB<spinner>\fR.
 .TP
 .B stop:\fINOM\fR
-Arrête le widget.
+Arrête l'animation d'un \fB<spinner>\fR.
 
 .SS Où écrit save:
 
@@ -630,14 +794,15 @@ purement décoratifs répondent « Save not implemented for this widget ».
 
 .B Piège de locale.
 Les valeurs numériques sont écrites avec les fonctions de formatage du C, qui
-suivent la locale. Sous \fBfr_FR\fR, une \fB<levelbar>\fR à 0.4 produit
-littéralement \fB0,4\fR, avec une virgule. Un script qui relit ce fichier pour
+suivent la locale. Sous \fBfr_FR\fR, un \fB<hscale digits="1">\fR à 0.4
+produit littéralement \fB0,4\fR, avec une virgule. Un script qui relit ce fichier pour
 calculer doit poser \fBLC_NUMERIC=C\fR autour du dialogue.
 
 .SS Préfixes conditionnels
 
 Devant l'action d'un widget à bascule — \fB<checkbox>\fR, \fB<radiobutton>\fR,
-\fB<togglebutton>\fR, \fB<expander>\fR —, on peut écrire \fBif true \fR ou
+\fB<togglebutton>\fR, \fB<switch>\fR, \fB<expander>\fR, entrée de menu à
+cocher —, on peut écrire \fBif true \fR ou
 \fBif false \fR : l'action n'est exécutée que si l'état correspond.
 
 .RS 4
@@ -653,11 +818,11 @@ Devant l'action d'un widget à bascule — \fB<checkbox>\fR, \fB<radiobutton>\fR
 
 L'espace après \fBtrue\fR et \fBfalse\fR est
 .B obligatoire
-et il en faut exactement un : une tabulation ou un espace en trop ne sont pas
-reconnus, et l'action part alors au shell avec son préfixe, où elle échoue.
+et ce doit être un espace : une tabulation n'est pas reconnue, et l'action part
+alors au shell avec son préfixe, où elle échoue.
 
-Cette forme est distincte de l'attribut \fBcondition=\fR, qui, lui, prend le
-dessus quand les deux sont présents.
+Cette forme est distincte de l'attribut \fBcondition=\fR. Quand les deux sont
+présents, les deux doivent être vrais pour que l'action s'exécute.
 
 .SH SÉCURITÉ
 
@@ -670,11 +835,14 @@ Une commande sans métacaractère shell est lancée directement par
 .BR exec ()
 sans aucun shell. Une commande qui contient un métacaractère shell
 (\fB|\fR, \fB&\fR, \fB;\fR, \fB<\fR, \fB>\fR, \fB$\fR, \fB\(ga\fR, etc.)
-retombe sur \fB/bin/sh \-c\fR — ce qui rétablit le risque d'injection pour
+retombe sur le shell (\fBSERMO_SHELL\fR, sinon \fB/bin/sh\fR) — ce qui rétablit le risque d'injection pour
 cette commande — et cette retombée est journalisée. Positionner la variable
 d'environnement \fBSERMO_NO_SHELL_FALLBACK\fR (à n'importe quelle valeur)
 refuse cette retombée et fait échouer la commande en sécurité
-(\fIfail-closed\fR). Le parser XML rejette proprement les documents malformés.
+(\fIfail-closed\fR). \fBSERMO_ALLOWED_CMDS\fR (liste de commandes permises,
+séparées par des virgules) borne ce que le dialogue peut lancer, et refuse
+aussi la retombée sur le shell. Le parser XML rejette proprement les documents
+malformés.
 .PP
 Chaque \fB<input>\fR lit au plus 16 Mio, depuis une commande ou un fichier.
 Au\-delà, la lecture s'arrête comme sur une fin de fichier, et un
@@ -684,7 +852,8 @@ La barre de progression n'est pas plafonnée : elle ne garde qu'une ligne à
 la fois.
 .PP
 Ne jamais passer de données non validées dans une \fB<action>\fR ou un
-\fB<input>\fR. Voir \fBSECURITY.md\fR et
+\fB<input>\fR. Voir \fBSECURITY.md\fR (dans les sources, sur
+\fIhttps://gitlab.com/haplo\-dialog/sermo\fR) et
 .BR gtk3sermo (1)
 pour la politique de sécurité complète.
 
@@ -719,7 +888,7 @@ export FORMULAIRE='
   </vbox>
 </window>'
 
-gtk3sermo --program FORMULAIRE
+eval "$(gtk3sermo \-\-program=FORMULAIRE)"
 
 if [ "$CGU" = "true" ] && [ -n "$NOM" ]; then
     echo "Inscription de $NOM — CGU acceptées"
@@ -731,6 +900,8 @@ fi
 
 .SH VOIR AUSSI
 .BR gtk3sermo (1),
+.BR sermo (1),
+.BR gtk4sermo\-xml (5),
 .BR gtkdialog (1),
 .BR zenity (1),
 .BR yad (1)
@@ -753,5 +924,7 @@ Documentation sous licence GPL-2.0-or-later, comme le programme :
 un seul texte couvre tout le dépôt.
 .br
 Logiciel sous licence GPL-2.0-or-later.
+.\" 2026-10-19 : <drawingarea> (width-request, height-request, embed) ; clé dans= de <action media>.
+.\" 2026-10-18 : sources et cibles (<input|action mqtt, mavlink, media…>), valeurs imprimées et non exportées, attributs range-*, en-têtes de colonnes par <label>, minuteur en secondes, accel-key/accel-mods, SERMO_SHELL.
 .\" 2026-08-20 : ajout des attributs Wayland layer/edge/dist de <window> (portage layer-shell, d'après src/widget_window.c).
 .\" 2026-08-11 : page réalignée sur le code source (widgets d'après src/, <pixmap> via <input file>, calendrier AAAA-MM-JJ, SÉCURITÉ d'après safe_exec.c) — GTK 3 uniquement.

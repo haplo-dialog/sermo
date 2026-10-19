@@ -1,5 +1,7 @@
 # Code of Conduct — sermo
 
+[Français](CODE_OF_CONDUCT.md)
+
 ## Our pledge
 
 In the interest of fostering an open and welcoming environment, we pledge to make
@@ -27,14 +29,14 @@ Unacceptable behaviours:
 
 ## Responsibilities
 
-Project maintainers are responsible for clarifying the standards of acceptable
-behaviour and are expected to take appropriate and fair corrective action in
+The project maintainer is responsible for clarifying the standards of acceptable
+behaviour and is expected to take appropriate and fair corrective action in
 response to any unacceptable behaviour.
 
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behaviour may be
-reported by contacting the project team at `devel@haplo-dialog.fr`. All complaints
+reported by contacting the maintainer at `devel@haplo-dialog.fr`. All complaints
 will be reviewed and investigated and will result in a response that is deemed
 necessary and appropriate to the circumstances.
 

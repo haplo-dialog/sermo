@@ -1,3 +1,173 @@
+sermo (3.1.2-2) unstable; urgency=medium
+
+  * Documentation relue une seconde fois contre le code, en français et en
+    anglais : caméra comme source du lecteur, <notebook> (page=, <input>),
+    width-request port par port, pages du XML (onglets, radios, <tree>,
+    start: et stop:, append:), <terminal> port par port.
+  * Notés ici, livrés depuis la 3.1.0-9 sans entrée : g_strdup sûr sur NULL
+    dans cinq ports (sdl3, lvgl, html, ncurses, efl1), comme GLib ; banc du
+    lecteur, un nombre lu aussi sous une locale française.
+  * efl1sermo : <drawingarea> prend la taille demandée (taille minimale
+    posée ; dans une boîte, la zone retombait à zéro).
+  * Précisé (entrée 3.1.1-1) : gtk4 lit width-request et height-request de
+    <drawingarea> comme gtk3, qt6, fltk1 et efl1, pas comme tous les ports
+    (sdl3, lvgl, ncurses et html lisent <width> et <height>) ; mpv incrusté
+    reste dans sa cage quand bwrap est installé.
+
+ -- s.cage <devel@haplo-dialog.fr>  Mon, 19 Oct 2026 22:23:05 +0200
+
+sermo (3.1.2-1) unstable; urgency=medium
+
+  * sermo-cible-media, sécurité : la cage de mpv masque /run/user ; le bus
+    D-Bus de session et les autres sockets de session n'y sont plus
+    joignables. Seuls le dossier du lecteur, le son (pulse) et l'affichage
+    sont remontés ; DBUS_SESSION_BUS_ADDRESS est retiré ; le son passe par
+    pulse (PipeWire n'est pas remonté).
+
+ -- s.cage <devel@haplo-dialog.fr>  Mon, 19 Oct 2026 20:12:49 +0200
+
+sermo (3.1.1-1) unstable; urgency=medium
+
+  * <action media> : la vidéo dans la fenêtre du dialogue. Clé
+    dans=$VARIABLE, la variable d'un <drawingarea embed="true"> : gtk3
+    sous X11 y exporte l'identifiant X11 de la zone, mpv y dessine (--wid),
+    toujours dans sa cage bubblewrap. Sans embed, la variable reste vide.
+    Variable vide, Wayland ou autre port : la fenêtre séparée de la 3.1.0,
+    et le message le dit. Incrusté, mpv ne lit
+    ni souris ni clavier (sinon un clic laissé sur le bouton relançait
+    l'action) ; caméra incrustée : « CAMÉRA ACTIVE » écrit dans l'image.
+  * <drawingarea> (gtk4) : lit width-request et height-request, comme les
+    autres ports ; manuel corrigé.
+
+ -- s.cage <devel@haplo-dialog.fr>  Mon, 19 Oct 2026 15:20:57 +0200
+
+sermo (3.1.0-9) unstable; urgency=medium
+
+  * <action media> et <input media> : jouer un son ou une vidéo par mpv
+    depuis un bouton, et en suivre l'état, la position et la durée ;
+    nouveaux paquets sermo-cible-media (dépend de mpv, recommande
+    bubblewrap) et sermo-source-media (recommande sermo-cible-media). Seule
+    une liste fermée de commandes atteint mpv ; la source est contrôlée
+    avant (file, http, https, rtsp, rtsps ; aucun identifiant dans l'URL) ;
+    mpv tourne dans une cage bubblewrap, obligatoire pour une source
+    réseau. La vidéo s'affiche dans la fenêtre de mpv, pas dans le
+    dialogue ; non essayé sous Wayland.
+  * sermo-doc : quinze programmes prêts à l'emploi (porte d'approbation,
+    Bluetooth, bus CAN, aperçu de caméra, contrôle TLS, DNS, domotique
+    MQTT, GNSS, NTP, journal systemd, lecteur son et vidéo, liaison série,
+    testeur réseau, USB, Wi-Fi).
+  * MQTT : des identifiants sont refusés sur mqtt:// (non chiffré), avant
+    toute connexion, sauf si l'URL porte clair=oui (réseau local de
+    confiance).
+  * <action media> : la caméra comme source (source=v4l2:///dev/videoN) ;
+    nœud contrôlé, adresse donnée à mpv construite par le programme,
+    taille et format en listes fermées, cage sans réseau avec ce seul
+    nœud, fenêtre « CAMÉRA ACTIVE » ; une caméra occupée est refusée,
+    jamais forcée.
+  * <notebook> : l'<input> lu à l'ouverture choisit la page sur les neuf
+    ports (gtk3sermo la perdait) ; page="…" l'emporte au premier passage.
+  * htmlsermo, mode serve : seules les variables du dialogue sont rendues
+    (un champ ajouté à la page ressortait, PATH compris) ; chaque champ du
+    formulaire porte son nom ; le bouton à bascule rend son état.
+  * gtk4sermo : la jauge suit range-min et range-max.
+  * Code du lecteur : plus de strcpy ni de strtod (copies bornées, strtod_l
+    en locale C).
+  * Les pages de manuel du XML, haplo-dialog-xml(5) et
+    gtk4sermo-xml(5), sont livrées dans sermo-backend-gtk3 et
+    sermo-backend-gtk4.
+  * debian/copyright de nouveau produit par packaging/copyright-dep5.py,
+    et complété : MAVLink (LGPL-3 avec l'exception MAVLink), analyseur SVG
+    et code Lottie de ThorVG, rapidjson, polices Montserrat et Font
+    Awesome, lv_conf.h ; les scripts CC0 ne sont plus rangés sous GPL-2+.
+
+ -- s.cage <devel@haplo-dialog.fr>  Mon, 19 Oct 2026 10:39:03 +0200
+
+sermo (3.1.0-8) UNRELEASED; urgency=medium
+
+  * Pilotage de drone (<action mavlink> pilote=) retiré : il est reporté
+    en 3.2.0. Les réglages au sol, les ordres de sécurité et les missions
+    restent ; le son et la vidéo (media) restent.
+
+ -- s.cage <devel@haplo-dialog.fr>  Sun, 18 Oct 2026 21:36:06 +0200
+
+sermo (3.1.0-7) UNRELEASED; urgency=medium
+
+  * <action mavlink> pilote= : armer, décoller, changer de mode, désarmer
+    un ArduPilot Copter (ligne « pilotage » de la liste blanche : barrière,
+    hauteur de décollage, modes permis) ; deux appuis par ordre, délai
+    court depuis le clic, état frais, barrières de sermo et de
+    l'autopilote ; jamais STABILIZE, ACRO, ALT_HOLD ni AUTO.
+  * sermo-doc : un tableau de pilotage, avec le rappel de responsabilité.
+  * <action media> et <input media> : lire un son ou une vidéo avec mpv
+    d'un clic (lire, pause, position, volume, arrêt), sources vérifiées
+    avant mpv ; état du lecteur en lecture seule ; nouveaux paquets
+    sermo-cible-media et sermo-source-media.
+
+ -- s.cage <devel@haplo-dialog.fr>  Sun, 18 Oct 2026 17:40:00 +0200
+
+sermo (3.1.0-6) UNRELEASED; urgency=medium
+
+  * <action mavlink> : envoyer une mission de points de passage
+    (mission=fichier QGC WPL 110), bornée par la liste blanche (rayon
+    autour du drone, hauteur 120 m au plus, 100 points), drone désarmé ; la
+    mission est relue sur le drone et comparée avant le succès ; elle
+    n'est pas lancée.
+
+ -- s.cage <devel@haplo-dialog.fr>  Sun, 18 Oct 2026 12:57:46 +0200
+
+sermo (3.1.0-5) UNRELEASED; urgency=medium
+
+  * <action mavlink> : régler un paramètre d'un drone au sol, ou lui donner
+    un ordre de sécurité (retour au départ, atterrissage, coupure des
+    moteurs) ; nouveau paquet sermo-cible-mavlink. Rien ne part sans une
+    liste blanche voulue (~/.config/sermo/cibles-mavlink,
+    /etc/sermo/cibles-mavlink) ; armement, modes, sorties moteur,
+    interrupteur de sécurité et barrière jamais réglés ; drone désarmé pour
+    un réglage ; refus si une autre station sol parle ; coupure en deux
+    appuis dans les 5 s ; succès sur la seule preuve du drone.
+  * sermo-doc : un tableau de commandes drone.
+
+ -- s.cage <devel@haplo-dialog.fr>  Sun, 18 Oct 2026 00:04:42 +0200
+
+sermo (3.1.0-4) UNRELEASED; urgency=medium
+
+  * <input mavlink> : télémétrie d'un drone en lecture seule (UDP, TCP,
+    liaison série) ; nouveau paquet sermo-source-mavlink, en-têtes C de
+    MAVLink embarqués. Rien n'est émis sur le lien.
+  * sermo-doc : un tableau de bord drone, et un faux drone (pymavlink).
+
+ -- s.cage <devel@haplo-dialog.fr>  Sat, 17 Oct 2026 15:10:52 +0200
+
+sermo (3.1.0-3) UNRELEASED; urgency=medium
+
+  * <action mqtt> : commander la domotique d'un clic ; nouveau paquet
+    sermo-cible-mqtt. Rien ne part sans une liste blanche voulue
+    (~/.config/sermo/cibles-mqtt, /etc/sermo/cibles-mqtt) qui borne les
+    valeurs de chaque sujet ; refus d'un minuteur, d'un champ, d'un signal.
+
+ -- s.cage <devel@haplo-dialog.fr>  Sat, 17 Oct 2026 12:02:49 +0200
+
+sermo (3.1.0-2) UNRELEASED; urgency=medium
+
+  * <input mqtt> chiffré (mqtts://) : autorité de confiance obligatoire, nom
+    du serveur vérifié, clé TLS du poste possible.
+  * <input mqtt> : un serveur nommé est essayé sur chacune de ses IP
+    (« localhost »), et plus de SIGPIPE après une lecture chiffrée.
+
+ -- s.cage <devel@haplo-dialog.fr>  Sat, 17 Oct 2026 08:37:07 +0200
+
+sermo (3.1.0-1) UNRELEASED; urgency=medium
+
+  * Nouvelle version amont 3.1.0 (en préparation).
+  * <input mqtt> : lecture seule d'un sujet MQTT (domotique) depuis le XML,
+    par un programme d'aide ; nouveau paquet sermo-source-mqtt
+    (libmosquitto). Identifiants lus dans un fichier en 600, jamais dans
+    l'adresse ; jokers refusés ; jamais d'écriture.
+  * Programmes d'aide (modbus, opcua, mqtt) durcis comme les ports : CET et
+    FORTIFY manquaient aux deux premiers dans la 3.0.0.
+
+ -- s.cage <devel@haplo-dialog.fr>  Fri, 16 Oct 2026 20:21:10 +0200
+
 sermo (3.0.0-1) unstable; urgency=medium
 
   * Nouvelle version amont 3.0.0.

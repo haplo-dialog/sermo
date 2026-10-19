@@ -28,16 +28,23 @@
  * Attributs de tag :
  *   width-request="x"   — largeur souhaitée en pixels
  *   height-request="x"  — hauteur souhaitée en pixels
+ *   embed="true"        — exporter l'identifiant X11 de la zone (vidéo)
  *
  * Note : aucun rendu n'est effectué par défaut ; ce widget fournit une
  * surface que des scripts externes ou de futures extensions pourront
- * peindre. Il n'exporte aucune variable.
+ * peindre. Avec embed="true", sous X11, sa variable vaut l'identifiant X11
+ * de la zone (une fois affichée) : <action media> y incruste la vidéo
+ * (dans=$CANVAS). Sans cet attribut, ou ailleurs (Wayland), elle est vide :
+ * un script qui lit la variable à la fermeture garde la valeur d'avant.
  */
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
 #include <gtk/gtk.h>
+#ifdef GDK_WINDOWING_X11
+#include <gdk/gdkx.h>
+#endif
 #include "config.h"
 #include "gtk3d.h"
 #include "attributes.h"
@@ -45,6 +52,7 @@
 #include "widgets.h"
 #include "signals.h"
 #include "tag_attributes.h"
+#include "widget_drawingarea.h"
 
 //#define DEBUG_CONTENT
 //#define DEBUG_TRANSITS
@@ -92,6 +100,8 @@ GtkWidget *widget_drawingarea_create(
 
 	if (width > 0 || height > 0)
 		gtk_widget_set_size_request(widget, width, height);
+	if (attr && (value = get_tag_attribute(attr, "embed")) && strcasecmp(value, "true") == 0)
+		g_object_set_data(G_OBJECT(widget), "_embed", GINT_TO_POINTER(1));
 
 #ifdef DEBUG_TRANSITS
 	fprintf(stderr, "%s(): Exiting.\n", __func__);
@@ -105,8 +115,7 @@ GtkWidget *widget_drawingarea_create(
 
 gchar *widget_drawingarea_envvar_all_construct(variable *var)
 {
-	/* Not connected by default */
-	return g_strdup("");
+	return var ? widget_drawingarea_envvar_construct(var->Widget) : g_strdup("");
 }
 
 /***********************************************************************
@@ -115,7 +124,13 @@ gchar *widget_drawingarea_envvar_all_construct(variable *var)
 
 gchar *widget_drawingarea_envvar_construct(GtkWidget *widget)
 {
-	/* A drawing area exports no value. */
+	/* L'identifiant X11 de la zone, une fois affichée ; sinon rien. */
+#ifdef GDK_WINDOWING_X11
+	int embed = widget && g_object_get_data(G_OBJECT(widget), "_embed") != NULL;
+	GdkWindow *fenetre = embed && gtk_widget_get_realized(widget) ? gtk_widget_get_window(widget) : NULL;
+	if (fenetre && GDK_IS_X11_WINDOW(fenetre))
+		return g_strdup_printf("%lu", (unsigned long)GDK_WINDOW_XID(fenetre));
+#endif
 	return g_strdup("");
 }
 

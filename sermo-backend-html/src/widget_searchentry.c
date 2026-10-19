@@ -29,6 +29,7 @@
 GtkWidget *widget_searchentry_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
     WidgetNode *node = widget_node_new(WT_SEARCHENTRY, NULL, "Search...");
+    widget_node_bind_variable(node, Attr, attr);   /* nom du champ du formulaire (mode serve) */
     node->state.list.filter[0] = '\0';
 
     if (Attr) {

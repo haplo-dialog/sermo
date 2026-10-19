@@ -35,6 +35,10 @@ while IFS= read -r doc; do
         no=${ligne%%:*}
         lien=$(printf '%s' "${ligne#*:}" | sed -E 's/.*\]\(([^)]+)\).*/\1/')
         case "$lien" in *.en.md|http*|'') continue;; esac
+        # Un lien relatif part du dossier du document, pas de la racine : sans
+        # cela, « [Français](README.md) » dans examples/metiers/README.en.md était
+        # lu comme le README de la racine (vu le 2026-10-18).
+        lien=$(realpath -m --relative-to=. -- "$(dirname -- "$doc")/$lien")
         [ -f "$lien" ] || continue
         # Le lien de bascule de langue est l'exception : « [Français](X.md) » en
         # tête d'un X.en.md DOIT mener au français, c'est sa raison d'être. Sans

@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: CC0-1.0
+# Liste blanche de sermo-cible-mqtt pour domotique.sh avec fausse-maison.sh.
+# À copier SOI-MÊME, puis à protéger (sinon le fichier entier est refusé) :
+#   mkdir -p ~/.config/sermo
+#   cp cibles-mqtt.exemple ~/.config/sermo/cibles-mqtt
+#   chmod 600 ~/.config/sermo/cibles-mqtt
+# Une ligne par cible : <serveur> <sujet> <valeurs>. Valeurs : a|b|c (liste
+# fermée) ou min..max (nombre, point décimal). Pas de joker, pas de valeur libre.
+mqtt://127.0.0.1:18830 maison/salon/lampe on|off
+mqtt://127.0.0.1:18830 maison/salon/consigne 18..24

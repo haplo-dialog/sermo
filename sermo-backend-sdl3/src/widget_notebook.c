@@ -89,16 +89,18 @@ void widget_notebook_refresh(variable *var)
     /* <input> : rejoué à chaque « refresh », comme l'étalon gtk3sermo (sa
      * première ligne, atoi = numéro de page), sans jouer d'action. Règles de
      * gtk_notebook_set_current_page, mesurées : page négative → la dernière,
-     * page hors bornes → rien ne change. Au premier passage la commande tourne
-     * mais la page reste 0 : GtkNotebook refuse de changer de page tant que
-     * ses enfants ne sont pas montrés (mesuré, et dit dans le code de
-     * l'étalon). Jusqu'au 2026-10-13 il n'était jamais lu. */
+     * page hors bornes → rien ne change. Premier passage : voir plus bas.
+     * Jusqu'au 2026-10-13 il n'était jamais lu. */
     n = (WidgetNode *)var->Widget;
     ligne = widget_input_ligne(var->Attributes);
+    /* Premier passage : l'<input> pose la page, sauf si la balise porte
+     * page="…", qui l'emporte — règle de gtk4sermo, et de gtk3sermo depuis le
+     * 2026-10-18 (il perdait cette page, GtkNotebook la refusant avant
+     * l'affichage). Jusque-là ce port copiait cette perte. */
     if (!n->initialised) {
+        const char *impose = (var->widget_tag_attr ? get_tag_attribute(var->widget_tag_attr, "page") : NULL);
         n->initialised = TRUE;
-        g_free(ligne);
-        return;
+        if (impose) { g_free(ligne); ligne = g_strdup(impose); }
     }
     if (!ligne) return;
     page = atoi(ligne);

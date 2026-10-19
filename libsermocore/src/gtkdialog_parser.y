@@ -66,7 +66,65 @@ void yyerror_simple(char *c);
 int gtkdialog_lex(void);
 int gtkdialog_error(char *c);
 
-/* <input modbus> / <input opcua> : une commande ordinaire qui lance le
+/* <action mqtt> / <action mavlink> (sermo_source.h, sermo_cible_commande) : une ÉCRITURE. Elle
+ * n'est permise que sur un bouton ou une entrée de menu, c'est-à-dire sur un
+ * geste de l'utilisateur ; jamais sur un minuteur, un champ, une case… (qui
+ * peuvent jouer leurs actions sans clic : refresh, minuterie). Dans le flot des
+ * jetons, les attributs d'un widget (SET) précèdent le widget lui-même (PUSH) :
+ * le premier PUSH après une <action mqtt|mavlink> est donc son propriétaire. */
+static int cible_en_attente = 0;
+
+static void
+cible_verifier(token t)
+{
+	if (!cible_en_attente || (t & COMMAND) != PUSH)
+		return;
+	cible_en_attente = 0;
+	switch (t & WIDGET_TYPE) {
+	case WIDGET_BUTTON: case WIDGET_OKBUTTON: case WIDGET_CANCELBUTTON: case WIDGET_HELPBUTTON:
+	case WIDGET_NOBUTTON: case WIDGET_YESBUTTON: case WIDGET_MENUITEM:
+		return;
+	default:
+		gtkdialog_error("<action mqtt>, <action mavlink> and <action media> are only allowed in a <button> or a <menuitem>: "
+		                "a write needs a click (not a timer, a field, a checkbox…).");
+	}
+}
+#define token_store(t) (cible_verifier(t), token_store(t))
+#define token_store_attr(t, a) (cible_verifier(t), token_store_attr((t), (a)))
+
+/* Un programme d'écriture (sermo-cible-…) ne s'écrit pas à la main dans une
+ * commande : seules <action mqtt> et <action mavlink> l'appellent, après les
+ * vérifications ci-dessus. */
+static void
+cible_main_refusee(const char *commande, const char *ou)
+{
+	if (commande && strstr(commande, "sermo-cible-")) {
+		char message[160];
+		snprintf(message, sizeof message, "%s names a sermo-cible- write program: use <action mqtt|mavlink> in a "
+		         "<button> or a <menuitem> instead.", ou);
+		gtkdialog_error(message);
+	}
+}
+
+/* <action mqtt> / <action mavlink> : la commande du programme d'écriture, dont
+ * le propriétaire (un clic) est vérifié au PUSH suivant (cible_verifier). */
+static void
+action_cible(const char *protocole, const char *adresse)
+{
+	char raison[160];
+	char message[256];
+	char *commande = sermo_cible_commande(protocole, adresse, raison, sizeof raison);
+	if (!commande) {
+		snprintf(message, sizeof message, "<action %s>: %s", protocole, raison);
+		gtkdialog_error(message);
+		return;
+	}
+	token_store_with_argument(SET | ATTR_ACTION, commande);
+	free(commande);
+	cible_en_attente = 1;
+}
+
+/* <input modbus> / <input opcua> / <input mqtt> : une commande ordinaire qui lance le
  * programme d'aide (sermo_source.h) ; une adresse refusée arrête l'analyse. */
 static void
 input_source(const char *protocole, const char *adresse)
@@ -147,7 +205,7 @@ start_up(void)
 %token         WIDTH EWIDTH
 %token         HEIGHT EHEIGHT
 %token         INPUT INPUTFILE EINPUT PART_INPUT PART_INPUTFILE
-%token         INPUTMODBUS INPUTOPCUA
+%token         INPUTMODBUS INPUTOPCUA INPUTMQTT INPUTMAVLINK ACTIONMQTT ACTIONMAVLINK INPUTMEDIA ACTIONMEDIA
 %token         OUTPUT OUTPUTFILE EOUTPUT
 
 %token         ACTION EACTION PART_ACTION 
@@ -1107,9 +1165,11 @@ height
 
 input
   : INPUT STRING EINPUT    { 
+		cible_main_refusee($2, "<input>");
 		token_store_with_argument(SET|ATTR_INPUT|SUB_ATTR_SHELL,$2);
 	}
   | PART_INPUT tagattr '>' STRING EINPUT {
+		cible_main_refusee($4, "<input>");
 		token_store_with_argument_attr(SET|ATTR_INPUT, $4, $2); 
 	}
   | INPUTFILE STRING EINPUT  { 
@@ -1139,11 +1199,31 @@ input
   | INPUTOPCUA STRING EINPUT {
 		input_source("opcua", $2);
 	}
+  | INPUTMQTT STRING EINPUT {
+		input_source("mqtt", $2);
+	}
+  | INPUTMAVLINK STRING EINPUT {
+		/* Télémétrie d'un drone, lecture seule (sermo-source-mavlink). */
+		input_source("mavlink", $2);
+	}
   | INPUTMODBUS EINPUT {
 		gtkdialog_error("the <input modbus> element is empty; it requires an address (tcp://host:502?registre=1).");
 	}
   | INPUTOPCUA EINPUT {
 		gtkdialog_error("the <input opcua> element is empty; it requires an address (opc.tcp://host:4840?noeud=…).");
+	}
+  | INPUTMQTT EINPUT {
+		gtkdialog_error("the <input mqtt> element is empty; it requires an address (mqtt://host:1883?sujet=…).");
+	}
+  | INPUTMAVLINK EINPUT {
+		gtkdialog_error("the <input mavlink> element is empty; it requires an address (udp://:14550?champ=…).");
+	}
+  | INPUTMEDIA STRING EINPUT {
+		/* État d'un lecteur son/vidéo (sermo-source-media). */
+		input_source("media", $2);
+	}
+  | INPUTMEDIA EINPUT {
+		gtkdialog_error("the <input media> element is empty; it requires an address (media://name?donnee=etat).");
 	}
   ;
 
@@ -1181,10 +1261,34 @@ variable
 
 action
   : ACTION STRING EACTION  { 
+		cible_main_refusee($2, "<action>");
 		token_store_with_argument( SET|ATTR_ACTION, $2); 
 	}
   | PART_ACTION tagattr '>' STRING EACTION {
+		cible_main_refusee($4, "<action>");
 		token_store_with_argument_attr(SET | ATTR_ACTION, $4, $2);
+	}
+  | ACTIONMQTT STRING EACTION {
+		/* Écriture domotique : voir cible_verifier() et sermo_source.h. */
+		action_cible("mqtt", $2);
+	}
+  | ACTIONMQTT EACTION {
+		gtkdialog_error("the <action mqtt> element is empty; it requires an address (mqtt://host?sujet=…&valeur=…).");
+	}
+  | ACTIONMAVLINK STRING EACTION {
+		/* Écriture drone (réglage au sol, ordre de sécurité) : même cadre. */
+		action_cible("mavlink", $2);
+	}
+  | ACTIONMAVLINK EACTION {
+		gtkdialog_error("the <action mavlink> element is empty; it requires an address (tcp://host:5760?ordre=rtl…).");
+	}
+  | ACTIONMEDIA STRING EACTION {
+		/* Commande d'un lecteur son/vidéo (sermo-cible-media) : un
+		 * bouton ou un menu seulement, comme toute <action> de ce genre. */
+		action_cible("media", $2);
+	}
+  | ACTIONMEDIA EACTION {
+		gtkdialog_error("the <action media> element is empty; it requires an address (media://name?commande=lire&source=…).");
 	}
   | ACTION EACTION {
 		gtkdialog_error("the <action> element is empty; it requires a command.");

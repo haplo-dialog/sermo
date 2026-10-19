@@ -24,7 +24,7 @@ backend. Le binaire par défaut est choisi par `update-alternatives` sous le nom
 |---|---|---|
 | **Lire la doc** (widgets, attributs, exemples) | `sermoman-mcp` | documentation seule, **lecture seule** |
 | **Savoir écrire du XML correct** (actions, pièges) | la section 1 ci-dessous | connaissance de référence |
-| **Vérifier et VOIR** un dialogue | le binaire `sermo` | `--print-ir`, `--render-png` |
+| **Vérifier et VOIR** un dialogue | le binaire `sermo`, ou `sermoia-mcp` | `--print-ir`, `--render-png` ; `sermo_check`, `sermo_render` |
 
 Règle simple :
 
@@ -34,10 +34,13 @@ Règle simple :
 - Contrôler ce qu'on vient d'écrire → la **ligne de commande** `sermo`, pas un
   serveur MCP.
 
-> **sermo ne fournit qu'un seul serveur MCP : `sermoman-mcp`, celui du manuel.**
-> Il informe, il n'agit pas. La génération de fenêtres par une IA — catalogue
-> d'exemples notés, vote, boucle de correction automatique — **a été retirée de
-> sermo** et ne fait plus partie de ce dépôt.
+> **sermo fournit deux serveurs MCP** (depuis la 2.8.0, en paquets depuis la
+> 2.8.2). `sermoman-mcp`, celui du manuel, informe et n'agit pas. `sermoia-mcp`
+> fait pratiquer : il fait vérifier un dialogue par l'analyseur réel
+> (`sermo_check`), le dessine en PNG avec les commandes bloquées
+> (`sermo_render`), sert des exemples validés (`sermo_examples`), et seul
+> `sermo_run` exécute les commandes du dialogue, pour le montrer à
+> l'utilisateur. Voir `sermoia-mcp/README.md`.
 
 ---
 
@@ -89,15 +92,24 @@ Les plus utiles : `exit:VALEUR`, `launch:NOM`, `closewindow:NOM`,
 `grabfocus:`, `refresh:`, `save:`, `fileselect:`, `clear:`,
 `removeselected:` (un seul mot, **sans tiret**), `break`.
 
+Une action peut aussi **écrire vers l'extérieur**, sans shell : `<action mqtt>`,
+`<action mavlink>`, `<action media>`, seulement dans un `<button>` ou un
+`<menuitem>`, et (pour MQTT et MAVLink) seulement vers ce qu'autorise une liste
+blanche écrite par l'utilisateur. Leurs pendants en lecture : `<input modbus>`,
+`<input opcua>`, `<input mqtt>`, `<input mavlink>`, `<input media>`. Voir
+« SOURCES ET CIBLES » dans la référence.
+
 ⚠️ sermo n'a **pas** les `set:Widget.prop` ni le presse-papiers
 (`cut/copy/paste/selectall`) de gtkdialog3. `append:` / `insert:` sont
 incomplets — à éviter.
 
 ### Les pièges à connaître
 
-- **Ce n'est PAS du XML complet.** Pas de commentaires `<!-- -->`, ni CDATA, ni
-  DTD, ni namespaces, ni entités `&amp;` : tout cela **fait échouer l'analyse**.
-  Mettez les commentaires dans le script shell, autour.
+- **Ce n'est PAS du XML complet.** Pas de CDATA, ni DTD, ni balise à préfixe
+  d'espace de noms (`<x:text>`) : cela **fait échouer l'analyse**. Les
+  commentaires `<!-- -->` sont permis (ignorés). Les entités `&lt;` `&gt;` `&amp;` `&quot;` `&apos;` (et `&#NN;`) sont décodées
+  dans un texte sans guillemets et dans une valeur d'attribut, pas dans une
+  chaîne entre guillemets.
 - **Échappement dans le balisage.** Échappez `<` `>` `"` `\` par antislash
   (`\<`, `\>`, `\"`, `\\`). Vérifiez toujours avec `--print-ir`.
 - **Échappement de sortie durci (propre à sermo).** La sortie `NOM="…"` échappe
@@ -119,8 +131,10 @@ incomplets — à éviter.
   n'est pas géré directement.
 - **timer.** Ne tourne que s'il est *sensitive* ; `disable:` / `enable:` le
   pilotent ; `visible="false"` le cache.
-- **Disponibilité selon le backend.** `terminal` exige VTE et n'existe que sur
-  les backends GTK. Les widgets graphiques (image, colorbutton, drawingarea…)
+- **Disponibilité selon le backend.** `terminal` n'est interactif que sur gtk3
+  et gtk4 (VTE), et sur qt6 construit avec qtermwidget6 ; fltk1 l'affiche dans
+  un Fl_Terminal sans saisie ; les autres ports montrent la sortie de la
+  commande. Les widgets graphiques (image, colorbutton, drawingarea…)
   n'ont pas d'équivalent sur `ncurses`.
 
 #### Les cinq formes qui ont l'air justes et qui arrêtent le programme

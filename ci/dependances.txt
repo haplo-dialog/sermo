@@ -39,6 +39,18 @@ libjson-glib-dev
 libmodbus-dev
 libopen62541-1.4-dev
 python3-pymodbus
+# <input mqtt> : bibliothèque, et les serveurs de son banc (mosquitto lancé
+# par le banc, jamais le service du système)
+libmosquitto-dev
+mosquitto
+mosquitto-clients
+# <input mavlink> : le faux drone de son banc (en-têtes C embarqués, tiers/mavlink)
+python3-pymavlink
+# <input media> / <action media> : le vrai mpv et sa cage (étape 8 du banc),
+# ffmpeg fabrique le son d'essai ; sans eux le banc du lecteur rend 77 (sauté)
+mpv
+bubblewrap
+ffmpeg
 # examples/modbus lit par mbpoll (banc des exemples réels)
 mbpoll
 openssl

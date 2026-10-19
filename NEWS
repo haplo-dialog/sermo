@@ -5,6 +5,112 @@ Ce fichier résume les changements du point de vue de l'utilisateur.
 Pour l'historique technique complet, voir CHANGELOG.md.
 
 ──────────────────────────────────────────────────
+Version 3.1.2 (2026-10-20)
+──────────────────────────────────────────────────
+
+Correctif de sécurité du lecteur son et vidéo : la cage de mpv ne laisse plus
+joindre le bus D-Bus de session ni les autres sockets de votre session, sauf
+les sockets « abstraits », encore joignables pour une source réseau (pas de
+--unshare-net), voir SECURITY.md ; seuls le son, l'affichage et le dossier du
+lecteur y restent. Le son passe
+par pulse. En pause, la position affichée peut avoir 0,1 à 0,2 s de retard
+(latence de pulse). Aussi : efl1sermo donne à un <drawingarea> la taille
+demandée ; la documentation a été relue une seconde fois contre le code.
+
+──────────────────────────────────────────────────
+Version 3.1.1 (2026-10-19)
+──────────────────────────────────────────────────
+
+La vidéo dans la fenêtre du dialogue : avec gtk3 sous X11, une zone
+<drawingarea embed="true"><variable>ECRAN</variable></drawingarea> peut accueillir l'image
+de <action media> (clé dans=$ECRAN). Ailleurs (Wayland, autres ports), la vidéo
+s'ouvre dans sa propre fenêtre, comme en 3.1.0, et le message le dit. Une
+caméra incrustée porte « CAMÉRA ACTIVE » écrit dans l'image.
+
+<drawingarea> lit width-request et height-request avec gtk4, comme gtk3, qt6,
+fltk1 et efl1 (gtk4 lisait seulement width et height ; ces deux noms restent
+acceptés). sdl3, lvgl, ncurses et html lisent <width> et <height>.
+
+──────────────────────────────────────────────────
+Version 3.1.0 (2026-10-19)
+──────────────────────────────────────────────────
+
+Lire la domotique : <input mqtt>mqtt://hôte?sujet=maison/salon/temperature</input>
+montre la valeur d'un sujet MQTT, en lecture seule (paquet sermo-source-mqtt).
+Le mot de passe vit dans un fichier à vous seul (identifiants=/chemin), jamais
+dans le XML. Chiffré : mqtts://hôte?sujet=…&confiance=/chemin/autorite.pem.
+Sur mqtt:// (non chiffré), des identifiants sont refusés avant toute
+connexion, car ils passeraient en clair ; ajoutez clair=oui à l'adresse pour
+les permettre sur un réseau local de confiance. Vaut pour la lecture comme
+pour <action mqtt>.
+
+Commander la domotique d'un clic : <action mqtt>mqtt://hôte?sujet=…&valeur=on</action>
+dans un bouton (paquet sermo-cible-mqtt). Rien ne part sans une liste blanche
+écrite exprès (~/.config/sermo/cibles-mqtt), qui borne les valeurs permises.
+
+Lire un drone : <input mavlink>udp://:14550?champ=batterie</input> montre la
+télémétrie de l'autopilote (batterie, position, hauteur, armé), en lecture
+seule — rien n'est envoyé au drone (paquet sermo-source-mavlink).
+
+Commander un drone d'un clic : <action mavlink>tcp://hôte:5760?ordre=rtl</action>
+ramène le drone ; parametre=WP_SPD&valeur=5 règle un paramètre, drone désarmé
+seulement (paquet sermo-cible-mavlink). Rien ne part sans une liste blanche
+écrite exprès (~/.config/sermo/cibles-mavlink) ; couper les moteurs demande
+deux appuis. Essayé contre un autopilote simulé, pas sur un vrai drone.
+mission=/chemin/vol.waypoints envoie une mission de points de passage
+préparée dans Mission Planner ou QGroundControl, bornée par la liste
+(mission rayon 500 hauteur 120), puis la relit sur le drone ; sans la lancer.
+
+Son et vidéo : <action media>media://nom?commande=lire&source=file:///chemin/son.ogg</action>
+dans un bouton lit un son ou une vidéo par mpv ; pause, reprendre, arreter,
+aller, volume, muet, son le commandent (paquet sermo-cible-media, qui
+dépend de mpv). <input media>media://nom?donnee=etat</input> montre l'état,
+la position ou la durée (paquet sermo-source-media). Seule une liste fermée
+de commandes parvient à mpv ; les sources sont filtrées avant lui (fichier,
+http(s), rtsp(s), jamais d'identifiants dans l'adresse) ; mpv tourne dans
+une cage bubblewrap, obligatoire pour une source réseau (sans bwrap, un
+fichier local ou une caméra est lu sans cage, et un message le dit). Une caméra est aussi
+une source : source=v4l2:///dev/video0 (taille et format en listes
+fermées) ; la fenêtre de mpv dit « CAMÉRA ACTIVE », rien n'est enregistré,
+une caméra occupée est refusée sans rien forcer. Limites : la vidéo
+s'affiche dans la fenêtre de mpv, pas encore dans le dialogue ; Wayland
+non essayé.
+
+Quinze nouveaux exemples prêts à l'emploi (paquet sermo-doc) :
+approbation (une fenêtre Refuser / Autoriser avant une action risquée),
+bluetooth-scan (appareils Bluetooth à portée), bus-can (écouter un bus CAN,
+envoyer une trame après approbation), camera-apercu (voir une caméra sur un
+clic, sans rien enregistrer), certificat-tls (le certificat d'un serveur),
+dns-testeur (comparer des résolveurs), domotique-mqtt (capteurs et
+commandes MQTT), gnss-moniteur (récepteur GNSS par gpsd), heure-ntp
+(l'horloge est-elle juste ?), journal-direct (le journal systemd en
+direct), lecteur-media (lire un son ou une vidéo), liaison-serie (écouter
+un port série, écrire après approbation), reseau-testeur (TCP, port, HTTP,
+UDP, ping), usb-moniteur (appareils USB et branchements en direct),
+wifi-scan (réseaux Wi-Fi à portée).
+
+Corrigé : htmlsermo en mode serve ne rend plus que les variables du dialogue
+(un champ ajouté à la page, PATH par exemple, ressortait et un eval le
+reprenait), et chaque champ du formulaire porte son nom ; la jauge de
+gtk4sermo suit range-min et range-max ; <notebook> : l'<input> lu à
+l'ouverture choisit la page, sur les neuf ports ; g_strdup ne plante plus
+sur une valeur vide (NULL) dans cinq ports (sdl3, lvgl, html, ncurses,
+efl1) ; le <drawingarea> de gtk4sermo lit width-request et height-request,
+comme les autres ports.
+
+Aussi : system-tools ne demande plus qu'un mot de passe pour la mise à
+jour ; les pages de manuel du langage XML (section 5) sont livrées ; la
+documentation décrit Windows, Android, BSD et macOS.
+
+Mesuré : ci/bancs.sh complet, 262 bancs, 0 échec (passage final de la 3.1.2, 2026-10-19). Le 2026-10-18 : un banc rouge
+au premier passage (corrigé, rejoué vert) ; 78 cas de comportement, à
+parité sur les 9 ports ; construction sans aucun avertissement.
+
+Pas dans cette version, prévu en 3.2.0 : piloter un drone (armer,
+décoller, changer de mode, se déplacer), la vidéo dans la fenêtre du
+dialogue, l'essai du lecteur sous Wayland.
+
+──────────────────────────────────────────────────
 Version 3.0.0
 ──────────────────────────────────────────────────
 

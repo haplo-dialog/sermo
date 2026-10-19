@@ -18,6 +18,7 @@ variants, adding a new backend, and the regression benches.
 8. Security — mandatory rules
 9. Architectural roadmap (Part 3)
 10. Side components
+11. Helper programs (`sermo-source/`)
 
 ---
 
@@ -69,6 +70,13 @@ option), because toolkit families do not share an ABI:
 | **glib/gtk3** | `-DSERMOCORE_GLIB=ON` | gtk3 | Real GLib/GTK 3 (native ABI of the `GList`, `GtkWidget`… structs), for the GObject introspection the GTK family uses. |
 | **gtk4** | `-DSERMOCORE_GTK4=ON` | gtk4 | Core files **rewritten for GTK 4**, **vendored in `libsermocore/src-gtk4/`** (5 files: `automaton.c`, `variables.c`, `signals.c`, `tag_attributes.c`, `gtkdialog.c` plus the `gtk4-compat.c` shim; the others, `actions.c` included, come from `src/`): GTK 4 removed `gtk_main`, `gtk_socket`, and the old event model. No external dependency. See §9. |
 
+Two other build options:
+
+| CMake option | Where | Default | Effect |
+|---|---|---|---|
+| `SERMOCORE_VTE` | `libsermocore` | `ON` | `<terminal>` widget through VTE in the glib/gtk3 and gtk4 variants. The choice goes into `sermocore.pc` (variable `vte`), and the gtk3 and gtk4 backends follow it. A missing VTE stops the build; `-DSERMOCORE_VTE=OFF` builds without it, and `<terminal>` only shows a warning. |
+| `SERMO_LVGL_LEGER` | `sermo-backend-lvgl` | `OFF` | lvgl without ThorVG or Lottie, hence without SVG icons (package `sermo-backend-lvgl-leger`, same `lvglsermo` binary). |
+
 The **neutral** and **gtk3** variants today compile **the same** core sources
 (`src/*.c`), but for one file: `sermo_progress.c` (the progress bar read as it
 comes) only goes into the neutral variant, gtk3 keeping its own reading thread
@@ -80,12 +88,17 @@ no longer applies. The only family-specific file on the neutral/gtk3 side is the
 of the core into the backend (`tag_set_property.c`) because it relies on GObject
 introspection, which neutral backends do not have.
 
-Core files: `gtkdialog.c` (orchestration + `main`), `safe_exec.c`, `variables.c`,
+Core files: `gtkdialog.c` (orchestration + `main`), `safe_exec.c`,
+`sermo_lanceur.c` (the command launcher, in a single place, and the choice of
+shell: `SERMO_SHELL`, otherwise `SERMO_SHELL_DEFAUT`), `variables.c`,
 `stack.c`, `automaton.c`, `attributes.c`, `signals.c`, `stringman.c`, `actions.c`,
 `tag_attributes.c` (helpers), `sermo_icon_theme.c`, `sermo_input.c` (the
-`<input>` cap), `sermo_focus.c` (which widget takes the focus when a window
-opens), `sermo_progress.c` (neutral variant only), plus `gtkdialog_lexer.l` /
-`gtkdialog_parser.y` (the grammar, source of truth).
+`<input>` cap), `sermo_source.c` (translation of
+`<input modbus|opcua|mqtt|mavlink|media>` and `<action mqtt|mavlink|media>` into
+a command, see §11), `sermo_focus.c` (which widget takes the focus when a window
+opens), `sermo_progress.c` (neutral variant only), `sermo_win32.c` (Windows
+only: console, command launching, an object built without the shim), plus
+`gtkdialog_lexer.l` / `gtkdialog_parser.y` (the grammar, source of truth).
 
 ## 3. The core ↔ backend boundary
 
@@ -155,8 +168,8 @@ gtk3 / gtk4).
    the toolkit libraries, `-D_FORTIFY_SOURCE=3 -fstack-protector-strong
    -fcf-protection=full`.
 5. Build against the installed library
-   (`PKG_CONFIG_PATH=…/libsermocore/_install`), then pass **the three benches**
-   (§6).
+   (`PKG_CONFIG_PATH=…/libsermocore/_install/lib/pkgconfig`), then pass **the
+   three benches** (§6).
 
 Symbols typically to be provided as well (resolved at link time):
 `widget_show_list` / `widget_hide_list` (visibility globals), and the glue the
@@ -177,7 +190,7 @@ binary:
 TIMEOUT=5 bash tests/xml/run_tests.sh <binary>           # expected: 55 PASS
 
 # 2. Behaviour — exported values == those of the gtk3sermo reference
-bash tests/comportement/run.sh <binary>                  # expected: 75/75
+bash tests/comportement/run.sh <binary>                  # expected: 78/78
 
 # 3. Guard — values at risk do not go back through the shell
 xvfb-run -a bash tests/garde_echappement_sortie.sh <binary>        # OK — 4 cases
@@ -195,18 +208,30 @@ with gtk3sermo.
 
 ### Every bench at once — the CI
 
-`ci/construire.sh` builds the useful core variants then the requested backends
-(default: all nine); `ci/bancs.sh` chains **every** bench: core unit tests,
-source guards (SPDX, forbidden functions, progress-bar thread, workstation
-headers, core FORTIFY), then for each backend the XML, the hardening,
-`SERMO_ALLOWED_CMDS`, endless sources (`garde_input_sans_fin.sh`), `--do`, the
-widget limit, escaping, clicking and the real
-opening of the `examples/` scripts (the masked password for ncurses; neither
-clicks nor examples for html, which opens no window), the behaviour on every
-built port, the two `sermoman-mcp` benches and the `sermoia-mcp` one. The CI
-(`.gitlab-ci.yml`, and its twin `.github/workflows/bancs.yml`) calls nothing but
-these two scripts, in a Debian testing fitted with `ci/dependances.txt`: what it
-sees replays identically.
+`ci/construire.sh` builds the useful core variants, the requested backends
+(default: all nine), then `sermoia-mcp`, the light lvgl port
+(`-DSERMO_LVGL_LEGER=ON`, when lvgl is requested) and the eight helper programs
+of `sermo-source/` (`-DSERMO_SOURCE_EXIGER=ON`: a missing library is a
+failure). `ci/bancs.sh` chains **every** bench: core unit tests, single
+version, language links, source guards (SPDX, script licences, forbidden
+functions, progress-bar thread, workstation headers, capped `<input>` reads),
+the helper programs (Modbus/OPC UA, MQTT read and write, MAVLink read and write
+against a fake drone, sound and video player) and their hardening, binary by
+binary, the tooled examples (approval, network, GNSS, serial, home automation,
+CAN, DNS, TLS, journal, USB, NTP, Wi-Fi, Bluetooth, camera), the behaviour of
+the light lvgl, the weight per port, the facade check, the core FORTIFY, then
+for each backend the XML, the identity, the hardening, `SERMO_ALLOWED_CMDS`,
+endless sources (`garde_input_sans_fin.sh`), `<input
+modbus|opcua|mqtt|mavlink>`, `<action mqtt|mavlink>` on click only, `--do`,
+`SERMO_SHELL`, the widget limit, `--include`, Glade, `<terminal>`, escaping,
+clicking and the real opening of the `examples/` scripts (the masked password
+for ncurses; neither clicks nor examples for html, which opens no window), the
+behaviour on every built port, the two `sermoman-mcp` benches, the job scripts
+and the `sermoia-mcp` one. The CI (`.gitlab-ci.yml`, and its twin
+`.github/workflows/bancs.yml`) calls, to build and test, nothing but these two
+scripts, in a Debian testing fitted with `ci/dependances.txt` (the rest of the
+recipe installs the dependencies and the French locale): what it sees replays
+identically.
 
 Rules these scripts enforce, because each one has already lied once:
 
@@ -254,6 +279,10 @@ export PKG_CONFIG_PATH=$PWD/libsermocore/_install/lib/pkgconfig
 cmake -S sermo-backend-qt6 -B sermo-backend-qt6/_build -DCMAKE_INSTALL_PREFIX=$PWD/_install_qt6
 make -C sermo-backend-qt6/_build && make -C sermo-backend-qt6/_build install
 
+# The helper programs (§11)
+cmake -S sermo-source -B sermo-source/_build -DSERMO_SOURCE_EXIGER=ON
+cmake --build sermo-source/_build
+
 # Separate .deb packages, built and tested in a pristine Debian testing
 bash packaging/construire-paquets.sh
 ```
@@ -265,11 +294,23 @@ Inherited from sermo, **non-negotiable**:
 - **Never** `system`/`popen`/`strcpy`/`strcat`/`sprintf`. Use `safe_system` /
   `safe_popen` (in the core) and the bounded GLib equivalents.
 - `safe_system` opens a shell **only** when the command carries metacharacters;
-  otherwise it executes directly through `argv`. The `/bin/sh -c` fallback is
-  **logged** ("injection risk").
+  otherwise it executes directly through `argv`. The fallback through the shell
+  (`/bin/sh -c`, or `SERMO_SHELL`) is **logged**, as a fact, not an alarm:
+  `safe_system: '<command>' contient de la syntaxe shell -- execution via
+  /bin/sh -c` (`libsermocore/src/safe_exec.c`). The old "injection risk"
+  message was removed: said on every ordinary `--do`, it was no longer heard.
+  With `SERMO_NO_SHELL_FALLBACK` or `SERMO_ALLOWED_CMDS`, the fallback is
+  **refused**, and that refusal stays an alarm (`g_critical`).
 - Hardening flags **to be kept** on every target: `-D_FORTIFY_SOURCE=3`,
   `-fstack-protector-strong`, `-fstack-clash-protection`, `-fcf-protection=full`,
-  PIE/RELRO/BIND_NOW/NX. Checked by `tests/garde_durcissement.sh`.
+  PIE/RELRO/BIND_NOW/NX. `tests/garde_durcissement.sh` measures them on the
+  **produced binary**, not on the flags (`readelf`): PIE, RELRO, BIND_NOW,
+  non-executable stack, CET IBT, CET SHSTK, stack protector
+  (`__stack_chk_fail`) and FORTIFY (`__*_chk` calls, `__stack_chk_*` excluded),
+  eight guarantees in all. A **witness** runs first: two small binaries,
+  fortified and bare, that the FORTIFY measure must tell apart.
+  `-fstack-clash-protection` leaves no trace this bench reads: it does not
+  check it.
 - The trust boundary is **the local author of the script** (documented), not an
   allowlist. See [SECURITY.en.md](SECURITY.en.md).
 - **Every `<input>` read is capped** (`libsermocore/include/sermo_input.h`,
@@ -318,3 +359,73 @@ chain; both are packaged since 2.8.2:
 
 Checking and off-screen rendering also remain available on the command line
 (`--print-ir`, `--render-png`).
+
+## 11. Helper programs (`sermo-source/`)
+
+The `<input modbus|opcua|mqtt|mavlink|media>` and `<action
+mqtt|mavlink|media>` tags do nothing themselves. The core (`sermo_source.c`)
+translates them into a command that starts a **helper program**, installed in
+`SERMO_SOURCE_DIR` (default `/usr/libexec/sermo`). The nine ports only see one
+more command: no port depends on libmodbus, open62541, libmosquitto or MAVLink.
+
+**The contract** is `libsermocore/include/sermo_source.h`:
+
+- the address goes as **a single argument**, percent-encoded (every byte outside
+  `[A-Za-z0-9._:/=,+@-]` becomes `%XX`): the command has no metacharacter, it
+  goes through `argv`, never through the shell, even with
+  `SERMO_NO_SHELL_FALLBACK` or `SERMO_ALLOWED_CMDS`;
+- refused when the XML is parsed: unknown protocol, empty address, more than
+  4096 bytes (`SERMO_SOURCE_ADRESSE_MAX`), control character, a relative
+  `SERMO_SOURCE_DIR` or one carrying a character outside the safe set;
+- the program started is `<folder>/sermo-source-<protocol>` (reading) or
+  `<folder>/sermo-cible-<protocol>` (writing). The core only accepts a writing
+  `<action>` inside a `<button>` or a `<menuitem>`, and refuses the name
+  `sermo-cible-` written by hand in an `<input>` or an `<action>`.
+
+**The eight programs**, one package each:
+
+| Program | Role | Library |
+|---|---|---|
+| `sermo-source-modbus` | reads Modbus registers (TCP, RTU) | libmodbus |
+| `sermo-source-opcua` | reads an OPC UA variable | open62541 |
+| `sermo-source-mqtt` | reads an MQTT topic (never publishes) | libmosquitto |
+| `sermo-cible-mqtt` | publishes a value, according to an allow-list | libmosquitto |
+| `sermo-source-mavlink` | reads an autopilot's telemetry (sends no byte) | embedded MAVLink headers |
+| `sermo-cible-mavlink` | sets a parameter, gives a safety order, sends a mission | embedded MAVLink headers |
+| `sermo-source-media` | reads the state of an mpv player | none |
+| `sermo-cible-media` | starts and commands mpv (in a `bwrap` cage if present) | none (mpv is a program) |
+
+**The shared files**:
+
+- `commun.c` / `commun.h` — for all: address reading (decoding, 32 parameters
+  at most, unknown keys refused, bounded integers), 5 s pause after a failure,
+  shared cache under `$XDG_RUNTIME_DIR/sermo-source/`, a lock per device, and
+  `source_lire()`, which never freezes the window (fresh value, stale value
+  reread in the background, or an empty field);
+- `mqtt-commun.c` / `.h` — MQTT reading and writing: `mqtt[s]://` address,
+  encryption (certificate and name checked, never "insecure"), credentials
+  (refused on `mqtt://` without `clair=oui`), connection bounded by a timeout;
+- `mavlink-commun.c` / `.h` — MAVLink reading and writing: link address
+  (`udp://`, `tcp://`, `serie://`), accepted speeds, opening;
+- `media-commun.c` / `.h` — the two media programs: player name, private folder
+  `$XDG_RUNTIME_DIR/sermo-media/NAME/` (700), exchange with mpv's socket (only
+  requests written by the program go there);
+- `mission-wpl.c` / `.h` — reading a "QGC WPL 110" mission file, reduced to
+  waypoints (100 at most, 256 KiB at most);
+- `tiers/mavlink/` — MAVLink's C headers (protocol v2), copied unmodified;
+  origin, checksum and licence in its `LISEZMOI` (French only).
+
+**Building**:
+
+```sh
+cmake -S sermo-source -B sermo-source/_build -DSERMO_SOURCE_EXIGER=ON
+cmake --build sermo-source/_build
+```
+
+The media and MAVLink programs are always built. The others are built if their
+library is there (`libmodbus-dev`, `libopen62541-1.4-dev`, `libmosquitto-dev`);
+without `SERMO_SOURCE_EXIGER`, a missing library skips its program with a
+warning. With `-DSERMO_SOURCE_EXIGER=ON` (CI, packages), it stops the build.
+Each program gets the same hardening as the ports; `ci/bancs.sh` measures it on
+each one with `tests/garde_durcissement.sh`. To try without installing, set
+`SERMO_SOURCE_DIR` to `sermo-source/_build` (absolute path).

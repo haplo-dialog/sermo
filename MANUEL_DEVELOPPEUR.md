@@ -18,6 +18,7 @@ d'un nouveau backend, et les bancs de non-régression.
 8. Sécurité — règles obligatoires
 9. Feuille de route architecturale (Part 3)
 10. Composants annexes
+11. Programmes d'aide (`sermo-source/`)
 
 ---
 
@@ -69,6 +70,13 @@ Le cœur se compile depuis **une source largement unifiée** en trois variantes
 | **glib/gtk3** | `-DSERMOCORE_GLIB=ON` | gtk3 | Vraie GLib/GTK 3 (ABI native des structs `GList`, `GtkWidget`…), pour l'introspection GObject utilisée par la famille GTK. |
 | **gtk4** | `-DSERMOCORE_GTK4=ON` | gtk4 | Fichiers cœur **réécrits pour GTK 4**, **vendorés dans `libsermocore/src-gtk4/`** (5 fichiers : `automaton.c`, `variables.c`, `signals.c`, `tag_attributes.c`, `gtkdialog.c` + le shim `gtk4-compat.c` ; les autres, `actions.c` compris, viennent de `src/`) : GTK 4 a retiré `gtk_main`, `gtk_socket`, l'ancien modèle d'évènements. Aucune dépendance externe. Voir §9. |
 
+Deux autres options de construction :
+
+| Option CMake | Où | Défaut | Effet |
+|---|---|---|---|
+| `SERMOCORE_VTE` | `libsermocore` | `ON` | Widget `<terminal>` par VTE dans les variantes glib/gtk3 et gtk4. Le choix part dans `sermocore.pc` (variable `vte`), et les backends gtk3 et gtk4 le suivent. VTE absent arrête la construction ; `-DSERMOCORE_VTE=OFF` construit sans, et `<terminal>` n'affiche qu'un avertissement. |
+| `SERMO_LVGL_LEGER` | `sermo-backend-lvgl` | `OFF` | lvgl sans ThorVG ni Lottie, donc sans icônes SVG (paquet `sermo-backend-lvgl-leger`, même binaire `lvglsermo`). |
+
 Les variantes **neutre** et **gtk3** compilent aujourd'hui **le même jeu de
 sources** cœur (`src/*.c`), à un fichier près : `sermo_progress.c` (la barre de
 progression lue au fil de l'eau) n'entre que dans la variante neutre, gtk3
@@ -80,10 +88,16 @@ neutre/gtk3 est le **bridge d'attributs** (`try_set_property` +
 parce qu'il repose sur l'introspection GObject que les backends neutres n'ont pas.
 
 Fichiers du cœur : `gtkdialog.c` (orchestration + `main`), `safe_exec.c`,
+`sermo_lanceur.c` (le lanceur de commandes, en un seul endroit, et le choix du
+shell : `SERMO_SHELL`, sinon `SERMO_SHELL_DEFAUT`),
 `variables.c`, `stack.c`, `automaton.c`, `attributes.c`, `signals.c`,
 `stringman.c`, `actions.c`, `tag_attributes.c` (helpers), `sermo_icon_theme.c`,
-`sermo_input.c` (plafond des `<input>`), `sermo_focus.c` (quel widget prend le
+`sermo_input.c` (plafond des `<input>`), `sermo_source.c` (traduction de
+`<input modbus|opcua|mqtt|mavlink|media>` et `<action mqtt|mavlink|media>` en
+commande, voir §11), `sermo_focus.c` (quel widget prend le
 focus à l'ouverture), `sermo_progress.c` (variante neutre seule),
+`sermo_win32.c` (Windows seulement : console, lancement des commandes, objet
+compilé sans le shim),
 + `gtkdialog_lexer.l` / `gtkdialog_parser.y` (grammaire, source de vérité).
 
 ## 3. La frontière cœur ↔ backend
@@ -152,7 +166,7 @@ variante, on pointe `PKG_CONFIG_PATH` sur le préfixe d'install correspondant
 4. Écrire le `CMakeLists.txt` : `pkg_check_modules(SERMOCORE REQUIRED sermocore)`,
    les libs du toolkit, `-D_FORTIFY_SOURCE=3 -fstack-protector-strong
    -fcf-protection=full`.
-5. Construire contre la lib installée (`PKG_CONFIG_PATH=…/libsermocore/_install`)
+5. Construire contre la lib installée (`PKG_CONFIG_PATH=…/libsermocore/_install/lib/pkgconfig`)
    puis faire passer **les trois bancs** (§6).
 
 Symboles typiquement à fournir en plus (résolus au lien) : `widget_show_list` /
@@ -173,7 +187,7 @@ Aucune étape n'avance avec un banc rouge. Les trois portes, pour un binaire
 TIMEOUT=5 bash tests/xml/run_tests.sh <binaire>          # attendu : 55 PASS
 
 # 2. Comportement — les valeurs exportées == celles de l'étalon gtk3sermo
-bash tests/comportement/run.sh <binaire>                 # attendu : 75/75
+bash tests/comportement/run.sh <binaire>                 # attendu : 78/78
 
 # 3. Garde — les valeurs à risque ne repassent pas par le shell
 xvfb-run -a bash tests/garde_echappement_sortie.sh <binaire>        # OK — 4 cas
@@ -190,17 +204,32 @@ valeurs à gtk3sermo.
 
 ### Tous les bancs d'un coup — la CI
 
-`ci/construire.sh` construit les variantes utiles du cœur puis les backends
-demandés (défaut : les neuf) ; `ci/bancs.sh` enchaîne **tous** les bancs : tests
-unitaires du cœur, gardes sur les sources (SPDX, fonctions interdites, thread de
-la barre de progression, en-têtes de poste, FORTIFY du cœur), puis pour chaque
-backend le XML, le durcissement, `SERMO_ALLOWED_CMDS`, les sources sans fin
-(`garde_input_sans_fin.sh`), `--do`, la limite de widgets, l'échappement, le clic et l'ouverture réelle des exemples de
+`ci/construire.sh` construit les variantes utiles du cœur, les backends
+demandés (défaut : les neuf), puis `sermoia-mcp`, le port lvgl léger
+(`-DSERMO_LVGL_LEGER=ON`, quand lvgl est demandé) et les huit programmes d'aide
+de `sermo-source/` (`-DSERMO_SOURCE_EXIGER=ON` : une bibliothèque absente est
+un échec). `ci/bancs.sh` enchaîne **tous** les bancs : tests
+unitaires du cœur, version unique, liens de langue, gardes sur les sources
+(SPDX, licences des scripts, fonctions interdites, thread de la barre de
+progression, en-têtes de poste, lectures d'`<input>` plafonnées), les
+programmes d'aide (Modbus/OPC UA, MQTT en lecture et en écriture, MAVLink en
+lecture et en écriture contre un faux drone, lecteur son et vidéo) et leur
+durcissement binaire par binaire, les exemples outillés (approbation, réseau,
+GNSS, série, domotique, CAN, DNS, TLS, journal, USB, NTP, Wi-Fi, Bluetooth,
+caméra), le comportement du lvgl léger, le poids par port, le contrôle de
+façade, le FORTIFY du cœur, puis pour chaque backend le XML, l'identité, le
+durcissement, `SERMO_ALLOWED_CMDS`, les sources sans fin
+(`garde_input_sans_fin.sh`), `<input modbus|opcua|mqtt|mavlink>`, `<action
+mqtt|mavlink>` au clic seul, `--do`, `SERMO_SHELL`, la limite de widgets,
+`--include`, Glade, `<terminal>`, l'échappement, le clic et l'ouverture réelle des exemples de
 `examples/` (le mot de passe masqué pour ncurses ; ni clic ni exemples pour html,
 qui n'ouvre pas de fenêtre), le comportement sur tous les ports construits,
-les deux bancs de `sermoman-mcp` et celui de `sermoia-mcp`. La CI
-(`.gitlab-ci.yml`) n'appelle que ces deux scripts, dans une Debian testing munie
-de `ci/dependances.txt` : ce qu'elle voit se rejoue à l'identique.
+les deux bancs de `sermoman-mcp`, les scripts métier et celui de
+`sermoia-mcp`. La CI (`.gitlab-ci.yml`, et son jumeau
+`.github/workflows/bancs.yml`) n'appelle, pour construire et éprouver, que ces
+deux scripts, dans une Debian testing munie de `ci/dependances.txt` (le reste
+de la recette installe les dépendances et la locale française) : ce qu'elle
+voit se rejoue à l'identique.
 
 Règles tenues par ces scripts, parce que chacune a déjà menti une fois :
 
@@ -245,8 +274,12 @@ make -C libsermocore/_build_gtk && make -C libsermocore/_build_gtk install
 
 # Un backend (ex. qt6, variante neutre)
 export PKG_CONFIG_PATH=$PWD/libsermocore/_install/lib/pkgconfig
-cmake -S sermo-backend-qt6 -B sermo-backend-qt6/_build
-make -C sermo-backend-qt6/_build
+cmake -S sermo-backend-qt6 -B sermo-backend-qt6/_build -DCMAKE_INSTALL_PREFIX=$PWD/_install_qt6
+make -C sermo-backend-qt6/_build && make -C sermo-backend-qt6/_build install
+
+# Les programmes d'aide (§11)
+cmake -S sermo-source -B sermo-source/_build -DSERMO_SOURCE_EXIGER=ON
+cmake --build sermo-source/_build
 
 # Paquets .deb séparés, construits et éprouvés dans une Debian testing vierge
 bash packaging/construire-paquets.sh
@@ -259,11 +292,22 @@ Héritées de sermo, **non négociables** :
 - **Jamais** `system`/`popen`/`strcpy`/`strcat`/`sprintf`. Utiliser `safe_system`
   / `safe_popen` (dans le cœur) et les équivalents GLib bornés.
 - `safe_system` n'ouvre un shell **que** si la commande contient des
-  métacaractères ; sinon exécution directe par `argv`. Le repli `/bin/sh -c` est
-  **journalisé** (« injection risk »).
+  métacaractères ; sinon exécution directe par `argv`. Le repli par le shell
+  (`/bin/sh -c`, ou `SERMO_SHELL`) est **journalisé**, comme un fait et non une
+  alarme : `safe_system: '<commande>' contient de la syntaxe shell -- execution
+  via /bin/sh -c` (`libsermocore/src/safe_exec.c`). L'ancien message « injection
+  risk » a été retiré : dit à chaque `--do` ordinaire, il ne s'entendait plus.
+  Avec `SERMO_NO_SHELL_FALLBACK` ou `SERMO_ALLOWED_CMDS`, le repli est
+  **refusé**, et ce refus reste une alarme (`g_critical`).
 - Flags de durcissement **à conserver** sur chaque cible : `-D_FORTIFY_SOURCE=3`,
   `-fstack-protector-strong`, `-fstack-clash-protection`, `-fcf-protection=full`,
-  PIE/RELRO/BIND_NOW/NX. Vérifiés par `tests/garde_durcissement.sh`.
+  PIE/RELRO/BIND_NOW/NX. `tests/garde_durcissement.sh` les mesure sur le
+  **binaire produit**, pas sur les drapeaux (`readelf`) : PIE, RELRO, BIND_NOW,
+  pile non exécutable, CET IBT, CET SHSTK, protecteur de pile
+  (`__stack_chk_fail`) et FORTIFY (appels `__*_chk`, `__stack_chk_*` exclus),
+  soit huit garanties. Un **témoin** passe d'abord : deux petits binaires,
+  fortifié et nu, que la mesure FORTIFY doit distinguer. `-fstack-clash-protection`
+  ne laisse pas de trace que ce banc lit : il n'est pas vérifié par lui.
 - La frontière de confiance est **l'auteur local du script** (documenté), pas une
   liste blanche. Voir [SECURITY.md](SECURITY.md).
 - **Toute lecture d'un `<input>` est plafonnée** (`libsermocore/include/sermo_input.h`,
@@ -312,3 +356,75 @@ deux sont empaquetés depuis la 2.8.2 :
 
 La vérification et le rendu hors écran restent aussi disponibles en ligne de
 commande (`--print-ir`, `--render-png`).
+
+## 11. Programmes d'aide (`sermo-source/`)
+
+Les balises `<input modbus|opcua|mqtt|mavlink|media>` et `<action
+mqtt|mavlink|media>` ne font rien elles-mêmes. Le cœur (`sermo_source.c`) les
+traduit en une commande qui lance un **programme d'aide**, installé dans
+`SERMO_SOURCE_DIR` (défaut `/usr/libexec/sermo`). Les neuf ports n'y voient
+qu'une commande de plus : aucun port ne dépend de libmodbus, open62541,
+libmosquitto ni MAVLink.
+
+**Le contrat** est `libsermocore/include/sermo_source.h` :
+
+- l'adresse part en **un seul argument**, encodée « pour cent » (tout octet hors
+  de `[A-Za-z0-9._:/=,+@-]` devient `%XX`) : la commande n'a aucun
+  métacaractère, elle part en `argv`, jamais par le shell, même avec
+  `SERMO_NO_SHELL_FALLBACK` ou `SERMO_ALLOWED_CMDS` ;
+- refusé à l'analyse du XML : protocole inconnu, adresse vide, plus de 4096
+  octets (`SERMO_SOURCE_ADRESSE_MAX`), caractère de contrôle, `SERMO_SOURCE_DIR`
+  relatif ou porteur d'un caractère hors de l'ensemble sûr ;
+- le programme lancé est `<dossier>/sermo-source-<protocole>` (lecture) ou
+  `<dossier>/sermo-cible-<protocole>` (écriture). Le cœur n'accepte une
+  `<action>` d'écriture que dans un `<button>` ou un `<menuitem>`, et refuse le
+  nom `sermo-cible-` écrit à la main dans un `<input>` ou une `<action>`.
+
+**Les huit programmes**, un paquet chacun :
+
+| Programme | Rôle | Bibliothèque |
+|---|---|---|
+| `sermo-source-modbus` | lit des registres Modbus (TCP, RTU) | libmodbus |
+| `sermo-source-opcua` | lit une variable OPC UA | open62541 |
+| `sermo-source-mqtt` | lit un sujet MQTT (jamais de publication) | libmosquitto |
+| `sermo-cible-mqtt` | publie une valeur, d'après une liste blanche | libmosquitto |
+| `sermo-source-mavlink` | lit la télémétrie d'un autopilote (n'envoie aucun octet) | en-têtes MAVLink embarqués |
+| `sermo-cible-mavlink` | règle un paramètre, donne un ordre de sécurité, envoie une mission | en-têtes MAVLink embarqués |
+| `sermo-source-media` | lit l'état d'un lecteur mpv | aucune |
+| `sermo-cible-media` | lance et commande mpv (en cage `bwrap` si présent) | aucune (mpv est un programme) |
+
+**Les fichiers partagés** :
+
+- `commun.c` / `commun.h` — à tous : lecture de l'adresse (décodage, 32
+  paramètres au plus, clés inconnues refusées, entiers bornés), pause de 5 s
+  après un échec, cache commun sous `$XDG_RUNTIME_DIR/sermo-source/`, verrou par
+  équipement, et `source_lire()`, qui ne fige jamais la fenêtre (valeur
+  fraîche, valeur périmée relue en fond, ou case vide) ;
+- `mqtt-commun.c` / `.h` — lecture et écriture MQTT : adresse `mqtt[s]://`,
+  chiffrement (certificat et nom vérifiés, jamais « insecure »), identifiants
+  (refusés sur `mqtt://` sans `clair=oui`), connexion bornée par un délai ;
+- `mavlink-commun.c` / `.h` — lecture et écriture MAVLink : adresse du lien
+  (`udp://`, `tcp://`, `serie://`), débits admis, ouverture ;
+- `media-commun.c` / `.h` — les deux programmes media : nom du lecteur, dossier
+  privé `$XDG_RUNTIME_DIR/sermo-media/NOM/` (700), échange avec le socket de
+  mpv (seules des requêtes écrites par le programme y partent) ;
+- `mission-wpl.c` / `.h` — lecture d'un fichier de mission « QGC WPL 110 »,
+  réduite aux points de passage (100 au plus, 256 Kio au plus) ;
+- `tiers/mavlink/` — les en-têtes C de MAVLink (protocole v2), copiés sans
+  modification ; origine, empreinte et licence dans son `LISEZMOI`.
+
+**Construire** :
+
+```sh
+cmake -S sermo-source -B sermo-source/_build -DSERMO_SOURCE_EXIGER=ON
+cmake --build sermo-source/_build
+```
+
+Les programmes media et MAVLink sont toujours construits. Les autres le sont si
+leur bibliothèque est là (`libmodbus-dev`, `libopen62541-1.4-dev`,
+`libmosquitto-dev`) ; sans `SERMO_SOURCE_EXIGER`, une bibliothèque absente
+saute son programme avec un avertissement. Avec `-DSERMO_SOURCE_EXIGER=ON`
+(CI, paquets), elle arrête la construction. Chaque programme reçoit le même
+durcissement que les ports ; `ci/bancs.sh` le mesure sur chacun avec
+`tests/garde_durcissement.sh`. Pour essayer sans installer, poser
+`SERMO_SOURCE_DIR` sur `sermo-source/_build` (chemin absolu).

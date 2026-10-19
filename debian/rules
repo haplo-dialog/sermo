@@ -51,8 +51,9 @@ override_dh_auto_build:
 	sed 's/@PACKAGE_VERSION@/$(DEB_VERSION_UPSTREAM)/' doc/sermo.texi.in > $(B)/sermo.texi
 	makeinfo --no-split -o $(B)/sermo.info $(B)/sermo.texi
 	sed 's/@PACKAGE_VERSION@/$(DEB_VERSION_UPSTREAM)/' doc/sermo.1.in > $(B)/sermo.1
-	# Les programmes d'aide de <input modbus> / <input opcua> (sermo-source/) ;
-	# une bibliothèque absente arrête la construction.
+	# Les huit programmes d'aide (sermo-source/) : sermo-source-modbus, -opcua,
+	# -mqtt, -mavlink, -media ; sermo-cible-mqtt, -mavlink, -media.
+	# Une bibliothèque absente arrête la construction.
 	dh_auto_configure --sourcedirectory=sermo-source --builddirectory=$(B)/source -- -DSERMO_SOURCE_EXIGER=ON
 	dh_auto_build --sourcedirectory=sermo-source --builddirectory=$(B)/source
 	# Le serveur MCP sermoia (C) : préfixe /usr, catalogue dans <datadir>.
@@ -88,6 +89,11 @@ override_dh_auto_install:
 	set -e; for p in fltk1 efl1 sdl3 lvgl ncurses html; do \
 	    install -D -m 0644 $(B)/sermo.1 debian/sermo-backend-$$p/usr/share/man/man1/$${p}sermo.1; \
 	done
+	# Le langage XML, section 5 : les pages section 1 y renvoient.
+	sed 's/@PACKAGE_VERSION@/$(DEB_VERSION_UPSTREAM)/' sermo-backend-gtk3/src/haplo-dialog-xml.5.in > $(B)/haplo-dialog-xml.5
+	install -D -m 0644 $(B)/haplo-dialog-xml.5 debian/sermo-backend-gtk3/usr/share/man/man5/haplo-dialog-xml.5
+	sed 's/@PACKAGE_VERSION@/$(DEB_VERSION_UPSTREAM)/' sermo-backend-gtk4/src/gtk4sermo-xml.5.in > $(B)/gtk4sermo-xml.5
+	install -D -m 0644 $(B)/gtk4sermo-xml.5 debian/sermo-backend-gtk4/usr/share/man/man5/gtk4sermo-xml.5
 	# Icônes d'application : le logo HD, à toutes les tailles du thème hicolor.
 	# Sans cette règle, seul qt6 en livrait une (son CMakeLists), et les fenêtres
 	# des cinq autres ports n'avaient pas d'icône dans leur barre de titre.
@@ -112,17 +118,36 @@ override_dh_auto_install:
 	# client C à compiler) : les SOURCES seulement, fichier par fichier — un
 	# opcua-lire ou un faux-serveur-opcua compilé sur le poste n'entre pas.
 	set -e; for f in modbus/faux-automate.py modbus/modbus-lecture.sh opcua/certificats-essai.sh \
-	    opcua/opcua-lecture.sh; do \
+	    opcua/opcua-lecture.sh mavlink/faux-drone.py mavlink/drone-lecture.sh mavlink/drone-commande.sh; do \
 	    install -D -m 0755 examples/$$f debian/sermo-doc/usr/share/doc/sermo-doc/examples/$$f; \
 	done
-	set -e; for f in opcua/Makefile opcua/faux-serveur-opcua.c opcua/opcua-lire.c; do \
+	set -e; for f in opcua/Makefile opcua/faux-serveur-opcua.c opcua/opcua-lire.c \
+	    modbus/README.md opcua/README.md mavlink/README.md; do \
 	    install -D -m 0644 examples/$$f debian/sermo-doc/usr/share/doc/sermo-doc/examples/$$f; \
+	done
+	# Les exemples prêts à l'emploi de la 3.1.0 (réseau, domotique, son et vidéo,
+	# matériel…) : leurs fichiers seulement, les scripts exécutables ; jamais un
+	# imgui.ini laissé par un essai du port sdl3.
+	set -e; for d in approbation bluetooth-scan bus-can camera-apercu certificat-tls dns-testeur \
+	    domotique-mqtt gnss-moniteur heure-ntp journal-direct lecteur-media liaison-serie \
+	    reseau-testeur usb-moniteur wifi-scan; do \
+	    find examples/$$d -type f ! -name imgui.ini | while read -r f; do \
+	        case "$$f" in *.sh|*.py) m=0755 ;; *) m=0644 ;; esac; \
+	        install -D -m $$m "$$f" debian/sermo-doc/usr/share/doc/sermo-doc/$$f; \
+	    done; \
 	done
 	# Un programme d'aide par paquet, dans le dossier que lit le cœur
 	# (SERMO_SOURCE_DIR_DEFAUT = /usr/libexec/sermo).
-	set -e; for p in modbus opcua; do \
+	set -e; for p in modbus opcua mqtt mavlink; do \
 	    install -D -m 0755 $(B)/source/sermo-source-$$p debian/sermo-source-$$p/usr/libexec/sermo/sermo-source-$$p; \
 	done
+	# L'ÉCRITURE, dans son propre paquet : qui n'installe que la lecture ne
+	# peut rien publier.
+	install -D -m 0755 $(B)/source/sermo-cible-mqtt debian/sermo-cible-mqtt/usr/libexec/sermo/sermo-cible-mqtt
+	install -D -m 0755 $(B)/source/sermo-cible-mavlink debian/sermo-cible-mavlink/usr/libexec/sermo/sermo-cible-mavlink
+	# Le lecteur son/vidéo : son état d'un côté, ses commandes de l'autre.
+	install -D -m 0755 $(B)/source/sermo-source-media debian/sermo-source-media/usr/libexec/sermo/sermo-source-media
+	install -D -m 0755 $(B)/source/sermo-cible-media debian/sermo-cible-media/usr/libexec/sermo/sermo-cible-media
 	# sermoia-mcp : binaire et catalogue (règles d'installation de son CMake).
 	dh_auto_install --sourcedirectory=sermoia-mcp --builddirectory=$(B)/sermoia --destdir=debian/sermoia-mcp
 	sed 's/@PACKAGE_VERSION@/$(DEB_VERSION_UPSTREAM)/' sermoia-mcp/sermoia-mcp.1.in > $(B)/sermoia-mcp.1
@@ -155,8 +180,9 @@ override_dh_auto_install:
 #
 # ⚠️ --link-doc ne franchit pas la frontière « all » / « any » : debhelper
 # refuse activement la combinaison depuis le niveau de compatibilité 10. Les
-# treize paquets « any » (le cœur, les neuf backends, sermoia-mcp et les deux
-# programmes d'aide sermo-source-*) gardent leur propre
+# vingt paquets « any » (sermo-core-dev, les dix paquets sermo-backend-* dont
+# lvgl-leger, sermoia-mcp et les huit paquets des programmes d'aide
+# sermo-source-* et sermo-cible-*) gardent leur propre
 # copyright ; pour eux, le gain vient du changelog amont retiré ci-dessus.
 override_dh_installdocs:
 	dh_installdocs -psermo-doc
@@ -164,12 +190,12 @@ override_dh_installdocs:
 	  -Nsermo-backend-gtk4 -Nsermo-backend-qt6 -Nsermo-backend-fltk1 \
 	  -Nsermo-backend-efl1 -Nsermo-backend-sdl3 -Nsermo-backend-lvgl -Nsermo-backend-lvgl-leger \
 	  -Nsermo-backend-ncurses -Nsermo-backend-html -Nsermoia-mcp -Nsermoman-mcp \
-	  -Nsermo-source-modbus -Nsermo-source-opcua --link-doc=sermo-doc
+	  -Nsermo-source-modbus -Nsermo-source-opcua -Nsermo-source-mqtt -Nsermo-cible-mqtt -Nsermo-source-mavlink -Nsermo-cible-mavlink -Nsermo-source-media -Nsermo-cible-media --link-doc=sermo-doc
 	dh_installdocs -psermo-core-dev -psermo-backend-gtk3 -psermo-backend-gtk4 \
 	  -psermo-backend-qt6 -psermo-backend-fltk1 -psermo-backend-efl1 \
 	  -psermo-backend-sdl3 -psermo-backend-lvgl -psermo-backend-lvgl-leger -psermo-backend-ncurses \
 	  -psermo-backend-html -psermoia-mcp -psermoman-mcp \
-	  -psermo-source-modbus -psermo-source-opcua
+	  -psermo-source-modbus -psermo-source-opcua -psermo-source-mqtt -psermo-cible-mqtt -psermo-source-mavlink -psermo-cible-mavlink -psermo-source-media -psermo-cible-media
 
 override_dh_installchangelogs:
 	dh_installchangelogs -XCHANGELOG

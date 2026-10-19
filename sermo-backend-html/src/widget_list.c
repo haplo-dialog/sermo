@@ -38,6 +38,7 @@ static void list_append(WidgetNode *node, const char *text)
 GtkWidget *widget_list_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
     WidgetNode *node = widget_node_new(WT_LIST, NULL, "");
+    widget_node_bind_variable(node, Attr, attr);   /* nom du champ du formulaire (mode serve) */
     node->state.list.items        = NULL;
     node->state.list.item_count   = 0;
     node->state.list.selected_index = -1;
@@ -45,11 +46,8 @@ GtkWidget *widget_list_create(AttributeSet *Attr, tag_attr *attr, gint Type)
      * appelle juste après la création — lire <input> ici aussi exécuterait
      * la commande deux fois. */
 
-    if (attr) {
-        const char *v;
-        if ((v = get_tag_attribute(attr, "variable")) && *v)
-            node->var_name = strdup(v);
-    }
+    /* Le nom (forme attribut ou enfant <variable>) est posé plus haut par
+     * widget_node_bind_variable() : la forme enfant était oubliée. */
     /* Les actions sont jouées par le rendu à chaque changement de sélection
      * (et une fois pour celle du chargement), comme « selection-changed » de
      * l'étalon. <tree> fabrique aussi un WT_LIST, mais sans ce jeu : ses

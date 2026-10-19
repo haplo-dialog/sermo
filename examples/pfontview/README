@@ -19,22 +19,15 @@ Installation
 
 From Source
 -----------
-By default the application will run from the current folder but it is
-possible to install it using the supplied Makefile (type "make" to show
-usage examples).
+No Makefile is supplied with this copy: there is nothing to install.
+The application finds its files in the current folder, so start it from
+its own folder:
 
-Install to wherever your PREFIX is currently set to:
+    cd examples/pfontview && ./main
 
-    make install
+The binary defaults to gtk3sermo. To use another one, set GTKDIALOG:
 
-To uninstall:
-
-    make uninstall
-
-DESTDIR is supported for packagers to install to an intermediate folder;
-for example:
-
-    make DESTDIR=pfontview-0.1.3 install
+    GTKDIALOG=qt6sermo ./main
 
 Requirements
 ============
@@ -60,8 +53,8 @@ access them via the Tools menu.
 Contacting Us
 =============
 
-Thunor <thunorsif@hotmail.com>
+Original author: Thunor <thunorsif@hotmail.com>
 
-https://haplo-dialog.fr (fork: gtk3sermo)
+Maintained fork: https://haplo-dialog.fr
 
 2012-11-08

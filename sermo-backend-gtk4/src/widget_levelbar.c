@@ -45,8 +45,12 @@ GtkWidget *widget_levelbar_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     gchar     *v;
 
     if (attr) {
-        if ((v = get_tag_attribute(attr, "min")))   min   = g_ascii_strtod(v, NULL);
-        if ((v = get_tag_attribute(attr, "max")))   max   = g_ascii_strtod(v, NULL);
+        /* range-min / range-max, comme l'étalon gtk3sermo ; min / max restent
+         * acceptés (anciens noms du port gtk4). */
+        if ((v = get_tag_attribute(attr, "range-min")) || (v = get_tag_attribute(attr, "min")))
+            min = g_ascii_strtod(v, NULL);
+        if ((v = get_tag_attribute(attr, "range-max")) || (v = get_tag_attribute(attr, "max")))
+            max = g_ascii_strtod(v, NULL);
         if ((v = get_tag_attribute(attr, "value"))) value = g_ascii_strtod(v, NULL);
         if ((v = get_tag_attribute(attr, "inverted")) &&
             (strcasecmp(v, "true") == 0 || strcmp(v, "1") == 0))
@@ -56,6 +60,8 @@ GtkWidget *widget_levelbar_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     widget = gtk_level_bar_new_for_interval(min, max);
     gtk_level_bar_set_value(GTK_LEVEL_BAR(widget), value);
     gtk_level_bar_set_inverted(GTK_LEVEL_BAR(widget), inverted);
+    if (attr && (v = get_tag_attribute(attr, "mode")) && g_ascii_strcasecmp(v, "discrete") == 0)
+        gtk_level_bar_set_mode(GTK_LEVEL_BAR(widget), GTK_LEVEL_BAR_MODE_DISCRETE);
 
     /* Paliers standard GTK4 */
     gtk_level_bar_add_offset_value(GTK_LEVEL_BAR(widget),

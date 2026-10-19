@@ -71,6 +71,34 @@ Tristan Grimmer, Disco Hello
   - Polices ProggyClean et ProggyForever (MIT)
 
 ──────────────────────────────────────────────────
+Code tiers embarqué (backend lvgl)
+──────────────────────────────────────────────────
+
+LVGL Kft
+  - LVGL v9.6.0, compilé dans lvglsermo (MIT)
+
+Le projet ThorVG
+  - ThorVG, moteur SVG et Lottie embarqué dans LVGL (MIT ; quelques fichiers
+    en partie sous BSD-2 et MPL-2.0, voir LICENCES.md)
+
+THL A29 Limited (Tencent) et Milo Yip
+  - rapidjson, embarqué dans ThorVG (MIT)
+
+Julieta Ulanovsky ; Fonticons, Inc.
+  - Police Montserrat et symboles Font Awesome 5 Free de LVGL (OFL-1.1)
+
+──────────────────────────────────────────────────
+Code tiers embarqué (programmes d'aide, sermo-source)
+──────────────────────────────────────────────────
+
+Les auteurs de MAVLink (https://mavlink.io)
+  - En-têtes C de MAVLink, compilés dans sermo-source-mavlink et
+    sermo-cible-mavlink (MIT une fois intégrés à un binaire)
+
+Kungliga Tekniska Högskolan (KTH, projet Heimdal)
+  - SHA-256 de mavlink_sha256.h (BSD-3)
+
+──────────────────────────────────────────────────
 Assistance IA
 ──────────────────────────────────────────────────
 

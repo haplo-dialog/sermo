@@ -12,8 +12,8 @@ dialogues corrects, sans inventer de balise.
 
 > **Optionnel.** sermo fonctionne parfaitement sans ; installez ce compagnon si
 > vous développez avec l'aide d'une IA et souhaitez qu'elle connaisse le format
-> sur le bout des doigts. Il existe en paquet Debian (`sermoman-mcp`, depuis la
-> 2.8.2) et dans l'arbre des sources.
+> sur le bout des doigts. Il existe en paquet Debian (`sermoman-mcp`) et dans
+> l'arbre des sources.
 
 ## Protection de l'utilisateur d'abord
 
@@ -38,7 +38,7 @@ Le pire qu'il puisse faire, c'est vous donner une réponse de documentation.
 [README](../README.md#installer) pour la vérification des sommes signées) :
 
 ```sh
-sudo apt install ./sermoman-mcp_2.8.2-3_all.deb
+sudo apt install ./sermoman-mcp_<version>_all.deb    # le fichier joint à la publication
 ```
 
 Il installe la commande `/usr/bin/sermoman-mcp` (le serveur et ses données sont
@@ -66,7 +66,7 @@ Redémarrez votre client : l'assistant dispose alors des outils ci-dessous.
 
 | Outil | Ce qu'il donne |
 |-------|----------------|
-| `sermo_reference` | La référence complète de la syntaxe XML (widgets, attributs, sous-éléments), commune aux neuf backends. |
+| `sermo_reference` | La référence complète de la syntaxe XML (widgets, attributs, sous-éléments, sources et cibles), commune aux neuf backends. |
 | `sermo_guide` | Le guide de prise en main (le cœur et les backends, installation, compatibilité gtkdialog, sécurité, licences). |
 | `sermo_architecture` | L'architecture modulaire : `libsermocore`, les neuf backends, le contrat cœur↔backend, les variantes de build, le packaging, les bancs. |
 | `sermo_heritage` | La vie de sermo : lignée gtkdialog → haplo-dialog → sermo, historique des versions, feuille de route, bilan de santé. |
@@ -97,7 +97,9 @@ l'exemple phare du guide ne démarrait pas. Rien ne rejouait la documentation,
 donc personne ne l'avait vu.
 
 Codes de retour : `0` tout passe · `1` un exemple casse, **ou** rien n'a été
-extrait · `77` aucun binaire de backend n'est disponible, rien n'a été vérifié.
+extrait, **ou** un port exigé par `SERMO_PORTS_REQUIS` est introuvable · `77`
+aucun binaire de backend n'est disponible, ou `xvfb-run` est absent : rien n'a
+été vérifié.
 Un banc muet ne rend jamais 0.
 
 ```sh
@@ -113,7 +115,8 @@ pendant des mois, alors que le code laisse tout passer par défaut quand
 Celui-ci relie chaque affirmation forte de `data/` à un fait du code de
 `libsermocore` : le défaut de `safe_system`, l'absence de la vieille formule
 fausse, l'existence des deux verrous d'environnement, et la couverture des
-balises du lexer par la référence.
+balises du lexer par la référence, dont les formes `<input X>` et `<action X>`
+des sources et cibles (modbus, opcua, mqtt, mavlink, media).
 
 Codes de retour : `0` · `1` · `77` si les sources de `libsermocore` sont
 introuvables (poser `SERMO_SRC`).

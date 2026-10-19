@@ -1,11 +1,13 @@
 <!-- SPDX-License-Identifier: GPL-2.0-or-later -->
-<!-- DESC: <input> au premier passage (juste apres la creation) puis aux refresh, regles de l etalon : un <default> l emporte au premier passage pour calendar (date valide), colorbutton, fontbutton et searchentry, <label> pour statusbar, expanded= pour expander ; notebook : -1 donne la derniere page et un numero trop grand ne change rien ; dates et lignes CR/LF bornees comme l etalon -->
+<!-- DESC: <input> au premier passage (juste apres la creation) puis aux refresh, regles de l etalon : un <default> l emporte au premier passage pour calendar (date valide), colorbutton, fontbutton et searchentry, <label> pour statusbar, expanded= pour expander, page= pour notebook (sinon la page lue s applique des le premier passage, corrige sur gtk3 le 2026-10-18) ; notebook : -1 donne la derniere page et un numero trop grand ne change rien ; dates et lignes CR/LF bornees comme l etalon -->
 <window><vbox>
 <expander expanded="false"><vbox><text><label>x</label></text></vbox><label>e</label><variable>EX1</variable><input>sh donnees/sequence.sh c-ex1 true true</input></expander>
 <expander expanded="true"><vbox><text><label>x</label></text></vbox><label>e</label><variable>EX2</variable><input>echo non</input></expander>
 <expander><vbox><text><label>x</label></text></vbox><label>e</label><variable>EX3</variable><input>echo YES</input></expander>
 <notebook><text><label>x</label></text><text><label>y</label></text><text><label>z</label></text><variable>NB1</variable><input>sh donnees/sequence.sh c-nb1 1 -1</input></notebook>
-<notebook><text><label>x</label></text><text><label>y</label></text><text><label>z</label></text><variable>NB2</variable><input>sh donnees/sequence.sh c-nb2 0 9</input></notebook>
+<notebook><text><label>x</label></text><text><label>y</label></text><text><label>z</label></text><variable>NB2</variable><input>sh donnees/sequence.sh c-nb2 1 9</input></notebook>
+<notebook page="2"><text><label>x</label></text><text><label>y</label></text><text><label>z</label></text><variable>NB3</variable><input>echo 1</input></notebook>
+<notebook page="2"><text><label>x</label></text><text><label>y</label></text><text><label>z</label></text><variable>NB4</variable></notebook>
 <calendar><variable>CA1</variable><default>2001-03-07</default><input>sh donnees/sequence.sh c-ca1 2021-05-06 2021-01-31</input></calendar>
 <calendar><variable>CA2</variable><input>echo 2021-13-40</input></calendar>
 <calendar><variable>CA3</variable><default>xx</default><input>echo 2021-05-06</input></calendar>

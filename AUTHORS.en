@@ -71,6 +71,34 @@ Tristan Grimmer, Disco Hello
   - ProggyClean and ProggyForever fonts (MIT)
 
 ──────────────────────────────────────────────────
+Embedded third-party code (lvgl backend)
+──────────────────────────────────────────────────
+
+LVGL Kft
+  - LVGL v9.6.0, compiled into lvglsermo (MIT)
+
+The ThorVG project
+  - ThorVG, the SVG and Lottie engine embedded in LVGL (MIT; a few files
+    partly under BSD-2 and MPL-2.0, see LICENCES.en.md)
+
+THL A29 Limited (Tencent) and Milo Yip
+  - rapidjson, embedded in ThorVG (MIT)
+
+Julieta Ulanovsky; Fonticons, Inc.
+  - LVGL's Montserrat font and Font Awesome 5 Free symbols (OFL-1.1)
+
+──────────────────────────────────────────────────
+Embedded third-party code (helper programs, sermo-source)
+──────────────────────────────────────────────────
+
+The MAVLink authors (https://mavlink.io)
+  - MAVLink C headers, compiled into sermo-source-mavlink and
+    sermo-cible-mavlink (MIT once built into a binary)
+
+Kungliga Tekniska Högskolan (KTH, Heimdal project)
+  - SHA-256 in mavlink_sha256.h (BSD-3)
+
+──────────────────────────────────────────────────
 AI assistance
 ──────────────────────────────────────────────────
 

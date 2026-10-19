@@ -20,22 +20,22 @@ the way to compile. The few behaviours that change are listed below.
 | Security variables | `HAPLO_ALLOWED_CMDS`, `HAPLO_NO_SHELL_FALLBACK` | `SERMO_ALLOWED_CMDS`, `SERMO_NO_SHELL_FALLBACK` (the old names are still read) |
 | Sources | one directory per port (`gtk3sermo/gtk3sermo_1.1.4/`…) | `libsermocore/` and `sermo-backend-<port>/`, built with CMake |
 | Arch, Gentoo, RPM, Slackware recipes | provided | rewritten for 2.x in `packaging/autres-os/` (plus Alpine and NixOS); `debian/` remains the reference |
-| Version | one per port | one for everything (3.0.0) |
+| Version | one per port | one for everything (3.1.2) |
 
 ## Upgrading the Debian packages
 
 ### From `.deb` files (the way 1.x was installed)
 
-Download and check the 2.x packages attached to the release, as the
+Download and check the current (3.1.0) packages attached to the release, as the
 [README](README.en.md#install) explains, then install those of the ports you use.
 apt removes the 1.x packages they replace by itself:
 
 ```sh
-sudo apt install ./sermo-backend-gtk3_3.0.0-1_amd64.deb ./sermo-gtkdialog_3.0.0-1_all.deb
+sudo apt install ./sermo-backend-gtk3_3.1.2-2_amd64.deb ./sermo-gtkdialog_3.1.2-2_all.deb
 ```
 
-Add `./sermo-backend-gtk4_3.0.0-1_amd64.deb` or
-`./sermo-backend-qt6_3.0.0-1_amd64.deb` if you had `gtk4sermo` or `qt6sermo`.
+Add `./sermo-backend-gtk4_3.1.2-2_amd64.deb` or
+`./sermo-backend-qt6_3.1.2-2_amd64.deb` if you had `gtk4sermo` or `qt6sermo`.
 
 Tested on 2026-09-17 in a clean Debian testing container, without network:
 `gtk3sermo`, `gtk4sermo`, `gtksermo` 1.1.4-2 and `qt6sermo` 1.0.2-2 installed, then

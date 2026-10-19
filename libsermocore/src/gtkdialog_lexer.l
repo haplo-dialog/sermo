@@ -767,6 +767,12 @@ gchar *Token;
 \<\input\ file\> 			{ Token="<input file>"; return(INPUTFILE);   		}
 \<input\ modbus\> 			{ Token="<input modbus>"; return(INPUTMODBUS);   	}
 \<input\ opcua\>  			{ Token="<input opcua>"; return(INPUTOPCUA);   		}
+\<input\ mqtt\>   			{ Token="<input mqtt>"; return(INPUTMQTT);   		}
+\<input\ mavlink\> 			{ Token="<input mavlink>"; return(INPUTMAVLINK);   	}
+\<action\ mqtt\>  			{ Token="<action mqtt>"; return(ACTIONMQTT);   		}
+\<action\ mavlink\>  			{ Token="<action mavlink>"; return(ACTIONMAVLINK);   	}
+\<input\ media\>  			{ Token="<input media>"; return(INPUTMEDIA);   		}
+\<action\ media\>  			{ Token="<action media>"; return(ACTIONMEDIA);   		}
 \<\input\ file[ ]+ 			{ Token="<input file>"; 
 					  BEGIN(ST_TAG_ATTR);
 					  return(PART_INPUTFILE);   				}

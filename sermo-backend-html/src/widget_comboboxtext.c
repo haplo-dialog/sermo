@@ -32,6 +32,7 @@ static void cbt_append(WidgetNode *node, const char *text)
 GtkWidget *widget_comboboxtext_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
     WidgetNode *node = widget_node_new(WT_COMBOBOX, NULL, "");
+    widget_node_bind_variable(node, Attr, attr);   /* nom du champ du formulaire (mode serve) */
     node->state.list.items       = NULL;
     node->state.list.item_count  = 0;
     /* Parite etalon : seul le comboboxtext selectionne son 1er item ;

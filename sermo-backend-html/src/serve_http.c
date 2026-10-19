@@ -21,8 +21,8 @@
  *     joignable depuis le réseau, seulement depuis cette machine.
  *   - Port éphémère tiré par le noyau (bind sur 0), pas un port fixe
  *     prévisible.
- *   - Jeton à usage unique de 128 bits dans le chemin, tiré de getrandom()
- *     (repli /dev/urandom). Une requête sans le bon jeton reçoit 404 et ne
+ *   - Jeton à usage unique de 128 bits dans le chemin, tiré de /dev/urandom.
+ *     Une requête sans le bon jeton reçoit 404 et ne
  *     révèle rien. Comparaison à temps constant.
  *   - Ne sert QUE cette page : aucun accès au système de fichiers, aucun
  *     chemin traversable, aucune autre méthode que GET et POST.
@@ -91,15 +91,6 @@ static void url_decode(char *s)
     *o = '\0';
 }
 
-/* Échappement pour un contexte VAR="…" de shell, comme le cœur. */
-static void print_shell_escaped(const char *v)
-{
-    for (const unsigned char *p = (const unsigned char *)v; *p; p++) {
-        if (*p == '\\' || *p == '"' || *p == '$' || *p == '`') putchar('\\');
-        putchar((int)*p);
-    }
-}
-
 /* Un nom de variable est-il un identifiant shell ? Le nom vient du formulaire :
  * on n'imprime jamais une chaine arbitraire a gauche d'un « = ». */
 static int name_ok(const char *name)
@@ -124,7 +115,17 @@ const char *html_valeur_soumise(const char *nom)
     return NULL;
 }
 
-/* Imprime le corps `application/x-www-form-urlencoded` en VAR="valeur".
+/* Garde le corps `application/x-www-form-urlencoded` reçu (nom → valeur).
+ *
+ * RIEN N'EST IMPRIMÉ NI EXPORTÉ ICI (2026-10-18). Jusque-là, chaque paire reçue
+ * était imprimée en NOM="valeur" et posée par setenv() : quiconque remplissait
+ * la page pouvait AJOUTER un champ (PATH, LD_PRELOAD, IFS…) avec les outils du
+ * navigateur, et le script qui fait `eval "$(htmlsermo …)"` le reprenait. La
+ * sortie, comme sur les autres ports, est maintenant faite par
+ * print_variables() du cœur : les variables DÉCLARÉES par le dialogue, avec la
+ * valeur reçue si le navigateur l'a envoyée (widget_get_text_value() lit
+ * html_valeur_soumise()), sinon leur valeur de départ. Un nom inconnu du
+ * dialogue n'est jamais repris ; seul EXIT, posé par les boutons, est lu à part.
  *
  * DEDOUBLONNAGE, LA DERNIERE GAGNE. Une case a cocher est precedee d'un champ
  * cache homonyme valant « false » : si la case est cochee, le navigateur envoie
@@ -149,16 +150,10 @@ static void print_form(char *body)
         else { names[n] = name; vals[n] = val; n++; }
     }
     for (int i = 0; i < n; i++) {
-        printf("%s=\"", names[i]);
-        print_shell_escaped(vals[i]);
-        printf("\"\n");
-        /* --do lit les valeurs, et EXIT, dans l'environnement (manuel §3.2). */
-        setenv(names[i], vals[i], 1);
         soumis_noms[i] = strdup(names[i]);
         soumis_vals[i] = strdup(vals[i]);
     }
     soumis_n = n;
-    fflush(stdout);
 }
 
 /* ─── Réponses ───────────────────────────────────────────────────────────── */

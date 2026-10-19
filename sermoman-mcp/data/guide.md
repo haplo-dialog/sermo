@@ -14,9 +14,11 @@ export MAIN_DIALOG='
   </vbox>
 </window>'
 
-sermo --program=MAIN_DIALOG
-echo "Bonjour, $NOM !"
-# Sortie : NOM="Jean"  EXIT="OK"
+eval "$(sermo --program=MAIN_DIALOG)"     # sermo écrit NOM="Jean" puis EXIT="OK"
+[ "$EXIT" = "OK" ] && echo "Bonjour, $NOM !"
+
+# Ou, sans eval : les valeurs arrivent par l'environnement de la commande
+sermo --program=MAIN_DIALOG --do='[ "$EXIT" = "OK" ] && echo "Bonjour, $NOM !"'
 ```
 
 `sermo` est l'alias du backend choisi par défaut (voir plus bas).
@@ -87,6 +89,18 @@ apt install sermo-backend-fltk1    # FLTK, sans GTK ni Qt
 L'alias `sermo` (`/usr/bin/sermo`) est géré par `update-alternatives` : chaque
 backend installé s'y enregistre, vous choisissez le défaut.
 
+Lire un équipement ou écrire vers lui depuis le XML (`<input modbus>`,
+`<input opcua>`, `<input mqtt>`, `<input mavlink>`, `<input media>`,
+`<action mqtt>`, `<action mavlink>`, `<action media>`) demande en plus le
+programme d'aide de la forme, chacun dans son paquet (`sermo-source-<nom>` pour
+lire, `sermo-cible-<nom>` pour écrire), installé dans `/usr/libexec/sermo` :
+
+```sh
+apt install sermo-source-mqtt sermo-cible-mqtt     # lire et commander la domotique
+```
+
+Voir la section « SOURCES ET CIBLES » de la référence (`sermo_reference`).
+
 ### Compatibilité gtkdialog
 
 sermo lit le **XML gtkdialog** tel quel : un script écrit pour `gtkdialog`
@@ -155,8 +169,10 @@ dédiée).
 
 Tout est détaillé dans `COMPILE.md` et `DEPENDENCIES.md`. Les paquets `.deb` se
 construisent avec `bash packaging/construire-paquets.sh`, dans une Debian testing
-vierge : `sermo-core-dev`, les 9 `sermo-backend-*`, `sermo-doc`, `sermo-gtkdialog`
-et quatre paquets de transition depuis la 1.x, soit **16 paquets** (voir
+vierge : `sermo-core-dev`, les 10 paquets de ports `sermo-backend-*` (dont
+`sermo-backend-lvgl-leger`), `sermo-doc`, `sermo-gtkdialog`, quatre paquets de
+transition depuis la 1.x, huit programmes d'aide (`sermo-source-*`,
+`sermo-cible-*`) et les deux serveurs MCP, soit **27 paquets** en 3.1.0 (voir
 `PACKAGING.md`).
 
 ---
@@ -167,8 +183,9 @@ La **frontière de confiance est l'auteur local du script XML**. sermo n'est pas
 un bac à sable qui exécuterait du XML hostile : qui écrit le script peut déjà
 lancer des commandes. Le rôle de sermo est de **ne pas transformer une saisie
 utilisateur en exécution de code** que l'auteur n'a pas voulue. Toute
-l'exécution passe par le cœur : `safe_exec.c`, en deux copies (`src/` et
-`src-gtk4/`) qui ne diffèrent que par des commentaires, testées toutes les deux.
+l'exécution passe par le cœur : `safe_exec.c`, en une seule copie
+(`libsermocore/src/safe_exec.c`), compilée dans chaque variante du cœur
+(`libsermocore/CMakeLists.txt`).
 
 **`safe_system` / `safe_popen`** remplacent `system` / `popen` :
 
@@ -176,8 +193,11 @@ l'exécution passe par le cœur : `safe_exec.c`, en deux copies (`src/` et
   exécutée **directement par `argv[]`, sans shell**. C'est le cas courant, et il
   évite l'injection shell.
 - Quand elle en contient, il y a **repli sur `/bin/sh -c`** (fonctionnalité shell
-  complète). Ce repli est **journalisé** (« injection risk ») et peut être
-  **refusé** en posant la variable d'environnement `SERMO_NO_SHELL_FALLBACK`.
+  complète ; `SERMO_SHELL` peut nommer un autre shell, par chemin absolu). Ce
+  repli est **journalisé** comme un fait, pas comme une alarme
+  (« safe_system: '…' contient de la syntaxe shell -- execution via /bin/sh -c »)
+  et il est **refusé** quand la variable d'environnement
+  `SERMO_NO_SHELL_FALLBACK` est posée, ou quand `SERMO_ALLOWED_CMDS` l'est.
 
 Il n'y a **pas de liste blanche de commandes imposée par défaut** : la confiance
 est l'auteur du script, pas une allow-list. Un filtre optionnel reste disponible

@@ -76,6 +76,7 @@ banc "liens de langue" bash tests/garde_liens_langue.sh
 for d in libsermocore contract tests examples sermo-backend-* sermo-source; do
     banc "spdx $d" bash tests/garde_spdx.sh "$d"
 done
+banc "licences des scripts (en-têtes ↔ debian/copyright)" bash tests/garde_spdx_scripts.sh
 for d in libsermocore/src libsermocore/src-gtk4 libsermocore/include contract sermo-backend-*/src sermo-source; do
     banc "fonctions interdites $d" bash tests/garde_fonctions_interdites.sh "$d"
 done
@@ -86,6 +87,33 @@ done
 banc "en-têtes de poste" bash tests/garde_pas_de_poste.sh "$RACINE"
 banc "lectures d'<input> plafonnées" bash tests/garde_lecture_input.sh "$RACINE"
 banc "programmes d'aide modbus/opcua" bash tests/garde_sermo_source.sh "$RACINE"
+banc "programme d'aide mqtt" bash tests/garde_sermo_source_mqtt.sh "$RACINE"
+banc "programme d'écriture mqtt" bash tests/garde_sermo_cible_mqtt.sh "$RACINE"
+banc "programme d'aide mavlink" bash tests/garde_sermo_source_mavlink.sh "$RACINE"
+banc "programme d'écriture mavlink (faux drone)" bash tests/garde_sermo_cible_mavlink.sh "$RACINE"
+banc "lecteur son/vidéo (faux et vrai mpv)" bash tests/garde_sermo_media.sh
+# Contre le simulateur ArduPilot (construit hors dépôt) : sur le poste, quand
+# SERMO_SITL est posé ; la CI ne l'a pas.
+[ -n "${SERMO_SITL:-}" ] && banc "programme d'écriture mavlink (SITL)" bash tests/garde_sermo_cible_mavlink_sitl.sh "$RACINE"
+banc "porte d'approbation" bash tests/garde_approbation.sh
+banc "testeur réseau" bash tests/garde_reseau_testeur.sh
+banc "moniteur GNSS" bash tests/garde_gnss_moniteur.sh
+banc "liaison série" bash tests/garde_liaison_serie.sh
+banc "domotique MQTT (fenêtre réelle)" bash tests/garde_domotique_mqtt.sh
+banc "bus CAN (vcan isolé)" bash tests/garde_bus_can.sh
+banc "testeur DNS (serveurs locaux)" bash tests/garde_dns_testeur.sh
+banc "certificat TLS (serveurs locaux)" bash tests/garde_certificat_tls.sh
+banc "journal en direct (faux journalctl)" bash tests/garde_journal_direct.sh
+banc "appareils USB (faux /sys)" bash tests/garde_usb_moniteur.sh
+banc "heure et NTP (faux timedatectl)" bash tests/garde_heure_ntp.sh
+banc "réseaux Wi-Fi (faux nmcli)" bash tests/garde_wifi_scan.sh
+banc "appareils Bluetooth (faux bluetoothctl)" bash tests/garde_bluetooth_scan.sh
+banc "aperçu caméra (sans ouvrir la caméra)" bash tests/garde_camera_apercu.sh
+# Les programmes d'aide aussi : leur durcissement manquait jusqu'à la 3.0.0
+# comprise, faute d'être contrôlé (le banc ne visait que les ports).
+for h in source-modbus source-opcua source-mqtt cible-mqtt source-mavlink cible-mavlink source-media cible-media; do
+    banc "sermo-$h durcissement" bash tests/garde_durcissement.sh "$RACINE/sermo-source/_build/sermo-$h"
+done
 case " ${PORTS[*]} " in *" lvgl "*)
     banc "lvgl léger : comportement" env TIMEOUT=60 sh tests/comportement/run.sh "$RACINE/sermo-backend-lvgl/_build_leger/lvglsermo"
     banc "poids par port" bash tests/garde_poids.sh "$RACINE" "${PORTS[@]}" lvgl-leger ;;
@@ -133,13 +161,16 @@ for p in "${PORTS[@]}"; do
     case "$p" in
         ncurses|html) ;;
         *) banc "$p taille de fenêtre" bash tests/garde_taille_fenetre.sh "$b"
-           banc "$p barre dans l'image" bash tests/garde_render_barre.sh "$b" ;;
+           banc "$p barre dans l'image" bash tests/garde_render_barre.sh "$b"
+           banc "$p jauge dans son intervalle" bash tests/garde_render_jauge.sh "$b"
+           banc "$p zone à sa taille" bash tests/garde_render_zone.sh "$b" ;;
     esac
     banc "$p calendrier" bash tests/garde_calendrier_date_du_jour.sh "$b"
     banc "$p durcissement" bash tests/garde_durcissement.sh "$b"
     banc "$p allowed_cmds" bash tests/garde_allowed_cmds.sh "$b"
     banc "$p source sans fin" bash tests/garde_input_sans_fin.sh "$b"
-    banc "$p input modbus/opcua" bash tests/garde_input_source.sh "$b"
+    banc "$p input modbus/opcua/mqtt/mavlink" bash tests/garde_input_source.sh "$b"
+    banc "$p action mqtt/mavlink (clic seul)" bash tests/garde_action_cible.sh "$b"
     banc "$p option --do" bash tests/garde_option_do.sh "$b"
     banc "$p SERMO_SHELL" bash tests/garde_sermo_shell.sh "$b"
     banc "$p maxwidgets" bash tests/garde_maxwidgets.sh "$b"
@@ -161,6 +192,7 @@ for p in "${PORTS[@]}"; do
         # Ni clic ni fenêtre à détecter (xdotool) : seule la sortie compte.
         banc "$p échappement" bash tests/garde_echappement_sortie.sh "$b"
         banc "$p valeurs de la page" bash tests/garde_html_valeurs_page.sh "$b"
+        banc "$p mode serve (variables du dialogue seulement)" bash tests/garde_html_serve.sh "$b"
     else
         banc "$p échappement" bash tests/garde_echappement_sortie.sh "$b"
         banc "$p clic widgets" bash tests/garde_clic_widgets.sh "$b"

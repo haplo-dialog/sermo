@@ -877,9 +877,20 @@ static void calendrier_mois(lv_event_t *e, int sens)
 static void calendrier_avant(lv_event_t *e) { calendrier_mois(e, -1); }
 static void calendrier_apres(lv_event_t *e) { calendrier_mois(e, +1); }
 
+/* Un changement d'onglet ne compte que s'il vient de l'utilisateur (clic sur un
+ * onglet, glissement). LVGL émet aussi VALUE_CHANGED quand la mise en page
+ * redimensionne la vue après la pose de la page : sa fin de défilement recalcule
+ * l'onglet sur la nouvelle largeur et retombait à côté — page="2" ou l'<input>
+ * de départ finissaient en page 1 dans un grand dialogue (cas 78, 2026-10-18).
+ * Sans périphérique actif, la page demandée reste celle du cœur, et
+ * synchroniser() remet l'onglet affiché. Ne PAS rappeler lv_tabview_set_active()
+ * ici : il relance un défilement qui renvoie cet événement (pile épuisée,
+ * erreur de segmentation, mesuré). */
 static void onglet_change(lv_event_t *e)
 {
     WidgetNode *n = (WidgetNode *)lv_event_get_user_data(e);
+
+    if (!lv_indev_active()) return;
     n->state.notebook.current_tab = (int)lv_tabview_get_tab_active(lv_event_get_target_obj(e));
 }
 

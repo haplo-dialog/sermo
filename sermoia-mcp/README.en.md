@@ -46,6 +46,10 @@ No argument. Returns a JSON object:
 - the widgets, grouped by family; the test checks this list against the tags the core
   parser recognises;
 - the content tags, the common attributes, the actions and the signals;
+- the sources and targets (`sources_cibles`): `<input modbus>`, `<input opcua>`,
+  `<input mqtt>`, `<input mavlink>`, `<input media>` to read, `<action mqtt>`,
+  `<action mavlink>`, `<action media>` to write, with their address, their package and
+  an example;
 - a minimal example and the shape of the output.
 
 The attributes specific to each widget are in the manual (sermoman-mcp).
@@ -173,7 +177,7 @@ The packages are attached to each release; check the signed checksums
 (`SHA256SUMS.asc`) first, as the [README](../README.en.md#install) explains.
 
 ```sh
-sudo apt install ./sermoia-mcp_2.8.2-3_amd64.deb ./sermo-backend-qt6_2.8.2-3_amd64.deb
+sudo apt install ./sermoia-mcp_3.1.2-2_amd64.deb ./sermo-backend-qt6_3.1.2-2_amd64.deb
 ```
 
 The package installs `/usr/bin/sermoia-mcp` and its catalogue in

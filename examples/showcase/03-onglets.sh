@@ -4,7 +4,7 @@
 # Repère visuel 3 : ONGLETS (notebook)
 #
 # Teste : notebook a 3 onglets, contenu different par onglet, bascule.
-#         Vérifie le placement des onglets (a gauche, comme gtk3) et le
+#         Vérifie le placement des onglets (en haut, comme gtk3) et le
 #         changement de page sur tous les ports.
 #
 # Usage :  ./03-onglets.sh            (utilise gtk3sermo)

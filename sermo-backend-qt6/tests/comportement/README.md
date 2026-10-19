@@ -18,7 +18,7 @@ bash tests/comportement/run_all.sh          # les neuf backends
 Codes : `0` parité atteinte · `1` au moins un écart/blocage · `77` binaire
 qt6sermo ou xvfb absent (rien vérifié — jamais un faux succès).
 
-## ⚠️ Ce banc est VOLONTAIREMENT ROUGE jusqu'à la parité (jalon M3)
+## ⚠️ Ce banc est VOLONTAIREMENT ROUGE jusqu'à la parité
 
 Les fichiers `cas/*.attendu` sont l'**étalon gtk3sermo**, pas des valeurs
 adaptées à qt6. Chaque widget réparé fait passer son cas du rouge au vert. Vert

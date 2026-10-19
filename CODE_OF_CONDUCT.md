@@ -1,5 +1,7 @@
 # Code de Conduite — sermo
 
+[English](CODE_OF_CONDUCT.en.md)
+
 ## Notre engagement
 
 Dans l'intérêt de favoriser un environnement ouvert et accueillant, nous nous engageons à faire de la participation au projet sermo une expérience sans harcèlement pour tout le monde, quels que soient l'âge, la corpulence, le handicap, l'ethnicité, l'identité et l'expression de genre, le niveau d'expérience, la nationalité, l'apparence personnelle, la race, la religion ou l'identité et l'orientation sexuelles.
@@ -22,11 +24,11 @@ Comportements inacceptables :
 
 ## Responsabilités
 
-Les mainteneurs du projet sont responsables de clarifier les standards de comportement acceptable et sont supposés prendre des mesures correctives appropriées et équitables en réponse à tout comportement inacceptable.
+Le mainteneur du projet est responsable de clarifier les standards de comportement acceptable et est supposé prendre des mesures correctives appropriées et équitables en réponse à tout comportement inacceptable.
 
 ## Application
 
-Les cas de comportement abusif, harcelant ou autrement inacceptable peuvent être signalés en contactant l'équipe du projet à `devel@haplo-dialog.fr`. Toutes les plaintes seront examinées et étudiées, et donneront lieu à une réponse jugée nécessaire et appropriée aux circonstances.
+Les cas de comportement abusif, harcelant ou autrement inacceptable peuvent être signalés en contactant le mainteneur à `devel@haplo-dialog.fr`. Toutes les plaintes seront examinées et étudiées, et donneront lieu à une réponse jugée nécessaire et appropriée aux circonstances.
 
 ## Attribution
 

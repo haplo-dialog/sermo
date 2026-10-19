@@ -70,12 +70,17 @@ sortie.append(bloc(['sermo-backend-gtk3/src/widget_window.c'],
     [LASZLO, THUNOR_CODE, '2021 Dima Krasner <dima@dimakrasner.com>', '2021-2024 Mick Amadio <01micko@gmail.com>', CAGE], 'GPL-2+',
     ["L'ancrage Wayland (layer-shell) vient de la lignée woof-CE (Puppy Linux), par gtk3dialog."]))
 sortie.append(bloc(['examples/*', 'sermoman-mcp/data/examples/*'], [LASZLO, THUNOR_EX, CAGE], 'GPL-2+',
-    ['188 des 213 fichiers de examples/ existent dans gtkdialog 0.8.3 (73 à',
-     "l'identique) ; pfeme, pfontview et playmusic sont des applications de Thunor.",
+    ['Mesuré en 2.8.0 : 188 des 213 fichiers de examples/ existaient dans',
+     "gtkdialog 0.8.3 (73 à l'identique) ; les fichiers ajoutés depuis sont écrits",
+     'pour sermo et, pour la plupart, déclarés CC0 (bloc suivant). pfeme,',
+     'pfontview et playmusic sont des applications de Thunor.',
      'sermoman-mcp/data/examples/ en garde des copies.']))
-sortie.append(bloc(cc0(), [CAGE], 'CC0-1.0',
+# Fichiers CC0 qui ne peuvent pas porter d'en-tête (données JSON Lines).
+CC0_SANS_ENTETE = ['examples/gnss-moniteur/echantillons/demo.jsonl']
+sortie.append(bloc(sorted(cc0() + CC0_SANS_ENTETE), [CAGE], 'CC0-1.0',
     ['Cas de test XML, démos qt6 et exemples écrits pour sermo, qui le déclarent',
-     'dans leur en-tête SPDX.']))
+     "dans leur en-tête SPDX ; et l'échantillon de données de gnss-moniteur, qui ne",
+     'peut pas porter d\'en-tête.']))
 sortie.append(bloc(['sermo-backend-qt6/data/fr.haplo_dialog.qt6sermo.metainfo.xml'], [CAGE], 'FSFAP',
     ['Métadonnées AppStream : AppStream demande une licence permissive pour elles,',
      'déclarée dans le fichier (metadata_license).']))
@@ -94,6 +99,16 @@ sortie.append(bloc(['examples/pfeme/profile.png', 'examples/pfeme/profileselecte
 sortie.append(bloc(['contract/*'], [CAGE], 'Expat',
     ['Le contrat de frontière entre le cœur et les backends est volontairement',
      'sous licence permissive.']))
+MAV = 'sermo-source/tiers/mavlink/'
+sortie.append(bloc([MAV + '*'], ['les auteurs de MAVLink (https://mavlink.io)'], 'LGPL-3 with MAVLink exception',
+    ['En-têtes C engendrés par le générateur MAVLink (c_library_v2, commit',
+     '8c63a49fe35aead7f9ef14031381c5e076ff743a ; voir sermo-source/tiers/mavlink/LISEZMOI).',
+     'Sous forme source, ils relèvent de la licence du générateur, LGPL-3 ; intégrés',
+     'à un binaire (sermo-source-mavlink, sermo-cible-mavlink), ils sont sous licence',
+     "MIT par l'exception écrite (COPYING.generateur, copié dans le même dossier)."]))
+sortie.append(bloc([MAV + 'mavlink_sha256.h'],
+    ['1995-2001 Kungliga Tekniska Högskolan (Royal Institute of Technology, Stockholm, Sweden)'], 'BSD-3-clause-heimdal',
+    ['SHA-256 tiré de Heimdal, adapté par MAVLink (signature des messages).']))
 sortie.append(bloc(['sermo-backend-sdl3/src/imgui/*'], ['2014-2026 Omar Cornut'], 'Expat',
     ['Dear ImGui 1.92.9 WIP, compilé dans sdl3sermo.']))
 sortie.append(bloc(['sermo-backend-sdl3/src/imgui/imgui_draw.cpp'],
@@ -121,10 +136,16 @@ sortie.append(bloc(['sermo-backend-sdl3/src/imgui/backends/imgui_impl_opengl3_lo
 # son avis de copyright, d'où des noms propres à chaque bibliothèque.
 LV = 'sermo-backend-lvgl/tiers/lvgl/'
 LVL = LV + 'src/libs/'
-sortie.append(bloc([LV + '*'], ['2025 LVGL Kft'], 'Expat',
+sortie.append(bloc([LV + '*'], ['2025 LVGL Kft', 'NXP', 'SiFli Technologies', 'Think Silicon, STMicroelectronics',
+                                'EDGEMTech Ltd.', 'Gaëtan Renaudeau'], 'Expat',
     ['LVGL v9.6.0, embarqué sans retouche (PROVENANCE). Les bibliothèques tierces',
-     "qu'il contient ont les licences ci-dessous ; seules celles que lv_conf.h",
-     'active sont compilées dans lvglsermo (TinyTTF et la bibliothèque C).']))
+     "qu'il contient ont les licences ci-dessous ; seules celles que",
+     'sermo-backend-lvgl/lv_conf.h active sont compilées dans lvglsermo :',
+     'TinyTTF, libpng (celle du système), ThorVG avec Lottie et rapidjson, la',
+     'police Montserrat 14 et la bibliothèque C. Les pilotes matériels (NXP, SiFli,',
+     'Think Silicon, Vivante…) ne sont pas compilés.']))
+sortie.append(bloc(['sermo-backend-lvgl/lv_conf.h'], ['2025 LVGL Kft', CAGE], 'Expat',
+    ["Réglages de LVGL pour lvglsermo, tirés de tiers/lvgl/lv_conf_template.h."]))
 LICENCES_LVGL = []   # (nom, fichier) — texte repris tel quel
 def lv(chemins, copyright, licence, fichier=None, commentaire=None):
     sortie.append(bloc([LVL + c if not c.startswith('sermo-') else c for c in chemins], copyright, licence, commentaire))
@@ -138,28 +159,65 @@ lv(['lodepng/*'], ['2005-2023 Lode Vandevenne'], 'Zlib-lodepng', LVL + 'lodepng/
 lv(['lz4/*'], ['2011-2023 Yann Collet'], 'BSD-2-clause-lz4', LVL + 'lz4/LICENSE.txt')
 lv(['nanovg/*'], ['2013 Mikko Mononen'], 'Zlib-nanovg', LVL + 'nanovg/LICENSE.txt')
 lv(['qrcode/*'], ['Project Nayuki'], 'Expat')
-lv(['thorvg/*'], ['2020-2025 les auteurs de ThorVG'], 'Expat',
-   commentaire=['rapidjson/ (inclus dans ThorVG) est sous MIT, et BSD-3-Clause pour son',
-                'assistant msinttypes ; non compilé ici (LV_USE_THORVG vaut 0).'])
+lv(['thorvg/*'], ['2020-2025 les auteurs de ThorVG', 'Samsung Electronics Co., Ltd.'], 'Expat',
+   commentaire=['ThorVG est compilé dans lvglsermo depuis la 2.8.2 (LV_USE_THORVG vaut 1) :',
+                'il dessine les icônes SVG et les animations Lottie.'])
+lv(['thorvg/tvgSvgLoader.cpp', 'thorvg/tvgSvgPath.cpp'], ['2020-2024 the ThorVG project', 'EFL developers'],
+   'Expat and BSD-2-clause-efl',
+   commentaire=['Analyseur SVG de ThorVG, repris en partie des EFL (notice BSD-2 dans le fichier).'])
+lv(['thorvg/tvgLottieInterpolator.cpp'], ['2020-2024 the ThorVG project', 'Mozilla Foundation'], 'Expat and MPL-2.0',
+   commentaire=['Une partie de ce fichier (interpolation de courbes) est sous MPL-2.0.'])
+lv(['thorvg/rapidjson/*'], ['2015 THL A29 Limited, a Tencent company, and Milo Yip'], 'Expat',
+   commentaire=["rapidjson, lecteur JSON des animations Lottie ; compilé. Son assistant",
+                'msinttypes (bloc suivant) ne sert qu\'à Visual Studio antérieur à 2013.'])
+lv(['thorvg/rapidjson/msinttypes/*'], ['2006-2013 Alexander Chemeris'], 'BSD-3-clause-msinttypes',
+   commentaire=['Non compilé ici.'])
 lv(['tiny_ttf/*'], ['2017 Sean Barrett'], 'Expat or public-domain',
    commentaire=['TinyTTF, issu de stb_truetype : au choix, MIT ou domaine public (Unlicense).'])
-lv(['tjpgd/*'], ['2021 ChaN'], 'TJpgDec', LVL + 'tjpgd/tjpgd.c',
-   commentaire=['Non compilé ici (LV_USE_TJPGD vaut 0). Le texte est la notice de tjpgd.c.'])
-lv(['vg_lite_driver/*'], ['2012-2023 Vivante Corporation'], 'MIT-Vivante', LVL + 'vg_lite_driver/LICENSE.txt',
+lv(['tjpgd/*'], ['2021 ChaN'], 'TJpgDec', LVL + 'tjpgd/LICENSE.txt',
+   commentaire=['Non compilé ici (LV_USE_TJPGD vaut 0).'])
+lv(['vg_lite_driver/*', LV + 'src/debugging/vg_lite_tvg/vg_lite.h'], ['2012-2023 Vivante Corporation'], 'MIT-Vivante', LVL + 'vg_lite_driver/LICENSE.txt',
    commentaire=['Pilote matériel VeriSilicon/Vivante, non compilé ici.'])
+lv(['vg_lite_driver/VGLiteKernel/*'], ['2014-2022 Vivante Corporation'], 'Expat or GPL-2+',
+   commentaire=['Partie noyau du pilote, au choix MIT ou GPL-2+ (notice de chaque fichier) ; non compilée.'])
 lv(['freetype/LiberationSans-Regular.ttf', 'freetype/LiberationSans-LICENSE.txt'],
    ['2010 Google Corporation', '2012 Red Hat, Inc.'], 'OFL-1.1-LiberationSans', LVL + 'freetype/LiberationSans-LICENSE.txt',
    commentaire=['Police de démonstration livrée avec les interfaces FreeType de LVGL ;',
                 'non utilisée par lvglsermo (LV_USE_FREETYPE vaut 0).'])
 lv(['freetype/ftmodule.h', 'freetype/ftoption.h', 'freetype/freetype-LICENSE.txt'],
-   ['les auteurs de FreeType'], 'FTL or GPL-2+',
+   ['David Turner, Robert Wilhelm, Werner Lemberg (FreeType)'], 'FTL or GPL-2+',
    commentaire=["Interfaces FreeType ; FreeType lui-même n'est pas dans LVGL."])
 LICENCES_LVGL.append(('FTL', LVL + 'freetype/freetype-LICENSE.txt'))
 sortie.append(bloc([LV + 'src/stdlib/builtin/lv_tlsf.c', LV + 'src/stdlib/builtin/lv_tlsf.h', LV + 'src/stdlib/builtin/lv_tlsf_private.h'],
     ['2006-2016 Matthew Conte'], 'BSD-3-clause-tlsf',
     ["Allocateur TLSF ; texte : LICENSE_TLSF.txt à côté. Non compilé ici (la",
      'bibliothèque C fournit malloc).']))
-LICENCES_LVGL.append(('BSD-3-clause-tlsf', LV + 'src/stdlib/builtin/LICENSE_TLSF.txt'))
+LICENCES_LVGL.append(('BSD-3-clause-tlsf', (LV + 'src/stdlib/builtin/lv_tlsf.h', 18, 41, '** ')))
+LVF = LV + 'src/font/'
+sortie.append(bloc([LVF + 'lv_font_montserrat_*.c'], ['2011 Julieta Ulanovsky (Montserrat)', 'Fonticons, Inc. (Font Awesome Free 5)'],
+    'OFL-1.1',
+    ['Glyphes de Montserrat et de Font Awesome Free 5 (polices), convertis en tableaux C',
+     'par lv_font_conv ; lv_font_montserrat_14.c est compilé (police par défaut).']))
+sortie.append(bloc([LVF + 'lv_font_dejavu_16_persian_hebrew.c'], ['2003 Bitstream, Inc. (Bitstream Vera)', 'Fonticons, Inc. (Font Awesome Free 5)'],
+    'Bitstream-Vera and OFL-1.1',
+    ['Glyphes de DejaVu Sans (modifications DejaVu dans le domaine public) et de Font',
+     'Awesome Free 5 ; non compilé.']))
+sortie.append(bloc([LVF + 'lv_font_source_han_sans_sc_*_cjk.c'], ['2014-2021 Adobe (Source Han Sans)'], 'OFL-1.1',
+    ['Glyphes de Source Han Sans ; non compilé.']))
+sortie.append(bloc([LVF + 'lv_font_unscii_*.c'], ['Viznut (unscii)'], 'public-domain',
+    ['Glyphes de la police unscii, versée par son auteur dans le domaine public ; non compilé.']))
+sortie.append(bloc([LV + 'src/drivers/opengles/glad/*'], ['2013-2020 The Khronos Group Inc.', 'David Herberth (glad)'],
+    '(WTFPL or CC0-1.0) and Apache-2.0',
+    ["Chargeur OpenGL engendré par glad (WTFPL ou CC0) à partir des définitions Khronos",
+     '(Apache-2.0) ; non compilé (LV_USE_OPENGLES vaut 0).']))
+sortie.append(bloc([LV + 'src/drivers/opengles/glad/include/KHR/khrplatform.h'], ['2008-2018 The Khronos Group Inc.'], 'Expat',
+    ['Non compilé.']))
+sortie.append(bloc([LV + 'src/osal/lv_cmsis_rtos2.c', LV + 'src/osal/lv_cmsis_rtos2.h'], ['2023 Arm Limited'], 'Apache-2.0',
+    ['Couche CMSIS-RTOS2 ; non compilée (LV_OS_NONE).']))
+sortie.append(bloc([LV + 'src/debugging/test/lv_test_screenshot_compare.c'], ['2002-2010 Guillaume Cottenceau'], 'X11',
+    ['Outil de test de LVGL ; non compilé (LV_USE_TEST vaut 0).']))
+sortie.append(bloc([LVL + 'gltf/stb_image/stb_image.h'], ['2017 Sean Barrett'], 'Expat or public-domain',
+    ['stb_image, au choix MIT ou domaine public ; non compilé (LV_USE_GLTF vaut 0).']))
 sortie.append(bloc([LV + 'src/stdlib/builtin/lv_sprintf_builtin.c'], ['2014-2019 Marco Paland'], 'Expat',
     ['Formatage printf embarqué ; texte : LICENSE_SPRINTF.txt à côté.']))
 sortie.append(bloc(['debian/*'], [CAGE], 'GPL-2+'))
@@ -265,11 +323,107 @@ sortie.append('''License: public-domain
 ''')
 
 def paragraphe(nom, fichier, commun=None):
-    t = open(f'{R}/{fichier}', encoding='utf-8', errors='replace').read().strip('\n').split('\n')
+    if isinstance(fichier, tuple):   # (fichier, première ligne, dernière ligne, préfixe de commentaire)
+        f, d, fin, pre = fichier
+        t = open(f'{R}/{f}', encoding='utf-8', errors='replace').read().split('\n')[d - 1:fin]
+        t = [l[len(pre):].rstrip() if l.startswith(pre) else ('' if l.strip() in (pre.strip(), '') else l.strip()) for l in t]
+    else:
+        t = open(f'{R}/{fichier}', encoding='utf-8', errors='replace').read().strip('\n').split('\n')
     corps = [(' ' + l.rstrip()) if l.strip() else ' .' for l in t]
     return 'License: ' + nom + '\n' + '\n'.join(corps) + '\n'
 for nom, fichier in LICENCES_LVGL:
     sortie.append(paragraphe(nom, fichier))
+LIB = LVL + 'thorvg/'
+sortie.append(paragraphe('BSD-2-clause-efl', (LIB + 'tvgSvgLoader.cpp', 27, 51, ' * ')))
+sortie.append(paragraphe('BSD-3-clause-heimdal', (MAV + 'mavlink_sha256.h', 15, 40, ' * ')))
+sortie.append(paragraphe('BSD-3-clause-msinttypes', (LIB + 'rapidjson/msinttypes/stdint.h', 6, 29, '// ')))
+sortie.append(paragraphe('OFL-1.1', (LVL + 'freetype/LiberationSans-LICENSE.txt', 12, 10000, '')))
+sortie.append(paragraphe('LGPL-3 with MAVLink exception', (MAV + 'COPYING.generateur', 1, 32, '')).rstrip('\n') + """
+ .
+ On Debian systems, the complete text of the GNU Lesser General Public License
+ version 3 can be found in "/usr/share/common-licenses/LGPL-3" (and the GNU GPL
+ version 3 in "/usr/share/common-licenses/GPL-3").
+""")
+sortie.append("""License: Bitstream-Vera
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of the fonts accompanying this license ("Fonts") and associated
+ documentation files (the "Font Software"), to reproduce and distribute the
+ Font Software, including without limitation the rights to use, copy, merge,
+ publish, distribute, and/or sell copies of the Font Software, and to permit
+ persons to whom the Font Software is furnished to do so, subject to the
+ following conditions:
+ .
+ The above copyright and trademark notices and this permission notice shall
+ be included in all copies of one or more of the Font Software typefaces.
+ .
+ The Font Software may be modified, altered, or added to, and in particular
+ the designs of glyphs or characters in the Fonts may be modified and
+ additional glyphs or characters may be added to the Fonts, only if the fonts
+ are renamed to names not containing either the words "Bitstream" or the word
+ "Vera".
+ .
+ This License becomes null and void to the extent applicable to Fonts or Font
+ Software that has been modified and is distributed under the "Bitstream
+ Vera" names.
+ .
+ The Font Software may be sold as part of a larger software package but no
+ copy of one or more of the Font Software typefaces may be sold by itself.
+ .
+ THE FONT SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF COPYRIGHT, PATENT,
+ TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL BITSTREAM OR THE GNOME
+ FOUNDATION BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, INCLUDING
+ ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL DAMAGES,
+ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
+ THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM OTHER DEALINGS IN THE
+ FONT SOFTWARE.
+ .
+ Except as contained in this notice, the names of Gnome, the Gnome
+ Foundation, and Bitstream Inc., shall not be used in advertising or
+ otherwise to promote the sale, use or other dealings in this Font Software
+ without prior written authorization from the Gnome Foundation or Bitstream
+ Inc., respectively. For further information, contact: fonts at gnome dot
+ org.
+""")
+sortie.append("""License: X11
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to
+ deal in the Software without restriction, including without limitation the
+ rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ sell copies of the Software, and to permit persons to whom the Software is
+ furnished to do so, subject to the following conditions:
+ .
+ The above copyright notice and this permission notice shall be included in
+ all copies or substantial portions of the Software.
+ .
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ X CONSORTIUM BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+ AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNEC-
+ TION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ .
+ Except as contained in this notice, the name of the X Consortium shall not
+ be used in advertising or otherwise to promote the sale, use or other deal-
+ ings in this Software without prior written authorization from the X Consor-
+ tium.
+""")
+sortie.append("""License: WTFPL
+ DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
+ Version 2, December 2004
+ .
+ Copyright (C) 2004 Sam Hocevar <sam@hocevar.net>
+ .
+ Everyone is permitted to copy and distribute verbatim or modified
+ copies of this license document, and changing it is allowed as long
+ as the name is changed.
+ .
+ DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
+ TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
+ .
+ 0. You just DO WHAT THE FUCK YOU WANT TO.
+""")
 sortie.append("""License: MPL-2.0
  This Source Code Form is subject to the terms of the Mozilla Public License,
  v. 2.0. If a copy of the MPL was not distributed with this file, You can

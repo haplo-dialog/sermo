@@ -18,20 +18,20 @@
 DIALOG="${1:-gtk3sermo}"
 
 export MAIN_DIALOG='
-<window title="Repere 5 - Boutons et icones" default-width="520" default-height="400">
-  <vbox space-expand="true" space-fill="true">
+<window title="Repère 5 - Boutons et icônes" default-width="520" default-height="400">
+  <vbox>
 
-    <frame label="Icones de theme (image icon-name)">
+    <frame label="Icônes de thème (image icon-name)">
       <hbox homogeneous="true">
         <vbox><image icon-name="folder" icon-size="dialog"></image><text><label>Dossier</label></text></vbox>
         <vbox><image icon-name="document-save" icon-size="dialog"></image><text><label>Enregistrer</label></text></vbox>
         <vbox><image icon-name="edit-find" icon-size="dialog"></image><text><label>Chercher</label></text></vbox>
         <vbox><image icon-name="dialog-warning" icon-size="dialog"></image><text><label>Attention</label></text></vbox>
-        <vbox><image icon-name="system-run" icon-size="dialog"></image><text><label>Executer</label></text></vbox>
+        <vbox><image icon-name="system-run" icon-size="dialog"></image><text><label>Exécuter</label></text></vbox>
       </hbox>
     </frame>
 
-    <frame label="Boutons avec icone (input file icon)">
+    <frame label="Boutons avec icône (input file icon)">
       <vbox>
         <button image-position="left">
           <input file icon="document-open"></input><label>Ouvrir un fichier</label>

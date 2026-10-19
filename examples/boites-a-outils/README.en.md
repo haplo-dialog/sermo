@@ -1,5 +1,7 @@
 # Toolboxes
 
+[Français](README.md)
+
 Four boxes of settings and tools, each with a **launcher** and **ten tools**. The
 launcher shows the tools in a single window; one click opens a tool, then you come
 back to the launcher.
@@ -56,8 +58,8 @@ SERMO_A_BLANC=0 examples/boites-a-outils/utilisateur/lanceur.sh gtk3sermo
 
 ## How they are written
 
-The rules are those of the job scripts: [CONVENTION.md](../metiers/CONVENTION.md)
-(French only). Public domain (CC0-1.0): copy and adapt them.
+The rules are those of the job scripts: [CONVENTION.md](../metiers/CONVENTION.md) (French only).
+Public domain (CC0-1.0): copy and adapt them.
 
 These dialogs are also served by `sermoia-mcp` (`sermo_examples`), under one topic
 per box.

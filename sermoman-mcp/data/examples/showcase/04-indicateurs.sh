@@ -18,7 +18,7 @@
 DIALOG="${1:-gtk3sermo}"
 
 export MAIN_DIALOG='
-<window title="Repere 4 - Indicateurs" default-width="520" default-height="420">
+<window title="Repère 4 - Indicateurs" default-width="520" default-height="420">
   <vbox space-expand="true" space-fill="true">
 
     <frame label="Progression (doit afficher 65 %)">
@@ -27,7 +27,7 @@ export MAIN_DIALOG='
       </progressbar>
     </frame>
 
-    <frame label="Glissieres (valeur 40)">
+    <frame label="Glissières (valeur 40)">
       <hbox space-expand="true" space-fill="true">
         <hscale range-min="0" range-max="100" space-expand="true" space-fill="true">
           <input>echo 40</input><variable>HVAL</variable>
@@ -46,7 +46,7 @@ export MAIN_DIALOG='
 
     <hbox>
       <frame label="Compteur"><spinbutton range-min="0" range-max="100" range-step="1"><input>echo 12</input><variable>CPT</variable></spinbutton></frame>
-      <frame label="Activite"><spinner></spinner></frame>
+      <frame label="Activité"><spinner></spinner></frame>
     </hbox>
 
     <hbox><button ok></button></hbox>

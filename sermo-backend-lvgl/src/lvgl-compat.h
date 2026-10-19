@@ -85,7 +85,11 @@ static inline void *_sdl3_malloc_check(size_t n) {
 #define g_try_new(t,n)   ((t*)malloc(sizeof(t)*(n)))
 
 /* ─── Chaînes ───────────────────────────────────────────────────────────── */
-#define g_strdup(s)       strdup(s)
+/* GLib rend NULL pour une entrée NULL ; strdup(NULL) plante. Les ports
+ * qt6 et fltk1 avaient cette garde, ce shim non (vu le 2026-10-18 : gcc
+ * -Wnonnull sur <notebook>). Et un manque de mémoire arrête net, comme GLib. */
+#define g_strdup(s)       ({ const char *_gs = (s); char *_gr = _gs ? strdup(_gs) : NULL; \
+                           if (_gs && !_gr) abort(); _gr; })
 #define g_strndup(s,n)    strndup((s),(n))
 #define g_strcmp0(a,b)    strcmp((a)?(a):"",(b)?(b):"")
 /* Analyse numérique indépendante de la locale : un nombre écrit dans un XML

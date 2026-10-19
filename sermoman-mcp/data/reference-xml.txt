@@ -29,8 +29,9 @@ DESCRIPTION
      fltk1sermo, efl1sermo, sdl3sermo, lvglsermo, ncursessermo, htmlsermo.
 
      La syntaxe descend de gtkdialog 0.8.3 (Pere Laszlo 2003-2007, puis Thunor
-     2011-2013 ; voir HISTOIRE.md). Le paquet du backend GTK 3 fournit le
-     paquet virtuel « gtkdialog », si bien que les vieux scripts qui appellent
+     2011-2013 ; voir HISTOIRE.md). Le paquet sermo-gtkdialog fournit le
+     paquet virtuel « gtkdialog » et la commande /usr/bin/gtkdialog (un lien
+     vers gtk3sermo), si bien que les vieux scripts qui appellent
      gtkdialog(1) continuent de fonctionner.
 
 
@@ -87,6 +88,14 @@ OPTIONS
             commande », donc FICHIER est sourcé à neuf dans le sous-shell de
             chaque action. Seule --do échappe à ce préfixe. Un chemin relatif
             part du dossier où le programme a été lancé.
+
+     -e FICHIER, --event-driven=FICHIER
+            Programme « piloté par évènements » à la gtkdialog : sermo lance
+            par le shell « . FICHIER; sermo [-d] [-w] [-c] [--print-ir]
+            [--program=VAR] -i FICHIER », puis rend le code de cette commande.
+            FICHIER est donc sourcé une fois pour fournir la description (il
+            doit exporter MAIN_DIALOG, ou la variable de --program), puis
+            inclus dans chaque action comme avec --include.
 
      -g FICHIER, --glade-xml=FICHIER
             gtk3sermo et gtk4sermo SEULEMENT. Construit le dialogue depuis un
@@ -249,6 +258,13 @@ WIDGETS —— RÉFÉRENCE COMPLÈTE
             Attribut : tab-labels (titres séparés par « | »). La forme
             labels="…" est acceptée mais dépréciée. Aussi : show-tabs,
             show-border.
+            Exporte le numéro de la page courante (0 = la première).
+            page="N" choisit la page de départ. Une <input> donne aussi une
+            page : lue à l'ouverture, elle fixe la page de départ ; si la
+            balise porte page="…", page= l'emporte au premier passage ; un
+            refresh relit l'<input>. -1 donne la dernière page ; un numéro
+            trop grand ne change rien. Même règle sur les neuf ports
+            (cas de comportement 78).
 
                 <notebook tab-labels="Général|Avancé">
                   <vbox><text><label>Page 1</label></text></vbox>
@@ -514,7 +530,12 @@ WIDGETS —— RÉFÉRENCE COMPLÈTE
             Attributs : file, icon-name, icon-size, width, height.
 
      <drawingarea>
-            Zone de dessin personnalisée.
+            Zone de dessin personnalisée. Attributs : width-request,
+            height-request (pixels), embed. Avec embed="true", gtk3 sous X11
+            rend dans la variable l'identifiant X11 de la zone une fois
+            affichée ; elle est vide sinon (avant l'affichage, sans embed,
+            sous Wayland, autres ports). C'est la zone que nomme dans= de
+            <action media>.
 
                 <drawingarea width-request="200" height-request="120"><variable>CANEVAS</variable></drawingarea>
 
@@ -556,8 +577,16 @@ WIDGETS —— RÉFÉRENCE COMPLÈTE
 
    Terminal et séparateurs
      <terminal>
-            Terminal interactif embarqué. NÉCESSITE VTE : disponible sur les
-            backends GTK seulement. Sous-élément : <input> (commande initiale).
+            Terminal embarqué. Sous-élément : <input> (commande initiale).
+            Selon le port :
+              gtk3, gtk4 : terminal interactif (VTE).
+              fltk1 : Fl_Terminal (FLTK 1.4, couleurs ANSI) qui affiche la
+                sortie de la commande, sans saisie.
+              qt6 : terminal interactif par QTermWidget si le port est
+                construit avec qtermwidget6 (le paquet Debian ne le demande
+                pas) ; sinon la sortie de la commande, en lecture seule.
+              efl1, sdl3, lvgl, ncurses, html : la sortie de la commande, en
+                lecture seule.
 
      <hseparator>  et  <vseparator>
             Séparateurs horizontal / vertical. Toujours écrire la balise
@@ -794,6 +823,143 @@ ACTIONS
      (voir SÉCURITÉ).
 
 
+SOURCES ET CIBLES
+     Un <input> peut lire, au lieu d'une commande, un équipement ou un service
+     décrit par une ADRESSE TOUT-EN-UN (schéma, hôte, puis clés après « ? »,
+     séparées par « & », écrit &amp; dans le XML). Une <action> peut écrire
+     vers lui. Chaque forme demande son programme d'aide, dans son propre
+     paquet, installé dans /usr/libexec/sermo (SERMO_SOURCE_DIR change ce
+     dossier). Un paramètre inconnu est refusé. La fenêtre ne se fige jamais :
+     une valeur gardée est montrée, et relue en arrière-plan.
+
+     <input modbus>tcp://hôte[:port]?registre=N…</input>
+            Lit un automate Modbus (TCP, ou rtu:///dev/ttyUSB0). Lecture seule.
+            Clés : registre (obligatoire, à partir de 1), type (maintien,
+            entree, bobine, discret), esclave, nombre, format, ordre, diviseur,
+            delai, cache, perime ; en RTU : vitesse, parite, bits, arret.
+            Paquet : sermo-source-modbus.
+
+                <text>
+                  <variable>TEMP</variable>
+                  <input modbus>tcp://automate:502?esclave=1&amp;registre=1&amp;diviseur=10</input>
+                </text>
+
+     <input opcua>opc.tcp://hôte:port?noeud=…</input>
+            Lit une variable d'un serveur OPC UA. Lecture seule. Clés : noeud
+            (obligatoire, ns=1;s=nom), delai, cache, perime, mode (none, sign,
+            chiffre) ; avec sign ou chiffre : certificat, cle, confiance
+            (obligatoires), uri. Paquet : sermo-source-opcua.
+
+                <text>
+                  <variable>PIECES</variable>
+                  <input opcua>opc.tcp://serveur:4840?noeud=ns=1;s=pieces</input>
+                </text>
+
+     <input mqtt>mqtt://hôte[:port]?sujet=…</input>
+            Lit un sujet MQTT : le message retenu, sinon le suivant (au plus
+            delai=). S'abonne et lit, ne publie jamais. mqtts:// chiffre (port
+            8883) et exige confiance= (autorité du serveur). Clés : sujet
+            (obligatoire, sans joker + ni #), delai, cache, perime,
+            identifiants (chemin absolu d'un fichier utilisateur:mot de passe,
+            en mode 600 ; jamais le mot de passe dans l'adresse), confiance,
+            certificat, cle, clair. Sur mqtt:// (non chiffré), identifiants=
+            est REFUSÉ avant toute connexion, sauf avec clair=oui (réseau local
+            de confiance) ; clair= n'admet que « oui » et ne vaut qu'avec
+            mqtt://. Paquet : sermo-source-mqtt.
+
+                <text>
+                  <variable>SALON</variable>
+                  <input mqtt>mqtt://serveur:1883?sujet=maison/salon/temperature</input>
+                </text>
+
+     <action mqtt>mqtt://hôte?sujet=…&amp;valeur=…</action>
+            Publie UNE valeur sur UN sujet, en QoS 1, jamais répétée.
+            Seulement dans un <button> ou un <menuitem> (ailleurs, le dialogue
+            est refusé à la lecture). Rien ne part sans la liste blanche
+            ~/.config/sermo/cibles-mqtt (mode 600) ou /etc/sermo/cibles-mqtt
+            (mode 644) : une ligne « serveur sujet valeurs », valeurs en liste
+            (on|off) ou en plage (18..24). valeur=$NOM prend une variable du
+            dialogue. Mêmes clés que la lecture pour le chiffrement, les
+            identifiants et clair=. Paquet : sermo-cible-mqtt.
+
+                <button>
+                  <label>Allumer</label>
+                  <action mqtt>mqtt://serveur?sujet=maison/salon/lampe&amp;valeur=on</action>
+                </button>
+
+     <input mavlink>LIAISON?champ=…</input>
+            Lit la télémétrie de l'autopilote d'un drone (MAVLink). Rien n'est
+            émis sur le lien. Liaisons : udp://[hôte]:port, tcp://hôte:port,
+            serie:///dev/ttyUSB0 (vitesse=). Clés : champ (obligatoire :
+            tension, courant, batterie, latitude, longitude, altitude, hauteur,
+            cap, vitesse, montee, satellites, fix, arme, mode), systeme, delai,
+            cache, perime. Paquet : sermo-source-mavlink.
+
+                <text>
+                  <variable>HAUT</variable>
+                  <input mavlink>udp://:14550?champ=hauteur</input>
+                </text>
+
+     <action mavlink>LIAISON?parametre=…|ordre=…|mission=…</action>
+            Règle UN paramètre (drone désarmé, réussi seulement si le drone
+            renvoie la même valeur), donne UN ordre de sécurité (rtl, land,
+            terminaison ; « terminaison » coupe les moteurs et demande deux
+            appuis en moins de 5 s), ou envoie UNE mission de points de
+            passage, relue sur le drone et JAMAIS lancée. Pas de pilotage :
+            ni armement, ni décollage, ni changement de mode. Seulement dans
+            un <button> ou un <menuitem>. Liste blanche
+            ~/.config/sermo/cibles-mavlink (mode 600) ou
+            /etc/sermo/cibles-mavlink (mode 644) : « parametre NOM min..max »,
+            « ordre rtl|land|terminaison », « mission rayon R hauteur H ».
+            Familles jamais réglées : ARMING_*, FLTMODE*, SERVOn_FUNCTION,
+            BRD_SAFETY*, FENCE_*. Conclusion de chaque appel :
+            $XDG_RUNTIME_DIR/sermo-cible-mavlink/message. Paquet :
+            sermo-cible-mavlink.
+
+                <button>
+                  <label>Retour au départ</label>
+                  <action mavlink>tcp://127.0.0.1:5760?ordre=rtl</action>
+                </button>
+
+     <action media>media://NOM?commande=…</action>
+            Pilote un lecteur de son et de vidéo (mpv), nommé NOM (4 au plus à
+            la fois). Commandes : lire&amp;source=…, pause, reprendre, arreter,
+            aller&amp;valeur=SECONDES, volume&amp;valeur=0..100, muet, son.
+            Sources : file:///chemin (fichier ordinaire), http(s)://,
+            rtsp(s)://, ou une caméra
+            v4l2:///dev/videoN[&amp;taille=…][&amp;format=mjpeg|yuyv422]
+            (taille : 320x240, 640x480, 1280x720 ou 1920x1080 ; par défaut
+            640x480 et mjpeg) ; tout autre schéma est refusé. La fenêtre d'une
+            caméra porte « CAMÉRA ACTIVE » dans son titre ; une caméra
+            occupée est refusée, rien n'est forcé. Mot de passe d'un flux
+            HTTP(S) : identifiants=/chemin (fichier 600). bwrap est
+            obligatoire pour une source réseau ; pour un fichier local ou une
+            caméra il est facultatif (sans lui, la source est lue sans cage,
+            et un message le dit). Seulement dans un <button> ou un <menuitem>. Le lecteur
+            s'arrête quand la fenêtre se ferme. Paquet : sermo-cible-media.
+            Dans la fenêtre : &amp;dans=$VAR (la variable d'un
+            <drawingarea embed="true">) affiche la vidéo dans cette zone,
+            avec gtk3 sous X11 seulement ; sinon (variable vide, Wayland,
+            autre port), fenêtre séparée, et le message le dit. Un dans=
+            qui n'est pas $NOM, ou une valeur qui n'est pas un nombre, est
+            refusé : mpv n'est pas lancé.
+
+                <button>
+                  <label>Lire</label>
+                  <action media>media://salon?commande=lire&amp;source=file:///srv/sons/annonce.ogg</action>
+                </button>
+
+     <input media>media://NOM?donnee=…</input>
+            Lit l'état d'un lecteur : donnee=etat (défaut : stopped, playing,
+            paused ou error), position ou duree (secondes). Pas d'événement
+            de fin : un <timer> relit l'état. Paquet : sermo-source-media.
+
+                <text>
+                  <variable>ETAT</variable>
+                  <input media>media://salon?donnee=etat</input>
+                </text>
+
+
 SIGNAUX
      Par défaut, <action> réagit au signal principal du widget (clic pour un
      bouton). Pour un autre signal, poser l'attribut signal= :
@@ -910,8 +1076,19 @@ ENVIRONNEMENT
      SERMO_NO_SHELL_FALLBACK
             Voir SÉCURITÉ. Refuse le repli /bin/sh -c.
 
+     SERMO_SHELL
+            Shell du repli « -c » (défaut /bin/sh). Chemin absolu d'un
+            programme exécutable ; sinon ignorée, avec un message.
+
      SERMO_ALLOWED_CMDS
             Voir SÉCURITÉ. Liste blanche de commandes autorisées.
+
+     SERMO_SOURCE_DIR
+            Dossier des programmes d'aide des <input X> / <action X>
+            (défaut /usr/libexec/sermo), par exemple pour essayer une
+            construction depuis les sources. Chemin absolu, fait seulement de
+            lettres ASCII, de chiffres et de . _ : / = , + @ - ; sinon
+            l'<input> ou l'<action> est refusée.
 
      GTKDIALOG_PIXMAP_PATH
             Répertoires (séparés par « : ») où chercher une image non trouvée
@@ -963,11 +1140,12 @@ DÉPANNAGE
      Quel backend derrière « sermo » ?
             Celui choisi par update-alternatives. Pour forcer, appeler le
             binaire du backend : gtk3sermo, gtk4sermo, qt6sermo, fltk1sermo,
-            efl1sermo, sdl3sermo.
+            efl1sermo, sdl3sermo, lvglsermo, ncursessermo, htmlsermo.
 
-     <terminal> ne s'affiche pas
-            Il nécessite VTE et n'existe que sur les backends GTK. Vérifier :
-            pkg-config --modversion vte-2.91.
+     <terminal> ne prend pas de saisie
+            Le terminal interactif n'existe que sur gtk3 et gtk4 (VTE), et sur
+            qt6 construit avec qtermwidget6. Ailleurs, il montre la sortie de
+            la commande. Voir <terminal>.
 
      Vérifier le parse sans afficher de fenêtre
             sermo --program=VAR --print-ir
@@ -989,4 +1167,4 @@ LICENCE
      Documentation sous licence GPL-2.0-or-later.
      Logiciel sous licence GPL-2.0-or-later.
 
-sermo 3.0.0                        2026-10                          SERMO-XML(5)
+sermo 3.1.2                        2026-10                          SERMO-XML(5)

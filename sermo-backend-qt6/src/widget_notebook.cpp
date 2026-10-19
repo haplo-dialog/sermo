@@ -173,7 +173,7 @@ void widget_notebook_clear(variable *var)
 
 /* <input> à chaque « refresh », comme l'étalon : atoi() de la première ligne
  * est la page ; négatif → dernière page ; au-delà du nombre de pages → rien.
- * Au premier passage, la page ne change PAS (la commande tourne quand même).
+ * Premier passage : voir le refresh.
  * Aucune <action> n'est branchée sur ce widget dans ce port. Jusqu'au
  * 2026-10-13, l'<input> n'était jamais lu (NO restait 0). */
 void widget_notebook_refresh(variable *var)
@@ -182,11 +182,16 @@ void widget_notebook_refresh(variable *var)
     QTabWidget *tabs = static_cast<QTabWidget *>(var->Widget);
     bool premier = !tabs->property("sermoLu").toBool();
     tabs->setProperty("sermoLu", true);
+    /* Premier passage : l'<input> pose la page, sauf si la balise porte
+     * page="…", qui l'emporte — règle de gtk4sermo, et de gtk3sermo depuis le
+     * 2026-10-18 (il perdait cette page, GtkNotebook la refusant avant
+     * l'affichage). Jusque-là ce port copiait cette perte. */
     gchar *ligne = widget_input_line(var->Attributes);
+    const char *impose = premier ? (var->widget_tag_attr ? get_tag_attribute(var->widget_tag_attr, "page") : NULL) : NULL;
+    if (impose) { g_free(ligne); ligne = g_strdup(impose); }
     if (!ligne) return;
     int page = atoi(ligne);
     g_free(ligne);
-    if (premier) return;
     if (page < 0) page = tabs->count() - 1;
     if (page >= 0 && page < tabs->count())
         tabs->setCurrentIndex(page);

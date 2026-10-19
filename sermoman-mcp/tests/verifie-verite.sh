@@ -10,13 +10,16 @@
 # libsermocore. Sans les sources il s'arrête en 77, jamais en 0.
 #
 #   SERMO_SRC=/chemin/vers/sermo ./tests/verifie-verite.sh
+#   SERMOMAN_REF=/chemin/copie/reference-xml.txt …   (autre référence à éprouver ;
+#                                défaut : data/reference-xml.txt)
 #
 # Codes : 0 tout concorde · 1 une affirmation ne colle plus au code ·
 #         77 sources de libsermocore introuvables, rien n'a été vérifié.
 
 set -u
 ICI=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)   # .../sermoman-mcp
-REF="$ICI/data/reference-xml.txt"
+REF="${SERMOMAN_REF:-$ICI/data/reference-xml.txt}"
+[ -f "$REF" ] || { echo "IGNORÉ : référence introuvable : $REF. Rien n'a été vérifié." >&2; exit 77; }
 GUIDE="$ICI/data/guide.md"
 
 # Racine du dépôt sermo : SERMO_SRC, sinon le parent (sermoman-mcp y vit).
@@ -119,6 +122,34 @@ if [ -z "$manquantes" ]; then
     ok "toutes les balises-widgets du lexer sont décrites ($lues entrées lues)"
 else
     ko "balise(s) du lexer absente(s) de la « RÉFÉRENCE COMPLÈTE » :$manquantes"
+fi
+
+# ── 6. Chaque source et cible du lexer est-elle dans la référence ? ─────────
+# Le test 5 ne lit que les balises d'un mot (« \<text\> ») : les formes à deux
+# mots « <input modbus> », « <action mqtt> »… lui échappent. On les extrait du
+# lexer (règles « \<input\ X\> » et « \<action\ X\> ») et on exige chacune,
+# écrite telle quelle, dans la référence. Les cinq familles attendues doivent
+# être trouvées : un lexer réécrit autrement rendrait sinon un vert muet.
+essai
+formes=$(grep -oE '^\\<(input|action)\\ [a-z]+\\>' "$LEXER" | sed 's/\\//g' | sort -u)
+absentes=""; familles_vues=""; n_formes=0
+for x in modbus opcua mqtt mavlink media; do
+    printf '%s\n' "$formes" | grep -qE "^<(input|action) $x>\$" && familles_vues="$familles_vues $x"
+done
+while IFS= read -r f; do
+    [ -n "$f" ] || continue
+    n_formes=$((n_formes+1))
+    grep -qF "$f" "$REF" || absentes="$absentes « $f »"
+done <<EOF_FORMES
+$formes
+EOF_FORMES
+if [ "$familles_vues" != " modbus opcua mqtt mavlink media" ]; then
+    ko "sources et cibles : le lexer ne donne pas les cinq familles attendues (vues :${familles_vues:- aucune})" \
+       "relire l'extraction dans $LEXER"
+elif [ -n "$absentes" ]; then
+    ko "forme(s) du lexer absente(s) de la référence :$absentes" "ajouter à la section SOURCES ET CIBLES de $REF"
+else
+    ok "sources et cibles : les $n_formes formes du lexer sont dans la référence"
 fi
 
 # L'inventaire des scripts (data/scripts.md) suit les en-têtes des scripts.

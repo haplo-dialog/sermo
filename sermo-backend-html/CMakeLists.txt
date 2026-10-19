@@ -4,7 +4,7 @@
 # widgets (modèle arbre-de-WidgetNode partagé avec les ports sdl3/ncurses,
 # copiés depuis ncurses car déjà 100% agnostiques du moteur de rendu), le
 # bridge d'attributs (tag_set_property.c), le hook d'init + l'ABI neutre
-# (sermo_backend_html.c) et l'exporteur (render_html.c). Jalon de faisabilité
+# (sermo_backend_html.c) et l'exporteur (render_html.c). Étape de faisabilité
 # (ADR dédié) : prouve que l'arbre neutre s'exporte en HTML, pas encore
 # l'interactif en ligne.
 cmake_minimum_required(VERSION 3.16)

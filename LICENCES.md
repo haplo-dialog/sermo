@@ -1,11 +1,13 @@
 # Licences — sermo
 
+[English](LICENCES.en.md)
+
 ## Licence du projet
 
 **GPL-2.0-or-later** — sermo descend de **gtkdialog**, placé sous
 GNU General Public License version 2 « ou toute version ultérieure ». Le cœur
-`libsermocore`, les neuf backends, `sermoman-mcp`, `sermoia-mcp` et la
-documentation (manuels, pages de manuel, Texinfo) sont sous cette même licence.
+`libsermocore`, les neuf backends, `sermoman-mcp`, `sermoia-mcp`, les
+programmes d'aide de `sermo-source/` et la documentation (manuels, pages de manuel, Texinfo) sont sous cette même licence.
 Aucune exception propre au projet.
 
 Les fichiers C et C++ portent un identifiant SPDX :
@@ -21,7 +23,7 @@ relève de la licence du projet, sauf s'il figure dans le tableau ci-dessous.
 
 | Chemin | Licence | Titulaires |
 |---|---|---|
-| `contract/sermo-contract.h` — la frontière cœur ↔ backend | MIT (texte dans l'en-tête et dans `contract/LICENSE.MIT`) | S. Cage |
+| `contract/` — `sermo-contract.h` (la frontière cœur ↔ backend) et `sermo_port_id.c` | MIT (texte dans l'en-tête et dans `contract/LICENSE.MIT`) | S. Cage |
 | `sermo-backend-sdl3/src/imgui/` — **Dear ImGui 1.92.9 WIP**, compilé dans `sdl3sermo` | MIT (`imgui/LICENSE.txt`) | Omar Cornut |
 | `imgui/imstb_rectpack.h`, `imstb_textedit.h`, `imstb_truetype.h` — bibliothèques stb modifiées par ImGui | MIT ou domaine public, au choix (fin de chaque fichier) | Sean Barrett |
 | Polices ProggyClean et ProggyForever, compilées dans `imgui/imgui_draw.cpp` | MIT | Tristan Grimmer ; Disco Hello |
@@ -29,11 +31,16 @@ relève de la licence du projet, sauf s'il figure dans le tableau ci-dessous.
 | `imgui/backends/imgui_impl_opengl3_loader.h` — chargeur OpenGL | domaine public et MIT (en-têtes Khronos) | The Khronos Group |
 | `sermo-backend-lvgl/tiers/lvgl/` — **LVGL v9.6.0**, compilé dans `lvglsermo` (provenance : `tiers/lvgl/PROVENANCE`) | MIT (`tiers/lvgl/LICENCE.txt`) ; parties tierces : `tiers/lvgl/COPYRIGHTS.md` | LVGL Kft |
 | `sermo-backend-lvgl/lv_conf.h` — réglage de LVGL, tiré du modèle d'origine | MIT | LVGL Kft ; S. Cage |
-| `tiers/lvgl/src/libs/thorvg/` — **ThorVG**, moteur SVG embarqué dans LVGL, compilé dans `lvglsermo` depuis la 2.8.2 (`LV_USE_THORVG` dans `sermo-backend-lvgl/lv_conf.h`) | MIT (en-tête de chaque fichier, `thorvg/LICENSE.txt`) | le projet ThorVG |
+| `tiers/lvgl/src/libs/thorvg/` — **ThorVG**, moteur SVG embarqué dans LVGL, compilé dans `lvglsermo` depuis la 2.8.2 (`LV_USE_THORVG` dans `sermo-backend-lvgl/lv_conf.h`) ; pas dans `sermo-backend-lvgl-leger` | MIT (en-tête de chaque fichier, `thorvg/LICENSE.txt`) | le projet ThorVG ; Samsung Electronics |
+| `thorvg/tvgSvgLoader.cpp`, `thorvg/tvgSvgPath.cpp` — l'analyseur SVG de ThorVG, repris en partie des EFL | MIT et BSD-2 (notice EFL dans le fichier) | le projet ThorVG ; les développeurs des EFL |
+| `thorvg/tvgLottieInterpolator.cpp` — interpolation de courbes des animations Lottie | MIT et MPL-2.0 (pour une partie du fichier) | le projet ThorVG ; Mozilla Foundation |
+| `thorvg/rapidjson/` — **rapidjson**, lecteur JSON des animations Lottie, compilé | MIT | THL A29 Limited (Tencent) et Milo Yip |
 | `tiers/lvgl/src/libs/tiny_ttf/` — lecteur de police TrueType (stb_truetype), compilé dans `lvglsermo` | MIT ou Unlicense, au choix | Sean Barrett ; codewitch-honey-crisis (tiny_ttf) |
-| Police Montserrat 14 et symboles Font Awesome 5 Free, compilés dans `tiers/lvgl/src/font/lv_font_montserrat_14.c` | OFL-1.1 | Julieta Ulanovsky ; Fonticons, Inc. |
+| Polices Montserrat et symboles Font Awesome 5 Free de LVGL (`tiers/lvgl/src/font/lv_font_montserrat_*.c`) ; seule `lv_font_montserrat_14.c` est compilée (police par défaut) | OFL-1.1 | Julieta Ulanovsky ; Fonticons, Inc. |
+| `sermo-source/tiers/mavlink/` — en-têtes C de **MAVLink** (c_library_v2, provenance : `tiers/mavlink/LISEZMOI`), compilés dans `sermo-source-mavlink` et `sermo-cible-mavlink` | LGPL-3 avec l'exception MAVLink : sous licence MIT une fois intégrés à un binaire (`tiers/mavlink/COPYING.generateur`) | les auteurs de MAVLink |
+| `sermo-source/tiers/mavlink/mavlink_sha256.h` — SHA-256 de Heimdal (signature des messages) | BSD-3 (texte en tête du fichier) | Kungliga Tekniska Högskolan (KTH) |
 | `sermo-backend-qt6/data/fr.haplo_dialog.qt6sermo.metainfo.xml` — métadonnées AppStream (AppStream demande une licence permissive) | FSFAP | S. Cage |
-| `tests/xml/*.xml`, `sermo-backend-qt6/examples/*/demo.sh`, et les exemples écrits pour sermo qui le déclarent dans leur en-tête (`examples/showcase/`, `examples/system-tools/`), les scripts métier (`examples/metiers/`) et les boîtes à outils (`examples/boites-a-outils/`), et `contrib/trousses/` | CC0-1.0 | — |
+| `tests/xml/*.xml`, `sermo-backend-qt6/examples/*/demo.sh`, et les exemples écrits pour sermo qui le déclarent dans leur en-tête (`examples/showcase/`, `examples/system-tools/`), les scripts métier (`examples/metiers/`), les boîtes à outils (`examples/boites-a-outils/`), les exemples Modbus et OPC UA (`examples/modbus/`, `examples/opcua/`), les scripts `examples/mavlink/drone-lecture.sh` et `drone-commande.sh`, les quinze exemples de la 3.1.0 (`examples/approbation/`, `bluetooth-scan/`, `bus-can/`, `camera-apercu/`, `certificat-tls/`, `dns-testeur/`, `domotique-mqtt/`, `gnss-moniteur/`, `heure-ntp/`, `journal-direct/`, `lecteur-media/`, `liaison-serie/`, `reseau-testeur/`, `usb-moniteur/`, `wifi-scan/`), et `contrib/trousses/` | CC0-1.0 | — |
 | Icônes des exemples `button`, `togglebutton`, `pfeme` (héritées de gtkdialog) | GPL-2 ou LGPL-2.1 : voir le fichier `COPYING-*-icons` posé à côté | projets elementary, fast-forward, nuvola |
 
 ## Provenance — de quoi sermo descend exactement
@@ -100,8 +107,9 @@ la moindre des choses envers un travail sur lequel celui-ci s'appuie.
 
 ## Portée
 
-- `libsermocore` (cœur), `sermo-backend-*` (backends), `sermoman-mcp`, `sermoia-mcp` :
-  GPL-2.0-or-later, sauf les fichiers du tableau ci-dessus.
+- `libsermocore` (cœur), `sermo-backend-*` (backends), `sermoman-mcp`, `sermoia-mcp`,
+  `sermo-source` (programmes d'aide) : GPL-2.0-or-later, sauf les fichiers du
+  tableau ci-dessus.
 - Le lexer/parser générés (Flex/Bison) suivent la licence du projet ; les
   squelettes Flex/Bison bénéficient de leurs exceptions habituelles.
 
@@ -122,7 +130,12 @@ compatibilité usuelle de la FSF ; ce n'est pas un avis juridique.
 
 - GPL-2 : fichier `COPYING` à la racine du dépôt, ou
   <https://www.gnu.org/licenses/old-licenses/gpl-2.0.html>.
-- MIT : `contract/LICENSE.MIT`, `sermo-backend-sdl3/src/imgui/LICENSE.txt` et
-  `sermo-backend-lvgl/tiers/lvgl/LICENCE.txt`.
+- MIT : `contract/LICENSE.MIT`, `sermo-backend-sdl3/src/imgui/LICENSE.txt`,
+  `sermo-backend-lvgl/tiers/lvgl/LICENCE.txt` et
+  `sermo-backend-lvgl/tiers/lvgl/src/libs/thorvg/LICENSE.txt`.
+- Exception MAVLink : `sermo-source/tiers/mavlink/COPYING.generateur`.
+- MPL-2.0 : <https://www.mozilla.org/MPL/2.0/>.
+- Le texte complet de chaque licence, fichier par fichier, est aussi dans
+  `debian/copyright`.
 - OFL-1.1 : <https://openfontlicense.org>.
 - CC BY 4.0 : <https://creativecommons.org/licenses/by/4.0/legalcode>.

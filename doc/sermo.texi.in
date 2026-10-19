@@ -7,7 +7,7 @@
 @c   makeinfo        sermo.texi     (→ sermo.info)
 @c ============================================================
 @set VERSION @PACKAGE_VERSION@
-@set UPDATED-MONTH September 2026
+@set UPDATED-MONTH October 2026
 @c %**start of header
 @setfilename sermo.info
 @settitle sermo @value{VERSION} User Manual
@@ -136,14 +136,24 @@ boîte à outils. Détails d'architecture : voir le manuel développeur.
 @chapter Installation
 
 @section Depuis les paquets
+Il n'y a pas de dépôt apt : les paquets Debian (@file{.deb}) sont joints à
+chaque publication, avec le fichier @file{SHA256SUMS} et sa signature
+@file{SHA256SUMS.asc}. On télécharge, on vérifie, puis on installe le fichier :
+
 @example
-apt install sermo-backend-gtk3     # GTK 3
-apt install sermo-backend-fltk1    # FLTK, sans GTK ni Qt
+gpg --verify SHA256SUMS.asc SHA256SUMS
+sha256sum --ignore-missing -c SHA256SUMS
+sudo apt install ./sermo-backend-gtk3_*_amd64.deb    # GTK 3
+sudo apt install ./sermo-backend-fltk1_*_amd64.deb   # FLTK, sans GTK ni Qt
 @end example
+
+Les sommes sont signées, pas chaque @file{.deb}. Téléchargement, clé et
+empreinte : @url{https://gitlab.com/haplo-dialog/sermo}.
 
 @section Depuis les sources
 On compile d'abord le cœur @code{libsermocore} (variante neutre, GLib ou GTK4),
-puis le backend choisi contre ce cœur via pkg-config. Voir @file{COMPILE.md}.
+puis le backend choisi contre ce cœur via pkg-config. Voir le fichier
+@file{COMPILE.md} des sources, sur @url{https://gitlab.com/haplo-dialog/sermo}.
 
 @node Invocation
 @chapter Invocation
@@ -158,19 +168,30 @@ sermo --stdin
 
 @section Options principales
 @table @option
-@item --program=@var{VARIABLE}
+@item -p @var{VARIABLE}
+@itemx --program=@var{VARIABLE}
 Lire la description XML depuis la variable d'environnement @var{VARIABLE}.
-@item --file=@var{FILE}
+@item -f @var{FILE}
+@itemx --file=@var{FILE}
 Lire la description XML depuis le fichier @var{FILE}.
-@item --stdin
+@item -s
+@itemx --stdin
 Lire la description XML depuis l'entrée standard.
 @item --do=@var{CMD}
 Exécuter @var{CMD} après la fermeture du dialogue ; les valeurs des widgets sont
 exportées comme variables d'environnement (voie recommandée, @ref{Security}).
-@item --include=@var{FILE}
+@item -i @var{FILE}
+@itemx --include=@var{FILE}
 Rendre les fonctions shell de @var{FILE} disponibles à chaque action. Un chemin
 relatif part du dossier où le programme a été lancé.
-@item --glade-xml=@var{FILE}
+@item -e @var{FILE}
+@itemx --event-driven=@var{FILE}
+Programme piloté par événements : le shell lit d'abord @var{FILE}
+(@code{. @var{FILE}}), puis le programme se relance avec
+@option{--include=@var{FILE}}. @var{FILE} peut ainsi poser la variable qui
+contient le dialogue et définir les fonctions que ses actions appellent.
+@item -g @var{FILE}
+@itemx --glade-xml=@var{FILE}
 gtk3sermo et gtk4sermo seulement : construire le dialogue depuis un fichier
 d'interface GtkBuilder (Glade) écrit pour leur version de GTK. La fenêtre est
 l'objet que @code{--program} désigne (@code{MAIN_WINDOW} par défaut) ; les
@@ -179,9 +200,36 @@ l'option (code de sortie 1).
 @item --print-ir
 Analyser la description, imprimer la représentation interne et quitter sans
 affichage (débogage et tests headless).
-@item --version
+@item --render-png=@var{FILE}
+Dessiner le dialogue hors écran, l'écrire dans l'image PNG @var{FILE} et
+quitter. Ports : gtk3sermo, gtk4sermo, qt6sermo, fltk1sermo, efl1sermo,
+sdl3sermo et lvglsermo. gtk3sermo, gtk4sermo et fltk1sermo demandent quand même
+un affichage ; un affichage virtuel (@command{xvfb-run}) suffit. ncursessermo
+et htmlsermo ne font pas d'image.
+@item -G @var{GEOMETRIE}
+@itemx --geometry=@var{GEOMETRIE}
+Position et taille de la fenêtre, @code{[LxH][+X+Y]} comme sous X11
+(p.@: ex.@: @code{800x600+0+0}).
+@item -c
+@itemx --center
+Centrer les fenêtres à l'écran.
+@item --space-expand=@var{ÉTAT}
+@itemx --space-fill=@var{ÉTAT}
+Valeur par défaut (@code{true} ou @code{false}) de @code{expand} et de
+@code{fill} pour tous les widgets.
+@item -w
+@itemx --no-warning
+Taire les avertissements non fatals.
+@item -d
+@itemx --debug
+Mode débogage : chaque caractère lu dans la description est recopié sur la
+sortie standard.
+@item -v
+@itemx --version
 Afficher la version et quitter.
 @end table
+
+Détail de chaque option : @command{man sermo}.
 
 @node XML Syntax
 @chapter Syntaxe XML
@@ -198,10 +246,78 @@ conteneurs (@code{<vbox>}, @code{<hbox>}, @code{<frame>}, @code{<notebook>}).
 </window>
 @end example
 
-Un widget nommé (@code{<variable>NOM</variable>}) exporte sa valeur sous la forme
-@code{NOM="valeur"} à la fermeture. La référence complète du langage (attributs,
-actions, signaux, entrées/sorties) est dans le manuel utilisateur
-(@file{MANUEL_UTILISATEUR.md}).
+Un widget nommé (@code{<variable>NOM</variable>}) imprime sa valeur sur la
+sortie standard sous la forme @code{NOM="valeur"} quand une action
+@code{exit:} termine le dialogue ; une action @code{closewindow:} ou la
+fermeture de la fenêtre n'impriment que @code{EXIT}. Rien n'est
+exporté vers le shell appelant : on lit ces lignes avec @code{eval}, ou mieux
+avec @option{--do}. La référence complète du langage (attributs, actions,
+signaux, entrées/sorties) est dans le manuel utilisateur,
+@file{MANUEL_UTILISATEUR.md} des sources, sur
+@url{https://gitlab.com/haplo-dialog/sermo}.
+
+@section Sources et cibles
+
+Certaines balises lisent un appareil ou un service au lieu de lancer une
+commande. Le texte de la balise est une adresse tout-en-un :
+
+@example
+<input modbus>tcp://plc:502?esclave=1&registre=1</input>
+<input opcua>opc.tcp://server:4840?noeud=ns=1;s=pieces</input>
+<input mqtt>mqtt://broker:1883?sujet=maison/salon/temperature</input>
+<input mavlink>udp://:14550?champ=batterie</input>
+<input media>media://salon?donnee=etat</input>
+<action mqtt>mqtt://broker?sujet=maison/salon/lampe&valeur=on</action>
+<action mavlink>tcp://127.0.0.1:5760?ordre=rtl</action>
+<action media>media://salon?commande=pause</action>
+@end example
+
+@itemize
+@item
+Un @code{<input>} de ce genre ne fait que lire : rien n'est écrit dans
+l'appareil.
+@item
+@code{<action mqtt>}, @code{<action mavlink>} et @code{<action media>} sont les
+seules écritures. Elles ne sont permises que dans un @code{<button>} ou un
+@code{<menuitem>} (une écriture demande un clic) ; ailleurs, le dialogue est
+refusé à la lecture. Une commande qui nomme à la main un programme
+@code{sermo-cible-} est refusée aussi.
+@item
+La balise devient une commande qui lance un programme d'aide,
+@file{/usr/libexec/sermo/sermo-source-@var{PROTOCOLE}} (lecture) ou
+@file{/usr/libexec/sermo/sermo-cible-@var{PROTOCOLE}} (écriture). L'adresse
+part en un seul argument, encodée « pour cent », jamais par le shell.
+@code{SERMO_SOURCE_DIR} change le dossier ; il doit être un chemin absolu. Avec
+@code{SERMO_ALLOWED_CMDS}, il faut nommer le programme d'aide (par exemple
+@file{/usr/libexec/sermo/sermo-source-modbus}).
+@item
+Chaque programme d'aide a son paquet : @code{sermo-source-modbus},
+@code{sermo-source-opcua}, @code{sermo-source-mqtt}, @code{sermo-source-mavlink},
+@code{sermo-source-media}, @code{sermo-cible-mqtt}, @code{sermo-cible-mavlink},
+@code{sermo-cible-media}.
+@item
+Les écritures MQTT et MAVLink ne vont que vers ce qu'une liste blanche nomme :
+@file{~/.config/sermo/cibles-mqtt} ou @file{/etc/sermo/cibles-mqtt},
+@file{~/.config/sermo/cibles-mavlink} ou @file{/etc/sermo/cibles-mavlink}. Sans
+liste, rien n'est envoyé.
+@item
+MQTT : des identifiants (@code{identifiants=}) sur @code{mqtt://} (non chiffré)
+sont refusés avant toute connexion, sauf si l'adresse porte @code{clair=oui}.
+@code{mqtts://} exige @code{confiance=} (l'autorité qui a signé le certificat
+du serveur).
+@item
+MAVLink : télémétrie ; un clic règle un paramètre drone désarmé, donne un ordre
+de sécurité (@code{rtl}, @code{land}, ou @code{terminaison} pour couper les
+moteurs, qui demande un second appui dans les 5 s), ou envoie une mission
+jamais lancée. Pas de pilotage : ni armement, ni décollage, ni changement de
+mode, ni déplacement.
+@item
+Média : son et vidéo joués par mpv. Une source réseau n'est lue que dans
+@command{bwrap} ; un fichier local est lu dans @command{bwrap} s'il est
+installé, sinon sans cage (un message le dit).
+@end itemize
+
+Détail (chaque paramètre, chaque refus) : manuel utilisateur, section 7.3.
 
 @node Widgets
 @chapter Widgets
@@ -210,7 +326,8 @@ Le langage supporte notamment :
 
 @table @code
 @item Conteneurs
-window, vbox, hbox, frame, notebook, expander, eventbox, aspectframe
+window, vbox, hbox, frame, notebook, expander, eventbox, aspectframe, grid,
+paned, stack, flowbox, overlay, revealer, wizard, toolbar
 @item Affichage
 text, image, pixmap, statusbar, infobar, drawingarea
 @item Saisie
@@ -222,11 +339,11 @@ filechooser, calendar
 @item Progression
 progressbar, pulse, spinner, levelbar
 @item Boutons
-button (+ formes stock ok/cancel/help/yes/no), linkbutton
+button (+ formes stock ok/cancel/help/yes/no), linkbutton, menubutton
 @item Menus
 menubar, menu, menuitem, separator
 @item Terminal et séparateurs
-terminal (backends GTK, VTE), hseparator, vseparator
+terminal (shell interactif sur les backends GTK, VTE, et sur qt6 construit avec QTermWidget ; ailleurs, sortie de la commande en lecture seule), hseparator, vseparator
 @item Minuteries
 timer
 @end table
@@ -263,8 +380,23 @@ commandes est concentrée dans le cœur durci :
 @itemize
 @item
 @code{safe_system} n'ouvre un shell que si la commande contient des
-métacaractères ; sinon exécution directe par @code{argv[]}. Le repli
-@code{/bin/sh -c} est journalisé, et refusé si @code{SERMO_NO_SHELL_FALLBACK=1}.
+métacaractères ; sinon exécution directe par @code{argv[]}. Le repli vers le
+shell (@code{SERMO_SHELL}, sinon @file{/bin/sh}) est journalisé, et refusé si
+@code{SERMO_NO_SHELL_FALLBACK=1}.
+@item
+@code{SERMO_SHELL} choisit ce shell : le chemin absolu d'un programme
+exécutable. Vide ou absente : @file{/bin/sh} (sous Windows, @code{%ComSpec%},
+sinon @command{cmd.exe}). Un chemin relatif, ou un fichier qu'on ne peut pas
+lancer, est signalé une fois sur la sortie d'erreur, et le shell par défaut
+sert.
+@item
+@code{SERMO_ALLOWED_CMDS} : liste, séparée par des virgules, des commandes
+permises (p.@: ex.@: @code{SERMO_ALLOWED_CMDS=ls,cat,/usr/local/bin/outil}).
+Absente par défaut ; elle sert à déployer un dialogue dans un contexte moins
+sûr (borne, session invitée). Une entrée sans barre oblique permet ce nom et le
+chemin où @code{PATH} le trouve ; une entrée avec barre oblique permet ce chemin
+exact. Tant qu'elle est posée, le repli vers le shell est refusé aussi. Les
+balises de sources et cibles lancent un programme d'aide : il faut le nommer.
 @item
 Les valeurs exportées échappent @code{\}, @code{"}, @code{$} et l'accent grave,
 pour que @code{eval "$(sermo @dots{})"} ne réexécute pas une saisie.
@@ -281,7 +413,8 @@ Durcissement du binaire : FORTIFY=3, stack protector, CET IBT/SHSTK, PIE, RELRO,
 BIND_NOW.
 @end itemize
 
-Voir @file{SECURITY.md}.
+Voir le fichier @file{SECURITY.md} des sources, sur
+@url{https://gitlab.com/haplo-dialog/sermo}.
 
 @node Index
 @unnumbered Index

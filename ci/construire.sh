@@ -94,11 +94,17 @@ case " ${PORTS[*]} " in *" lvgl "*)
     ;;
 esac
 
-# Les programmes d'aide de <input modbus> / <input opcua> (sermo_source.h).
+# Les programmes d'aide de <input modbus> / <input opcua> / <input mqtt> (sermo_source.h).
 journal="$J/sermo-source.log"
 if { cmake -S "$RACINE/sermo-source" -B "$RACINE/sermo-source/_build" -DSERMO_SOURCE_EXIGER=ON \
      && cmake --build "$RACINE/sermo-source/_build" -j"$N"; } > "$journal" 2>&1 \
-   && [ -x "$RACINE/sermo-source/_build/sermo-source-modbus" ] && [ -x "$RACINE/sermo-source/_build/sermo-source-opcua" ]; then
+   && [ -x "$RACINE/sermo-source/_build/sermo-source-modbus" ] && [ -x "$RACINE/sermo-source/_build/sermo-source-opcua" ] \
+   && [ -x "$RACINE/sermo-source/_build/sermo-source-mqtt" ] \
+   && [ -x "$RACINE/sermo-source/_build/sermo-cible-mqtt" ] \
+   && [ -x "$RACINE/sermo-source/_build/sermo-source-mavlink" ] \
+   && [ -x "$RACINE/sermo-source/_build/sermo-cible-mavlink" ] \
+   && [ -x "$RACINE/sermo-source/_build/sermo-source-media" ] \
+   && [ -x "$RACINE/sermo-source/_build/sermo-cible-media" ]; then
     printf 'OK     %-8s (%s avertissement(s))\n' source "$(grep -c 'warning:' "$journal")"
 else
     printf 'ÉCHEC  %-8s — voir %s\n' source "$journal"; tail -20 "$journal"

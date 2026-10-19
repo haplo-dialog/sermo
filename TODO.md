@@ -1,7 +1,19 @@
 # TODO — sermo
 
-État : Phase 1 (modularisation) terminée — neuf backends sur `libsermocore`,
-empaquetage séparé prouvé. Reste ci-dessous.
+État : la 3.0.0 est publiée (2026-10-15) ; la 3.1.0 est publiée (2026-10-19)
+(MQTT, MAVLink, son et vidéo ; voir [CHANGELOG.md](CHANGELOG.md)). Neuf
+backends sur `libsermocore`, empaquetage séparé. Reste ci-dessous.
+
+## Prévu en 3.2.0
+
+- [ ] **Piloter un drone** : armer, décoller, changer de mode, se déplacer. La
+      3.1.0 ne fait que régler un drone au sol, donner les ordres de sécurité
+      (retour, atterrissage, coupure) et envoyer une mission sans la lancer.
+- [ ] **Vidéo intégrée, suite** : depuis la 3.1.1, gtk3 sous X11 l'affiche dans le
+      dialogue (`dans=$ZONE`) ; ailleurs (Wayland, autres ports), elle reste dans la
+      fenêtre de mpv.
+- [ ] **Lecteur son et vidéo sous Wayland** : essayé sous X11 seulement.
+- [ ] **Console lvgl en mode graphique** : à essayer sur une vraie console.
 
 ## Court terme
 
@@ -15,18 +27,22 @@ Trouvé le 2026-09-16 par les bancs réparés (`ci/bancs.sh`), **ouvert** :
       GitLab : 3 refaits sur gtk3, dont un injoignable DEUX fois. Depuis le 2026-10-01,
       `ci/bancs.sh` passe par `tests/outils/xvfb-run` (Xvfb `-displayfd`, éteint et attendu).
       Cause exacte jamais reproduite : fermer ce point quand plusieurs pipelines
-      seront verts sans « refait ».
+      seront verts sans « refait ». Cause trouvée le 2026-10-14
+      (`tests/outils/xvfb-run`) : lancé sans `-noreset`, Xvfb se réinitialise au
+      départ de son dernier client et refuse les connexions pendant ce temps ;
+      les bancs le lancent désormais avec `-noreset`. Reste à voir les pipelines.
 - [ ] **Faux « syntax error » à l'arrêt, avec `--program`** : efl1 arrêté par
       SIGTERM (et il sort alors en code 1), qt6 privé de son serveur X,
       écrivent `Error in line N, near token '<window>': syntax error` — le cœur
       relance l'analyse d'un texte déjà consommé. Rien avec `--file` ; rien sur
       gtk3, gtk4, fltk1, sdl3.
-- [ ] **`<notebook>` : l'`<input>` lu au premier passage ne change pas de page
+- [x] **`<notebook>` : l'`<input>` lu au premier passage ne change pas de page
       sur gtk3sermo** (mesuré le 2026-10-13 : `echo 1` à l'ouverture laisse la
       page 0 ; aux `refresh` suivants la page suit). gtk4sermo change bien de
-      page. Les sept autres ports suivent l'étalon gtk3. Effet de bord de GTK 3
-      (carnet pas encore montré) ou règle voulue ? À trancher par SC ; le cas
-      78 évite exprès ce point.
+      page. **Tranché par SC le 2026-10-18 : défaut de GTK 3, corrigé** —
+      gtk3 retient la page et la pose à l'affichage ; les sept autres ports
+      posent la page lue, `page="…"` l'emporte au premier passage (règle de
+      gtk4, mesurée). Cas 78 : NB2 à NB4.
 - [x] **CET sans effet à l'exécution** : les notes IBT/SHSTK sont forcées au
       lien (`-Wl,-z,ibt -Wl,-z,shstk`), mais ni la glibc ni les bibliothèques des
       toolkits de Debian testing n'en portent (mesuré au `readelf`). Dit dans
@@ -106,10 +122,13 @@ l'étalon gtk3sermo mesurés (ou lus, quand c'est dit) pendant la réparation de
       sans écran lit chaque barre jusqu'au bout AVANT les minuteries
       (`render_ncurses.c`, `run_headless`). Voulu, et sans risque mémoire ; mais
       un `exit` par minuterie n'y part jamais tant qu'une barre lit `yes`.
-- [ ] **Petites pertes mémoire à chaque export des variables** (cœur,
+- [x] **Petites pertes mémoire à chaque export des variables** (cœur,
       `variables_export_all`, mesuré sous valgrind sur efl1) : quelques octets par
       variable à chaque `refresh:` ou action ; lent, mais sans fin dans une boucle
-      de rafraîchissement.
+      de rafraîchissement. **Fermé en 3.0.0** (2026-10-15) :
+      `widget_get_text_value()` rend toujours une chaîne allouée, que le cœur
+      libère ; banc `tests/garde_fuite_refresh.sh` (LeakSanitizer), joué par
+      `ci/bancs.sh` sur ncurses et html.
 - [ ] **`<list>` et `<table>` rafraîchies en boucle** : chaque `refresh:` AJOUTE ses
       rangées, comme l'étalon ; un script qui rafraîchit sans `clear:` grossit sans
       fin. Comportement hérité de gtkdialog, à documenter.
@@ -238,7 +257,7 @@ Trouvé le 2026-09-16, **fermé en 2.7.0** (voir [CHANGELOG.md](CHANGELOG.md)) :
 
 ## Toujours vrai (garde-fous)
 
-- Ne jamais régresser ce que joue **`ci/bancs.sh`** (XML 55 · comportement 75 ·
+- Ne jamais régresser ce que joue **`ci/bancs.sh`** (XML 55 · comportement 78 ·
   gardes · exemples réels · scripts métier et boîtes à outils sur les neuf
   ports).
 - Ne jamais retirer un drapeau de durcissement (voir [SECURITY.md](SECURITY.md)).

@@ -30,7 +30,7 @@ par fichier dans [LICENCES.md](LICENCES.md).
 
 ## État du projet
 
-- Version **3.0.0**. sermo est tenu par **un seul mainteneur**, S. Cage. Il n'y a
+- Version **3.1.2**. sermo est tenu par **un seul mainteneur**, S. Cage. Il n'y a
   pas d'équipe derrière : une réponse peut prendre du temps.
 - Une partie du code, de la documentation et des tests a été écrite avec l'aide
   d'une IA (Claude, d'Anthropic), sous la direction du mainteneur. Il l'essaie et
@@ -38,9 +38,21 @@ par fichier dans [LICENCES.md](LICENCES.md).
   vérification repose surtout sur les bancs, que chacun peut rejouer
   ([AUTHORS](AUTHORS)).
 - **Ce qui est vérifié** : 178 bancs (analyse XML, valeurs exportées, sécurité,
-  clics, ouverture des exemples réels, serveurs MCP) sur les neuf ports ; le
-  dernier passage complet (2026-10-11) est détaillé dans
-  [BILAN_SANTE.md](BILAN_SANTE.md). Chaque chiffre se rejoue par une commande.
+  clics, ouverture des exemples réels, serveurs MCP) sur les neuf ports au
+  passage complet du 2026-10-11, détaillé dans [BILAN_SANTE.md](BILAN_SANTE.md).
+  Au passage complet (`ci/bancs.sh`, programmes d'aide compris) :
+  262 bancs, 0 échec (passage final de la 3.1.2, 2026-10-19). Au passage du 2026-10-18, un banc était rouge (des fonctions
+  interdites dans le code du lecteur son et vidéo) ; il a été corrigé puis
+  rejoué vert. Chaque chiffre se rejoue par une commande.
+- **Ce que sermo lit et écrit dehors**, par des programmes d'aide installés à
+  part : un automate en Modbus ou OPC UA (lecture seule) ; la domotique MQTT
+  (lire, et publier si une liste blanche le permet) ; un drone MAVLink (lire sa
+  télémétrie ; régler un paramètre du drone désarmé, lui envoyer une mission
+  sans la lancer, ou donner un ordre de sécurité : retour au départ,
+  atterrissage, coupure des moteurs en deux appuis) ; le son et la vidéo, joués
+  par mpv. sermo ne pilote pas un drone : il ne l'arme pas, ne le fait pas
+  décoller et ne le dirige pas, hors retour au départ et atterrissage de
+  sécurité. Les paquets sont dans « Installer ».
 - **Écarts connus** : les ports sans GTK s'écartent encore de gtk3sermo sur
   quelques points (`auto-refresh`, libellé du bouton Annuler, `<terminal>`…).
   Ils sont listés dans [TODO.md](TODO.md).
@@ -102,23 +114,43 @@ commandes) est lié dans chaque binaire ; le backend ne fait que dessiner. Le po
 ncurses a été ajouté sans changer une ligne du cœur. Architecture :
 [MANUEL_DEVELOPPEUR.md](MANUEL_DEVELOPPEUR.md).
 
+## Autres systèmes
+
+Hors de Linux, un seul port tourne : **ncurses**, dans un terminal.
+
+| Système | Comment l'obtenir | Vérifié |
+|---|---|---|
+| Windows 10 et 11 | `sermo-<version>-windows-x86_64.zip`, joint à la publication : un seul `ncursessermo.exe`, rien à installer | banc de comportement sous Wine ; affichage et accents sur un vrai Windows 11, commandes et accents sur un vrai Windows 10 |
+| Android (Termux) | recette [`packaging/autres-os/termux/build.sh`](packaging/autres-os/termux/build.sh), à construire dans Termux | sur un téléphone (Android 15, arm64) |
+| FreeBSD, OpenBSD | ports [`packaging/autres-os/freebsd/`](packaging/autres-os/freebsd/) et [`openbsd/`](packaging/autres-os/openbsd/) | dans des machines virtuelles (FreeBSD 15.1, OpenBSD 7.9) |
+| macOS | formule Homebrew [`packaging/autres-os/homebrew/sermo.rb`](packaging/autres-os/homebrew/sermo.rb) | sur un runner macOS (Apple Silicon) |
+
+« Vérifié » veut dire : le port y rend les mêmes valeurs que gtk3sermo sur le banc
+de comportement et sur les dialogues des scripts métier. Seul Windows a un
+binaire publié ; pour Android, les BSD et macOS, il n'y a que les recettes.
+
+- Construire : [COMPILE.md](COMPILE.md) §7.
+- Ce qui change pour la sécurité (pas de plafond des `<input>` sous Windows,
+  durcissement selon le processeur) : [SECURITY.md](SECURITY.md).
+- Le détail de chaque essai : [packaging/autres-os/README.md](packaging/autres-os/README.md).
+
 ## Installer
 
 Il n'y a pas de dépôt apt. Les paquets Debian sont joints à la publication
-[**v3.0.0**](https://gitlab.com/haplo-dialog/sermo/-/releases/v3.0.0), avec leurs
+[**v3.1.2**](https://gitlab.com/haplo-dialog/sermo/-/releases/v3.1.2), avec leurs
 sommes de contrôle : on télécharge, on vérifie, on installe.
 
 ```sh
-U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/3.0.0
-for f in sermo-backend-gtk3_3.0.0-1_amd64.deb sermo-gtkdialog_3.0.0-1_all.deb SHA256SUMS SHA256SUMS.asc; do
+U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/3.1.2
+for f in sermo-backend-gtk3_3.1.2-2_amd64.deb sermo-gtkdialog_3.1.2-2_all.deb SHA256SUMS SHA256SUMS.asc; do
     curl -fLO "$U/$f"
 done
 curl -fLO https://haplo-dialog.fr/cle-haplo-dialog.asc
 gpg --import cle-haplo-dialog.asc
 gpg --verify SHA256SUMS.asc SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
-sudo apt install ./sermo-backend-gtk3_3.0.0-1_amd64.deb \
-                 ./sermo-gtkdialog_3.0.0-1_all.deb
+sudo apt install ./sermo-backend-gtk3_3.1.2-2_amd64.deb \
+                 ./sermo-gtkdialog_3.1.2-2_all.deb
 ```
 
 Pour un autre port, remplacez `gtk3` par `gtk4`, `qt6`, `fltk1`, `efl1`, `sdl3`,
@@ -142,6 +174,20 @@ serait pas partout à la fois.
 Ce qui est signé, c'est la liste des sommes (`SHA256SUMS`), pas chaque `.deb`
 un par un : un paquet est sûr parce que sa somme figure dans une liste dont la
 signature est bonne. Il n'y a pas non plus de dépôt apt signé.
+
+**Lire et écrire dehors** : chaque programme d'aide a son paquet, à installer
+en plus du port (même téléchargement, même vérification) :
+
+| Pour | Paquets |
+|---|---|
+| lire un automate | `sermo-source-modbus`, `sermo-source-opcua` |
+| la domotique MQTT | `sermo-source-mqtt` (lire), `sermo-cible-mqtt` (publier) |
+| un drone MAVLink | `sermo-source-mavlink` (lire), `sermo-cible-mavlink` (régler, mission, ordres de sécurité) |
+| le son et la vidéo | `sermo-cible-media` (jouer ; tire `mpv`, recommande `bubblewrap`), `sermo-source-media` (suivre l'état) |
+
+Qui n'installe que la lecture ne peut rien écrire. Les listes blanches et les
+gardes sont dans [SECURITY.md](SECURITY.md) et le
+[manuel utilisateur](MANUEL_UTILISATEUR.md).
 
 **Construire les paquets vous-même** (Debian testing, Docker) :
 `bash packaging/construire-paquets.sh` construit dans un conteneur vierge, passe
@@ -172,7 +218,7 @@ Compilé depuis les sources sans `install` : supprimez le dossier de constructio
 
 ## Venir de la 1.x
 
-Installez les paquets 2.x des ports que vous utilisez (`sermo-backend-gtk3`,
+Installez les paquets actuels (3.1.0) des ports que vous utilisez (`sermo-backend-gtk3`,
 `sermo-gtkdialog`…) : apt retire les paquets 1.x qu'ils remplacent (`gtk3sermo`,
 `gtksermo`…). Les commandes gardent leur nom. Ce qui change et comment faire :
 [MIGRATION.md](MIGRATION.md).
@@ -207,5 +253,6 @@ Installez les paquets 2.x des ports que vous utilisez (`sermo-backend-gtk3`,
 ## Licence
 
 GPL-2.0-or-later, comme gtkdialog. Quelques fichiers ont une autre licence (le
-contrat de frontière en MIT, Dear ImGui en MIT, des exemples en CC0) : voir
+contrat de frontière en MIT, Dear ImGui, LVGL et ThorVG en MIT, les en-têtes
+MAVLink en MIT une fois compilés, des exemples en CC0) : voir
 [LICENCES.md](LICENCES.md).

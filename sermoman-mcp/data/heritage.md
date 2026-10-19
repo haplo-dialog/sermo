@@ -88,25 +88,42 @@ Le cœur se construit en trois formes, depuis une source largement unifiée :
 - **`SERMOCORE_GTK4`** — fichiers cœur réécrits pour gtk4 (GTK 4 a retiré
   `gtk_main`, `gtk_socket` et l'ancien modèle d'évènements).
 
-### Packaging — 16 paquets .deb
+### Packaging — 27 paquets .deb (3.1.0)
 
-Le dossier `debian/` (debhelper) produit **16 paquets .deb** aux dépendances
-**disjointes** (calculées par `dh_shlibdeps`) ; `packaging/construire-paquets.sh`
-les construit et les éprouve dans une Debian testing vierge :
+Le dossier `debian/` (debhelper) produit, en 3.1.0, **27 paquets .deb** (compte
+de `debian/control`, mesuré le 2026-10-18), dont 20 « Architecture: any ».
+Leurs dépendances sont **disjointes** (calculées par `dh_shlibdeps`) ;
+`packaging/construire-paquets.sh` les construit et les éprouve dans une Debian
+testing vierge. En 2.7.x, il y en avait 16.
 
-- `sermo-core-dev` — le cœur statique + en-têtes + `sermocore.pc` (ne dépend que
-  de libc6) ;
-- **neuf** `sermo-backend-<t>` — un par port, chacun ne tirant que **sa**
-  bibliothèque graphique (html n'en tire aucune) ;
-- `sermo-doc` — le manuel Texinfo et la documentation commune ;
+- `sermo-core-dev` — le cœur statique + en-têtes + `sermocore.pc` (aucune
+  dépendance propre : `Depends: ${misc:Depends}` seulement) ;
+- **dix** paquets de ports : `sermo-backend-gtk3`, `-gtk4`, `-qt6`, `-fltk1`,
+  `-efl1`, `-sdl3`, `-lvgl`, `-lvgl-leger` (le même `lvglsermo`, construit sans
+  ThorVG), `-ncurses`, `-html` — chacun ne tirant que **sa** bibliothèque
+  graphique (html n'en tire aucune) ;
+- `sermo-doc` — le manuel Texinfo, la documentation commune et des exemples
+  (scripts métier, boîtes à outils, Modbus, OPC UA, MAVLink, et les quinze
+  exemples de la 3.1.0) sous `/usr/share/doc/sermo-doc/examples/` ;
 - `sermo-gtkdialog` — paquet **séparé et optionnel** posant la commande
   historique `gtkdialog` (lien → `gtk3sermo`). Il déclare
-  `Conflicts`/`Replaces`/`Provides` sur `gtkdialog`, `gtk3dialog`, `haplo-dialog`
-  pour rester mutuellement exclusif avec le gtkdialog original et le `gtk3dialog`
+  `Provides: gtkdialog` et `Conflicts`/`Replaces` sur `gtkdialog`, `gtk3dialog`,
+  `haplo-dialog` pour rester mutuellement exclusif avec le gtkdialog original et le `gtk3dialog`
   de BunsenLabs ;
 - **quatre paquets de transition** `gtk3sermo`, `gtk4sermo`, `qt6sermo`,
   `gtksermo` — les noms de la 1.x, désormais vides, qui font venir leurs
-  successeurs lors d'un `apt upgrade`.
+  successeurs lors d'un `apt upgrade` ;
+- **huit programmes d'aide**, un par paquet, installés dans `/usr/libexec/sermo` :
+  la lecture (`sermo-source-modbus`, `sermo-source-opcua`, `sermo-source-mqtt`,
+  `sermo-source-mavlink`, `sermo-source-media`) et l'écriture, à part
+  (`sermo-cible-mqtt`, `sermo-cible-mavlink`, `sermo-cible-media`) : qui
+  n'installe que la lecture ne peut rien publier. `sermo-cible-media` dépend de
+  `mpv` et recommande `bubblewrap` ;
+- **deux serveurs MCP** : `sermoia-mcp` (le binaire qui vérifie et rend un
+  dialogue) et `sermoman-mcp` (ce serveur de documentation).
+
+Pas de dépôt apt : les fichiers `.deb` sont joints à chaque publication, avec
+leurs sommes SHA256 signées.
 
 L'alias `sermo` (`/usr/bin/sermo`) est géré par `update-alternatives` : chaque
 backend installé s'y enregistre, l'utilisateur choisit le défaut.
@@ -114,6 +131,51 @@ backend installé s'y enregistre, l'utilisateur choisit le défaut.
 ---
 
 ## 2. Historique des versions
+
+### 2.7.3 → 3.1.2, en bref (d'après CHANGELOG.md)
+
+- **3.1.2** — sécurité du lecteur : la cage de mpv masque `/run/user` ; le bus
+  D-Bus de session et les autres sockets de session n'y sont plus joignables
+  (sauf les sockets abstraits, pour une source réseau) ; le son passe par
+  pulse.
+- **3.1.1** — la vidéo dans la fenêtre du dialogue : clé `dans=$VAR` de
+  `<action media>` et `<drawingarea embed="true">`, avec gtk3 sous X11
+  seulement ; ailleurs, fenêtre séparée, et le message le dit. gtk4 lit
+  `width-request` et `height-request` de `<drawingarea>`.
+- **3.1.0** (2026-10-19) — domotique, drones, son et vidéo :
+  `<input mqtt>` et `<action mqtt>` (MQTT, chiffré par `mqtts://` ; des
+  identifiants sur `mqtt://` sont refusés sauf `clair=oui`), `<input mavlink>`
+  et `<action mavlink>` (télémétrie ; réglage d'un paramètre drone désarmé,
+  ordres de sécurité `rtl`, `land`, `terminaison` en deux appuis, envoi d'une
+  mission jamais lancée), `<input media>` et `<action media>` (son et vidéo par
+  mpv, en cage bubblewrap) ; quinze exemples prêts à l'emploi. Prévu en 3.2.0 :
+  le pilotage d'un drone, la vidéo dans la fenêtre du dialogue sur les autres
+  ports et sous Wayland (déjà faite en 3.1.1 pour gtk3 sous X11), l'essai du
+  lecteur sous Wayland.
+- **3.0.0** (2026-10-15) — `<input modbus>` et `<input opcua>` : lire un
+  automate depuis le XML, en lecture seule ; le port ncurses sort de Linux
+  (Windows 10/11, Termux, FreeBSD, OpenBSD) ; `SERMO_SHELL` ;
+  `sermo-backend-lvgl-leger`.
+- **2.8.2** (2026-10-11) — soixante scripts métier et quatre boîtes à outils,
+  devenus le test de réussite des ports ; les deux serveurs MCP deviennent des
+  paquets ; `sermo_render` de sermoia-mcp n'exécute plus les commandes du XML.
+- **2.8.1** (2026-10-10) — widgets mal ou pas dessinés, trouvés par une revue
+  des captures port par port.
+- **2.8.0** (2026-10-10) — deux ports de plus, neuf en tout (`htmlsermo`,
+  `lvglsermo`) ; second serveur MCP (`sermoia-mcp`) ; recettes de paquets hors
+  Debian ; `HISTOIRE.md`.
+- **2.7.7** (2026-10-04) — lecture hors tampon dans la barre de progression
+  (gtk3, gtk4), et trois correctifs que le cœur GTK 4 n'avait pas encore.
+- **2.7.6** (2026-10-03) — une variable de widget nommée `LD_PRELOAD`
+  franchissait la liste blanche `SERMO_ALLOWED_CMDS`.
+- **2.7.5** (2026-10-01) — débordement de tas dans `linecutter()`, hérité de
+  gtkdialog.
+- **2.7.4** (2026-09-30) — gtk4 : un `<calendar>` posait le mauvais mois les
+  jours 29 à 31.
+- **2.7.3** (2026-09-24) — ce que lit un `<input>` est plafonné à 16 Mio
+  (`SERMO_INPUT_MAX`) ; première version 2.x publiée.
+
+Le détail de chaque version est dans `CHANGELOG.md`.
 
 ### 2.0.0 — Édition modulaire publique (2026-09-09)
 
@@ -193,12 +255,13 @@ backends portés, le packaging séparé. **Faite.**
 Déjà acquis :
 - Les 3 écarts de valeur de gtk4 résorbés (le 2026-09-09) → gtk4 = 24/24.
 - Documentation complète + page de manuel + Texinfo.
-- gtk4 intégré à `packaging/build-debs.sh` → les 9 `.deb`.
+- gtk4 intégré à `packaging/build-debs.sh` → les 9 `.deb` d'alors (27 paquets
+  en 3.1.0).
 
 ### Phase 3 — Frontière propre
 
 - ✅ Ponts `qt6_*` renommés `sermo_be_*` (cœur neutre + les cinq backends
-  neutres + gtk3) : le cœur ne nomme plus un port. La boucle porte le nom
+  neutres d'alors + gtk3) : le cœur ne nomme plus un port. La boucle porte le nom
   `sermo_be_run_loop()`.
 - ⏳ Remettre gtk4 sur la source unifiée (retirer `SERMOCORE_GTK4` et la
   dépendance de build à l'ancien gtk4). La voie compile déjà contre le cœur
@@ -215,14 +278,33 @@ Déjà acquis :
 - ⏳ Backends supplémentaires via le contrat de frontière.
 - ⏳ Publication produit (dépôt apt, site).
 
-> La progression est **gardée par les trois bancs** (XML 55 · comportement 52 ·
-> gardes) : aucune phase n'avance en laissant un banc rouge.
+> La progression est **gardée par les trois bancs** (XML 55 · comportement 78
+> en 3.1.0, 52 à l'époque de cette feuille · gardes) : aucune phase n'avance en
+> laissant un banc rouge.
 
 ---
 
 ## 4. Bilan de santé et TODO
 
-État vérifié le **2026-09-16**, sur un clone neuf. Les chiffres ci-dessous ne
+### État en 3.1.0 (compté le 2026-10-18)
+
+- **Neuf ports** : gtk3 (étalon), gtk4, qt6, fltk1, efl1, sdl3, lvgl, ncurses,
+  html.
+- **27 paquets** dans `debian/control`, dont 20 « Architecture: any ».
+- **78 cas de comportement** (`sermo-backend-qt6/tests/comportement/cas`), joués
+  à parité sur les neuf ports ; **55 cas XML** (`tests/xml`).
+- `--glade-xml` : gtk3sermo et gtk4sermo seulement ; les **sept autres ports**
+  refusent l'option (code 1, `libsermocore/src/gtkdialog.c`).
+- 76 dossiers dans `examples/`. Le compte de `tests/run_examples.sh` n'a pas été
+  rejoué pour cette page.
+
+Le reste de cette section est **historique** : l'état de la **2.5.x**, à sept
+ports, tel qu'il a été vérifié le 2026-09-16. Ses chiffres (7 backends, 9 `.deb`,
+53 cas) ne décrivent plus la version courante.
+
+### État historique vérifié le **2026-09-16**
+
+Sur un clone neuf. Les chiffres ci-dessous ne
 sont pas des notes d'auto-évaluation : ce sont des **comptes de bancs rejouables**,
 chacun reproductible par une commande (`ci/bancs.sh` les enchaîne tous).
 
@@ -247,7 +329,8 @@ sdl3, où l'exemple `glade` est réservé aux ports GTK.
 
 - `--glade-xml` (gtk3sermo, gtk4sermo **seulement**) charge un fichier
   d'interface GtkBuilder, dans le format de la version de GTK du port ; les cinq
-  autres ports refusent l'option (code 1). Ne le proposez que pour ces deux-là.
+  autres ports d'alors refusaient l'option (code 1) — les sept autres en 3.1.0.
+  Ne le proposez que pour ces deux-là.
 - `<progressbar>` suit sa commande `<input>` ligne par ligne sur les sept ports,
   et la ligne qui vaut 100 déclenche ses actions. Jusqu'à la 2.6.8, seuls gtk3 et
   gtk4 le faisaient.
@@ -262,7 +345,7 @@ sdl3, où l'exemple `glade` est réservé aux ports GTK.
 ```sh
 # les trois portes sur UN backend <BIN> (= sermo-backend-<t>/_build/<t>sermo)
 TIMEOUT=5 bash tests/xml/run_tests.sh <BIN>              # 55 PASS
-bash tests/comportement/run.sh <BIN>                     # 53 au vert (étalon gtk3, headless)
+bash tests/comportement/run.sh <BIN>                     # 78 au vert en 3.1.0 (étalon gtk3, headless)
 xvfb-run -a bash tests/garde_clic_widgets.sh <BIN>       # 17 widgets, aucun plantage
 
 # le comportement sur LES NEUF backends d'un coup :
@@ -275,7 +358,7 @@ bash tests/comportement/run_all.sh                       # un tableau par backen
   graphique.
 - Trois familles sur un cœur (neutre + GLib + GTK4).
 - Consommation par pkg-config (`sermocore.pc` installé).
-- Packaging séparé, dépendances disjointes (9 `.deb`).
+- Packaging séparé, dépendances disjointes (9 `.deb` alors ; 27 paquets en 3.1.0).
 - 7e backend : ncurses (terminal), le plus léger.
 - Alias `sermo` (`update-alternatives`) + commande `gtkdialog` (paquet séparé).
 - Durcissement conservé (FORTIFY=3, PIE, RELRO, BIND_NOW, pile non exécutable,
@@ -308,7 +391,7 @@ formaliser l'IR.
 **Long terme** — cloisonnement IPC ; backends supplémentaires.
 
 **Garde-fous, toujours vrais** — ne jamais régresser ce que joue `ci/bancs.sh`
-(XML 55, comportement 52, gardes, exemples réels) ; ne jamais retirer un drapeau
+(XML 55, comportement 78 en 3.1.0, gardes, exemples réels) ; ne jamais retirer un drapeau
 de durcissement.
 
 ---
@@ -323,7 +406,7 @@ la lignée sermo.
 - **MINEUR** — nouvelles capacités rétro-compatibles (widget, action, backend).
 - **CORRECTIF** — corrections sans changement d'interface.
 
-**Version courante : `3.0.0` ; la première version 2.x publiée a été la `2.7.3`.** La ligne 2.x s'est
+**Version courante : `3.1.2` ; la première version 2.x publiée a été la `2.7.3`.** La ligne 2.x s'est
 ouverte sur `2.0.0`, première édition modulaire, restée interne, dont le bump MAJEUR reflétait le changement du contrat de frontière cœur↔backend
 (`sermo_backend.h`, ponts `sermo_be_*`) ; le langage XML, lui, reste
 rétro-compatible avec gtkdialog / sermo 1.x.
@@ -332,7 +415,7 @@ Le cœur (`libsermocore`) et les backends **partagent le numéro de version** ta
 qu'ils sont livrés ensemble. Le contrat de frontière `sermo_backend.h` est le
 point de compatibilité : un changement incompatible impose un bump MAJEUR, car un
 backend ancien ne se lierait plus au cœur. `sermocore.pc` porte la version
-(`Version: 3.0.0`) ; un backend peut exiger une version minimale du cœur via
+(`Version: 3.1.2`) ; un backend peut exiger une version minimale du cœur via
 `pkg_check_modules(SERMOCORE REQUIRED sermocore>=X.Y)`.
 
 **Compatibilité des scripts.** Les scripts XML écrits pour gtkdialog / sermo

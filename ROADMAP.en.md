@@ -1,5 +1,7 @@
 # Roadmap — sermo
 
+[Français](ROADMAP.md)
+
 ## Phase 1 — Modularisation ✅ (done)
 
 - [x] Extract the core `libsermocore` (parsing + hardened execution, no toolkit).
@@ -41,5 +43,21 @@
       signed checksums (`SHA256SUMS.asc`, since 2.8.2).
 - [ ] apt repository (there is none today).
 
-> Progress is **guarded by the three benches** (XML 55 · behaviour 75 · guards):
+## Sources and targets — read, then write on a click
+
+- [x] **3.0.0** (released on 2026-10-15): read a PLC, read-only —
+      `<input modbus>`, `<input opcua>`.
+- [x] **3.1.0** (2026-10-19): MQTT (`<input mqtt>`, `<action mqtt>`),
+      MAVLink (`<input mavlink>`; `<action mavlink>`: ground settings, safety
+      orders, sending a mission without starting it), sound and video
+      (`<input media>`, `<action media>`, mpv in a bubblewrap cage).
+- [x] **3.1.1** (2026-10-19): video inside the dialog window (gtk3 under
+      X11, `dans=$ZONE`), separate-window fallback elsewhere.
+- [x] **3.1.2** (2026-10-20): player security, mpv's cage no longer
+      reaches the session sockets (D-Bus bus…).
+- [ ] **3.2.0**: pilot a drone (arm, take off, change mode, move); video in
+      the dialog's window on the other ports and under Wayland (already done
+      in 3.1.1 for gtk3 under X11); the player tried under Wayland.
+
+> Progress is **guarded by the three benches** (XML 55 · behaviour 78 · guards):
 > no phase advances while a bench is red.
