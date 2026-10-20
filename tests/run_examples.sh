@@ -51,6 +51,11 @@ for n in gtkdialog gtkdialog4 gtksermo sermo \
     printf '#!/bin/sh\n"%s" "$@"\nrc=$?\necho "$rc" >> "%s/codes"\nexit $rc\n' "$BIN" "$SHIM" > "$SHIM/$n"; chmod +x "$SHIM/$n"
 done
 export SERMO_CODES="$SHIM/codes"
+# Sans session (conteneur de CI, root), XDG_RUNTIME_DIR manque : les exemples
+# qui y posent leur message (mavlink) s'arrêteraient avant toute fenêtre.
+if [[ -z "${XDG_RUNTIME_DIR:-}" ]]; then
+    mkdir -m 700 "$SHIM/run"; export XDG_RUNTIME_DIR="$SHIM/run"
+fi
 export PATH="$SHIM:$PATH"
 # Le nom du port testé, pour les exemples qui en dépendent : les exemples glade
 # choisissent leur fichier GtkBuilder (GTK 3 ou GTK 4) d'après GTKDIALOG.
@@ -249,6 +254,26 @@ for dir in $(find "$EXAMPLES" -maxdepth 1 -mindepth 1 -type d | sort); do
             *) printf '  %-16s %s\n' "$name" "(réservé à : ${ports_ok% })"
                RESERVE=$((RESERVE+1)); continue ;;
         esac
+    fi
+
+    # Un exemple qui pilote un outil du système (wifi-scan : nmcli, usb-moniteur :
+    # udevadm, reseau-testeur : ss, liaison-serie : socat, bus-can : candump,
+    # dns-testeur : dig) s'arrête
+    # avant toute fenêtre si l'outil manque. Sur un poste qui n'a pas l'outil
+    # (conteneur de CI), il est annoncé « non joué », visiblement, et compté
+    # avec les réservés — jamais en échec ni en réussite.
+    case "$name" in
+        wifi-scan)      outil=nmcli ;;
+        usb-moniteur)   outil=udevadm ;;
+        reseau-testeur) outil=ss ;;
+        liaison-serie)  outil=socat ;;
+        bus-can)        outil=candump ;;
+        dns-testeur)    outil=dig ;;
+        *)         outil= ;;
+    esac
+    if [[ -n "$outil" ]] && ! command -v "$outil" >/dev/null 2>&1; then
+        printf '  %-16s %s\n' "$name" "(non joué : $outil absent)"
+        RESERVE=$((RESERVE+1)); continue
     fi
 
     log="$(mktemp)"

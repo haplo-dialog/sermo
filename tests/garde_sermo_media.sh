@@ -138,8 +138,12 @@ aucun_mpv() { ! ls "$XDG_RUNTIME_DIR"/sermo-media/*/appels >/dev/null 2>&1; }
 
 # ── 1 — refus, rien de lancé ────────────────────────────────────────────────
 S="$T/medias/silence.ogg"
+# file:///etc/shadow : un fichier ILLISIBLE doit être refusé. En root (conteneur
+# de CI), root le lit : le cas ne prouve plus rien et n'est pas joué.
+ILLISIBLE='file:///etc/shadow'
+[[ $(id -u) == 0 ]] && { ILLISIBLE='file:///nexiste.ogg'; echo "note   : en root, /etc/shadow est lisible : le cas « fichier illisible » n'est pas joué"; }
 for src in 'edl://x' 'av://lavfi:sine' 'concat:a|b' 'lavf://x' 'ftp://h/x' 'file://relatif.ogg' 'file:///etc' \
-           'file:///etc/shadow' 'file:///nexiste.ogg' 'http://u:p@h/x' 'http://h@x/' 'http://-h/x' 'http://h/a b' \
+           "$ILLISIBLE" 'file:///nexiste.ogg' 'http://u:p@h/x' 'http://h@x/' 'http://-h/x' 'http://h/a b' \
            'http://h:0/x' 'http://h:99999/x' 'https://[::1/x' 'rtsp://h/x"y' "file://$T/medias" ''; do
     cible essai "commande=lire&source=$src" >/dev/null 2>&1; rc=$?
     [[ $rc == 1 ]] && aucun_mpv || echec "source « $src » : code $rc ou mpv lancé"
@@ -375,7 +379,11 @@ done
 # Le VRAI dossier de session : mpv y trouve le serveur de son (pulse/native).
 export PATH="$VRAI_PATH" XDG_RUNTIME_DIR="$VRAI_RUN"
 V="vrai-$$"; F="fen-$$"
-if command -v mpv >/dev/null && command -v xvfb-run >/dev/null; then
+if [[ -z "$VRAI_RUN" ]]; then
+    # Sans session (conteneur de CI, root) : pas de dossier de session, donc pas
+    # de serveur de son ni de dossier privé pour le lecteur.
+    echo "  note : XDG_RUNTIME_DIR absent (pas de session) : étape 8 non jouée"
+elif command -v mpv >/dev/null && command -v xvfb-run >/dev/null; then
     timeout 60 xvfb-run -a bash -c '
         C=$1; Q=$2; S=$3
         "$C" "media://$4?commande=lire%26source=file://$S" >/dev/null || exit 11

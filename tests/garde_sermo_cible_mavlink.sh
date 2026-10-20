@@ -41,14 +41,24 @@ DRONE="$RACINE/examples/mavlink/faux-drone.py"
 [ -f "$DRONE" ] || { echo "faux drone absent : $DRONE" >&2; exit 2; }
 python3 -I -c 'import pymavlink' 2>/dev/null || { echo "outil manquant : python3-pymavlink" >&2; exit 2; }
 command -v unshare >/dev/null || { echo "outil manquant : unshare" >&2; exit 2; }
-if unshare -rm true 2>/dev/null; then
+# L'espace isolé doit pouvoir MONTER (tmpfs sur /root, overlay sur /etc) :
+# dans un conteneur de CI, unshare réussit souvent alors que l'overlay est
+# refusé — chaque cas échouerait alors avant de commencer (vu sur la CI
+# GitLab le 2026-10-20). On essaie donc le vrai montage.
+essai_isole() {
+    local d; d=$(mktemp -d -p "$AIDE" essai-isole.XXXXXX) || return 1
+    unshare -rm sh -c 'mkdir "$1/u" "$1/w" && mount -t tmpfs tmpfs /root \
+        && mount -t overlay overlay -o "lowerdir=/etc,upperdir=$1/u,workdir=$1/w" /etc' _ "$d" 2>/dev/null
+    local rc=$?; rm -rf -- "$d"; return $rc
+}
+if essai_isole; then
     MODE=isole
 elif [ "${CI:-}" = true ] && [ "$(id -u)" = 0 ] && [ ! -e /etc/sermo/cibles-mavlink ] \
      && [ ! -e "$(getent passwd 0 | cut -d: -f6)/.config/sermo/cibles-mavlink" ]; then
     MODE=direct
     echo "note   : espace isolé impossible ; conteneur de CI en root : listes écrites en direct (conteneur jetable)"
 else
-    echo "espace isolé impossible (unshare -rm) et pas dans un conteneur de CI en root : rien n'est essayé" >&2
+    echo "espace isolé impossible (unshare -rm avec montages) et pas dans un conteneur de CI en root : rien n'est essayé" >&2
     exit 2
 fi
 

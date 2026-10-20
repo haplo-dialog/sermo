@@ -81,3 +81,5 @@ faketime
 # gdb : quand un exemple n'ouvre pas de fenêtre, run_examples.sh relève la pile
 # de chaque fil avant de l'arrêter (blocage efl1 vu seulement sur la CI de GitLab)
 gdb
+# Banc htmlsermo en mode serve (garde_html_serve.sh) : il interroge la page servie.
+curl
