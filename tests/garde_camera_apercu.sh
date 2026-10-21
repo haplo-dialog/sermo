@@ -132,9 +132,14 @@ reel() {  # reel <identifiants ou vide> : un aperçu réel sous xvfb, 3 s, puis 
     grep -q '^● CAMÉRA ACTIVE — http://127.0.0.1' "$T/etat-reel" || echec "aperçu réel ($1) : indicateur : $(cat "$T/etat-reel")"
 }
 reel ""
+# bwrap présent ne veut pas dire bwrap utilisable : un conteneur de CI peut
+# refuser ses espaces de noms. Le même bac que l'exemple est essayé d'abord.
+BWRAP_OK=0
+command -v bwrap >/dev/null && bwrap --ro-bind / / --dev /dev --tmpfs /tmp --die-with-parent true 2>/dev/null && BWRAP_OK=1
+command -v bwrap >/dev/null && [[ $BWRAP_OK == 0 ]] && echo "  note : bwrap présent mais refusé ici (espaces de noms) : contrôle du bac à sable non joué"
 reel "$T/id" auto        # avec identifiants ET bwrap : le tube traverse le bac à sable
 ! grep -q 's3cret' "$T/cmdlines" || echec "le mot de passe est dans les arguments d'un processus : $(grep s3cret "$T/cmdlines")"
-command -v bwrap >/dev/null && { grep -q '^bwrap .*ffplay' "$T/cmdlines" || echec "bwrap non utilisé en mode auto"; }
+[[ $BWRAP_OK == 1 ]] && { grep -q '^bwrap .*ffplay' "$T/cmdlines" || echec "bwrap non utilisé en mode auto (bac : $(cat "$CA_DIR/bac" 2>/dev/null) ; processus vus : $(grep -aE 'bwrap|ffplay|curl' "$T/cmdlines" | cut -c1-160 | tr '\n' '|') ; sortie : $(tail -n 3 "$T/reel" | tr '\n' '|'))"; }
 grep -q 'curl -sS -K -' "$T/cmdlines" || echec "curl non vu pendant l'aperçu à identifiants (le test ne prouve rien)"
 ! grep -q 'curl.conf' "$T/fichiers" || echec "la config de curl (identifiants) n'a pas été effacée"
 "$APP" --xml | python3 -I -c 'import sys,xml.dom.minidom as m; m.parseString(sys.stdin.read())' || echec "XML mal formé"
