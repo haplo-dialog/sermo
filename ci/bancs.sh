@@ -99,7 +99,7 @@ banc "porte d'approbation" bash tests/garde_approbation.sh
 banc "testeur réseau" bash tests/garde_reseau_testeur.sh
 banc "moniteur GNSS" bash tests/garde_gnss_moniteur.sh
 banc "liaison série" bash tests/garde_liaison_serie.sh
-banc "domotique MQTT (fenêtre réelle)" bash tests/garde_domotique_mqtt.sh
+banc "domotique MQTT (fenêtre réelle)" bash tests/garde_domotique_mqtt.sh "$RACINE/sermo-backend-gtk3/_build/gtk3sermo"
 banc "bus CAN (vcan isolé)" bash tests/garde_bus_can.sh
 banc "testeur DNS (serveurs locaux)" bash tests/garde_dns_testeur.sh
 banc "certificat TLS (serveurs locaux)" bash tests/garde_certificat_tls.sh

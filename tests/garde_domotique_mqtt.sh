@@ -27,7 +27,19 @@ done
 [[ -x "$(command -v mosquitto || echo /usr/sbin/mosquitto)" ]] || { echo "mosquitto absent" >&2; exit 77; }
 [[ -x "$AIDE/sermo-source-mqtt" && -x "$AIDE/sermo-cible-mqtt" ]] || { echo "programmes d'aide non construits ($AIDE) : ci/construire.sh" >&2; exit 77; }
 [[ -n "$BIN" && -x "$BIN" ]] || { echo "aucun port à fenêtre (gtk3sermo)" >&2; exit 77; }
-unshare -rm true 2>/dev/null || { echo "espace isolé impossible (unshare -rm) : rien n'est essayé" >&2; exit 77; }
+# L'espace isolé doit pouvoir MONTER un tmpfs sur /root : dans un conteneur de
+# CI, unshare réussit parfois alors que le montage est refusé. En conteneur de
+# CI jetable, root, sans liste existante, la liste est écrite en direct
+# (même règle que garde_sermo_cible_mqtt.sh).
+if unshare -rm sh -c 'mount -t tmpfs tmpfs /root' 2>/dev/null; then
+    ISOLE="unshare -rm"
+elif [ "${CI:-}" = true ] && [ "$(id -u)" = 0 ] && [ "$(getent passwd 0 | cut -d: -f6)" = /root ] \
+     && [ ! -e /root/.config/sermo/cibles-mqtt ] && [ ! -e /etc/sermo/cibles-mqtt ]; then
+    ISOLE=""
+    echo "note   : espace isolé impossible ; conteneur de CI en root : liste écrite en direct (conteneur jetable)"
+else
+    echo "espace isolé impossible (unshare -rm avec montage) : rien n'est essayé" >&2; exit 77
+fi
 
 T=$(mktemp -d -p "$AIDE" banc-domotique.XXXXXX) || exit 2
 MAISON=""
@@ -68,8 +80,9 @@ fenetre() {  # fenetre <avec-liste:0|1> <touches…> → valeurs exportées dans
     local liste=$1; shift
     LISTE="$liste" CIBLES="mqtt://127.0.0.1:$P $PRE/lampe on|off
 mqtt://127.0.0.1:$P $PRE/consigne 18..24" XML="$T/essai.xml" BINR="$BIN" TOUCHES="$*" \
-    timeout 40 unshare -rm bash -c '
-        mount -t tmpfs tmpfs /root || exit 3
+    DIRECT=${ISOLE:+0} timeout 40 $ISOLE bash -c '
+        if [ "$DIRECT" = 0 ]; then mount -t tmpfs tmpfs /root || exit 3
+        else rm -f /root/.config/sermo/cibles-mqtt; fi
         if [ "$LISTE" = 1 ]; then
             mkdir -p -m 700 /root/.config/sermo
             printf "%s\n" "$CIBLES" > /root/.config/sermo/cibles-mqtt; chmod 600 /root/.config/sermo/cibles-mqtt
@@ -82,6 +95,7 @@ mqtt://127.0.0.1:$P $PRE/consigne 18..24" XML="$T/essai.xml" BINR="$BIN" TOUCHES
                 case $k in pause) timeout 0.6 tail -f /dev/null ;; *) xdotool key --window "$w" "$k" ;; esac
             done
             wait $p'"'"'' > "$T/sortie" 2> "$T/erreurs"
+    [[ -n "$ISOLE" ]] || rm -f /root/.config/sermo/cibles-mqtt
 }
 exporte() { sed -n "s/^$1=\"\\(.*\\)\"\$/\\1/p" "$T/sortie" | head -n 1; }
 

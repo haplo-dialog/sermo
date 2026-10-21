@@ -83,3 +83,10 @@ faketime
 gdb
 # Banc htmlsermo en mode serve (garde_html_serve.sh) : il interroge la page servie.
 curl
+# Bancs qui jouent un outil système (liaison série, bus CAN, testeur DNS,
+# aperçu caméra) : sans eux, ils sont comptés en échec.
+socat
+can-utils
+iproute2
+bind9-dnsutils
+ffplay
