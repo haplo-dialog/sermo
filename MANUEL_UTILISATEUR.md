@@ -2,7 +2,7 @@
 
 [English](MANUEL_UTILISATEUR.en.md)
 
-**Version :** 3.1.2
+**Version :** 3.2.0
 **Licence :** GPL-2.0-or-later | **Distributeur :** haplo-dialog (devel@haplo-dialog.fr)
 
 ---
@@ -82,9 +82,9 @@ joints à chaque publication, avec le fichier `SHA256SUMS` et sa signature
 gpg --import cle-haplo-dialog.asc            # https://haplo-dialog.fr/cle-haplo-dialog.asc
 gpg --verify SHA256SUMS.asc SHA256SUMS       # « Bonne signature de haplo-dialog <devel@haplo-dialog.fr> »
 sha256sum --ignore-missing -c SHA256SUMS
-sudo apt install ./sermo-backend-gtk3_3.1.0-*_amd64.deb     # GTK 3
-sudo apt install ./sermo-backend-fltk1_3.1.0-*_amd64.deb    # FLTK, sans tirer GTK ni Qt
-sudo apt install ./sermo-gtkdialog_3.1.0-*_all.deb          # + la commande gtkdialog
+sudo apt install ./sermo-backend-gtk3_3.2.0-1_amd64.deb     # GTK 3
+sudo apt install ./sermo-backend-fltk1_3.2.0-1_amd64.deb    # FLTK, sans tirer GTK ni Qt
+sudo apt install ./sermo-gtkdialog_3.2.0-1_all.deb          # + la commande gtkdialog
 ```
 
 Le `*` tient la place de la révision Debian de la publication (le chiffre
@@ -181,11 +181,11 @@ déterministe pour la documentation, une vignette ou un test visuel :
 sermo --render-png sortie.png --file=mon_interface.xml
 ```
 
-Le rendu hors écran est disponible sur **six backends graphiques** (`gtk3`,
-`gtk4`, `qt6`, `fltk1`, `efl1`, `sdl3`) — `gtk3`/`gtk4`/`fltk1` via un display
+Le rendu hors écran est disponible sur **sept backends graphiques** (`gtk3`,
+`gtk4`, `qt6`, `fltk1`, `efl1`, `sdl3`, `lvgl`) — `gtk3`/`gtk4`/`fltk1` via un display
 virtuel (xvfb) où le backend écrit lui-même le PNG, `qt6`/`efl1`/`sdl3` via leur
-plateforme offscreen. `lvgl` a aussi l'option : il dessine l'image sans ouvrir
-de fenêtre. `ncurses` reste un affichage **terminal** (pas d'image ;
+plateforme offscreen, et `lvgl` en dessinant l'image sans ouvrir de fenêtre.
+`ncurses` reste un affichage **terminal** (pas d'image ;
 aperçu texte via `--print-ir`), et `html` écrit une page, pas une image.
 
 La taille demandée par `default-width`/`default-height` est respectée sur ces
@@ -249,7 +249,7 @@ Ailleurs, l'attribut est accepté et sans effet.
 | `<width>N</width>` et `<height>N</height>` | Taille lue par certains widgets seulement : la plupart des widgets gtk3 et gtk4, `<pixmap>` de qt6 et html, `<drawingarea>` de sdl3, lvgl, ncurses et html |
 
 **Toute balise s'écrit ouverte puis fermée.** La forme auto-fermante n'est pas
-reconnue par l'analyseur : `<separator></separator>` et non `<separator/>`,
+reconnue par l'analyseur : `<hseparator></hseparator>` et non `<hseparator/>`,
 `<button ok></button>` et non `<okbutton/>`. Un conteneur vide est refusé lui
 aussi : un `<vbox>` doit contenir au moins un widget.
 
@@ -822,9 +822,12 @@ la même chose partout.
 ```
 
 Une surface libre, réservée au dessin. **Variable : chaîne vide.** Avec
-`embed="true"`, et seulement avec gtk3 sous X11, elle vaut l'identifiant X11 de la
+`embed="true"`, et seulement avec gtk3 ou qt6 sous X11, elle vaut l'identifiant X11 de la
 zone une fois affichée : c'est ce qui permet d'y afficher une vidéo
 (`<action media>`, clé `dans=$ZONE`). Ce nombre change à chaque lancement.
+Avec gtk3, `media="NOM"` fait aussi peindre à la zone les images du lecteur
+`NOM` rendu « dans la zone » ; hors X11, la variable (avec `embed="true"`) vaut
+alors `zone`.
 
 Taille : gtk3, gtk4, qt6, fltk1 et efl1 lisent les attributs `width-request` /
 `height-request` ; sdl3, lvgl, ncurses et html lisent les sous-éléments
@@ -987,6 +990,87 @@ cliquable. **L'ordre compte** — le contenu d'abord, puis `<variable>` et
 `<action>`. Variable : chaîne vide (c'est l'`<action>` qui porte l'effet).
 
 ---
+
+### 5.9 Balises par port
+
+Le même XML s'ouvre sur les neuf ports. Ce tableau dit, pour chaque balise, deux
+choses :
+
+- **Mêmes valeurs sur les 9 ports** : la balise figure dans le banc de
+  comportement (`tests/comportement/run_all.sh`), qui ouvre chaque cas sur les
+  neuf ports et compare les variables rendues à celles de gtk3sermo. Joué en
+  entier le 2026-10-31 : 78 cas, 9 ports, 0 écart. « — » : la balise n'est pas
+  dans ce banc (`<terminal>` a son banc à part, `tests/garde_terminal.sh`).
+- **Ce qui change selon le port** : les différences d'affichage ou de
+  fonction écrites dans ce manuel (§4.2 et §5). « Rien de signalé » veut dire
+  que le manuel n'en décrit pas, pas que l'affichage est identique au pixel.
+
+| Balise | Mêmes valeurs sur les 9 ports | Ce qui change selon le port |
+|---|---|---|
+| `<window>` | oui (78 cas) | `resizable` : gtk3, gtk4, qt6, fltk1 ; `decorated`, `icon-name` : gtk3, gtk4 |
+| `<vbox>` | oui (78 cas) | rien de signalé |
+| `<hbox>` | — | rien de signalé |
+| `<frame>` | oui (2 cas) | rien de signalé |
+| `<notebook>` | oui (3 cas) | rien de signalé |
+| `<expander>` | oui (3 cas) | rien de signalé |
+| `<grid>` | oui (2 cas) | rien de signalé |
+| `<table>` | oui (4 cas) | rien de signalé |
+| `<aspectframe>` | — | rien de signalé |
+| `<eventbox>` | oui (1 cas) | rien de signalé |
+| `<paned>` | oui (1 cas) | poignée native (GtkPaned, QSplitter, Fl_Tile, elm_panes) ; sdl3 : poignée glissable ; ncurses : aux flèches |
+| `<stack>` | oui (1 cas) | rien de signalé |
+| `<wizard>` | oui (1 cas) | rien de signalé |
+| `<flowbox>` | oui (1 cas) | reflux et sélection : gtk3, gtk4 seulement ; ailleurs N colonnes fixes, variable vide |
+| `<overlay>` | oui (1 cas) | ncurses : rien ne se superpose, les couches s'affichent l'une sous l'autre |
+| `<revealer>` | oui (1 cas) | transition animée : gtk3, gtk4 seulement |
+| `<entry>` | oui (34 cas) | rien de signalé |
+| `<password>` | oui (1 cas) | rien de signalé |
+| `<searchentry>` | oui (2 cas) | rien de signalé |
+| `<edit>` | oui (6 cas) | rien de signalé |
+| `<spinbutton>` | oui (4 cas) | rien de signalé |
+| `<hscale>` `<vscale>` | oui (4 cas) | rien de signalé |
+| `<checkbox>` | oui (10 cas) | rien de signalé |
+| `<radiobutton>` | oui (4 cas) | rien de signalé |
+| `<switch>` | oui (4 cas) | rien de signalé |
+| `<togglebutton>` | oui (4 cas) | rien de signalé |
+| `<comboboxtext>` | oui (3 cas) | rien de signalé |
+| `<combobox>` | oui (3 cas) | rien de signalé |
+| `<comboboxentry>` | oui (1 cas) | rien de signalé |
+| `<list>` | oui (5 cas) | rien de signalé |
+| `<tree>` | oui (3 cas) | rien de signalé |
+| `<calendar>` | oui (3 cas) | rien de signalé |
+| `<colorbutton>` | oui (3 cas) | rien de signalé |
+| `<fontbutton>` | oui (3 cas) | rien de signalé |
+| `<filechooser>` | oui (1 cas) | sélecteur du toolkit (gtk3, gtk4, qt6), du système par le portail XDG (sdl3), `elm_fileselector` (efl1), navigateur dans le terminal (ncurses) |
+| `<button>` | oui (3 cas) | rien de signalé |
+| `<linkbutton>` | oui (3 cas) | rien de signalé |
+| `<menubutton>` | oui (1 cas) | rien de signalé |
+| `<menubar>` `<menuitem>` | oui (3 cas) | rien de signalé |
+| `<toolbar>` | oui (1 cas) | rien de signalé |
+| `<text>` | oui (10 cas) | rien de signalé |
+| `<pixmap>` | — | rien de signalé |
+| `<image>` | — | rien de signalé |
+| `<progressbar>` | oui (3 cas) | rien de signalé |
+| `<pulse>` | oui (1 cas) | rien de signalé |
+| `<levelbar>` | oui (3 cas) | rien de signalé |
+| `<spinner>` | — | rien de signalé |
+| `<statusbar>` | oui (2 cas) | rien de signalé |
+| `<infobar>` | oui (3 cas) | rien de signalé |
+| `<hseparator>` `<vseparator>` | — | rien de signalé |
+| `<drawingarea>` | oui (1 cas) | `embed` : gtk3, qt6 sous X11 ; `media` : gtk3 ; taille par attributs (gtk3, gtk4, qt6, fltk1, efl1) ou par `<width>`/`<height>` (sdl3, lvgl, ncurses, html) |
+| `<terminal>` | — | shell interactif : gtk3, gtk4 (et qt6 construit avec QTermWidget, pas le paquet Debian) ; ailleurs, la sortie de la commande en lecture seule |
+| `<timer>` | oui (76 cas) | rien de signalé |
+
+Attributs qui ne valent pas partout :
+
+| Attribut | Lu par |
+|---|---|
+| `tooltip-text` | gtk3, gtk4 |
+| `scrollable` | gtk3, gtk4 |
+| `width-request`, `height-request` | tous les widgets sur gtk3 et gtk4 ; la plupart sur qt6 et fltk1 ; quelques-uns ailleurs (détail au §4.2) |
+
+Options propres à certains ports : `--glade-xml` (gtk3, gtk4), ancrage Wayland
+`layer-shell` (gtk3), `--render-png` (tous sauf ncurses et html, §3.3).
 
 ## 6. Actions et signaux
 
@@ -1370,7 +1454,8 @@ mission est envoyée, **jamais lancée**. Même cadre que `<action mqtt>` :
 - **paquet à part** : `sermo-cible-mavlink`.
 
 Une ligne de la liste : `parametre NOM min..max`, `ordre rtl`, `ordre land`,
-`ordre terminaison`, ou `mission rayon R hauteur H` (`#` commente).
+`ordre terminaison`, `mission rayon R hauteur H`, ou une ligne `pilotage`
+(voir plus bas ; `#` commente).
 
 ```
 parametre WP_SPD 1..15
@@ -1383,6 +1468,7 @@ ordre land
 | `parametre` + `valeur` | un nom exact (`A-Z`, `0-9`, `_`, 16 caractères au plus) et un nombre (point décimal), ou `$NOM` (variable du dialogue) |
 | `ordre` | `rtl` (retour au départ), `land` (atterrir sur place), `terminaison` (couper les moteurs) |
 | `mission` | chemin absolu d'un fichier de mission (points de passage, voir plus bas) |
+| `pilote` (+ `mode`) | `armer`, `desarmer`, `decoller`, `mode` avec `mode=guided`, `loiter`, `poshold`, `brake`, `rtl`, `smart_rtl`, `land`, ou `aller` avec `lat=`, `lon=`, `hauteur=` (voir plus bas) |
 | `systeme`, `vitesse` | comme `<input mavlink>` |
 | `delai` | délai total en ms (défaut 5000, 20 000 pour une mission ; de 2000 à 60 000) |
 
@@ -1448,6 +1534,79 @@ lancée** : la lancer, c'est piloter. Sans position du drone (sur ArduPilot
 4.7 : `MAV1_POSITION`), rien n'est envoyé. `delai` vaut 20 000 ms par défaut
 pour une mission.
 
+**Piloter** (armer, décoller, changer de mode, désarmer) :
+
+```xml
+<button><label>Armer (2 appuis)</label>
+  <action mavlink>tcp://127.0.0.1:5760?pilote=armer</action>
+</button>
+<button><label>Décoller (2 appuis)</label>
+  <action mavlink>tcp://127.0.0.1:5760?pilote=decoller</action>
+</button>
+<button><label>Tenir la position (2 appuis)</label>
+  <action mavlink>tcp://127.0.0.1:5760?pilote=mode&mode=loiter</action>
+</button>
+```
+
+> **Le télépilote reste seul responsable du vol** et du respect des règles
+> (catégorie, zone, hauteur, vue directe). sermo **n'est pas une station sol
+> certifiée**, et son pilotage n'est **pas fait pour un vol hors vue**.
+
+Pour ArduPilot Copter seulement. Ligne de la liste blanche, distincte des
+autres (sans elle, aucun ordre de pilotage ne part) :
+
+```
+pilotage lat 45.1234 lon 5.7654 rayon 300 hauteur 60 decollage 20 modes 4,5,6,9
+```
+
+- **barrière de sermo** : le point de référence, un rayon (m) et une hauteur
+  (120 m au plus) ; **hauteur de décollage** fixée là, jamais saisie ;
+- **modes** : GUIDED (4), LOITER (5), POSHOLD (16), BRAKE (17), RTL (6),
+  SMART_RTL (21), LAND (9) — ceux de la ligne ; STABILIZE, ACRO, ALT_HOLD et
+  AUTO ne sont **jamais** pilotables. LOITER, POSHOLD, BRAKE en vol seulement.
+
+Chaque ordre se **confirme par deux appuis** dans les 5 s : le premier écrit
+ce qui partirait. Puis, avant l'envoi :
+
+- **délai** : 2,5 s au plus entre le second appui et l'envoi (3,5 s pour
+  désarmer), et l'état du drone relu moins de 0,5 s avant ; un lien trop lent
+  fait refuser, et le clic est perdu ;
+- **barrière de l'autopilote** active (`FENCE_ENABLE`, une action, cercle et
+  hauteur), pas plus large ni plus haute que celle de sermo — sinon seuls RTL,
+  SMART_RTL et LAND passent ;
+- le drone doit être **dans la barrière de sermo** — sinon seuls RTL,
+  SMART_RTL et LAND passent ;
+- **armer** : désarmé, au sol, en GUIDED (jamais forcé) ; **décoller** : armé,
+  au sol, en GUIDED ; **désarmer** : vu posé pendant 2 s (hauteur < 1 m,
+  vitesse verticale < 0,3 m/s) ;
+- refus si une autre station sol parle, si le drone **signe** ses messages,
+  ou s'il n'est pas un ArduPilot.
+
+L'état au sol et la position sont **demandés** au drone juste avant l'envoi
+(simples lectures). Essayé contre ArduPilot Copter 4.7.2 simulé : vol complet
+(GUIDED, armer, décoller à 10 m, aller à un point, LOITER, LAND), refus en
+montée, hors barrière, barrière coupée, radio lente. **Pas essayé sur un vrai
+drone.**
+
+**Aller à un point** :
+
+```xml
+<button><label>Aller au point (2 appuis)</label>
+  <action mavlink>tcp://127.0.0.1:5760?pilote=aller&lat=$LAT&lon=$LON&hauteur=$H</action>
+</button>
+```
+
+`lat`, `lon` (degrés) et `hauteur` (m **au-dessus du point de départ**) : un
+nombre, ou une variable du dialogue. Le premier appui écrit le point, la
+hauteur et sa distance à la référence ; changer le point entre les deux
+appuis repart du premier. Refusé si le point est hors de la barrière de sermo
+ou si la hauteur n'est pas entre 1 m et celle de la liste ; si le drone n'est
+pas armé, en vol et **déjà en GUIDED** (cet ordre ne change jamais de mode :
+hors GUIDED, ArduPilot l'ignorerait). L'ordre part en hauteur relative au
+départ, position seule (ni vitesse ni cap imposés). Pas d'accusé de réception
+pour cet ordre : le succès n'est dit que si la **cible relue sur le drone** est
+la même.
+
 Chaque appel écrit sa conclusion, une ligne, sur la sortie d'erreur et dans
 `$XDG_RUNTIME_DIR/sermo-cible-mavlink/message` (si `XDG_RUNTIME_DIR` est un
 chemin absolu ; sinon, sur la sortie d'erreur seulement). Un dialogue la montre avec
@@ -1502,22 +1661,38 @@ commandes) et `sermo-source-media` (l'état). Paquets : `sermo-cible-media`,
   refusée après une seconde tentative, sans rien forcer ; mpv ne distingue pas
   « occupée » d'« indisponible », le message dit donc les deux.
 - **Dans la fenêtre** : `dans=$ZONE` (la variable d'un `<drawingarea embed="true">`) affiche
-  l'image dans cette zone au lieu d'une fenêtre à part. Seulement avec gtk3 sous
-  X11. Ailleurs (Wayland, autres ports, zone pas encore affichée), la variable est
-  vide : la vidéo s'ouvre dans sa propre fenêtre, et le message le dit. Une caméra
-  incrustée porte « CAMÉRA ACTIVE — <nom> » écrit dans l'image. Un `dans=` qui
-  n'est pas de la forme `$NOM`, ou une variable dont la valeur n'est pas un
+  l'image dans cette zone au lieu d'une fenêtre à part. Avec gtk3 et qt6 sous
+  X11. **Sous Wayland, avec gtk3**, ajoutez `media="NOM"` (le nom du lecteur) :
+  la variable vaut alors `zone`, et l'image est rendue par `sermo-media-images`
+  (libmpv, dans la cage, **sans aucun accès à l'écran**), puis peinte par la
+  zone. Ailleurs (autres ports sous Wayland, zone pas encore affichée), la
+  variable est vide : la vidéo s'ouvre dans sa propre fenêtre, et le message le
+  dit. Une caméra incrustée porte « CAMÉRA ACTIVE — <nom> » écrit dans l'image.
+  Un `dans=` qui n'est pas de la forme `$NOM`, ou une variable dont la valeur n'est pas un
   nombre (de 1 à 2³²−1), est refusé : code 1, mpv n'est pas lancé.
   ```xml
-  <drawingarea width-request="320" height-request="240" embed="true"><variable>ECRAN</variable></drawingarea>
+  <drawingarea width-request="320" height-request="240" embed="true" media="film"><variable>ECRAN</variable></drawingarea>
   <button><label>Lire</label>
-    <action media>media://film?commande=lire&source=file:///chemin/film.mp4&dans=$ECRAN</action>
+    <action media>media://film?commande=lire&amp;source=file:///chemin/film.mp4&amp;dans=$ECRAN</action>
   </button>
   ```
 - **Flux HTTP(S) à mot de passe** : `identifiants=/chemin` d'un fichier à vous, en
   mode **exactement** `600` (`chmod 600`), avec une ligne `utilisateur:mot de passe`. Il est passé à mpv par un
-  fichier d'en-tête privé, effacé après lecture, **jamais en argument**. RTSP à mot
-  de passe : non pris en charge (mpv ne le lit que dans l'adresse).
+  fichier d'en-tête privé, effacé après lecture, **jamais en argument**.
+- **Flux RTSP(S) à mot de passe** : même fichier `identifiants=`. mpv démarre sans
+  source ; l'adresse `rtsp://utilisateur:mot de passe@…` n'existe qu'en mémoire et
+  lui arrive par son socket privé, **jamais en argument** ni dans un fichier.
+  `transport=tcp` ou `transport=udp` (RTSP seulement) choisit le transport, quand
+  la caméra n'accepte pas celui que mpv essaie d'abord.
+- **Photo et vidéo d'une caméra** (un AUTRE geste que l'aperçu ; le dialogue le
+  fait précéder d'une confirmation qui montre le chemin et la durée, comme
+  l'exemple `camera-capture`) :
+  `commande=photo&fichier=/chemin/photo.jpg` (`.jpg` ou `.png`),
+  `commande=enregistrer&fichier=/chemin/video.mkv&duree=30` (1 à 600 s, caméra
+  en `format=mjpeg`), `commande=couper` pour finir avant. Pour une caméra en cours
+  seulement. Le fichier n'écrase jamais rien, il est créé en mode `600`, dans un
+  dossier à vous que ni le groupe ni les autres ne peuvent écrire.
+  « ENREGISTREMENT » s'affiche dans le titre et dans l'image.
 - **Bac à sable** : un flux réseau ne se lit **que** dans `bwrap` (refusé sans) ; un
   fichier local ou une caméra y est lu si `bwrap` est installé, réseau coupé. Sans
   `bwrap`, un fichier local ou une caméra est lu **sans cage**, et seul un message
@@ -1814,10 +1989,11 @@ backend : `gtk3sermo`, `gtk4sermo`, `qt6sermo`, `fltk1sermo`, `efl1sermo`,
 `sdl3sermo`, `lvglsermo`, `ncursessermo` ou `htmlsermo`.
 
 **Q : Le widget `<terminal>` ne s'affiche pas**
-R : Le terminal nécessite VTE et n'existe que sur `gtk3sermo` et `gtk4sermo`.
+R : Le shell interactif nécessite VTE et n'existe que sur `gtk3sermo` et `gtk4sermo`
+(et sur qt6 construit avec QTermWidget, ce que le paquet Debian n'est pas).
 Vérifiez que le binaire a été construit avec : `gtk3sermo --version` doit afficher
-« Built with additional support for: …, VTE ». Sur les autres ports, un dialogue qui
-contient `<terminal>` s'ouvre quand même, sans terminal.
+« Built with additional support for: …, VTE ». Sur les autres ports, `<terminal>`
+lance la commande `<input>` et montre sa sortie en lecture seule (voir §5.6).
 
 **Q : Comment passer des données volumineuses à `<edit>` ?**
 R : Utilisez `<input file>/chemin/fichier</input>` plutôt qu'une commande shell.

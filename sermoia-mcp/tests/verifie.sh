@@ -53,22 +53,33 @@ grep -aoE '"<[a-z]+' "$LEXER" | tr -d '"<' | sort -u > "$T/lexer"
 while read -r b; do
     case "$NON_WIDGETS" in *" $b "*) ;; *) echo "$b" ;; esac
 done < "$T/lexer" > "$T/lexer-widgets"
-python3 -I - "$ICI/src/sermoia-mcp.c" > "$T/schema" <<'EOF'
-import json,re,sys
-s=open(sys.argv[1],encoding='utf-8').read()
-m=re.search(r'static const char \*SCHEMA_JSON =\n(.*?);\n',s,re.S)
-txt=''.join(re.findall(r'"((?:[^"\\]|\\.)*)"',m.group(1)))
-d=json.loads(txt.encode().decode('unicode_escape'))
-for k in ('conteneurs','affichage','saisie','selection','boutons','menus','divers'):
-    for b in d[k]: print(b)
-EOF
+# Le schéma est sermo.schema.json (généré depuis le code, embarqué au build) : ses
+# widgets, puis ce que le serveur sert vraiment (le fichier embarqué + le complément).
+python3 -I -c 'import json,sys; [print(w) for w in json.load(open(sys.argv[1]))["widgets"]]' "$RACINE/sermo.schema.json" > "$T/schema" 2>/dev/null
 sort -u "$T/schema" -o "$T/schema"
-[ -s "$T/schema" ] || ko "schéma illisible dans src/sermoia-mcp.c"
+[ -s "$T/schema" ] || ko "sermo.schema.json illisible ($RACINE/sermo.schema.json)"
 inventees=$(comm -23 "$T/schema" "$T/lexer")
 oubliees=$(comm -13 "$T/schema" "$T/lexer-widgets")
 [ -z "$inventees" ] || ko "le schéma nomme des balises que l'analyseur ignore : $(echo $inventees)"
 [ -z "$oubliees" ] || ko "le schéma oublie des balises de l'analyseur : $(echo $oubliees)"
 echo "schéma : $(wc -l < "$T/schema") balises, toutes connues de l'analyseur ($(wc -l < "$T/lexer-widgets") balises de widget)"
+# Ce que sermo_schema sert : les mêmes widgets que le fichier, plus le complément éditorial.
+printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18"}}' \
+    '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"sermo_schema","arguments":{}}}' \
+    | SERMO_BIN="${SERMO_BIN:-/bin/true}" timeout 20 "$SERVEUR" 2>/dev/null > "$T/servi.json"
+python3 -I - "$T/servi.json" "$RACINE/sermo.schema.json" <<'EOF' || ko "sermo_schema ne sert pas le schéma embarqué + complément"
+import json,sys
+servi=None
+for l in open(sys.argv[1]):
+    d=json.loads(l)
+    if d.get("id")==2: servi=json.loads(d["result"]["content"][0]["text"])
+f=json.load(open(sys.argv[2]))
+assert servi, "pas de réponse"
+assert set(servi["widgets"])==set(f["widgets"]), "widgets servis ≠ fichier"
+assert servi["commit"]==f["commit"], "commit servi ≠ fichier (serveur construit sur un autre schéma : reconstruire)"
+for k in ("sources_cibles","exemple_minimal","sortie","regle"): assert k in servi, "complément absent : "+k
+print("sermo_schema : %d widgets servis = fichier (commit %s), complément présent" % (len(servi["widgets"]), servi["commit"]))
+EOF
 
 # ── 2. Catalogue d'exemples ────────────────────────────────────────────────────
 n=0; mauvais=0
@@ -201,6 +212,30 @@ ok=len(l)==2 and l[0]["result"].get("isError") and "timeout" in l[0]["result"]["
 sys.exit(0 if ok else 1)
 PY
 pgrep -f "$ESSAIS/bloque.sh" >/dev/null && ko "des processus du faux binaire survivent au délai"
+
+# ── 5 bis. sermo_run fermé par défaut : les DEUX sens, avec le port ncurses ───
+# ncursessermo sans terminal joue les <timer> et sort : pas besoin d'écran. Le
+# même XML (un <input> qui crée un témoin, un timer qui ferme) est joué sans
+# SERMO_ALLOWED_CMDS (témoin attendu ABSENT, réponse « BLOQUÉES ») puis avec
+# touch listé (témoin attendu PRÉSENT, réponse « permises »). Un seul sens ne
+# prouverait pas que la liste est transmise.
+NC="$RACINE/sermo-backend-ncurses/_build/ncursessermo"
+if [ -x "$NC" ]; then
+    run_xml() { printf '<window><vbox><text><input>touch %s</input></text><timer milliseconds=\\"true\\" interval=\\"200\\"><action>exit:fin</action></timer></vbox></window>' "$1"; }
+    req_run() { printf '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"sermo_run","arguments":{"xml":"%s","timeout":10}}}\n' "$(run_xml "$1")"; }
+    TR1="$T/temoin-run-ferme"; TR2="$T/temoin-run-ouvert"; ecarts_avant=$ecarts
+    req_run "$TR1" | SERMO_BIN="$NC" env -u SERMO_ALLOWED_CMDS timeout 60 "$SERVEUR" > "$T/run1.jsonl" 2>/dev/null
+    req_run "$TR2" | SERMO_BIN="$NC" SERMO_ALLOWED_CMDS="$(command -v touch)" timeout 60 "$SERVEUR" > "$T/run2.jsonl" 2>/dev/null
+    t1=$(python3 -I -c 'import json,sys; print(json.loads(open(sys.argv[1]).readline())["result"]["content"][0]["text"])' "$T/run1.jsonl" 2>/dev/null)
+    t2=$(python3 -I -c 'import json,sys; print(json.loads(open(sys.argv[1]).readline())["result"]["content"][0]["text"])' "$T/run2.jsonl" 2>/dev/null)
+    [ -e "$TR1" ] && ko "sermo_run SANS SERMO_ALLOWED_CMDS a EXÉCUTÉ un <input> du XML"
+    case "$t1" in *"BLOQUÉES"*'EXIT="fin"'*) ;; *) ko "sermo_run sans liste ne dit pas « BLOQUÉES » (ou n'a pas rendu EXIT) : ${t1:0:120}" ;; esac
+    [ -e "$TR2" ] || ko "sermo_run AVEC touch dans SERMO_ALLOWED_CMDS n'a pas exécuté l'<input> (liste non transmise ?)"
+    case "$t2" in *"permises"*'EXIT="fin"'*) ;; *) ko "sermo_run avec liste ne dit pas « permises » : ${t2:0:120}" ;; esac
+    [ "$ecarts" -eq "$ecarts_avant" ] && echo "fermé par défaut : sermo_run sans liste = <input> bloqué et dit ; avec touch listé = <input> joué (ncursessermo)"
+else
+    echo "fermé par défaut : NON vérifié (ncursessermo non construit)"
+fi
 
 # ── 6. Catalogue métier : à jour des scripts d'examples/metiers ──────────────
 if [ -d "$RACINE/examples/metiers" ]; then

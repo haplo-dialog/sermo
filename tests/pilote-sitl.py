@@ -13,6 +13,11 @@
 #   pilote-sitl.py PORT desarmer         désarmement forcé (fin d'essai)
 #   pilote-sitl.py PORT param NOM        valeur du paramètre
 #   pilote-sitl.py PORT station SECONDES une station sol (battements GCS)
+#   pilote-sitl.py PORT pret             attend que le drone accepte d'être armé
+#                                        (GPS, estimateur), puis le désarme
+#   pilote-sitl.py PORT regler NOM VALEUR règle un paramètre (essai : la barrière)
+#   pilote-sitl.py PORT hauteur          hauteur au-dessus du départ (m)
+#   pilote-sitl.py PORT position         « lat lon hauteur »
 #   pilote-sitl.py PORT mission          la mission gardée par le drone, un
 #                                        élément par ligne « rang commande
 #                                        repère lat lon hauteur attente » (0 = départ)
@@ -89,6 +94,36 @@ elif quoi == "station":
     while time.time() < fin:
         s.heartbeat_send(mavutil.mavlink.MAV_TYPE_GCS, mavutil.mavlink.MAV_AUTOPILOT_INVALID, 0, 0, 0)
         time.sleep(0.5)
+elif quoi == "pret":
+    fin = time.time() + 120
+    while True:
+        commande(mavutil.mavlink.MAV_CMD_DO_SET_MODE, 1, 4)
+        if commande(mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 1) == 0:
+            break
+        if time.time() > fin:
+            sys.exit("pilote : le drone refuse toujours d'être armé")
+        time.sleep(2)
+    sys.exit(0 if commande(mavutil.mavlink.MAV_CMD_COMPONENT_ARM_DISARM, 0) == 0 else 1)
+elif quoi == "regler":
+    m.mav.param_set_send(1, 1, sys.argv[3].encode(), float(sys.argv[4]), 9)
+    fin = time.time() + 5
+    while time.time() < fin:
+        v = m.recv_match(type="PARAM_VALUE", blocking=True, timeout=0.5)
+        if v and v.param_id == sys.argv[3] and abs(v.param_value - float(sys.argv[4])) < 1e-6:
+            sys.exit(0)
+    sys.exit("pilote : réglage non confirmé")
+elif quoi == "hauteur":
+    m.mav.command_long_send(1, 1, 512, 0, 33, 0, 0, 0, 0, 0, 0)
+    g = m.recv_match(type="GLOBAL_POSITION_INT", blocking=True, timeout=3)
+    if g is None:
+        sys.exit("pilote : pas de position")
+    print("%.1f" % (g.relative_alt / 1000.0))
+elif quoi == "position":
+    m.mav.command_long_send(1, 1, 512, 0, 33, 0, 0, 0, 0, 0, 0)
+    g = m.recv_match(type="GLOBAL_POSITION_INT", blocking=True, timeout=3)
+    if g is None:
+        sys.exit("pilote : pas de position")
+    print("%.7f %.7f %.1f" % (g.lat / 1e7, g.lon / 1e7, g.relative_alt / 1000.0))
 elif quoi == "mission":
     m.mav.mission_request_list_send(1, 1, 0)
     n = m.recv_match(type="MISSION_COUNT", blocking=True, timeout=5)

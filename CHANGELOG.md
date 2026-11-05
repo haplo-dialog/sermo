@@ -7,6 +7,134 @@ La **2.7.3 est la première version 2.x publiée** ; les 2.7.4, 2.7.5, 2.7.7 et 
 restées internes ; elles sont décrites ci-dessous pour garder la trace de ce qui a
 changé depuis la 1.x. Pour passer de la 1.x à la 2.x : [MIGRATION.md](MIGRATION.md).
 
+## [3.2.0] — 2026-11-04
+
+### Modifié
+
+- **En-têtes MAVLink embarqués rafraîchis** (`sermo-source/tiers/mavlink/`) :
+  c_library_v2 `8c63a49` (12 oct.) → `a2d0ecf` (28 oct.). Même jeu de 254
+  fichiers ; changements de commentaires (`coordinate_frame` « superseded »),
+  `MAV_AUTOPILOT_BETAFLIGHT=22`, `MAV_SYS_STATUS_SENSOR_MOTOR_OUTPUTS`
+  redéfini. Bancs faux drone rejoués : tout tient. `debian/copyright` suit.
+
+### Corrigé
+
+- **Exemple caméra : `ffplay` est un paquet à part** depuis ffmpeg 7:9 dans
+  Debian testing (vu le 2026-11-03) : `ci/dependances.txt` l'installe (sans
+  lui, le banc « aperçu caméra » rend 77, compté en échec en CI) ; les messages
+  et le README de l'exemple disent `apt install ffplay`. Et quand `bwrap` est
+  installé mais privé de ses espaces de noms (conteneur sous seccomp ou
+  AppArmor : « Creating new namespace failed »), `CA_BAC=auto` le dit et joue
+  sans bac au lieu de laisser le lecteur mourir ; `require` refuse. Mesuré dans
+  trois conteneurs debian:testing (simple, sans seccomp/AppArmor, privilégié) :
+  le banc passe dès que les espaces de noms sont permis — la mort de ffplay
+  sous bwrap vue sur la CI GitLab (2026-10-21) n'est pas reproduite ; la trace
+  en gardera désormais la raison (ci-dessous).
+- **`ci/bancs.sh` : un banc « NON JOUÉ » recopie sa raison entière dans la
+  trace** (ligne « ↳ … »). Jusqu'ici elle restait dans le journal, que la page
+  publique du job ne montre pas sans compte, et la ligne de verdict était
+  coupée à 80 caractères.
+
+### Ajouté
+
+- **`sermo.schema.json` : le langage XML lu dans le code** (`outils/schema/generer.py`).
+  Balises et balises à attributs (lexer), alias, balises de contenu et conteneurs
+  (grammaire), boutons de stock, sources et cibles, préfixes d'action
+  (`stringman.c`), signaux (`signals.c`), et widget par widget les attributs que
+  chaque port lit (`get_tag_attribute`), avec la liste des ports ; gtk3/gtk4
+  acceptent toute propriété GObject (`attributs_libres`). Seule part écrite à la
+  main : la famille de chaque widget, et un widget sans famille fait échouer la
+  génération. `tests/garde_schema.sh` (dans `ci/bancs.sh`) : régénération à
+  l'identique, chaque balise employée par les 294 dialogues du dépôt connue,
+  témoin. Pas d'XSD : mesuré, 266 de ces 294 dialogues ne sont pas du XML strict
+  (`<button ok>`, `<input file>`). Livré par `sermo-doc`
+  (`/usr/share/doc/sermo-doc/sermo.schema.json`).
+- **sermoia-mcp : `sermo_schema` sert ce fichier**, embarqué au build (CMake), plus
+  le complément éditorial (sources et cibles, exemple minimal, sortie, règle) ;
+  la constante tapée à la main disparaît. Son banc vérifie que les widgets servis
+  sont ceux du fichier, au même commit.
+- **Tutoriel « sermo avec un assistant IA » : une séance réelle**, jouée le
+  2026-11-04 avec sermoman-mcp et sermoia-mcp par le protocole MCP (demande de
+  congés : recherche dans le manuel, schéma, exemples, XML, `sermo_check`,
+  `sermo_render` avec un calendrier coupé puis corrigé, `sermo_run` avec un
+  délai tombé puis les valeurs, `sermo_vote`). Résumé dans
+  `sermoia-mcp/README.md` (fr/en), version complète avec les images sur le
+  site (page Assistant IA). Seul client montré : Claude Code ; rien d'inventé.
+- **Badges lus en direct en tête des README** (fr/en) : état du pipeline GitLab
+  (badge natif) et dernière version (shields.io, qui lit l'API GitLab ; le badge
+  natif « release » de GitLab exige une session, mesuré : 403 vers la page de
+  connexion). Rien d'écrit à la main. Pas de badge GitHub Actions : le miroir
+  n'a aucune exécution (API : 0), il afficherait « no status ».
+  `tests/garde_badges.sh` (banc de publication, hors `ci/bancs.sh`) télécharge
+  chaque badge : 200, SVG, et un texte qui n'avoue pas l'absence de donnée
+  (« unknown », « not found », « no status ») ; les deux README doivent porter
+  les mêmes adresses ; témoin : un projet inexistant est vu mort.
+- **Un seul fichier de chiffres pour les bancs : `_journaux/bilan.json`**
+  (`ci/bilan-json.sh`, joué en fin de `ci/bancs.sh`). Les cas XML, de
+  comportement, les garanties de durcissement, les widgets cliqués, les cas
+  d'échappement, les exemples ouverts, `--glade-xml` et `<terminal>` sont LUS
+  dans les journaux, port par port, avec le verdict de chaque banc
+  (`_journaux/bancs/verdicts.tsv`, nouveau). La même chose tient sur une ligne
+  `BILAN-JSON: {…}` en fin de trace, que la page publique du job de CI garde.
+  `ci/bilan-md.sh` réécrit depuis ce JSON le bloc « Dernière passe des bancs »
+  de `BILAN_SANTE.md` (tableau « Par backend », entre deux repères invisibles) ;
+  le site reprend le même fichier pour « Ce que les bancs vérifient ». Avant :
+  recopiés à la main, et faux (le bilan disait 61 cas et 176 bancs quand la CI
+  en jouait 78 et 265). Banc : `tests/garde_bilan_json.sh` (journaux
+  fabriqués, sabotage d'un chiffre vu).
+- **`tests/garde_mavlink_amont.sh`** : banc de publication pour la copie figée
+  de `mavlink/c_library_v2` (`sermo-source/tiers/mavlink/`). Télécharge
+  l'archive du commit noté dans `LISEZMOI`, compare SHA-256 et chaque fichier
+  octet à octet, puis lit la tête de l'amont et dit l'écart (commits, dates,
+  fichiers touchés dans les dialectes embarqués). 77 sans réseau ; hors
+  `ci/bancs.sh` (l'amont bouge chaque semaine). Suite d'un audit extérieur.
+- **`<action mavlink>` : piloter (armer, décoller, changer de mode,
+  désarmer)** (jalon M3a ; ArduPilot Copter). `pilote=armer|desarmer|decoller`
+  ou `pilote=mode&mode=guided|loiter|poshold|brake|rtl|smart_rtl|land` ; ligne
+  `pilotage lat … lon … rayon … hauteur … decollage … modes …` de la liste
+  blanche (barrière de sermo, hauteur de décollage fixée, modes permis ;
+  STABILIZE, ACRO, ALT_HOLD, AUTO jamais). Chaque ordre : deux appuis ; 2,5 s
+  au plus du clic à l'envoi (3,5 s pour désarmer), état relu de moins de
+  0,5 s ; barrière de l'autopilote active et pas plus large ; drone dans la
+  barrière (sinon RTL/SMART_RTL/LAND seulement) ; armer et décoller au sol en
+  GUIDED, jamais forcé ; désarmer vu posé 2 s ; refus si autre station, autre
+  autopilote ou messages signés. État au sol et position demandés au drone
+  juste avant l'envoi. Bancs : faux drone 90 cas (dont une radio lente par
+  latence simulée), SITL 43 cas en vol réel. Exemple
+  `examples/mavlink/drone-pilotage.sh`.
+- **`<action mavlink>` : aller à un point** (jalon M3b ; ArduPilot Copter).
+  `pilote=aller&lat=…&lon=…&hauteur=…` (nombres ou variables du dialogue) ;
+  point et hauteur (1 m au moins) dans la barrière de sermo ; drone armé, en
+  vol, déjà en GUIDED (l'ordre ne change jamais de mode) ;
+  `SET_POSITION_TARGET_GLOBAL_INT` en hauteur relative au départ, position
+  seule ; succès quand la cible relue sur le drone est la même. Bancs : faux
+  drone 107 cas (cadre et masque vérifiés), SITL 47 cas (le drone va au point).
+- **`<action media>` : photo et vidéo d'une caméra** (fiche 06, J3) :
+  `commande=photo&fichier=/…jpg|png`, `commande=enregistrer&fichier=/….mkv&duree=1..600`
+  (caméra en MJPEG, images recopiées sans réencodage), `commande=couper`. Caméra
+  en cours seulement ; chemin absolu normalisé, extension fermée, dossier à
+  l'utilisateur sans écriture groupe/autres, fichier créé par `O_EXCL` en 600.
+  « ENREGISTREMENT » dans le titre et l'image. La confirmation est faite par le
+  dialogue : exemple **`camera-capture`** (porte `approbation`, chemin exact et
+  durée montrés).
+- **RTSP à mot de passe** : `identifiants=` vaut pour `rtsp(s)://`. mpv démarre
+  sans source (`--idle=once`) ; l'adresse avec le mot de passe n'existe qu'en
+  mémoire et part par le socket privé (`loadfile`). Clé `transport=tcp|udp`.
+- **Vidéo dans la fenêtre sous Wayland (gtk3)** : `<drawingarea embed="true"
+  media="NOM">` exporte `zone` hors X11 ; `<action media>` lance alors
+  `sermo-media-images` (libmpv, rendu logiciel) dans la cage, sans accès à
+  l'écran ; la zone lit son fichier d'images (`sermo_images.h`) par `pread`,
+  en-tête borné. Mesuré sous sway : 30 images/s, gtk3sermo 14,5 %, décodeur
+  11,4 % d'un cœur (640x480). Nouvelle dépendance de construction : libmpv-dev.
+- **qt6** : `<drawingarea embed="true">` a sa propre fenêtre X11 et l'exporte ;
+  la vidéo s'y incruste comme avec gtk3.
+
+### Bancs
+
+- `garde_sermo_media.sh` : photo, enregistrement, couper, refus de chemins,
+  RTSP par le socket (aucun secret en argument ni dans un fichier) ;
+  `garde_camera_capture.sh` (sans ouvrir la caméra).
+
 ## [3.1.2] — 2026-10-20
 
 Correctif de sécurité.

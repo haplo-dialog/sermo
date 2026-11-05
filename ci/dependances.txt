@@ -42,6 +42,8 @@ python3-pymodbus
 # <input mqtt> : bibliothèque, et les serveurs de son banc (mosquitto lancé
 # par le banc, jamais le service du système)
 libmosquitto-dev
+# <action media> dans=zone : sermo-media-images (libmpv, rendu logiciel)
+libmpv-dev
 mosquitto
 mosquitto-clients
 # <input mavlink> : le faux drone de son banc (en-têtes C embarqués, tiers/mavlink)
@@ -51,6 +53,9 @@ python3-pymavlink
 mpv
 bubblewrap
 ffmpeg
+# l'exemple caméra (banc « aperçu caméra ») exige ffplay : paquet à part depuis
+# ffmpeg 7:9 dans Debian testing (vu le 2026-11-03 ; avant, il venait avec ffmpeg)
+ffplay
 # examples/modbus lit par mbpoll (banc des exemples réels)
 mbpoll
 openssl

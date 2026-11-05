@@ -21,6 +21,10 @@
  *               dialogue)
  *   ordre       rtl (retour au départ), land (atterrir sur place) ou
  *               terminaison (couper les moteurs : DEUX appuis, voir plus bas)
+ *   pilote      armer, desarmer, decoller, mode (avec mode=guided, loiter,
+ *               poshold, brake, rtl, smart_rtl, land), ou aller (avec lat=,
+ *               lon=, hauteur= : un nombre, ou $NOM) : le PILOTAGE (voir
+ *               plus bas), ArduPilot Copter seulement
  *   mission     chemin absolu d'un fichier « QGC WPL 110 » (Mission Planner,
  *               QGroundControl) : des POINTS DE PASSAGE seulement
  *               (mission-wpl.h), envoyés au drone désarmé puis RELUS et
@@ -40,6 +44,7 @@
  *   ordre land
  *   ordre terminaison
  *   mission rayon 500 hauteur 120
+ *   pilotage lat 45.1234 lon 5.7654 rayon 300 hauteur 60 decollage 20 modes 4,5,6,9
  * La ligne mission borne chaque point : à R mètres au plus de la position
  * actuelle du drone, de 0 à H mètres de hauteur (H : 120 au plus). Deux
  * lignes : la plus stricte. Les familles ARMING_*, FLTMODE*, SERVOn_FUNCTION, BRD_SAFETY*, FENCE_* sont
@@ -72,6 +77,32 @@
  * datée (dossier $XDG_RUNTIME_DIR/sermo-cible-mavlink, à vous seul) et le dit.
  * Un second appui dans les CONFIRMATION_MS envoie l'ordre ; après, la marque
  * est périmée et l'on recommence.
+ *
+ * PILOTAGE (une ligne « pilotage » par fichier ; deux fichiers : la plus
+ * stricte, même point de référence exigé) :
+ *  - chaque ordre se confirme par DEUX appuis dans les CONFIRMATION_MS ; le
+ *    premier écrit ce qui partirait ; entre le second appui et l'envoi,
+ *    DELAI_PILOTAGE_MS au plus (DELAI_DESARMER_MS pour désarmer : attendre
+ *    ne fait que mieux vérifier qu'il est posé), et l'état du drone (battement, position, au
+ *    sol / en vol) relu moins de ETAT_MAX_MS avant l'envoi ;
+ *  - ArduPilot seulement ; drone qui signe ses messages : refus ;
+ *  - modes : intersection de la liste figée (GUIDED 4, LOITER 5, POSHOLD 16,
+ *    BRAKE 17 ; RTL 6, SMART_RTL 21, LAND 9) et de la ligne ; LOITER,
+ *    POSHOLD, BRAKE en vol seulement ; STABILIZE, ACRO, ALT_HOLD, AUTO jamais ;
+ *  - hors RTL, SMART_RTL, LAND : barrière de l'autopilote active (FENCE_ENABLE,
+ *    action non nulle, cercle et hauteur, pas plus large ni plus haute que
+ *    celle de sermo), et drone DANS la barrière de sermo ;
+ *  - armer : désarmé, au sol, en GUIDED ; décoller : armé, au sol, en GUIDED,
+ *    à la hauteur de la liste ; désarmer : posé depuis 2 s continues (au sol,
+ *    hauteur < 1 m, vitesse verticale < 0,3 m/s) ; jamais de forçage ;
+ *  - aller à un point : armé, en vol, DÉJÀ en GUIDED (l'ordre ne change
+ *    jamais de mode) ; point et hauteur (1 m au moins) dans la barrière de
+ *    sermo ; SET_POSITION_TARGET_GLOBAL_INT en cadre 6 (hauteur au-dessus
+ *    du départ), position seule (type_mask 0x0DF8) ; succès quand la CIBLE
+ *    relue sur le drone (POSITION_TARGET_GLOBAL_INT) est la même, l'altitude
+ *    comparée au départ (HOME_POSITION) relu avec l'état.
+ * L'état au sol et la position sont DEMANDÉS juste avant l'envoi
+ * (MAV_CMD_REQUEST_MESSAGE, une lecture) : ArduPilot ne les diffuse pas tous.
  *
  * MESSAGE : chaque appel écrit sa conclusion, une ligne, sur la sortie
  * d'erreur ET dans $XDG_RUNTIME_DIR/sermo-cible-mavlink/message : un dialogue
@@ -111,11 +142,61 @@
 #define CONFIRMATION_MS 5000
 #define RAYON_MAX 10000.0
 #define HAUTEUR_MAX 120.0
+#define DELAI_PILOTAGE_MS 2500    /* du second appui à l'envoi */
+#define DELAI_DESARMER_MS 3500    /* désarmer : 2 s posé à observer en plus du démarrage */
+#define ETAT_MAX_MS 500           /* âge maximal de l'état relu à l'envoi */
+#define POSE_MS 2000              /* posé depuis, pour désarmer */
 #define MON_SYSTEME 255
 #define MON_COMPOSANT MAV_COMP_ID_USER1   /* 25 (voir plus haut) */
 
 typedef enum { O_AUCUN, O_RTL, O_LAND, O_TERMINAISON } ordre_t;
 static const char *const noms_ordre[] = { "", "rtl", "land", "terminaison" };
+static const char *const noms_barriere[] = { "FENCE_ENABLE", "FENCE_ACTION", "FENCE_TYPE", "FENCE_ALT_MAX",
+                                             "FENCE_RADIUS" };
+
+typedef enum { P_AUCUN, P_ARMER, P_DESARMER, P_DECOLLER, P_MODE, P_ALLER } pilote_t;
+static const char *const noms_pilote[] = { "", "armer", "desarmer", "decoller", "mode", "aller" };
+
+/* Le point d'« aller à ». */
+typedef struct {
+	double lat, lon, hauteur;
+} point_vise_t;
+
+#define TYPE_MASK_POSITION 0x0DF8        /* position seule : ni vitesse, ni accélération, ni cap */
+
+/* Liste FIGÉE des modes ArduPilot Copter permis. En vol : seulement armé et
+ * en l'air. Secours : permis hors barrière et barrière de l'autopilote
+ * coupée. STABILIZE (0), ACRO (1), ALT_HOLD (2) — sans manches — et AUTO (3)
+ * n'y sont pas, et n'y entreront pas. */
+static const struct {
+	const char *nom, *libelle;
+	int numero, en_vol, secours;
+} modes_figes[] = {
+	{ "guided", "GUIDED", 4, 0, 0 },
+	{ "loiter", "LOITER", 5, 1, 0 },
+	{ "poshold", "POSHOLD", 16, 1, 0 },
+	{ "brake", "BRAKE", 17, 1, 0 },
+	{ "rtl", "RTL", 6, 0, 1 },
+	{ "smart_rtl", "SMART_RTL", 21, 0, 1 },
+	{ "land", "LAND", 9, 0, 1 },
+};
+#define N_MODES ((int)(sizeof modes_figes / sizeof modes_figes[0]))
+
+static int
+mode_par_numero(long n)
+{
+	for (int i = 0; i < N_MODES; i++)
+		if (modes_figes[i].numero == n)
+			return i;
+	return -1;
+}
+
+/* La ligne « pilotage » d'une liste blanche. */
+typedef struct {
+	int vu;
+	double lat, lon, rayon, hauteur, decollage;
+	unsigned modes;                   /* un bit par rang de modes_figes */
+} pilotage_t;
 
 /* ---- message ------------------------------------------------------------ */
 
@@ -185,6 +266,41 @@ nombre(const char *texte)
 	return v;
 }
 
+/* @brute : un nombre, ou $NOM (variable du dialogue). Rend 0 et *v, ou -1
+ * (raison dite). */
+static int
+nombre_ou_variable(const char *cle, const char *brute, double *v)
+{
+	char ligne[256];
+	const char *texte = brute;
+	if (brute[0] == '$') {
+		const char *nom = brute + 1;
+		size_t i = 0;
+		for (; nom[i]; i++)
+			if (!((nom[i] >= 'A' && nom[i] <= 'Z') || (nom[i] >= 'a' && nom[i] <= 'z') || nom[i] == '_'
+			      || (i > 0 && nom[i] >= '0' && nom[i] <= '9')))
+				break;
+		if (i == 0 || nom[i] != '\0') {
+			conclure("%s=%s : nom de variable invalide : rien n'est envoyé", cle, brute);
+			return -1;
+		}
+		const char *e = getenv(nom);
+		if (!e) {
+			conclure("%s=%s : la variable %s n'existe pas dans ce dialogue : rien n'est envoyé", cle, brute, nom);
+			return -1;
+		}
+		snprintf(ligne, sizeof ligne, "%s", e);
+		ligne[strcspn(ligne, "\r\n")] = '\0';
+		texte = ligne;
+	}
+	*v = nombre(texte);
+	if (isnan(*v)) {
+		conclure("%s « %s » : un nombre attendu (point décimal) : rien n'est envoyé", cle, texte);
+		return -1;
+	}
+	return 0;
+}
+
 static int
 nom_parametre_valide(const char *nom)
 {
@@ -236,9 +352,52 @@ intervalle(const char *texte, double *min, double *max)
 /* Cherche la permission dans @chemin. Rend 1 (permise), 0 (absente, ou
  * fichier absent), -1 (fichier refusé ou mal formé : TOUT refuser). Pour un
  * paramètre connu mais hors de son intervalle, *connu = 1. */
+/* « pilotage lat X lon Y rayon R hauteur H decollage T modes a,b,… » (mots[0..12]). */
+static int
+pilotage_lire(char **mots, pilotage_t *pl)
+{
+	static const char *const cles[] = { "pilotage", "lat", "lon", "rayon", "hauteur", "decollage", "modes" };
+	for (int i = 0; i < 7; i++)
+		if (strcmp(mots[i == 0 ? 0 : 2 * i - 1], cles[i]) != 0)
+			return -1;
+	double v[5];
+	for (int i = 0; i < 5; i++) {
+		v[i] = nombre(mots[2 * i + 2]);
+		if (isnan(v[i]))
+			return -1;
+	}
+	if (v[0] < -90 || v[0] > 90 || v[1] < -180 || v[1] > 180 || v[2] < 1 || v[2] > RAYON_MAX
+	    || v[3] < 1 || v[3] > HAUTEUR_MAX || v[4] < 1 || v[4] > v[3])
+		return -1;
+	unsigned modes = 0;
+	char liste[128];
+	if (strlen(mots[12]) >= sizeof liste)
+		return -1;
+	snprintf(liste, sizeof liste, "%s", mots[12]);
+	char *s3 = NULL;
+	for (char *t = strtok_r(liste, ",", &s3); t; t = strtok_r(NULL, ",", &s3)) {
+		char *fin;
+		long n = strtol(t, &fin, 10);
+		int i = mode_par_numero(n);
+		if (*fin || fin == t || i < 0)
+			return -1;
+		modes |= 1u << i;
+	}
+	if (!modes)
+		return -1;
+	pl->vu = 1;
+	pl->lat = v[0];
+	pl->lon = v[1];
+	pl->rayon = v[2];
+	pl->hauteur = v[3];
+	pl->decollage = v[4];
+	pl->modes = modes;
+	return 0;
+}
+
 static int
 liste_chercher(const char *chemin, uid_t uid, int prive, const char *parametre, double valeur,
-               ordre_t ordre, int mission, double *rayon, double *hauteur, int *connu)
+               ordre_t ordre, int mission, double *rayon, double *hauteur, pilotage_t *pl, int *connu)
 {
 	struct stat st;
 	int fd = open(chemin, O_RDONLY | O_NOFOLLOW | O_CLOEXEC);
@@ -277,9 +436,9 @@ liste_chercher(const char *chemin, uid_t uid, int prive, const char *parametre, 
 		char *diese = strchr(ligne, '#');
 		if (diese)
 			*diese = '\0';
-		char *mots[6], *s2 = NULL;
+		char *mots[14], *s2 = NULL;
 		int k = 0;
-		for (char *m = strtok_r(ligne, " \t\r", &s2); m && k < 6; m = strtok_r(NULL, " \t\r", &s2))
+		for (char *m = strtok_r(ligne, " \t\r", &s2); m && k < 14; m = strtok_r(NULL, " \t\r", &s2))
 			mots[k++] = m;
 		if (k == 0)
 			continue;
@@ -318,8 +477,22 @@ liste_chercher(const char *chemin, uid_t uid, int prive, const char *parametre, 
 				continue;
 			}
 		}
+		if (k == 13 && strcmp(mots[0], "pilotage") == 0) {
+			if (pl->vu) {
+				conclure("liste blanche %s, ligne %d : une seule ligne « pilotage » par fichier ; rien n'est "
+				         "envoyé", chemin, numero);
+				free(texte);
+				return -1;
+			}
+			if (pilotage_lire(mots, pl) == 0) {
+				if (pl->vu && !parametre && ordre == O_AUCUN && !mission)
+					trouve = 1;
+				continue;
+			}
+		}
 		conclure("liste blanche %s, ligne %d mal formée (« parametre NOM min..max », « ordre rtl|land|"
-		         "terminaison » ou « mission rayon 1..10000 hauteur 1..120 ») : rien n'est envoyé", chemin, numero);
+		         "terminaison », « mission rayon 1..10000 hauteur 1..120 » ou « pilotage lat … lon … rayon … "
+		         "hauteur … decollage … modes 4,5,… ») : rien n'est envoyé", chemin, numero);
 		free(texte);
 		return -1;
 	}
@@ -332,13 +505,16 @@ liste_chercher(const char *chemin, uid_t uid, int prive, const char *parametre, 
 /* Nom de la marque de @base/@systeme : empreinte FNV-1a, le texte de
  * l'adresse ne devient jamais un chemin. */
 static void
-marque_chemin(char *chemin, size_t n, const char *base, long systeme)
+marque_chemin(char *chemin, size_t n, const char *base, long systeme, const char *cle)
 {
 	uint64_t h = 1469598103934665603ULL;
 	for (const char *p = base; *p; p++)
 		h = (h ^ (unsigned char)*p) * 1099511628211ULL;
 	h = (h ^ (uint64_t)systeme) * 1099511628211ULL;
-	snprintf(chemin, n, "%s/terminaison-%016llx", dossier_etat, (unsigned long long)h);
+	for (const char *p = cle; *p; p++)
+		h = (h ^ (unsigned char)*p) * 1099511628211ULL;
+	snprintf(chemin, n, "%s/%s-%016llx", dossier_etat, strncmp(cle, "pilote", 6) == 0 ? "pilote" : "terminaison",
+	         (unsigned long long)h);
 }
 
 /* Heure de la marque : CLOCK_BOOTTIME, en ms (la même que /proc/uptime ; une
@@ -354,12 +530,12 @@ marque_heure(void)
 /* Rend 1 si une marque FRAÎCHE existait (elle est effacée : on peut envoyer),
  * 0 si elle vient d'être posée (premier appui), -1 si impossible. */
 static int
-marque_confirmer(const char *base, long systeme)
+marque_confirmer(const char *base, long systeme, const char *cle)
 {
 	char chemin[4300];
 	if (!dossier_etat[0])
 		return -1;
-	marque_chemin(chemin, sizeof chemin, base, systeme);
+	marque_chemin(chemin, sizeof chemin, base, systeme, cle);
 	long maintenant = marque_heure();
 	int fd = open(chemin, O_RDONLY | O_NOFOLLOW | O_CLOEXEC);
 	if (fd >= 0) {
@@ -399,10 +575,84 @@ typedef struct {
 	int autre_station;                /* système de la station sol entendue, ou 0 */
 	int position;                     /* une position de l'autopilote est arrivée */
 	double latitude, longitude;
+	/* Pilotage : l'état, avec l'heure de chaque relevé (mavlink_maintenant_ms). */
+	int signe;                        /* l'autopilote signe ses messages */
+	int autopilote, arme, mode;       /* du dernier battement */
+	long t_battement, t_position, t_sol, sol_depuis;
+	double hauteur_rel, vitesse_vert;
+	long t_depart, t_cible;           /* HOME_POSITION, POSITION_TARGET_GLOBAL_INT reçus */
+	double depart_alt;                /* m, niveau de la mer */
+	int32_t cible_lat, cible_lon;
+	double cible_alt;
+	int cible_repere;
+	int au_sol;                       /* EXTENDED_SYS_STATE.landed_state */
+	double barriere[5];               /* FENCE_ENABLE, _ACTION, _TYPE, _ALT_MAX, _RADIUS */
+	unsigned barriere_lue;            /* un bit par valeur reçue */
+	uint32_t candidat;                /* système noté avant l'adoption (systeme = 0) */
 	int vivant;                       /* un message MAVLink est arrivé */
 	unsigned char tampon[2048];
 	ssize_t n, i;
 } canal_t;
+
+/* L'état de l'autopilote suivi, relevé au passage (heure comprise). */
+static void
+noter_etat(canal_t *c, const mavlink_message_t *msg)
+{
+	long t = mavlink_maintenant_ms();
+	if (msg->incompat_flags & MAVLINK_IFLAG_SIGNED)
+		c->signe = 1;
+	switch (msg->msgid) {
+	case MAVLINK_MSG_ID_HEARTBEAT:
+		c->autopilote = mavlink_msg_heartbeat_get_autopilot(msg);
+		c->arme = (mavlink_msg_heartbeat_get_base_mode(msg) & MAV_MODE_FLAG_SAFETY_ARMED) != 0;
+		c->mode = (int)mavlink_msg_heartbeat_get_custom_mode(msg);
+		c->t_battement = t;
+		break;
+	case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
+		c->latitude = mavlink_msg_global_position_int_get_lat(msg) / 1e7;
+		c->longitude = mavlink_msg_global_position_int_get_lon(msg) / 1e7;
+		c->position = !(c->latitude == 0 && c->longitude == 0);
+		c->hauteur_rel = mavlink_msg_global_position_int_get_relative_alt(msg) / 1000.0;
+		c->vitesse_vert = mavlink_msg_global_position_int_get_vz(msg) / 100.0;
+		c->t_position = t;
+		/* Posé : hauteur < 1 m, vitesse verticale < 0,3 m/s, sans interruption. */
+		if (fabs(c->hauteur_rel) < 1.0 && fabs(c->vitesse_vert) < 0.3) {
+			if (!c->sol_depuis)
+				c->sol_depuis = t;
+		} else {
+			c->sol_depuis = 0;
+		}
+		break;
+	case MAVLINK_MSG_ID_EXTENDED_SYS_STATE:
+		c->au_sol = mavlink_msg_extended_sys_state_get_landed_state(msg);
+		c->t_sol = t;
+		break;
+	case MAVLINK_MSG_ID_HOME_POSITION:
+		c->depart_alt = mavlink_msg_home_position_get_altitude(msg) / 1000.0;
+		c->t_depart = t;
+		break;
+	case MAVLINK_MSG_ID_POSITION_TARGET_GLOBAL_INT:
+		c->cible_lat = mavlink_msg_position_target_global_int_get_lat_int(msg);
+		c->cible_lon = mavlink_msg_position_target_global_int_get_lon_int(msg);
+		c->cible_alt = mavlink_msg_position_target_global_int_get_alt(msg);
+		c->cible_repere = mavlink_msg_position_target_global_int_get_coordinate_frame(msg);
+		c->t_cible = t;
+		break;
+	case MAVLINK_MSG_ID_PARAM_VALUE: {
+		char id[MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1];
+		memset(id, 0, sizeof id);
+		mavlink_msg_param_value_get_param_id(msg, id);
+		for (int i = 0; i < 5; i++)
+			if (strcmp(id, noms_barriere[i]) == 0) {
+				c->barriere[i] = mavlink_msg_param_value_get_param_value(msg);
+				c->barriere_lue |= 1u << i;
+			}
+		break;
+	}
+	default:
+		break;
+	}
+}
 
 /* Le message suivant, avant @fin. Rend 1 (dans @msg), 0 (délai), -1 (lien
  * fermé ou en panne, message dit). Toute station sol entendue est notée. */
@@ -416,11 +666,15 @@ recevoir(canal_t *c, mavlink_message_t *msg, long fin)
 			c->vivant = 1;
 			if (msg->msgid == MAVLINK_MSG_ID_HEARTBEAT && mavlink_msg_heartbeat_get_type(msg) == MAV_TYPE_GCS)
 				c->autre_station = msg->sysid ? msg->sysid : 256;
-			if (msg->msgid == MAVLINK_MSG_ID_GLOBAL_POSITION_INT && msg->compid == MAV_COMP_ID_AUTOPILOT1
-			    && c->systeme != 0 && msg->sysid == c->systeme) {
-				c->latitude = mavlink_msg_global_position_int_get_lat(msg) / 1e7;
-				c->longitude = mavlink_msg_global_position_int_get_lon(msg) / 1e7;
-				c->position = !(c->latitude == 0 && c->longitude == 0);
+			/* L'état se relève dès le premier message de l'autopilote, avant même
+			 * son adoption (le délai de pilotage compte) ; un autre système
+			 * adopté ensuite efface ce relevé (de_l_autopilote). */
+			if (msg->compid == MAV_COMP_ID_AUTOPILOT1 && msg->sysid != 0) {
+				if (c->systeme != 0 ? msg->sysid == c->systeme : (c->candidat == 0 || msg->sysid == c->candidat)) {
+					if (c->systeme == 0)
+						c->candidat = msg->sysid;
+					noter_etat(c, msg);
+				}
 			}
 			return 1;
 		}
@@ -467,6 +721,12 @@ de_l_autopilote(canal_t *c, const mavlink_message_t *msg)
 		if (msg->msgid != MAVLINK_MSG_ID_HEARTBEAT || mavlink_msg_heartbeat_get_autopilot(msg) == MAV_AUTOPILOT_INVALID)
 			return 0;
 		c->systeme = msg->sysid;
+		if (c->candidat && c->candidat != msg->sysid) {
+			c->position = c->signe = 0;
+			c->t_battement = c->t_position = c->t_sol = c->sol_depuis = 0;
+			c->barriere_lue = 0;
+			noter_etat(c, msg);
+		}
 	}
 	return msg->sysid == c->systeme;
 }
@@ -510,6 +770,330 @@ static int
 meme_valeur(float a, double b)
 {
 	return fabs((double)a - b) <= 1e-6 * fmax(1.0, fabs(b));
+}
+
+/* ---- pilotage -------------------------------------------------------------- */
+
+/* Lit un paramètre de l'autopilote (une LECTURE). Rend 0 et *v, -1 sinon. */
+static int
+lire_parametre(canal_t *c, const char *nom, long fin_ms, double *v)
+{
+	mavlink_message_t msg;
+	char id[MAVLINK_MSG_PARAM_SET_FIELD_PARAM_ID_LEN + 1];
+	memset(id, 0, sizeof id);
+	memcpy(id, nom, strlen(nom));
+	mavlink_msg_param_request_read_pack(MON_SYSTEME, MON_COMPOSANT, &msg, (uint8_t)c->systeme, MAV_COMP_ID_AUTOPILOT1,
+	                                    id, -1);
+	if (envoyer(c, &msg) != 0)
+		return -1;
+	long attente = mavlink_maintenant_ms() + 1000;
+	int r;
+	while ((r = recevoir(c, &msg, attente < fin_ms ? attente : fin_ms)) == 1) {
+		if (msg.msgid != MAVLINK_MSG_ID_PARAM_VALUE || !de_l_autopilote(c, &msg))
+			continue;
+		char recu[MAVLINK_MSG_PARAM_VALUE_FIELD_PARAM_ID_LEN + 1];
+		memset(recu, 0, sizeof recu);
+		mavlink_msg_param_value_get_param_id(&msg, recu);
+		if (strcmp(recu, nom) == 0) {
+			*v = mavlink_msg_param_value_get_param_value(&msg);
+			return 0;
+		}
+	}
+	return -1;
+}
+
+/* Envoie seulement la demande de lecture d'un paramètre ; la réponse est
+ * relevée au passage (noter_etat). */
+static int
+lire_parametre_demander(canal_t *c, const char *nom)
+{
+	mavlink_message_t msg;
+	char id[MAVLINK_MSG_PARAM_SET_FIELD_PARAM_ID_LEN + 1];
+	memset(id, 0, sizeof id);
+	memcpy(id, nom, strlen(nom));
+	mavlink_msg_param_request_read_pack(MON_SYSTEME, MON_COMPOSANT, &msg, (uint8_t)c->systeme, MAV_COMP_ID_AUTOPILOT1,
+	                                    id, -1);
+	return envoyer(c, &msg);
+}
+
+/* Demande un message à l'autopilote (MAV_CMD_REQUEST_MESSAGE : une LECTURE). */
+static int
+demander(canal_t *c, uint32_t msgid)
+{
+	mavlink_message_t msg;
+	if (c->systeme <= 0)
+		return -1;   /* jamais la diffusion (système 0) */
+	mavlink_msg_command_long_pack(MON_SYSTEME, MON_COMPOSANT, &msg, (uint8_t)c->systeme, MAV_COMP_ID_AUTOPILOT1,
+	                              MAV_CMD_REQUEST_MESSAGE, 0, (float)msgid, 0, 0, 0, 0, 0, 0);
+	return envoyer(c, &msg);
+}
+
+/* L'ordre de pilotage, après l'écoute. @debut : heure (marque_heure) du
+ * second appui. Rend 0 (accepté par le drone), 1 sinon (raison dite). */
+static int32_t
+en_degres_e7(double degres)
+{
+	return (int32_t)lround(degres * 1e7);
+}
+
+static int
+piloter(canal_t *c, pilote_t quoi, int i_mode, const pilotage_t *pl, const point_vise_t *pv, long debut, long fin_ms,
+        const char *base)
+{
+	mavlink_message_t msg;
+	int r;
+	int secours = quoi == P_MODE && modes_figes[i_mode].secours;
+	const char *nom = quoi == P_MODE ? modes_figes[i_mode].libelle : noms_pilote[quoi];
+	long delai_max = quoi == P_DESARMER ? DELAI_DESARMER_MS : DELAI_PILOTAGE_MS;
+	/* Toutes les attentes s'arrêtent à la fin du délai depuis le clic : un
+	 * lien lent fait refuser pour le DÉLAI, pas pour une autre raison. */
+	long budget = mavlink_maintenant_ms() + (delai_max - (marque_heure() - debut));
+	if (budget < fin_ms)
+		fin_ms = budget;
+#define DELAI_DEPASSE() (marque_heure() - debut > delai_max)
+	if (DELAI_DEPASSE()) {
+		conclure("%s : %ld ms depuis le clic (%ld permis), lien trop lent : refusé, rien n'est envoyé ; recommencer",
+		         nom, marque_heure() - debut, delai_max);
+		return 1;
+	}
+
+	if (c->signe) {
+		conclure("le drone signe ses messages (MAVLink 2) : sermo ne signe pas, aucun ordre de pilotage ; "
+		         "rien n'est envoyé");
+		return 1;
+	}
+	if (c->autopilote != MAV_AUTOPILOT_ARDUPILOTMEGA) {
+		conclure("l'autopilote n'est pas ArduPilot (type %d) : pilotage refusé ; rien n'est envoyé", c->autopilote);
+		return 1;
+	}
+	/* La barrière de l'autopilote : elle retient l'appareil après l'envoi. */
+	if (!secours) {
+		/* Lue pendant l'écoute ; ce qui manque est redemandé. */
+		double v[5];
+		for (int i = 0; i < 5; i++) {
+			if (c->barriere_lue & (1u << i)) {
+				v[i] = c->barriere[i];
+				continue;
+			}
+			if (lire_parametre(c, noms_barriere[i], fin_ms, &v[i]) != 0) {
+				if (DELAI_DEPASSE() || mavlink_maintenant_ms() >= budget)
+					conclure("%s : délai depuis le clic dépassé (%ld ms permis) en lisant la barrière, lien trop lent : "
+					         "refusé, rien n'est envoyé", nom, delai_max);
+				else
+					conclure("barrière de l'autopilote illisible (%s) : pilotage refusé ; rien n'est envoyé",
+					         noms_barriere[i]);
+				return 1;
+			}
+		}
+		if (v[0] < 1 || v[1] == 0 || ((long)v[2] & 3) != 3) {
+			conclure("barrière de l'autopilote inactive (FENCE_ENABLE %g, FENCE_ACTION %g, FENCE_TYPE %g) : seuls "
+			         "RTL, SMART_RTL et LAND sont permis ; rien n'est envoyé", v[0], v[1], v[2]);
+			return 1;
+		}
+		if (v[3] > pl->hauteur || v[4] > pl->rayon) {
+			conclure("barrière de l'autopilote plus large que celle de sermo (FENCE_RADIUS %g m pour %g, "
+			         "FENCE_ALT_MAX %g m pour %g) : pilotage refusé ; rien n'est envoyé", v[4], pl->rayon, v[3],
+			         pl->hauteur);
+			return 1;
+		}
+	}
+	/* Désarmer : posé depuis POSE_MS continues ; on regarde la position
+	 * jusqu'à l'avoir vu, dans le délai. */
+	if (quoi == P_DESARMER) {
+		/* Bornée deux fois : par le délai depuis le clic, et par le délai total. */
+		long limite = (budget < fin_ms ? budget : fin_ms) - 150;
+		long prochaine = 0;
+		while (!(c->sol_depuis && mavlink_maintenant_ms() - c->sol_depuis >= POSE_MS)) {
+			long t = mavlink_maintenant_ms();
+			if (t >= limite)
+				break;
+			if (t >= prochaine) {
+				demander(c, MAVLINK_MSG_ID_GLOBAL_POSITION_INT);
+				prochaine = t + 250;
+			}
+			r = recevoir(c, &msg, prochaine < limite ? prochaine : limite);
+			if (r < 0)
+				return 1;
+		}
+		long t = mavlink_maintenant_ms();
+		if (!c->sol_depuis || t - c->sol_depuis < POSE_MS) {
+			conclure("désarmer : le drone n'a pas été vu POSÉ pendant %d s (hauteur < 1 m, vitesse verticale < 0,3 m/s ; "
+			         "ici %.2f m, %.2f m/s) ; rien n'est envoyé", POSE_MS / 1000, c->hauteur_rel, c->vitesse_vert);
+			return 1;
+		}
+	}
+	/* L'état frais, demandé en une fois : battement, état au sol, position. */
+	long t1 = mavlink_maintenant_ms();
+	if (demander(c, MAVLINK_MSG_ID_HEARTBEAT) != 0 || demander(c, MAVLINK_MSG_ID_EXTENDED_SYS_STATE) != 0
+	    || demander(c, MAVLINK_MSG_ID_GLOBAL_POSITION_INT) != 0
+	    || (quoi == P_ALLER && demander(c, MAVLINK_MSG_ID_HOME_POSITION) != 0)) {
+		conclure("%s : envoi impossible : rien n'est envoyé", base);
+		return 1;
+	}
+	long attente = t1 + ETAT_MAX_MS;
+	while ((c->t_battement < t1 || c->t_sol < t1 || c->t_position < t1 || (quoi == P_ALLER && c->t_depart < t1))
+	       && (r = recevoir(c, &msg, attente < fin_ms ? attente : fin_ms)) == 1)
+		;
+	long maintenant = mavlink_maintenant_ms();
+	if (c->autre_station) {
+		conclure("une station sol parle déjà à ce drone (système %d) : un seul émetteur, rien n'est envoyé",
+		         c->autre_station == 256 ? 0 : c->autre_station);
+		return 1;
+	}
+	if (c->signe) {
+		conclure("le drone signe ses messages (MAVLink 2) : aucun ordre de pilotage ; rien n'est envoyé");
+		return 1;
+	}
+	if (DELAI_DEPASSE() || maintenant >= budget) {
+		conclure("%s : délai depuis le clic dépassé (%ld ms permis), lien trop lent : refusé, rien n'est envoyé ; "
+		         "recommencer", nom, delai_max);
+		return 1;
+	}
+	if (!c->t_battement || maintenant - c->t_battement > ETAT_MAX_MS || !c->t_position
+	    || maintenant - c->t_position > ETAT_MAX_MS || !c->t_sol || maintenant - c->t_sol > ETAT_MAX_MS
+	    || (quoi == P_ALLER && (!c->t_depart || maintenant - c->t_depart > ETAT_MAX_MS))) {
+		conclure("état du drone trop ancien ou incomplet (battement, position, au sol : plus de %d ms) : %s refusé ; "
+		         "rien n'est envoyé", ETAT_MAX_MS, nom);
+		return 1;
+	}
+	/* La barrière de sermo : la position actuelle. */
+	if (!secours) {
+		if (!c->position) {
+			conclure("position du drone inconnue (pas encore de position GPS) : la barrière ne peut pas être vérifiée, "
+			         "%s refusé ; rien n'est envoyé", nom);
+			return 1;
+		}
+		double d = mission_distance(pl->lat, pl->lon, c->latitude, c->longitude);
+		if (d > pl->rayon || c->hauteur_rel > pl->hauteur) {
+			conclure("le drone est hors de la barrière de sermo (%.0f m de la référence, %.1f m de haut ; %g m et %g m "
+			         "permis) : seuls RTL, SMART_RTL et LAND passent ; rien n'est envoyé", d, c->hauteur_rel,
+			         pl->rayon, pl->hauteur);
+			return 1;
+		}
+	}
+	int au_sol = c->au_sol == MAV_LANDED_STATE_ON_GROUND;
+	uint16_t commande;
+	float p1 = 0, p2 = 0, p3 = 0, p7 = 0;
+	switch (quoi) {
+	case P_ARMER:
+		if (c->arme || !au_sol || c->mode != 4) {
+			conclure("armer : il faut un drone désarmé, au sol, en GUIDED (ici : %s, %s, mode %d) ; rien n'est envoyé",
+			         c->arme ? "armé" : "désarmé", au_sol ? "au sol" : "pas au sol", c->mode);
+			return 1;
+		}
+		commande = MAV_CMD_COMPONENT_ARM_DISARM;
+		p1 = 1;
+		break;
+	case P_DESARMER:
+		if (!c->arme || !au_sol || !c->sol_depuis || maintenant - c->sol_depuis < POSE_MS) {
+			conclure("désarmer : le drone doit être armé et POSÉ depuis %d s (au sol, hauteur < 1 m, vitesse verticale "
+			         "< 0,3 m/s ; ici : %s, état %d, %.2f m, %.2f m/s, posé depuis %ld ms) ; rien n'est envoyé",
+			         POSE_MS / 1000, c->arme ? "armé" : "désarmé", c->au_sol, c->hauteur_rel, c->vitesse_vert,
+			         c->sol_depuis ? maintenant - c->sol_depuis : 0L);
+			return 1;
+		}
+		commande = MAV_CMD_COMPONENT_ARM_DISARM;
+		break;
+	case P_DECOLLER:
+		if (!c->arme || !au_sol || c->mode != 4) {
+			conclure("décoller : il faut un drone armé, au sol, en GUIDED (ici : %s, %s, mode %d) ; rien n'est envoyé",
+			         c->arme ? "armé" : "désarmé", au_sol ? "au sol" : "pas au sol", c->mode);
+			return 1;
+		}
+		commande = MAV_CMD_NAV_TAKEOFF;
+		p7 = (float)pl->decollage;
+		break;
+	case P_ALLER:
+		if (!c->arme || au_sol || c->mode != 4) {
+			conclure("aller à : il faut un drone armé, en vol, DÉJÀ en GUIDED — l'ordre ne change jamais de mode, et "
+			         "serait ignoré hors GUIDED (ici : %s, %s, mode %d) ; rien n'est envoyé", c->arme ? "armé" : "désarmé",
+			         au_sol ? "au sol" : "en vol", c->mode);
+			return 1;
+		}
+		commande = 0;
+		break;
+	default:
+		if (modes_figes[i_mode].en_vol && (!c->arme || au_sol)) {
+			conclure("le mode %s ne se prend qu'en vol ; rien n'est envoyé", nom);
+			return 1;
+		}
+		commande = MAV_CMD_DO_SET_MODE;
+		p1 = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
+		p2 = (float)modes_figes[i_mode].numero;
+		break;
+	}
+#undef DELAI_DEPASSE
+	/* Le délai depuis le second appui, au tout dernier moment. */
+	long ecoule = marque_heure() - debut;
+	if (ecoule > delai_max) {
+		conclure("%s : %ld ms depuis le clic (%ld permis) : refusé, rien n'est envoyé ; recommencer", nom, ecoule,
+		         delai_max);
+		return 1;
+	}
+	if (quoi == P_ALLER) {
+		int32_t la = en_degres_e7(pv->lat), lo = en_degres_e7(pv->lon);
+		mavlink_msg_set_position_target_global_int_pack(MON_SYSTEME, MON_COMPOSANT, &msg, 0, (uint8_t)c->systeme,
+		                                                MAV_COMP_ID_AUTOPILOT1, MAV_FRAME_GLOBAL_RELATIVE_ALT_INT,
+		                                                TYPE_MASK_POSITION, la, lo, (float)pv->hauteur,
+		                                                0, 0, 0, 0, 0, 0, 0, 0);
+		long t_envoi = mavlink_maintenant_ms();
+		if (envoyer(c, &msg) != 0) {
+			conclure("%s : envoi impossible : rien n'est envoyé", base);
+			return 1;
+		}
+		/* Pas d'accusé pour cet ordre : la preuve est la CIBLE relue. */
+		long prochaine = 0;
+		for (;;) {
+			long t = mavlink_maintenant_ms();
+			if (c->t_cible > t_envoi) {
+				double alt_voulue = c->cible_repere == MAV_FRAME_GLOBAL || c->cible_repere == MAV_FRAME_GLOBAL_INT
+				                    ? c->depart_alt + pv->hauteur : pv->hauteur;
+				if (labs((long)c->cible_lat - la) <= 2 && labs((long)c->cible_lon - lo) <= 2
+				    && fabs(c->cible_alt - alt_voulue) <= 0.3) {
+					conclure("aller à %.7f, %.7f, %g m : cible confirmée par le drone", pv->lat, pv->lon, pv->hauteur);
+					return 0;
+				}
+			}
+			if (t >= fin_ms)
+				break;
+			if (t >= prochaine) {
+				demander(c, MAVLINK_MSG_ID_POSITION_TARGET_GLOBAL_INT);
+				prochaine = t + 300;
+			}
+			r = recevoir(c, &msg, prochaine < fin_ms ? prochaine : fin_ms);
+			if (r < 0)
+				return 1;
+		}
+		if (c->t_cible > t_envoi)
+			conclure("aller à : envoyé, mais la cible relue diffère (%.7f, %.7f, %.2f m, repère %d) ; NON confirmé",
+			         c->cible_lat / 1e7, c->cible_lon / 1e7, c->cible_alt, c->cible_repere);
+		else
+			conclure("aller à : envoyé, mais le drone n'a pas montré sa cible ; NON confirmé, pas de nouvel essai");
+		return 1;
+	}
+	mavlink_msg_command_long_pack(MON_SYSTEME, MON_COMPOSANT, &msg, (uint8_t)c->systeme, MAV_COMP_ID_AUTOPILOT1,
+	                              commande, 0, p1, p2, p3, 0, 0, 0, p7);
+	if (envoyer(c, &msg) != 0) {
+		conclure("%s : envoi impossible : rien n'est envoyé", base);
+		return 1;
+	}
+	while ((r = recevoir(c, &msg, fin_ms)) == 1) {
+		if (!de_l_autopilote(c, &msg) || msg.msgid != MAVLINK_MSG_ID_COMMAND_ACK
+		    || mavlink_msg_command_ack_get_command(&msg) != commande)
+			continue;
+		uint8_t res = mavlink_msg_command_ack_get_result(&msg);
+		if (res == MAV_RESULT_IN_PROGRESS)
+			continue;
+		if (res == MAV_RESULT_ACCEPTED) {
+			conclure("%s : accepté par le drone", nom);
+			return 0;
+		}
+		conclure("%s : %s par le drone", nom, resultat(res));
+		return 1;
+	}
+	if (r == 0)
+		conclure("%s envoyé, mais le drone n'a pas confirmé dans le délai ; pas de nouvel essai", nom);
+	return 1;
 }
 
 /* ---- mission ------------------------------------------------------------- */
@@ -738,8 +1322,10 @@ mission_charger(const char *chemin, mission_t *m)
 int
 main(int argc, char **argv)
 {
-	static const char *const connues[] = { "parametre", "valeur", "ordre", "mission", "systeme", "vitesse", "delai",
-	                                       NULL };
+	static const char *const connues[] = { "parametre", "valeur", "ordre", "mission", "pilote", "mode", "lat", "lon",
+	                                       "hauteur", "systeme",
+	                                       "vitesse", "delai", NULL };
+	long debut = marque_heure();      /* le clic : le programme part à l'appui */
 	static mission_t mission;
 	adresse_t a;
 
@@ -765,6 +1351,15 @@ main(int argc, char **argv)
 	const char *brute = adresse_valeur(&a, "valeur");
 	const char *nom_ordre = adresse_valeur(&a, "ordre");
 	const char *chemin_mission = adresse_valeur(&a, "mission");
+	const char *nom_pilote = adresse_valeur(&a, "pilote");
+	const char *nom_mode = adresse_valeur(&a, "mode");
+	pilote_t pilote = P_AUCUN;
+	int i_mode = -1;
+	point_vise_t point_vise = { NAN, NAN, NAN };
+	pilotage_t pl1, pl2, pl;
+	memset(&pl1, 0, sizeof pl1);
+	memset(&pl2, 0, sizeof pl2);
+	memset(&pl, 0, sizeof pl);
 	ordre_t ordre = O_AUCUN;
 	double rayon = NAN, hauteur = NAN;
 	double valeur = NAN;
@@ -783,11 +1378,58 @@ main(int argc, char **argv)
 		fputs(PROGRAMME ": vitesse vaut 9600, 19200, 38400, 57600, 115200, 230400, 460800 ou 921600\n", stderr);
 		goto fin;
 	}
-	if (!!parametre + !!nom_ordre + !!chemin_mission != 1) {
-		conclure("donner parametre= (avec valeur=), ordre= OU mission= : rien n'est envoyé");
+	if (!!parametre + !!nom_ordre + !!chemin_mission + !!nom_pilote != 1) {
+		conclure("donner parametre= (avec valeur=), ordre=, mission= OU pilote= : rien n'est envoyé");
 		goto fin;
 	}
-	if (chemin_mission) {
+	if (nom_mode && !nom_pilote) {
+		conclure("mode= ne va qu'avec pilote=mode : rien n'est envoyé");
+		goto fin;
+	}
+	if (nom_pilote) {
+		for (int i = P_ARMER; i <= P_ALLER; i++)
+			if (strcmp(nom_pilote, noms_pilote[i]) == 0)
+				pilote = (pilote_t)i;
+		if (pilote == P_AUCUN) {
+			conclure("pilote=%s inconnu (armer, desarmer, decoller, mode, aller) : rien n'est envoyé", nom_pilote);
+			goto fin;
+		}
+		int n_point = !!adresse_valeur(&a, "lat") + !!adresse_valeur(&a, "lon") + !!adresse_valeur(&a, "hauteur");
+		if ((pilote == P_ALLER && n_point != 3) || (pilote != P_ALLER && n_point != 0)) {
+			conclure("pilote=aller demande lat=, lon= et hauteur= (et elles ne vont qu'avec lui) : rien n'est envoyé");
+			goto fin;
+		}
+		if (pilote == P_ALLER) {
+			static const char *const cles_point[] = { "lat", "lon", "hauteur" };
+			double *v[] = { &point_vise.lat, &point_vise.lon, &point_vise.hauteur };
+			for (int i = 0; i < 3; i++)
+				if (nombre_ou_variable(cles_point[i], adresse_valeur(&a, cles_point[i]), v[i]) != 0)
+					goto fin;
+			if (point_vise.lat < -90 || point_vise.lat > 90 || point_vise.lon < -180 || point_vise.lon > 180) {
+				conclure("aller à : position impossible (%g, %g) ; rien n'est envoyé", point_vise.lat, point_vise.lon);
+				goto fin;
+			}
+		}
+		if (brute) {
+			conclure("valeur= ne va qu'avec parametre= : rien n'est envoyé");
+			goto fin;
+		}
+		if ((pilote == P_MODE) != !!nom_mode) {
+			conclure("pilote=mode demande mode= (guided, loiter, poshold, brake, rtl, smart_rtl, land), et lui seul ; "
+			         "rien n'est envoyé");
+			goto fin;
+		}
+		if (nom_mode) {
+			for (int i = 0; i < N_MODES; i++)
+				if (strcmp(nom_mode, modes_figes[i].nom) == 0)
+					i_mode = i;
+			if (i_mode < 0) {
+				conclure("mode %s refusé : seuls guided, loiter, poshold, brake, rtl, smart_rtl et land sont "
+				         "pilotables (jamais stabilize, acro, alt_hold ni auto) ; rien n'est envoyé", nom_mode);
+				goto fin;
+			}
+		}
+	} else if (chemin_mission) {
 		if (brute) {
 			conclure("valeur= ne va qu'avec parametre= : rien n'est envoyé");
 			goto fin;
@@ -858,10 +1500,12 @@ main(int argc, char **argv)
 	}
 	snprintf(perso, sizeof perso, "%s/.config/sermo/cibles-mavlink", pw->pw_dir);
 	int connu = 0;
-	int p1 = liste_chercher(perso, geteuid(), 1, parametre, valeur, ordre, !!chemin_mission, &rayon, &hauteur, &connu);
+	int p1 = liste_chercher(perso, geteuid(), 1, parametre, valeur, ordre, !!chemin_mission, &rayon, &hauteur, &pl1,
+	                        &connu);
 	if (p1 < 0)
 		goto fin;
-	int p2 = liste_chercher(LISTE_SYSTEME, 0, 0, parametre, valeur, ordre, !!chemin_mission, &rayon, &hauteur, &connu);
+	int p2 = liste_chercher(LISTE_SYSTEME, 0, 0, parametre, valeur, ordre, !!chemin_mission, &rayon, &hauteur, &pl2,
+	                        &connu);
 	if (p2 < 0)
 		goto fin;
 	if (!p1 && !p2) {
@@ -871,6 +1515,9 @@ main(int argc, char **argv)
 		else if (parametre)
 			conclure("le paramètre %s n'est pas dans la liste blanche (%s, %s) : rien n'est envoyé",
 			         parametre, perso, LISTE_SYSTEME);
+		else if (pilote)
+			conclure("le pilotage n'est pas dans la liste blanche (ligne « pilotage lat … lon … rayon … hauteur … "
+			         "decollage … modes … » dans %s ou %s) : rien n'est envoyé", perso, LISTE_SYSTEME);
 		else if (chemin_mission)
 			conclure("les missions ne sont pas dans la liste blanche (ligne « mission rayon R hauteur H » dans %s "
 			         "ou %s) : rien n'est envoyé", perso, LISTE_SYSTEME);
@@ -888,9 +1535,61 @@ main(int argc, char **argv)
 			goto fin;
 		}
 
+	/* Pilotage : les deux lignes réunies (la plus stricte), le mode permis,
+	 * puis le double appui. */
+	if (pilote) {
+		if (pl1.vu && pl2.vu && (pl1.lat != pl2.lat || pl1.lon != pl2.lon)) {
+			conclure("les deux lignes « pilotage » n'ont pas le même point de référence : rien n'est envoyé");
+			goto fin;
+		}
+		pl = pl1.vu ? pl1 : pl2;
+		if (pl1.vu && pl2.vu) {
+			pl.rayon = fmin(pl1.rayon, pl2.rayon);
+			pl.hauteur = fmin(pl1.hauteur, pl2.hauteur);
+			pl.decollage = fmin(pl1.decollage, pl2.decollage);
+			pl.modes = pl1.modes & pl2.modes;
+		}
+		if (i_mode >= 0 && !(pl.modes & (1u << i_mode))) {
+			conclure("le mode %s n'est pas permis par la liste blanche : rien n'est envoyé", modes_figes[i_mode].libelle);
+			goto fin;
+		}
+		char cle[128], dit[256];
+		if (pilote == P_MODE) {
+			snprintf(cle, sizeof cle, "pilote:mode:%d", modes_figes[i_mode].numero);
+			snprintf(dit, sizeof dit, "passer en %s (%d)", modes_figes[i_mode].libelle, modes_figes[i_mode].numero);
+		} else if (pilote == P_ALLER) {
+			double d = mission_distance(pl.lat, pl.lon, point_vise.lat, point_vise.lon);
+			if (d > pl.rayon || point_vise.hauteur < 1 || point_vise.hauteur > pl.hauteur) {
+				conclure("aller à %.7f, %.7f, %g m : hors de la barrière de sermo (%.0f m de la référence pour %g permis ; "
+				         "hauteur de 1 à %g m) ; rien n'est envoyé", point_vise.lat, point_vise.lon, point_vise.hauteur, d,
+				         pl.rayon, pl.hauteur);
+				goto fin;
+			}
+			snprintf(cle, sizeof cle, "pilote:aller:%.7f:%.7f:%.2f", point_vise.lat, point_vise.lon, point_vise.hauteur);
+			snprintf(dit, sizeof dit, "ALLER à %.7f, %.7f, %g m au-dessus du départ (à %.0f m de la référence)",
+			         point_vise.lat, point_vise.lon, point_vise.hauteur, d);
+		} else if (pilote == P_DECOLLER) {
+			snprintf(cle, sizeof cle, "pilote:decoller:%g", pl.decollage);
+			snprintf(dit, sizeof dit, "DÉCOLLER à %g m", pl.decollage);
+		} else {
+			snprintf(cle, sizeof cle, "pilote:%s", noms_pilote[pilote]);
+			snprintf(dit, sizeof dit, "%s", pilote == P_ARMER ? "ARMER les moteurs" : "DÉSARMER les moteurs");
+		}
+		int m = marque_confirmer(base, systeme, cle);
+		if (m < 0) {
+			conclure("pilotage : la confirmation demande $XDG_RUNTIME_DIR (à vous seul) ; rien n'est envoyé");
+			goto fin;
+		}
+		if (m == 0) {
+			conclure("%s (%s) : appuyer encore dans les %d s pour confirmer ; rien n'est envoyé", dit, base,
+			         CONFIRMATION_MS / 1000);
+			goto fin;
+		}
+	}
+
 	/* Coupure des moteurs : deux appuis. */
 	if (ordre == O_TERMINAISON) {
-		int m = marque_confirmer(base, systeme);
+		int m = marque_confirmer(base, systeme, "terminaison");
 		if (m < 0) {
 			conclure("coupure des moteurs : la confirmation demande $XDG_RUNTIME_DIR (à vous seul) ; "
 			         "rien n'est envoyé");
@@ -917,11 +1616,25 @@ main(int argc, char **argv)
 	/* 1. Le premier battement de l'autopilote (son système, et en UDP son
 	 * adresse), une demande de lecture, puis l'écoute : un seul émetteur ; et
 	 * l'état armé, avant de rien envoyer qui écrive. */
-	while (!battu && (r = recevoir(&c, &msg, fin_ms)) == 1)
+	int battement_demande = 0;
+	while (!battu && (r = recevoir(&c, &msg, fin_ms)) == 1) {
 		if (msg.msgid == MAVLINK_MSG_ID_HEARTBEAT && de_l_autopilote(&c, &msg)) {
 			battu = 1;
 			deja_arme = (mavlink_msg_heartbeat_get_base_mode(&msg) & MAV_MODE_FLAG_SAFETY_ARMED) != 0;
+			continue;
 		}
+		/* Pilotage : le délai compte ; un premier message de l'autopilote
+		 * suffit à lui DEMANDER son battement, sans attendre le suivant. */
+		if (pilote && !battement_demande && msg.compid == MAV_COMP_ID_AUTOPILOT1 && msg.sysid != 0
+		    && (systeme == 0 || msg.sysid == systeme)) {
+			long garde = c.systeme;
+			c.systeme = msg.sysid;
+			demander(&c, MAVLINK_MSG_ID_HEARTBEAT);
+			demander(&c, MAVLINK_MSG_ID_GLOBAL_POSITION_INT);
+			c.systeme = garde;
+			battement_demande = 1;
+		}
+	}
 	if (r < 0)
 		goto fin;
 	if (!battu) {
@@ -936,14 +1649,41 @@ main(int argc, char **argv)
 		goto fin;
 	}
 	long ecoute = mavlink_maintenant_ms() + ECOUTE_MS;
-	while ((r = recevoir(&c, &msg, ecoute < fin_ms ? ecoute : fin_ms)) == 1)
-		if (msg.msgid == MAVLINK_MSG_ID_HEARTBEAT && de_l_autopilote(&c, &msg))
+	/* Pilotage : pendant l'écoute, lire la barrière de l'autopilote et suivre
+	 * la position (toutes des LECTURES). */
+	long prochaine = 0;
+	if (pilote && !(pilote == P_MODE && modes_figes[i_mode].secours))
+		for (int i = 0; i < 5; i++)
+			if (lire_parametre_demander(&c, noms_barriere[i]) != 0) {
+				conclure("%s : envoi impossible : rien n'est envoyé", base);
+				goto fin;
+			}
+	for (;;) {
+		long t = mavlink_maintenant_ms();
+		long borne = ecoute < fin_ms ? ecoute : fin_ms;
+		if (t >= borne)
+			break;
+		if (pilote && t >= prochaine) {
+			demander(&c, MAVLINK_MSG_ID_GLOBAL_POSITION_INT);
+			prochaine = t + 250;
+		}
+		r = recevoir(&c, &msg, pilote && prochaine < borne ? prochaine : borne);
+		if (r < 0)
+			goto fin;
+		if (r == 1 && msg.msgid == MAVLINK_MSG_ID_HEARTBEAT && de_l_autopilote(&c, &msg))
 			deja_arme = (mavlink_msg_heartbeat_get_base_mode(&msg) & MAV_MODE_FLAG_SAFETY_ARMED) != 0;
+	}
+	r = 0;
 	if (r < 0)
 		goto fin;
 	if (c.autre_station) {
 		conclure("une station sol parle déjà à ce drone (système %d) : un seul émetteur, rien n'est envoyé",
 		         c.autre_station == 256 ? 0 : c.autre_station);
+		goto fin;
+	}
+
+	if (pilote) {
+		code = piloter(&c, pilote, i_mode, &pl, &point_vise, debut, fin_ms, base);
 		goto fin;
 	}
 

@@ -118,9 +118,16 @@ while time.time() < fin:
     if cmd[0] == "get_property":
         c.sendall(json.dumps({"data": etat.get(cmd[1]), "request_id": 0, "error": "success"}).encode() + b"\n")
     elif cmd[0] == "set_property":
-        etat[cmd[1]] = cmd[2]; c.sendall(b'{"request_id":0,"error":"success"}\n')
+        etat[cmd[1]] = cmd[2]
+        if cmd[1] == "stream-record" and cmd[2]:
+            open(cmd[2], "w").write("FAUX-FLUX\n")
+        c.sendall(b'{"request_id":0,"error":"success"}\n')
+    elif cmd[0] == "screenshot-to-file":
+        open(cmd[1], "w").write("FAUSSE-IMAGE\n"); c.sendall(b'{"request_id":0,"error":"success"}\n')
     elif cmd[0] == "seek":
         etat["time-pos"] = float(cmd[1]); c.sendall(b'{"request_id":0,"error":"success"}\n')
+    elif cmd[0] == "loadfile":
+        c.sendall(b'{"request_id":0,"error":"success"}\n')
     elif cmd[0] == "quit":
         c.sendall(b'{"request_id":0,"error":"success"}\n'); c.close(); sys.exit(0)
     else:
@@ -271,7 +278,11 @@ printf 'camera:s3cret-tres\n' > "$T/id"; chmod 600 "$T/id"; printf 'a:b\n' > "$T
 for f in "$T/id644" "$T/idlien" relatif "$T/nexiste"; do
     cible web "commande=lire&source=https://cam.test/flux&identifiants=$f" >/dev/null 2>&1 && echec "identifiants « $f » acceptés"
 done
-cible web "commande=lire&source=rtsp://cam.test/flux&identifiants=$T/id" >/dev/null 2>&1 && echec "RTSP avec identifiants accepté"
+cible web "commande=lire&source=file://$S&identifiants=$T/id" >/dev/null 2>&1 && echec "identifiants pour un fichier local acceptés"
+for t in TCP udp6 '' 'tcp;x'; do
+    cible web "commande=lire&source=rtsp://cam.test/flux&transport=$t" >/dev/null 2>&1 && echec "transport=« $t » accepté"
+done
+cible web "commande=lire&source=https://cam.test/flux&transport=tcp" >/dev/null 2>&1 && echec "transport= accepté hors RTSP"
 if command -v bwrap >/dev/null; then
     cible web "commande=lire&source=https://cam.test/flux&identifiants=$T/id" >/dev/null || echec "HTTPS avec identifiants refusé"
     attendre '[[ -s "$(L web)/include-lu" ]]' || echec "fichier d'en-tête non lu par mpv"
@@ -280,8 +291,19 @@ if command -v bwrap >/dev/null; then
     for c in /proc/[0-9]*/cmdline; do { tr '\0' ' ' < "$c"; } 2>/dev/null; echo; done | grep -v 'grep\|garde_sermo_media' | grep -q 's3cret' && echec "mot de passe visible dans un processus"
     attendre '[[ ! -e "$(L web)/auth.conf" ]]' || echec "fichier d'en-tête (identifiants) non effacé"
     cible web "commande=arreter" >/dev/null
+    # RTSP à mot de passe : mpv démarre sans source, l'adresse arrive par le socket.
+    printf 'cam ér@:p@ss:w/ ö1\n' > "$T/idr"; chmod 600 "$T/idr"
+    cible ip "commande=lire&source=rtsp://cam.test:554/flux&identifiants=$T/idr&transport=tcp" >/dev/null || echec "RTSP avec identifiants refusé"
+    attendre '[[ -s "$(L ip)/requetes" ]]' || echec "RTSP : aucune requête reçue"
+    grep -qF '"loadfile","rtsp://cam%20%C3%A9r%40:p%40ss%3Aw%2F%20%C3%B61@cam.test:554/flux"' "$(L ip)/requetes" \
+        || echec "RTSP : adresse envoyée : $(cat "$(L ip)/requetes")"
+    python3 -I -c 'import json,sys; a=json.loads(open(sys.argv[1]).readline()); assert "--idle=once" in a and "--rtsp-transport=tcp" in a and "--" not in a and not any("p@ss" in x or "p%40ss" in x or "cam.test" in x for x in a), a' "$(L ip)/appels" \
+        || echec "RTSP : arguments de mpv : $(cat "$(L ip)/appels")"
+    for c in /proc/[0-9]*/cmdline; do { tr '\0' ' ' < "$c"; } 2>/dev/null; echo; done | grep -v 'grep\|garde_sermo_media' | grep 'p%40ss\|p@ss' > "$T/vu-rtsp" && echec "RTSP : mot de passe visible dans un processus : $(cat "$T/vu-rtsp")"
+    [[ -z $(grep -rl -a 'p%40ss' "$(L ip)" --exclude=requetes) ]] || echec "RTSP : mot de passe écrit dans un fichier du lecteur"
+    cible ip "commande=arreter" >/dev/null
 else
-    echo "  note : bwrap absent : identifiants HTTP non joués (réseau refusé sans bac)"
+    echo "  note : bwrap absent : identifiants HTTP et RTSP non joués (réseau refusé sans bac)"
 fi
 
 # ── 7 — socket détourné ─────────────────────────────────────────────────────
@@ -338,6 +360,48 @@ PY2
     [[ $rc == 1 ]] && grep -q 'occupée ou indisponible' "$T/tard" || echec "socket sans image puis échec : annoncé comme lecture (rc=$rc) $(cat "$T/tard")"
     FAKE_MODE=erreur cible cam2 "commande=lire&source=v4l2://$NOEUD" >/dev/null 2>&1
     [[ $(wc -l < "$(L cam2)/appels") == 1 ]] || echec "échec ordinaire de la caméra : relancé quand même"
+    # ── 7d — photo et enregistrement (J3) : chemin exact, jamais écrasé, 600 ──
+    O="$T/sortie"; mkdir -m 700 "$O" "$T/ouvert"; chmod 777 "$T/ouvert"
+    cible fic "commande=lire&source=file://$S" >/dev/null || echec "J3 : lecteur fichier"
+    cible fic "commande=photo&fichier=$O/f.png" >/dev/null 2>&1 && echec "J3 : photo d'un lecteur qui n'est pas une caméra"
+    cible fic "commande=arreter" >/dev/null
+    cible cam "commande=lire&source=v4l2://$NOEUD" >/dev/null || echec "J3 : caméra refusée"
+    cible cam "commande=photo&fichier=$O/a.png" >/dev/null || echec "J3 : photo refusée"
+    [[ $(cat "$O/a.png") == FAUSSE-IMAGE && $(stat -c %a "$O/a.png") == 600 && ! -e "$(L cam)/photo.png" ]] \
+        || echec "J3 : photo : $(ls -la "$O" "$(L cam)")"
+    cible cam "commande=photo&fichier=$O/a.png" >/dev/null 2>&1 && echec "J3 : photo écrasée"
+    for f in "a.png" "$O/../sortie/b.png" "$O//b.png" "$O/./b.png" "$O/b.gif" "$O/.b.png" "$O/b" "$O/b\".png" \
+             "$T/ouvert/b.png" "$T/absent/b.png" "$O/b.mkv"; do
+        cible cam "commande=photo&fichier=$f" >/dev/null 2>&1 && echec "J3 : photo vers « $f » acceptée"
+    done
+    cible cam "commande=photo" >/dev/null 2>&1 && echec "J3 : photo sans fichier= acceptée"
+    [[ $(ls "$O") == a.png ]] || echec "J3 : fichiers en trop : $(ls "$O")"
+    for d in 0 601 abc 1.5 ''; do
+        cible cam "commande=enregistrer&fichier=$O/v.mkv&duree=$d" >/dev/null 2>&1 && echec "J3 : duree=« $d » acceptée"
+    done
+    cible cam "commande=enregistrer&fichier=$O/v.png&duree=2" >/dev/null 2>&1 && echec "J3 : enregistrement en .png accepté"
+    cible cam "commande=couper" >/dev/null 2>&1 && echec "J3 : couper sans enregistrement"
+    cible cam "commande=enregistrer&fichier=$O/v.mkv&duree=1" >/dev/null || echec "J3 : enregistrement refusé"
+    grep -q 'ENREGISTREMENT' "$(L cam)/requetes" || echec "J3 : pas d'indicateur d'enregistrement"
+    cible cam "commande=enregistrer&fichier=$O/w.mkv&duree=5" >/dev/null 2>&1 && echec "J3 : deux enregistrements à la fois"
+    attendre '[[ -s "$O/v.mkv" ]]' || echec "J3 : enregistrement non déposé"
+    attendre '[[ ! -e "$(L cam)/enregistreur" ]]' || echec "J3 : enregistreur toujours là"
+    [[ $(cat "$O/v.mkv") == FAUX-FLUX && $(stat -c %a "$O/v.mkv") == 600 && $(cat "$(L cam)/enregistrement") == fait \
+       && ! -e "$(L cam)/video.mkv" ]] || echec "J3 : enregistrement : $(ls -la "$O" "$(L cam)")"
+    grep -qF '"stream-record",""' "$(L cam)/requetes" || echec "J3 : enregistrement jamais fermé : $(cat "$(L cam)/requetes")"
+    cible cam "commande=enregistrer&fichier=$O/x.mkv&duree=600" >/dev/null || echec "J3 : 2e enregistrement refusé"
+    timeout 0.5 tail -f /dev/null
+    cible cam "commande=couper" >/dev/null || echec "J3 : couper refusé"
+    attendre '[[ -s "$O/x.mkv" ]]' || echec "J3 : couper n'a pas déposé le fichier"
+    cible cam "commande=arreter" >/dev/null
+    cible cam "commande=lire&source=v4l2://$NOEUD&format=yuyv422" >/dev/null || echec "J3 : yuyv422 refusé"
+    cible cam "commande=enregistrer&fichier=$O/y.mkv&duree=2" >/dev/null 2>&1 && echec "J3 : enregistrement en yuyv422 accepté"
+    cible cam "commande=arreter" >/dev/null
+    cible cam "commande=lire&source=file://$S" >/dev/null       # même lecteur, cette fois sur un fichier
+    cible cam "commande=photo&fichier=$O/g.png" >/dev/null 2>&1 && echec "J3 : la marque caméra a survécu au lecteur suivant"
+    cible cam "commande=arreter" >/dev/null
+    rm -f "$(L cam)/appels" "$(L cam)/requetes"
+
     # Caméra incrustée : le titre n'est plus visible, l'indicateur passe dans l'image.
     rm -f "$(L cam)/appels"
     ECRAN=4242 DISPLAY=:99 cible cam "commande=lire&source=v4l2://$NOEUD&dans=\$ECRAN" >/dev/null 2>&1 || echec "caméra incrustée refusée"
@@ -346,7 +410,7 @@ PY2
         || echec "caméra incrustée sans --wid ou sans indicateur dans l'image : $(cat "$(L cam)/appels")"
     cible cam "commande=arreter" >/dev/null
     unset SERMO_MEDIA_V4L_SYSFS
-    camera=" ; caméra (v4l2) : nœud, taille, format, occupée, incrustée"
+    camera=" ; caméra (v4l2) : nœud, taille, format, occupée, incrustée, photo et enregistrement"
 else
     echo "  note : aucun /dev/videoN : section caméra non jouée"
 fi
@@ -374,6 +438,34 @@ for d in ECRAN '$1ECRAN' '$' '$A-B'; do
     cible inc "commande=lire&source=file://$S&dans=$d" >/dev/null 2>&1 && echec "dans=$d accepté"
 done
 [[ ! -e "$(L inc)/appels" ]] || echec "mpv lancé malgré un dans= refusé"
+
+# ── 7e — dans=zone : le VRAI sermo-media-images dans la cage, sans écran ──
+zone=""
+if [[ -x "$AIDE/sermo-media-images" ]] && command -v bwrap >/dev/null; then
+    ffmpeg -hide_banner -loglevel error -f lavfi -i testsrc=size=160x120:rate=30 -t 4 -an "$T/medias/mire.mkv" || exit 2
+    MK=$(readlink -f "$T/medias/mire.mkv")
+    ECRAN=zone WAYLAND_DISPLAY=wayland-9 DISPLAY=:9 cible zone "commande=lire&source=file://$MK&dans=\$ECRAN" >/dev/null 2>"$T/zone.err" \
+        || echec "dans=zone refusé : $(cat "$T/zone.err")"
+    attendre '[[ -s "$(L zone)/images" ]]' || echec "dans=zone : pas de fichier d'images ($(cat "$(L zone)/fin" 2>/dev/null))"
+    lit() { python3 -I -c 'import struct,sys; b=open(sys.argv[1],"rb").read(40); m,v,l,h,p,c,r,s=struct.unpack("<8s6IQ",b); print(m.decode(),v,l,h,p,c,s)' "$(L zone)/images"; }
+    timeout 0.5 tail -f /dev/null; a=$(lit); timeout 0.5 tail -f /dev/null; b=$(lit)
+    read -r m v l h p c s1 <<<"$a"; s2=${b##* }
+    [[ $m == SERMOIMG && $v == 1 && $l == 160 && $h == 120 && $p == 640 && $c -le 1 && $s2 -gt $s1 ]] \
+        || echec "dans=zone : en-tête « $a » puis « $b »"
+    [[ $(stat -c %a "$(L zone)/images") == 600 ]] || echec "dans=zone : fichier d'images pas en 600"
+    tr '\0' ' ' < /proc/$(cat "$(L zone)/mpv")/cmdline > "$T/zone.cmd"
+    grep -qF -- "--images=$(L zone)/images" "$T/zone.cmd" && grep -q 'sermo-media-images --no-config' "$T/zone.cmd" \
+        && ! grep -q 'X11-unix\|wayland-9\|Xauthority' "$T/zone.cmd" && grep -qF -- '--unsetenv WAYLAND_DISPLAY' "$T/zone.cmd" \
+        && grep -qF -- '--unsetenv DISPLAY' "$T/zone.cmd" && grep -qF -- '--tmpfs /run/user' "$T/zone.cmd" \
+        || echec "dans=zone : cage : $(cat "$T/zone.cmd")"
+    D=""; for q in $(pgrep -x sermo-media-ima); do grep -qF "$(L zone)/images" /proc/$q/cmdline 2>/dev/null && D=$q; done
+    [[ -n "$D" ]] && ! tr '\0' '\n' < /proc/$D/environ 2>/dev/null | grep -q '^WAYLAND_DISPLAY=\|^DISPLAY=' || echec "dans=zone : le décodeur voit une variable d'écran"
+    cible zone "commande=arreter" >/dev/null
+    attendre '[[ ! -e "$(L zone)/images" ]]' || echec "dans=zone : images non effacées à l'arrêt"
+    zone=" ; dans=zone : vrai décodeur, sans écran, images 600 effacées à l'arrêt"
+else
+    echo "  note : sermo-media-images (libmpv) ou bwrap absent : dans=zone non joué"
+fi
 
 # ── 8 — vrai mpv (son silencieux, sous xvfb) ────────────────────────────────
 # Le VRAI dossier de session : mpv y trouve le serveur de son (pulse/native).
@@ -421,4 +513,4 @@ X
     attendre '[[ $(etat "$F") == stopped ]]' || echec "vraie fenêtre fermée : mpv toujours là (maître non trouvé ?)"
     suite=" ; vraie fenêtre : clic → playing, fermeture → mpv arrêté"
 fi
-echo "OK : sources/noms/commandes piégés refusés sans mpv, durcissement, bac (réseau refusé sans bwrap), requêtes fixes, états, 4 lecteurs, pas d'orphelin, identifiants hors arguments, socket 600 exigé${camera:-}${vrai:-}${suite:-}"
+echo "OK : sources/noms/commandes piégés refusés sans mpv, durcissement, bac (réseau refusé sans bwrap), requêtes fixes, états, 4 lecteurs, pas d'orphelin, identifiants hors arguments, socket 600 exigé${camera:-}${zone:-}${vrai:-}${suite:-}"

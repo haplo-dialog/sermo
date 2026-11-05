@@ -32,10 +32,15 @@ Trouvé le 2026-09-16 par les bancs réparés (`ci/bancs.sh`), **ouvert** :
       départ de son dernier client et refuse les connexions pendant ce temps ;
       les bancs le lancent désormais avec `-noreset`. Reste à voir les pipelines.
 - [ ] **Faux « syntax error » à l'arrêt, avec `--program`** : efl1 arrêté par
-      SIGTERM (et il sort alors en code 1), qt6 privé de son serveur X,
-      écrivent `Error in line N, near token '<window>': syntax error` — le cœur
-      relance l'analyse d'un texte déjà consommé. Rien avec `--file` ; rien sur
-      gtk3, gtk4, fltk1, sdl3.
+      SIGTERM (et il sort alors en code 1) écrit `Error in line 1, near token
+      '<window>': syntax error` — le cœur relance l'analyse d'un texte déjà
+      consommé. Rien avec `--file` ; rien sur gtk3, gtk4, qt6, fltk1, sdl3, lvgl
+      (rejoué le 2026-11-02 sur master et sur les binaires 3.1.2-2). Le cas qt6
+      « privé de son serveur X » noté en 2.7.1 n'existe plus : qt6 s'arrête en
+      code 134 (abort) sur un message de Qt, sans « syntax error ». Trouvé en
+      route : sdl3 privé de son serveur X sort en **code 0** avec `EXIT="abort"`
+      et un seul message SDL (un script ne voit pas l'échec) ; arrêté par SIGTERM
+      il écrit aussi `EXIT="abort"`. Sa fenêtre fait toujours 800 px de large.
 - [x] **`<notebook>` : l'`<input>` lu au premier passage ne change pas de page
       sur gtk3sermo** (mesuré le 2026-10-13 : `echo 1` à l'ouverture laisse la
       page 0 ; aux `refresh` suivants la page suit). gtk4sermo change bien de
@@ -53,11 +58,26 @@ Trouvé le 2026-09-17 en préparant les paquets Debian, **ouvert** — écarts �
 l'étalon gtk3sermo mesurés (ou lus, quand c'est dit) pendant la réparation de
 `<input>`, laissés hors de la 2.7.1 :
 
+- [ ] **Attributs GTK « libres » que les sept autres ports ignorent** (rendu par
+      `tests/garde_schema.sh`, 2026-11-04) : les exemples du dépôt posent 15
+      attributs@widget que seuls gtk3 et gtk4 appliquent (toute propriété
+      GObject passe par `tag_set_property.c`), et qu'aucun autre port ne lit —
+      sur ces ports, l'attribut est muet, sans avertissement. Par poids :
+      `editable@edit` (25 fichiers), `draw-value@hscale` (22), `column-spacing@grid`
+      et `row-spacing@grid` (9), `editable@entry` (5), `accel@menuitem` (2),
+      `width-chars@entry` (2), et un fichier chacun : `decorated@window`,
+      `digits@levelbar`, `draw-value@vscale`, `icon-name@window`, `rules-hint@tree`,
+      `text@progressbar`, `tooltip-text@eventbox`, `tooltip-text@spinbutton`.
+      À trancher par attribut : le lire sur les autres ports (`editable`,
+      `draw-value`, `*-spacing`, `width-chars` ont un sens partout), ou le dire
+      « gtk seulement » dans le manuel. La garde en tient la liste à jour, elle
+      ne fait pas échouer.
 - [ ] **`auto-refresh`** (surveillance d'un `<input file>`) ne vit que sur gtk3 et
       gtk4 (GFileMonitor de la vraie GLib) : les sept autres ports (qt6, fltk1,
       efl1, sdl3, lvgl, ncurses, html) ne relisent pas le fichier — seuls les
       widgets de gtk3 et gtk4 appellent `widget_file_monitor_try_create()`
-      (relu le 2026-10-11). Non documenté dans les manuels ; deux exemples
+      (relu le 2026-10-11 ; rejoué le 2026-11-02 sur les sept ports graphiques,
+      master et binaires 3.1.2-2 : `E="nouveau"` sur gtk3 et gtk4 seulement). Non documenté dans les manuels ; deux exemples
       l'emploient.
 - [x] **Sélection initiale de `<list>`, `<tree>`, `<table>`** : chez l'étalon, la
       1re rangée ne ressort que si le widget a le focus clavier (1er widget
@@ -76,16 +96,21 @@ l'étalon gtk3sermo mesurés (ou lus, quand c'est dit) pendant la réparation de
 - [ ] **`<edit>` avec `<default>` et `<input>`** : l'étalon garde `<default>` au
       démarrage ; qt6, fltk1 et efl1 gardent `<input>` (sdl3 et ncurses suivent
       l'étalon).
-- [ ] **`<comboboxentry>` exporte toujours ""** sur efl1 (la valeur est rangée
-      ailleurs que là où l'export la cherche) ; le cas 23 passe par hasard. FLTK
-      fusionne deux éléments de même libellé dans `<comboboxtext>`.
+- [ ] **`<comboboxentry>` ignore `<default>`** : `<default>choix</default>` est
+      exporté par gtk3 et qt6 seulement ; gtk4, fltk1, efl1, sdl3 et lvgl
+      exportent "" (mesuré le 2026-11-02 sur master et sur les binaires 3.1.2-2,
+      sans `<default>` les sept exportent "" ; `<comboboxtext>` avec `<default>`
+      est bon partout). La saisie au clavier est prouvée sur gtk3, gtk4, qt6 ;
+      [NON VÉRIFIÉ] sur les quatre autres (le harnais sans écran ne trouve pas
+      leur fenêtre). Le cas 23 passe par hasard. FLTK fusionne deux éléments de
+      même libellé dans `<comboboxtext>`.
 - [ ] **`<input>` brut restant** : `<terminal>` des ports sans GTK (non promis),
       `<pixmap>` d'efl1 (« file:… » passé tel quel), et, lu dans le code de qt6
       [NON VÉRIFIÉ] : `<image>`/`<button>` comparent « file: » en tenant compte de
       la casse alors que le cœur stocke « File: », `<linkbutton>` prend la valeur
-      brute pour adresse. qt6 : `<checkbox>` ne suit pas `refresh:` d'un `<input>`
-      (mesuré) ; `activate:` est suivi depuis les cas 62 à 65 du banc de
-      comportement.
+      brute pour adresse. qt6 : `<checkbox>` suit `refresh:` d'un `<input>` ET
+      `activate:` (rejoué le 2026-11-02 sur master et sur les binaires 3.1.2-2,
+      `CB="true"` sur les sept ports graphiques) — l'écart noté en 2.7.1 est clos.
 - [ ] **Actions des widgets à bascule, ce qui reste** : depuis les cas 62 à 67,
       la case à cocher, le bouton radio, le bouton à bascule et l'interrupteur
       jouent leurs actions sur les neuf ports (« if true »/« if false » compris,

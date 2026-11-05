@@ -57,7 +57,7 @@ Depuis les sources : `ci/construire.sh`, puis `SERMO_SOURCE_DIR=$PWD/sermo-sourc
 - **bwrap** : obligatoire pour une source réseau. Pour un fichier local ou une caméra, il est facultatif : avec
   lui, le réseau est coupé ; sans lui, la source est lue sans cage et seul un message le dit.
 - **mpv s'arrête quand la fenêtre se ferme**, même si sermo est tué.
-- **Identifiants** d'un flux HTTP(S) : `identifiants=/chemin` d'un fichier `chmod 600` (`utilisateur:mot de passe`), jamais dans l'adresse. RTSP à mot de passe : non pris en charge.
+- **Identifiants** d'un flux HTTP(S) : `identifiants=/chemin` d'un fichier `chmod 600` (`utilisateur:mot de passe`), jamais dans l'adresse. RTSP à mot de passe : même fichier ; l'adresse passe à mpv par son socket privé, jamais en argument (depuis la 3.2.0).
 
 ## Limites
 

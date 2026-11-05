@@ -17,6 +17,7 @@ Build-Depends: debhelper-compat (= 14),
                libjson-glib-dev,
                libmodbus-dev,
                libmosquitto-dev,
+               libmpv-dev,
                libncurses-dev,
                libopen62541-1.4-dev,
                libpng-dev,
@@ -41,8 +42,8 @@ Architecture: any
 Depends: ${misc:Depends}
 Description: sermo dialog engine - static core library and headers
  sermo builds native windows from an XML description, so that a shell script
- can show a real graphical interface without any toolkit knowledge. It succeeds
- gtkdialog and keeps its XML language. One hardened core parses the description
+ can show a real graphical interface without any toolkit knowledge. It is a
+ hardened fork of gtkdialog 0.8.3 and keeps its XML language. One hardened core parses the description
  and runs the actions; each backend draws it with one toolkit.
  .
  This package contains the core, libsermocore, as a static library, with its
@@ -57,8 +58,8 @@ Breaks: gtk3sermo (<< 2.0~)
 Replaces: gtk3sermo (<< 2.0~)
 Description: sermo dialog boxes for shell scripts - GTK 3 backend
  sermo builds native windows from an XML description, so that a shell script
- can show a real graphical interface without any toolkit knowledge. It succeeds
- gtkdialog and keeps its XML language. One hardened core parses the description
+ can show a real graphical interface without any toolkit knowledge. It is a
+ hardened fork of gtkdialog 0.8.3 and keeps its XML language. One hardened core parses the description
  and runs the actions; each backend draws it with one toolkit.
  .
  This package provides gtk3sermo, the GTK 3 backend, the reference port of
@@ -72,8 +73,8 @@ Breaks: gtk4sermo (<< 2.0~)
 Replaces: gtk4sermo (<< 2.0~)
 Description: sermo dialog boxes for shell scripts - GTK 4 backend
  sermo builds native windows from an XML description, so that a shell script
- can show a real graphical interface without any toolkit knowledge. It succeeds
- gtkdialog and keeps its XML language. One hardened core parses the description
+ can show a real graphical interface without any toolkit knowledge. It is a
+ hardened fork of gtkdialog 0.8.3 and keeps its XML language. One hardened core parses the description
  and runs the actions; each backend draws it with one toolkit.
  .
  This package provides gtk4sermo, the GTK 4 backend. It also offers the sermo
@@ -87,8 +88,8 @@ Breaks: qt6sermo (<< 2.0~)
 Replaces: qt6sermo (<< 2.0~)
 Description: sermo dialog boxes for shell scripts - Qt 6 backend
  sermo builds native windows from an XML description, so that a shell script
- can show a real graphical interface without any toolkit knowledge. It succeeds
- gtkdialog and keeps its XML language. One hardened core parses the description
+ can show a real graphical interface without any toolkit knowledge. It is a
+ hardened fork of gtkdialog 0.8.3 and keeps its XML language. One hardened core parses the description
  and runs the actions; each backend draws it with one toolkit.
  .
  This package provides qt6sermo, the Qt 6 backend. It also offers the sermo
@@ -100,8 +101,8 @@ Depends: ${misc:Depends}, ${shlibs:Depends}
 Provides: sermo-backend
 Description: sermo dialog boxes for shell scripts - FLTK 1.4 backend
  sermo builds native windows from an XML description, so that a shell script
- can show a real graphical interface without any toolkit knowledge. It succeeds
- gtkdialog and keeps its XML language. One hardened core parses the description
+ can show a real graphical interface without any toolkit knowledge. It is a
+ hardened fork of gtkdialog 0.8.3 and keeps its XML language. One hardened core parses the description
  and runs the actions; each backend draws it with one toolkit.
  .
  This package provides fltk1sermo, the FLTK 1.4 backend. It also offers the
@@ -113,8 +114,8 @@ Depends: ${misc:Depends}, ${shlibs:Depends}
 Provides: sermo-backend
 Description: sermo dialog boxes for shell scripts - EFL (Enlightenment) backend
  sermo builds native windows from an XML description, so that a shell script
- can show a real graphical interface without any toolkit knowledge. It succeeds
- gtkdialog and keeps its XML language. One hardened core parses the description
+ can show a real graphical interface without any toolkit knowledge. It is a
+ hardened fork of gtkdialog 0.8.3 and keeps its XML language. One hardened core parses the description
  and runs the actions; each backend draws it with one toolkit.
  .
  This package provides efl1sermo, the EFL backend (Elementary widgets). It also
@@ -126,8 +127,8 @@ Depends: ${misc:Depends}, ${shlibs:Depends}
 Provides: sermo-backend
 Description: sermo dialog boxes for shell scripts - SDL 3 backend
  sermo builds native windows from an XML description, so that a shell script
- can show a real graphical interface without any toolkit knowledge. It succeeds
- gtkdialog and keeps its XML language. One hardened core parses the description
+ can show a real graphical interface without any toolkit knowledge. It is a
+ hardened fork of gtkdialog 0.8.3 and keeps its XML language. One hardened core parses the description
  and runs the actions; each backend draws it with one toolkit.
  .
  This package provides sdl3sermo, the SDL 3 backend, drawn with Dear ImGui. It
@@ -140,8 +141,8 @@ Provides: sermo-backend
 Conflicts: sermo-backend-lvgl-leger
 Description: sermo dialog boxes for shell scripts - LVGL backend
  sermo builds native windows from an XML description, so that a shell script
- can show a real graphical interface without any toolkit knowledge. It succeeds
- gtkdialog and keeps its XML language. One hardened core parses the description
+ can show a real graphical interface without any toolkit knowledge. It is a
+ hardened fork of gtkdialog 0.8.3 and keeps its XML language. One hardened core parses the description
  and runs the actions; each backend draws it with one toolkit.
  .
  This package provides lvglsermo, the backend for kiosks and embedded screens,
@@ -157,8 +158,8 @@ Conflicts: sermo-backend-lvgl
 Replaces: sermo-backend-lvgl
 Description: sermo dialog boxes for shell scripts - LVGL backend, light build
  sermo builds native windows from an XML description, so that a shell script
- can show a real graphical interface without any toolkit knowledge. It succeeds
- gtkdialog and keeps its XML language. One hardened core parses the description
+ can show a real graphical interface without any toolkit knowledge. It is a
+ hardened fork of gtkdialog 0.8.3 and keeps its XML language. One hardened core parses the description
  and runs the actions; each backend draws it with one toolkit.
  .
  This package provides lvglsermo built without the ThorVG vector engine: about
@@ -172,8 +173,8 @@ Depends: ${misc:Depends}, ${shlibs:Depends}
 Provides: sermo-backend
 Description: sermo dialog boxes for shell scripts - terminal (ncurses) backend
  sermo builds native windows from an XML description, so that a shell script
- can show a real graphical interface without any toolkit knowledge. It succeeds
- gtkdialog and keeps its XML language. One hardened core parses the description
+ can show a real graphical interface without any toolkit knowledge. It is a
+ hardened fork of gtkdialog 0.8.3 and keeps its XML language. One hardened core parses the description
  and runs the actions; each backend draws it with one toolkit.
  .
  This package provides ncursessermo, the terminal backend, for machines without
@@ -185,8 +186,8 @@ Depends: ${misc:Depends}, ${shlibs:Depends}
 Provides: sermo-backend
 Description: sermo dialog boxes for shell scripts - static HTML export backend
  sermo builds native windows from an XML description, so that a shell script
- can show a real graphical interface without any toolkit knowledge. It succeeds
- gtkdialog and keeps its XML language. One hardened core parses the description
+ can show a real graphical interface without any toolkit knowledge. It is a
+ hardened fork of gtkdialog 0.8.3 and keeps its XML language. One hardened core parses the description
  and runs the actions; each backend draws it with one toolkit.
  .
  This package provides htmlsermo, which writes the dialog as one standalone
@@ -224,8 +225,8 @@ Breaks: gtksermo (<< 2.0~)
 Replaces: gtk3dialog, gtkdialog, gtksermo (<< 2.0~), haplo-dialog
 Description: sermo dialog boxes for shell scripts - gtkdialog command
  sermo builds native windows from an XML description, so that a shell script
- can show a real graphical interface without any toolkit knowledge. It succeeds
- gtkdialog and keeps its XML language. One hardened core parses the description
+ can show a real graphical interface without any toolkit knowledge. It is a
+ hardened fork of gtkdialog 0.8.3 and keeps its XML language. One hardened core parses the description
  and runs the actions; each backend draws it with one toolkit.
  .
  This package makes /usr/bin/gtkdialog a link to gtk3sermo, so that scripts
@@ -359,6 +360,12 @@ Description: sermo dialog boxes for shell scripts - drone ground settings and sa
  seconds. A waypoint mission (Mission Planner or QGroundControl file) can be
  sent to a disarmed drone, bounded in distance and height by the list; it is
  read back from the drone before success is reported, and never started.
+ On ArduPilot Copter, a "pilotage" line also allows piloting: arm, take off to
+ a fixed height, change to an allowed mode (never STABILIZE, ACRO, ALT_HOLD or
+ AUTO), disarm once landed; each order needs two presses, sermo's own fence
+ and the autopilot's fence, a fresh drone state and a short delay since the
+ click. The remote pilot remains responsible for the flight; sermo is not a
+ certified ground station.
  Success is reported only on the drone's own confirmation.
  Without this package, sermo can read a drone but never command it.
 
@@ -392,8 +399,11 @@ Description: sermo dialog boxes for shell scripts - sound and video player
  Sources are checked before mpv sees them (file, a camera with v4l2, http,
  https, rtsp and rtsps only; no credentials in the address). Only a fixed set
  of commands reaches the player. Network sources are played in a bubblewrap
- sandbox, and refused without it; a camera window says so while it is on,
- and nothing is recorded. The player stops when the dialog closes.
+ sandbox, and refused without it; a camera says so while it is on. A photo or
+ a recording is a separate command, written only to the exact path given,
+ never overwriting a file. The picture can also show inside the dialog
+ (gtk3, qt6; under Wayland through sermo-media-images, libmpv, which renders
+ without any access to the screen). The player stops when the dialog closes.
 
 Package: sermoia-mcp
 Architecture: any

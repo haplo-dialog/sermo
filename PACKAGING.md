@@ -32,7 +32,7 @@ testing vierge.
 | `sermo-source-mqtt` | programme d'aide de `<input mqtt>` (`/usr/libexec/sermo`), lecture seule (domotique) ; identifiants dans un fichier en 600 | libmosquitto |
 | `sermo-source-mavlink` | programme d'aide de `<input mavlink>` (`/usr/libexec/sermo`) : télémétrie d'un drone, lecture seule, rien n'est émis sur le lien | en-têtes MAVLink embarqués |
 | `sermo-cible-mqtt` | programme d'**écriture** de `<action mqtt>` (`/usr/libexec/sermo`) : un clic publie une valeur, si la liste blanche (`~/.config/sermo/cibles-mqtt`, `/etc/sermo/cibles-mqtt`) le permet | libmosquitto |
-| `sermo-cible-mavlink` | programme d'**écriture** de `<action mavlink>` (`/usr/libexec/sermo`) : un clic règle un paramètre d'un drone désarmé, lui envoie une mission de points de passage ou donne un ordre de sécurité, si la liste blanche (`~/.config/sermo/cibles-mavlink`, `/etc/sermo/cibles-mavlink`) le permet | en-têtes MAVLink embarqués |
+| `sermo-cible-mavlink` | programme d'**écriture** de `<action mavlink>` (`/usr/libexec/sermo`) : un clic règle un paramètre d'un drone désarmé, lui envoie une mission de points de passage, donne un ordre de sécurité ou le pilote (ArduPilot : armer, décoller, modes), si la liste blanche (`~/.config/sermo/cibles-mavlink`, `/etc/sermo/cibles-mavlink`) le permet | en-têtes MAVLink embarqués |
 | `sermo-source-media` | programme d'aide de `<input media>` (`/usr/libexec/sermo`) : l'état d'un lecteur son ou vidéo (arrêté, en lecture, en pause, erreur ; position et durée sur demande), lecture seule | recommande `sermo-cible-media` |
 | `sermo-cible-media` | programme de **commande** de `<action media>` (`/usr/libexec/sermo`) : un clic lit un son ou une vidéo avec mpv, le met en pause, le déplace, règle le volume ou l'arrête ; une source réseau n'est lue que dans une cage bubblewrap | `mpv` ; recommande `bubblewrap` |
 
@@ -142,7 +142,7 @@ La 1.x était livrée sous les noms `gtk3sermo`, `gtk4sermo`, `qt6sermo` et
 actuels (3.1.0) voulus depuis leurs fichiers retire les paquets 1.x qu'ils remplacent :
 
 ```sh
-sudo apt install ./sermo-backend-gtk3_3.1.2-2_amd64.deb ./sermo-gtkdialog_3.1.2-2_all.deb
+sudo apt install ./sermo-backend-gtk3_3.2.0-1_amd64.deb ./sermo-gtkdialog_3.2.0-1_all.deb
 ```
 
 Éprouvé le 2026-09-17 dans un conteneur Debian testing vierge, sans réseau, depuis
@@ -238,9 +238,9 @@ détaillée dans [LICENCES.md](LICENCES.md).
 ## Installer et désinstaller
 
 ```sh
-sudo apt install ./sermo-backend-gtk3_3.1.2-2_amd64.deb      # GTK 3
-sudo apt install ./sermo-gtkdialog_3.1.2-2_all.deb           # + la commande gtkdialog
-sudo apt install ./sermo-core-dev_3.1.2-2_amd64.deb          # pour compiler un backend
+sudo apt install ./sermo-backend-gtk3_3.2.0-1_amd64.deb      # GTK 3
+sudo apt install ./sermo-gtkdialog_3.2.0-1_all.deb           # + la commande gtkdialog
+sudo apt install ./sermo-core-dev_3.2.0-1_amd64.deb          # pour compiler un backend
 
 sudo apt purge sermo-gtkdialog sermo-backend-gtk3            # tout retirer
 ```

@@ -102,7 +102,7 @@ sortie.append(bloc(['contract/*'], [CAGE], 'Expat',
 MAV = 'sermo-source/tiers/mavlink/'
 sortie.append(bloc([MAV + '*'], ['les auteurs de MAVLink (https://mavlink.io)'], 'LGPL-3 with MAVLink exception',
     ['En-têtes C engendrés par le générateur MAVLink (c_library_v2, commit',
-     '8c63a49fe35aead7f9ef14031381c5e076ff743a ; voir sermo-source/tiers/mavlink/LISEZMOI).',
+     'a2d0ecf011a4aaa7840480e43f4e38d8c9e79d29 ; voir sermo-source/tiers/mavlink/LISEZMOI).',
      'Sous forme source, ils relèvent de la licence du générateur, LGPL-3 ; intégrés',
      'à un binaire (sermo-source-mavlink, sermo-cible-mavlink), ils sont sous licence',
      "MIT par l'exception écrite (COPYING.generateur, copié dans le même dossier)."]))

@@ -15,7 +15,8 @@ The `sermo-doc` package installs part of these folders under `/usr/share/doc/ser
   machine);
 - the fifteen examples of 3.1.0 (`approbation/`, `bluetooth-scan/`, `bus-can/`, `camera-apercu/`,
   `certificat-tls/`, `dns-testeur/`, `domotique-mqtt/`, `gnss-moniteur/`, `heure-ntp/`, `journal-direct/`,
-  `lecteur-media/`, `liaison-serie/`, `reseau-testeur/`, `usb-moniteur/`, `wifi-scan/`), all their files.
+  `lecteur-media/`, `liaison-serie/`, `reseau-testeur/`, `usb-moniteur/`, `wifi-scan/`), and the one of
+  3.2.0 (`camera-capture/`), all their files.
 
 The other folders are in the sources only.
 
@@ -122,6 +123,7 @@ Three complete applications, written by Thunor for gtkdialog (GPL-2.0 or later).
 - `bluetooth-scan/` — Bluetooth devices in range, read-only ([README](bluetooth-scan/README.md) (French only)).
 - `bus-can/` — listen to a CAN bus, and send a frame only after confirmation ([README](bus-can/README.md) (French only)).
 - `camera-apercu/` — see a camera on a click, recording nothing ([README](camera-apercu/README.md) (French only)).
+- `camera-capture/` — the camera inside the window, photo and video after a confirmation that shows the file ([README](camera-capture/README.md) (French only)).
 - `certificat-tls/` — a server's TLS certificate: chain, name, days left ([README](certificat-tls/README.md) (French only)).
 - `dns-testeur/` — resolve a name and compare resolvers ([README](dns-testeur/README.md) (French only)).
 - `gnss-moniteur/` — the state of a GNSS/GPS receiver, with a demo mode ([README](gnss-moniteur/README.md) (French only)).

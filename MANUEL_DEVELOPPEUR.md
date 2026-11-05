@@ -102,8 +102,10 @@ compilé sans le shim),
 
 ## 3. La frontière cœur ↔ backend
 
-Le contrat est déclaré dans `sermo_backend.h` (installé avec la lib). Le cœur
-**appelle**, le backend **fournit** :
+`sermo_backend.h` (installé avec la lib) ne déclare plus que
+`sermo_backend_toolkit_init` ; le contrat lui-même — les fonctions `sermo_be_*` et
+leurs types opaques — est dans `contract/sermo-contract.h`. Le cœur **appelle**,
+le backend **fournit** :
 
 - **`sermo_backend_toolkit_init(int *argc, char ***argv, int print_ir)`** — le
   backend initialise son toolkit (`gtk_init`, `QApplication`, `SDL_Init`…), sans
@@ -118,7 +120,7 @@ Le contrat est déclaré dans `sermo_backend.h` (installé avec la lib). Le cœu
   historique `qt6_*` → `sermo_be_*` est fait).
 - **Identité du port** (facultative) : `sermo_port_name` et
   `sermo_port_details`, deux symboles **faibles** déclarés par le cœur. Sans
-  eux, `--version` imprime le nom du cœur — et les sept ports s'annonçaient
+  eux, `--version` imprime le nom du cœur — et tous les ports s'annonçaient
   « sermocore ». Le plus simple est de compiler `contract/sermo_port_id.c` dans
   le port, en lui passant `SERMO_PORT_NAME` et `SERMO_PORT_VERSION` (les
   `CMakeLists.txt` le font déjà). ⚠️ La ligne de `--version` a une forme figée :
@@ -225,7 +227,12 @@ mqtt|mavlink>` au clic seul, `--do`, `SERMO_SHELL`, la limite de widgets,
 `examples/` (le mot de passe masqué pour ncurses ; ni clic ni exemples pour html,
 qui n'ouvre pas de fenêtre), le comportement sur tous les ports construits,
 les deux bancs de `sermoman-mcp`, les scripts métier et celui de
-`sermoia-mcp`. La CI (`.gitlab-ci.yml`, et son jumeau
+`sermoia-mcp`. En fin de passe, `ci/bilan-json.sh` lit les journaux et pose les
+chiffres de chaque banc, port par port, dans `_journaux/bilan.json` (verdicts
+dans `_journaux/bancs/verdicts.tsv`) et sur une ligne `BILAN-JSON:` de la
+trace ; `ci/bilan-md.sh` en réécrit le tableau « Par backend » de
+[BILAN_SANTE.md](BILAN_SANTE.md), et le site en tire « Ce que les bancs
+vérifient » : un chiffre n'a qu'une source. La CI (`.gitlab-ci.yml`, et son jumeau
 `.github/workflows/bancs.yml`) n'appelle, pour construire et éprouver, que ces
 deux scripts, dans une Debian testing munie de `ci/dependances.txt` (le reste
 de la recette installe les dépendances et la locale française) : ce qu'elle

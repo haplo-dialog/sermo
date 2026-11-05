@@ -141,7 +141,12 @@ EOF
 cat > "$TMP/installer.sh" <<'EOF'
 . /scripts/apt.sh
 cd /paquets
-debs=$(ls ./*_"$VERSION"_*.deb | grep -v -- -dbgsym_)
+# sermo-backend-lvgl-leger remplace sermo-backend-lvgl (Conflicts/Replaces, depuis
+# 18f6e14) : les deux ne s'installent pas ensemble. Tout le reste d'un coup ; le
+# léger à part, après, en remplaçant le lvgl complet (vu le 2026-11-04 : apt
+# refusait les 27 d'un bloc, « two conflicting assignments »).
+debs=$(ls ./*_"$VERSION"_*.deb | grep -v -- -dbgsym_ | grep -v -- lvgl-leger_)
+leger=$(ls ./sermo-backend-lvgl-leger_"$VERSION"_*.deb 2>/dev/null | head -1)
 amorcer install $debs
 apt-get install -y -q $debs
 echo "· installés :"
@@ -181,6 +186,12 @@ if ! MAIN_DIALOG="$dialogue" SERMO_NCURSES_BATCH=1 timeout 20 ncursessermo --pro
     echo "ÉCHEC : le dialogue en terminal n'a pas exporté E=\"paquet\""; exit 1
 fi
 echo "· dialogue en terminal : E=\"paquet\" exporté"
+if [ -n "$leger" ]; then
+    apt-get install -y -q "$leger"
+    dpkg-query -W -f '${Package}\n' | grep -qx sermo-backend-lvgl && { echo "ÉCHEC : sermo-backend-lvgl survit à l'installation du léger"; exit 1; }
+    v=$(SERMO_LVGL_BATCH=1 timeout 20 /usr/bin/lvglsermo --version 2>/dev/null | head -1)
+    case "$v" in *"$AMONT"*) echo "· lvgl léger installé à la place du complet : $v" ;; *) echo "ÉCHEC : lvglsermo (léger) --version rend « $v »"; exit 1 ;; esac
+fi
 apt-get purge -y -q $(dpkg-query -W -f '${Package}\n' | grep -E '^(sermo-|gtk3sermo$|gtk4sermo$|qt6sermo$|gtksermo$)')
 # Les formes de noms que posent les paquets, et elles seules : « *sermo* »
 # attrapait usermod. (Un -regex à alternatives manquait des noms sous find :

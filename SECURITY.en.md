@@ -222,9 +222,17 @@ that starts a **helper program**:
   acknowledgement. One attempt, never repeated.
 - **No MAVLink signing**: nothing authenticates the messages, and another
   device on the same link can talk to the drone.
-- **No piloting**: arming, taking off, changing mode or steering the drone is
-  not in this version (planned for later), apart from the safety return to
-  launch and landing (`rtl`, `land`, above).
+- **Piloting, only if the allow list permits it** (3.2.0, ArduPilot Copter):
+  a `pilotage lat … lon … rayon … hauteur … decollage … modes …` line opens
+  `pilote=armer|desarmer|decoller`, `pilote=mode&mode=…` (GUIDED, LOITER,
+  POSHOLD, BRAKE, RTL, SMART_RTL, LAND; never STABILIZE, ACRO, ALT_HOLD, AUTO)
+  and `pilote=aller&lat=…&lon=…&hauteur=…` (in GUIDED). Every order needs
+  **two presses**, leaves less than 2.5 s after the click (3.5 s to disarm),
+  requires the autopilot's fence to be active and no wider than the list's,
+  the drone inside it, and a state read less than 0.5 s ago; arming and
+  taking off happen on the ground only, never forced. Refused if another
+  station, another autopilot or signed messages are seen. The remote pilot
+  remains responsible for the flight: sermo is not a certified ground station.
 
 ### Sound and video (`sermo-cible-media`, `sermo-source-media`)
 
@@ -239,8 +247,22 @@ that starts a **helper program**:
   (`…@`). `edl://`, `av://`, `concat:`… are refused.
 - **HTTP(S) credentials**: `identifiants=` names a file of yours, in mode
   exactly `600`. The program writes the header into another `600` file, passed
-  to mpv by `--include=`, then deleted. RTSP with a password: refused (mpv
-  would only read it from the address, so as an argument).
+  to mpv by `--include=`, then deleted.
+- **RTSP(S) credentials** (3.2.0): the same file. mpv starts with
+  `--idle=once`, without a source; the address `rtsp://u:p@…` (user and
+  password percent-encoded) exists only in memory, goes out by `loadfile` on the
+  `600` socket, then is wiped (`explicit_bzero`). Measured: 0 occurrence in the
+  arguments and environment of bwrap and mpv, nor in the player's files.
+  Limit: mpv keeps the address in memory, and its `path` property returns it to
+  whoever talks to the socket (you alone, `600`).
+- **Photo and video** (3.2.0, running camera only): absolute normalised path
+  (no `..`, `.` or `//`), closed extension (`.jpg`, `.png`; `.mkv`), folder of
+  yours not writable by group or others, file created by `O_EXCL` in `600`
+  (never overwritten, never followed through a link). mpv first writes it into
+  the player's private folder (`700`, in memory), from which it is copied then
+  deleted. Video: 1 to 600 s, "ENREGISTREMENT" in the title and the picture.
+  The confirmation (path and duration shown) is the dialog's job: the helper
+  cannot know it happened (example `camera-capture`).
 - **mpv options**: `--no-config`, `--no-terminal`, `--idle=no`, `--ytdl=no`,
   `--load-scripts=no`, `--load-auto-profiles=no`,
   `--input-default-bindings=no`, `--load-unsafe-playlists=no`,
@@ -283,6 +305,12 @@ that starts a **helper program**:
   compromised mpv could use them. Under X11 this already holds without
   embedding: X11 does not separate the windows of one screen, `--wid` adds no
   access.
+- **Picture in the area (3.2.0, `dans=zone`)**: the decoder is
+  `sermo-media-images` (libmpv, software rendering) inside the same cage,
+  **without any display mount or variable**. The gtk3 area reads its picture
+  file as untrusted data: a regular file of yours in `600`, bounded header (at
+  most 1280x720, stride = width × 4, buffer 0 or 1, file large enough), read
+  with `pread` (never `mmap`). Test `garde_zone_images.sh`: 9 hostile files.
 - **Session sockets: fixed in 3.1.2.** Up to 3.1.1, the D-Bus session bus and
   the other sockets of `/run/user/<uid>` stayed reachable inside the cage
   (measured: `--ro-bind / /` does not prevent `connect()`). Since 3.1.2,
@@ -369,6 +397,10 @@ website would not be replaced everywhere at once. What is signed is the list of
 checksums: the `.deb` files are not signed one by one, and there is no apt
 repository (so no signed repository). Full command:
 [README.en.md](README.en.md#install).
+
+The same key is also in the repository, at the root (`cle-haplo-dialog.asc`,
+from 3.2.0 on): a clone from GitLab or GitHub gives it without going through
+the website. Both files must be identical (`cmp`), with the same fingerprint.
 
 ## Outside Linux: what changes
 

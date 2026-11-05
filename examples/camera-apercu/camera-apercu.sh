@@ -3,7 +3,7 @@
 # Métier   : Support, visioconférence, atelier, surveillance de son propre local
 # Besoin   : voir l'image d'une webcam ou d'une caméra IP, sur un clic, avec un
 #            indicateur « caméra active » — sans rien enregistrer
-# Enrobe   : ffplay (paquet ffmpeg) ; curl pour une caméra HTTP(S) à mot de passe ;
+# Enrobe   : ffplay (paquet ffplay ; ffmpeg avant Debian 7:9) ; curl pour une caméra HTTP(S) à mot de passe ;
 #            bwrap (facultatif) pour isoler le lecteur
 # Ports    : tout port à fenêtre (l'image s'ouvre dans la fenêtre de ffplay)
 # Terminal : sans affichage graphique, l'aperçu est refusé
@@ -114,6 +114,13 @@ bac() {   # bac <nœud ou vide> → remplit le tableau BAC
 		[ "$CA_BAC" = require ] && { echo "bwrap absent et CA_BAC=require : aperçu refusé" | tee "$CA_DIR/etat"; exit 2; }
 		echo "inactif (bwrap absent)" > "$CA_DIR/bac"; return 0
 	fi
+	# bwrap présent ne veut pas dire utilisable : un conteneur (docker sous seccomp
+	# ou AppArmor) lui refuse ses espaces de noms, et le lecteur mourrait aussitôt
+	# avec « Creating new namespace failed » (vu le 2026-11-03). Essai à blanc d'abord.
+	if ! bwrap --ro-bind / / --dev /dev --tmpfs /tmp --die-with-parent true 2>/dev/null; then
+		[ "$CA_BAC" = require ] && { echo "bwrap refusé ici (espaces de noms) et CA_BAC=require : aperçu refusé" | tee "$CA_DIR/etat"; exit 2; }
+		echo "inactif (bwrap refusé : espaces de noms interdits ici)" > "$CA_DIR/bac"; return 0
+	fi
 	BAC=(bwrap --ro-bind / / --dev /dev --tmpfs /tmp --die-with-parent)
 	[ -n "$1" ] && BAC+=(--dev-bind "$1" "$1" --unshare-net)
 	[ -n "${CA_DIR:-}" ] && BAC+=(--bind "$CA_DIR" "$CA_DIR")
@@ -128,7 +135,7 @@ voir_locale() {
 	dans "$r" "$RESOLUTIONS" || refus "résolution « $r »"
 	dans "$f" "$FORMATS" || refus "format « $f »"
 	[ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ] || { echo "pas d'affichage graphique : aperçu impossible" | tee "$CA_DIR/etat"; exit 2; }
-	command -v ffplay >/dev/null || { echo "ffplay absent : sudo apt install ffmpeg" | tee "$CA_DIR/etat"; exit 2; }
+	command -v ffplay >/dev/null || { echo "ffplay absent : sudo apt install ffplay" | tee "$CA_DIR/etat"; exit 2; }
 	nom=$(cameras | awk -F'|' -v n="$n" '$1 == n { print $2; exit }'); nom=${nom:-$n}
 	bac "$n"
 	lancer "$nom ($n, $r, $f)" "" -- "${BAC[@]}" ffplay -hide_banner -loglevel error -nostats -an \
@@ -139,7 +146,7 @@ voir_ip() {
 	local u=$1 idf=${2:-} ident
 	url_valide "$u" || refus "adresse « $u » (rtsp, rtsps, http, https ; sans identifiants dans l'adresse)"
 	[ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ] || { echo "pas d'affichage graphique : aperçu impossible" | tee "$CA_DIR/etat"; exit 2; }
-	command -v ffplay >/dev/null || { echo "ffplay absent : sudo apt install ffmpeg" | tee "$CA_DIR/etat"; exit 2; }
+	command -v ffplay >/dev/null || { echo "ffplay absent : sudo apt install ffplay" | tee "$CA_DIR/etat"; exit 2; }
 	bac ""
 	if [ -z "$idf" ]; then
 		lancer "${u%%\?*}" "" -- "${BAC[@]}" ffplay -hide_banner -loglevel error -nostats -an \

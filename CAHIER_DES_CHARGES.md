@@ -27,7 +27,7 @@
 
 ## 1. Contexte
 
-sermo (successeur moderne et durci de gtkdialog) existait comme un binaire
+sermo (fork durci de gtkdialog 0.8.3) existait comme un binaire
 **monolithique par toolkit** : chaque port (gtk3, gtk4, qt6, fltk1, efl1, sdl3)
 embarquait sa propre copie du lexer, du parser et de la logique d'exécution.
 Cette duplication rendait coûteuse toute correction du cœur (à répercuter six

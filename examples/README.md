@@ -15,7 +15,8 @@ Le paquet `sermo-doc` installe une partie de ces dossiers sous `/usr/share/doc/s
   le poste) ;
 - les quinze exemples de la 3.1.0 (`approbation/`, `bluetooth-scan/`, `bus-can/`, `camera-apercu/`,
   `certificat-tls/`, `dns-testeur/`, `domotique-mqtt/`, `gnss-moniteur/`, `heure-ntp/`, `journal-direct/`,
-  `lecteur-media/`, `liaison-serie/`, `reseau-testeur/`, `usb-moniteur/`, `wifi-scan/`), tous leurs fichiers.
+  `lecteur-media/`, `liaison-serie/`, `reseau-testeur/`, `usb-moniteur/`, `wifi-scan/`), et celui de la
+  3.2.0 (`camera-capture/`), tous leurs fichiers.
 
 Les autres dossiers sont dans les sources seulement.
 
@@ -122,6 +123,7 @@ Trois applications complètes, écrites par Thunor pour gtkdialog (GPL-2.0 ou pl
 - `bluetooth-scan/` — les appareils Bluetooth à portée, en lecture seule ([README](bluetooth-scan/README.md)).
 - `bus-can/` — écouter un bus CAN, et n'y envoyer une trame qu'avec confirmation ([README](bus-can/README.md)).
 - `camera-apercu/` — voir une caméra sur un clic, sans rien enregistrer ([README](camera-apercu/README.md)).
+- `camera-capture/` — la caméra dans la fenêtre, photo et vidéo après une confirmation qui montre le fichier ([README](camera-capture/README.md)).
 - `certificat-tls/` — le certificat TLS d'un serveur : chaîne, nom, jours restants ([README](certificat-tls/README.md)).
 - `dns-testeur/` — résoudre un nom et comparer des résolveurs ([README](dns-testeur/README.md)).
 - `gnss-moniteur/` — l'état d'un récepteur GNSS/GPS, avec un mode démo ([README](gnss-moniteur/README.md)).

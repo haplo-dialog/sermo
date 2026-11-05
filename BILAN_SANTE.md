@@ -1,5 +1,35 @@
 # Bilan de santé — sermo (édition modulaire)
 
+[//]: # (bilan:debut)
+
+## Dernière passe des bancs — commit `0e6ffa2`, le 2026-11-03
+
+*Bloc écrit par `ci/bilan-md.sh` depuis `_journaux/bilan.json` (`ci/bilan-json.sh`, en fin de
+`ci/bancs.sh`) : ne pas le corriger à la main, rejouer les bancs. Les éditions datées qui
+suivent sont écrites par le mainteneur et gardent leurs chiffres.*
+
+```sh
+bash ci/bancs.sh          # 266 bancs : 266 verts, 0 en échec
+```
+
+### Par backend
+
+| Backend | XML (55) | Comportement (78) | Durcissement (8) | `--glade-xml` | `<terminal>` | Échappement (4) | Clic (17) | Exemples réels |
+|---|:--:|:--:|:--:|:--:|:--:|:--:|:--:|:--:|
+| gtk3 (étalon) | ✅ 55/55 | ✅ 78/78 | ✅ 8/8 | ✅ chargé | ✅ VTE | ✅ 4/4 | ✅ 17/17 | ✅ 74/74 |
+| gtk4 | ✅ 55/55 | ✅ 78/78 | ✅ 8/8 | ✅ chargé | ✅ VTE | ✅ 4/4 | ✅ 17/17 | ✅ 74/74 |
+| qt6 | ✅ 55/55 | ✅ 78/78 | ✅ 8/8 | ✅ refusé | ✅ non promis | ✅ 4/4 | ✅ 17/17 | ✅ 73/73 |
+| fltk1 | ✅ 55/55 | ✅ 78/78 | ✅ 8/8 | ✅ refusé | ✅ non promis | ✅ 4/4 | ✅ 17/17 | ✅ 73/73 |
+| efl1 | ✅ 55/55 | ✅ 78/78 | ✅ 8/8 | ✅ refusé | ✅ non promis | ✅ 4/4 | ✅ 17/17 | ✅ 73/73 |
+| sdl3 | ✅ 55/55 | ✅ 78/78 | ✅ 8/8 | ✅ refusé | ✅ non promis | ✅ 4/4 | ✅ 17/17 | ✅ 73/73 |
+| lvgl | ✅ 55/55 | ✅ 78/78 | ✅ 8/8 | ✅ refusé | ✅ non promis | ✅ 4/4 | ✅ 17/17 | ✅ 73/73 |
+| ncurses | ✅ 55/55 | ✅ 78/78 | ✅ 8/8 | ✅ refusé | ✅ non promis · mot de passe ✅ | — | — | — |
+| html | ✅ 55/55 | ✅ 78/78 | ✅ 8/8 | ✅ refusé | ✅ non promis | ✅ 3/3 | — | — |
+
+Légende : ✅ banc vert · ❌ banc rouge, figé ou qui n'a rien vérifié · — pas de banc pour ce port
+(ncurses est un terminal, html écrit une page) · ? journal présent, verdict non enregistré.
+
+[//]: # (bilan:fin)
 ## 3.1.0 — mesuré le 18/10/2026
 
 Sur l'arbre de construction de la 3.1.0, mêmes commandes :
@@ -232,7 +262,7 @@ gtk4) et l'ancrage Wayland (gtk3), qui n'étaient plus compilés depuis la 2.0.0
 non lu, commande exécutée deux fois, selon le port et le widget) ; la table sans
 `<label>` (plantage de sdl3). Chacun a son banc, rouge sur les binaires de la
 2.7.0. Restent ouverts : un faux « syntax error » à l'arrêt avec `--program`
-(efl1, qt6), CET (ci-dessous), et les écarts à l'étalon relevés en réparant
+(efl1 seul : le cas qt6 n'existe plus, rejoué le 2026-11-02), CET (ci-dessous), et les écarts à l'étalon relevés en réparant
 `<input>` — voir [TODO.md](TODO.md).
 
 ### Ce que « durcissement » mesure ici

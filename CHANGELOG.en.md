@@ -7,6 +7,132 @@ Versioning: see [VERSIONING.en.md](VERSIONING.en.md).
 internal; they are described below to keep track of what changed since 1.x. To
 move from 1.x to 2.x: [MIGRATION.en.md](MIGRATION.en.md).
 
+## [3.2.0] — 2026-11-04
+
+### Changed
+
+- **Bundled MAVLink headers refreshed** (`sermo-source/tiers/mavlink/`):
+  c_library_v2 `8c63a49` (12 Oct) → `a2d0ecf` (28 Oct). Same set of 254
+  files; comment changes (`coordinate_frame` "superseded"),
+  `MAV_AUTOPILOT_BETAFLIGHT=22`, `MAV_SYS_STATUS_SENSOR_MOTOR_OUTPUTS`
+  redefined. Fake-drone tests replayed: all hold. `debian/copyright` follows.
+
+### Fixed
+
+- **Camera example: `ffplay` is a separate package** since ffmpeg 7:9 in
+  Debian testing (seen 2026-11-03): `ci/dependances.txt` installs it (without
+  it the "camera preview" bench returns 77, counted as a failure in CI); the
+  example's messages and README say `apt install ffplay`. And when `bwrap` is
+  installed but denied its namespaces (container under seccomp or AppArmor:
+  "Creating new namespace failed"), `CA_BAC=auto` says so and plays without a
+  sandbox instead of letting the player die; `require` refuses. Measured in
+  three debian:testing containers (plain, no seccomp/AppArmor, privileged):
+  the bench passes as soon as namespaces are allowed — the death of ffplay
+  under bwrap seen on GitLab CI (2026-10-21) is not reproduced; the trace will
+  now keep the reason (below).
+- **`ci/bancs.sh`: a "NON JOUÉ" bench copies its full reason into the trace**
+  ("↳ …" line). Until now it stayed in the log, which the public job page does
+  not show without an account, and the verdict line was cut at 80 characters.
+
+### Added
+
+- **`sermo.schema.json`: the XML language as read from the code**
+  (`outils/schema/generer.py`). Tags and attribute-bearing tags (lexer),
+  aliases, content tags and containers (grammar), stock buttons, sources and
+  targets, action prefixes (`stringman.c`), signals (`signals.c`), and widget
+  by widget the attributes each port reads (`get_tag_attribute`), with the
+  list of ports; gtk3/gtk4 accept any GObject property (`attributs_libres`).
+  Only hand-written part: each widget's family, and a widget without a family
+  fails the generation. `tests/garde_schema.sh` (in `ci/bancs.sh`): identical
+  regeneration, every tag used by the repository's 294 dialogs known, witness.
+  No XSD: measured, 266 of those 294 dialogs are not strict XML
+  (`<button ok>`, `<input file>`). Shipped by `sermo-doc`
+  (`/usr/share/doc/sermo-doc/sermo.schema.json`).
+- **sermoia-mcp: `sermo_schema` serves that file**, embedded at build time
+  (CMake), plus the editorial complement (sources and targets, minimal
+  example, output, rule); the hand-typed constant is gone. Its test checks
+  that the widgets served are those of the file, at the same commit.
+- **"sermo with an AI assistant" tutorial: a real session**, played on
+  2026-11-04 with sermoman-mcp and sermoia-mcp over the MCP protocol (leave
+  request: manual search, schema, examples, XML, `sermo_check`, `sermo_render`
+  with a cut-off calendar then fixed, `sermo_run` with a timeout then the
+  values, `sermo_vote`). Summary in `sermoia-mcp/README.md` (fr/en), full
+  version with pictures on the website (AI assistant page). Only client
+  shown: Claude Code; nothing made up.
+- **Live badges at the top of the READMEs** (fr/en): GitLab pipeline state
+  (native badge) and latest release (shields.io, which reads the GitLab API;
+  GitLab's native "release" badge requires a session, measured: 403 to the
+  sign-in page). Nothing written by hand. No GitHub Actions badge: the mirror
+  has no run at all (API: 0), it would show "no status".
+  `tests/garde_badges.sh` (release check, outside `ci/bancs.sh`) downloads each
+  badge: 200, SVG, and a text that does not confess missing data ("unknown",
+  "not found", "no status"); both READMEs must carry the same addresses;
+  witness: a nonexistent project is seen dead.
+- **One file of figures for the benches: `_journaux/bilan.json`**
+  (`ci/bilan-json.sh`, run at the end of `ci/bancs.sh`). XML cases, behaviour
+  cases, hardening guarantees, clicked widgets, escaping cases, opened
+  examples, `--glade-xml` and `<terminal>` are READ from the logs, port by
+  port, with each bench's verdict (`_journaux/bancs/verdicts.tsv`, new). The
+  same data fits on one `BILAN-JSON: {…}` line at the end of the trace, which
+  the public CI job page keeps. `ci/bilan-md.sh` rewrites from that JSON the
+  "Dernière passe des bancs" block of `BILAN_SANTE.md` ("Par backend" table,
+  between two invisible markers); the website takes the same file for "What
+  the benches check". Before: copied by hand, and wrong (the report still said
+  61 cases and 176 benches when CI ran 78 and 265). Bench:
+  `tests/garde_bilan_json.sh` (fabricated logs, a tampered figure is seen).
+- **`tests/garde_mavlink_amont.sh`**: release check for the frozen copy of
+  `mavlink/c_library_v2` (`sermo-source/tiers/mavlink/`). Downloads the
+  archive of the commit noted in `LISEZMOI`, compares SHA-256 and every file
+  byte for byte, then reads the upstream head and reports the gap (commits,
+  dates, files touched in the bundled dialects). 77 without network; not in
+  `ci/bancs.sh` (upstream moves every week). Follows an external audit.
+- **`<action mavlink>`: piloting (arm, take off, change mode, disarm)**
+  (milestone M3a; ArduPilot Copter). `pilote=armer|desarmer|decoller` or
+  `pilote=mode&mode=guided|loiter|poshold|brake|rtl|smart_rtl|land`; allow-list
+  line `pilotage lat … lon … rayon … hauteur … decollage … modes …` (sermo's
+  fence, fixed takeoff height, allowed modes; STABILIZE, ACRO, ALT_HOLD, AUTO
+  never). Each order: two presses; 2.5 s at most from click to send (3.5 s to
+  disarm), drone state read less than 0.5 s before; autopilot fence active and
+  not wider; drone inside the fence (otherwise RTL/SMART_RTL/LAND only); arm
+  and take off on the ground in GUIDED, never forced; disarm when seen landed
+  for 2 s; refused with another station, another autopilot or signed messages.
+  Landed state and position requested from the drone just before sending.
+  Tests: fake drone 90 cases (including a slow radio by simulated latency),
+  SITL 43 cases in real flight. Example `examples/mavlink/drone-pilotage.sh`.
+- **`<action mavlink>`: going to a point** (milestone M3b; ArduPilot Copter).
+  `pilote=aller&lat=…&lon=…&hauteur=…` (numbers or dialog variables); point
+  and height (1 m at least) inside sermo's fence; drone armed, flying, already
+  in GUIDED (the order never changes mode); `SET_POSITION_TARGET_GLOBAL_INT`
+  with height relative to home, position only; success when the target read
+  back from the drone is the same. Tests: fake drone 107 cases (frame and mask
+  checked), SITL 47 cases (the drone flies to the point).
+- **`<action media>`: photo and video from a camera** (sheet 06, J3):
+  `commande=photo&fichier=/…jpg|png`, `commande=enregistrer&fichier=/….mkv&duree=1..600`
+  (camera in MJPEG, frames copied without re-encoding), `commande=couper`.
+  Running camera only; absolute normalised path, closed extension, folder of the
+  user not writable by group or others, file created by `O_EXCL` in 600.
+  "ENREGISTREMENT" in the title and the picture. The confirmation is the
+  dialog's job: example **`camera-capture`** (`approbation` gate, exact path and
+  duration shown).
+- **RTSP with a password**: `identifiants=` applies to `rtsp(s)://`. mpv starts
+  without a source (`--idle=once`); the address holding the password exists
+  only in memory and goes through the private socket (`loadfile`). Key
+  `transport=tcp|udp`.
+- **Video inside the window under Wayland (gtk3)**: `<drawingarea embed="true"
+  media="NAME">` exports `zone` outside X11; `<action media>` then starts
+  `sermo-media-images` (libmpv, software rendering) inside the cage, without
+  access to the screen; the area reads its picture file (`sermo_images.h`) with
+  `pread`, bounded header. Measured under sway: 30 frames/s, gtk3sermo 14.5 %,
+  decoder 11.4 % of a core (640x480). New build dependency: libmpv-dev.
+- **qt6**: `<drawingarea embed="true">` has its own X11 window and exports it;
+  video is embedded there as with gtk3.
+
+### Tests
+
+- `garde_sermo_media.sh`: photo, recording, couper, path refusals, RTSP through
+  the socket (no secret in arguments nor in a file); `garde_camera_capture.sh`
+  (without opening the camera).
+
 ## [3.1.2] — 2026-10-20
 
 Security fix.

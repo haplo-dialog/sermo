@@ -12,6 +12,9 @@
  *   media://NOM?commande=lire&source=https://hôte/flux&identifiants=/chemin/fichier
  *   media://NOM?commande=lire&source=v4l2:///dev/video0[&taille=640x480][&format=mjpeg]
  *   media://NOM?commande=lire&source=…&dans=$VARIABLE   (image DANS la fenêtre)
+ *   media://NOM?commande=photo&fichier=/chemin/photo.png      (caméra en cours)
+ *   media://NOM?commande=enregistrer&fichier=/chemin/video.mkv&duree=SECONDES
+ *   media://NOM?commande=couper                              (fin d'enregistrement)
  *   media://NOM?commande=pause | reprendre | arreter | muet | son
  *   media://NOM?commande=aller&valeur=SECONDES      (0 à 86400, ou $VARIABLE)
  *   media://NOM?commande=volume&valeur=0..100       (ou $VARIABLE)
@@ -30,11 +33,28 @@
  *                    d'un fichier 600 (en-tête Authorization), JAMAIS en argument.
  *                    RTSP à mot de passe : refusé (mpv ne le lit que dans l'adresse).
  *
+ * DANS LA ZONE (Wayland…) : si la variable vaut « zone » (un <drawingarea
+ * embed="true" media="NOM"> hors X11), le lecteur est sermo-media-images
+ * (libmpv, à côté de ce programme) au lieu de mpv : il rend les images en
+ * logiciel dans DOSSIER/images (sermo_images.h), que la zone lit et peint.
+ * La cage ne monte alors AUCUN accès à l'écran.
+ *
  * DANS LA FENÊTRE : dans=$VARIABLE nomme la variable d'un <drawingarea> ; sermo
  * (gtk3, sous X11) y exporte l'identifiant X11 de la zone, donné à mpv par
  * --wid. Variable absente ou vide (Wayland, autre port, zone pas encore
  * affichée) : REPLI sur une fenêtre séparée, et c'est dit. Caméra incrustée :
  * « CAMÉRA ACTIVE » est écrit dans l'image, le titre n'étant plus visible.
+ *
+ * PHOTO ET ENREGISTREMENT (caméra seulement) : un AUTRE geste que l'aperçu, que le
+ * dialogue fait précéder d'une confirmation montrant le chemin et la durée
+ * (exemple camera-capture). Le fichier est le chemin exact donné : absolu,
+ * extension fermée (.png, .jpg ; .mkv), dans un dossier à vous que ni le
+ * groupe ni les autres ne peuvent écrire ; jamais écrasé (O_EXCL) ; écrit en
+ * 600. mpv l'écrit d'abord dans le dossier privé du lecteur (700, en mémoire
+ * sous XDG_RUNTIME_DIR), puis il est recopié et l'original effacé.
+ * Enregistrement : MJPEG seulement (les paquets sont recopiés tels quels),
+ * 1 à 600 s, « ENREGISTREMENT » écrit dans l'image et dans le titre ; il
+ * s'arrête à la durée, sur commande=couper, ou quand le lecteur s'arrête.
  *
  * BAC À SABLE : bwrap OBLIGATOIRE pour une source réseau ; pour un fichier
  * local, utilisé s'il est là (sinon c'est dit). Système en lecture seule,
@@ -220,8 +240,9 @@ source_valider(const char *s, char *reel, size_t taille)
 static const char b64[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 /* Fichier 600 « utilisateur:mot de passe » → <dossier>/auth.conf (600), en-tête Authorization. */
+/* Lit « utilisateur:mot de passe » (fichier à vous, en 600) dans ligne. */
 static int
-identifiants_preparer(const char *fichier, const char *dossier, char *inclure, size_t taille)
+identifiants_lire(const char *fichier, char *ligne, size_t taille)
 {
 	struct stat st;
 	if (fichier[0] != '/' || lstat(fichier, &st) != 0 || !S_ISREG(st.st_mode)
@@ -229,9 +250,8 @@ identifiants_preparer(const char *fichier, const char *dossier, char *inclure, s
 		fputs(PROGRAMME ": fichier d'identifiants refusé : chemin absolu d'un fichier ordinaire, à vous, en mode 600\n", stderr);
 		return -1;
 	}
-	char ligne[300];
 	FILE *f = fopen(fichier, "r");
-	if (!f || !fgets(ligne, sizeof ligne, f)) {
+	if (!f || !fgets(ligne, (int)taille, f)) {
 		if (f)
 			fclose(f);
 		fputs(PROGRAMME ": fichier d'identifiants illisible ou vide\n", stderr);
@@ -249,6 +269,16 @@ identifiants_preparer(const char *fichier, const char *dossier, char *inclure, s
 			fputs(PROGRAMME ": identifiants : caractère de contrôle refusé\n", stderr);
 			return -1;
 		}
+	return 0;
+}
+
+static int
+identifiants_preparer(const char *fichier, const char *dossier, char *inclure, size_t taille)
+{
+	char ligne[300];
+	if (identifiants_lire(fichier, ligne, sizeof ligne) != 0)
+		return -1;
+	size_t n = strlen(ligne);
 	char code[400];
 	size_t j = 0;
 	for (size_t i = 0; i < n; i += 3) {
@@ -276,6 +306,46 @@ identifiants_preparer(const char *fichier, const char *dossier, char *inclure, s
 }
 
 /* ── Le processus sermo à surveiller ─────────────────────────────────────── */
+
+/* RTSP à mot de passe : l'adresse « rtsp://u:p@hôte/… » n'existe qu'en mémoire,
+ * et part vers mpv par son socket privé (loadfile), JAMAIS en argument.
+ * Utilisateur et mot de passe encodés « pour cent » (seuls A-Z a-z 0-9 - . _ ~
+ * restent tels quels) : rien ne peut sortir de la chaîne JSON. */
+static int
+rtsp_avec_identifiants(const char *source, const char *fichier, char *url, size_t taille)
+{
+	char ligne[300];
+	if (identifiants_lire(fichier, ligne, sizeof ligne) != 0)
+		return -1;
+	const char *reste = strstr(source, "://");
+	for (const char *c = source; *c; c++)
+		if (*c == '"' || *c == '\\' || (unsigned char)*c < 0x20) {
+			explicit_bzero(ligne, sizeof ligne);
+			return -1;
+		}
+	size_t j = 0;
+	int n = snprintf(url, taille, "%.*s://", (int)(reste - source), source);
+	j = (size_t)n;
+	static const char hex[] = "0123456789ABCDEF";
+	for (const char *c = ligne; *c && j + 4 < taille; c++) {
+		unsigned char o = (unsigned char)*c;
+		if (c == strchr(ligne, ':'))
+			url[j++] = ':';
+		else if ((o >= 'A' && o <= 'Z') || (o >= 'a' && o <= 'z') || (o >= '0' && o <= '9')
+		         || o == '-' || o == '.' || o == '_' || o == '~')
+			url[j++] = (char)o;
+		else {
+			url[j++] = '%'; url[j++] = hex[o >> 4]; url[j++] = hex[o & 15];
+		}
+	}
+	explicit_bzero(ligne, sizeof ligne);
+	n = snprintf(url + j, taille - j, "@%s", reste + 3);
+	if (n < 0 || (size_t)n >= taille - j) {
+		explicit_bzero(url, taille);
+		return -1;
+	}
+	return 0;
+}
 
 static pid_t
 parent_de(pid_t pid)
@@ -422,6 +492,8 @@ gardien(const char *dossier, pid_t maitre, char *const argv[], int effacer_auth)
 			unlink(marque);
 			ecrire_fichier(dossier, "fin", demande ? "arret\n"
 			               : (WIFEXITED(statut) && WEXITSTATUS(statut) == 0) ? "fin\n" : "erreur\n");
+			snprintf(marque, sizeof marque, "%s/images", dossier);   /* la zone se vide */
+			unlink(marque);
 			break;
 		}
 		if (kill(maitre, 0) != 0) {
@@ -431,6 +503,9 @@ gardien(const char *dossier, pid_t maitre, char *const argv[], int effacer_auth)
 			kill(m, SIGKILL);
 			waitpid(m, &statut, 0);
 			ecrire_fichier(dossier, "fin", "arret\n");
+			char images[640];
+			snprintf(images, sizeof images, "%s/images", dossier);
+			unlink(images);
 			break;
 		}
 		if (effacer_auth && ++tours == 12) {          /* 3 s : mpv a lu --include */
@@ -450,9 +525,10 @@ gardien(const char *dossier, pid_t maitre, char *const argv[], int effacer_auth)
 
 /* dans=$NOM : l'identifiant X11 exporté par la zone, ou "" (repli). -1 = refus. */
 static int
-dans_resoudre(const char *brute, char *wid, size_t taille)
+dans_resoudre(const char *brute, char *wid, size_t taille, int *zone)
 {
 	wid[0] = '\0';
+	*zone = 0;
 	size_t i = 1;
 	if (brute[0] != '$')
 		i = 0;
@@ -465,6 +541,10 @@ dans_resoudre(const char *brute, char *wid, size_t taille)
 		return -1;
 	}
 	const char *v = getenv(brute + 1), *x = getenv("DISPLAY");
+	if (v && strcmp(v, "zone") == 0) {           /* la zone lit les images elle-même */
+		*zone = 1;
+		return 0;
+	}
 	if (!v || !*v || !x || !*x) {
 		fprintf(stderr, PROGRAMME ": dans=%s : pas de zone X11 (variable vide, Wayland ou autre port) : "
 		        "fenêtre séparée\n", brute);
@@ -516,24 +596,49 @@ lire(const char *nom, const char *dossier, const adresse_t *a)
 		 * (« occupée »…) ne se lit que dans ce journal (dossier privé). */
 		snprintf(journal, sizeof journal, "--log-file=%s/mpv.log", dossier);
 	}
-	if (ident && *ident) {
-		if (reseau != 1 || strncmp(source, "http", 4) != 0) {
-			fputs(PROGRAMME ": identifiants : pour une source HTTP(S) seulement "
-			      "(RTSP : mpv ne les lit que dans l'adresse, donc en argument : non pris en charge)\n", stderr);
+	const char *tr = adresse_valeur(a, "transport");
+	char opt_transport[32] = "";
+	if (tr) {
+		if (strncmp(source, "rtsp", 4) != 0 || (strcmp(tr, "tcp") != 0 && strcmp(tr, "udp") != 0)) {
+			fputs(PROGRAMME ": transport= : tcp ou udp, pour une source RTSP seulement\n", stderr);
 			return 1;
 		}
+		snprintf(opt_transport, sizeof opt_transport, "--rtsp-transport=%s", tr);
 	}
-	char wid[40] = "", osd[160] = "";
+	int rtsp_auth = 0;
+	if (ident && *ident) {
+		if (reseau != 1) {
+			fputs(PROGRAMME ": identifiants : pour une source réseau seulement (http, https, rtsp, rtsps)\n", stderr);
+			return 1;
+		}
+		rtsp_auth = strncmp(source, "rtsp", 4) == 0;
+	}
+	char wid[40] = "", osd[160] = "", images[700] = "", opt_images[720] = "";
+	int zone = 0;
 	const char *dans = adresse_valeur(a, "dans");
-	if (dans && dans_resoudre(dans, wid, sizeof wid) != 0)
+	if (dans && dans_resoudre(dans, wid, sizeof wid, &zone) != 0)
 		return 1;
-	if (*wid && reseau == 2)
+	if (zone) {
+		snprintf(images, sizeof images, "%s/images", dossier);
+		snprintf(opt_images, sizeof opt_images, "--images=%s", images);
+	}
+	if ((*wid || zone) && reseau == 2)
 		snprintf(osd, sizeof osd, "--osd-msg1=CAMÉRA ACTIVE — %s", nom);
 	if (strlen(dossier) + sizeof "/ipc" > 108) {   /* sun_path : 108 octets, NUL compris */
 		fprintf(stderr, PROGRAMME ": chemin du socket trop long (%s/ipc) : XDG_RUNTIME_DIR trop profond\n", dossier);
 		return 1;
 	}
-	if (chercher("mpv", mpv, sizeof mpv) != 0) {
+	if (zone) {
+		/* sermo-media-images est installé à côté de ce programme. */
+		char moi[PATH_MAX];
+		ssize_t l = readlink("/proc/self/exe", moi, sizeof moi - 1);
+		char *barre = l > 0 ? (moi[l] = '\0', strrchr(moi, '/')) : NULL;
+		if (!barre || snprintf(mpv, sizeof mpv, "%.*s/sermo-media-images", (int)(barre - moi), moi) >= (int)sizeof mpv
+		    || access(mpv, X_OK) != 0) {
+			fputs(PROGRAMME ": sermo-media-images absent (construit avec libmpv) : image dans la zone impossible\n", stderr);
+			return 1;
+		}
+	} else if (chercher("mpv", mpv, sizeof mpv) != 0) {
 		fputs(PROGRAMME ": mpv est absent (sudo apt install mpv)\n", stderr);
 		return 1;
 	}
@@ -547,7 +652,19 @@ lire(const char *nom, const char *dossier, const adresse_t *a)
 		return 1;
 	}
 	arreter_existant(dossier);
-	if (ident && *ident && identifiants_preparer(ident, dossier, inclure, sizeof inclure) != 0)
+	{   /* la marque « caméra » d'un lancement précédent ne doit pas survivre */
+		char marque[620];
+		snprintf(marque, sizeof marque, "%s/camera", dossier);
+		unlink(marque);
+		snprintf(marque, sizeof marque, "%s/images", dossier);   /* l'image d'un lecteur précédent */
+		unlink(marque);
+	}
+	static char url_auth[1200];
+	if (rtsp_auth && rtsp_avec_identifiants(source, ident, url_auth, sizeof url_auth) != 0) {
+		fputs(PROGRAMME ": identifiants RTSP refusés (fichier, ou adresse trop longue)\n", stderr);
+		return 1;
+	}
+	if (ident && *ident && !rtsp_auth && identifiants_preparer(ident, dossier, inclure, sizeof inclure) != 0)
 		return 1;
 	char fin[620];
 	snprintf(fin, sizeof fin, "%s/fin", dossier);
@@ -579,6 +696,10 @@ lire(const char *nom, const char *dossier, const adresse_t *a)
 			argv[n++] = "--tmpfs"; argv[n++] = run;
 		}
 		argv[n++] = "--unsetenv"; argv[n++] = "DBUS_SESSION_BUS_ADDRESS";
+		if (zone) {                                   /* aucun écran pour le décodeur */
+			argv[n++] = "--unsetenv"; argv[n++] = "WAYLAND_DISPLAY";
+			argv[n++] = "--unsetenv"; argv[n++] = "DISPLAY";
+		}
 		argv[n++] = "--bind"; argv[n++] = dossier; argv[n++] = dossier;
 		argv[n++] = "--ro-bind"; argv[n++] = mpv; argv[n++] = mpv;
 		if (reseau == 0) { argv[n++] = "--ro-bind"; argv[n++] = reel; argv[n++] = reel; }
@@ -586,13 +707,13 @@ lire(const char *nom, const char *dossier, const adresse_t *a)
 		if (run && run[0] == '/') {
 			snprintf(pulse, sizeof pulse, "%s/pulse", run);
 			if (access(pulse, F_OK) == 0) { argv[n++] = "--ro-bind"; argv[n++] = pulse; argv[n++] = pulse; }
-			if (wl && *wl && !strchr(wl, '/')) {
+			if (!zone && wl && *wl && !strchr(wl, '/')) {
 				snprintf(wayland, sizeof wayland, "%s/%s", run, wl);
 				if (access(wayland, F_OK) == 0) { argv[n++] = "--ro-bind"; argv[n++] = wayland; argv[n++] = wayland; }
 			}
 		}
-		if (access("/tmp/.X11-unix", F_OK) == 0) { argv[n++] = "--ro-bind"; argv[n++] = "/tmp/.X11-unix"; argv[n++] = "/tmp/.X11-unix"; }
-		if (xa && xa[0] == '/' && access(xa, R_OK) == 0) { argv[n++] = "--ro-bind"; argv[n++] = xa; argv[n++] = xa; }
+		if (!zone && access("/tmp/.X11-unix", F_OK) == 0) { argv[n++] = "--ro-bind"; argv[n++] = "/tmp/.X11-unix"; argv[n++] = "/tmp/.X11-unix"; }
+		if (!zone && xa && xa[0] == '/' && access(xa, R_OK) == 0) { argv[n++] = "--ro-bind"; argv[n++] = xa; argv[n++] = xa; }
 		if (reseau != 1) argv[n++] = "--unshare-net";
 		argv[n++] = "--unshare-pid";
 		argv[n++] = "--die-with-parent";
@@ -602,7 +723,7 @@ lire(const char *nom, const char *dossier, const adresse_t *a)
 	argv[n++] = mpv;
 	argv[n++] = "--no-config";
 	argv[n++] = "--no-terminal";
-	argv[n++] = "--idle=no";
+	argv[n++] = rtsp_auth ? "--idle=once" : "--idle=no";   /* RTSP à mot de passe : la source arrive par le socket */
 	argv[n++] = "--ytdl=no";
 	argv[n++] = "--load-scripts=no";
 	argv[n++] = "--load-auto-profiles=no";
@@ -619,6 +740,8 @@ lire(const char *nom, const char *dossier, const adresse_t *a)
 	if (*opt_inclure) argv[n++] = opt_inclure;
 	if (*lavf) argv[n++] = lavf;
 	if (*journal) argv[n++] = journal;
+	if (*opt_transport) argv[n++] = opt_transport;
+	if (zone) argv[n++] = opt_images;
 	if (*wid) {
 		/* Incrusté : mpv ne lit ni souris ni clavier de la fenêtre sermo (sinon,
 		 * mesuré sous xfwm4 : un clic laissé sur le bouton relançait l'action). */
@@ -629,8 +752,10 @@ lire(const char *nom, const char *dossier, const adresse_t *a)
 	if (*osd) {   /* lisible même dans une petite zone : taille fixe, pas proportionnelle */
 		argv[n++] = "--osd-level=1"; argv[n++] = "--osd-scale-by-window=no"; argv[n++] = "--osd-font-size=24"; argv[n++] = osd;
 	}
-	argv[n++] = "--";
-	argv[n++] = reseau == 0 ? reel : reseau == 2 ? av : source;
+	if (!rtsp_auth) {
+		argv[n++] = "--";
+		argv[n++] = reseau == 0 ? reel : reseau == 2 ? av : source;
+	}
 	if (n >= ARGS_MAX) {                         /* ne doit jamais arriver : arrêt net */
 		fputs(PROGRAMME ": trop d'arguments pour mpv (erreur interne)\n", stderr);
 		abort();
@@ -663,6 +788,23 @@ lire(const char *nom, const char *dossier, const adresse_t *a)
 			if (access(chemin_ipc, F_OK) == 0 || access(fin, F_OK) == 0)
 				break;
 			dormir_ms(100);
+		}
+		if (rtsp_auth) {
+			char req[1300], rep[1024];
+			snprintf(req, sizeof req, "{\"command\":[\"loadfile\",\"%s\"]}", url_auth);
+			int ok = 0;
+			for (int i = 0; i < 20 && !ok && access(fin, F_OK) != 0; i++) {
+				ok = media_ipc(dossier, req, rep, sizeof rep) == 0 && strstr(rep, "\"error\":\"success\"");
+				if (!ok)
+					dormir_ms(100);
+			}
+			explicit_bzero(req, sizeof req);
+			explicit_bzero(url_auth, sizeof url_auth);
+			if (!ok) {
+				fprintf(stderr, PROGRAMME ": le lecteur « %s » n'a pas reçu la source RTSP\n", nom);
+				arreter_existant(dossier);
+				return 1;
+			}
 		}
 		/* Caméra : le socket apparaît AVANT l'ouverture du périphérique (mesuré) ;
 		 * on n'annonce la lecture qu'à la première image (video-params), ou
@@ -711,7 +853,253 @@ lire(const char *nom, const char *dossier, const adresse_t *a)
 	}
 	if (!avec_bac)
 		fputs(PROGRAMME ": note : bwrap absent, mpv tourne sans bac à sable\n", stderr);
+	if (reseau == 2)
+		ecrire_fichier(dossier, "camera", fm && strcmp(fm, "yuyv422") == 0 ? "yuyv422\n" : "mjpeg\n");
 	printf("lecture : %s\n", nom);
+	return 0;
+}
+
+/* fichier= : chemin exact, absolu, extension fermée, dossier à vous (ni groupe
+ * ni autres en écriture), fichier inexistant. Écrit le chemin résolu dans sortie. */
+static int
+cible_valider(const char *brute, const char *const extensions[], char *sortie, size_t taille)
+{
+	if (!brute || brute[0] != '/' || strlen(brute) >= PATH_MAX - 1) {
+		fputs(PROGRAMME ": fichier= : chemin absolu attendu\n", stderr);
+		return -1;
+	}
+	for (const char *c = brute; *c; c++)
+		if ((unsigned char)*c < 0x20 || *c == 0x7f || *c == '"' || *c == '\\') {
+			fputs(PROGRAMME ": fichier= : caractère refusé dans le chemin\n", stderr);
+			return -1;
+		}
+	if (strstr(brute, "/../") || strstr(brute, "/./") || strstr(brute, "//")) {
+		fputs(PROGRAMME ": fichier= : chemin non normalisé (.., ., //) refusé\n", stderr);
+		return -1;
+	}
+	const char *base = strrchr(brute, '/') + 1;
+	const char *point = strrchr(base, '.');
+	int ok = 0;
+	for (int i = 0; point && point != base && extensions[i] && !ok; i++)
+		ok = strcmp(point + 1, extensions[i]) == 0;
+	if (!ok || base[0] == '.') {
+		fprintf(stderr, PROGRAMME ": fichier= : nom ou extension refusé (%s%s%s)\n", extensions[0],
+		        extensions[1] ? ", " : "", extensions[1] ? extensions[1] : "");
+		return -1;
+	}
+	char dossier[PATH_MAX], reel[PATH_MAX];
+	size_t l = (size_t)(base - brute) - 1;
+	if (l == 0)
+		l = 1;                                  /* « /photo.png » : la racine */
+	memcpy(dossier, brute, l);
+	dossier[l] = '\0';
+	struct stat st;
+	if (!realpath(dossier, reel) || stat(reel, &st) != 0 || !S_ISDIR(st.st_mode)) {
+		fprintf(stderr, PROGRAMME ": fichier= : le dossier %s n'existe pas\n", dossier);
+		return -1;
+	}
+	if (st.st_uid != geteuid() || (st.st_mode & 022)) {
+		fprintf(stderr, PROGRAMME ": fichier= : %s doit être à vous, sans écriture pour le groupe ni les autres\n", reel);
+		return -1;
+	}
+	int n = snprintf(sortie, taille, "%s/%s", strcmp(reel, "/") == 0 ? "" : reel, base);
+	if (n < 0 || (size_t)n >= taille)
+		return -1;
+	if (lstat(sortie, &st) == 0 || errno != ENOENT) {
+		fprintf(stderr, PROGRAMME ": fichier= : %s existe déjà : jamais écrasé\n", sortie);
+		return -1;
+	}
+	return 0;
+}
+
+/* Recopie src (fichier ordinaire du dossier privé) vers dst, créé (O_EXCL) en 600,
+ * puis efface src. -1 : dst n'existe pas (effacé en cas d'échec). */
+static int
+deposer(const char *src, const char *dst)
+{
+	int s = open(src, O_RDONLY | O_NOFOLLOW | O_CLOEXEC);
+	struct stat st;
+	if (s < 0 || fstat(s, &st) != 0 || !S_ISREG(st.st_mode) || st.st_size == 0) {
+		if (s >= 0) close(s);
+		return -1;
+	}
+	int d = open(dst, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0600);
+	if (d < 0) {
+		close(s);
+		return -1;
+	}
+	int ok = 1;                                  /* créé en 600 par O_EXCL : rien à resserrer */
+	char tampon[65536];
+	ssize_t r;
+	while (ok && (r = read(s, tampon, sizeof tampon)) != 0) {
+		if (r < 0) { if (errno == EINTR) continue; ok = 0; break; }
+		for (ssize_t f = 0; ok && f < r; ) {
+			ssize_t w = write(d, tampon + f, (size_t)(r - f));
+			if (w < 0) { if (errno != EINTR) ok = 0; } else f += w;
+		}
+	}
+	ok = ok && fsync(d) == 0;
+	ok = close(d) == 0 && ok;
+	close(s);
+	if (!ok) {
+		unlink(dst);
+		return -1;
+	}
+	unlink(src);
+	return 0;
+}
+
+/* Le format de la caméra en cours (« mjpeg », « yuyv422 »), ou "" : pas une caméra. */
+static void
+camera_format(const char *dossier, char *format, size_t taille)
+{
+	char chemin[620];
+	format[0] = '\0';
+	snprintf(chemin, sizeof chemin, "%s/camera", dossier);
+	FILE *f = fopen(chemin, "re");
+	if (!f)
+		return;
+	if (fgets(format, (int)taille, f))
+		format[strcspn(format, "\n")] = '\0';
+	fclose(f);
+}
+
+static void
+indicateur(const char *dossier, const char *nom, int enregistre)
+{
+	char r[160], rep[256];
+	snprintf(r, sizeof r, "{\"command\":[\"set_property\",\"title\",\"sermo — CAMÉRA ACTIVE%s — %s\"]}",
+	         enregistre ? " — ENREGISTREMENT" : "", nom);
+	media_ipc(dossier, r, rep, sizeof rep);
+	snprintf(r, sizeof r, "{\"command\":[\"set_property\",\"osd-msg1\",\"CAMÉRA ACTIVE%s — %s\"]}",
+	         enregistre ? " — ENREGISTREMENT" : "", nom);
+	media_ipc(dossier, r, rep, sizeof rep);
+	media_ipc(dossier, "{\"command\":[\"set_property\",\"osd-level\",1]}", rep, sizeof rep);
+}
+
+/* Processus à part : attend la fin (durée, couper, lecteur arrêté), ferme
+ * l'enregistrement et dépose le fichier. Écrit « enregistrement » : fait|échec. */
+static void
+enregistreur(const char *dossier, const char *nom, const char *video, const char *dst, long duree)
+{
+	setsid();
+	int nul = open("/dev/null", O_RDWR | O_CLOEXEC);
+	if (nul >= 0) { dup2(nul, 0); dup2(nul, 1); dup2(nul, 2); }
+	for (int fd = 3; fd < 1024; fd++)
+		close(fd);
+	char t[32], couper[620], rep[256];
+	snprintf(t, sizeof t, "%d\n", (int)getpid());
+	ecrire_fichier(dossier, "enregistreur", t);
+	snprintf(couper, sizeof couper, "%s/couper", dossier);
+	for (long i = 0; i < duree * 10; i++) {
+		if (access(couper, F_OK) == 0 || !media_pid_vivant(dossier, "mpv"))
+			break;
+		dormir_ms(100);
+	}
+	media_ipc(dossier, "{\"command\":[\"set_property\",\"stream-record\",\"\"]}", rep, sizeof rep);
+	if (media_pid_vivant(dossier, "mpv"))
+		indicateur(dossier, nom, 0);
+	dormir_ms(300);                              /* mpv ferme le fichier */
+	ecrire_fichier(dossier, "enregistrement", deposer(video, dst) == 0 ? "fait\n" : "échec\n");
+	unlink(video);
+	unlink(couper);
+	snprintf(couper, sizeof couper, "%s/enregistreur", dossier);
+	unlink(couper);
+	_exit(0);
+}
+
+static int
+capturer(const char *nom, const char *dossier, const char *commande, const adresse_t *a)
+{
+	char format[16], dst[PATH_MAX], src[700], r[900], rep[1024];
+	camera_format(dossier, format, sizeof format);
+	if (!*format) {
+		fprintf(stderr, PROGRAMME ": %s : pour une caméra en cours seulement\n", commande);
+		return 1;
+	}
+	for (const char *c = dossier; *c; c++)
+		if (*c == '"' || *c == '\\')
+			return 1;                              /* jamais dans une requête JSON */
+	if (strcmp(commande, "couper") == 0) {
+		if (!media_pid_vivant(dossier, "enregistreur")) {
+			fputs(PROGRAMME ": aucun enregistrement en cours\n", stderr);
+			return 1;
+		}
+		ecrire_fichier(dossier, "couper", "1\n");
+		puts("enregistrement coupé");
+		return 0;
+	}
+	int photo = strcmp(commande, "photo") == 0;
+	static const char *const ext_photo[] = { "png", "jpg", NULL };
+	static const char *const ext_video[] = { "mkv", NULL };
+	const char *brute = adresse_valeur(a, "fichier");
+	if (!brute || !*brute) {
+		fputs(PROGRAMME ": fichier= manquant (chemin exact du fichier à écrire)\n", stderr);
+		return 1;
+	}
+	if (cible_valider(brute, photo ? ext_photo : ext_video, dst, sizeof dst) != 0)
+		return 1;
+	if (photo) {
+		const char *ext = strrchr(dst, '.');
+		snprintf(src, sizeof src, "%s/photo%s", dossier, ext);
+		unlink(src);
+		snprintf(r, sizeof r, "{\"command\":[\"screenshot-to-file\",\"%s\",\"video\"]}", src);
+		/* Juste après le démarrage, mpv n'a pas encore d'image affichée
+		 * (« Taking screenshot failed », mesuré sur la vraie caméra) : 2 s au plus. */
+		int pris = 0;
+		for (int i = 0; i < 10 && !pris; i++) {
+			pris = media_ipc(dossier, r, rep, sizeof rep) == 0 && strstr(rep, "\"error\":\"success\"");
+			if (!pris)
+				dormir_ms(200);
+		}
+		if (!pris || deposer(src, dst) != 0) {
+			unlink(src);
+			fprintf(stderr, PROGRAMME ": photo non prise (le lecteur « %s » a-t-il une image ?)\n", nom);
+			return 1;
+		}
+		printf("photo : %s\n", dst);
+		return 0;
+	}
+	/* Enregistrement. */
+	if (strcmp(format, "mjpeg") != 0) {
+		fputs(PROGRAMME ": enregistrer : caméra en format=mjpeg seulement (yuyv422 n'est pas enregistrable tel quel)\n", stderr);
+		return 1;
+	}
+	if (media_pid_vivant(dossier, "enregistreur")) {
+		fputs(PROGRAMME ": un enregistrement est déjà en cours (commande=couper)\n", stderr);
+		return 1;
+	}
+	const char *dv = adresse_valeur(a, "duree");
+	char *fin;
+	errno = 0;
+	long duree = dv ? strtol(dv, &fin, 10) : 0;
+	if (!dv || errno || fin == dv || *fin || duree < 1 || duree > 600) {
+		fputs(PROGRAMME ": duree= : un nombre entier de secondes, de 1 à 600\n", stderr);
+		return 1;
+	}
+	char video[700], couper[620];
+	snprintf(video, sizeof video, "%s/video.mkv", dossier);
+	snprintf(couper, sizeof couper, "%s/couper", dossier);
+	unlink(video);
+	unlink(couper);
+	snprintf(r, sizeof r, "{\"command\":[\"set_property\",\"stream-record\",\"%s\"]}", video);
+	if (media_ipc(dossier, r, rep, sizeof rep) != 0 || !strstr(rep, "\"error\":\"success\"")) {
+		fprintf(stderr, PROGRAMME ": le lecteur « %s » n'a pas commencé l'enregistrement\n", nom);
+		return 1;
+	}
+	indicateur(dossier, nom, 1);
+	fflush(stdout);
+	pid_t e = fork();
+	if (e < 0) {
+		media_ipc(dossier, "{\"command\":[\"set_property\",\"stream-record\",\"\"]}", rep, sizeof rep);
+		unlink(video);
+		return 1;
+	}
+	if (e == 0)
+		enregistreur(dossier, nom, video, dst, duree);
+	for (int i = 0; i < 20 && !media_pid_vivant(dossier, "enregistreur"); i++)
+		dormir_ms(50);
+	printf("enregistrement : %s (%ld s au plus)\n", dst, duree);
 	return 0;
 }
 
@@ -735,6 +1123,9 @@ commander(const char *nom, const char *dossier, const char *commande, const adre
 		arreter_existant(dossier);
 		puts("arrêté");
 		return 0;
+	} else if (strcmp(commande, "photo") == 0 || strcmp(commande, "enregistrer") == 0
+	           || strcmp(commande, "couper") == 0) {
+		return capturer(nom, dossier, commande, a);
 	} else if (strcmp(commande, "aller") == 0 || strcmp(commande, "volume") == 0) {
 		const char *brute = adresse_valeur(a, "valeur");
 		if (!brute || !*brute) {
@@ -765,7 +1156,7 @@ commander(const char *nom, const char *dossier, const char *commande, const adre
 			snprintf(requete, sizeof requete, "{\"command\":[\"set_property\",\"volume\",%ld]}", (long)d);
 	} else {
 		fprintf(stderr, PROGRAMME ": commande « %s » inconnue "
-		        "(lire, pause, reprendre, arreter, aller, volume, muet, son)\n", commande);
+		        "(lire, pause, reprendre, arreter, aller, volume, muet, son, photo, enregistrer, couper)\n", commande);
 		return 1;
 	}
 	if (media_ipc(dossier, requete, rep, sizeof rep) != 0 || !strstr(rep, "\"error\":\"success\"")) {
@@ -780,7 +1171,7 @@ main(int argc, char **argv)
 {
 	adresse_t a;
 	char nom[MEDIA_NOM_MAX + 1], dossier[600];
-	static const char *const connues[] = { "commande", "source", "identifiants", "valeur", "taille", "format", "dans", NULL };
+	static const char *const connues[] = { "commande", "source", "identifiants", "valeur", "taille", "format", "dans", "fichier", "duree", "transport", NULL };
 	if (argc != 2) {
 		fputs("usage : " PROGRAMME " 'media://NOM?commande=…'\n", stderr);
 		return 1;
@@ -792,7 +1183,7 @@ main(int argc, char **argv)
 		goto fin;
 	const char *commande = adresse_valeur(&a, "commande");
 	if (!commande || !*commande) {
-		fputs(PROGRAMME ": commande manquante (commande=lire, pause, reprendre, arreter, aller, volume, muet, son)\n", stderr);
+		fputs(PROGRAMME ": commande manquante (commande=lire, pause, reprendre, arreter, aller, volume, muet, son, photo, enregistrer, couper)\n", stderr);
 		goto fin;
 	}
 	int creer = strcmp(commande, "lire") == 0;

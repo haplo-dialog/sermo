@@ -1,10 +1,10 @@
 En-têtes C de MAVLink (protocole v2), dialectes common, standard et minimal.
 
 Origine : https://github.com/mavlink/c_library_v2
-Commit  : 8c63a49fe35aead7f9ef14031381c5e076ff743a (poussé le 2026-10-12)
-Archive : https://codeload.github.com/mavlink/c_library_v2/tar.gz/8c63a49fe35aead7f9ef14031381c5e076ff743a
-SHA-256 : c192167675c9022b6382942c3a31eb1f89452e0bbcd9581105504cf2bff871e9 (1 203 131 octets)
-Copié le 2026-10-17, sans modification : les en-têtes de la racine, common/, standard/, minimal/.
+Commit  : a2d0ecf011a4aaa7840480e43f4e38d8c9e79d29 (poussé le 2026-10-28)
+Archive : https://codeload.github.com/mavlink/c_library_v2/tar.gz/a2d0ecf011a4aaa7840480e43f4e38d8c9e79d29
+SHA-256 : 3fc41a3cd46717b1aa226b958aed0829fbe7b7c9793bc8ffdcca76345a9dfde3 (1 203 815 octets)
+Copié le 2026-11-02 (première copie le 2026-10-17, commit 8c63a49f), sans modification : les en-têtes de la racine, common/, standard/, minimal/.
 Retiré : les autres dialectes et message_definitions/ (non utilisés).
 
 Licence : code engendré par le générateur MAVLink. Une fois intégré à un
@@ -15,3 +15,10 @@ Copyright 1995-2001 Kungliga Tekniska Högskolan, licence BSD à 3 clauses
 (texte en tête du fichier).
 Utilisé seulement par sermo-source-mavlink (lecture) et sermo-cible-mavlink
 (écriture) ; ni le cœur ni les ports n'en dépendent.
+
+Vieillissement : rien ne met cette copie à jour. Avant chaque publication,
+jouer tests/garde_mavlink_amont.sh : il vérifie que les fichiers sont
+identiques à l'archive du commit ci-dessus (SHA-256 et octet à octet) et dit
+de combien de commits l'amont a avancé, avec les fichiers touchés dans les
+dialectes embarqués. Rafraîchir = recopier, puis mettre à jour Commit, Archive,
+SHA-256 et la date ci-dessus.

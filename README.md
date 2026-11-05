@@ -1,5 +1,9 @@
 # sermo
 
+**[English](README.en.md)** · Français
+
+[![Pipeline GitLab](https://gitlab.com/haplo-dialog/sermo/badges/main/pipeline.svg)](https://gitlab.com/haplo-dialog/sermo/-/pipelines) [![Dernière version](https://img.shields.io/gitlab/v/release/haplo-dialog%2Fsermo?label=version)](https://gitlab.com/haplo-dialog/sermo/-/releases)
+
 **sermo** ouvre, depuis un script shell, une boîte de dialogue décrite en **XML**,
 puis écrit sur sa sortie les valeurs saisies (`NOM="Jean"`). Le même script
 tourne sur huit bibliothèques graphiques : GTK 3, GTK 4, Qt 6, FLTK, EFL, SDL 3,
@@ -12,8 +16,6 @@ LVGL, et ncurses dans un terminal. Un neuvième port, html, n'ouvre rien : il
 rendu par les binaires des paquets 2.7.1-1. efl1 garde son thème sombre même
 quand le thème clair est demandé ([TODO.md](TODO.md)). L'image se refait avec
 [`doc/captures/refaire.sh`](doc/captures/refaire.sh).*
-
-[English](README.en.md)
 
 ## D'où vient sermo
 
@@ -30,7 +32,7 @@ par fichier dans [LICENCES.md](LICENCES.md).
 
 ## État du projet
 
-- Version **3.1.2**. sermo est tenu par **un seul mainteneur**, S. Cage. Il n'y a
+- Version **3.2.0**. sermo est tenu par **un seul mainteneur**, S. Cage. Il n'y a
   pas d'équipe derrière : une réponse peut prendre du temps.
 - Une partie du code, de la documentation et des tests a été écrite avec l'aide
   d'une IA (Claude, d'Anthropic), sous la direction du mainteneur. Il l'essaie et
@@ -41,7 +43,7 @@ par fichier dans [LICENCES.md](LICENCES.md).
   clics, ouverture des exemples réels, serveurs MCP) sur les neuf ports au
   passage complet du 2026-10-11, détaillé dans [BILAN_SANTE.md](BILAN_SANTE.md).
   Au passage complet (`ci/bancs.sh`, programmes d'aide compris) :
-  262 bancs, 0 échec (passage final de la 3.1.2, 2026-10-19). Au passage du 2026-10-18, un banc était rouge (des fonctions
+  265 bancs, 0 échec (branche `master`, 2026-10-31, pilotage de drone compris). Au passage du 2026-10-18, un banc était rouge (des fonctions
   interdites dans le code du lecteur son et vidéo) ; il a été corrigé puis
   rejoué vert. Chaque chiffre se rejoue par une commande.
 - **Ce que sermo lit et écrit dehors**, par des programmes d'aide installés à
@@ -59,6 +61,36 @@ par fichier dans [LICENCES.md](LICENCES.md).
 - **Pas de dépôt apt** : les paquets Debian sont joints à chaque publication
   (voir « Installer »).
 
+## Fait avec une IA : comment chaque changement est vérifié
+
+Une partie de sermo est écrite par une IA, sous la direction du
+mainteneur (voir « État du projet »). La confiance ne repose donc pas sur une
+relecture ligne à ligne, mais sur des bancs que chacun peut rejouer :
+
+- **Deux commandes, les mêmes partout** : `bash ci/construire.sh` construit le
+  cœur et les neuf ports, `bash ci/bancs.sh` joue tous les bancs. La CI lance ces
+  deux scripts et rien d'autre ; chez soi, on obtient le même résultat. Dernier
+  passage complet : 265 bancs, 0 échec (2026-10-31).
+- **Un étalon** : gtk3sermo. Le banc de comportement ouvre chaque cas sur les
+  neuf ports et compare les valeurs rendues à celles de gtk3sermo. Quand un port
+  s'écarte, on répare le port ; on ne corrige jamais la valeur attendue.
+- **Sans écran** : gtk3, gtk4 et fltk1 tournent sous Xvfb, qt6, sdl3 et efl1 sur
+  leur plateforme hors écran, ncurses en mode batch ; html écrit sa page. Même
+  sur un poste de travail, aucune fenêtre ne s'ouvre : la mesure est celle de la CI.
+- **Un banc qui n'a rien vérifié compte comme un échec** (outil absent, binaire
+  introuvable, banc figé) : pas de vert par défaut.
+- **Deux forges, deux CI jumelles** : `.gitlab-ci.yml` sur GitLab et
+  `.github/workflows/bancs.yml` sur GitHub jouent les mêmes deux commandes, pour
+  qu'une contribution n'entre sans contrôle par aucune des deux. GitHub construit
+  aussi le port ncurses sur macOS (`macos.yml`).
+- **En option** : `SERMO_BANC_SANITIZERS=1` rejoue le banc de comportement sous
+  ASan et UBSan, erreurs fatales.
+
+Les affirmations de sécurité qu'aucun banc ne garde (vérifiées à la main ou
+lues dans le code) sont listées dans
+[SECURITY.md](SECURITY.md#ce-quaucun-banc-automatique-ne-vérifie) ; les écarts
+connus entre ports, dans [TODO.md](TODO.md).
+
 ## Exemple
 
 ```sh
@@ -70,7 +102,10 @@ export MAIN_DIALOG='
     <hbox><button ok></button><button cancel></button></hbox>
   </vbox>
 </window>'
-sermo --program=MAIN_DIALOG
+sermo --program=MAIN_DIALOG --do='
+    if [ "$EXIT" = "OK" ]; then
+        echo "Bonjour $NOM"
+    fi'
 ```
 
 Après avoir tapé « Jean » et cliqué sur OK, la sortie est la même sur chaque
@@ -79,13 +114,56 @@ port qui affiche le dialogue :
 ```
 NOM="Jean"
 EXIT="OK"
+Bonjour Jean
 ```
 
-Un script lit ces lignes avec `eval "$(sermo --program=MAIN_DIALOG)"` : les
-valeurs sont échappées pour cela. Quand quelqu'un d'autre que l'auteur remplit le
-dialogue, préférez `--do` ([SECURITY.md](SECURITY.md)).
+Avec `--do`, les valeurs arrivent dans la commande comme variables
+d'environnement : ce que l'utilisateur a tapé n'est **jamais relu comme du
+code** (un `$(id)` tapé dans le champ reste du texte). C'est la voie
+recommandée ([SECURITY.md](SECURITY.md)).
+
+**L'héritage de gtkdialog : `eval`.** Les deux premières lignes, sermo les écrit
+toujours, comme gtkdialog. Un ancien script les lit avec
+`eval "$(sermo --program=MAIN_DIALOG)"` et marche tel quel. sermo échappe ce que
+le shell développerait entre guillemets (`$`, accent grave, `\`, `"`), mais
+`eval` exécute toute la sortie comme du shell : une erreur de guillemets dans le
+script suffit pour que la saisie devienne une commande. À garder pour reprendre
+l'existant, pas pour un nouveau script.
+
+## Sécurité en bref
+
+- Un fichier de dialogue **est un programme** : ses `<action>` lancent des
+  commandes. N'ouvrez pas un XML venu d'une source dont vous ne lanceriez pas un
+  script shell.
+- Avec `--do`, ce que l'utilisateur tape n'est jamais exécuté ; avec `eval`, voir
+  la limite ci-dessus.
+- Pour une borne, une session invité ou un dialogue écrit par une IA, deux
+  variables bornent l'exécution : `SERMO_NO_SHELL_FALLBACK` (pas de repli sur
+  `/bin/sh -c`) et `SERMO_ALLOWED_CMDS` (seules les commandes listées). Elles sont
+  éteintes par défaut pour que les scripts gtkdialog marchent tels quels.
+- Modèle de menace, durcissement et limites connues : [SECURITY.md](SECURITY.md).
 
 ## Les neuf ports
+
+**Quel port choisir.** Sans raison particulière : **gtk3sermo** sur un bureau Linux,
+**ncursessermo** par SSH, **`ncursessermo.exe`** sous Windows. Le même fichier XML
+s'ouvre sur tous les ports ; changer de port, c'est changer de commande (quelques
+balises n'existent que sur certains ports :
+[tableau des balises par port](MANUEL_UTILISATEUR.md#59-balises-par-port)).
+
+| Votre cas | Port | Pourquoi |
+|---|---|---|
+| Un bureau Linux, sans préférence | **gtk3sermo** (par défaut) | l'étalon : les autres ports sont mesurés contre lui ; le seul qui a tout (`<terminal>`, `--glade-xml`, ancrage Wayland) |
+| Un bureau en GTK 4 (GNOME récent) | gtk4sermo | a aussi `<terminal>` et `--glade-xml` |
+| Un bureau KDE, ou des applications Qt | qt6sermo | demande Qt ≥ 6.11.2 |
+| Le moins de bibliothèques possible | fltk1sermo | ne tire que FLTK, ni GTK ni Qt |
+| Le bureau Enlightenment | efl1sermo | widgets Elementary |
+| Une fenêtre sans toolkit de bureau | sdl3sermo | SDL 3, dessin Dear ImGui |
+| Une borne, un écran embarqué, une console sans bureau | lvglsermo | LVGL est dans le paquet ; fenêtre Wayland ou X11, ou framebuffer. Version légère (`sermo-backend-lvgl-leger`) : un tiers plus petite, sans icônes SVG |
+| Par SSH, dans un terminal, sur un serveur sans écran | **ncursessermo** | ne demande que ncurses |
+| Windows 10 ou 11 | **`ncursessermo.exe`** | dans le zip de la publication, rien à installer ; seul binaire publié hors Linux |
+| Android, BSD, macOS | ncursessermo | à construire depuis les recettes (« Autres systèmes ») |
+| Pas de fenêtre : une page dans un navigateur | htmlsermo | écrit une page HTML autonome ; avec `SERMO_HTML_MODE=serve`, renvoie les valeurs saisies |
 
 | Port | Bibliothèque | Commande | Paquet |
 |---|---|---|---|
@@ -137,20 +215,20 @@ binaire publié ; pour Android, les BSD et macOS, il n'y a que les recettes.
 ## Installer
 
 Il n'y a pas de dépôt apt. Les paquets Debian sont joints à la publication
-[**v3.1.2**](https://gitlab.com/haplo-dialog/sermo/-/releases/v3.1.2), avec leurs
+[**v3.2.0**](https://gitlab.com/haplo-dialog/sermo/-/releases/v3.2.0), avec leurs
 sommes de contrôle : on télécharge, on vérifie, on installe.
 
 ```sh
-U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/3.1.2
-for f in sermo-backend-gtk3_3.1.2-2_amd64.deb sermo-gtkdialog_3.1.2-2_all.deb SHA256SUMS SHA256SUMS.asc; do
+U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/3.2.0
+for f in sermo-backend-gtk3_3.2.0-1_amd64.deb sermo-gtkdialog_3.2.0-1_all.deb SHA256SUMS SHA256SUMS.asc; do
     curl -fLO "$U/$f"
 done
 curl -fLO https://haplo-dialog.fr/cle-haplo-dialog.asc
 gpg --import cle-haplo-dialog.asc
 gpg --verify SHA256SUMS.asc SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
-sudo apt install ./sermo-backend-gtk3_3.1.2-2_amd64.deb \
-                 ./sermo-gtkdialog_3.1.2-2_all.deb
+sudo apt install ./sermo-backend-gtk3_3.2.0-1_amd64.deb \
+                 ./sermo-gtkdialog_3.2.0-1_all.deb
 ```
 
 Pour un autre port, remplacez `gtk3` par `gtk4`, `qt6`, `fltk1`, `efl1`, `sdl3`,
@@ -240,6 +318,11 @@ Installez les paquets actuels (3.1.0) des ports que vous utilisez (`sermo-backen
 - [`sermoia-mcp`](sermoia-mcp/README.md) — un serveur MCP qui fait écrire,
   vérifier et voir un dialogue à un assistant IA ; l'aperçu n'exécute aucune
   commande.
+- [`sermo.schema.json`](sermo.schema.json) — le langage XML lu dans le code
+  (balises, conteneurs, contenu, attributs lus par chaque port, actions,
+  signaux), généré par `outils/schema/generer.py` et tenu à jour par un banc ;
+  pour les éditeurs et les assistants IA. Ce n'est pas un XSD : le dialecte
+  hérité de gtkdialog (`<button ok>`) n'est pas du XML strict.
 
 ## Signaler un problème
 

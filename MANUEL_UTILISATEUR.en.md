@@ -2,7 +2,7 @@
 
 [Français](MANUEL_UTILISATEUR.md)
 
-**Version:** 3.1.2
+**Version:** 3.2.0
 **Licence:** GPL-2.0-or-later | **Distributor:** haplo-dialog (devel@haplo-dialog.fr)
 
 ---
@@ -82,9 +82,9 @@ attached to each release, with the `SHA256SUMS` file and its signature
 gpg --import cle-haplo-dialog.asc            # https://haplo-dialog.fr/cle-haplo-dialog.asc
 gpg --verify SHA256SUMS.asc SHA256SUMS       # "Good signature from haplo-dialog <devel@haplo-dialog.fr>"
 sha256sum --ignore-missing -c SHA256SUMS
-sudo apt install ./sermo-backend-gtk3_3.1.0-*_amd64.deb     # GTK 3
-sudo apt install ./sermo-backend-fltk1_3.1.0-*_amd64.deb    # FLTK, without pulling in GTK or Qt
-sudo apt install ./sermo-gtkdialog_3.1.0-*_all.deb          # + the gtkdialog command
+sudo apt install ./sermo-backend-gtk3_3.2.0-1_amd64.deb     # GTK 3
+sudo apt install ./sermo-backend-fltk1_3.2.0-1_amd64.deb    # FLTK, without pulling in GTK or Qt
+sudo apt install ./sermo-gtkdialog_3.2.0-1_all.deb          # + the gtkdialog command
 ```
 
 The `*` stands for the Debian revision of the release (the number after the
@@ -180,11 +180,11 @@ deterministic capture for documentation, a thumbnail or a visual test:
 sermo --render-png output.png --file=my_interface.xml
 ```
 
-Off-screen rendering is available on **six graphical backends** (`gtk3`,
-`gtk4`, `qt6`, `fltk1`, `efl1`, `sdl3`) — `gtk3`/`gtk4`/`fltk1` through a virtual
+Off-screen rendering is available on **seven graphical backends** (`gtk3`,
+`gtk4`, `qt6`, `fltk1`, `efl1`, `sdl3`, `lvgl`) — `gtk3`/`gtk4`/`fltk1` through a virtual
 display (xvfb) where the backend writes the PNG itself, `qt6`/`efl1`/`sdl3`
-through their offscreen platform. `lvgl` has the option too: it draws the image
-without opening a window. `ncurses` stays a **terminal** display (no image; text
+through their offscreen platform, and `lvgl` by drawing the image without
+opening a window. `ncurses` stays a **terminal** display (no image; text
 preview through `--print-ir`), and `html` writes a page, not an image.
 
 The size asked for through `default-width`/`default-height` is honoured on these
@@ -247,7 +247,7 @@ Elsewhere, the attribute is accepted and has no effect.
 | `<width>N</width>` and `<height>N</height>` | Size read by some widgets only: most gtk3 and gtk4 widgets, `<pixmap>` on qt6 and html, `<drawingarea>` on sdl3, lvgl, ncurses and html |
 
 **Every tag is written opened then closed.** The self-closing form is not
-recognised by the parser: `<separator></separator>` and not `<separator/>`,
+recognised by the parser: `<hseparator></hseparator>` and not `<hseparator/>`,
 `<button ok></button>` and not `<okbutton/>`. An empty container is refused too:
 a `<vbox>` must contain at least one widget.
 
@@ -819,9 +819,12 @@ everywhere.
 ```
 
 A free surface, reserved for drawing. **Variable: empty string.** With
-`embed="true"`, and only with gtk3 under X11, it holds the X11 id of the area once
+`embed="true"`, and only with gtk3 or qt6 under X11, it holds the X11 id of the area once
 shown: this is what lets a video play inside it (`<action media>`, key
 `dans=$AREA`). The number changes at every run.
+With gtk3, `media="NAME"` also makes the area paint the pictures of the player
+`NAME` rendered "in the area"; outside X11, the variable (with `embed="true"`)
+then holds `zone`.
 
 Size: gtk3, gtk4, qt6, fltk1 and efl1 read the `width-request` /
 `height-request` attributes; sdl3, lvgl, ncurses and html read the `<width>` /
@@ -983,6 +986,86 @@ An invisible container: it wraps its content to give it a clickable area.
 Variable: empty string (the `<action>` carries the effect).
 
 ---
+
+### 5.9 Tags by port
+
+The same XML opens on all nine ports. For each tag, this table says two things:
+
+- **Same values on all 9 ports**: the tag is in the behaviour bench
+  (`tests/comportement/run_all.sh`), which opens each case on the nine ports and
+  compares the variables returned with those of gtk3sermo. Run in full on
+  2026-10-31: 78 cases, 9 ports, 0 differences. "—": the tag is not in that
+  bench (`<terminal>` has its own bench, `tests/garde_terminal.sh`).
+- **What changes by port**: the display or feature differences written in this
+  manual (§4.2 and §5). "Nothing reported" means the manual describes none, not
+  that the display is pixel-identical.
+
+| Tag | Same values on all 9 ports | What changes by port |
+|---|---|---|
+| `<window>` | yes (78 cases) | `resizable`: gtk3, gtk4, qt6, fltk1; `decorated`, `icon-name`: gtk3, gtk4 |
+| `<vbox>` | yes (78 cases) | nothing reported |
+| `<hbox>` | — | nothing reported |
+| `<frame>` | yes (2 cases) | nothing reported |
+| `<notebook>` | yes (3 cases) | nothing reported |
+| `<expander>` | yes (3 cases) | nothing reported |
+| `<grid>` | yes (2 cases) | nothing reported |
+| `<table>` | yes (4 cases) | nothing reported |
+| `<aspectframe>` | — | nothing reported |
+| `<eventbox>` | yes (1 cases) | nothing reported |
+| `<paned>` | yes (1 cases) | native handle (GtkPaned, QSplitter, Fl_Tile, elm_panes); sdl3: draggable handle; ncurses: with the arrow keys |
+| `<stack>` | yes (1 cases) | nothing reported |
+| `<wizard>` | yes (1 cases) | nothing reported |
+| `<flowbox>` | yes (1 cases) | reflow and selection: gtk3, gtk4 only; elsewhere N fixed columns, empty variable |
+| `<overlay>` | yes (1 cases) | ncurses: nothing overlaps, layers are shown one below the other |
+| `<revealer>` | yes (1 cases) | animated transition: gtk3, gtk4 only |
+| `<entry>` | yes (34 cases) | nothing reported |
+| `<password>` | yes (1 cases) | nothing reported |
+| `<searchentry>` | yes (2 cases) | nothing reported |
+| `<edit>` | yes (6 cases) | nothing reported |
+| `<spinbutton>` | yes (4 cases) | nothing reported |
+| `<hscale>` `<vscale>` | yes (4 cases) | nothing reported |
+| `<checkbox>` | yes (10 cases) | nothing reported |
+| `<radiobutton>` | yes (4 cases) | nothing reported |
+| `<switch>` | yes (4 cases) | nothing reported |
+| `<togglebutton>` | yes (4 cases) | nothing reported |
+| `<comboboxtext>` | yes (3 cases) | nothing reported |
+| `<combobox>` | yes (3 cases) | nothing reported |
+| `<comboboxentry>` | yes (1 cases) | nothing reported |
+| `<list>` | yes (5 cases) | nothing reported |
+| `<tree>` | yes (3 cases) | nothing reported |
+| `<calendar>` | yes (3 cases) | nothing reported |
+| `<colorbutton>` | yes (3 cases) | nothing reported |
+| `<fontbutton>` | yes (3 cases) | nothing reported |
+| `<filechooser>` | yes (1 cases) | toolkit picker (gtk3, gtk4, qt6), system picker through the XDG portal (sdl3), `elm_fileselector` (efl1), in-terminal browser (ncurses) |
+| `<button>` | yes (3 cases) | nothing reported |
+| `<linkbutton>` | yes (3 cases) | nothing reported |
+| `<menubutton>` | yes (1 cases) | nothing reported |
+| `<menubar>` `<menuitem>` | yes (3 cases) | nothing reported |
+| `<toolbar>` | yes (1 cases) | nothing reported |
+| `<text>` | yes (10 cases) | nothing reported |
+| `<pixmap>` | — | nothing reported |
+| `<image>` | — | nothing reported |
+| `<progressbar>` | yes (3 cases) | nothing reported |
+| `<pulse>` | yes (1 cases) | nothing reported |
+| `<levelbar>` | yes (3 cases) | nothing reported |
+| `<spinner>` | — | nothing reported |
+| `<statusbar>` | yes (2 cases) | nothing reported |
+| `<infobar>` | yes (3 cases) | nothing reported |
+| `<hseparator>` `<vseparator>` | — | nothing reported |
+| `<drawingarea>` | yes (1 cases) | `embed`: gtk3, qt6 under X11; `media`: gtk3; size from attributes (gtk3, gtk4, qt6, fltk1, efl1) or from `<width>`/`<height>` (sdl3, lvgl, ncurses, html) |
+| `<terminal>` | — | interactive shell: gtk3, gtk4 (and qt6 built with QTermWidget, not the Debian package); elsewhere, the command output, read-only |
+| `<timer>` | yes (76 cases) | nothing reported |
+
+Attributes that do not apply everywhere:
+
+| Attribute | Read by |
+|---|---|
+| `tooltip-text` | gtk3, gtk4 |
+| `scrollable` | gtk3, gtk4 |
+| `width-request`, `height-request` | every widget on gtk3 and gtk4; most on qt6 and fltk1; a few elsewhere (details in §4.2) |
+
+Options specific to some ports: `--glade-xml` (gtk3, gtk4), Wayland
+`layer-shell` anchoring (gtk3), `--render-png` (all but ncurses and html, §3.3).
 
 ## 6. Actions and signals
 
@@ -1361,7 +1444,8 @@ started**. Same framework as `<action mqtt>`:
 - **separate package**: `sermo-cible-mavlink`.
 
 One line of the list: `parametre NAME min..max`, `ordre rtl`, `ordre land`,
-`ordre terminaison`, or `mission rayon R hauteur H` (`#` comments).
+`ordre terminaison`, `mission rayon R hauteur H`, or a `pilotage` line (see
+below; `#` comments).
 
 ```
 parametre WP_SPD 1..15
@@ -1374,6 +1458,7 @@ ordre land
 | `parametre` + `valeur` | an exact name (`A-Z`, `0-9`, `_`, 16 characters at most) and a number (decimal point), or `$NAME` (dialog variable) |
 | `ordre` | `rtl` (return to launch), `land` (land in place), `terminaison` (cut the motors) |
 | `mission` | absolute path of a mission file (waypoints, see below) |
+| `pilote` (+ `mode`) | `armer`, `desarmer`, `decoller`, `mode` with `mode=guided`, `loiter`, `poshold`, `brake`, `rtl`, `smart_rtl`, `land`, or `aller` with `lat=`, `lon=`, `hauteur=` (see below) |
 | `systeme`, `vitesse` | as for `<input mavlink>` |
 | `delai` | total time limit in ms (default 5000, 20,000 for a mission; from 2000 to 60,000) |
 
@@ -1437,6 +1522,79 @@ success is reported only if it is identical. The mission is **not started**:
 starting it is piloting. Without the drone's position (on ArduPilot 4.7:
 `MAV1_POSITION`), nothing is sent. `delai` defaults to 20,000 ms for a mission.
 
+**Piloting** (arm, take off, change mode, disarm):
+
+```xml
+<button><label>Arm (2 presses)</label>
+  <action mavlink>tcp://127.0.0.1:5760?pilote=armer</action>
+</button>
+<button><label>Take off (2 presses)</label>
+  <action mavlink>tcp://127.0.0.1:5760?pilote=decoller</action>
+</button>
+<button><label>Hold position (2 presses)</label>
+  <action mavlink>tcp://127.0.0.1:5760?pilote=mode&mode=loiter</action>
+</button>
+```
+
+> **The remote pilot alone remains responsible for the flight** and for
+> following the rules (category, zone, height, line of sight). sermo **is not
+> a certified ground station**, and its piloting is **not meant for flights
+> beyond visual line of sight**.
+
+ArduPilot Copter only. Allow-list line, separate from the others (without it,
+no piloting order is sent):
+
+```
+pilotage lat 45.1234 lon 5.7654 rayon 300 hauteur 60 decollage 20 modes 4,5,6,9
+```
+
+- **sermo's fence**: the reference point, a radius (m) and a height (120 m at
+  most); the **takeoff height** is fixed there, never typed in;
+- **modes**: GUIDED (4), LOITER (5), POSHOLD (16), BRAKE (17), RTL (6),
+  SMART_RTL (21), LAND (9) — those of the line; STABILIZE, ACRO, ALT_HOLD and
+  AUTO are **never** pilotable. LOITER, POSHOLD, BRAKE in flight only.
+
+Each order is **confirmed by two presses** within 5 s: the first writes what
+would be sent. Then, before sending:
+
+- **delay**: 2.5 s at most between the second press and sending (3.5 s to
+  disarm), and the drone's state read less than 0.5 s before; a link that is
+  too slow means refusal, and the click is lost;
+- the **autopilot's fence** active (`FENCE_ENABLE`, an action, circle and
+  height), not wider nor higher than sermo's — otherwise only RTL, SMART_RTL
+  and LAND pass;
+- the drone must be **inside sermo's fence** — otherwise only RTL, SMART_RTL
+  and LAND pass;
+- **arm**: disarmed, on the ground, in GUIDED (never forced); **take off**:
+  armed, on the ground, in GUIDED; **disarm**: seen landed for 2 s (height
+  < 1 m, vertical speed < 0.3 m/s);
+- refused if another ground station is talking, if the drone **signs** its
+  messages, or if it is not an ArduPilot.
+
+The landed state and the position are **requested** from the drone just before
+sending (plain reads). Tried against a simulated ArduPilot Copter 4.7.2: full
+flight (GUIDED, arm, take off to 10 m, go to a point, LOITER, LAND), refusal while
+climbing, outside the fence, fence off, slow radio. **Not tried on a real
+drone.**
+
+**Going to a point**:
+
+```xml
+<button><label>Go to the point (2 presses)</label>
+  <action mavlink>tcp://127.0.0.1:5760?pilote=aller&lat=$LAT&lon=$LON&hauteur=$H</action>
+</button>
+```
+
+`lat`, `lon` (degrees) and `hauteur` (m **above the home point**): a number,
+or a dialog variable. The first press writes the point, the height and its
+distance to the reference; changing the point between the two presses starts
+over. Refused if the point is outside sermo's fence or the height is not
+between 1 m and the list's; if the drone is not armed, flying and **already in
+GUIDED** (this order never changes mode: outside GUIDED, ArduPilot would
+ignore it). The order is sent with height relative to home, position only (no
+speed or heading imposed). There is no acknowledgement for this order: success
+is reported only if the **target read back from the drone** is the same.
+
 Each call writes its conclusion, one line, to standard error and to
 `$XDG_RUNTIME_DIR/sermo-cible-mavlink/message` (if `XDG_RUNTIME_DIR` is an
 absolute path; otherwise, to standard error only). A dialog shows it with
@@ -1492,22 +1650,37 @@ commands) and `sermo-source-media` (the state). Packages: `sermo-cible-media`,
   retry, nothing is forced; mpv does not tell "busy" from "unavailable", so the
   message says both.
 - **Inside the window**: `dans=$AREA` (the variable of a `<drawingarea embed="true">`) shows the
-  picture in that area instead of a separate window. Only with gtk3 under X11.
-  Elsewhere (Wayland, other ports, area not shown yet) the variable is empty: the
-  video opens in its own window, and the message says so. An embedded camera shows
-  "CAMÉRA ACTIVE — <name>" written in the picture. A `dans=` that is not of the
-  form `$NAME`, or a variable whose value is not a number (from 1 to 2³²−1), is
-  refused: code 1, mpv is not started.
+  picture in that area instead of a separate window. With gtk3 and qt6 under X11.
+  **Under Wayland, with gtk3**, add `media="NAME"` (the player's name): the
+  variable then holds `zone`, and the picture is rendered by `sermo-media-images`
+  (libmpv, inside the cage, **without any access to the screen**), then painted
+  by the area. Elsewhere (other ports under Wayland, area not shown yet) the
+  variable is empty: the video opens in its own window, and the message says so.
+  An embedded camera shows "CAMÉRA ACTIVE — <name>" written in the picture.
+  A `dans=` that is not of the form `$NAME`, or a variable whose value is not a
+  number (from 1 to 2³²−1), is refused: code 1, mpv is not started.
   ```xml
-  <drawingarea width-request="320" height-request="240" embed="true"><variable>AREA</variable></drawingarea>
+  <drawingarea width-request="320" height-request="240" embed="true" media="film"><variable>AREA</variable></drawingarea>
   <button><label>Play</label>
-    <action media>media://film?commande=lire&source=file:///path/film.mp4&dans=$AREA</action>
+    <action media>media://film?commande=lire&amp;source=file:///path/film.mp4&amp;dans=$AREA</action>
   </button>
   ```
 - **HTTP(S) stream with a password**: `identifiants=/path` of a file you own, in
   mode **exactly** `600` (`chmod 600`), holding one line `user:password`. It reaches mpv through a private
-  header file, deleted once read, **never as an argument**. RTSP with a password:
-  not supported (mpv only reads it from the address).
+  header file, deleted once read, **never as an argument**.
+- **RTSP(S) stream with a password**: the same `identifiants=` file. mpv starts
+  without a source; the address `rtsp://user:password@…` exists only in memory and
+  reaches mpv through its private socket, **never as an argument** nor in a file.
+  `transport=tcp` or `transport=udp` (RTSP only) picks the transport, when the
+  camera refuses the one mpv tries first.
+- **Photo and video from a camera** (ANOTHER gesture than the preview; the dialog
+  puts a confirmation showing the path and the duration before it, like the
+  `camera-capture` example): `commande=photo&fichier=/path/photo.jpg` (`.jpg` or
+  `.png`), `commande=enregistrer&fichier=/path/video.mkv&duree=30` (1 to 600 s,
+  camera in `format=mjpeg`), `commande=couper` to stop earlier. For a running
+  camera only. The file never overwrites anything, it is created in mode `600`,
+  in a folder you own that neither the group nor others can write.
+  "ENREGISTREMENT" shows in the title and in the picture.
 - **Sandbox**: a network stream plays **only** inside `bwrap` (refused without it);
   a local file or a camera plays inside it when `bwrap` is installed, with no
   network. Without `bwrap`, a local file or a camera plays **without a sandbox**,
@@ -1803,10 +1976,11 @@ binary: `gtk3sermo`, `gtk4sermo`, `qt6sermo`, `fltk1sermo`, `efl1sermo`,
 `sdl3sermo`, `lvglsermo`, `ncursessermo` or `htmlsermo`.
 
 **Q: The `<terminal>` widget does not show**
-A: The terminal requires VTE and exists only on `gtk3sermo` and `gtk4sermo`.
-Check the binary was built with it: `gtk3sermo --version` must print "Built with
-additional support for: …, VTE". On the other ports, a dialog containing
-`<terminal>` still opens, without a terminal.
+A: The interactive shell requires VTE and exists only on `gtk3sermo` and `gtk4sermo`
+(and on qt6 built with QTermWidget, which the Debian package is not). Check the
+binary was built with it: `gtk3sermo --version` must print "Built with
+additional support for: …, VTE". On the other ports, `<terminal>` runs the
+`<input>` command and shows its output, read-only (see §5.6).
 
 **Q: How do I pass large amounts of data to `<edit>`?**
 A: Use `<input file>/path/file</input>` rather than a shell command.

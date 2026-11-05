@@ -24,8 +24,17 @@ set(CMAKE_C_STANDARD 11)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(DEPS REQUIRED glib-2.0 gio-2.0 json-glib-1.0)
 
+# Le schéma du langage, sermo.schema.json à la racine du dépôt (généré depuis le code par
+# outils/schema/generer.py, tenu par tests/garde_schema.sh), est EMBARQUÉ dans le binaire :
+# sermo_schema le sert tel quel, rien n'est recopié à la main. Reconfiguré s'il change.
+set(SERMO_SCHEMA "${CMAKE_CURRENT_SOURCE_DIR}/../sermo.schema.json")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${SERMO_SCHEMA}")
+file(READ "${SERMO_SCHEMA}" SERMO_SCHEMA_HEX HEX)
+string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," SERMO_SCHEMA_OCTETS "${SERMO_SCHEMA_HEX}")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/schema_embarque.h"
+  "/* Généré par CMake depuis sermo.schema.json : ne pas éditer. */\nstatic const unsigned char SCHEMA_EMBARQUE[] = {${SERMO_SCHEMA_OCTETS} 0x00};\n")
 add_executable(sermoia-mcp src/sermoia-mcp.c)
-target_include_directories(sermoia-mcp PRIVATE ${DEPS_INCLUDE_DIRS})
+target_include_directories(sermoia-mcp PRIVATE ${DEPS_INCLUDE_DIRS} ${CMAKE_CURRENT_BINARY_DIR})
 include(GNUInstallDirs)
 target_compile_definitions(sermoia-mcp PRIVATE SERMOIA_MCP_VERSION="${PROJECT_VERSION}"
   SERMOIA_EXAMPLES_DIR="${CMAKE_INSTALL_FULL_DATADIR}/sermoia-mcp/examples")

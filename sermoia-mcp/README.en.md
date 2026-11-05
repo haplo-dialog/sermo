@@ -26,6 +26,20 @@ message per line. GPL-2.0-or-later.
 The server sends this summary to the client as soon as it starts (the `instructions`
 field of `initialize`).
 
+**A real session** (4 November 2026, by Claude, talking to both servers over the protocol,
+abridged; the full version with pictures is on the website, "AI assistant" page) — need: "a
+leave-request window: name, dates, type, reason". `sermo_search "calendar"` (sermoman-mcp):
+`<calendar>` exports YYYY-MM-DD. `sermo_schema`: the widget families. `sermo_examples "leave
+request form…"`: `formulaire/formulaire.xml` (relevance 7) and an equipment-request form. XML
+written by imitating them (frame, hbox+text+entry, two calendars, comboboxtext, edit, an
+`EXIT:envoyer` button, `<button cancel>`). `sermo_check`: "OK — the XML parses (52 lines of
+internal representation)". `sermo_render`: 533×533, **the second calendar cut off** →
+`width-request="640"`, second rendering 640×533, everything fits. `sermo_run`: on the first try
+nobody answers, "ERREUR — the dialog was not closed within 25 s"; on the second, the user fills it
+in and presses Envoyer: `DEBUT="2026-11-16"`, `FIN="2026-11-20"`, `MOTIF="Vacances en famille"`,
+`NOM="Camille Martin"`, `TYPE="Congés payés"`, `EXIT="envoyer"`. `sermo_vote
+formulaire/formulaire.xml helpful=true`: "cumulative score 1".
+
 ## The six tools
 
 | Tool | Role | Does it run the XML's commands? |
@@ -42,17 +56,23 @@ client can ask for confirmation before `sermo_run`, the only one marked "destruc
 
 ### `sermo_schema`
 
-No argument. Returns a JSON object:
-- the widgets, grouped by family; the test checks this list against the tags the core
-  parser recognises;
-- the content tags, the common attributes, the actions and the signals;
-- the sources and targets (`sources_cibles`): `<input modbus>`, `<input opcua>`,
-  `<input mqtt>`, `<input mavlink>`, `<input media>` to read, `<action mqtt>`,
-  `<action mavlink>`, `<action media>` to write, with their address, their package and
-  an example;
-- a minimal example and the shape of the output.
+No argument. Returns a JSON object: `sermo.schema.json`, **generated from sermo's
+code** (`outils/schema/generer.py`, kept true by `tests/garde_schema.sh`) and embedded
+in the server at build time, plus an editorial complement. It gives:
+- the 59 widgets, their family, whether they are containers (16, from the grammar),
+  their aliases (`<visible>` = `<sensitive>`, `<separator>` = `<menuitemseparator>`)
+  and, widget by widget, **the attributes each port really reads** (`attributs_lus`,
+  with the list of ports); gtk3 and gtk4 also accept any GObject property of the GTK
+  widget (`attributs_libres`);
+- the content tags (`variable`, `label`, `default`, `input`, `output`, `action`,
+  `item`, `sensitive`, `width`, `height`), the stock buttons, the sources and targets
+  (`<input modbus|opcua|mqtt|mavlink|media>`, `<action mqtt|mavlink|media>`), the 22
+  action prefixes (`exit`, `launch`, `refresh`…) and the 37 signals;
+- the complement (`sources_cibles` with addresses, packages and examples;
+  `exemple_minimal`; `sortie`; `regle`), and `note_xml`: this dialect is not strict
+  XML, the reference validator is `sermo_check`.
 
-The attributes specific to each widget are in the manual (sermoman-mcp).
+The test checks that the widgets served are those of the file, at the same commit.
 
 ### `sermo_check`
 
@@ -143,13 +163,19 @@ topic missing from the catalogue is refused.
 
 ## Security
 
-- **What runs commands**: `sermo_run`, and only it. A sermo dialog is meant to run
-  commands: `sermo_run` runs them, as the script would. To limit what it may run, set
-  `SERMO_ALLOWED_CMDS` in the server's environment (see `SECURITY.en.md` at the root):
-  the core then refuses any command outside the list, and the `/bin/sh -c` fallback.
-- **What does not**: `sermo_check` (parsing only) and `sermo_render`. Rendering sets
-  `SERMO_ALLOWED_CMDS` to a command that does not exist, which forbids everything. The
-  test checks it: an `<input>` that creates a witness file does not create it.
+- **What may run commands**: `sermo_run`, and only it — and it is **closed by default**
+  since 3.2.0. Without `SERMO_ALLOWED_CMDS` in the server's environment the window opens
+  but no command of the XML (`<input>`, `<action>`) is launched: the server sets the same
+  barrier as rendering, and its answer starts with "Commandes du XML BLOQUÉES". To allow
+  them, set `SERMO_ALLOWED_CMDS` to the list of commands the dialog needs (see
+  `SECURITY.en.md` at the root): the core launches those, refuses the others and the
+  `/bin/sh -c` fallback. There is no "allow everything" switch: whoever wants everything
+  lists everything.
+- **What never runs commands**: `sermo_check` (parsing only) and `sermo_render`.
+  Rendering sets `SERMO_ALLOWED_CMDS` to a command that does not exist, which forbids
+  everything. The test checks both directions: an `<input>` that creates a witness file
+  creates it neither when rendering nor under `sermo_run` without a list, and creates it
+  under `sermo_run` with the command listed.
 - **The MCP channel is protected**: a launched process reads `/dev/null`, never the
   channel, and its output is captured. A port that prints its `VAR="…"` even when
   rendering (html) therefore does not break the protocol.
@@ -169,7 +195,7 @@ topic missing from the catalogue is refused.
 | `SERMO_VOTE_FILE` | `$XDG_STATE_HOME/sermoia/votes.tsv` | vote register |
 | `SERMOIA_CHECK_DELAI` | 20 s (≤ 120) | parsing timeout |
 | `SERMOIA_RENDER_DELAI` | 30 s (≤ 300) | timeout of each render attempt |
-| `SERMO_ALLOWED_CMDS` | — | commands `sermo_run` may launch (see Security) |
+| `SERMO_ALLOWED_CMDS` | — (all blocked) | commands `sermo_run` may launch; unset = none (see Security) |
 
 ## Install
 

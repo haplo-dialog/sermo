@@ -32,7 +32,7 @@ Debian testing system.
 | `sermo-source-mqtt` | helper for `<input mqtt>` (`/usr/libexec/sermo`), read-only (home automation); credentials in a 600 file | libmosquitto |
 | `sermo-source-mavlink` | helper for `<input mavlink>` (`/usr/libexec/sermo`): drone telemetry, read-only, nothing sent on the link | bundled MAVLink headers |
 | `sermo-cible-mqtt` | **write** program for `<action mqtt>` (`/usr/libexec/sermo`): a click publishes a value, if the allow-list (`~/.config/sermo/cibles-mqtt`, `/etc/sermo/cibles-mqtt`) permits it | libmosquitto |
-| `sermo-cible-mavlink` | **write** program for `<action mavlink>` (`/usr/libexec/sermo`): a click sets a parameter of a disarmed drone, sends it a waypoint mission or gives a safety order, if the allow-list (`~/.config/sermo/cibles-mavlink`, `/etc/sermo/cibles-mavlink`) permits it | bundled MAVLink headers |
+| `sermo-cible-mavlink` | **write** program for `<action mavlink>` (`/usr/libexec/sermo`): a click sets a parameter of a disarmed drone, sends it a waypoint mission, gives a safety order or pilots it (ArduPilot: arm, take off, modes), if the allow-list (`~/.config/sermo/cibles-mavlink`, `/etc/sermo/cibles-mavlink`) permits it | bundled MAVLink headers |
 | `sermo-source-media` | helper for `<input media>` (`/usr/libexec/sermo`): the state of a sound or video player (stopped, playing, paused, error; position and duration on request), read-only | recommends `sermo-cible-media` |
 | `sermo-cible-media` | **command** program for `<action media>` (`/usr/libexec/sermo`): a click plays a sound or a video with mpv, pauses it, seeks, sets the volume or stops it; a network source is only played in a bubblewrap sandbox | `mpv`; recommends `bubblewrap` |
 
@@ -139,7 +139,7 @@ as `.deb` files attached to the release. Installing the wanted current (3.1.0)
 packages from their files removes the 1.x packages they replace:
 
 ```sh
-sudo apt install ./sermo-backend-gtk3_3.1.2-2_amd64.deb ./sermo-gtkdialog_3.1.2-2_all.deb
+sudo apt install ./sermo-backend-gtk3_3.2.0-1_amd64.deb ./sermo-gtkdialog_3.2.0-1_all.deb
 ```
 
 Tested on 2026-09-17 in a clean Debian testing container, without network,
@@ -235,9 +235,9 @@ upstream…). Provenance, port by port, is detailed in
 ## Installing and uninstalling
 
 ```sh
-sudo apt install ./sermo-backend-gtk3_3.1.2-2_amd64.deb      # GTK 3
-sudo apt install ./sermo-gtkdialog_3.1.2-2_all.deb           # + the gtkdialog command
-sudo apt install ./sermo-core-dev_3.1.2-2_amd64.deb          # to build a backend
+sudo apt install ./sermo-backend-gtk3_3.2.0-1_amd64.deb      # GTK 3
+sudo apt install ./sermo-gtkdialog_3.2.0-1_all.deb           # + the gtkdialog command
+sudo apt install ./sermo-core-dev_3.2.0-1_amd64.deb          # to build a backend
 
 sudo apt purge sermo-gtkdialog sermo-backend-gtk3            # remove everything
 ```

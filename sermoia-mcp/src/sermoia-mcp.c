@@ -39,7 +39,8 @@
 
 /* Commande « interdite à tout » : posée dans SERMO_ALLOWED_CMDS, elle n'autorise
  * aucune commande réelle ; le cœur refuse alors aussi le repli /bin/sh -c
- * (safe_exec.c). Sert à sermo_check et sermo_render, qui ne doivent RIEN lancer. */
+ * (safe_exec.c). Sert à sermo_check et sermo_render, qui ne doivent RIEN lancer,
+ * et à sermo_run tant que le serveur n'a pas sa propre SERMO_ALLOWED_CMDS. */
 #define AUCUNE_COMMANDE "/sermoia/aucune-commande"
 
 static const char *sermo_bin(void)
@@ -58,42 +59,40 @@ static guint delai_env(const char *nom, guint defaut, guint max)
     return n > max ? max : (guint)n;
 }
 
-/* ─── Schéma du langage (clean-room, depuis la doc/tables de sermo) ─────────── */
-/* tests/verifie.sh compare les sept listes de widgets à l'analyseur du cœur. */
-static const char *SCHEMA_JSON =
-"{"
-"\"langage\":\"sermo-xml\",\"racine\":\"window\","
-"\"conteneurs\":[\"window\",\"vbox\",\"hbox\",\"frame\",\"notebook\",\"expander\",\"eventbox\",\"aspectframe\",\"grid\",\"paned\",\"stack\",\"wizard\",\"toolbar\",\"flowbox\",\"overlay\",\"revealer\"],"
-"\"affichage\":[\"text\",\"image\",\"pixmap\",\"statusbar\",\"infobar\",\"drawingarea\",\"progressbar\",\"pulse\",\"spinner\",\"levelbar\"],"
-"\"saisie\":[\"entry\",\"edit\",\"password\",\"searchentry\",\"spinbutton\",\"hscale\",\"vscale\",\"checkbox\",\"togglebutton\",\"radiobutton\",\"switch\"],"
-"\"selection\":[\"combobox\",\"comboboxtext\",\"comboboxentry\",\"chooser\",\"list\",\"tree\",\"table\",\"colorbutton\",\"fontbutton\",\"filechooser\",\"calendar\"],"
-"\"boutons\":[\"button\",\"linkbutton\",\"menubutton\"],\"stock\":[\"button ok\",\"button cancel\",\"button help\",\"button yes\",\"button no\"],"
-"\"menus\":[\"menubar\",\"menu\",\"menuitem\",\"menuitemseparator\"],"
-"\"divers\":[\"terminal\",\"hseparator\",\"vseparator\",\"timer\"],"
-"\"balises_contenu\":[\"variable\",\"label\",\"default\",\"input\",\"action\",\"item\",\"sensitive\",\"visible\"],"
-"\"attributs_communs\":[\"sensitive\",\"visible\",\"tooltip-text\",\"width-request\",\"height-request\",\"space-expand\",\"space-fill\"],"
-"\"actions\":[\"EXIT\",\"CLOSEWINDOW\",\"LAUNCH\",\"REFRESH\",\"SAVE\",\"CLEAR\",\"APPEND\",\"INSERT\",\"FILESELECT\",\"ENABLE\",\"DISABLE\",\"SHOW\",\"HIDE\",\"GRABFOCUS\",\"PRESENTWINDOW\",\"PULSE\",\"START\",\"STOP\",\"ACTIVATE\",\"REMOVESELECTED\",\"BREAK\"],"
-"\"signaux\":[\"activate\",\"changed\",\"clicked\",\"toggled\",\"value-changed\",\"cursor-changed\",\"select-row\"],"
-"\"sources_cibles\":{"
-"\"regle\":\"Un <input X> lit un équipement ou un service décrit par une adresse tout-en-un (schéma, hôte, puis clés après ?, séparées par &amp; dans le XML) ; une <action X> écrit vers lui, seulement dans un <button> ou un <menuitem>. Chaque forme demande son programme d'aide (paquet sermo-source-X pour lire, sermo-cible-X pour écrire), installé dans /usr/libexec/sermo. Un paramètre inconnu est refusé.\","
-"\"lecture\":["
-"{\"balise\":\"input modbus\",\"adresse\":\"tcp://hôte[:port]?registre=N (ou rtu:///dev/ttyUSB0)\",\"paquet\":\"sermo-source-modbus\",\"exemple\":\"<input modbus>tcp://automate:502?esclave=1&amp;registre=1&amp;diviseur=10</input>\"},"
-"{\"balise\":\"input opcua\",\"adresse\":\"opc.tcp://hôte:port?noeud=ns=1;s=nom\",\"paquet\":\"sermo-source-opcua\",\"exemple\":\"<input opcua>opc.tcp://serveur:4840?noeud=ns=1;s=pieces</input>\"},"
-"{\"balise\":\"input mqtt\",\"adresse\":\"mqtt://hôte[:port]?sujet=… (mqtts:// chiffré, confiance= obligatoire)\",\"paquet\":\"sermo-source-mqtt\",\"exemple\":\"<input mqtt>mqtt://serveur:1883?sujet=maison/salon/temperature</input>\"},"
-"{\"balise\":\"input mavlink\",\"adresse\":\"udp://[hôte]:port, tcp://hôte:port ou serie:///dev/ttyUSB0, ?champ=…\",\"paquet\":\"sermo-source-mavlink\",\"exemple\":\"<input mavlink>udp://:14550?champ=hauteur</input>\"},"
-"{\"balise\":\"input media\",\"adresse\":\"media://NOM?donnee=etat|position|duree\",\"paquet\":\"sermo-source-media\",\"exemple\":\"<input media>media://salon?donnee=etat</input>\"}"
-"],"
-"\"ecriture\":["
-"{\"balise\":\"action mqtt\",\"adresse\":\"mqtt://hôte?sujet=…&amp;valeur=…\",\"paquet\":\"sermo-cible-mqtt\",\"garde\":\"liste blanche ~/.config/sermo/cibles-mqtt (600) ou /etc/sermo/cibles-mqtt ; identifiants= refusés sur mqtt:// sauf clair=oui\",\"exemple\":\"<button><label>Allumer</label><action mqtt>mqtt://serveur?sujet=maison/salon/lampe&amp;valeur=on</action></button>\"},"
-"{\"balise\":\"action mavlink\",\"adresse\":\"LIAISON?parametre=NOM&amp;valeur=…, ?ordre=rtl|land|terminaison ou ?mission=/chemin\",\"paquet\":\"sermo-cible-mavlink\",\"garde\":\"liste blanche ~/.config/sermo/cibles-mavlink (600) ou /etc/sermo/cibles-mavlink ; paramètre réglé drone désarmé seulement ; terminaison en deux appuis dans 5 s ; mission envoyée, jamais lancée ; pas de pilotage\",\"exemple\":\"<button><label>Retour au départ</label><action mavlink>tcp://127.0.0.1:5760?ordre=rtl</action></button>\"},"
-"{\"balise\":\"action media\",\"adresse\":\"media://NOM?commande=lire&amp;source=…|pause|reprendre|arreter|aller|volume|muet|son\",\"paquet\":\"sermo-cible-media\",\"garde\":\"sources file://, http(s)://, rtsp(s)://, ou caméra v4l2:///dev/videoN (taille=320x240|640x480|1280x720|1920x1080, format=mjpeg|yuyv422 ; fenêtre « CAMÉRA ACTIVE » ; caméra occupée refusée) seulement ; bwrap obligatoire pour une source réseau ; sans bwrap, fichier local ou caméra lus sans cage, avec un message ; dans=$VAR (gtk3 X11, sinon fenêtre séparée)\",\"exemple\":\"<button><label>Lire</label><action media>media://salon?commande=lire&amp;source=file:///srv/sons/annonce.ogg</action></button>\"}"
-"]"
-"},"
-"\"exemple_minimal\":\"<window title=\\\"Nom\\\"><vbox><text><label>Votre nom :</label></text><entry><variable>NOM</variable></entry><hbox><button cancel></button><button ok></button></hbox></vbox></window>\","
-"\"sortie\":\"À la fermeture, chaque widget nommé émet NOM=\\\"valeur\\\" sur stdout (échappé pour eval), puis EXIT=\\\"…\\\" (le bouton cliqué). Préférer --do : les valeurs arrivent par l'environnement, jamais relues comme du code.\","
-"\"regle\":\"Racine <window>. Widgets imbriqués dans des conteneurs. <variable> nomme la sortie. <action>ACTION:cible</action> ou commande. <input> lance une commande pour remplir un widget.\","
-"\"voir\":\"sermoman-mcp sert le manuel complet (attributs de chaque widget). sermo_examples sert des dialogues validés.\""
-"}";
+/* ─── Schéma du langage ──────────────────────────────────────────────────────
+ * Le schéma lui-même (balises, conteneurs, contenu, attributs lus par chaque
+ * port, actions, signaux) est sermo.schema.json, GÉNÉRÉ depuis le code par
+ * outils/schema/generer.py et embarqué ici au build (schema_embarque.h) ;
+ * tests/garde_schema.sh refuse un fichier qui ne serait plus celui du code.
+ * Ce qui suit est le complément éditorial, qu'aucun code ne porte : la règle en
+ * une phrase, les adresses des sources et cibles, un exemple minimal, la forme
+ * de la sortie. schema_texte() fond les deux en un seul objet JSON. */
+#include "schema_embarque.h"
+static const char *COMPLEMENT_JSON =
+"{\"regle\":\"Racine <window>. Widgets imbriqués dans des conteneurs. <variable> nomme la sortie. <action>ACTION:cible</action> ou commande. <input> lance une commande pour remplir un widget.\",\"sources_cibles\":{\"regle\":\"Un <input X> lit un équipement ou un service décrit par une adresse tout-en-un (schéma, hôte, puis clés après ?, séparées par &amp; dans le XML) ; une <action X> écrit vers lui, seulement dans un <button> ou un <menuitem>. Chaque forme demande son programme d'aide (paquet sermo-source-X pour lire, sermo-cible-X pour écrire), installé dans /usr/libexec/sermo. Un paramètre inconnu est refusé.\",\"lecture\":[{\"balise\":\"input modbus\",\"adresse\":\"tcp://hôte[:port]?registre=N (ou rtu:///dev/ttyUSB0)\",\"paquet\":\"sermo-source-modbus\",\"exemple\":\"<input modbus>tcp://automate:502?esclave=1&amp;registre=1&amp;diviseur=10</input>\"},{\"balise\":\"input opcua\",\"adresse\":\"opc.tcp://hôte:port?noeud=ns=1;s=nom\",\"paquet\":\"sermo-source-opcua\",\"exemple\":\"<input opcua>opc.tcp://serveur:4840?noeud=ns=1;s=pieces</input>\"},{\"balise\":\"input mqtt\",\"adresse\":\"mqtt://hôte[:port]?sujet=… (mqtts:// chiffré, confiance= obligatoire)\",\"paquet\":\"sermo-source-mqtt\",\"exemple\":\"<input mqtt>mqtt://serveur:1883?sujet=maison/salon/temperature</input>\"},{\"balise\":\"input mavlink\",\"adresse\":\"udp://[hôte]:port, tcp://hôte:port ou serie:///dev/ttyUSB0, ?champ=…\",\"paquet\":\"sermo-source-mavlink\",\"exemple\":\"<input mavlink>udp://:14550?champ=hauteur</input>\"},{\"balise\":\"input media\",\"adresse\":\"media://NOM?donnee=etat|position|duree\",\"paquet\":\"sermo-source-media\",\"exemple\":\"<input media>media://salon?donnee=etat</input>\"}],\"ecriture\":[{\"balise\":\"action mqtt\",\"adresse\":\"mqtt://hôte?sujet=…&amp;valeur=…\",\"paquet\":\"sermo-cible-mqtt\",\"garde\":\"liste blanche ~/.config/sermo/cibles-mqtt (600) ou /etc/sermo/cibles-mqtt ; identifiants= refusés sur mqtt:// sauf clair=oui\",\"exemple\":\"<button><label>Allumer</label><action mqtt>mqtt://serveur?sujet=maison/salon/lampe&amp;valeur=on</action></button>\"},{\"balise\":\"action mavlink\",\"adresse\":\"LIAISON?parametre=NOM&amp;valeur=…, ?ordre=rtl|land|terminaison ou ?mission=/chemin\",\"paquet\":\"sermo-cible-mavlink\",\"garde\":\"liste blanche ~/.config/sermo/cibles-mavlink (600) ou /etc/sermo/cibles-mavlink ; paramètre réglé drone désarmé seulement ; terminaison en deux appuis dans 5 s ; mission envoyée, jamais lancée ; pas de pilotage\",\"exemple\":\"<button><label>Retour au départ</label><action mavlink>tcp://127.0.0.1:5760?ordre=rtl</action></button>\"},{\"balise\":\"action media\",\"adresse\":\"media://NOM?commande=lire&amp;source=…|pause|reprendre|arreter|aller|volume|muet|son\",\"paquet\":\"sermo-cible-media\",\"garde\":\"sources file://, http(s)://, rtsp(s)://, ou caméra v4l2:///dev/videoN (taille=320x240|640x480|1280x720|1920x1080, format=mjpeg|yuyv422 ; fenêtre « CAMÉRA ACTIVE » ; caméra occupée refusée) seulement ; bwrap obligatoire pour une source réseau ; sans bwrap, fichier local ou caméra lus sans cage, avec un message ; dans=$VAR (gtk3 X11, sinon fenêtre séparée)\",\"exemple\":\"<button><label>Lire</label><action media>media://salon?commande=lire&amp;source=file:///srv/sons/annonce.ogg</action></button>\"}]},\"exemple_minimal\":\"<window title=\\\"Nom\\\"><vbox><text><label>Votre nom :</label></text><entry><variable>NOM</variable></entry><hbox><button cancel></button><button ok></button></hbox></vbox></window>\",\"sortie\":\"À la fermeture, chaque widget nommé émet NOM=\\\"valeur\\\" sur stdout (échappé pour eval), puis EXIT=\\\"…\\\" (le bouton cliqué). Préférer --do : les valeurs arrivent par l'environnement, jamais relues comme du code.\",\"voir\":\"sermoman-mcp sert le manuel complet (attributs de chaque widget). sermo_examples sert des dialogues validés.\"}";
+
+static const char *schema_texte(void)
+{
+    static gchar *texte = NULL;
+    if (texte) return texte;
+    JsonParser *ps = json_parser_new(), *pc = json_parser_new();
+    if (!json_parser_load_from_data(ps, (const gchar *)SCHEMA_EMBARQUE, -1, NULL)
+        || !json_parser_load_from_data(pc, COMPLEMENT_JSON, -1, NULL)) {
+        g_object_unref(ps); g_object_unref(pc);
+        return "{\"erreur\":\"schéma embarqué illisible\"}";
+    }
+    JsonObject *schema = json_node_get_object(json_parser_get_root(ps));
+    JsonObject *comp = json_node_get_object(json_parser_get_root(pc));
+    JsonObjectIter it; const gchar *k; JsonNode *v;
+    json_object_iter_init(&it, comp);
+    while (json_object_iter_next(&it, &k, &v))
+        json_object_set_member(schema, k, json_node_copy(v));
+    JsonGenerator *gen = json_generator_new();
+    json_generator_set_root(gen, json_parser_get_root(ps));
+    texte = json_generator_to_data(gen, NULL);
+    g_object_unref(gen); g_object_unref(ps); g_object_unref(pc);
+    return texte;
+}
 
 /* ─── Lancer un processus, avec délai ─────────────────────────────────────────
  * GSubprocess : l'entrée standard de l'enfant est /dev/null (jamais le canal
@@ -339,11 +338,22 @@ static JsonObject *tool_run(const char *xml, guint delai)
     if (!f) { dossier_effacer(dir, NULL); return tool_text_result("Impossible d'écrire le XML dans un dossier temporaire.", TRUE); }
     gchar *fa = g_strdup_printf("--file=%s", f);
     const char *argv[] = { bin, fa, NULL };
+    /* Fermé par défaut (3.2.0) : sans SERMO_ALLOWED_CMDS dans l'environnement du
+     * serveur, le dialogue s'affiche mais aucune commande du XML ne part (même
+     * barrière que sermo_render). Une liste posée est transmise telle quelle. */
+    const char *liste = g_getenv("SERMO_ALLOWED_CMDS");
+    gboolean ferme = !liste || !*liste;
+    const char *env_ferme[] = { "SERMO_ALLOWED_CMDS", AUCUNE_COMMANDE, NULL };
     Resultat r;
-    lancer(argv, NULL, delai, &r);
+    lancer(argv, ferme ? env_ferme : NULL, delai, &r);
     const char *fichiers[] = { "dialogue.xml", NULL };
     dossier_effacer(dir, fichiers);
     g_free(fa); g_free(f);
+    const char *note = ferme
+        ? "Commandes du XML BLOQUÉES (<input>, <action>) : le serveur n'a pas SERMO_ALLOWED_CMDS. "
+          "Pour les permettre, poser dans l'environnement du serveur la liste des commandes "
+          "dont le dialogue a besoin (voir SECURITY.md).\n"
+        : "Commandes du XML permises selon la liste SERMO_ALLOWED_CMDS du serveur.\n";
 
     JsonObject *res;
     if (!r.lance) {
@@ -357,7 +367,7 @@ static JsonObject *tool_run(const char *xml, guint delai)
     } else {
         gchar *diag = diagnostic_utile(r.err);
         gboolean valeurs = r.out && *r.out;
-        GString *g = g_string_new(NULL);
+        GString *g = g_string_new(note);
         if (valeurs) g_string_append(g, r.out);
         else         g_string_append(g, "(aucune valeur exportée)\n");
         if (!(r.sorti && r.code == 0))
@@ -824,8 +834,9 @@ static JsonArray *tools_list(void)
 
     s = outil(a, "sermo_run", "Montrer un dialogue à l'utilisateur",
           "Ouvre le dialogue dans une vraie fenêtre, attend que l'utilisateur le ferme et renvoie "
-          "ses valeurs (lignes NOM=\"valeur\", puis EXIT=\"…\"). Les commandes du XML S'EXÉCUTENT "
-          "(<input>, <action>) : ne l'appeler qu'avec l'accord de l'utilisateur, sur un XML "
+          "ses valeurs (lignes NOM=\"valeur\", puis EXIT=\"…\"). Les commandes du XML (<input>, "
+          "<action>) sont BLOQUÉES sauf si le serveur a une liste SERMO_ALLOWED_CMDS ; la réponse "
+          "dit lequel des deux. Ne l'appeler qu'avec l'accord de l'utilisateur, sur un XML "
           "vérifié. Demande un affichage.",
           FALSE, TRUE, TRUE);
     prop(props_de(s), "xml", "string", desc_xml);
@@ -890,7 +901,7 @@ static JsonObject *tool_call(const char *name, JsonObject *args)
     if (besoin_xml && (!xml || !*xml))
         return tool_text_result("Argument 'xml' manquant ou vide (une chaîne : le dialogue, racine <window>).", TRUE);
 
-    if (g_strcmp0(name, "sermo_schema") == 0) return tool_text_result(SCHEMA_JSON, FALSE);
+    if (g_strcmp0(name, "sermo_schema") == 0) return tool_text_result(schema_texte(), FALSE);
     if (g_strcmp0(name, "sermo_check") == 0) {
         gboolean ir = FALSE;
         arg_bool(args, "ir", &ir);
@@ -959,7 +970,8 @@ static const char *INSTRUCTIONS =
     "1) sermo_schema une fois ; 2) sermo_examples avec ce que le dialogue doit faire ; "
     "3) écrire le XML ; 4) sermo_check, corriger jusqu'à « OK » ; 5) sermo_render pour voir "
     "la mise en page ; 6) sermo_run seulement si l'utilisateur veut l'essayer — c'est le seul "
-    "outil qui exécute les commandes du XML. Après usage d'un exemple, sermo_vote.";
+    "outil qui peut exécuter les commandes du XML, et seulement si le serveur a une liste "
+    "SERMO_ALLOWED_CMDS (sinon elles sont bloquées). Après usage d'un exemple, sermo_vote.";
 
 static void traiter(const char *ligne, gsize n)
 {

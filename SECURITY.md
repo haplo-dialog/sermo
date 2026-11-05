@@ -234,9 +234,18 @@ commande qui lance un **programme d'aide** :
   « accepté ». Une seule tentative, jamais répétée.
 - **Pas de signature MAVLink** : rien n'authentifie les messages, et un autre
   appareil sur la même liaison peut parler au drone.
-- **Aucun pilotage** : armer, décoller, changer de mode ou diriger le drone
-  n'est pas dans cette version (prévu pour plus tard), hors retour au départ
-  et atterrissage de sécurité (`rtl`, `land`, ci-dessus).
+- **Pilotage, seulement si la liste blanche le permet** (3.2.0, ArduPilot
+  Copter) : une ligne `pilotage lat … lon … rayon … hauteur … decollage …
+  modes …` ouvre `pilote=armer|desarmer|decoller`, `pilote=mode&mode=…`
+  (GUIDED, LOITER, POSHOLD, BRAKE, RTL, SMART_RTL, LAND ; jamais STABILIZE,
+  ACRO, ALT_HOLD, AUTO) et `pilote=aller&lat=…&lon=…&hauteur=…` (en GUIDED).
+  Chaque ordre demande **deux appuis**, part moins de 2,5 s après le clic
+  (3,5 s pour désarmer), exige la barrière de l'autopilote active et pas plus
+  large que celle de la liste, le drone dedans, et un état relu de moins de
+  0,5 s ; armer et décoller ne se font qu'au sol, jamais forcés. Refus si une
+  autre station, un autre autopilote ou des messages signés sont vus. Le
+  télépilote reste responsable du vol : sermo n'est pas une station sol
+  certifiée.
 
 ### Son et vidéo (`sermo-cible-media`, `sermo-source-media`)
 
@@ -259,8 +268,23 @@ commande qui lance un **programme d'aide** :
   forcée. Sans bwrap, comme un fichier local : pas de cage, un message le dit.
 - **Identifiants HTTP(S)** : `identifiants=` désigne un fichier à vous, en mode
   exactement `600`. Le programme écrit l'en-tête dans un autre fichier `600`,
-  passé à mpv par `--include=`, puis effacé. RTSP avec mot de passe : refusé
-  (mpv ne le lirait que dans l'adresse, donc en argument).
+  passé à mpv par `--include=`, puis effacé.
+- **Identifiants RTSP(S)** (3.2.0) : même fichier. mpv démarre en
+  `--idle=once`, sans source ; l'adresse `rtsp://u:p@…` (utilisateur et mot de
+  passe encodés « pour cent ») n'existe qu'en mémoire, part par `loadfile` sur
+  le socket `600`, puis est effacée (`explicit_bzero`). Mesuré : 0 occurrence
+  dans les arguments et l'environnement de bwrap et de mpv, ni dans les
+  fichiers du lecteur. Limite : mpv garde l'adresse en mémoire, et sa propriété
+  `path` la rend à qui parle au socket (vous seul, `600`).
+- **Photo et vidéo** (3.2.0, caméra en cours seulement) : chemin absolu
+  normalisé (ni `..`, ni `.`, ni `//`), extension fermée (`.jpg`, `.png` ;
+  `.mkv`), dossier à vous sans écriture pour le groupe ni les autres, fichier
+  créé par `O_EXCL` en `600` (jamais écrasé, jamais suivi par un lien). mpv
+  l'écrit d'abord dans le dossier privé du lecteur (`700`, en mémoire), d'où il
+  est recopié puis effacé. Vidéo : 1 à 600 s, « ENREGISTREMENT » dans le titre
+  et l'image. La confirmation (chemin et durée montrés) est à la charge du
+  dialogue : le programme d'aide ne peut pas savoir qu'elle a eu lieu
+  (exemple `camera-capture`).
 - **Options de mpv** : `--no-config`, `--no-terminal`, `--idle=no`,
   `--ytdl=no`, `--load-scripts=no`, `--load-auto-profiles=no`,
   `--input-default-bindings=no`, `--load-unsafe-playlists=no`,
@@ -298,6 +322,13 @@ commande qui lance un **programme d'aide** :
 - **La cage donne l'accès à l'affichage (X11, Wayland) et au son.** Un mpv
   compromis pourrait s'en servir. Sous X11, cela vaut déjà sans incrustation :
   X11 ne sépare pas les fenêtres d'un même écran, `--wid` n'ajoute pas d'accès.
+- **Image dans la zone (3.2.0, `dans=zone`)** : le décodeur est
+  `sermo-media-images` (libmpv, rendu logiciel) dans la même cage, **sans aucun
+  montage ni variable d'écran**. La zone gtk3 lit son fichier d'images comme une
+  donnée non fiable : fichier ordinaire à vous en `600`, en-tête borné (taille
+  au plus 1280x720, pas = largeur × 4, tampon 0 ou 1, taille du fichier
+  suffisante), lecture par `pread` (jamais `mmap`). Banc
+  `garde_zone_images.sh` : 9 fichiers hostiles.
 - **Sockets de session : corrigé en 3.1.2.** Jusqu'à la 3.1.1, le bus D-Bus de
   session et les autres sockets de `/run/user/<uid>` restaient joignables dans
   la cage (mesuré : `--ro-bind / /` n'empêche pas `connect()`). Depuis la 3.1.2,
@@ -385,6 +416,10 @@ la clé publique vient du site, et une clé remplacée sur le site ne le serait
 pas partout à la fois. Ce qui est signé, c'est la liste des sommes : les `.deb`
 ne sont pas signés un par un, et il n'y a pas de dépôt apt (donc pas de dépôt
 signé). Commande complète : [README.md](README.md#installer).
+
+La même clé est aussi dans le dépôt, à la racine (`cle-haplo-dialog.asc`, à partir de
+la 3.2.0) : un clone de GitLab ou de GitHub la donne sans passer par le site.
+Les deux fichiers doivent être identiques (`cmp`), et l'empreinte la même.
 
 ## Hors de Linux : ce qui change
 

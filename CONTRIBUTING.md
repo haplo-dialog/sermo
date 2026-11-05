@@ -83,7 +83,7 @@ Debian testing avec les paquets de [`ci/dependances.txt`](ci/dependances.txt) :
 
 ```sh
 bash ci/construire.sh      # le cœur et les neuf backends (ou quelques-uns : ci/construire.sh qt6 ncurses)
-bash ci/bancs.sh           # tous les bancs ; un journal par banc dans _journaux/
+bash ci/bancs.sh           # tous les bancs ; un journal par banc dans _journaux/bancs/, les chiffres dans _journaux/bilan.json
 ```
 
 `ci/construire.sh` construit aussi, à chaque fois, le serveur `sermoia-mcp` et
@@ -94,7 +94,10 @@ demandés.
 `ci/bancs.sh` joue tout avant de conclure, affiche une ligne par banc, et rend 1
 dès qu'un banc est rouge, figé, ou n'a rien vérifié. Il contrôle aussi qu'aucun
 chemin personnel (`/home/<vous>/`) ni en-tête d'horodatage de poste n'entre dans
-le dépôt.
+le dépôt. À la fin, `ci/bilan-json.sh` pose les chiffres de tous les bancs dans
+`_journaux/bilan.json` (et sur une ligne `BILAN-JSON:` de la trace) ; c'est de là
+que `ci/bilan-md.sh` réécrit le tableau de `BILAN_SANTE.md` et que le site prend
+« Ce que les bancs vérifient » — personne ne recopie un chiffre.
 
 ## Où va le code
 

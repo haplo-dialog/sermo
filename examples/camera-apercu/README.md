@@ -48,10 +48,10 @@ Codes de sortie :
 ## Installer
 
 ```sh
-sudo apt install ffmpeg curl bubblewrap
+sudo apt install ffplay curl bubblewrap
 ```
 
-`ffmpeg` fournit `ffplay` (obligatoire). `curl` sert seulement pour une caméra HTTP(S) à mot de passe.
+`ffplay` est obligatoire (paquet à part depuis ffmpeg 7:9 ; avant, il venait avec `ffmpeg`). `curl` sert seulement pour une caméra HTTP(S) à mot de passe.
 `bubblewrap` (la commande `bwrap`) est facultatif : il isole le lecteur (voir « Bac à sable »).
 
 ## Les règles
@@ -78,7 +78,9 @@ printf 'camera:motdepasse\n' > ~/.config/camera-salon.id && chmod 600 ~/.config/
 
 Avec `bwrap` (`CA_BAC=auto`, par défaut), `ffplay` voit le système en lecture seule, **seulement le nœud
 `/dev/videoN` choisi**, et pas de réseau pour une caméra locale. `CA_BAC=require` refuse sans `bwrap`
-(code 2), `CA_BAC=off` le désactive. L'état est affiché à côté de « CAMÉRA ACTIVE ».
+(code 2), `CA_BAC=off` le désactive. L'état est affiché à côté de « CAMÉRA ACTIVE ». Là où `bwrap` est
+installé mais n'a pas le droit de créer ses espaces de noms (un conteneur sous seccomp ou AppArmor),
+`auto` le dit et joue sans bac ; `require` refuse.
 
 ## Ce que l'exemple garantit (testé par `tests/garde_camera_apercu.sh`)
 

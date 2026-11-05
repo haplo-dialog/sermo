@@ -83,7 +83,7 @@ with the packages listed in [`ci/dependances.txt`](ci/dependances.txt):
 
 ```sh
 bash ci/construire.sh      # the core and the nine backends (or a few: ci/construire.sh qt6 ncurses)
-bash ci/bancs.sh           # every bench; one log per bench in _journaux/
+bash ci/bancs.sh           # every bench; one log per bench in _journaux/bancs/, the figures in _journaux/bilan.json
 ```
 
 `ci/construire.sh` also builds, every time, the `sermoia-mcp` server and the
@@ -93,7 +93,10 @@ the light variant of lvgl when lvgl is among the requested ports.
 `ci/bancs.sh` runs everything before concluding, prints one line per bench, and
 returns 1 as soon as a bench is red, hung, or verified nothing. It also checks
 that no personal path (`/home/<you>/`) or workstation timestamp header enters
-the repository.
+the repository. At the end, `ci/bilan-json.sh` puts the figures of every bench
+in `_journaux/bilan.json` (and on one `BILAN-JSON:` line of the trace); that is
+where `ci/bilan-md.sh` rewrites the table of `BILAN_SANTE.md` and where the
+website takes "What the benches check" from — nobody copies a figure by hand.
 
 ## Where code goes
 

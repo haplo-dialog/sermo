@@ -112,13 +112,14 @@ override_dh_auto_install:
 	# Les scripts métier (examples/metiers) et les boîtes à outils
 	# (examples/boites-a-outils) : exemples ET test de réussite des ports,
 	# jouables sur une machine où sermo est installé.
+	install -D -m 0644 sermo.schema.json debian/sermo-doc/usr/share/doc/sermo-doc/sermo.schema.json
 	mkdir -p debian/sermo-doc/usr/share/doc/sermo-doc/examples
 	cp -a examples/metiers examples/boites-a-outils debian/sermo-doc/usr/share/doc/sermo-doc/examples/
 	# Lire un automate en lecture seule (Modbus par mbpoll, OPC UA par un petit
 	# client C à compiler) : les SOURCES seulement, fichier par fichier — un
 	# opcua-lire ou un faux-serveur-opcua compilé sur le poste n'entre pas.
 	set -e; for f in modbus/faux-automate.py modbus/modbus-lecture.sh opcua/certificats-essai.sh \
-	    opcua/opcua-lecture.sh mavlink/faux-drone.py mavlink/drone-lecture.sh mavlink/drone-commande.sh; do \
+	    opcua/opcua-lecture.sh mavlink/faux-drone.py mavlink/drone-lecture.sh mavlink/drone-commande.sh mavlink/drone-pilotage.sh; do \
 	    install -D -m 0755 examples/$$f debian/sermo-doc/usr/share/doc/sermo-doc/examples/$$f; \
 	done
 	set -e; for f in opcua/Makefile opcua/faux-serveur-opcua.c opcua/opcua-lire.c \
@@ -128,7 +129,7 @@ override_dh_auto_install:
 	# Les exemples prêts à l'emploi de la 3.1.0 (réseau, domotique, son et vidéo,
 	# matériel…) : leurs fichiers seulement, les scripts exécutables ; jamais un
 	# imgui.ini laissé par un essai du port sdl3.
-	set -e; for d in approbation bluetooth-scan bus-can camera-apercu certificat-tls dns-testeur \
+	set -e; for d in approbation bluetooth-scan bus-can camera-apercu camera-capture certificat-tls dns-testeur \
 	    domotique-mqtt gnss-moniteur heure-ntp journal-direct lecteur-media liaison-serie \
 	    reseau-testeur usb-moniteur wifi-scan; do \
 	    find examples/$$d -type f ! -name imgui.ini | while read -r f; do \
@@ -148,6 +149,9 @@ override_dh_auto_install:
 	# Le lecteur son/vidéo : son état d'un côté, ses commandes de l'autre.
 	install -D -m 0755 $(B)/source/sermo-source-media debian/sermo-source-media/usr/libexec/sermo/sermo-source-media
 	install -D -m 0755 $(B)/source/sermo-cible-media debian/sermo-cible-media/usr/libexec/sermo/sermo-cible-media
+	# L'image dans la zone du dialogue (dans=zone) : libmpv, rendu logiciel,
+	# lancé dans la cage à la place de mpv ; à côté de sermo-cible-media.
+	install -D -m 0755 $(B)/source/sermo-media-images debian/sermo-cible-media/usr/libexec/sermo/sermo-media-images
 	# sermoia-mcp : binaire et catalogue (règles d'installation de son CMake).
 	dh_auto_install --sourcedirectory=sermoia-mcp --builddirectory=$(B)/sermoia --destdir=debian/sermoia-mcp
 	sed 's/@PACKAGE_VERSION@/$(DEB_VERSION_UPSTREAM)/' sermoia-mcp/sermoia-mcp.1.in > $(B)/sermoia-mcp.1

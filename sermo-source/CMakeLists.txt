@@ -13,10 +13,11 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(MODBUS IMPORTED_TARGET libmodbus)
 pkg_check_modules(OPEN62541 IMPORTED_TARGET open62541)
 pkg_check_modules(MOSQUITTO IMPORTED_TARGET libmosquitto)
+pkg_check_modules(LIBMPV IMPORTED_TARGET mpv)
 
 # ON (CI, paquets) : une bibliothèque absente arrête la construction au lieu
 # de sauter son programme d'aide.
-option(SERMO_SOURCE_EXIGER "libmodbus, open62541 et libmosquitto obligatoires" OFF)
+option(SERMO_SOURCE_EXIGER "libmodbus, open62541, libmosquitto et libmpv obligatoires" OFF)
 
 # Même durcissement que les ports et sermoia-mcp. Absent jusqu'à la 3.0.0
 # comprise : garde_durcissement.sh, joué pour la première fois sur les
@@ -85,6 +86,19 @@ endif()
 add_executable(sermo-source-media sermo-source-media.c media-commun.c commun.c)
 add_executable(sermo-cible-media sermo-cible-media.c media-commun.c commun.c)
 list(APPEND construits sermo-source-media sermo-cible-media)
+# L'image DANS la zone du dialogue (dans=zone, Wayland) : libmpv rend en
+# logiciel dans un fichier que lit la zone ; lancé dans la cage à la place de
+# mpv, sans accès à l'écran.
+if(LIBMPV_FOUND)
+  add_executable(sermo-media-images sermo-media-images.c)
+  target_include_directories(sermo-media-images PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../libsermocore/include)
+  target_link_libraries(sermo-media-images PRIVATE PkgConfig::LIBMPV)
+  list(APPEND construits sermo-media-images)
+elseif(SERMO_SOURCE_EXIGER)
+  message(FATAL_ERROR "libmpv absente (paquet libmpv-dev)")
+else()
+  message(WARNING "libmpv absente : sermo-media-images n'est PAS construit (paquet libmpv-dev) ; dans=zone indisponible")
+endif()
 
 # <input mavlink> : en-têtes C de MAVLink embarqués (tiers/mavlink, MIT ; voir
 # son LISEZMOI). Aucune bibliothèque à trouver : toujours construit. SYSTEM :

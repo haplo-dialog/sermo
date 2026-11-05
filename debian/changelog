@@ -1,3 +1,49 @@
+sermo (3.2.0-1) unstable; urgency=medium
+
+  * Nouvelle version amont 3.2.0 : le pilotage de drone, la photo et la vidéo
+    d'une caméra, le langage lu dans le code.
+  * <action mavlink> pilote= : armer, décoller à la hauteur de la liste,
+    changer de mode (GUIDED, LOITER, POSHOLD, BRAKE, RTL, SMART_RTL, LAND ;
+    jamais STABILIZE, ACRO, ALT_HOLD ni AUTO), désarmer une fois posé, un
+    ArduPilot Copter ; ligne « pilotage » de la liste blanche (barrière,
+    hauteur de décollage, modes) ; deux appuis par ordre, 2,5 s au plus
+    du clic à l'envoi (3,5 s pour désarmer), état frais, barrières de
+    sermo et de l'autopilote ; refus si autre station, autre autopilote
+    ou messages signés.
+  * pilote=aller : aller à un point de la barrière, drone déjà en GUIDED,
+    hauteur au-dessus du départ ; succès sur la cible relue sur le drone.
+  * sermo-doc : un tableau de pilotage, avec le rappel de responsabilité ;
+    SECURITY fr/en : « Aucun pilotage » remplacé par ce que le pilotage
+    permet et refuse.
+  * <action media> : photo et vidéo d'une caméra (commande=photo,
+    enregistrer, couper), dans un fichier jamais écrasé, en 600 ; nouvel
+    exemple camera-capture, qui montre le chemin et la durée avant
+    d'écrire.
+  * <action media> : RTSP à mot de passe ; l'adresse passe par le socket
+    privé de mpv, jamais en argument ; clé transport=tcp|udp.
+  * qt6 : <drawingarea embed="true"> accueille la vidéo, comme gtk3.
+  * gtk3 sous Wayland : <drawingarea embed="true" media="NOM"> ; l'image est
+    rendue par sermo-media-images (libmpv, dans la cage, sans accès à
+    l'écran) et peinte par la zone. Dépendance de construction libmpv-dev.
+  * sermoia-mcp, CHANGEMENT DE COMPORTEMENT : sermo_run est fermé par
+    défaut ; sans SERMO_ALLOWED_CMDS dans l'environnement du serveur, aucune
+    commande du XML (<input>, <action>) ne part, et la réponse le dit.
+  * sermoia-mcp : sermo_schema sert sermo.schema.json, le langage XML lu
+    dans le code (outils/schema/generer.py, tenu par un banc), embarqué au
+    build ; sermo-doc installe ce fichier
+    (/usr/share/doc/sermo-doc/sermo.schema.json).
+  * En-têtes MAVLink embarqués rafraîchis (c_library_v2 a2d0ecf, 28 oct.) ;
+    debian/copyright suit.
+  * Exemple camera-apercu : ffplay est un paquet à part depuis ffmpeg 7:9
+    (messages et README : apt install ffplay) ; quand bwrap est installé mais
+    privé de ses espaces de noms, CA_BAC=auto le dit et joue sans bac.
+  * Bancs : un verdict par banc et les chiffres de tous les bancs dans
+    _journaux/bilan.json (ci/bilan-json.sh), tableau de BILAN_SANTE.md
+    généré (ci/bilan-md.sh) ; banc de publication pour la copie MAVLink
+    (garde_mavlink_amont.sh) et pour les badges des README (garde_badges.sh).
+
+ -- s.cage <devel@haplo-dialog.fr>  Wed, 04 Nov 2026 21:10:50 +0100
+
 sermo (3.1.2-2) unstable; urgency=medium
 
   * Documentation relue une seconde fois contre le code, en français et en

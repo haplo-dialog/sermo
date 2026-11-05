@@ -102,8 +102,10 @@ only: console, command launching, an object built without the shim), plus
 
 ## 3. The core ↔ backend boundary
 
-The contract is declared in `sermo_backend.h` (installed with the library). The
-core **calls**, the backend **provides**:
+`sermo_backend.h` (installed with the library) now declares only
+`sermo_backend_toolkit_init`; the contract itself — the `sermo_be_*` functions and
+their opaque types — lives in `contract/sermo-contract.h`. The core **calls**, the
+backend **provides**:
 
 - **`sermo_backend_toolkit_init(int *argc, char ***argv, int print_ir)`** — the
   backend initialises its toolkit (`gtk_init`, `QApplication`, `SDL_Init`…),
@@ -118,7 +120,7 @@ core **calls**, the backend **provides**:
   `qt6_*` → `sermo_be_*` rename is done).
 - **Port identity** (optional): `sermo_port_name` and `sermo_port_details`, two
   **weak** symbols declared by the core. Without them, `--version` prints the
-  core's name — which is why all seven ports used to announce themselves as
+  core's name — which is why all the ports used to announce themselves as
   "sermocore". The simplest route is to compile `contract/sermo_port_id.c` into
   the port, passing it `SERMO_PORT_NAME` and `SERMO_PORT_VERSION` (the
   `CMakeLists.txt` files already do). ⚠️ The `--version` line has a fixed shape:
@@ -227,7 +229,12 @@ modbus|opcua|mqtt|mavlink>`, `<action mqtt|mavlink>` on click only, `--do`,
 clicking and the real opening of the `examples/` scripts (the masked password
 for ncurses; neither clicks nor examples for html, which opens no window), the
 behaviour on every built port, the two `sermoman-mcp` benches, the job scripts
-and the `sermoia-mcp` one. The CI (`.gitlab-ci.yml`, and its twin
+and the `sermoia-mcp` one. At the end of the run, `ci/bilan-json.sh` reads the
+logs and puts each bench's figures, port by port, in `_journaux/bilan.json`
+(verdicts in `_journaux/bancs/verdicts.tsv`) and on one `BILAN-JSON:` line of
+the trace; `ci/bilan-md.sh` rewrites from it the "Par backend" table of
+[BILAN_SANTE.md](BILAN_SANTE.md) (French only), and the website takes "What the benches
+check" from it: a figure has one source. The CI (`.gitlab-ci.yml`, and its twin
 `.github/workflows/bancs.yml`) calls, to build and test, nothing but these two
 scripts, in a Debian testing fitted with `ci/dependances.txt` (the rest of the
 recipe installs the dependencies and the French locale): what it sees replays

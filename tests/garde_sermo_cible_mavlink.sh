@@ -27,6 +27,10 @@
 # d'autres, lien symbolique, chemin relatif, pas de ligne « mission », ligne
 # mission hors bornes, drone armé, autre station : rien n'est envoyé ; une
 # mission permise passe toutes les gardes (le faux drone ne répond pas : « s'est tu »).
+# ALLER À : clés manquantes ou en trop, nombres faux, point ou hauteur hors
+# barrière, premier appui, autre point, drone au sol, hors GUIDED, barrière de
+# l'autopilote coupée : rien n'est envoyé ; sinon la cible part une fois, en
+# cadre 6 avec le masque 0x0DF8.
 #
 # Usage : garde_sermo_cible_mavlink.sh [racine du dépôt]
 # Codes : 0 = tout tient · 1 = un défaut · 2 = outil ou programme manquant
@@ -68,9 +72,21 @@ trap 'for p in "${PIDS[@]}"; do kill "$p" 2>/dev/null; done; wait 2>/dev/null; r
 mkdir -m 700 "$T/run"; export XDG_RUNTIME_DIR="$T/run"
 
 B=$((20000 + $$ % 20000)); PD=$B; PA=$((B + 1)); PI=$((B + 2)); PM=$((B + 3)); PX=$((B + 4))
+# Pilotage : des faux drones qui RÉPONDENT aux lectures (barrière, état au sol,
+# position), en GUIDED, chacun avec un défaut.
+PG=$((B + 5)); PGA=$((B + 6)); PGC=$((B + 7)); PGL=$((B + 8)); PGX=$((B + 9)); PGS=$((B + 10)); PGM=$((B + 11))
+PGV=$((B + 12))   # armé, en vol, en LOITER (5)
 python3 -I "$DRONE" --tcp "$PD" --journal "$T/j-desarme" >"$T/d.log" 2>&1 & PIDS+=($!)
 python3 -I "$DRONE" --tcp "$PA" --arme --journal "$T/j-arme" >"$T/a.log" 2>&1 & PIDS+=($!)
 python3 -I "$DRONE" --tcp "$PI" --intrus --journal "$T/j-intrus" >"$T/i.log" 2>&1 & PIDS+=($!)
+python3 -I "$DRONE" --tcp "$PG" --repond --mode 4 --journal "$T/j-guided" >"$T/g.log" 2>&1 & PIDS+=($!)
+python3 -I "$DRONE" --tcp "$PGA" --repond --mode 4 --arme --journal "$T/j-guided-arme" >"$T/ga.log" 2>&1 & PIDS+=($!)
+python3 -I "$DRONE" --tcp "$PGC" --repond --mode 4 --barriere-coupee --journal "$T/j-coupee" >"$T/gc.log" 2>&1 & PIDS+=($!)
+python3 -I "$DRONE" --tcp "$PGL" --repond --mode 4 --lent --journal "$T/j-lent" >"$T/gl.log" 2>&1 & PIDS+=($!)
+python3 -I "$DRONE" --tcp "$PGX" --repond --mode 4 --px4 --journal "$T/j-px4" >"$T/gx.log" 2>&1 & PIDS+=($!)
+python3 -I "$DRONE" --tcp "$PGS" --repond --mode 4 --signe --journal "$T/j-signe" >"$T/gs.log" 2>&1 & PIDS+=($!)
+python3 -I "$DRONE" --tcp "$PGM" --repond --mode 4 --arme --sol --journal "$T/j-menteur" >"$T/gm.log" 2>&1 & PIDS+=($!)
+python3 -I "$DRONE" --tcp "$PGV" --repond --mode 5 --arme --journal "$T/j-loiter" >"$T/gv.log" 2>&1 & PIDS+=($!)
 # Lien muet : accepte la connexion TCP, n'envoie rien.
 python3 -I -c '
 import socket,sys
@@ -78,10 +94,10 @@ s=socket.socket(); s.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
 s.bind(("127.0.0.1",int(sys.argv[1]))); s.listen(16); c=[]
 while True: c.append(s.accept()[0])' "$PM" >/dev/null 2>&1 & PIDS+=($!)
 for i in $(seq 1 100); do
-    n=0; for p in $PD $PA $PI $PM; do (exec 3<>/dev/tcp/127.0.0.1/$p) 2>/dev/null && n=$((n + 1)); done
-    [ $n = 4 ] && break; sleep 0.1
+    n=0; for p in $PD $PA $PI $PM $PG $PGA $PGC $PGL $PGX $PGS $PGM $PGV; do (exec 3<>/dev/tcp/127.0.0.1/$p) 2>/dev/null && n=$((n + 1)); done
+    [ $n = 12 ] && break; sleep 0.1
 done
-[ $n = 4 ] || { echo "faux drones pas prêts"; tail -3 "$T"/*.log; exit 2; }
+[ $n = 12 ] || { echo "faux drones pas prêts"; tail -3 "$T"/*.log; exit 2; }
 
 echecs=0
 ko() { echo "ECHEC : $*"; echecs=$((echecs + 1)); }
@@ -116,7 +132,10 @@ jouer() {
     RC=$(cat "$T/rc" 2>/dev/null || echo ?)
 }
 # Les commandes (écritures) qu'a reçues un faux drone, tous cas confondus.
-commandes() { grep -c -x -e PARAM_SET -e COMMAND_LONG -e COMMAND_INT -e MISSION_COUNT -e MISSION_ITEM_INT -e MISSION_ITEM -e MISSION_CLEAR_ALL "$1" 2>/dev/null; }
+# Écritures reçues : tout sauf les LECTURES (PARAM_REQUEST_READ,
+# MAV_CMD_REQUEST_MESSAGE = COMMAND_LONG:512).
+commandes() { grep -E -x 'PARAM_SET|COMMAND_LONG:[0-9]+|COMMAND_INT|MISSION_COUNT|MISSION_ITEM_INT|MISSION_ITEM|MISSION_CLEAR_ALL|SET_POSITION_TARGET_GLOBAL_INT|SET_POSITION_TARGET_LOCAL_NED' "$1" 2>/dev/null \
+    | grep -c -v -x 'COMMAND_LONG:512'; }
 # Commandes reçues, tous drones ; BASE : celles envoyées EXPRÈS avant (la
 # coupure en deux appuis), que les refus suivants ne doivent pas augmenter.
 total_commandes() { local nb=0 j; for j in "$T"/j-*; do nb=$((nb + $(commandes "$j"))); done; echo $nb; }
@@ -142,7 +161,7 @@ jouer "$L" - 600 - "$D?parametre=WP_SPD&valeur=vite";            refuse "valeur 
 jouer "$L" - 600 - "$D?parametre=RTL_ALT&valeur=20";             refuse "paramètre hors liste refusé" "pas dans la liste"
 jouer "$L" - 600 - "$D?ordre=land";                              refuse "ordre hors liste refusé" "pas dans la liste"
 jouer "$L" - 600 - "$D?ordre=decoller";                          refuse "ordre inconnu refusé" "ordre inconnu"
-jouer "$L" - 600 - "$D?ordre=rtl&parametre=WP_SPD&valeur=5";     refuse "paramètre ET ordre refusés" "OU mission"
+jouer "$L" - 600 - "$D?ordre=rtl&parametre=WP_SPD&valeur=5";     refuse "paramètre ET ordre refusés" "OU pilote"
 jouer "$L" - 600 - "$D?parametre=wp_spd&valeur=5";               refuse "nom de paramètre invalide refusé" "invalide"
 jouer "$L" - 644 - "$D?parametre=WP_SPD&valeur=5";               refuse "liste personnelle lisible par d'autres : refus" "refusée"
 jouer - "$L" - 664 "$D?parametre=WP_SPD&valeur=5";               refuse "liste système modifiable par d'autres : refus" "refusée"
@@ -249,7 +268,7 @@ jouer "ordre rtl
 " - 600 - "$D?mission=$MI/bon";                                refuse "mission : sans ligne « mission », refus" "pas dans la liste"
 jouer "mission rayon 500 hauteur 150
 " - 600 - "$D?mission=$MI/bon";                                refuse "mission : ligne au-delà de 120 m, liste refusée" "mal formée"
-jouer "$LM" - 600 - "$D?mission=$MI/bon&ordre=rtl";            refuse "mission ET ordre refusés" "OU mission"
+jouer "$LM" - 600 - "$D?mission=$MI/bon&ordre=rtl";            refuse "mission ET ordre refusés" "OU pilote"
 jouer "$LM" - 600 - "tcp://127.0.0.1:$PA?mission=$MI/bon";     refuse "mission : drone ARMÉ, refus" "ARMÉ"
 jouer "$LM" - 600 - "tcp://127.0.0.1:$PI?mission=$MI/bon";     refuse "mission : une station sol parle, refus" "station sol parle déjà"
 # Toutes les gardes passées : l'envoi commence (une annonce MISSION_COUNT), le
@@ -259,6 +278,148 @@ apres=$(grep -c -x MISSION_COUNT "$T/j-desarme")
 [ "$RC" = 1 ] && [ "$apres" = 1 ] && [ "$(commandes "$T/j-desarme")" = $((avant + 1)) ] && grep -q "s'est tu" "$T/err" \
     && ok "mission permise : toutes les gardes passées, une seule annonce, pas de nouvel essai" \
     || ko "mission permise : code $RC, $apres annonce(s), $(cat "$T/err")"
+
+# 6. PILOTAGE (faux drones en GUIDED à 45.1234567 N 5.7654321 E, 30 m de haut).
+BASE=$(total_commandes)
+LP="pilotage lat 45.1234 lon 5.7654 rayon 300 hauteur 120 decollage 20 modes 4,5,6,9
+"
+G="tcp://127.0.0.1:$PG"
+# deux_appuis LISTE ADRESSE : premier appui (rien), puis le second, dans les 5 s.
+deux_appuis() {  # deux_appuis LISTE ADRESSE [VAR=valeur…]
+    local l=$1 ad=$2; shift 2
+    jouer "$l" - 600 - "$ad" "$@"; grep -q "appuyer encore" "$T/err" || { echo "  (premier appui : $(cat "$T/err"))"; }
+    jouer "$l" - 600 - "$ad" "$@"
+}
+jouer "ordre rtl
+" - 600 - "$G?pilote=armer";                                  refuse "pilotage : sans ligne « pilotage », refus" "pilotage n'est pas dans la liste"
+jouer "pilotage lat 45.1234 lon 5.7654 rayon 300 hauteur 120 decollage 150 modes 4
+" - 600 - "$G?pilote=armer";                                  refuse "pilotage : décollage plus haut que la hauteur, liste refusée" "mal formée"
+jouer "pilotage lat 45.1234 lon 5.7654 rayon 300 hauteur 150 decollage 20 modes 4
+" - 600 - "$G?pilote=armer";                                  refuse "pilotage : hauteur au-delà de 120 m, liste refusée" "mal formée"
+jouer "pilotage lat 45.1234 lon 5.7654 rayon 300 hauteur 120 decollage 20 modes 4,0
+" - 600 - "$G?pilote=armer";                                  refuse "pilotage : STABILIZE (0) dans la liste, liste refusée" "mal formée"
+jouer "pilotage lat 45.1234 lon 5.7654 rayon 300 hauteur 120 decollage 20 modes 4,3
+" - 600 - "$G?pilote=armer";                                  refuse "pilotage : AUTO (3) dans la liste, liste refusée" "mal formée"
+jouer "$LP$LP" - 600 - "$G?pilote=armer";                      refuse "pilotage : deux lignes dans un fichier, refus" "une seule ligne"
+jouer "$LP" "pilotage lat 46.1234 lon 5.7654 rayon 300 hauteur 120 decollage 20 modes 4
+" 600 644 "$G?pilote=armer";                                  refuse "pilotage : deux références différentes, refus" "même point de référence"
+jouer "$LP" - 600 - "$G?pilote=mode&mode=stabilize";          refuse "pilotage : mode stabilize refusé" "jamais stabilize"
+jouer "$LP" - 600 - "$G?pilote=mode&mode=auto";               refuse "pilotage : mode auto refusé" "jamais stabilize"
+jouer "$LP" - 600 - "$G?pilote=mode&mode=brake";              refuse "pilotage : mode brake hors de la liste blanche" "pas permis"
+jouer "$LP" - 600 - "$G?pilote=voler";                        refuse "pilotage : ordre inconnu" "inconnu"
+jouer "$LP" - 600 - "$G?pilote=mode";                         refuse "pilotage : mode= manquant" "demande mode="
+jouer "$LP" - 600 - "$G?ordre=rtl&mode=land";                 refuse "pilotage : mode= sans pilote=mode" "ne va qu'avec"
+jouer "$LP" - 600 - "$G?pilote=armer&ordre=rtl";              refuse "pilotage ET ordre refusés" "OU pilote"
+rm -f -- "$M"/pilote-*
+jouer "$LP" - 600 - "$G?pilote=armer";                        refuse "pilotage : premier appui, rien n'est envoyé" "appuyer encore"
+grep -q "ARMER" "$M/message" && ok "pilotage : le message dit ce qui partirait" || ko "message : $(cat "$M/message")"
+# La marque est propre à l'ordre : un autre ordre ne confirme pas l'armement.
+jouer "$LP" - 600 - "$G?pilote=decoller";                     refuse "pilotage : un AUTRE ordre ne confirme pas (premier appui)" "appuyer encore"
+rm -f -- "$M"/pilote-*
+deux_appuis "$LP" "tcp://127.0.0.1:$PGA?pilote=armer";        refuse "pilotage : armer un drone armé, refus" "désarmé, au sol"
+# Armé mais « au sol » : seul l'état armé refuse.
+deux_appuis "$LP" "tcp://127.0.0.1:$PGM?pilote=armer";        refuse "pilotage : armer un drone armé posé, refus" "ici : armé, au sol"
+deux_appuis "$LP" "$G?pilote=decoller";                       refuse "pilotage : décoller désarmé, refus" "armé, au sol"
+deux_appuis "$LP" "$G?pilote=mode&mode=loiter";               refuse "pilotage : LOITER au sol, refus" "qu'en vol"
+deux_appuis "$LP" "tcp://127.0.0.1:$PGA?pilote=desarmer";     refuse "pilotage : désarmer à 30 m, refus" "POSÉ"
+# L'autopilote se dit « au sol » à 30 m : seule la hauteur observée refuse.
+deux_appuis "$LP" "tcp://127.0.0.1:$PGM?pilote=desarmer";     refuse "pilotage : « au sol » à 30 m, désarmer refusé (hauteur observée)" "POSÉ"
+deux_appuis "$LP" "tcp://127.0.0.1:$PGC?pilote=armer";        refuse "pilotage : barrière de l'autopilote coupée, refus" "inactive"
+deux_appuis "$LP" "tcp://127.0.0.1:$PGX?pilote=armer";        refuse "pilotage : autopilote PX4, refus" "pas ArduPilot"
+deux_appuis "$LP" "tcp://127.0.0.1:$PGS?pilote=armer";        refuse "pilotage : drone qui signe, refus" "signe ses messages"
+deux_appuis "$LP" "tcp://127.0.0.1:$PI?pilote=armer";         refuse "pilotage : une station sol parle, refus" "station sol parle déjà"
+deux_appuis "$LP" "tcp://127.0.0.1:$PGL?pilote=armer";        refuse "pilotage : battement lent (3 s), refus (délai ou état trop ancien)" "lien trop lent\|trop ancien"
+deux_appuis "pilotage lat 45.1534 lon 5.7654 rayon 300 hauteur 120 decollage 20 modes 4,9
+" "$G?pilote=mode&mode=guided";                               refuse "pilotage : drone hors de la barrière de sermo, GUIDED refusé" "hors de la barrière"
+deux_appuis "pilotage lat 45.1234 lon 5.7654 rayon 100 hauteur 120 decollage 20 modes 4
+" "$G?pilote=armer";                                          refuse "pilotage : barrière de l'autopilote plus large que celle de sermo" "plus large"
+# Les gardes passées : l'ordre PART (une fois) ; le faux drone n'accuse pas.
+avant=$(total_commandes)
+deux_appuis "$LP" "$G?pilote=armer"
+[ "$RC" = 1 ] && [ $(( $(total_commandes) - avant )) = 1 ] && grep -q -x 'COMMAND_LONG:400' "$T/j-guided" && grep -q "pas confirmé" "$T/err" \
+    && [ "$(cat "$T/j-guided.parametres")" = "400 1 0 0" ] \
+    && ok "pilotage : armer, gardes passées, l'ordre part une fois (400, param1 1, param2 0 : jamais forcé)" \
+    || ko "pilotage armer : code $RC, $(( $(total_commandes) - avant )) écriture(s), $(cat "$T/err")"
+avant=$(total_commandes)
+deux_appuis "pilotage lat 45.1534 lon 5.7654 rayon 300 hauteur 120 decollage 20 modes 4,9
+" "tcp://127.0.0.1:$PGC?pilote=mode&mode=land"
+[ "$RC" = 1 ] && [ $(( $(total_commandes) - avant )) = 1 ] && grep -q -x 'COMMAND_LONG:176' "$T/j-coupee" \
+    && ok "pilotage : LAND passe hors barrière et barrière coupée (secours), une fois" \
+    || ko "pilotage land de secours : code $RC, $(( $(total_commandes) - avant )) écriture(s), $(cat "$T/err")"
+
+# 7. ALLER À UN POINT (faux drones à 45.1234567 N 5.7654321 E ; référence 45.1234 5.7654, rayon 300 m).
+BASE=$(total_commandes)
+PA2="tcp://127.0.0.1:$PGA"
+jouer "$LP" - 600 - "$PA2?pilote=aller&lat=45.1244&lon=5.7654";                 refuse "aller : hauteur= manquante" "demande lat="
+jouer "$LP" - 600 - "$PA2?pilote=armer&lat=45.1244&lon=5.7654&hauteur=20";      refuse "aller : lat/lon/hauteur avec un autre ordre" "ne vont qu'avec lui"
+jouer "$LP" - 600 - "$PA2?pilote=aller&lat=nord&lon=5.7654&hauteur=20";         refuse "aller : latitude non numérique" "un nombre attendu"
+jouer "$LP" - 600 - "$PA2?pilote=aller&lat=95&lon=5.7654&hauteur=20";           refuse "aller : latitude impossible" "position impossible"
+jouer "$LP" - 600 - "$PA2?pilote=aller&lat=45.1534&lon=5.7654&hauteur=20";      refuse "aller : point à 3 km, hors barrière" "hors de la barrière"
+jouer "$LP" - 600 - "$PA2?pilote=aller&lat=45.1244&lon=5.7654&hauteur=130";     refuse "aller : 130 m, hors barrière" "hors de la barrière"
+jouer "$LP" - 600 - "$PA2?pilote=aller&lat=45.1244&lon=5.7654&hauteur=0";       refuse "aller : hauteur 0 (le sol), refusée" "hors de la barrière"
+jouer "$LP" - 600 - "$PA2?pilote=aller&lat=45.1244&lon=5.7654&hauteur=%24H" H=x; refuse "aller : \$H non numérique" "un nombre attendu"
+rm -f -- "$M"/pilote-*
+jouer "$LP" - 600 - "$PA2?pilote=aller&lat=45.1244&lon=5.7654&hauteur=20";      refuse "aller : premier appui, rien n'est envoyé" "appuyer encore"
+grep -q "ALLER à 45.1244000, 5.7654000, 20 m" "$M/message" && grep -q "de la référence" "$M/message" \
+    && ok "aller : le message montre le point, la hauteur et la distance" || ko "message : $(cat "$M/message")"
+# Un AUTRE point ne confirme pas le premier.
+jouer "$LP" - 600 - "$PA2?pilote=aller&lat=45.1245&lon=5.7654&hauteur=20";      refuse "aller : un autre point ne confirme pas (premier appui)" "appuyer encore"
+rm -f -- "$M"/pilote-*
+deux_appuis "$LP" "$G?pilote=aller&lat=45.1244&lon=5.7654&hauteur=20";          refuse "aller : drone au sol, refus" "armé, en vol"
+deux_appuis "$LP" "tcp://127.0.0.1:$PGV?pilote=aller&lat=45.1244&lon=5.7654&hauteur=20"; refuse "aller : en LOITER, refus (jamais de changement de mode)" "DÉJÀ en GUIDED"
+deux_appuis "$LP" "tcp://127.0.0.1:$PGC?pilote=aller&lat=45.1244&lon=5.7654&hauteur=20"; refuse "aller : barrière de l'autopilote coupée, refus" "inactive"
+# Gardes passées : la cible part UNE fois, en cadre 6, position seule ; le faux
+# drone ne la montre pas : « NON confirmé ».
+avant=$(total_commandes)
+deux_appuis "$LP" "$PA2?pilote=aller&lat=45.1244&lon=5.7654&hauteur=%24H" H=20
+[ "$RC" = 1 ] && [ $(( $(total_commandes) - avant )) = 1 ] && grep -q "NON confirmé" "$T/err" \
+    && [ "$(grep '^cible' "$T/j-guided-arme.parametres")" = "cible 6 0x0DF8 451244000 57654000 20" ] \
+    && ok "aller : la cible part une fois (cadre 6, type_mask 0x0DF8, point exact, 20 m via \$H)" \
+    || ko "aller : code $RC, $(( $(total_commandes) - avant )) écriture(s), cible [$(grep '^cible' "$T/j-guided-arme.parametres" 2>/dev/null)], $(cat "$T/err")"
+
+# Poste GELÉ entre le clic et l'envoi (processus arrêté 2,6 s par SIGSTOP), le
+# drone répondant vite : seul le DÉLAI depuis le clic refuse (l'état relu
+# après le dégel est frais).
+if [ "$MODE" = isole ]; then
+rm -f -- "$M"/pilote-*
+jouer "$LP" - 600 - "$G?pilote=armer"
+printf '%s' "$LP" >"$T/l-gel"
+unshare -rm bash -c '
+    mount -t tmpfs tmpfs /root; mkdir -p /root/.config/sermo
+    cp "$1/l-gel" /root/.config/sermo/cibles-mavlink; chmod 600 /root/.config/sermo/cibles-mavlink
+    "$2" "$3" 2>"$1/err" & p=$!
+    sleep 0.3; kill -STOP $p; sleep 2.6; kill -CONT $p
+    wait $p; echo $? >"$1/rc"' _ "$T" "$PROG" "$G?pilote=armer"
+RC=$(cat "$T/rc" 2>/dev/null || echo ?)
+[ "$RC" = 1 ] && grep -q "depuis le clic" "$T/err" && ok "pilotage : poste gelé 2,6 s après le clic, refus pour le délai" \
+    || ko "pilotage poste gelé : code $RC, $(cat "$T/err")"
+else
+    echo "note   : pas d'espace isolé : cas « poste gelé » non joué"
+fi
+
+# Radio LENTE : 400 ms de latence sur la boucle locale, dans un espace réseau
+# isolé (unshare -rn, tc netem) ; armer doit être refusé pour le DÉLAI depuis
+# le clic. Sans netem (conteneur de CI), le cas est sauté et c'est dit.
+TC=$(command -v tc || echo /usr/sbin/tc)
+if [ "$MODE" = isole ] && [ -x "$TC" ] && unshare -rn sh -c "ip link set lo up && $TC qdisc add dev lo root netem delay 1ms" 2>/dev/null; then
+    mkdir -m 700 "$T/run-lent"
+    printf '%s' "$LP" >"$T/l-lente"
+    unshare -rn bash -c '
+        ip link set lo up; "$1" qdisc add dev lo root netem delay 400ms
+        python3 -I "$2" --tcp 29931 --repond --mode 4 >/dev/null 2>&1 & d=$!
+        for i in $(seq 1 50); do (exec 3<>/dev/tcp/127.0.0.1/29931) 2>/dev/null && break; sleep 0.2; done
+        for k in 1 2; do
+            XDG_RUNTIME_DIR="$3/run-lent" unshare -m bash -c "mount -t tmpfs tmpfs /root; mkdir -p /root/.config/sermo
+                cp \"$3/l-lente\" /root/.config/sermo/cibles-mavlink; chmod 600 /root/.config/sermo/cibles-mavlink
+                \"$4\" \"tcp://127.0.0.1:29931?pilote=armer\" 2>\"$3/err\"; echo \$? >\"$3/rc\""
+        done
+        kill $d' _ "$TC" "$DRONE" "$T" "$PROG"
+    RC=$(cat "$T/rc" 2>/dev/null || echo ?)
+    [ "$RC" = 1 ] && grep -q "lien trop lent" "$T/err" && ok "pilotage : radio lente (400 ms), refus pour le délai depuis le clic" \
+        || ko "pilotage radio lente : code $RC, $(cat "$T/err")"
+else
+    echo "note   : pas de latence simulable ici (tc netem dans un espace isolé) : cas « radio lente » non joué"
+fi
 
 echo
 [ $echecs = 0 ] && { echo "sermo-cible-mavlink (faux drone) : tout tient"; exit 0; }

@@ -2,12 +2,12 @@
 #
 # Formule Homebrew de sermo : le port ncurses seul (ncurses de Homebrew).
 # La construction est celle de packaging/autres-os/construire-os.sh.
-# La somme (sha256) est celle de l'archive de l'étiquette sur GitLab (mesurée le 2026-10-16).
+# La somme (sha256) est celle de l'archive de l'étiquette sur GitLab (mesurée le 2026-10-21).
 class Sermo < Formula
   desc "Dialog boxes for shell scripts, described in XML (ncurses port)"
   homepage "https://gitlab.com/haplo-dialog/sermo"
-  url "https://gitlab.com/haplo-dialog/sermo/-/archive/v3.0.0/sermo-v3.0.0.tar.gz"
-  sha256 "1bbe3cf52558ad33d115e31f657b1fe73e29a90a7152367651e9ee46942ba43e"
+  url "https://gitlab.com/haplo-dialog/sermo/-/archive/v3.1.2/sermo-v3.1.2.tar.gz"
+  sha256 "81474b30913db27ede35010b053527bc52dfbcc3369a9f4ed7e7bbeec16c3c37"
   license "GPL-2.0-or-later"
 
   depends_on "bison" => :build

@@ -28,6 +28,21 @@ un message par ligne. GPL-2.0-or-later.
 Le serveur envoie ce résumé au client dès l'ouverture (champ `instructions` de
 `initialize`).
 
+**Une séance réelle** (4 novembre 2026, par Claude, en parlant aux deux serveurs par le
+protocole, abrégée ; la version complète avec les images est sur le site, page
+« Assistant IA ») — besoin : « une fenêtre de demande de congés : nom, dates, type, motif ».
+`sermo_search "calendar"` (sermoman-mcp) : `<calendar>` exporte AAAA-MM-JJ. `sermo_schema` :
+les familles de widgets. `sermo_examples "formulaire de demande de congés…"` :
+`formulaire/formulaire.xml` (pertinence 7) et un formulaire de demande de matériel.
+XML écrit en les imitant (frame, hbox+text+entry, deux calendar, comboboxtext, edit, bouton
+`EXIT:envoyer`, `<button cancel>`). `sermo_check` : « OK — le XML s'analyse (52 lignes de
+représentation interne) ». `sermo_render` : 533×533, **le second calendrier coupé** →
+`width-request="640"`, second rendu 640×533, tout tient. `sermo_run` : au premier essai personne
+ne répond, « ERREUR — le dialogue n'a pas été fermé dans les 25 s » ; au second, l'utilisateur
+remplit et appuie sur Envoyer : `DEBUT="2026-11-16"`, `FIN="2026-11-20"`,
+`MOTIF="Vacances en famille"`, `NOM="Camille Martin"`, `TYPE="Congés payés"`, `EXIT="envoyer"`.
+`sermo_vote formulaire/formulaire.xml helpful=true` : « score cumulé 1 ».
+
 ## Les six outils
 
 | Outil | Rôle | Lance-t-il les commandes du XML ? |
@@ -45,17 +60,23 @@ seul marqué « destructif ».
 
 ### `sermo_schema`
 
-Sans argument. Rend un objet JSON :
-- les widgets, rangés par famille ; la liste est vérifiée par le banc contre les balises
-  que l'analyseur du cœur reconnaît ;
-- les balises de contenu, les attributs communs, les actions et les signaux ;
-- les sources et cibles (`sources_cibles`) : `<input modbus>`, `<input opcua>`,
-  `<input mqtt>`, `<input mavlink>`, `<input media>` pour lire, `<action mqtt>`,
-  `<action mavlink>`, `<action media>` pour écrire, avec leur adresse, leur paquet et
-  un exemple ;
-- un exemple minimal et la forme de la sortie.
+Sans argument. Rend un objet JSON : `sermo.schema.json`, **généré depuis le code** de
+sermo (`outils/schema/generer.py`, tenu par `tests/garde_schema.sh`) et embarqué dans le
+serveur au build, plus un complément éditorial. On y lit :
+- les 59 widgets, leur famille, s'ils sont conteneurs (16, d'après la grammaire), leurs
+  alias (`<visible>` = `<sensitive>`, `<separator>` = `<menuitemseparator>`) et, widget
+  par widget, **les attributs que chaque port lit vraiment** (`attributs_lus`, avec la
+  liste des ports) ; gtk3 et gtk4 acceptent en plus toute propriété GObject du widget
+  GTK (`attributs_libres`) ;
+- les balises de contenu (`variable`, `label`, `default`, `input`, `output`, `action`,
+  `item`, `sensitive`, `width`, `height`), les boutons de stock, les sources et cibles
+  (`<input modbus|opcua|mqtt|mavlink|media>`, `<action mqtt|mavlink|media>`), les 22
+  préfixes d'action (`exit`, `launch`, `refresh`…) et les 37 signaux ;
+- le complément (`sources_cibles` avec adresses, paquets et exemples ; `exemple_minimal` ;
+  `sortie` ; `regle`), et `note_xml` : ce dialecte n'est pas du XML strict, le
+  validateur de référence est `sermo_check`.
 
-Les attributs propres à chaque widget sont dans le manuel (sermoman-mcp).
+Le banc vérifie que les widgets servis sont ceux du fichier, au même commit.
 
 ### `sermo_check`
 
@@ -143,14 +164,19 @@ sujet absent du catalogue est refusé.
 
 ## Sécurité
 
-- **Ce qui exécute** : `sermo_run`, et lui seul. Un dialogue sermo sert à lancer des
-  commandes : `sermo_run` les lance, comme le ferait le script. Pour borner ce qu'il peut
-  lancer, poser `SERMO_ALLOWED_CMDS` dans l'environnement du serveur (voir
-  `SECURITY.md` à la racine) : le cœur refuse alors toute commande hors liste, et le
-  repli `/bin/sh -c`.
-- **Ce qui n'exécute pas** : `sermo_check` (analyse seule) et `sermo_render`. Le rendu
-  pose `SERMO_ALLOWED_CMDS` sur une commande qui n'existe pas, ce qui interdit tout. Le
-  banc le vérifie : un `<input>` qui crée un fichier témoin ne le crée pas.
+- **Ce qui peut exécuter** : `sermo_run`, et lui seul — et **fermé par défaut** depuis
+  3.2.0. Sans `SERMO_ALLOWED_CMDS` dans l'environnement du serveur, la fenêtre s'ouvre
+  mais aucune commande du XML (`<input>`, `<action>`) ne part : le serveur pose la même
+  barrière que le rendu, et sa réponse commence par « Commandes du XML BLOQUÉES ». Pour
+  les permettre, poser `SERMO_ALLOWED_CMDS` avec la liste des commandes dont le dialogue
+  a besoin (voir `SECURITY.md` à la racine) : le cœur lance celles-là, refuse les
+  autres et le repli `/bin/sh -c`. Il n'y a pas de « tout permis » : qui veut tout
+  liste tout.
+- **Ce qui n'exécute jamais** : `sermo_check` (analyse seule) et `sermo_render`. Le
+  rendu pose `SERMO_ALLOWED_CMDS` sur une commande qui n'existe pas, ce qui interdit
+  tout. Le banc vérifie les deux sens : un `<input>` qui crée un fichier témoin ne le
+  crée ni au rendu ni sous `sermo_run` sans liste, et le crée sous `sermo_run` avec
+  la commande listée.
 - **Le canal MCP est protégé** : un processus lancé lit `/dev/null`, jamais le canal, et
   ses sorties sont captées. Un port qui écrit ses `VAR="…"` même en rendu (html) ne
   casse donc pas le protocole.
@@ -170,7 +196,7 @@ sujet absent du catalogue est refusé.
 | `SERMO_VOTE_FILE` | `$XDG_STATE_HOME/sermoia/votes.tsv` | registre des votes |
 | `SERMOIA_CHECK_DELAI` | 20 s (≤ 120) | délai de l'analyse |
 | `SERMOIA_RENDER_DELAI` | 30 s (≤ 300) | délai de chaque tentative de rendu |
-| `SERMO_ALLOWED_CMDS` | — | liste des commandes que `sermo_run` peut lancer (voir Sécurité) |
+| `SERMO_ALLOWED_CMDS` | — (tout bloqué) | commandes que `sermo_run` peut lancer ; absente = aucune (voir Sécurité) |
 
 ## Installer
 

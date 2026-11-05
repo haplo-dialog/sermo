@@ -30,6 +30,9 @@ cd "$RACINE" || exit 1
 J="${SERMO_JOURNAUX:-$RACINE/_journaux}/bancs"
 DELAI="${SERMO_BANC_DELAI:-1800}"   # secondes par banc : un banc figé ne doit pas manger le job
 mkdir -p "$J"
+# Un verdict par ligne (nom ⇥ verdict ⇥ rc ⇥ dernière ligne du journal) : c'est
+# ce que ci/bilan-json.sh lit pour poser les chiffres dans _journaux/bilan.json.
+VERDICTS="$J/verdicts.tsv"; : > "$VERDICTS"
 # Mêmes conditions qu'en CI : aucun affichage. Les gardes graphiques lancent
 # leur propre Xvfb ; sans ça, sur un poste de travail, des fenêtres s'ouvriraient
 # sur l'écran de la session et la mesure ne serait plus celle de la CI.
@@ -53,19 +56,27 @@ banc() {  # banc <nom> <commande…> : journal complet, une ligne de verdict
     local rc=$?
     local fin; fin=$(grep -a -v '^[[:space:]]*$' "$journal" | tail -1 | sed 's/\x1b\[[0-9;]*m//g' | cut -c1-80)
     joues=$((joues + 1))
+    local verdict
     if [ "$rc" -eq 0 ]; then
-        ligne 'OK    ' "$nom" "$fin"
+        verdict=OK; ligne 'OK    ' "$nom" "$fin"
+        # Un banc vert mais « NON JOUÉ » (outil absent, exécuteur qui refuse) : la
+        # raison est dans le journal, que la CI ne montre pas sans compte. La
+        # première ligne qui la porte est recopiée en entier dans la trace.
+        case "$fin" in *"NON JOUÉ"*)
+            grep -a -m1 'NON JOUÉ' "$journal" | sed 's/\x1b\[[0-9;]*m//g' | cut -c1-600 | sed 's/^ */       ↳ /' ;;
+        esac
     elif [ "$rc" -eq 77 ]; then
         # 77 = « rien n'a été vérifié ». Ici tout est censé être là : c'est un échec.
-        ligne 'IGNORÉ' "$nom" "compté en échec — $fin"
+        verdict=IGNORÉ; ligne 'IGNORÉ' "$nom" "compté en échec — $fin"
         echecs=$((echecs + 1))
     elif [ "$rc" -eq 124 ] || [ "$rc" -eq 137 ]; then
-        ligne 'ÉCHEC ' "$nom" "figé, arrêté après ${delai}s"
+        verdict=FIGÉ; ligne 'ÉCHEC ' "$nom" "figé, arrêté après ${delai}s"
         echecs=$((echecs + 1))
     else
-        ligne 'ÉCHEC ' "$nom" "rc=$rc — $fin"
+        verdict=ÉCHEC; ligne 'ÉCHEC ' "$nom" "rc=$rc — $fin"
         echecs=$((echecs + 1))
     fi
+    printf '%s\t%s\t%s\t%s\n' "$nom" "$verdict" "$rc" "$fin" >> "$VERDICTS"
 }
 
 echo "Ports : ${PORTS[*]} · langue : ${LC_ALL:-${LANG:-C}} · délai par banc : ${DELAI}s"
@@ -85,6 +96,8 @@ for p in gtk3 gtk4; do
     banc "ligne vide progressbar $p" bash tests/garde_progressbar_ligne_vide.sh "sermo-backend-$p/src/widget_progressbar.c"
 done
 banc "en-têtes de poste" bash tests/garde_pas_de_poste.sh "$RACINE"
+banc "bilan json (chiffres des bancs)" bash tests/garde_bilan_json.sh
+banc "schéma du langage (généré, couvrant)" bash tests/garde_schema.sh
 banc "lectures d'<input> plafonnées" bash tests/garde_lecture_input.sh "$RACINE"
 banc "programmes d'aide modbus/opcua" bash tests/garde_sermo_source.sh "$RACINE"
 banc "programme d'aide mqtt" bash tests/garde_sermo_source_mqtt.sh "$RACINE"
@@ -109,9 +122,11 @@ banc "heure et NTP (faux timedatectl)" bash tests/garde_heure_ntp.sh
 banc "réseaux Wi-Fi (faux nmcli)" bash tests/garde_wifi_scan.sh
 banc "appareils Bluetooth (faux bluetoothctl)" bash tests/garde_bluetooth_scan.sh
 banc "aperçu caméra (sans ouvrir la caméra)" bash tests/garde_camera_apercu.sh
+banc "photo et vidéo après confirmation (sans ouvrir la caméra)" bash tests/garde_camera_capture.sh
+banc "zone d'images gtk3 (fichiers hostiles)" bash tests/garde_zone_images.sh
 # Les programmes d'aide aussi : leur durcissement manquait jusqu'à la 3.0.0
 # comprise, faute d'être contrôlé (le banc ne visait que les ports).
-for h in source-modbus source-opcua source-mqtt cible-mqtt source-mavlink cible-mavlink source-media cible-media; do
+for h in source-modbus source-opcua source-mqtt cible-mqtt source-mavlink cible-mavlink source-media cible-media media-images; do
     banc "sermo-$h durcissement" bash tests/garde_durcissement.sh "$RACINE/sermo-source/_build/sermo-$h"
 done
 case " ${PORTS[*]} " in *" lvgl "*)
@@ -150,7 +165,8 @@ for p in "${PORTS[@]}"; do
     echo "── $p"
     b="$RACINE/sermo-backend-$p/_build/${p}sermo"
     if [ ! -x "$b" ]; then
-        ligne 'ÉCHEC ' "$p" "binaire absent : $b"; echecs=$((echecs + 1)); continue
+        ligne 'ÉCHEC ' "$p" "binaire absent : $b"; echecs=$((echecs + 1))
+        printf '%s\t%s\t%s\t%s\n' "$p" ÉCHEC - "binaire absent : $b" >> "$VERDICTS"; continue
     fi
     banc "$p xml" env TIMEOUT=10 bash tests/xml/run_tests.sh "$b"
     banc "$p identité" bash tests/garde_identite_port.sh "$b"
@@ -216,4 +232,8 @@ banc "sermoia-mcp : schéma, exemples, protocole, rendu, délais, catalogue mét
 
 echo
 echo "Bancs : $joues joué(s), $echecs en échec. Journaux : $J"
+# Les chiffres de tout ce qui vient d'être joué, en un JSON (_journaux/bilan.json)
+# et une ligne « BILAN-JSON: … » que la trace du job garde : le site et
+# BILAN_SANTE.md les reprennent, personne ne les recopie à la main.
+bash ci/bilan-json.sh "$J" || ligne 'ÉCHEC ' "bilan json" "ci/bilan-json.sh rc=$?"
 [ "$echecs" -eq 0 ]

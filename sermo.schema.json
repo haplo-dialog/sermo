@@ -1,0 +1,2232 @@
+{
+ "_": "Généré par outils/schema/generer.py depuis le code de sermo (lexer, grammaire, ports). Ne pas éditer : régénérer. tests/garde_schema.sh refuse un fichier qui diverge.",
+ "langage": "sermo-xml",
+ "version": "3.2.0",
+ "commit": "e796e34",
+ "xml_strict": false,
+ "note_xml": "Dialecte hérité de gtkdialog : <button ok>, <input file>, <action mqtt …> portent des attributs nus ; ce n'est pas du XML strict. Le validateur de référence est l'analyseur du cœur : sermoia-mcp sermo_check, ou <port>sermo --print-ir.",
+ "racine": "window",
+ "ports": [
+  "gtk3",
+  "gtk4",
+  "qt6",
+  "fltk1",
+  "efl1",
+  "sdl3",
+  "lvgl",
+  "ncurses",
+  "html"
+ ],
+ "familles": {
+  "conteneurs": [
+   "window",
+   "vbox",
+   "hbox",
+   "frame",
+   "notebook",
+   "expander",
+   "eventbox",
+   "aspectframe",
+   "grid",
+   "paned",
+   "stack",
+   "wizard",
+   "toolbar",
+   "flowbox",
+   "overlay",
+   "revealer"
+  ],
+  "affichage": [
+   "text",
+   "image",
+   "pixmap",
+   "statusbar",
+   "infobar",
+   "drawingarea",
+   "progressbar",
+   "pulse",
+   "spinner",
+   "levelbar"
+  ],
+  "saisie": [
+   "entry",
+   "edit",
+   "password",
+   "searchentry",
+   "spinbutton",
+   "hscale",
+   "vscale",
+   "checkbox",
+   "togglebutton",
+   "radiobutton",
+   "switch"
+  ],
+  "selection": [
+   "combobox",
+   "comboboxtext",
+   "comboboxentry",
+   "chooser",
+   "list",
+   "tree",
+   "table",
+   "colorbutton",
+   "fontbutton",
+   "filechooser",
+   "calendar"
+  ],
+  "boutons": [
+   "button",
+   "linkbutton",
+   "menubutton"
+  ],
+  "menus": [
+   "menubar",
+   "menu",
+   "menuitem",
+   "menuitemseparator"
+  ],
+  "divers": [
+   "terminal",
+   "hseparator",
+   "vseparator",
+   "timer"
+  ]
+ },
+ "widgets": {
+  "aspectframe": {
+   "famille": "conteneurs",
+   "conteneur": true,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "height-request": [
+     "qt6",
+     "fltk1"
+    ],
+    "label": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "lvgl",
+     "html"
+    ],
+    "obey-child": [
+     "gtk3",
+     "gtk4"
+    ],
+    "ratio": [
+     "gtk3",
+     "gtk4"
+    ],
+    "width-request": [
+     "qt6",
+     "fltk1"
+    ],
+    "xalign": [
+     "gtk3",
+     "gtk4"
+    ],
+    "yalign": [
+     "gtk3",
+     "gtk4"
+    ]
+   }
+  },
+  "button": {
+   "famille": "boutons",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "height-request": [
+     "qt6",
+     "fltk1"
+    ],
+    "homogeneous": [
+     "gtk3",
+     "gtk4"
+    ],
+    "image-position": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "html"
+    ],
+    "stock-icon-size": [
+     "gtk3",
+     "gtk4"
+    ],
+    "theme-icon-size": [
+     "gtk3",
+     "gtk4",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "use-underline": [
+     "gtk3",
+     "gtk4"
+    ],
+    "width-request": [
+     "qt6",
+     "fltk1"
+    ]
+   }
+  },
+  "calendar": {
+   "famille": "selection",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {}
+  },
+  "checkbox": {
+   "famille": "saisie",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "height-request": [
+     "qt6",
+     "fltk1"
+    ],
+    "width-request": [
+     "qt6",
+     "fltk1"
+    ]
+   }
+  },
+  "chooser": {
+   "famille": "selection",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {}
+  },
+  "colorbutton": {
+   "famille": "selection",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "height-request": [
+     "qt6",
+     "fltk1"
+    ],
+    "width-request": [
+     "qt6",
+     "fltk1"
+    ]
+   }
+  },
+  "combobox": {
+   "famille": "selection",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "height-request": [
+     "qt6",
+     "fltk1"
+    ],
+    "width-request": [
+     "qt6",
+     "fltk1"
+    ]
+   }
+  },
+  "comboboxentry": {
+   "famille": "selection",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {}
+  },
+  "comboboxtext": {
+   "famille": "selection",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "height-request": [
+     "qt6"
+    ],
+    "width-request": [
+     "qt6"
+    ]
+   }
+  },
+  "drawingarea": {
+   "famille": "affichage",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "background-color": [
+     "gtk4"
+    ],
+    "embed": [
+     "gtk3",
+     "qt6"
+    ],
+    "height": [
+     "gtk4"
+    ],
+    "height-request": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1"
+    ],
+    "media": [
+     "gtk3"
+    ],
+    "width": [
+     "gtk4"
+    ],
+    "width-request": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1"
+    ]
+   }
+  },
+  "edit": {
+   "famille": "saisie",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "background": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "foreground": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "height-request": [
+     "qt6",
+     "fltk1"
+    ],
+    "space-expand": [
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "width-request": [
+     "qt6",
+     "fltk1"
+    ],
+    "wrap-mode": [
+     "fltk1"
+    ]
+   }
+  },
+  "entry": {
+   "famille": "saisie",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "height-request": [
+     "qt6",
+     "fltk1"
+    ],
+    "max-length": [
+     "qt6",
+     "efl1"
+    ],
+    "sensitive": [
+     "qt6"
+    ],
+    "visibility": [
+     "qt6",
+     "efl1"
+    ],
+    "width-request": [
+     "qt6",
+     "fltk1"
+    ]
+   }
+  },
+  "eventbox": {
+   "famille": "conteneurs",
+   "conteneur": true,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "width-request": [
+     "fltk1"
+    ]
+   }
+  },
+  "expander": {
+   "famille": "conteneurs",
+   "conteneur": true,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "expanded": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "height-request": [
+     "fltk1"
+    ],
+    "label": [
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "width-request": [
+     "fltk1"
+    ]
+   }
+  },
+  "filechooser": {
+   "famille": "selection",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "action": [
+     "gtk3",
+     "gtk4",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "height-request": [
+     "fltk1"
+    ],
+    "width-request": [
+     "fltk1"
+    ]
+   }
+  },
+  "flowbox": {
+   "famille": "conteneurs",
+   "conteneur": true,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "column-spacing": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "max-children-per-line": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "min-children-per-line": [
+     "gtk3",
+     "gtk4"
+    ],
+    "row-spacing": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "selection-mode": [
+     "gtk3",
+     "gtk4"
+    ]
+   }
+  },
+  "fontbutton": {
+   "famille": "selection",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "height-request": [
+     "qt6"
+    ],
+    "width-request": [
+     "qt6"
+    ]
+   }
+  },
+  "frame": {
+   "famille": "conteneurs",
+   "conteneur": true,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "height-request": [
+     "fltk1"
+    ],
+    "label": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "space-expand": [
+     "gtk3",
+     "gtk4"
+    ],
+    "space-fill": [
+     "gtk3",
+     "gtk4"
+    ],
+    "width-request": [
+     "fltk1"
+    ]
+   }
+  },
+  "grid": {
+   "famille": "conteneurs",
+   "conteneur": true,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "columns": [
+     "gtk3",
+     "gtk4"
+    ],
+    "homogeneous": [
+     "qt6",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "space-expand": [
+     "gtk3",
+     "gtk4"
+    ],
+    "space-fill": [
+     "gtk3",
+     "gtk4"
+    ]
+   }
+  },
+  "hbox": {
+   "famille": "conteneurs",
+   "conteneur": true,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "homogeneous": [
+     "gtk4",
+     "ncurses",
+     "html"
+    ],
+    "margin": [
+     "gtk3",
+     "gtk4"
+    ],
+    "space-expand": [
+     "gtk3",
+     "gtk4",
+     "ncurses"
+    ],
+    "space-fill": [
+     "gtk3",
+     "gtk4",
+     "ncurses"
+    ],
+    "spacing": [
+     "qt6",
+     "fltk1",
+     "efl1"
+    ]
+   }
+  },
+  "hscale": {
+   "famille": "saisie",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "digits": [
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "height-request": [
+     "qt6",
+     "fltk1"
+    ],
+    "max": [
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "min": [
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "range-max": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "range-min": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "range-step": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "range-value": [
+     "gtk3",
+     "gtk4",
+     "qt6"
+    ],
+    "scale-max": [
+     "gtk3",
+     "gtk4"
+    ],
+    "scale-min": [
+     "gtk3",
+     "gtk4"
+    ],
+    "scale-step": [
+     "gtk3",
+     "gtk4"
+    ],
+    "scale-value": [
+     "gtk3",
+     "gtk4"
+    ],
+    "step": [
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "value": [
+     "qt6",
+     "fltk1"
+    ],
+    "width-request": [
+     "qt6",
+     "fltk1"
+    ]
+   }
+  },
+  "hseparator": {
+   "famille": "divers",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "height-request": [
+     "qt6",
+     "fltk1"
+    ],
+    "width-request": [
+     "qt6",
+     "fltk1"
+    ]
+   }
+  },
+  "image": {
+   "famille": "affichage",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "file": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "height": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1"
+    ],
+    "height-request": [
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "icon-name": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "icon-size": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "width": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "width-request": [
+     "qt6",
+     "fltk1"
+    ]
+   }
+  },
+  "infobar": {
+   "famille": "affichage",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "height-request": [
+     "fltk1"
+    ],
+    "message-type": [
+     "qt6",
+     "lvgl",
+     "html"
+    ],
+    "width-request": [
+     "fltk1"
+    ]
+   }
+  },
+  "levelbar": {
+   "famille": "affichage",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "height-request": [
+     "fltk1"
+    ],
+    "inverted": [
+     "gtk4"
+    ],
+    "max": [
+     "gtk4",
+     "qt6"
+    ],
+    "min": [
+     "gtk4",
+     "qt6"
+    ],
+    "mode": [
+     "gtk3",
+     "gtk4"
+    ],
+    "range-max": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "range-min": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "value": [
+     "gtk4",
+     "qt6",
+     "fltk1"
+    ],
+    "width-request": [
+     "qt6",
+     "fltk1"
+    ]
+   }
+  },
+  "linkbutton": {
+   "famille": "boutons",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "height-request": [
+     "fltk1"
+    ],
+    "width-request": [
+     "fltk1"
+    ]
+   }
+  },
+  "list": {
+   "famille": "selection",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "height-request": [
+     "qt6",
+     "fltk1"
+    ],
+    "multiple-selection": [
+     "qt6",
+     "fltk1"
+    ],
+    "selected-row": [
+     "gtk3",
+     "gtk4"
+    ],
+    "variable": [
+     "sdl3",
+     "lvgl",
+     "ncurses"
+    ],
+    "width-request": [
+     "qt6",
+     "fltk1"
+    ]
+   }
+  },
+  "menu": {
+   "famille": "menus",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "label": [
+     "fltk1",
+     "efl1"
+    ]
+   }
+  },
+  "menubar": {
+   "famille": "menus",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "label": [
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "width-request": [
+     "fltk1"
+    ]
+   }
+  },
+  "menubutton": {
+   "famille": "boutons",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "label": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ]
+   }
+  },
+  "menuitem": {
+   "famille": "menus",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "accel-key": [
+     "gtk3"
+    ],
+    "accel-mods": [
+     "gtk3"
+    ],
+    "checkbox": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "icon": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "icon-name": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "image-file": [
+     "gtk3",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "image-icon": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "image-name": [
+     "gtk3",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "image-stock": [
+     "gtk3",
+     "gtk4",
+     "qt6"
+    ],
+    "label": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1"
+    ],
+    "radiobutton": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "sensitive": [
+     "gtk3"
+    ],
+    "stock": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "stock-id": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "theme-icon-size": [
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "use-stock": [
+     "gtk3"
+    ]
+   }
+  },
+  "menuitemseparator": {
+   "famille": "menus",
+   "conteneur": false,
+   "attributs_de_balise": false,
+   "alias": [
+    "separator"
+   ],
+   "attributs_lus": {}
+  },
+  "notebook": {
+   "famille": "conteneurs",
+   "conteneur": true,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "height-request": [
+     "fltk1"
+    ],
+    "labels": [
+     "gtk3",
+     "gtk4",
+     "efl1"
+    ],
+    "page": [
+     "gtk3",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "tab-base-index": [
+     "gtk3",
+     "gtk4"
+    ],
+    "tab-labels": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "tab-pos": [
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "tab-prefix": [
+     "gtk3",
+     "gtk4"
+    ],
+    "tab-suffix": [
+     "gtk3",
+     "gtk4"
+    ],
+    "width-request": [
+     "fltk1"
+    ]
+   }
+  },
+  "overlay": {
+   "famille": "conteneurs",
+   "conteneur": true,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {}
+  },
+  "paned": {
+   "famille": "conteneurs",
+   "conteneur": true,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "orientation": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "position": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "resizable": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ]
+   }
+  },
+  "password": {
+   "famille": "saisie",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "max-length": [
+     "gtk3",
+     "gtk4"
+    ],
+    "placeholder": [
+     "gtk3",
+     "gtk4"
+    ],
+    "show-toggle": [
+     "gtk3",
+     "gtk4"
+    ],
+    "tooltip": [
+     "qt6"
+    ],
+    "width-request": [
+     "qt6",
+     "fltk1"
+    ]
+   }
+  },
+  "pixmap": {
+   "famille": "affichage",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "file": [
+     "qt6",
+     "fltk1"
+    ],
+    "height-request": [
+     "qt6",
+     "fltk1"
+    ],
+    "stock-icon-size": [
+     "gtk3",
+     "gtk4",
+     "qt6"
+    ],
+    "theme-icon-size": [
+     "gtk3",
+     "gtk4",
+     "qt6"
+    ],
+    "width-request": [
+     "qt6",
+     "fltk1"
+    ]
+   }
+  },
+  "progressbar": {
+   "famille": "affichage",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "height-request": [
+     "qt6",
+     "fltk1"
+    ],
+    "value": [
+     "qt6",
+     "fltk1"
+    ],
+    "width-request": [
+     "qt6",
+     "fltk1"
+    ]
+   }
+  },
+  "pulse": {
+   "famille": "affichage",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "height-request": [
+     "fltk1"
+    ],
+    "show-text": [
+     "gtk3",
+     "gtk4",
+     "qt6"
+    ],
+    "text": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "width-request": [
+     "fltk1"
+    ]
+   }
+  },
+  "radiobutton": {
+   "famille": "saisie",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "height-request": [
+     "qt6",
+     "fltk1"
+    ],
+    "width-request": [
+     "qt6",
+     "fltk1"
+    ]
+   }
+  },
+  "revealer": {
+   "famille": "conteneurs",
+   "conteneur": true,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "duration": [
+     "gtk3",
+     "gtk4"
+    ],
+    "reveal": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "transition": [
+     "gtk3",
+     "gtk4"
+    ]
+   }
+  },
+  "searchentry": {
+   "famille": "saisie",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "width-request": [
+     "qt6",
+     "fltk1"
+    ]
+   }
+  },
+  "spinbutton": {
+   "famille": "saisie",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "digits": [
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "height-request": [
+     "qt6",
+     "fltk1"
+    ],
+    "max": [
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "min": [
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "range-max": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "range-min": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "range-step": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1"
+    ],
+    "range-value": [
+     "gtk3",
+     "gtk4"
+    ],
+    "step": [
+     "qt6",
+     "fltk1",
+     "efl1"
+    ],
+    "value": [
+     "qt6",
+     "fltk1"
+    ],
+    "width-request": [
+     "qt6",
+     "fltk1"
+    ]
+   }
+  },
+  "spinner": {
+   "famille": "affichage",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "active": [
+     "gtk3",
+     "gtk4"
+    ]
+   }
+  },
+  "stack": {
+   "famille": "conteneurs",
+   "conteneur": true,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "transition": [
+     "gtk4"
+    ]
+   }
+  },
+  "statusbar": {
+   "famille": "affichage",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "height-request": [
+     "fltk1"
+    ],
+    "width-request": [
+     "fltk1"
+    ]
+   }
+  },
+  "switch": {
+   "famille": "saisie",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "tooltip": [
+     "qt6"
+    ]
+   }
+  },
+  "table": {
+   "famille": "selection",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "auto-sort": [
+     "gtk3"
+    ],
+    "column-header-active": [
+     "gtk3"
+    ],
+    "column-visible": [
+     "gtk3"
+    ],
+    "exported-column": [
+     "gtk3",
+     "qt6"
+    ],
+    "height-request": [
+     "qt6",
+     "fltk1"
+    ],
+    "selected-row": [
+     "gtk3"
+    ],
+    "selection-mode": [
+     "gtk3"
+    ],
+    "sort-column": [
+     "gtk3"
+    ],
+    "sort-function": [
+     "gtk3"
+    ],
+    "sort-type": [
+     "gtk3"
+    ],
+    "width-request": [
+     "qt6",
+     "fltk1"
+    ]
+   }
+  },
+  "terminal": {
+   "famille": "divers",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "bold-foreground-color": [
+     "gtk3",
+     "gtk4"
+    ],
+    "current-directory-uri": [
+     "gtk3",
+     "gtk4"
+    ],
+    "cursor-background-color": [
+     "gtk3",
+     "gtk4"
+    ],
+    "dim-foreground-color": [
+     "gtk3",
+     "gtk4"
+    ],
+    "font-name": [
+     "gtk3",
+     "gtk4",
+     "qt6"
+    ],
+    "font-size": [
+     "qt6"
+    ],
+    "height-request": [
+     "qt6",
+     "fltk1"
+    ],
+    "highlight-background-color": [
+     "gtk3",
+     "gtk4"
+    ],
+    "text-background-color": [
+     "gtk3",
+     "gtk4"
+    ],
+    "text-foreground-color": [
+     "gtk3",
+     "gtk4"
+    ],
+    "width-request": [
+     "qt6",
+     "fltk1"
+    ]
+   }
+  },
+  "text": {
+   "famille": "affichage",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "height-request": [
+     "fltk1"
+    ],
+    "sensitive": [
+     "qt6"
+    ],
+    "use-markup": [
+     "gtk3",
+     "gtk4"
+    ],
+    "width-request": [
+     "qt6",
+     "fltk1"
+    ],
+    "wrap": [
+     "efl1"
+    ],
+    "xalign": [
+     "fltk1"
+    ]
+   }
+  },
+  "timer": {
+   "famille": "divers",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "interval": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "milliseconds": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "variable": [
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ]
+   }
+  },
+  "togglebutton": {
+   "famille": "saisie",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "height-request": [
+     "qt6",
+     "fltk1"
+    ],
+    "width-request": [
+     "qt6",
+     "fltk1"
+    ]
+   }
+  },
+  "toolbar": {
+   "famille": "conteneurs",
+   "conteneur": true,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "orientation": [
+     "gtk3",
+     "gtk4",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "spacing": [
+     "gtk3",
+     "gtk4",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ]
+   }
+  },
+  "tree": {
+   "famille": "selection",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "auto-sort": [
+     "gtk3",
+     "gtk4"
+    ],
+    "column-header-active": [
+     "gtk3",
+     "gtk4"
+    ],
+    "column-sort-function": [
+     "gtk3",
+     "gtk4"
+    ],
+    "column-type": [
+     "gtk3",
+     "gtk4"
+    ],
+    "column-visible": [
+     "gtk3",
+     "gtk4"
+    ],
+    "exported-column": [
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "height-request": [
+     "qt6",
+     "fltk1"
+    ],
+    "icon": [
+     "gtk3",
+     "gtk4"
+    ],
+    "icon-name": [
+     "gtk3",
+     "gtk4"
+    ],
+    "selected-row": [
+     "gtk3",
+     "gtk4"
+    ],
+    "selection-mode": [
+     "gtk3",
+     "gtk4"
+    ],
+    "sort-column": [
+     "gtk3",
+     "gtk4"
+    ],
+    "sort-type": [
+     "gtk3",
+     "gtk4"
+    ],
+    "stock": [
+     "gtk3",
+     "gtk4"
+    ],
+    "stock-id": [
+     "gtk3",
+     "gtk4"
+    ],
+    "width-request": [
+     "qt6",
+     "fltk1"
+    ]
+   }
+  },
+  "vbox": {
+   "famille": "conteneurs",
+   "conteneur": true,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "homogeneous": [
+     "gtk4",
+     "efl1",
+     "sdl3",
+     "ncurses",
+     "html"
+    ],
+    "margin": [
+     "gtk3",
+     "gtk4"
+    ],
+    "space-expand": [
+     "gtk3",
+     "gtk4",
+     "efl1",
+     "ncurses"
+    ],
+    "space-fill": [
+     "gtk3",
+     "gtk4",
+     "efl1",
+     "ncurses"
+    ],
+    "spacing": [
+     "qt6",
+     "fltk1",
+     "efl1"
+    ],
+    "width-request": [
+     "fltk1"
+    ]
+   }
+  },
+  "vscale": {
+   "famille": "saisie",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "digits": [
+     "qt6",
+     "fltk1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "height-request": [
+     "qt6",
+     "fltk1"
+    ],
+    "max": [
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "min": [
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "range-max": [
+     "gtk4",
+     "qt6",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "range-min": [
+     "gtk4",
+     "qt6",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "range-step": [
+     "gtk4",
+     "qt6",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "range-value": [
+     "gtk4"
+    ],
+    "scale-max": [
+     "gtk4"
+    ],
+    "scale-min": [
+     "gtk4"
+    ],
+    "scale-step": [
+     "gtk4"
+    ],
+    "scale-value": [
+     "gtk4"
+    ],
+    "step": [
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "value": [
+     "qt6",
+     "fltk1"
+    ],
+    "width-request": [
+     "qt6",
+     "fltk1"
+    ]
+   }
+  },
+  "vseparator": {
+   "famille": "divers",
+   "conteneur": false,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "height-request": [
+     "qt6",
+     "fltk1"
+    ],
+    "width-request": [
+     "qt6",
+     "fltk1"
+    ]
+   }
+  },
+  "window": {
+   "famille": "conteneurs",
+   "conteneur": true,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {
+    "border-width": [
+     "qt6"
+    ],
+    "default-height": [
+     "gtk3",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "default-width": [
+     "gtk3",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "dist": [
+     "gtk3"
+    ],
+    "edge": [
+     "gtk3"
+    ],
+    "headerbar": [
+     "gtk3",
+     "gtk4"
+    ],
+    "height-request": [
+     "gtk3",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "image-name": [
+     "gtk3",
+     "gtk4"
+    ],
+    "layer": [
+     "gtk3"
+    ],
+    "margin": [
+     "gtk3",
+     "gtk4",
+     "qt6"
+    ],
+    "reserve": [
+     "gtk3"
+    ],
+    "resizable": [
+     "gtk3",
+     "qt6",
+     "fltk1"
+    ],
+    "title": [
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "width-request": [
+     "gtk3",
+     "qt6",
+     "fltk1",
+     "efl1",
+     "sdl3",
+     "lvgl",
+     "ncurses",
+     "html"
+    ],
+    "window-position": [
+     "qt6",
+     "fltk1"
+    ]
+   }
+  },
+  "wizard": {
+   "famille": "conteneurs",
+   "conteneur": true,
+   "attributs_de_balise": true,
+   "alias": [],
+   "attributs_lus": {}
+  }
+ },
+ "boutons_stock": [
+  "button ok",
+  "button cancel",
+  "button help",
+  "button yes",
+  "button no"
+ ],
+ "contenu": [
+  "default",
+  "sensitive",
+  "label",
+  "width",
+  "height",
+  "input",
+  "output",
+  "variable",
+  "action",
+  "item"
+ ],
+ "contenu_alias": {
+  "visible": "sensitive"
+ },
+ "sources": {
+  "input": [
+   "modbus",
+   "opcua",
+   "mqtt",
+   "mavlink",
+   "media"
+  ],
+  "action": [
+   "mqtt",
+   "mavlink",
+   "media"
+  ]
+ },
+ "actions": {
+  "forme": "<action [signal=\"…\"] [type=\"…\"]>PRÉFIXE:argument</action> ; sans préfixe, une commande shell (« command »).",
+  "prefixes": [
+   "command",
+   "exit",
+   "closewindow",
+   "launch",
+   "enable",
+   "disable",
+   "show",
+   "hide",
+   "activate",
+   "grabfocus",
+   "presentwindow",
+   "refresh",
+   "save",
+   "fileselect",
+   "clear",
+   "removeselected",
+   "break",
+   "insert",
+   "append",
+   "pulse",
+   "start",
+   "stop"
+  ]
+ },
+ "signaux": [
+  "activate",
+  "button-press-event",
+  "button-release-event",
+  "changed",
+  "child-exited",
+  "clicked",
+  "color-set",
+  "configure-event",
+  "cursor-changed",
+  "delete-event",
+  "destroy-event",
+  "enter",
+  "enter-notify-event",
+  "file-changed",
+  "focus-in-event",
+  "focus-out-event",
+  "font-set",
+  "hide",
+  "key-press-event",
+  "key-release-event",
+  "leave",
+  "leave-notify-event",
+  "map-event",
+  "pressed",
+  "primary-icon-press",
+  "primary-icon-release",
+  "realize",
+  "released",
+  "row-activated",
+  "secondary-icon-press",
+  "secondary-icon-release",
+  "select-row",
+  "selection-changed",
+  "show",
+  "toggled",
+  "unmap-event",
+  "value-changed"
+ ],
+ "attributs_communs": [
+  "accept",
+  "auto-refresh",
+  "block-function-signals",
+  "file-monitor",
+  "fs-action",
+  "fs-filters",
+  "fs-filters-mime",
+  "fs-folder",
+  "fs-title",
+  "height",
+  "hscrollbar-policy",
+  "rate-limit",
+  "scrollable",
+  "sensitive",
+  "shadow-type",
+  "vscrollbar-policy",
+  "width"
+ ],
+ "attributs_hors_widget": {
+  "height-request": [
+   "fltk1"
+  ],
+  "homogeneous": [
+   "lvgl"
+  ],
+  "page": [
+   "efl1",
+   "fltk1",
+   "gtk3",
+   "gtk4",
+   "html",
+   "lvgl",
+   "ncurses",
+   "qt6",
+   "sdl3"
+  ],
+  "space-expand": [
+   "efl1",
+   "fltk1",
+   "html",
+   "lvgl",
+   "ncurses",
+   "sdl3"
+  ],
+  "space-fill": [
+   "efl1",
+   "fltk1",
+   "html",
+   "lvgl",
+   "ncurses",
+   "sdl3"
+  ],
+  "switcher": [
+   "efl1",
+   "fltk1",
+   "gtk3",
+   "gtk4",
+   "html",
+   "lvgl",
+   "ncurses",
+   "qt6",
+   "sdl3"
+  ],
+  "variable": [
+   "html"
+  ],
+  "visible": [
+   "efl1",
+   "fltk1",
+   "gtk3",
+   "gtk4",
+   "html",
+   "lvgl",
+   "ncurses",
+   "qt6",
+   "sdl3"
+  ],
+  "width-request": [
+   "fltk1"
+  ]
+ },
+ "attributs_libres": {
+  "gtk3": "toute propriété GObject du widget GTK (tag_set_property.c)",
+  "gtk4": "toute propriété GObject du widget GTK (tag_set_property.c)"
+ },
+ "controle": [
+  "if",
+  "while",
+  "command",
+  "show"
+ ],
+ "herites": [
+  "gvim",
+  "radio"
+ ]
+}

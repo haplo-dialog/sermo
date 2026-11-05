@@ -38,7 +38,10 @@ declare -A PERMIS=(
     ['libsermocore/src/sermo_icon_theme.c|FILE *f = fopen(path, "rb");']=1
     # Le tube de safe_popen(), plafonné à la ligne suivante (sermo_input_wrap).
     ['libsermocore/src/safe_exec.c|stream = fdopen(stdout_fd, "r");']=1
-    ['libsermocore/src-gtk4/safe_exec.c|stream = fdopen(stdout_fd, "r");']=1
+    # gtk3 : les images de sermo-media-images (zone de dessin). Pas un <input> :
+    # un fichier à soi (propriétaire, mode 0600, O_NOFOLLOW vérifiés), lu par
+    # pread de taille fixe, une image au plus 1280×720×4 (sermo_images.h).
+    ['sermo-backend-gtk3/src/widget_drawingarea.c|z->fd = open(z->chemin, O_RDONLY | O_NOFOLLOW | O_CLOEXEC);']=1
     # L'ouvreur plafonné lui-même.
     ['libsermocore/src/sermo_input.c|return sermo_input_wrap(fopen(chemin, "r"), chemin);']=1
     # fltk1 : les réglages de thème du bureau (clair ou sombre).

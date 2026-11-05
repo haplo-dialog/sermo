@@ -5,6 +5,49 @@ This file summarises changes from the user's point of view.
 For the full technical history, see CHANGELOG.en.md.
 
 ──────────────────────────────────────────────────
+Version 3.2.0 (2026-11-04)
+──────────────────────────────────────────────────
+
+BEHAVIOUR CHANGE — sermoia-mcp: the sermo_run tool is closed by default.
+Without SERMO_ALLOWED_CMDS in the MCP server's environment the dialog is
+shown but no command of the XML (<input>, <action>) is launched, and the
+answer says so. Before, everything ran. To get the commands back, set
+SERMO_ALLOWED_CMDS to the list of those the dialog needs.
+
+pilote=armer, decoller, desarmer and pilote=mode&mode=loiter… pilot an
+ArduPilot Copter in line of sight: two presses per order, sermo's and the
+autopilot's fence, a short delay since the click. The remote pilot remains
+responsible for the flight; sermo is not a certified ground station.
+
+pilote=aller&lat=…&lon=…&hauteur=… sends the drone to a point inside the
+fence, already in GUIDED; success is reported only if the target read back
+from the drone is the same.
+
+Photo and video from a camera, after a confirmation: <action media> can take
+a photo (commande=photo&fichier=…) and record at most 600 s
+(commande=enregistrer&fichier=…&duree=…), into a file that never overwrites
+anything, readable by you only. The camera-capture example shows the exact
+path and the duration before writing.
+
+RTSP IP camera with a password: identifiants=/path, as for HTTP; the password
+never appears in a process's arguments. transport=tcp or udp when needed.
+
+Video inside the window under Wayland, with gtk3: <drawingarea embed="true"
+media="NAME">. The picture is decoded outside sermo, in the cage, without
+access to the screen.
+
+Video inside the window also works with qt6 under X11
+(<drawingarea embed="true">).
+
+sermo.schema.json: the XML language as read from the code (tags, containers,
+attributes read by each port, actions, signals), for editors and AI
+assistants; sermoia-mcp serves it through sermo_schema, sermo-doc installs it.
+Not an XSD: the dialect inherited from gtkdialog (<button ok>) is not strict
+XML, the parser remains the judge.
+
+camera-apercu example: install the ffplay package (split from ffmpeg since
+Debian 7:9).
+
 Version 3.1.2 (2026-10-20)
 ──────────────────────────────────────────────────
 
