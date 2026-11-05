@@ -19,6 +19,13 @@ move from 1.x to 2.x: [MIGRATION.en.md](MIGRATION.en.md).
 
 ### Fixed
 
+- **The documentation still said "no piloting"** in ten places written for
+  3.1: user manual (fr/en), the ports' `man` pages (section 1) and the XML
+  language ones (section 5, gtk3 and gtk4), the Texinfo manual, the `mavlink`
+  example README, the reference served to AI assistants by sermoman-mcp, the
+  `sermo_schema` complement (sermoia-mcp). They now describe 3.2.0 piloting and
+  its safeguards, as `SECURITY.md` does. Found while preparing the website,
+  before the tag.
 - **Camera example: `ffplay` is a separate package** since ffmpeg 7:9 in
   Debian testing (seen 2026-11-03): `ci/dependances.txt` installs it (without
   it the "camera preview" bench returns 77, counted as a failure in CI); the

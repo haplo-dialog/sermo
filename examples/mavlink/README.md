@@ -9,7 +9,7 @@ Deux fenêtres pour un drone qui parle MAVLink (ArduPilot), en balises natives, 
 | `drone-commande.sh` | Au sol, régler **un** paramètre (`WP_SPD`, vitesse de mission) ; en vol, **retour au départ**, **atterrir ici**, et en dernier recours **couper les moteurs** (deux appuis en moins de 5 s). Plus l'état : armé, mode, hauteur. | `sermo-cible-mavlink` (et `sermo-source-mavlink` pour l'état) |
 | `faux-drone.py` | Un faux drone qui diffuse de la télémétrie, pour essayer la lecture sans matériel. | `python3-pymavlink` |
 
-Pas de pilotage : ni armement, ni décollage, ni changement de mode, ni déplacement.
+Ces deux fenêtres ne pilotent pas : ni armement, ni décollage, ni changement de mode, ni déplacement. Depuis la 3.2.0, `<action mavlink>` sait piloter un ArduPilot Copter (`pilote=armer|decoller|mode|aller|desarmer`), seulement si une ligne `pilotage` de la liste blanche le permet : voir le manuel utilisateur, « Commander un drone », et `SECURITY.md`.
 
 ## Essayer la lecture sans drone
 

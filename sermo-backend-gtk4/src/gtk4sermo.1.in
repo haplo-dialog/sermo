@@ -338,8 +338,13 @@ gives a safety order
 or
 .B terminaison
 to cut the motors, which needs a second press within 5 s), or sends a mission
-that is never started. No piloting: no arming, takeoff, mode change or
-movement.
+that is never started. Since 3.2.0 it can also pilot an ArduPilot Copter
+.RB ( pilote=armer ", " decoller ", " mode ", " aller ", " desarmer ),
+only if a
+.B pilotage
+line of the allow-list permits it: two presses per order, sermo's and the
+autopilot's fences, fresh drone state; the remote pilot remains responsible
+for the flight.
 .IP \(bu 2
 Media: sound and video played by mpv. A network source plays only inside
 .BR bwrap ;

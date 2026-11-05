@@ -309,8 +309,11 @@ du serveur).
 MAVLink : télémétrie ; un clic règle un paramètre drone désarmé, donne un ordre
 de sécurité (@code{rtl}, @code{land}, ou @code{terminaison} pour couper les
 moteurs, qui demande un second appui dans les 5 s), ou envoie une mission
-jamais lancée. Pas de pilotage : ni armement, ni décollage, ni changement de
-mode, ni déplacement.
+jamais lancée. Depuis la 3.2.0, il sait aussi piloter un ArduPilot Copter
+(@code{pilote=armer}, @code{decoller}, @code{mode}, @code{aller},
+@code{desarmer}), seulement si une ligne @code{pilotage} de la liste blanche le
+permet : deux appuis par ordre, barrières de sermo et de l'autopilote, état du
+drone relu ; le télépilote reste responsable du vol.
 @item
 Média : son et vidéo joués par mpv. Une source réseau n'est lue que dans
 @command{bwrap} ; un fichier local est lu dans @command{bwrap} s'il est

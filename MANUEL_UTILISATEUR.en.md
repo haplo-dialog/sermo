@@ -1431,11 +1431,12 @@ hardware): `examples/mavlink/`.
 </button>
 ```
 
-A click sets **one** autopilot parameter, gives it **one** safety order, or
-sends it **one** mission. No piloting: no takeoff, no arming, no mode change, no
-commanded movement other than the safety orders (`rtl` brings the drone back to
-its launch point, `land` sets it down in place). A mission is sent, **never
-started**. Same framework as `<action mqtt>`:
+A click sets **one** autopilot parameter, gives it **one** safety order (`rtl`
+brings the drone back to its launch point, `land` sets it down in place), sends
+it **one** mission (sent, **never started**), or, since 3.2.0, **pilots** it:
+arm, take off, change mode, go to a point, disarm — only if a `pilotage` line of
+the allow-list permits it, with two presses per order (see **Piloting**,
+below). Same framework as `<action mqtt>`:
 
 - **only a click**: inside a `<button>` or a `<menuitem>`, refused anywhere else
   when the dialog is read;

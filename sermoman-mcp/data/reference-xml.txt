@@ -900,17 +900,26 @@ SOURCES ET CIBLES
                   <input mavlink>udp://:14550?champ=hauteur</input>
                 </text>
 
-     <action mavlink>LIAISON?parametre=…|ordre=…|mission=…</action>
+     <action mavlink>LIAISON?parametre=…|ordre=…|mission=…|pilote=…</action>
             Règle UN paramètre (drone désarmé, réussi seulement si le drone
             renvoie la même valeur), donne UN ordre de sécurité (rtl, land,
             terminaison ; « terminaison » coupe les moteurs et demande deux
-            appuis en moins de 5 s), ou envoie UNE mission de points de
-            passage, relue sur le drone et JAMAIS lancée. Pas de pilotage :
-            ni armement, ni décollage, ni changement de mode. Seulement dans
-            un <button> ou un <menuitem>. Liste blanche
-            ~/.config/sermo/cibles-mavlink (mode 600) ou
+            appuis en moins de 5 s), envoie UNE mission de points de
+            passage, relue sur le drone et JAMAIS lancée, ou (3.2.0,
+            ArduPilot Copter) PILOTE : pilote=armer|desarmer|decoller,
+            pilote=mode&mode=guided|loiter|poshold|brake|rtl|smart_rtl|land
+            (jamais STABILIZE, ACRO, ALT_HOLD, AUTO), pilote=aller&lat=…&lon=…
+            &hauteur=… (en GUIDED). Chaque ordre de pilotage : deux appuis en
+            moins de 5 s, envoi moins de 2,5 s après le clic (3,5 s pour
+            désarmer), état relu de moins de 0,5 s, barrière de l'autopilote
+            active et pas plus large que celle de la liste, drone dedans ;
+            armer et décoller au sol seulement. Le télépilote reste
+            responsable du vol. Seulement dans un <button> ou un <menuitem>.
+            Liste blanche ~/.config/sermo/cibles-mavlink (mode 600) ou
             /etc/sermo/cibles-mavlink (mode 644) : « parametre NOM min..max »,
-            « ordre rtl|land|terminaison », « mission rayon R hauteur H ».
+            « ordre rtl|land|terminaison », « mission rayon R hauteur H »,
+            « pilotage lat L lon L rayon R hauteur H decollage D modes 4,5,… »
+            (sans elle, aucun ordre de pilotage ne part).
             Familles jamais réglées : ARMING_*, FLTMODE*, SERVOn_FUNCTION,
             BRD_SAFETY*, FENCE_*. Conclusion de chaque appel :
             $XDG_RUNTIME_DIR/sermo-cible-mavlink/message. Paquet :

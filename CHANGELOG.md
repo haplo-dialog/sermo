@@ -19,6 +19,13 @@ changé depuis la 1.x. Pour passer de la 1.x à la 2.x : [MIGRATION.md](MIGRATIO
 
 ### Corrigé
 
+- **La documentation disait encore « pas de pilotage »** à dix endroits écrits
+  en 3.1 : manuel utilisateur (fr/en), pages `man` des ports (section 1) et du
+  langage XML (section 5, gtk3 et gtk4), manuel Texinfo, README de l'exemple
+  `mavlink`, référence servie aux assistants IA par sermoman-mcp, complément
+  de `sermo_schema` (sermoia-mcp). Ils décrivent maintenant le pilotage de la
+  3.2.0 et sa garde, comme `SECURITY.md`. Trouvé en préparant le site, avant
+  l'étiquette.
 - **Exemple caméra : `ffplay` est un paquet à part** depuis ffmpeg 7:9 dans
   Debian testing (vu le 2026-11-03) : `ci/dependances.txt` l'installe (sans
   lui, le banc « aperçu caméra » rend 77, compté en échec en CI) ; les messages

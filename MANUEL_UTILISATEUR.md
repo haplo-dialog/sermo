@@ -1442,10 +1442,11 @@ matériel) : `examples/mavlink/`.
 ```
 
 Un clic règle **un** paramètre de l'autopilote, lui donne **un** ordre de
-sécurité, ou lui envoie **une** mission. Pas de pilotage : ni décollage, ni
-armement, ni changement de mode, ni déplacement commandé autre que les ordres
-de sécurité (`rtl` ramène le drone à son départ, `land` le pose sur place). Une
-mission est envoyée, **jamais lancée**. Même cadre que `<action mqtt>` :
+sécurité (`rtl` ramène le drone à son départ, `land` le pose sur place), lui
+envoie **une** mission (envoyée, **jamais lancée**), ou, depuis la 3.2.0, le
+**pilote** : armer, décoller, changer de mode, aller à un point, désarmer —
+seulement si une ligne `pilotage` de la liste blanche le permet, avec deux
+appuis par ordre (voir **Piloter**, plus bas). Même cadre que `<action mqtt>` :
 
 - **seulement un clic** : dans un `<button>` ou un `<menuitem>`, refusé
   ailleurs à la lecture du dialogue ;

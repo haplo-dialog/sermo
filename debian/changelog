@@ -37,6 +37,10 @@ sermo (3.2.0-1) unstable; urgency=medium
   * Exemple camera-apercu : ffplay est un paquet à part depuis ffmpeg 7:9
     (messages et README : apt install ffplay) ; quand bwrap est installé mais
     privé de ses espaces de noms, CA_BAC=auto le dit et joue sans bac.
+  * Documentation : dix passages écrits en 3.1 disaient encore « pas de
+    pilotage » (manuel fr/en, pages man sections 1 et 5, manuel Texinfo,
+    README de l'exemple mavlink, référence de sermoman-mcp, complément de
+    sermo_schema) ; ils décrivent maintenant le pilotage et sa garde.
   * Bancs : un verdict par banc et les chiffres de tous les bancs dans
     _journaux/bilan.json (ci/bilan-json.sh), tableau de BILAN_SANTE.md
     généré (ci/bilan-md.sh) ; banc de publication pour la copie MAVLink

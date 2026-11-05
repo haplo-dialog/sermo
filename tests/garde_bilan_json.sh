@@ -24,7 +24,8 @@ printf '  ✔ fichier chargé, dialogue fermé par son gestionnaire (rc=0)\ngard
 printf '  ✔ --version annonce VTE\ngarde_terminal : OK — conforme pour gtk3sermo.\n' > "$J/gtk3_terminal.log"
 printf '  ✔ une valeur ordinaire traverse intacte\ngarde_echappement_sortie : OK — 4 cas, aucune exécution.\n' > "$J/gtk3_echappement.log"
 printf '  ✔ tree\ngarde_clic_widgets : OK — 17 widgets, aucun plantage.\n' > "$J/gtk3_clic_widgets.log"
-printf '  wifi-scan        (non joué : nmcli absent)\n  usb-moniteur     (non joué : udevadm absent)\n  ================================================\n  72 exemples : 72 OK · 0 CRASH · 0 SYNTAX · 0 sans fenêtre\n  ================================================\n' > "$J/gtk3_exemples_reels.log"
+printf '  wifi-scan        (non joué : nmcli absent)\n  usb-moniteur     (non joué : udevadm absent)\n  ================================================\n  72 exemples : 72 OK · 0 CRASH · 0 SYNTAX · 0 sans fenêtre\n  ================================================\n  (2 exemple(s) réservé(s) à d’autres ports, non joué(s))\n' > "$J/gtk3_exemples_reels.log"
+printf '  glade            (réservé à : gtk3 gtk4)\n  71 exemples : 71 OK · 0 CRASH · 0 SYNTAX · 0 sans fenêtre\n  (3 exemple(s) réservé(s) à d’autres ports, non joué(s))\n' > "$J/qt6_exemples_reels.log"
 printf '────  Résultats pour /x/ncursessermo : 55 PASS | 0 FAIL | 0 SKIP\n' > "$J/ncurses_xml.log"
 printf 'garde_ncurses_mot_de_passe : OK — saisie masquée, valeur exportée.\n' > "$J/ncurses_mot_de_passe.log"
 printf '  ✔ option refusée : code 1 et message\ngarde_glade : OK — conforme pour ncursessermo.\n' > "$J/ncurses_glade.log"
@@ -80,6 +81,9 @@ attendu ports.gtk3.exemples.joues 72
 attendu ports.gtk3.exemples.ok 72
 attendu ports.gtk3.exemples.non_joues.0 "wifi-scan (non joué : nmcli absent)"
 attendu ports.gtk3.autres.identité OK
+# La ligne de résumé « (N exemple(s) réservé(s)…) » n'est PAS un exemple réservé (bogue du 2026-11-05).
+reserves_gtk3=$(lit ports.gtk3.exemples.reserves); [ -z "$reserves_gtk3" ] && ok "gtk3 : aucun exemple réservé (la ligne de résumé ne compte pas)" || ko "gtk3 : $reserves_gtk3 réservé(s) comptés, attendu aucun"
+attendu ports.qt6.exemples.reserves 1
 attendu ports.ncurses.glade.etat refusé
 attendu ports.ncurses.mot_de_passe.verdict OK
 attendu ports.html.terminal.etat "non promis"
@@ -97,7 +101,7 @@ bash "$RACINE/ci/bilan-md.sh" "$BAC/journaux/bilan.json" "$MD" >/dev/null || ko 
 grep -q '^\[//\]: # (bilan:debut)$' "$MD" && grep -q '^\[//\]: # (bilan:fin)$' "$MD" && ok "repères posés" || ko "repères absents"
 grep -q '^| gtk3 (étalon) | ✅ 55/55 | ✅ 78/78 | ✅ 8/8 | ✅ chargé | ✅ VTE | ✅ 4/4 | ✅ 17/17 | ✅ 72/72 ; 2 non joué(s) faute d'\''outil (nmcli, udevadm) |$' "$MD" \
     && ok "ligne gtk3 du tableau" || { ko "ligne gtk3 du tableau"; grep '^| gtk3' "$MD"; }
-grep -q '^| qt6 | ❌ 54/55 | ❌ 77/78 | — | — | — | — | — | — |$' "$MD" && ok "ligne qt6 : rouge, 54/55 et 77/78" || { ko "ligne qt6"; grep '^| qt6' "$MD"; }
+grep -q '^| qt6 | ❌ 54/55 | ❌ 77/78 | — | — | — | — | — | ? 71/71 |$' "$MD" && ok "ligne qt6 : rouge, 54/55 et 77/78 ; exemples sans verdict enregistré" || { ko "ligne qt6"; grep '^| qt6' "$MD"; }
 grep -q '^| ncurses | ✅ 55/55 | ✅ 78/78 | — | ✅ refusé | — · mot de passe ✅ | — | — | — |$' "$MD" && ok "ligne ncurses : mot de passe" || { ko "ligne ncurses"; grep '^| ncurses' "$MD"; }
 grep -q '^| sdl3 ' "$MD" && ko "sdl3 sans journal apparaît" || ok "sdl3 sans journal : pas de ligne"
 grep -q 'bash ci/bancs.sh          # 13 bancs : 10 verts, 3 en échec' "$MD" && ok "compte des bancs" || ko "compte des bancs"

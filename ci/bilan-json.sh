@@ -124,7 +124,10 @@ for p in PORTS:
         ex = {"verdict": verdict(n), **chiffre(n, r"(\d+) exemples : (\d+) OK · (\d+) CRASH · (\d+) SYNTAX · (\d+) sans fenêtre",
                                                 ("joues", "ok", "crash", "syntax", "sans_fenetre"))}
         non_joues = [re.sub(r"\s+", " ", l.strip()) for l in lignes(journal(n)) if "(non joué" in l]
-        reserves = sum(1 for l in lignes(journal(n)) if "réservé" in l)
+        # « (réservé à : gtk3 gtk4) » sur la ligne d'un exemple ; PAS la ligne de résumé
+        # « (N exemple(s) réservé(s) à d'autres ports…) », qui compte aussi les non joués
+        # (vu le 2026-11-05 : un de trop sur chaque port dans le bilan de la CI 3.2.0).
+        reserves = sum(1 for l in lignes(journal(n)) if "(réservé à :" in l)
         if non_joues:
             ex["non_joues"] = non_joues
         if reserves:
