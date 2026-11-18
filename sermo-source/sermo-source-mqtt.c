@@ -179,6 +179,15 @@ lire_mqtt(void *donnees, FILE *sortie)
 		        l->sujet, l->taille, MESSAGE_MAX);
 		return LECTURE_REFUS;
 	}
+	/* Le message vient du réseau : ses octets de contrôle ne vont pas tels
+	 * quels au dialogue. ESC ouvrait une séquence de terminal (port ncurses,
+	 * <terminal>), NUL coupait la ligne, CR la réécrivait. Saut de ligne et
+	 * tabulation restent (un message de plusieurs lignes garnit une liste). */
+	for (int i = 0; i < l->taille; i++) {
+		unsigned char o = (unsigned char)l->message[i];
+		if ((o < 0x20 && o != '\n' && o != '\t') || o == 0x7f)
+			l->message[i] = ' ';
+	}
 	fwrite(l->message, 1, (size_t)l->taille, sortie);
 	if (l->message[l->taille - 1] != '\n')
 		fputc('\n', sortie);

@@ -110,7 +110,44 @@ media_pid_vivant(const char *dossier, const char *fichier)
 	long pid = strtol(tampon, &fin, 10);
 	if (pid <= 1 || (*fin != '\0' && *fin != '\n'))
 		return 0;
-	return kill((pid_t)pid, 0) == 0 ? (pid_t)pid : 0;
+	if (kill((pid_t)pid, 0) != 0)
+		return 0;
+#ifdef __linux__
+	/* Le numéro peut avoir été REPRIS par un autre processus après la mort du
+	 * nôtre (fichier resté d'un arrêt brutal) : l'appelant lui enverrait
+	 * SIGTERM. Un processus né APRÈS l'écriture du fichier n'est pas celui que
+	 * le fichier désigne. Si /proc ne se lit pas, on garde l'ancienne réponse. */
+	{
+		struct stat st;
+		char proc[64], ligne[1024];
+		double demarre = -1, amorce = -1;
+		long tics = sysconf(_SC_CLK_TCK);
+		snprintf(proc, sizeof proc, "/proc/%ld/stat", pid);
+		FILE *p = fopen(proc, "r");
+		if (p) {
+			if (fgets(ligne, sizeof ligne, p)) {
+				/* champ 22 (starttime), compté après la « ) » qui ferme le nom */
+				char *q = strrchr(ligne, ')');
+				unsigned long long t = 0;
+				if (q && sscanf(q + 1, " %*c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %*u %*u %*d %*d %*d %*d %*d %*d %llu",
+				                &t) == 1 && tics > 0)
+					demarre = (double)t / (double)tics;
+			}
+			fclose(p);
+		}
+		p = fopen("/proc/stat", "r");
+		if (p) {
+			while (fgets(ligne, sizeof ligne, p))
+				if (sscanf(ligne, "btime %lf", &amorce) == 1)
+					break;
+			fclose(p);
+		}
+		if (demarre >= 0 && amorce > 0 && stat(chemin, &st) == 0
+		    && amorce + demarre > (double)st.st_mtime + 2.0)
+			return 0;
+	}
+#endif
+	return (pid_t)pid;
 }
 
 int
@@ -133,7 +170,10 @@ media_ipc(const char *dossier, const char *requete, char *reponse, size_t taille
 		return -1;
 	}
 	size_t l = strlen(requete);
-	if (write(fd, requete, l) != (ssize_t)l || write(fd, "\n", 1) != 1) {
+	/* MSG_NOSIGNAL : si le lecteur ferme son socket entre les deux envois,
+	 * write() tuait ce programme (SIGPIPE, code 141) au lieu de rendre
+	 * l'erreur — mesuré 1 fois sur 200 contre un socket qui ferme aussitôt. */
+	if (send(fd, requete, l, MSG_NOSIGNAL) != (ssize_t)l || send(fd, "\n", 1, MSG_NOSIGNAL) != 1) {
 		close(fd);
 		return -1;
 	}

@@ -687,7 +687,7 @@ void widget_menuitem_save(variable *var)
 		/* If we have a valid filename then open it and dump the
 		 * widget's data to it */
 		if (filename) {
-			if ((outfile = fopen(filename, "w"))) {
+			if ((outfile = sermo_fopen_output(filename))) {
 
 				is_active = gtk_check_menu_item_get_active(
 					GTK_CHECK_MENU_ITEM(var->Widget));

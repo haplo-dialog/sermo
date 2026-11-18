@@ -115,9 +115,22 @@ backend **provides**:
 - **The `sermo_be_*` operation bridge** (neutral variant): the shim maps toolkit
   primitives onto a small set of functions the backend implements —
   `sermo_be_widget_show`/`hide`/`set_sensitive`/`redraw`, `sermo_be_container_add`,
-  `sermo_be_window_move`, `sermo_be_run_loop`, `sermo_be_app_init`/`quit`. This is
-  the boundary contract: the core no longer names any port (the historical
-  `qt6_*` → `sermo_be_*` rename is done).
+  `sermo_be_container_child0`, `sermo_be_scroll_new`, `sermo_be_window_move`,
+  `sermo_be_run_loop`, `sermo_be_app_init`/`quit`. This is the boundary
+  contract: the core no longer names any port (the historical `qt6_*` →
+  `sermo_be_*` rename is done).
+- **Optional functions**: **weak** symbols a port may leave out (it still
+  links, and the core then says the action is not served).
+  `sermo_be_before_export`, `sermo_be_widget_activate`,
+  `sermo_be_widget_etat`; and, since 3.3.0, `sermo_be_button_click`
+  (`activate:` on a button), `sermo_be_widget_append` and
+  `sermo_be_widget_rows` (`append:` and `save:` outside GTK),
+  `sermo_be_window_close`, `sermo_be_window_present` and `sermo_be_window_new`
+  (`closewindow:` and `launch:` outside GTK). A port that serves `launch:`
+  must accept `sermo_be_run_loop()` being called again from an action, while a
+  first loop is running. The nine ports of the repository provide all of
+  them; a port that does without fails the behaviour cases that play them and
+  `tests/garde_fenetres_multiples.sh`.
 - **Port identity** (optional): `sermo_port_name` and `sermo_port_details`, two
   **weak** symbols declared by the core. Without them, `--version` prints the
   core's name — which is why all the ports used to announce themselves as
@@ -168,7 +181,9 @@ gtk3 / gtk4).
 3. Implement `sermo_backend_toolkit_init` (toolkit init).
 4. Write the `CMakeLists.txt`: `pkg_check_modules(SERMOCORE REQUIRED sermocore)`,
    the toolkit libraries, `-D_FORTIFY_SOURCE=3 -fstack-protector-strong
-   -fcf-protection=full`.
+   -fcf-protection=full`, and, since 3.3.0, `-ffunction-sections
+   -fdata-sections` with `-Wl,--gc-sections` (the binary's weight is held by
+   `tests/garde_poids.sh` and `tests/poids-plafonds.txt`).
 5. Build against the installed library
    (`PKG_CONFIG_PATH=…/libsermocore/_install/lib/pkgconfig`), then pass **the
    three benches** (§6).
@@ -192,10 +207,10 @@ binary:
 TIMEOUT=5 bash tests/xml/run_tests.sh <binary>           # expected: 55 PASS
 
 # 2. Behaviour — exported values == those of the gtk3sermo reference
-bash tests/comportement/run.sh <binary>                  # expected: 78/78
+bash tests/comportement/run.sh <binary>                  # expected: 95/95
 
 # 3. Guard — values at risk do not go back through the shell
-xvfb-run -a bash tests/garde_echappement_sortie.sh <binary>        # OK — 4 cases
+xvfb-run -a bash tests/garde_echappement_sortie.sh <binary>        # OK — 6 cases
 ```
 
 The behaviour bench compares the **exports** (`VAR="value"`) with those of the
@@ -216,7 +231,8 @@ with gtk3sermo.
 of `sermo-source/` (`-DSERMO_SOURCE_EXIGER=ON`: a missing library is a
 failure). `ci/bancs.sh` chains **every** bench: core unit tests, single
 version, language links, source guards (SPDX, script licences, forbidden
-functions, progress-bar thread, workstation headers, capped `<input>` reads),
+functions, progress-bar thread, workstation headers, capped `<input>` reads,
+checksums of the non-Debian recipes, language schema),
 the helper programs (Modbus/OPC UA, MQTT read and write, MAVLink read and write
 against a fake drone, sound and video player) and their hardening, binary by
 binary, the tooled examples (approval, network, GNSS, serial, home automation,
@@ -225,10 +241,14 @@ the light lvgl, the weight per port, the facade check, the core FORTIFY, then
 for each backend the XML, the identity, the hardening, `SERMO_ALLOWED_CMDS`,
 endless sources (`garde_input_sans_fin.sh`), `<input
 modbus|opcua|mqtt|mavlink>`, `<action mqtt|mavlink>` on click only, `--do`,
-`SERMO_SHELL`, the widget limit, `--include`, Glade, `<terminal>`, escaping,
+`SERMO_SHELL`, the widget limit, `--include`, Glade, `<terminal>`, window
+closing and size, picture rendering (bar, gauge, area, and no command run
+under `--render-png`), the calendar, multiple and same-named windows
+(`launch:`, `closewindow:`), the zero-interval timer, variables-only output,
+opening a large dialog, escaping,
 clicking and the real opening of the `examples/` scripts (the masked password
 for ncurses; neither clicks nor examples for html, which opens no window), the
-behaviour on every built port, the two `sermoman-mcp` benches, the job scripts
+behaviour on every built port, the three `sermoman-mcp` benches (protocol, truth, examples), the job scripts
 and the `sermoia-mcp` one. At the end of the run, `ci/bilan-json.sh` reads the
 logs and puts each bench's figures, port by port, in `_journaux/bilan.json`
 (verdicts in `_journaux/bancs/verdicts.tsv`) and on one `BILAN-JSON:` line of
@@ -249,6 +269,14 @@ Rules these scripts enforce, because each one has already lied once:
   counted as failed;
 - **no display**: `DISPLAY` is removed, each graphical guard starts its own Xvfb —
   a workstation measures what the CI measures.
+
+**ASan and UBSan**, on demand: `SERMO_BANC_SANITIZERS=1 bash ci/bancs.sh`
+builds the core and the ports under ASan + UBSan in separate folders
+(`_build_asan*`), replays the behaviour bench and the multi-window cases
+there with every error fatal (about 40 min for the nine ports), then the
+export leak bench on ncurses and html. Alone:
+`bash tests/garde_sanitizers.sh`. In CI: the `sanitizers` job (tag, scheduled
+pipeline, or on demand).
 
 ### Facade check (before publishing)
 
@@ -326,6 +354,14 @@ Inherited from sermo, **non-negotiable**:
   file with `fopen`, `open` or `g_file_get_contents` would escape the limit. Only
   the progress bar, which keeps a single line, removes it
   (`sermo_input_sans_limite()`). Checked by `tests/garde_input_sans_fin.sh`.
+- **Under `--render-png`, no command runs** (3.3.0), unless
+  `SERMO_RENDER_EXEC=1`: the refusal lives in `safe_system` and `safe_popen`.
+  A widget that starts a program without going through them must itself check
+  `safe_exec_tout_refuse()` — as the VTE `<terminal>` of gtk3 and gtk4 does.
+  Checked by `tests/garde_render_sans_commande.sh`.
+- **`SERMO_NO_FILES`** (3.3.0) closes the files named by the XML: every read
+  of an `<input file>` goes through `sermo_fopen_input()`, every `save:` write
+  through the core; a port must not open those files itself.
 
 ## 9. Architectural roadmap (Part 3)
 
@@ -389,7 +425,9 @@ more command: no port depends on libmodbus, open62541, libmosquitto or MAVLink.
   `<action>` inside a `<button>` or a `<menuitem>`, and refuses the name
   `sermo-cible-` written by hand in an `<input>` or an `<action>`.
 
-**The eight programs**, one package each:
+**The eight programs**, one package each. A ninth binary,
+`sermo-media-images` (the picture inside the dialog's area under Wayland,
+linked to libmpv), ships in the package of `sermo-cible-media`:
 
 | Program | Role | Library |
 |---|---|---|

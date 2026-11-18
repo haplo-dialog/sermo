@@ -1,0 +1,7 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: une fenetre fermee par l action d un de ses propres widgets (closewindow:FERME depuis sa barre), alors que les actions suivantes de la meme barre visent encore ses widgets (clear, refresh) : rien ne plante, la suite des actions est jouee, la premiere fenetre continue et sort -->
+<window><vbox>
+<entry><variable>E</variable><default>princ</default></entry>
+<entry><variable>LU</variable><input>sh donnees/lire.sh vu.txt</input></entry>
+<progressbar><variable>P</variable><input>echo 100</input><action>launch:FERME</action></progressbar>
+<timer visible="false" interval="3"><variable>_F</variable><action>refresh:LU</action><action>exit:fin</action></timer></vbox></window>

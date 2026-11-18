@@ -378,7 +378,7 @@ void widget_filechooser_save(variable *var)
 	}
 
 	if (filename) {
-		if ((outfile = fopen(filename, "w"))) {
+		if ((outfile = sermo_fopen_output(filename))) {
 			{
 				const gchar *fp2 = g_object_get_data(
 					G_OBJECT(var->Widget), "fc_path");

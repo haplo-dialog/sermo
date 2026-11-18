@@ -38,6 +38,8 @@
 
 #include <gtk/gtk.h>
 
+#include <time.h>
+#include "safe_exec.h"
 #include "config.h"
 #include "gtk3d.h"
 #include "widgets.h"
@@ -128,6 +130,9 @@ GtkWidget *window = NULL;
 /*
  * Static function definitions.
  */
+/* Variable créée par le dernier instruction_execute_push() (NULL : aucune). */
+static variable *variable_poussee = NULL;
+
 static int 
 instruction_execute_push(token Token, 
 		AttributeSet *Attr, 
@@ -783,8 +788,18 @@ instruction_execute(instruction command)
 		/* These instructions will push widgets into the stack, some
 		 ** of them will remove elements from it.
 		 */
+		variable_poussee = NULL;
 		instruction_execute_push(Token, Attr, command.tag_attributes);
-		variables_refresh(attributeset_get_first(&element, Attr, ATTR_VARIABLE));
+		/* Le premier refresh vise la variable créée pour CE widget. Par le
+		 * nom du XML, le widget d'une seconde fenêtre aux noms déjà pris
+		 * (rangé sous NOM__W<id>) n'était jamais initialisé : c'est celui de
+		 * la première fenêtre qui était rafraîchi une seconde fois — ni
+		 * <default>, ni <input>, ni signaux pour le nouveau (jusqu'à la
+		 * 3.3.0, mesuré sur gtk3 et gtk4 : NOM__W2="" pour un champ dont le
+		 * défaut est « deux »). */
+		variables_refresh(variable_poussee
+			? variable_poussee->Name
+			: attributeset_get_first(&element, Attr, ATTR_VARIABLE));
 		Attr = NULL;
 		break;
 	case SET:
@@ -821,7 +836,7 @@ instruction_execute(instruction command)
 		stackelement s;
 		s = pop();
 		g_message("  -> %s := '%s'", Argument, s.cval);
-		g_setenv(Argument, s.cval, TRUE);
+		sermo_exporter_variable(Argument, s.cval, TRUE);
 		}
 		break;
 	case IMPUSH:
@@ -1061,7 +1076,9 @@ static GtkWidget *put_in_the_scrolled_window(GtkWidget *widget,
 	return scrolledwindow;
 }
 
-static
+/* Branchée par g_signal_connect : sans objet dans les variantes où cet appel
+ * est une macro vide. */
+static __attribute__((unused))
 gboolean widget_moved(GtkWidget *widget,
                       GdkEvent *event,
                       gpointer user_data){
@@ -1158,6 +1175,22 @@ create_gvim(AttributeSet * Attr)
 
 #ifndef QT6_COMPAT_H	/* ports sans GTK : <chooser> passe par widget_filechooser_create() */
 /* GTK3: always available - removed version guard */
+/* GtkFileChooserWidget choisit de lui-même la première entrée du dossier
+ * une fois celui-ci chargé : la variable rendait ce fichier sans que personne
+ * n'ait rien choisi (/usr/share/accountsservice pour <default>/usr/share,
+ * mesuré le 2026-11-15). Un choix ne compte que s'il vient d'un geste : il y
+ * a alors un événement en cours. */
+static void chooser_selection_changee(GtkFileChooser *chooser, gpointer data)
+{
+	GdkEvent *ev = gtk_get_current_event();
+
+	(void)data;
+	if (ev) {
+		g_object_set_data(G_OBJECT(chooser), "sermo-choisi", GINT_TO_POINTER(1));
+		gdk_event_free(ev);
+	}
+}
+
 static GtkWidget *
 create_chooser(AttributeSet *Attr)
 {
@@ -1191,9 +1224,16 @@ create_chooser(AttributeSet *Attr)
 				atoi(attributeset_get_first(&element, Attr, ATTR_WIDTH)),
 				atoi(attributeset_get_first(&element, Attr, ATTR_HEIGHT)));
 	
-	if (attributeset_is_avail(Attr, ATTR_DEFAULT))
+	if (attributeset_is_avail(Attr, ATTR_DEFAULT)) {
 		gtk_file_chooser_set_current_folder((GtkFileChooser *)chooser, 
 				attributeset_get_first(&element, Attr, ATTR_DEFAULT));
+		/* gardé pour l'export : tant que rien n'est choisi, la variable
+		 * rend <default> (voir widget_get_text_value, WIDGET_CHOOSER) */
+		g_object_set_data_full(G_OBJECT(chooser), "sermo-defaut",
+			g_strdup(attributeset_get_first(&element, Attr, ATTR_DEFAULT)), g_free);
+	}
+	g_signal_connect(G_OBJECT(chooser), "selection-changed",
+		G_CALLBACK(chooser_selection_changee), NULL);
 	
 	act = attributeset_get_first(&element, Attr, ATTR_ACTION);
 	while (act != NULL) {
@@ -1231,6 +1271,69 @@ static int widget_insensible_a_la_creation(AttributeSet *Attr, tag_attr *tags)
 		return 1;
 	return Attr && attributeset_is_avail(Attr, ATTR_SENSITIVE)
 	       && valeur_fausse(attributeset_get_first(&el, Attr, ATTR_SENSITIVE));
+}
+
+/* <calendar day="3" month="1" year="2025"> — sur gtk3 et gtk4 ce sont des
+ * propriétés de GtkCalendar, posées après le <default> (month compte de 0 :
+ * 1 = février). Les ports sans GTK les ignoraient : le calendrier s'ouvrait
+ * à la date du jour (mesuré le 2026-11-15, sept ports). Ils lisent tous
+ * <default> : la date demandée y est rangée, AAAA-MM-JJ, avant la création.
+ * Chaque attribut ne compte que s'il laisse une date qui existe (règle de
+ * gtk4 ; gtk3 rend alors des dates fausses, 2025-02-31). */
+/* Entier d'un attribut de <calendar>, borné : atoi() est indéfini hors de
+ * int, et « month + 1 » débordait pour 2147483647. strtol sature. */
+static int calendrier_entier(const char *s)
+{
+	long v = strtol(s, NULL, 10);
+
+	return v < -99999 ? -99999 : v > 99999 ? 99999 : (int)v;
+}
+
+static int date_existe(int a, int m, int j)
+{
+	static const int jours[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+	int max;
+
+	if (a < 1 || a > 9999 || m < 1 || m > 12 || j < 1)
+		return 0;
+	max = jours[m - 1];
+	if (m == 2 && ((a % 4 == 0 && a % 100 != 0) || a % 400 == 0))
+		max = 29;
+	return j <= max;
+}
+
+static void calendrier_attributs_vers_defaut(AttributeSet *Attr, tag_attr *tags)
+{
+	GList *el = NULL;
+	const char *sa, *sm, *sj;
+	char *def, texte[16];
+	int a = 0, m = 0, j = 0, v;
+
+	if (!Attr || !tags)
+		return;
+	sa = get_tag_attribute(tags, "year");
+	sm = get_tag_attribute(tags, "month");
+	sj = get_tag_attribute(tags, "day");
+	if (!sa && !sm && !sj)
+		return;
+	def = attributeset_get_first(&el, Attr, ATTR_DEFAULT);
+	if (!def || sscanf(def, "%d-%d-%d", &a, &m, &j) != 3 || !date_existe(a, m, j)) {
+		time_t t = time(NULL);
+		struct tm *tm = localtime(&t);
+		a = tm->tm_year + 1900; m = tm->tm_mon + 1; j = tm->tm_mday;
+	}
+	if (sa && (v = calendrier_entier(sa), date_existe(v, m, j)))
+		a = v;
+	if (sm && (v = calendrier_entier(sm) + 1, date_existe(a, v, j)))
+		m = v;
+	if (sj && (v = calendrier_entier(sj), date_existe(a, m, v)))
+		j = v;
+	g_snprintf(texte, sizeof(texte), "%04d-%02d-%02d", a, m, j);
+	if (el && el->data) {
+		/* l'ancien texte appartient à l'analyseur : il n'est pas libéré ici */
+		((Attribute *)el->data)->text = g_strdup(texte);
+	} else
+		attributeset_insert(Attr, ATTR_DEFAULT, texte);
 }
 #endif
 
@@ -1313,6 +1416,9 @@ instruction_execute_push(
 			push_widget(Widget, Widget_Type);
 			break;
 		case WIDGET_CALENDAR:
+#ifdef QT6_COMPAT_H
+			calendrier_attributs_vers_defaut(Attr, tag_attributes);
+#endif
 			Widget = widget_calendar_create(Attr, tag_attributes, Widget_Type);
 			push_widget(Widget, Widget_Type);
 			break;
@@ -1591,10 +1697,15 @@ instruction_execute_push(
 	 ** Now we create a new variable or refresh the old one for this
 	 ** new widget.
 	 */
-	variables_new_with_widget(Attr, tag_attributes, Widget, Widget_Type);
+	variable_poussee = variables_new_with_widget(Attr, tag_attributes,
+		Widget, Widget_Type);
 
-	variables_set_attributes(attributeset_get_first(&element, Attr,
-		ATTR_VARIABLE), Attr);
+	/* Les attributs vont à la variable de ce widget (variables_new_with_widget
+	 * les y a déjà rangés). Par le nom du XML, ceux d'une seconde fenêtre
+	 * homonyme écrasaient ceux de la première. */
+	if (variable_poussee == NULL)
+		variables_set_attributes(attributeset_get_first(&element, Attr,
+			ATTR_VARIABLE), Attr);
 
 #ifdef QT6_COMPAT_H
 	/* Ports sans GTK : grisé dès la création. GTK le fait de lui-même
@@ -1687,7 +1798,7 @@ instruction_new(instruction new)
 	PIP_DEBUG("instruction_counter=%d, memory_counter=%d", 
 			instruction_counter, memory_counter);
 	
-	if (instruction_counter == memory_counter)
+	if ((size_t)instruction_counter == memory_counter)
 		_more_memory_needed();
 
 	program[instruction_counter++] = new;
@@ -1702,7 +1813,7 @@ instruction_get_pc(void)
 void
 instruction_set_jump(gint from, gint where)
 {
-	if (from >= memory_counter)
+	if (from < 0 || (size_t)from >= memory_counter)
 		g_error("Jump from a nonexistent instruction memory location.");
 	program[from].ival = where;
 }

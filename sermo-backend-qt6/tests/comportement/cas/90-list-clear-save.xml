@@ -1,0 +1,15 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: list : clear: retire les rangees (items et <input>), save: n ecrit plus rien, et un append: suivant repart d une liste vide (fltk1 ne retirait que la selection) -->
+<window><vbox>
+<list><variable>LA</variable><item>x</item><item>y</item><output file>la.out</output></list>
+<list><variable>LB</variable><input file>donnees/deux-lignes.txt</input><output file>lb.out</output></list>
+<list><variable>LC</variable><item>x</item><item>y</item><output file>lc.out</output></list>
+<entry><variable>SRC</variable><default>apres</default></entry>
+<entry><variable>FLA</variable><input>sh donnees/lire.sh la.out</input></entry>
+<entry><variable>FLB</variable><input>sh donnees/lire.sh lb.out</input></entry>
+<entry><variable>FLC</variable><input>sh donnees/lire.sh lc.out</input></entry>
+<timer visible="false"><variable>_T</variable>
+<action>clear:LA</action><action>clear:LB</action><action>clear:LC</action><action>append:SRC,LC</action>
+<action>save:LA</action><action>save:LB</action><action>save:LC</action>
+<action>refresh:FLA</action><action>refresh:FLB</action><action>refresh:FLC</action>
+<action>exit:fin</action></timer></vbox></window>

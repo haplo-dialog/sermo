@@ -6,7 +6,7 @@
 /* neutral_toolkit_bridge.c — pont ABI « toolkit neutre » du backend fltk1.
  *
  * libsermocore (variante NEUTRE) est compilé avec sermocore-shim.h,
- * qui EST qt6-compat.h. Ses macros de remplacement mappent les primitives
+ * né comme copie de qt6-compat.h du port Qt 6. Ses macros de remplacement mappent les primitives
  * toolkit (gtk_widget_show, gtk_main, …) vers des fonctions préfixées « qt6_ »
  * — c'est le NOM de l'ABI neutre cœur→backend, indépendamment du toolkit réel.
  * Le cœur laisse donc ces 8 symboles indéfinis ; chaque backend neutre les
@@ -42,6 +42,8 @@ void  sermo_be_widget_set_sensitive(void *w, int s)    { fltk_widget_set_sensiti
 void  sermo_be_container_add(void *c, void *child)     { fltk_group_add(c, child); }
 void *sermo_be_container_child0(void *c)               { return fltk_group_child0(c); }
 void  sermo_be_window_move(void *w, int x, int y)      { fltk_window_move(w, x, y); }
+int   sermo_be_window_close(void *w)                   { return fltk_window_close(w); }
+void  sermo_be_window_present(void *w)                 { fltk_window_present(w); }
 void *sermo_be_scroll_new(int w, int h)                { return fltk_scroll_new(w, h); }
 
 /* gtk_main() → sermo_be_run_loop() ; fltk_run() rend void, l'ABI attend un int.

@@ -1,0 +1,9 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: comboboxentry : <default> choisit l element de meme texte ; absent de la liste, ou liste vide, il reste le texte du widget, entier meme au-dela de 255 octets (CL : 300) -->
+<window><vbox>
+<comboboxentry><variable>CE</variable><item>un</item><item>deux</item><default>deux</default></comboboxentry>
+<comboboxentry><variable>CF</variable><item>un</item><item>deux</item><default>libre é</default></comboboxentry>
+<comboboxentry><variable>CG</variable><default>seul</default></comboboxentry>
+<comboboxentry><variable>CL</variable><item>un</item><default>LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL</default></comboboxentry>
+<comboboxtext><variable>CT</variable><item>un</item><item>deux</item><default>absent</default></comboboxtext>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

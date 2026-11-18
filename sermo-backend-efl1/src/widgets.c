@@ -301,9 +301,12 @@ widget_get_text_value(GtkWidget *widget, int type)
         return widget_colorbutton_envvar_construct(widget);
 
     case WIDGET_COMBOBOX:
-    case WIDGET_COMBOBOXENTRY:
         return widget_combobox_envvar_construct(widget);
 
+    /* <comboboxentry> est créé et rafraîchi par widget_comboboxtext : sa
+     * valeur s'y lit aussi. Lue par widget_combobox (une autre donnée du
+     * widget), elle sortait toujours vide, <default> compris. */
+    case WIDGET_COMBOBOXENTRY:
     case WIDGET_COMBOBOXTEXT:
         return widget_comboboxtext_envvar_construct(widget);
 

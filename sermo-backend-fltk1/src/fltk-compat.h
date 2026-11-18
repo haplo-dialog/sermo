@@ -599,6 +599,8 @@ void  fltk_widget_set_sensitive(Fl_Widget_C *w, int sensitive);
 void  fltk_group_add(Fl_Widget_C *group, Fl_Widget_C *child);
 void *fltk_group_child0(Fl_Widget_C *group);
 void  fltk_window_move(Fl_Widget_C *w, int x, int y);
+int   fltk_window_close(Fl_Widget_C *w);
+void  fltk_window_present(Fl_Widget_C *w);
 #ifdef __cplusplus
 }
 #endif

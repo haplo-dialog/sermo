@@ -364,7 +364,7 @@ void widget_list_save(variable *var)
 	/* If we have a valid filename then open it and dump the
 	 * widget's data to it */
 	if (filename) {
-		if ((outfile = fopen(filename, "w"))) {
+		if ((outfile = sermo_fopen_output(filename))) {
 
 			/* GTK3: GtkList → GtkListBox. Rows are GtkListBoxRow with a GtkLabel
 			 * child. The item text is stored as "user_data" on each row. */
@@ -446,7 +446,7 @@ static void widget_list_input_by_command(variable *var, char *filename,
 				gtk_label_set_xalign(GTK_LABEL(label), 0.0); /* left-align text */
 				gtk_container_add(GTK_CONTAINER(item), label);
 			}
-			g_object_set_data(G_OBJECT(item), "user_data", (gpointer)saved);
+			g_object_set_data_full(G_OBJECT(item), "user_data", (gpointer)saved, g_free);
 			gtk_container_add(GTK_CONTAINER(var->Widget), item);
 			gtk_widget_show_all(item);
 

@@ -1,0 +1,14 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: activate:NOM sur un <button> joue ses actions, comme un clic (BA vide E1, toutes ses actions jouent : E2 aussi) ; un bouton grise les joue aussi, comme sur l etalon (BG vide E4) ; sur un bouton nu (<button ok>) il ferme le dialogue avec sa valeur : EXIT="OK", et la minuterie de secours ne joue pas -->
+<window><vbox>
+<entry><variable>E1</variable><default>un</default></entry>
+<entry><variable>E2</variable><default>deux</default></entry>
+<entry><variable>E3</variable><default>trois</default></entry>
+<entry><variable>E4</variable><default>quatre</default></entry>
+<button><label>agir</label><variable>BA</variable><action>clear:E1</action><action>clear:E2</action></button>
+<button><label>grise</label><variable>BG</variable><sensitive>false</sensitive><action>clear:E4</action></button>
+<button ok><variable>BO</variable></button>
+<timer visible="false" interval="1"><variable>T1</variable><action>disable:T1</action><action>activate:BA</action><action>activate:BG</action></timer>
+<timer visible="false" interval="2"><variable>T2</variable><action>disable:T2</action><action>activate:BO</action></timer>
+<timer visible="false" interval="5"><variable>_F</variable><action>clear:E3</action><action>exit:secours</action></timer>
+</vbox></window>

@@ -127,6 +127,27 @@ for f in "${DOCS_COURANTE[@]}"; do
     done <<< "$TROUVES"
 done
 
+# 8. Les documents de suivi ouvrent sur la version courante. Le 2026-11-05, un
+#    audit a trouvé un TODO qui disait encore « la 3.1.0 est publiée » et
+#    rangeait le pilotage en « Prévu en 3.2.0 » alors que la 3.2.0 était
+#    publiée : aucun banc ne lisait le TODO, ni la tête du CHANGELOG et des NEWS.
+#    - CHANGELOG.md / .en.md : la première entrée « ## [X] » est X = VERSION ;
+#    - NEWS / NEWS.en : la première ligne « Version X » est X = VERSION ;
+#    - TODO.md : le paragraphe d'état (avant le premier titre « ## ») cite VERSION.
+for f in CHANGELOG.md CHANGELOG.en.md; do
+    TETE=$(grep -a -m1 -oE '^## \[[^]]+\]' "$f" 2>/dev/null | sed -E 's/^## \[(.*)\]$/\1/')
+    [ "$TETE" = "$ATTENDUE" ] || \
+        signale "$f : première entrée [${TETE:-<absente>}], attendu [$ATTENDUE]"
+done
+for f in NEWS NEWS.en; do
+    TETE=$(grep -a -m1 -oE "^Version $V" "$f" 2>/dev/null | sed 's/^Version //')
+    [ "$TETE" = "$ATTENDUE" ] || \
+        signale "$f : première version annoncée ${TETE:-<absente>}, attendu $ATTENDUE"
+done
+ETAT=$(awk '/^## /{exit} {print}' TODO.md 2>/dev/null)
+printf '%s\n' "$ETAT" | grep -aqF "$ATTENDUE" || \
+    signale "TODO.md : le paragraphe d'état ne cite pas $ATTENDUE"
+
 if [ "$ecarts" -gt 0 ]; then
     echo "ECHEC : $ecarts écart(s) au fichier VERSION ($ATTENDUE) :" >&2
     exit 1

@@ -73,236 +73,6 @@ input_get_shell_command(const gchar *command)
 		return NULL;
 }
 
-/* Redundant: Not being used
-gboolean
-command_is_shell_command(const gchar *command)
-{
-	if (command == NULL)
-		return FALSE;
-	return strncasecmp(command, "command:", 8) == 0;
-}
-
-const gchar *
-command_get_shell_command(const gchar *command)
-{
-	if (command_is_shell_command(command))
-		return command + 8;
-	else
-		return NULL;
-}
-
-gboolean
-command_is_exit_command(const gchar *command)
-{
-	if (command == NULL)
-		return FALSE;
-	return strncasecmp(command, "exit:", 5) == 0;
-}
-
-const gchar *
-command_get_exit_command(const gchar *command)
-{
-	if (command_is_exit_command(command))
-		return command + 5;
-	else
-		return NULL;
-}
-
-gboolean
-command_is_closewindow_command(const gchar *command)
-{
-	if (command == NULL)
-		return FALSE;
-	return strncasecmp(command, "closewindow:", 12) == 0;
-}
-
-const gchar *
-command_get_closewindow_command(const gchar *command)
-{
-	if (command_is_closewindow_command(command))
-		return command + 12;
-	else
-		return NULL;
-}
-
-gboolean
-command_is_launch_command(const gchar *command)
-{
-	if (command == NULL)
-		return FALSE;
-	return strncasecmp(command, "launch:", 7) == 0;
-}
-
-const gchar *
-command_get_launch_command(const gchar *command)
-{
-	if (command_is_launch_command(command))
-		return command + 7;
-	else
-		return NULL;
-}
-
-gboolean
-command_is_enable_command(const gchar *command)
-{
-	if (command == NULL)
-		return FALSE;
-	return strncasecmp(command, "enable:", 7) == 0;
-}
-
-const gchar *
-command_get_enable_command(const gchar *command)
-{
-	if (command_is_enable_command(command))
-		return command + 7;
-	else
-		return NULL;
-}
-
-
-gboolean
-command_is_disable_command(const gchar *command)
-{
-	if (command == NULL)
-		return FALSE;
-	return strncasecmp(command, "disable:", 8) == 0;
-}
-
-const gchar *
-command_get_disable_command(const gchar *command)
-{
-	if (command_is_disable_command(command))
-		return command + 8;
-	else
-		return NULL;
-}
-
-
-gboolean
-command_is_refresh_command(const gchar *command)
-{
-	if (command == NULL)
-		return FALSE;
-	return strncasecmp(command, "refresh:", 8) == 0;
-}
-
-const gchar *
-command_get_refresh_command(const gchar *command)
-{
-	if (command_is_refresh_command(command))
-		return command + 8;
-	else
-		return NULL;
-}
-
-
-gboolean
-command_is_save_command(const gchar *command)
-{
-	if (command == NULL)
-		return FALSE;
-	return strncasecmp(command, "save:", 5) == 0;
-}
-
-const gchar *
-command_get_save_command(const gchar *command)
-{
-	if (command_is_save_command(command))
-		return command + 5;
-	else
-		return NULL;
-}
-
-
-gboolean
-command_is_fileselect_command(const gchar *command)
-{
-	if (command == NULL)
-		return FALSE;
-	return strncasecmp(command, "fileselect:", 11) == 0;
-}
-
-const gchar *
-command_get_fileselect_command(const gchar *command)
-{
-	if (command_is_fileselect_command(command))
-		return command + 11;
-	else
-		return NULL;
-}
-
-gboolean
-command_is_clear_command(const gchar *command)
-{
-	if (command == NULL)
-		return FALSE;
-	return strncasecmp(command, "clear:", 6) == 0;
-}
-
-const gchar *
-command_get_clear_command(const gchar *command)
-{
-	if (command_is_clear_command(command))
-		return command + 6;
-	else
-		return NULL;
-}
-
-
-gboolean
-command_is_removeselected_command(const gchar *command)
-{
-	if (command == NULL)
-		return FALSE;
-	return strncasecmp(command, "removeselected:", 15) == 0;
-}
-
-const gchar *
-command_get_removeselected_command(const gchar *command)
-{
-	if (command_is_removeselected_command(command))
-		return command + 15;
-	else
-		return NULL;
-}
-
-
-gboolean
-command_is_insert_command(const gchar *command)
-{
-	if (command == NULL)
-		return FALSE;
-	return strncasecmp(command, "insert:", 7) == 0;
-}
-
-const gchar *
-command_get_insert_command(const gchar *command)
-{
-	if (command_is_insert_command(command))
-		return command + 7;
-	else
-		return NULL;
-}
-
-
-gboolean
-command_is_append_command(const gchar *command)
-{
-	if (command == NULL)
-		return FALSE;
-	return strncasecmp(command, "append:", 7) == 0;
-}
-
-const gchar *
-command_get_append_command(const gchar *command)
-{
-	if (command_is_append_command(command))
-		return command + 7;
-	else
-		return NULL;
-} */
-
-
 /* Thunor: These need to match CommandType as defined in stringman.h */
 
 static gchar *prefixes[] = {
@@ -468,6 +238,7 @@ list_t *linecutter(char *str, int fs)
 {
 	list_t *parts;
 	int n, q;
+	char *p, *debut, *fin;
 	
 	g_assert(str != NULL);
 #ifdef DEBUG
@@ -484,35 +255,44 @@ list_t *linecutter(char *str, int fs)
 	for (n = 0; n < parts->maxlines; n++) parts->line[n] = NULL;
 
 	parts->line[0] = str;
-	
-	for(n = 0; n <= (gint)strlen(str); ++n){
-		if (str[n] == fs){
-			/* Correctif debordement (CWE-787) : l'original ecrivait sans
-			 * jamais comparer a maxlines ; des 127 separateurs il debordait
-			 * du tableau de 128 cases. On l'agrandit au besoin, en gardant
-			 * toujours une case libre pour le NULL final de line[n_lines]. */
-			if (parts->n_lines + 1 >= parts->maxlines){
-				int ancien = parts->maxlines;
-				parts->maxlines *= 2;
-				parts->line = g_realloc(parts->line,
-					sizeof(char *) * parts->maxlines);
-				for (q = ancien; q < parts->maxlines; ++q)
-					parts->line[q] = NULL;
-			}
-			/* g_strdup et non strdup : list_t_free libere par g_free,
-			 * et melanger les deux allocateurs est indefini. */
-			parts->line[parts->n_lines] = g_strdup(str + n + 1);
-			++parts->n_lines;
+
+	/* Un seul passage. Jusqu'à la 3.3.0, chaque séparateur faisait recopier
+	 * toute la fin de la chaîne (g_strdup(str + n + 1)), que l'on recoupait
+	 * ensuite, et la longueur était remesurée à chaque tour : temps et
+	 * mémoire quadratiques — une ligne de 10 000 colonnes vides coûtait
+	 * 50 Mo de copies. Ici chaque morceau est copié une fois, à sa taille. */
+	debut = str;
+	for (p = str; *p; ++p) {
+		if (*p != fs) continue;
+		/* Correctif débordement (CWE-787) : l'original écrivait sans jamais
+		 * comparer à maxlines. On agrandit au besoin, en gardant toujours
+		 * une case libre pour le NULL final de line[n_lines]. */
+		if (parts->n_lines + 1 >= parts->maxlines) {
+			int ancien = parts->maxlines;
+			parts->maxlines *= 2;
+			parts->line = g_realloc(parts->line,
+				sizeof(char *) * parts->maxlines);
+			for (q = ancien; q < parts->maxlines; ++q)
+				parts->line[q] = NULL;
 		}
+		/* Le morceau qui se termine ici : line[0] est str lui-même, coupé
+		 * sur place ; les suivants sont des copies (g_strndup, puisque
+		 * list_t_free libère par g_free). */
+		if (parts->n_lines > 1)
+			parts->line[parts->n_lines - 1] = g_strndup(debut, (gsize)(p - debut));
+		parts->line[parts->n_lines] = NULL;	/* posé au morceau suivant */
+		++parts->n_lines;
+		debut = p + 1;
 	}
-	
+	fin = p;
+	if (parts->n_lines > 1) {
+		parts->line[parts->n_lines - 1] = g_strndup(debut, (gsize)(fin - debut));
+		/* couper str à son premier séparateur, une fois les copies faites */
+		p = strchr(str, fs);
+		if (p) *p = '\0';
+	}
 	parts->line[parts->n_lines] = NULL;
 
-	for (n = 0; n < parts->n_lines - 1; ++n){
-		for (q = 0; q < (gint)strlen(parts->line[n]); ++q)
-			if (*(parts->line[n] + q) == fs)
-				*(parts->line[n] + q) = '\0';
-	}
 	return parts;
 }
 

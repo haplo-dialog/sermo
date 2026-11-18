@@ -24,6 +24,8 @@ void       widget_table_refresh(variable *var);
 void       widget_table_fileselect(variable *var, const char *name, const char *value);
 void       widget_table_removeselected(variable *var);
 void       widget_table_save(variable *var);
+/* gtk3, gtk4 : rangée ajoutée par append: (les autres ports passent par le contrat). */
+void widget_table_append_row(variable *var, const char *valeur);
 
 #ifdef __cplusplus
 }

@@ -7,6 +7,23 @@
 name: macOS (port ncurses)
 on:
   push:
+    # Ce que le job construit ou joue : le cœur, le port ncurses, le contrat,
+    # les bancs (les cas de comportement sont sous sermo-backend-qt6/tests),
+    # les exemples métier et leurs programmes d'aide, les recettes des autres
+    # systèmes. Une poussée qui ne touche qu'à la documentation ou aux paquets
+    # Debian ne le relance plus.
+    paths:
+      - 'libsermocore/**'
+      - 'sermo-backend-ncurses/**'
+      - 'sermo-backend-qt6/tests/**'
+      - 'contract/**'
+      - 'tests/**'
+      - 'examples/**'
+      - 'sermo-source/**'
+      - 'packaging/autres-os/**'
+      - 'doc/**'
+      - 'VERSION'
+      - '.github/workflows/macos.yml'
   workflow_dispatch:
 permissions:
   contents: read
@@ -18,7 +35,7 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Outils (Homebrew)
         run: |
           brew install cmake bison flex ncurses pkgconf bash coreutils
@@ -48,18 +65,22 @@ jobs:
           bash examples/metiers/verifie.sh --ports ncurses --garder passe-macos 2>&1 | tee metiers.log
       - name: Formule Homebrew
         run: |
-          git archive --format=tar.gz --prefix=sermo-v3.0.0/ -o "$RUNNER_TEMP/sermo-v3.0.0.tar.gz" HEAD
-          somme=$(shasum -a 256 "$RUNNER_TEMP/sermo-v3.0.0.tar.gz" | cut -d' ' -f1)
+          # Le numéro vient de la formule : Homebrew le tire du nom de l'archive, et `brew test`
+          # le compare à `--version` (figé à 3.0.0 ici jusqu'au 2026-11-05).
+          v=$(sed -n 's#^  url ".*/archive/v\([0-9.]*\)/.*#\1#p' packaging/autres-os/homebrew/sermo.rb)
+          test -n "$v"
+          git archive --format=tar.gz --prefix=sermo-v$v/ -o "$RUNNER_TEMP/sermo-v$v.tar.gz" HEAD
+          somme=$(shasum -a 256 "$RUNNER_TEMP/sermo-v$v.tar.gz" | cut -d' ' -f1)
           brew tap-new --no-git local/essai
           f="$(brew --repository)/Library/Taps/local/homebrew-essai/Formula/sermo.rb"
-          sed -e "s#^  url .*#  url \"file://$RUNNER_TEMP/sermo-v3.0.0.tar.gz\"#" \
+          sed -e "s#^  url .*#  url \"file://$RUNNER_TEMP/sermo-v$v.tar.gz\"#" \
               -e "s#^  sha256 .*#  sha256 \"$somme\"#" packaging/autres-os/homebrew/sermo.rb > "$f"
           brew install --build-from-source local/essai/sermo 2>&1 | tee formule.log
           brew test local/essai/sermo 2>&1 | tee -a formule.log
           sermo --version | tee -a formule.log
       - name: Journaux
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: journaux-macos
           path: |

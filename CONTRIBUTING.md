@@ -65,8 +65,8 @@ backends touchés :
 
 ```sh
 TIMEOUT=5 bash tests/xml/run_tests.sh <BIN>                       # 55 PASS
-bash tests/comportement/run.sh <BIN>                              # 78 au vert
-xvfb-run -a bash tests/garde_echappement_sortie.sh <BIN>          # OK — 4 cas
+bash tests/comportement/run.sh <BIN>                              # 95 au vert
+xvfb-run -a bash tests/garde_echappement_sortie.sh <BIN>          # OK — 6 cas
 ```
 
 Une demande de fusion qui rougit un banc n'est pas fusionnée. Si vous ajoutez une
@@ -87,8 +87,8 @@ bash ci/bancs.sh           # tous les bancs ; un journal par banc dans _journaux
 ```
 
 `ci/construire.sh` construit aussi, à chaque fois, le serveur `sermoia-mcp` et
-les huit programmes d'aide de `sermo-source/` (toutes leurs bibliothèques
-exigées), et la variante légère de lvgl quand lvgl fait partie des ports
+les huit programmes d'aide de `sermo-source/` avec `sermo-media-images` (toutes
+leurs bibliothèques exigées), et la variante légère de lvgl quand lvgl fait partie des ports
 demandés.
 
 `ci/bancs.sh` joue tout avant de conclure, affiche une ligne par banc, et rend 1
@@ -98,6 +98,11 @@ le dépôt. À la fin, `ci/bilan-json.sh` pose les chiffres de tous les bancs da
 `_journaux/bilan.json` (et sur une ligne `BILAN-JSON:` de la trace) ; c'est de là
 que `ci/bilan-md.sh` réécrit le tableau de `BILAN_SANTE.md` et que le site prend
 « Ce que les bancs vérifient » — personne ne recopie un chiffre.
+
+Avant une livraison, ou si vous touchez à la mémoire :
+`SERMO_BANC_SANITIZERS=1 bash ci/bancs.sh` rejoue en plus le comportement sous
+ASan et UBSan, toute erreur fatale (environ 40 min de plus pour les neuf
+ports).
 
 ## Où va le code
 

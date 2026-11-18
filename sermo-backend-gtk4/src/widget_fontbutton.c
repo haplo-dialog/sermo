@@ -273,7 +273,7 @@ void widget_fontbutton_save(variable *var)
 	/* If we have a valid filename then open it and dump the
 	 * widget's data to it */
 	if (filename) {
-		if ((outfile = fopen(filename, "w"))) {
+		if ((outfile = sermo_fopen_output(filename))) {
 
 			fprintf(outfile, "%s", gtk_font_button_get_font_name(GTK_FONT_BUTTON(var->Widget)));
 

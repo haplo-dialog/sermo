@@ -47,6 +47,17 @@ static void widget_comboboxtext_input_by_items(variable *var);
  * The comboboxentry widget is near identical to the comboboxtext widget
  * so there's absolutely no point in maintaining another pair of files */
 
+/* Vide le champ de saisie d'un <comboboxentry>. Le champ se prend par
+ * gtk_combo_box_get_child() : le premier enfant du widget (ce que rend la macro
+ * gtk_bin_get_child) est sa boîte interne. Jusqu'à la 3.3.0, clear:, refresh:
+ * et removeselected: laissaient donc le texte tapé en place sur ce port. */
+static void cbt_vider_champ(GtkWidget *widget)
+{
+	GtkWidget *champ = gtk_combo_box_get_child(GTK_COMBO_BOX(widget));
+	if (champ && GTK_IS_EDITABLE(champ))
+		gtk_editable_set_text(GTK_EDITABLE(champ), "");
+}
+
 /***********************************************************************
  * Clear                                                               *
  ***********************************************************************/
@@ -69,6 +80,7 @@ void widget_comboboxtext_clear(variable *var)
 	/* Record the currently selected text if any */
 	if ((string = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(var->Widget)))) {
 		g_strlcpy(oldselected, string, sizeof(oldselected));
+		g_free(string);	/* copie rendue par GTK */
 	} else {
 		g_strlcpy(oldselected, "", sizeof(oldselected));
 	}
@@ -94,8 +106,7 @@ void widget_comboboxtext_clear(variable *var)
 #ifdef DEBUG_CONTENT
 		fprintf(stderr, "%s(): clearing the entry\n", __func__);
 #endif
-		gtk_entry_set_text(
-			GTK_ENTRY(gtk_bin_get_child(GTK_BIN(var->Widget))), "");
+		cbt_vider_champ(var->Widget);
 	}
 
 	/* We'll manage signals ourselves */
@@ -175,12 +186,14 @@ gchar *widget_comboboxtext_envvar_all_construct(variable *var)
 	 * isn't empty */
 	if ((var->Type == WIDGET_COMBOBOXENTRY) &&
 		(gtk_combo_box_get_active(GTK_COMBO_BOX(var->Widget)) == -1) &&
-		(text = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(var->Widget))) &&
-		(strcmp(text, ""))) {
-		string = g_strconcat(line, "'", text, "'", NULL);
-		g_free(line);
-		line = string;
-		index++;
+		(text = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(var->Widget)))) {
+		if (strcmp(text, "")) {
+			string = g_strconcat(line, "'", text, "'", NULL);
+			g_free(line);
+			line = string;
+			index++;
+		}
+		g_free(text);	/* copie rendue par GTK */
 	}
 	model = gtk_combo_box_get_model(GTK_COMBO_BOX(var->Widget));
 	if (gtk_tree_model_get_iter_first(model, &iter)) {
@@ -292,6 +305,7 @@ void widget_comboboxtext_refresh(variable *var)
 	/* Record the currently selected text if any */
 	if ((string = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(var->Widget)))) {
 		g_strlcpy(oldselected, string, sizeof(oldselected));
+		g_free(string);	/* copie rendue par GTK */
 	} else {
 		g_strlcpy(oldselected, "", sizeof(oldselected));
 	}
@@ -317,8 +331,7 @@ void widget_comboboxtext_refresh(variable *var)
 		/* The comboboxtext functions also manage the comboboxentry:
 		 * clear the entry */
 		if (var->Type == WIDGET_COMBOBOXENTRY) {
-			gtk_entry_set_text(
-				GTK_ENTRY(gtk_bin_get_child(GTK_BIN(var->Widget))), "");
+			cbt_vider_champ(var->Widget);
 		}
 	}
 
@@ -357,6 +370,7 @@ void widget_comboboxtext_refresh(variable *var)
 	/* Record the currently selected text if any */
 	if ((string = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(var->Widget)))) {
 		g_strlcpy(newselected, string, sizeof(newselected));
+		g_free(string);	/* copie rendue par GTK */
 	} else {
 		g_strlcpy(newselected, "", sizeof(newselected));
 	}
@@ -381,9 +395,9 @@ void widget_comboboxtext_refresh(variable *var)
 		if (attributeset_is_avail(var->Attributes, ATTR_DEFAULT)) {
 			string = attributeset_get_first(&element, var->Attributes, ATTR_DEFAULT);
 			model = gtk_combo_box_get_model(GTK_COMBO_BOX(var->Widget));
+			found = FALSE;
 			if (gtk_tree_model_get_iter_first(model, &iter)) {
 				index = 0;
-				found = FALSE;
 				do {
 					gtk_tree_model_get(model, &iter, 0, &text, -1);
 #ifdef DEBUG_CONTENT
@@ -400,14 +414,18 @@ void widget_comboboxtext_refresh(variable *var)
 					g_free(text);
 					index++;
 				} while (gtk_tree_model_iter_next(model, &iter));
-				/* The comboboxtext functions also manage the comboboxentry:
-				 * if default text not found then set it as default entry text */
-				if (var->Type == WIDGET_COMBOBOXENTRY) {
-					if (!found) {
-						gtk_entry_set_text(GTK_ENTRY(
-							gtk_bin_get_child(GTK_BIN(var->Widget))), string);
-					}
-				}
+			}
+			/* The comboboxtext functions also manage the comboboxentry:
+			 * if default text not found then set it as default entry text,
+			 * même quand la liste est vide. */
+			if (var->Type == WIDGET_COMBOBOXENTRY && !found) {
+				/* gtk_combo_box_get_child() : le champ de saisie. Le
+				 * premier enfant du widget (ce que rendait la macro
+				 * gtk_bin_get_child) est sa boîte interne : jusqu'à la
+				 * 3.3.0 le texte n'était posé nulle part. */
+				GtkWidget *champ = gtk_combo_box_get_child(GTK_COMBO_BOX(var->Widget));
+				if (champ && GTK_IS_EDITABLE(champ))
+					gtk_editable_set_text(GTK_EDITABLE(champ), string);
 			}
 		}
 		if (attributeset_is_avail(var->Attributes, ATTR_HEIGHT))
@@ -428,12 +446,13 @@ void widget_comboboxtext_refresh(variable *var)
 			(gpointer)var->Attributes);
 		/* The comboboxtext functions also manage the comboboxentry */
 		if (var->Type == WIDGET_COMBOBOXENTRY) {
-			/* GTK4 : gtk_bin_get_child (shim) peut rendre un GtkBox, qui
-			 * n'a pas de signal "activate" (CRITICAL au demarrage) — ne
-			 * connecter que sur une vraie entry. Les signaux
+			/* GTK4 : le champ de saisie se prend par
+			 * gtk_combo_box_get_child() ; gtk_bin_get_child (shim) rend la
+			 * boîte interne, qui n'a pas de signal "activate" : jusqu'à la
+			 * 3.3.0 Entrée dans le champ ne jouait donc rien. Les signaux
 			 * button-press/release-event ont disparu : la voie GTK4 passe
 			 * par gtk4-events.c (event controllers). */
-			GtkWidget *child_e = gtk_bin_get_child(GTK_BIN(var->Widget));
+			GtkWidget *child_e = gtk_combo_box_get_child(GTK_COMBO_BOX(var->Widget));
 			if (child_e && GTK_IS_ENTRY(child_e))
 				g_signal_connect(G_OBJECT(child_e), "activate",
 					G_CALLBACK(on_any_widget_activate_event),
@@ -467,6 +486,7 @@ void widget_comboboxtext_removeselected(variable *var)
 	/* Record the currently selected text if any */
 	if ((string = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(var->Widget)))) {
 		g_strlcpy(oldselected, string, sizeof(oldselected));
+		g_free(string);	/* copie rendue par GTK */
 	} else {
 		g_strlcpy(oldselected, "", sizeof(oldselected));
 	}
@@ -481,8 +501,7 @@ void widget_comboboxtext_removeselected(variable *var)
 	/* The comboboxtext functions also manage the comboboxentry:
 	 * clear the entry */
 	if (var->Type == WIDGET_COMBOBOXENTRY) {
-		gtk_entry_set_text(
-			GTK_ENTRY(gtk_bin_get_child(GTK_BIN(var->Widget))), "");
+		cbt_vider_champ(var->Widget);
 	}
 	/* Auto-select the previous item rather than leaving it empty */
 	if (index > 0) index--; else index = 0;
@@ -494,6 +513,7 @@ void widget_comboboxtext_removeselected(variable *var)
 	/* Record the currently selected text if any */
 	if ((string = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(var->Widget)))) {
 		g_strlcpy(newselected, string, sizeof(newselected));
+		g_free(string);	/* copie rendue par GTK */
 	} else {
 		g_strlcpy(newselected, "", sizeof(newselected));
 	}
@@ -568,17 +588,19 @@ void widget_comboboxtext_save(variable *var)
 	 * widget's data to it carefully not leaving a newline so
 	 * that it can be read back in again */
 	if (filename) {
-		if ((outfile = fopen(filename, "w"))) {
+		if ((outfile = sermo_fopen_output(filename))) {
 			index = 0;
 			/* The comboboxtext functions also manage the comboboxentry:
 			 * save the entry if the active index is -1 and the entry
 			 * isn't empty */
 			if ((var->Type == WIDGET_COMBOBOXENTRY) &&
 				(gtk_combo_box_get_active(GTK_COMBO_BOX(var->Widget)) == -1) &&
-				(text = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(var->Widget))) &&
-				(strcmp(text, ""))) {
-				fprintf(outfile, "%s", text);
-				index++;
+				(text = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(var->Widget)))) {
+				if (strcmp(text, "")) {
+					fprintf(outfile, "%s", text);
+					index++;
+				}
+				g_free(text);	/* copie rendue par GTK */
 			}
 			model = gtk_combo_box_get_model(GTK_COMBO_BOX(var->Widget));
 			if (gtk_tree_model_get_iter_first(model, &iter)) {

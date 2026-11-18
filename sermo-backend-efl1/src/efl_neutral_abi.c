@@ -103,6 +103,41 @@ static int efl_render_png(const char *path)
     return ok ? 0 : -1;
 }
 
+/* ─── Fenêtres multiples (launch: / closewindow:) ─────────────────────────────
+ * Jusqu'à la 3.3.0 tous les <window> partageaient LA fenêtre native : une
+ * seconde fenêtre empilait son contenu sur celui de la première, et
+ * closewindow: ne fermait rien. */
+
+/* launch: va construire une fenêtre : la suivante sera neuve. */
+void sermo_be_window_new(void)
+{
+    g_efl_main_win = NULL;
+    g_efl_root_box = NULL;
+}
+
+/* closewindow: — la fenêtre qui contient @w est cachée et marquée fermée, PAS
+ * détruite : l'action peut venir d'un de ses widgets, et ses minuteries (qui
+ * s'arrêtent sur cette marque, voir widget_timer.c) gardent un pointeur sur
+ * leur widget. */
+int sermo_be_window_close(void *w)
+{
+    Evas_Object *haut = w ? elm_object_top_widget_get((Evas_Object *)w) : NULL;
+    if (!haut) return 0;
+    evas_object_data_set(haut, "sermo_fermee", haut);
+    evas_object_hide(haut);
+    if (g_efl_main_win == haut) { g_efl_main_win = NULL; g_efl_root_box = NULL; }
+    return 1;
+}
+
+/* launch: d'une fenêtre déjà ouverte : au premier plan. */
+void sermo_be_window_present(void *w)
+{
+    Evas_Object *haut = w ? elm_object_top_widget_get((Evas_Object *)w) : NULL;
+    if (!haut || evas_object_data_get(haut, "sermo_fermee")) return;
+    evas_object_show(haut);
+    elm_win_raise(haut);
+}
+
 /* Boucle d'événements (= gtk_main). elm_run() est void ; on rend 0. */
 int sermo_be_run_loop(void)
 {
@@ -114,5 +149,12 @@ int sermo_be_run_loop(void)
         exit(r == 0 ? 0 : 1);
     }
     elm_run();
-    return 0;
+    /* La boucle n'a rendu la main que parce que la dernière fenêtre a été fermée
+     * (une action exit:… sort par exit() sans revenir ici) : même sortie que
+     * gtk3sermo, EXIT="abort". Jusqu'à la 3.2.0 ce port ne rendait RIEN, et un
+     * script ne pouvait pas distinguer « fermé » de « planté ». */
+    printf("EXIT=\"abort\"\n");
+    g_setenv("EXIT", "abort", TRUE);
+    fflush(stdout);
+    exit(EXIT_SUCCESS);
 }

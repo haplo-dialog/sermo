@@ -233,7 +233,9 @@ static inline char **g_strsplit(const char *str, const char *delim, int max) {
     char *copy = strdup(str);
     char *tok = strtok(copy, delim);
     while (tok && (max <= 0 || n < max - 1)) {
-        if (n >= cap - 1) { cap *= 2; res = (char **)realloc(res, cap * sizeof(char *)); }
+        /* Deux places d'avance : le dernier champ (après la boucle) et le NULL
+         * final. Avec une seule, max == cap écrivait une case après le bloc. */
+        if (n + 2 >= cap) { cap *= 2; res = (char **)realloc(res, cap * sizeof(char *)); }
         res[n++] = strdup(tok);
         tok = strtok(NULL, delim);
     }
@@ -563,8 +565,8 @@ static inline unsigned int gdk_keyval_to_unicode(unsigned int keyval) { return k
 #endif
 
 /* ─── GIO (GFile/GFileMonitor) — stubs no-op ─────────────────────────────────
- * La surveillance de fichiers passe par inotify sur Linux (HAVE_SYS_INOTIFY_H).
- * La branche GIO est conservée pour portabilité mais inerte dans le port SDL3. */
+ * Le cœur surveille les fichiers par GFileMonitor (la branche inotify, jamais
+ * compilée, est retirée) ; ces bouchons la rendent inerte dans ce port. */
 #define G_FILE_MONITOR_NONE                    0
 #define G_FILE_MONITOR_EVENT_CHANGED           0
 #define G_FILE_MONITOR_EVENT_CHANGES_DONE_HINT 1

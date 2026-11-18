@@ -278,7 +278,7 @@ static JsonObject *tool_check(const char *xml, gboolean avec_ir)
     if (!f) { dossier_effacer(dir, NULL); return tool_text_result("Impossible d'écrire le XML dans un dossier temporaire.", TRUE); }
     gchar *fa = g_strdup_printf("--file=%s", f);
     const char *argv[] = { sermo_bin(), "--print-ir", fa, NULL };
-    const char *env[] = { "SERMO_ALLOWED_CMDS", AUCUNE_COMMANDE, NULL };
+    const char *env[] = { "SERMO_ALLOWED_CMDS", AUCUNE_COMMANDE, "SERMO_NO_FILES", "1", NULL };
     Resultat r;
     lancer(argv, env, delai_env("SERMOIA_CHECK_DELAI", 20, 120), &r);
     const char *fichiers[] = { "dialogue.xml", NULL };
@@ -340,17 +340,21 @@ static JsonObject *tool_run(const char *xml, guint delai)
     const char *argv[] = { bin, fa, NULL };
     /* Fermé par défaut (3.2.0) : sans SERMO_ALLOWED_CMDS dans l'environnement du
      * serveur, le dialogue s'affiche mais aucune commande du XML ne part (même
-     * barrière que sermo_render). Une liste posée est transmise telle quelle. */
+     * barrière que sermo_render), et aucun fichier nommé par le XML n'est lu ni
+     * écrit (SERMO_NO_FILES : <input file> rendait le contenu d'un fichier au
+     * modèle, save: vers <output file> en écrivait un). Une liste posée est
+     * transmise telle quelle, et les fichiers sont alors permis. */
     const char *liste = g_getenv("SERMO_ALLOWED_CMDS");
     gboolean ferme = !liste || !*liste;
-    const char *env_ferme[] = { "SERMO_ALLOWED_CMDS", AUCUNE_COMMANDE, NULL };
+    const char *env_ferme[] = { "SERMO_ALLOWED_CMDS", AUCUNE_COMMANDE, "SERMO_NO_FILES", "1", NULL };
     Resultat r;
     lancer(argv, ferme ? env_ferme : NULL, delai, &r);
     const char *fichiers[] = { "dialogue.xml", NULL };
     dossier_effacer(dir, fichiers);
     g_free(fa); g_free(f);
     const char *note = ferme
-        ? "Commandes du XML BLOQUÉES (<input>, <action>) : le serveur n'a pas SERMO_ALLOWED_CMDS. "
+        ? "Commandes du XML BLOQUÉES (<input>, <action>), fichiers du XML non lus ni écrits "
+          "(<input file>, <output file>) : le serveur n'a pas SERMO_ALLOWED_CMDS. "
           "Pour les permettre, poser dans l'environnement du serveur la liste des commandes "
           "dont le dialogue a besoin (voir SECURITY.md).\n"
         : "Commandes du XML permises selon la liste SERMO_ALLOWED_CMDS du serveur.\n";
@@ -416,7 +420,7 @@ static JsonObject *tool_render(const char *xml)
     gchar *png = g_build_filename(dir, "rendu.png", NULL);
     gchar *pa = g_strdup_printf("--render-png=%s", png);
     gchar *fa = g_strdup_printf("--file=%s", f);
-    const char *env[] = { "SERMO_ALLOWED_CMDS", AUCUNE_COMMANDE,
+    const char *env[] = { "SERMO_ALLOWED_CMDS", AUCUNE_COMMANDE, "SERMO_NO_FILES", "1",
                           "QT_QPA_PLATFORM", "offscreen", "SDL_VIDEODRIVER", "offscreen",
                           "ELM_ENGINE", "buffer", "SERMO_HTML_OUT", "/dev/null", NULL };
     guint l = 0, h = 0;
@@ -451,7 +455,7 @@ static JsonObject *tool_render(const char *xml)
     } else {
         /* repli : la représentation interne, toujours exploitable */
         const char *argv[] = { sermo_bin(), "--print-ir", fa, NULL };
-        const char *env2[] = { "SERMO_ALLOWED_CMDS", AUCUNE_COMMANDE, NULL };
+        const char *env2[] = { "SERMO_ALLOWED_CMDS", AUCUNE_COMMANDE, "SERMO_NO_FILES", "1", NULL };
         Resultat ir;
         lancer(argv, env2, delai_env("SERMOIA_CHECK_DELAI", 20, 120), &ir);
         gchar *b = g_path_get_basename(rbin);

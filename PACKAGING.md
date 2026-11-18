@@ -139,10 +139,10 @@ l'installation du backend GTK 3 pour ceux qui ont déjà un `gtkdialog`.
 
 La 1.x était livrée sous les noms `gtk3sermo`, `gtk4sermo`, `qt6sermo` et
 `gtksermo`, en fichiers `.deb` joints à la publication. Installer les paquets
-actuels (3.1.0) voulus depuis leurs fichiers retire les paquets 1.x qu'ils remplacent :
+actuels (3.3.0) voulus depuis leurs fichiers retire les paquets 1.x qu'ils remplacent :
 
 ```sh
-sudo apt install ./sermo-backend-gtk3_3.2.0-1_amd64.deb ./sermo-gtkdialog_3.2.0-1_all.deb
+sudo apt install ./sermo-backend-gtk3_3.3.0-1_amd64.deb ./sermo-gtkdialog_3.3.0-1_all.deb
 ```
 
 Éprouvé le 2026-09-17 dans un conteneur Debian testing vierge, sans réseau, depuis
@@ -221,8 +221,8 @@ dpkg-buildpackage -us -uc -b
 ```
 
 `debian/rules` construit les trois variantes du cœur, les neuf backends, la
-variante légère de lvgl, les huit programmes d'aide (`sermo-source/`, toutes
-leurs bibliothèques exigées) et `sermoia-mcp`. Il rejoue pendant la
+variante légère de lvgl, les huit programmes d'aide et `sermo-media-images` (`sermo-source/`,
+toutes leurs bibliothèques exigées) et `sermoia-mcp`. Il rejoue pendant la
 construction les tests unitaires, et le banc XML sur chacun des neuf binaires
 des backends (`DEB_BUILD_OPTIONS=nocheck` les saute). Les paquets arrivent dans le
 dossier parent.
@@ -238,9 +238,9 @@ détaillée dans [LICENCES.md](LICENCES.md).
 ## Installer et désinstaller
 
 ```sh
-sudo apt install ./sermo-backend-gtk3_3.2.0-1_amd64.deb      # GTK 3
-sudo apt install ./sermo-gtkdialog_3.2.0-1_all.deb           # + la commande gtkdialog
-sudo apt install ./sermo-core-dev_3.2.0-1_amd64.deb          # pour compiler un backend
+sudo apt install ./sermo-backend-gtk3_3.3.0-1_amd64.deb      # GTK 3
+sudo apt install ./sermo-gtkdialog_3.3.0-1_all.deb           # + la commande gtkdialog
+sudo apt install ./sermo-core-dev_3.3.0-1_amd64.deb          # pour compiler un backend
 
 sudo apt purge sermo-gtkdialog sermo-backend-gtk3            # tout retirer
 ```

@@ -17,6 +17,22 @@ string(STRIP "${SERMO_VERSION}" SERMO_VERSION)
 
 project(sermocore VERSION ${SERMO_VERSION} LANGUAGES C)
 
+# Poids : chaque fonction et chaque donnée dans sa section, et l'éditeur de
+# liens retire celles que rien n'atteint (le cœur est une bibliothèque
+# statique : sans cela, tout ce qu'un fichier objet contient est lié dès
+# qu'une de ses fonctions sert). Mesuré le 2026-11-15 : html 399 → 359 Kio,
+# efl1 375 → 343, ncurses 387 → 347 (tests/garde_poids.sh).
+# Sous Windows (mingw-w64), -fdata-sections range les tableaux non initialisés
+# dans .data au lieu de .bss : « stack » (stack.c, 6 Mio de zéros) partait dans
+# le fichier, ncursessermo.exe pesait 8,1 Mo au lieu de 1,7 (mesuré le
+# 2026-11-18, compilation croisée). Les fonctions gardent leur section,
+# pas les données.
+if(WIN32)
+  add_compile_options(-ffunction-sections)
+else()
+  add_compile_options(-ffunction-sections -fdata-sections)
+endif()
+
 # FORTIFY_SOURCE n'agit qu'avec l'optimisation : sans type de build, CMake ne
 # passe aucun -O et la protection promise par SECURITY.md reste lettre morte.
 # Même règle que qt6, sdl3 et ncurses. Vérifié par tests/garde_fortify_coeur.sh
@@ -210,7 +226,13 @@ if(SERMO_A_STACK_CLASH)
 else()
   set(SERMO_PILE_CLASH "")
 endif()
+# Avertissements : le cœur se compilait sans aucun (-Wall absent), et la CI
+# annonçait « 0 avertissement » sans en avoir demandé. Trois familles restent
+# éteintes, et c'est écrit : les paramètres inutilisés (signatures de rappels
+# GTK, imposées), et les variables inutilisées ou seulement affectées (dans les
+# variantes sans GTK, les appels qui les lisent sont des macros vides).
 target_compile_options(sermocore PRIVATE
+  -Wall -Wextra -Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable
   -std=gnu11
   -D_FORTIFY_SOURCE=3 -fstack-protector-strong ${SERMO_PILE_CLASH} ${SERMO_FLOT_CONTROLE}
   -fPIC)
@@ -244,7 +266,9 @@ elseif(SERMOCORE_GLIB)
 else()
   target_include_directories(sermocore BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include/_shim)
   target_compile_options(sermocore PRIVATE
-    -include ${CMAKE_CURRENT_SOURCE_DIR}/include/sermocore-shim.h)
+    -include ${CMAKE_CURRENT_SOURCE_DIR}/include/sermocore-shim.h
+    # save: écrit par le cœur pour les ports sans GTK (variables.c)
+    -DSERMO_COEUR_NEUTRE=1)
   message(STATUS "sermocore : variante NEUTRE (shim, sans toolkit)")
 endif()
 

@@ -1,0 +1,11 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<window><vbox>
+<list><variable>L</variable><item>a</item><item>b</item></list>
+<tree><variable>TR</variable><label>c1|c2</label><item>x|y</item></tree>
+<table><variable>TB</variable><label>c1|c2</label><item>x|y</item></table>
+<comboboxentry><variable>CB</variable><item>un</item><default>libre</default></comboboxentry>
+<calendar><variable>CA</variable><default>2001-03-07</default></calendar>
+<entry><variable>EN</variable><default>texte</default></entry>
+<progressbar><variable>Q</variable><input>echo 100</input>
+<action>closewindow:FERME</action><action>clear:L</action><action>refresh:TR</action><action>clear:EN</action><action>printf '%s' "apres" > vu.txt</action></progressbar>
+</vbox><variable>FERME</variable></window>

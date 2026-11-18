@@ -48,7 +48,7 @@ joues=0
 #     d'écart mesurés), et le clic « bas de fenêtre » manquait le bouton.
 rendre_ligne() {
 	LC_ALL=fr_FR.UTF-8 GSK_RENDERER=cairo \
-	xvfb-run -a -s '-screen 0 1024x768x24' timeout 45 sh -c '
+	xvfb-run -a -s '-screen 0 1024x768x24 -noreset' timeout 45 sh -c '
 		command -v xfwm4 >/dev/null 2>&1 && { xfwm4 --compositor=off >/dev/null 2>&1 & sleep 1; }
 		"$1" --file="$2" > "$3" 2>/dev/null &
 		pid=$!
@@ -121,6 +121,20 @@ XML
 	else
 		echo "  ✔ $nom : eval n'exécute rien"
 	fi
+
+	# Troisième argument : la valeur que eval doit RENDRE, à l'octet près. Un
+	# guillemet ou une barre oblique inverse mal échappés n'exécutent pas
+	# forcément quelque chose ; ils coupent ou déforment la valeur.
+	if [ $# -ge 3 ]; then
+		rendu="$( eval "$ligne" 2>/dev/null; printf '%s' "${VAL-}" )"
+		if [ "$rendu" = "$3" ]; then
+			echo "  ✔ $nom : eval rend la valeur d'origine"
+		else
+			echo "  ✘ $nom : eval rend [$rendu] au lieu de [$3]" >&2
+			echo "      ligne rendue : $ligne" >&2
+			echec=$((echec + 1))
+		fi
+	fi
 }
 
 echo "garde_echappement_sortie : $BIN"
@@ -128,6 +142,11 @@ echo "garde_echappement_sortie : $BIN"
 essai dollar   "\$(touch $TMP/temoin_dollar)"
 essai accolade "\${IFS}\$(touch $TMP/temoin_accolade)"
 essai backtick "\`touch $TMP/temoin_backtick\`"
+# Le guillemet ferme la chaîne s'il n'est pas échappé, la barre oblique inverse
+# avale le caractère suivant : les deux autres caractères que le shell lit
+# entre guillemets doubles (non essayés jusqu'à la 3.2.0).
+essai guillemet "a\";touch $TMP/temoin_guillemet;echo \"" "a\";touch $TMP/temoin_guillemet;echo \""
+essai antislash 'C:\dossier\x' 'C:\dossier\x'
 
 # ── La même chose sur la ligne EXIT=, dont la valeur est l'étiquette du bouton
 rm -f "$TMP/temoin_exit"

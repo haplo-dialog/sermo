@@ -81,8 +81,9 @@ description XML. Il permet aux scripts shell (ou Python, Perl@dots{}) de créer
 des interfaces graphiques sans aucune connaissance de la programmation d'une
 boîte à outils graphique.
 
-@command{sermo} est le successeur moderne, durci et maintenu de gtkdialog
-(László Pere, 2003--2007 ; Thunor, 2011--2013). Sa forme actuelle est
+@command{sermo} est né d'un fork de gtkdialog 0.8.3 (László Pere,
+2003--2007 ; Thunor, 2011--2013). Il en garde le langage XML ; l'exécution des
+commandes a été durcie et GTK 2 a laissé la place à neuf ports. Sa forme actuelle est
 @emph{modulaire} : le programme est séparé en un cœur unique et des backends de
 rendu (voir @ref{Architecture}).
 
@@ -205,7 +206,12 @@ Dessiner le dialogue hors écran, l'écrire dans l'image PNG @var{FILE} et
 quitter. Ports : gtk3sermo, gtk4sermo, qt6sermo, fltk1sermo, efl1sermo,
 sdl3sermo et lvglsermo. gtk3sermo, gtk4sermo et fltk1sermo demandent quand même
 un affichage ; un affichage virtuel (@command{xvfb-run}) suffit. ncursessermo
-et htmlsermo ne font pas d'image.
+et htmlsermo ne font pas d'image. Les commandes du dialogue ne sont pas
+lancées (@code{<input>}, @code{<action>}, @code{<terminal>}) et chaque refus
+est dit sur la sortie d'erreur : on peut ainsi rendre l'aperçu d'un XML qu'on
+n'a pas écrit. Pour l'image d'un dialogue de confiance avec ses vraies valeurs,
+poser @code{SERMO_RENDER_EXEC=1}. Jusqu'à la 3.2.0, les commandes étaient
+lancées.
 @item -G @var{GEOMETRIE}
 @itemx --geometry=@var{GEOMETRIE}
 Position et taille de la fenêtre, @code{[LxH][+X+Y]} comme sous X11
@@ -337,8 +343,8 @@ text, image, pixmap, statusbar, infobar, drawingarea
 entry, edit, password, searchentry, spinbutton, hscale, vscale, checkbox,
 togglebutton, radiobutton, switch
 @item Sélection
-combobox, comboboxtext, list, tree, table, colorbutton, fontbutton,
-filechooser, calendar
+combobox, comboboxtext, comboboxentry, list, tree, table, colorbutton,
+fontbutton, filechooser, chooser, calendar
 @item Progression
 progressbar, pulse, spinner, levelbar
 @item Boutons
@@ -400,6 +406,21 @@ sûr (borne, session invitée). Une entrée sans barre oblique permet ce nom et 
 chemin où @code{PATH} le trouve ; une entrée avec barre oblique permet ce chemin
 exact. Tant qu'elle est posée, le repli vers le shell est refusé aussi. Les
 balises de sources et cibles lancent un programme d'aide : il faut le nommer.
+@item
+Un widget dont la variable porte un nom réservé (@code{SERMO_*},
+@code{HAPLO_*}, @code{LD_*}, @code{PATH}, @code{IFS}, @code{ENV},
+@code{BASH_ENV}, @code{SHELLOPTS}, @code{PS4}) n'est pas posé dans
+l'environnement des commandes, et un avertissement le dit : un dialogue ne
+peut pas remplacer la liste blanche. Sa valeur reste imprimée avec les autres.
+@item
+@option{--render-png} ne lance aucune commande du dialogue, sauf avec
+@code{SERMO_RENDER_EXEC=1}.
+@item
+@code{SERMO_NO_FILES} (posée à autre chose que @code{0}) : le dialogue ne lit
+ni n'écrit aucun fichier nommé par le XML (@code{<input file>}, @code{save:}
+vers un @code{<output file>}, la condition @code{file()}). Les images ne sont
+pas concernées. Avec @code{SERMO_ALLOWED_CMDS}, qui ferme les commandes, elle
+permet d'afficher un XML qu'on n'a pas écrit.
 @item
 Les valeurs exportées échappent @code{\}, @code{"}, @code{$} et l'accent grave,
 pour que @code{eval "$(sermo @dots{})"} ne réexécute pas une saisie.

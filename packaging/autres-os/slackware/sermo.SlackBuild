@@ -19,7 +19,7 @@
 
 cd "$(dirname "$0")" || exit 1
 CWD=$(pwd)
-VERSION=${VERSION:-3.0.0}
+VERSION=${VERSION:-3.2.0}
 BUILD=${BUILD:-1}
 TAG=${TAG:-_SBo}
 PKGTYPE=${PKGTYPE:-txz}
@@ -76,7 +76,7 @@ slack_desc() {  # paquet, description courte, détail
     echo "$1:"
     echo "$1: sermo builds native windows from an XML description, so that a shell"
     echo "$1: script can show a real graphical interface without any toolkit"
-    echo "$1: knowledge. It succeeds gtkdialog and keeps its XML language."
+    echo "$1: knowledge. Scripts written for gtkdialog run unchanged."
     echo "$1:"
     echo "$1: https://gitlab.com/haplo-dialog/sermo"
     echo "$1:"

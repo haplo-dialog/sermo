@@ -1,3 +1,37 @@
+sermo (3.3.0-1) unstable; urgency=medium
+
+  * Nouvelle version amont 3.3.0 : audit complet ; les sept ports sans GTK
+    rejoignent gtk3 sur les fenêtres multiples et sur les actions.
+  * CHANGEMENT DE COMPORTEMENT : --render-png n'exécute plus les commandes
+    du dialogue (<input>, <action>, <terminal>) ; SERMO_RENDER_EXEC=1 le
+    permet.
+  * launch: et closewindow: sur les neuf ports ; une action vise d'abord
+    la fenêtre du widget qui l'a déclenchée (fenêtres aux mêmes noms de
+    variables).
+  * save:, append:, activate: sur un <button>, disable: d'un <timer>,
+    <action> des listes déroulantes, clear: et removeselected: : servis
+    sur qt6, fltk1, efl1, sdl3, lvgl, ncurses et html comme sur gtk3.
+  * <comboboxentry>, <calendar day= month= year=>, <chooser> : mêmes
+    valeurs sur les neuf ports.
+  * Sécurité : noms de variables réservés (SERMO_ALLOWED_CMDS) non posés
+    dans l'environnement ; SERMO_NO_FILES pour sermoia-mcp fermé ;
+    sermoman-mcp et htmlsermo en mode serve durcis contre les entrées
+    invalides ; refus supplémentaires du pilotage MAVLink.
+  * Mémoire : usages après libération, débordements et fuites corrigés
+    (gtk3, gtk4, qt6, lvgl, ports sans GLib) ; cœur compilé en
+    -Wall -Wextra.
+  * Performance : ouverture des grands dialogues, recherche des icônes de
+    thème, sdl3 au repos ; binaires plus légers (--gc-sections).
+  * debian/rules : la construction s'arrête si un dossier d'exemples
+    manque.
+  * Recettes hors Debian (Arch, Alpine, RPM, FreeBSD, OpenBSD, Termux,
+    Slackware, Nix, Gentoo, manifeste Windows) passées de 3.0.0 à 3.2.0 ;
+    formule Homebrew sur l'archive v3.2.0 ; workflow macOS qui lit le
+    numéro dans la formule ; sommes de contrôle vérifiées par Arch,
+    Alpine, Termux et OpenBSD.
+
+ -- s.cage <devel@haplo-dialog.fr>  Wed, 18 Nov 2026 09:00:00 +0100
+
 sermo (3.2.0-1) unstable; urgency=medium
 
   * Nouvelle version amont 3.2.0 : le pilotage de drone, la photo et la vidéo

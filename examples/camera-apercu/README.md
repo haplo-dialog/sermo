@@ -72,7 +72,7 @@ printf 'camera:motdepasse\n' > ~/.config/camera-salon.id && chmod 600 ~/.config/
 ```
 
 - **HTTP(S)** (MJPEG, MPEG-TS…) : `curl` lit l'adresse et les identifiants **sur son entrée standard** (`-K -`). Le flux passe par un tube vers `ffplay`. Ni `curl` ni `ffplay` n'ont le mot de passe dans leurs arguments, et la configuration temporaire (600) est effacée dès que `curl` l'a lue.
-- **RTSP** : **non pris en charge avec mot de passe**. `ffplay` ne sait lire des identifiants RTSP que dans l'adresse, donc en argument. Mesuré le 2026-10-18 : la voie « fichier liste » (`-f concat`) ne lit pas un flux en direct.
+- **RTSP** : **non pris en charge avec mot de passe**. `ffplay` ne sait lire des identifiants RTSP que dans l'adresse, donc en argument. Mesuré le 2026-10-18 : la voie « fichier liste » (`-f concat`) ne lit pas un flux en direct. Depuis la 3.2.0, `<action media>` le fait (`identifiants=`, le mot de passe ne passe jamais en argument) : voir [lecteur-media](../lecteur-media/README.md) et le manuel.
 
 ## Bac à sable
 

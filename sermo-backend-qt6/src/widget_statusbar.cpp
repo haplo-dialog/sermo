@@ -37,6 +37,7 @@ GtkWidget *widget_statusbar_create(AttributeSet *Attr, tag_attr *attr, gint Type
 {
     QStatusBar *sb    = new QStatusBar();
     QLabel     *label = new QLabel();
+    label->setTextFormat(Qt::PlainText);   /* la ligne d'un <input> n'est pas du HTML */
     sb->addWidget(label, 1);
 
     if (Attr) {

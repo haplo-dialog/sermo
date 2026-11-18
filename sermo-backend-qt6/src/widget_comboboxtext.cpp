@@ -4,11 +4,12 @@
  * haplo-dialog <devel@haplo-dialog.fr>
  */
 /*
- * widget_comboboxtext.cpp — ComboBox éditable Qt6
+ * widget_comboboxtext.cpp — liste déroulante Qt6
  * sermo — haplo-dialog <devel@haplo-dialog.fr>
  * Licence : GPL-2.0-or-later
  *
- * <comboboxtext> → QComboBox avec setEditable(true) ; sert aussi <comboboxentry>.
+ * <comboboxtext> → QComboBox ; sert aussi <comboboxentry>, seule à avoir un
+ * champ de saisie (setEditable), comme chez l'étalon gtk3sermo.
  * Alimentation : <input> (commande ou fichier, un élément par ligne — une
  * ligne vide fait un élément vide, comme chez l'étalon)
  * puis <item>, chargés par widget_comboboxtext_refresh().
@@ -26,8 +27,20 @@
 #include "tag_attributes.h"
 #include "widget_comboboxtext.h"
 #include "safe_exec.h"
+#include "jouer_actions.h"
 
 #include <QtWidgets/QComboBox>
+#include <QtCore/QSignalBlocker>
+
+/* Règle de l'étalon gtk3sermo : les <action> de la liste jouent (signal
+ * « changed ») quand son texte n'est plus le même après qu'avant. Les signaux
+ * de Qt sont tus pendant clear:, refresh: et removeselected: ; la comparaison
+ * décide seule. Jusqu'à la 3.3.0 ce port ne jouait jamais ces actions. */
+static void jouer_si_change(variable *var, QComboBox *cb, const QString &avant)
+{
+    if (avant != cb->currentText())
+        jouer_actions((GtkWidget *)cb, var->Attributes, "changed", NULL);
+}
 
 #include <string.h>
 #include <stdlib.h>
@@ -36,7 +49,10 @@
 GtkWidget *widget_comboboxtext_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
     QComboBox *cb = new QComboBox();
-    cb->setEditable(true);
+    /* Champ de saisie pour <comboboxentry> seulement : une <comboboxtext> de
+     * l'étalon n'en a pas. Jusqu'à la 3.3.0 les deux étaient éditables ici, et
+     * une frappe y rendait un texte que gtk3sermo ne peut pas rendre. */
+    cb->setEditable(Type == WIDGET_COMBOBOXENTRY);
 
     /* Éléments, sélection et <default> : posés par widget_comboboxtext_refresh(),
      * que le cœur appelle juste après la création. Lire <input> ici aussi
@@ -68,7 +84,14 @@ gchar *widget_comboboxtext_envvar_all_construct(variable *var)
 void widget_comboboxtext_clear(variable *var)
 {
     if (!var || !var->Widget) return;
-    static_cast<QComboBox *>(var->Widget)->clear();
+    QComboBox *cb = static_cast<QComboBox *>(var->Widget);
+    QString avant = cb->currentText();
+    {
+        QSignalBlocker muet(cb);
+        cb->clear();
+        cb->clearEditText();
+    }
+    jouer_si_change(var, cb, avant);
 }
 
 void widget_comboboxtext_refresh(variable *var)
@@ -79,6 +102,8 @@ void widget_comboboxtext_refresh(variable *var)
     /* Le cœur neutre ne retient pas « _initialised » (g_object_set_data y est
      * sans effet) : le premier passage est noté sur le widget lui-même. */
     bool initialise = cb->property("sermoInitialise").toBool();
+    QString avant = cb->currentText();
+    QSignalBlocker muet(cb);
 
     /* Même déroulé que l'étalon gtk3sermo. Un refresh ultérieur recharge tout :
      * on vide d'abord, zone de saisie comprise. */
@@ -132,9 +157,36 @@ void widget_comboboxtext_refresh(variable *var)
             }
         }
         cb->setProperty("sermoInitialise", true);
+        /* Les actions ne sont branchées qu'ici, après le premier chargement,
+         * comme sur l'étalon : rien ne joue au démarrage, même si <default>
+         * choisit un élément. Ensuite : un élément choisi, ou une frappe dans
+         * le champ d'une <comboboxentry>. */
+        AttributeSet *Attr = var->Attributes;
+        QObject::connect(cb, &QComboBox::currentTextChanged, cb,
+            [cb, Attr](const QString &) {
+                jouer_actions((GtkWidget *)cb, Attr, "changed", NULL); });
+        return;
     }
+    muet.unblock();
+    jouer_si_change(var, cb, avant);
 }
 
 void widget_comboboxtext_fileselect(variable *var, const char *n, const char *v) {}
-void widget_comboboxtext_removeselected(variable *var) {}
+void widget_comboboxtext_removeselected(variable *var)
+{
+    if (!var || !var->Widget) return;
+    QComboBox *cb = static_cast<QComboBox *>(var->Widget);
+    QString avant = cb->currentText();
+    {
+        /* Comme l'étalon : l'élément choisi est retiré, puis le précédent est
+         * choisi (le premier s'il n'y en a pas). Sans effet jusqu'à la 3.3.0. */
+        QSignalBlocker muet(cb);
+        int idx = cb->currentIndex();
+        if (idx >= 0) cb->removeItem(idx);
+        idx = idx > 0 ? idx - 1 : 0;
+        cb->setCurrentIndex(idx < cb->count() ? idx : -1);
+        if (cb->currentIndex() < 0) cb->clearEditText();
+    }
+    jouer_si_change(var, cb, avant);
+}
 void widget_comboboxtext_save(variable *var) {}

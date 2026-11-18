@@ -230,11 +230,42 @@ FILE *sermo_input_wrap(FILE *flux, const char *source)
 #endif
 }
 
+int sermo_fichiers_interdits(void)
+{
+	const char *s = getenv("SERMO_NO_FILES");
+	return s != NULL && *s != '\0' && strcmp(s, "0") != 0;
+}
+
+/* Dit le refus, une fois par sens : un dialogue qui relit son fichier dix fois
+ * par seconde ne doit pas noyer la sortie d'erreur. */
+static FILE *fichier_refuse(const char *chemin, int ecriture)
+{
+	static int dit[2];
+	if (!dit[ecriture]) {
+		dit[ecriture] = 1;
+		fprintf(stderr, "sermo: SERMO_NO_FILES : %s de fichier refusée (%s) ; les suivantes le seront sans message\n",
+		        ecriture ? "écriture" : "lecture", chemin);
+	}
+	errno = EACCES;
+	return NULL;
+}
+
 FILE *sermo_fopen_input(const char *chemin)
 {
 	if (chemin == NULL)
 		return NULL;
+	if (sermo_fichiers_interdits())
+		return fichier_refuse(chemin, 0);
 	return sermo_input_wrap(fopen(chemin, "r"), chemin);
+}
+
+FILE *sermo_fopen_output(const char *chemin)
+{
+	if (chemin == NULL)
+		return NULL;
+	if (sermo_fichiers_interdits())
+		return fichier_refuse(chemin, 1);
+	return fopen(chemin, "w");
 }
 
 FILE *sermo_input_sans_limite(FILE *flux)

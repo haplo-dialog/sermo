@@ -232,3 +232,33 @@ void widget_tree_removeselected(variable *v) {
     if (sel) { tree->remove(sel); tree->redraw(); }
 }
 void widget_tree_save(variable *v) {}
+
+/* ─── save: et append: (appelées par sermo_be_widget_rows/_append) ───────── */
+
+/* Toutes les rangées, une par ligne, sans la rangée d'en-têtes. malloc. */
+extern "C" char *fltk1_tree_rangees(void *w)
+{
+    Fl_Tree *tree = (Fl_Tree *)w;
+    std::string r;
+    bool premiere = true;
+    if (!tree) return NULL;
+    for (Fl_Tree_Item *it = tree->first(); it; it = tree->next(it)) {
+        if (it == tree->root() || !it->is_active()) continue;
+        if (!premiere) r += '\n';
+        premiere = false;
+        if (it->label()) r += it->label();
+    }
+    return strdup(r.c_str());
+}
+
+/* Une rangée à la fin, à colonnes si elle porte « | » (comme un <item>). */
+extern "C" int fltk1_tree_ajouter(void *w, const char *valeur)
+{
+    Fl_Tree *tree = (Fl_Tree *)w;
+    if (!tree || !valeur) return 0;
+    if (strchr(valeur, '|')) tree_ajouter(tree, valeur, 0);
+    else                     tree->add(tree->root(), valeur);
+    tree_mesurer(tree);
+    tree->redraw();
+    return 1;
+}

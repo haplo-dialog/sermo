@@ -103,8 +103,9 @@ générique `doc/sermo.1.in` sous leur propre nom, exactement comme le fait
 
 `<input modbus>`, `<input opcua>`, `<input mqtt>`, `<input mavlink>`,
 `<input media>` et `<action mqtt>`, `<action mavlink>`, `<action media>`
-passent par huit petits programmes séparés. Ils se construisent à part, sans
-le cœur :
+passent par huit petits programmes séparés, plus `sermo-media-images` (l'image
+dans la zone du dialogue sous Wayland). Ils se construisent à part, sans le
+cœur :
 
 ```bash
 cmake -S sermo-source -B sermo-source/_build
@@ -114,12 +115,15 @@ cmake --build sermo-source/_build
 
 Chacun n'est construit que si sa bibliothèque est là : `libmodbus-dev`
 (`sermo-source-modbus`), `libopen62541-1.4-dev` (`sermo-source-opcua`),
-`libmosquitto-dev` (`sermo-source-mqtt` et `sermo-cible-mqtt`). Sinon CMake
+`libmosquitto-dev` (`sermo-source-mqtt` et `sermo-cible-mqtt`), `libmpv-dev`
+(`sermo-media-images`). Sinon CMake
 prévient et saute ce programme. Avec `-DSERMO_SOURCE_EXIGER=ON`, une
-bibliothèque absente arrête la construction : la CI et les paquets le posent.
+bibliothèque absente arrête la construction : la CI et les paquets le posent,
+et `ci/construire.sh` aussi, sauf lancé avec `SERMO_SOURCE_FACULTATIF=1`
+(depuis la 3.3.0 : il saute alors ces programmes et dit lesquels).
 MAVLink n'a rien à installer : ses en-têtes C sont embarqués
 (`sermo-source/tiers/mavlink`). Les deux programmes media n'ont pas de
-bibliothèque : à l'exécution, `sermo-cible-media` lance le programme `mpv`
+bibliothèque eux-mêmes : à l'exécution, `sermo-cible-media` lance le programme `mpv`
 (dans une cage `bwrap` quand elle est là), et `sermo-source-media` l'interroge.
 
 `cmake --install` les pose dans `<préfixe>/libexec/sermo`. Le cœur les cherche
@@ -136,6 +140,12 @@ choisie par CMake après essai : `-fcf-protection=full` (CET) sur x86,
 n'est gardé que si le compilateur s'en sert. Ne retirez pas ces drapeaux : le banc
 `tests/garde_durcissement.sh` les vérifie. Voir [SECURITY.md](SECURITY.md).
 
+Depuis la 3.3.0, chaque fonction est compilée dans sa section
+(`-ffunction-sections -fdata-sections`) et l'éditeur de liens retire celles que
+rien n'atteint (`-Wl,--gc-sections`) : le poids de chaque binaire est tenu par
+`tests/garde_poids.sh`. Le cœur compile avec `-Wall -Wextra` ;
+`ci/construire.sh` affiche le nombre d'avertissements de chaque cible.
+
 Sans `-DCMAKE_BUILD_TYPE`, chaque projet se construit en `Release` : c'est ce qui
 rend `_FORTIFY_SOURCE` effectif (il n'agit qu'avec l'optimisation). Un build
 `Debug` perd cette protection. Pour le cœur :
@@ -151,8 +161,8 @@ Faites passer **les trois portes** (voir [MANUEL_DEVELOPPEUR.md](MANUEL_DEVELOPP
 ```bash
 BIN=sermo-backend-qt6/_build/qt6sermo
 TIMEOUT=5 bash tests/xml/run_tests.sh "$BIN"                       # 55 PASS
-bash tests/comportement/run.sh "$BIN"                             # 78 au vert
-xvfb-run -a bash tests/garde_echappement_sortie.sh "$BIN"          # OK — 4 cas
+bash tests/comportement/run.sh "$BIN"                             # 95 au vert
+xvfb-run -a bash tests/garde_echappement_sortie.sh "$BIN"          # OK — 6 cas
 ```
 
 Ou tout construire et tout vérifier, exactement comme la CI :

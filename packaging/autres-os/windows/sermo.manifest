@@ -4,7 +4,7 @@
      programme (environnement, noms de fichiers, fonctions « A »), et
      Windows 10/11 déclarés. Windows 10 1903 ou plus pour activeCodePage. -->
 <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
-  <assemblyIdentity type="win32" name="haplo-dialog.sermo" version="3.0.0.0"/>
+  <assemblyIdentity type="win32" name="haplo-dialog.sermo" version="3.2.0.0"/>
   <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
     <application>
       <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}"/>

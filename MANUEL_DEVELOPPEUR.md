@@ -115,9 +115,22 @@ le backend **fournit** :
 - **Le pont d'opérations `sermo_be_*`** (variante neutre) : le shim mappe les
   primitives toolkit vers un petit jeu de fonctions que le backend implémente —
   `sermo_be_widget_show`/`hide`/`set_sensitive`/`redraw`, `sermo_be_container_add`,
-  `sermo_be_window_move`, `sermo_be_run_loop`, `sermo_be_app_init`/`quit`. C'est le
-  contrat de frontière : le cœur ne nomme plus aucun port (le rename
-  historique `qt6_*` → `sermo_be_*` est fait).
+  `sermo_be_container_child0`, `sermo_be_scroll_new`, `sermo_be_window_move`,
+  `sermo_be_run_loop`, `sermo_be_app_init`/`quit`. C'est le contrat de
+  frontière : le cœur ne nomme plus aucun port (le rename historique `qt6_*` →
+  `sermo_be_*` est fait).
+- **Fonctions facultatives** : des symboles **faibles**, qu'un port peut ne pas
+  fournir (il se lie quand même, et le cœur dit alors que l'action n'est pas
+  servie). `sermo_be_before_export`, `sermo_be_widget_activate`,
+  `sermo_be_widget_etat` ; et, depuis la 3.3.0, `sermo_be_button_click`
+  (`activate:` sur un bouton), `sermo_be_widget_append` et
+  `sermo_be_widget_rows` (`append:` et `save:` hors GTK),
+  `sermo_be_window_close`, `sermo_be_window_present` et `sermo_be_window_new`
+  (`closewindow:` et `launch:` hors GTK). Un port qui sert `launch:` doit
+  accepter que `sermo_be_run_loop()` soit rappelée depuis une action, pendant
+  qu'une première boucle tourne. Les neuf ports du dépôt les fournissent
+  toutes ; un port qui s'en passe échoue aux cas de comportement qui les
+  jouent et à `tests/garde_fenetres_multiples.sh`.
 - **Identité du port** (facultative) : `sermo_port_name` et
   `sermo_port_details`, deux symboles **faibles** déclarés par le cœur. Sans
   eux, `--version` imprime le nom du cœur — et tous les ports s'annonçaient
@@ -167,7 +180,9 @@ variante, on pointe `PKG_CONFIG_PATH` sur le préfixe d'install correspondant
 3. Implémenter `sermo_backend_toolkit_init` (init du toolkit).
 4. Écrire le `CMakeLists.txt` : `pkg_check_modules(SERMOCORE REQUIRED sermocore)`,
    les libs du toolkit, `-D_FORTIFY_SOURCE=3 -fstack-protector-strong
-   -fcf-protection=full`.
+   -fcf-protection=full`, et, depuis la 3.3.0, `-ffunction-sections
+   -fdata-sections` avec `-Wl,--gc-sections` (le poids du binaire est tenu par
+   `tests/garde_poids.sh` et `tests/poids-plafonds.txt`).
 5. Construire contre la lib installée (`PKG_CONFIG_PATH=…/libsermocore/_install/lib/pkgconfig`)
    puis faire passer **les trois bancs** (§6).
 
@@ -189,15 +204,16 @@ Aucune étape n'avance avec un banc rouge. Les trois portes, pour un binaire
 TIMEOUT=5 bash tests/xml/run_tests.sh <binaire>          # attendu : 55 PASS
 
 # 2. Comportement — les valeurs exportées == celles de l'étalon gtk3sermo
-bash tests/comportement/run.sh <binaire>                 # attendu : 78/78
+bash tests/comportement/run.sh <binaire>                 # attendu : 95/95
 
 # 3. Garde — les valeurs à risque ne repassent pas par le shell
-xvfb-run -a bash tests/garde_echappement_sortie.sh <binaire>        # OK — 4 cas
+xvfb-run -a bash tests/garde_echappement_sortie.sh <binaire>        # OK — 6 cas
 ```
 
 Le banc de comportement compare les **exports** (`VAR="valeur"`) à ceux de
 l'étalon gtk3sermo. Chaque cas se ferme seul : par un `<timer>` déclenchant
-`exit:fin`, ou (cas 41 et 42) par l'action d'une barre de progression arrivée à 100.
+`exit:fin`, ou (cas 41 et 42) par l'action d'une barre de progression arrivée à
+100, ou (cas 94) par `activate:` sur un bouton nu.
 
 Au-delà des trois portes, le test de réussite d'un port est
 `bash examples/metiers/verifie.sh --ports "<port>"` : il joue chaque dialogue des
@@ -209,11 +225,12 @@ valeurs à gtk3sermo.
 `ci/construire.sh` construit les variantes utiles du cœur, les backends
 demandés (défaut : les neuf), puis `sermoia-mcp`, le port lvgl léger
 (`-DSERMO_LVGL_LEGER=ON`, quand lvgl est demandé) et les huit programmes d'aide
-de `sermo-source/` (`-DSERMO_SOURCE_EXIGER=ON` : une bibliothèque absente est
-un échec). `ci/bancs.sh` enchaîne **tous** les bancs : tests
+de `sermo-source/`, avec `sermo-media-images` (`-DSERMO_SOURCE_EXIGER=ON` : une
+bibliothèque absente est un échec). `ci/bancs.sh` enchaîne **tous** les bancs : tests
 unitaires du cœur, version unique, liens de langue, gardes sur les sources
 (SPDX, licences des scripts, fonctions interdites, thread de la barre de
-progression, en-têtes de poste, lectures d'`<input>` plafonnées), les
+progression, en-têtes de poste, lectures d'`<input>` plafonnées, sommes des
+recettes hors Debian, schéma du langage), les
 programmes d'aide (Modbus/OPC UA, MQTT en lecture et en écriture, MAVLink en
 lecture et en écriture contre un faux drone, lecteur son et vidéo) et leur
 durcissement binaire par binaire, les exemples outillés (approbation, réseau,
@@ -223,10 +240,14 @@ façade, le FORTIFY du cœur, puis pour chaque backend le XML, l'identité, le
 durcissement, `SERMO_ALLOWED_CMDS`, les sources sans fin
 (`garde_input_sans_fin.sh`), `<input modbus|opcua|mqtt|mavlink>`, `<action
 mqtt|mavlink>` au clic seul, `--do`, `SERMO_SHELL`, la limite de widgets,
-`--include`, Glade, `<terminal>`, l'échappement, le clic et l'ouverture réelle des exemples de
+`--include`, Glade, `<terminal>`, la fermeture et la taille de la fenêtre, le
+rendu en image (barre, jauge, zone, et aucune commande lancée sous
+`--render-png`), le calendrier, les fenêtres multiples et homonymes (`launch:`,
+`closewindow:`), la minuterie à intervalle nul, la sortie réduite aux
+variables, l'ouverture d'un grand dialogue, l'échappement, le clic et l'ouverture réelle des exemples de
 `examples/` (le mot de passe masqué pour ncurses ; ni clic ni exemples pour html,
 qui n'ouvre pas de fenêtre), le comportement sur tous les ports construits,
-les deux bancs de `sermoman-mcp`, les scripts métier et celui de
+les trois bancs de `sermoman-mcp` (protocole, vérité, exemples), les scripts métier et celui de
 `sermoia-mcp`. En fin de passe, `ci/bilan-json.sh` lit les journaux et pose les
 chiffres de chaque banc, port par port, dans `_journaux/bilan.json` (verdicts
 dans `_journaux/bancs/verdicts.tsv`) et sur une ligne `BILAN-JSON:` de la
@@ -247,6 +268,14 @@ Règles tenues par ces scripts, parce que chacune a déjà menti une fois :
   en échec ;
 - **aucun affichage** : `DISPLAY` est retiré, chaque garde graphique démarre son
   propre Xvfb — un poste de travail mesure ce que mesure la CI.
+
+**ASan et UBSan**, à la demande : `SERMO_BANC_SANITIZERS=1 bash ci/bancs.sh`
+construit le cœur et les ports sous ASan + UBSan dans des dossiers à part
+(`_build_asan*`), y rejoue le banc de comportement et les cas à plusieurs
+fenêtres avec toute erreur fatale (environ 40 min pour les neuf ports), puis
+le banc de fuite à l'export sur ncurses et html. Seul :
+`bash tests/garde_sanitizers.sh`. En CI : le job `sanitizers` (étiquette,
+pipeline planifié, ou à la demande).
 
 ### Contrôle de façade (avant publication)
 
@@ -323,6 +352,14 @@ Héritées de sermo, **non négociables** :
   un fichier par `fopen`, `open` ou `g_file_get_contents` échapperait à la
   limite. Seule la barre de progression, qui ne garde qu'une ligne, la retire
   (`sermo_input_sans_limite()`). Vérifié par `tests/garde_input_sans_fin.sh`.
+- **Sous `--render-png`, aucune commande ne part** (3.3.0), sauf
+  `SERMO_RENDER_EXEC=1` : le refus est dans `safe_system` et `safe_popen`. Un
+  widget qui lance un programme sans passer par eux doit consulter lui-même
+  `safe_exec_tout_refuse()` — c'est le cas du `<terminal>` VTE de gtk3 et gtk4.
+  Vérifié par `tests/garde_render_sans_commande.sh`.
+- **`SERMO_NO_FILES`** (3.3.0) ferme les fichiers nommés par le XML : toute
+  lecture d'`<input file>` passe par `sermo_fopen_input()`, toute écriture de
+  `save:` par le cœur ; un port ne doit pas ouvrir ces fichiers lui-même.
 
 ## 9. Feuille de route architecturale (Part 3)
 
@@ -387,7 +424,9 @@ libmosquitto ni MAVLink.
   `<action>` d'écriture que dans un `<button>` ou un `<menuitem>`, et refuse le
   nom `sermo-cible-` écrit à la main dans un `<input>` ou une `<action>`.
 
-**Les huit programmes**, un paquet chacun :
+**Les huit programmes**, un paquet chacun. Un neuvième binaire,
+`sermo-media-images` (l'image dans la zone du dialogue sous Wayland, lié à
+libmpv), est livré dans le paquet de `sermo-cible-media` :
 
 | Programme | Rôle | Bibliothèque |
 |---|---|---|

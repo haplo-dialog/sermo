@@ -301,7 +301,7 @@ void widget_entry_save(variable *var)
 	/* If we have a valid filename then open it and dump the
 	 * widget's data to it */
 	if (filename) {
-		if ((outfile = fopen(filename, "w"))) {
+		if ((outfile = sermo_fopen_output(filename))) {
 
 			/* Thunor: This is all original code moved across when refactoring */
 			text = gtk_entry_get_text(GTK_ENTRY(var->Widget));

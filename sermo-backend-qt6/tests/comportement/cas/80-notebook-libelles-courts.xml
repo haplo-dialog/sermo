@@ -1,0 +1,9 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: notebook : trois pages, un seul libelle (html et ncurses lisaient apres la fin du tableau des libelles) -->
+<window><vbox>
+<notebook tab-labels="Un">
+<vbox><entry><variable>P1</variable><default>un</default></entry></vbox>
+<vbox><entry><variable>P2</variable><default>deux</default></entry></vbox>
+<vbox><entry><variable>P3</variable><default>trois</default></entry></vbox>
+</notebook>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

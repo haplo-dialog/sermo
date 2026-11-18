@@ -83,12 +83,13 @@ echo "Ports : ${PORTS[*]} · langue : ${LC_ALL:-${LANG:-C}} · délai par banc :
 echo "── Sources et cœur"
 banc "tests unitaires du cœur" bash tests/run_unit_tests.sh
 banc "version unique" bash tests/garde_version.sh
+banc "sommes des recettes" sh tests/garde_recettes_sommes.sh "$RACINE"
 banc "liens de langue" bash tests/garde_liens_langue.sh
 for d in libsermocore contract tests examples sermo-backend-* sermo-source; do
     banc "spdx $d" bash tests/garde_spdx.sh "$d"
 done
 banc "licences des scripts (en-têtes ↔ debian/copyright)" bash tests/garde_spdx_scripts.sh
-for d in libsermocore/src libsermocore/src-gtk4 libsermocore/include contract sermo-backend-*/src sermo-source; do
+for d in libsermocore/src libsermocore/src-gtk4 libsermocore/include contract sermo-backend-*/src sermo-source sermoia-mcp/src; do
     banc "fonctions interdites $d" bash tests/garde_fonctions_interdites.sh "$d"
 done
 for p in gtk3 gtk4; do
@@ -145,6 +146,12 @@ if [ "${SERMO_BANC_SANITIZERS:-0}" = 1 ]; then
             banc "fuite export $p" bash tests/garde_fuite_refresh.sh "$RACINE/sermo-backend-$p/_build_asan/${p}sermo" ;;
         esac
     done
+    # Fuites des widgets GTK (copies rendues par GTK et jamais libérées).
+    for p in gtk3 gtk4; do
+        case " ${PORTS[*]} " in *" $p "*)
+            banc "fuite widgets $p" bash tests/garde_fuite_gtk.sh "$RACINE/sermo-backend-$p/_build_asan/${p}sermo" ;;
+        esac
+    done
 fi
 if [ "${SERMO_BANC_PUBLICATION:-0}" = 1 ]; then
     banc "façade avant publication (arbre)" bash tests/verifie-facade.sh --strict
@@ -176,10 +183,12 @@ for p in "${PORTS[@]}"; do
     # html est un exportateur : il écrit une page, il n'ouvre aucune fenêtre.
     case "$p" in
         ncurses|html) ;;
-        *) banc "$p taille de fenêtre" bash tests/garde_taille_fenetre.sh "$b"
+        *) banc "$p fermeture de fenêtre" bash tests/garde_fermeture_fenetre.sh "$b"
+           banc "$p taille de fenêtre" bash tests/garde_taille_fenetre.sh "$b"
            banc "$p barre dans l'image" bash tests/garde_render_barre.sh "$b"
            banc "$p jauge dans son intervalle" bash tests/garde_render_jauge.sh "$b"
-           banc "$p zone à sa taille" bash tests/garde_render_zone.sh "$b" ;;
+           banc "$p zone à sa taille" bash tests/garde_render_zone.sh "$b"
+           banc "$p rendu sans commande" bash tests/garde_render_sans_commande.sh "$b" ;;
     esac
     banc "$p calendrier" bash tests/garde_calendrier_date_du_jour.sh "$b"
     banc "$p durcissement" bash tests/garde_durcissement.sh "$b"
@@ -195,11 +204,22 @@ for p in "${PORTS[@]}"; do
     banc "$p terminal" bash tests/garde_terminal.sh "$b"
     [ "$p" = gtk3 ] && banc "$p layer-shell" bash tests/garde_layer_shell.sh "$b"
     [ "$p" = efl1 ] && banc "$p sans fenêtre" bash tests/garde_efl1_sans_fenetre.sh "$b"
-    # Fenêtres homonymes : gtk3 et gtk4 seulement. L'étalon est ce que rend gtk3 ;
-    # les cinq autres ports ouvrent une seconde fenêtre autrement (mesuré le
-    # 2026-10-04 : valeur de NOM__W2 différente, sortie vide ou dialogue figé) —
-    # un écart de parité à part, que ce banc ne prétend pas juger.
-    case "$p" in gtk3|gtk4) banc "$p fenêtres homonymes" sh tests/garde_fenetres_homonymes.sh "$b" ;; esac
+    # launch: / closewindow: / launch: — à l'écran, dans un terminal (ncurses)
+    # et sans écran (html, ncurses, lvgl), voir l'en-tête du banc.
+    banc "$p fenêtres multiples" bash tests/garde_fenetres_multiples.sh "$b"
+    # Fenêtres homonymes : la seconde rangée sous NOM__W<id>, avec son
+    # <default> et son <input>, sur les neuf ports.
+    banc "$p fenêtres homonymes" sh tests/garde_fenetres_homonymes.sh "$b"
+    case "$p" in gtk3|gtk4) banc "$p append vers edit" bash tests/garde_append_edit.sh "$b" ;; esac
+    case "$p" in gtk3|gtk4) banc "$p pixmap à sa taille" bash tests/garde_pixmap_taille.sh "$b" ;; esac
+    case "$p" in gtk3|gtk4) banc "$p table : refresh et save" bash tests/garde_table_refresh_save.sh "$b" ;; esac
+    banc "$p minuterie à intervalle nul" bash tests/garde_minuterie_intervalle.sh "$b"
+    banc "$p sortie : variables seules" bash tests/garde_sortie_variables_seules.sh "$b"
+    # Grand dialogue : efl1 et lvgl sont hors de la mesure « champs » (c'est
+    # leur toolkit qui est lent à créer 2000 champs, pas le cœur) ; gtk3 et
+    # gtk4 hors de la mesure « icônes » (ils ont leur propre recherche).
+    case "$p" in efl1|lvgl) ;; *) banc "$p grand dialogue : champs" bash tests/garde_ouverture_grande.sh "$b" champs ;; esac
+    case "$p" in gtk3|gtk4) ;; *) banc "$p grand dialogue : icônes" bash tests/garde_ouverture_grande.sh "$b" icones ;; esac
     if [ "$p" = ncurses ]; then
         banc "$p mot de passe" bash tests/garde_ncurses_mot_de_passe.sh "$b"
         banc "$p sortie capturée" bash tests/garde_ncurses_sortie_capturee.sh "$b"
@@ -208,6 +228,7 @@ for p in "${PORTS[@]}"; do
         # Ni clic ni fenêtre à détecter (xdotool) : seule la sortie compte.
         banc "$p échappement" bash tests/garde_echappement_sortie.sh "$b"
         banc "$p valeurs de la page" bash tests/garde_html_valeurs_page.sh "$b"
+        banc "$p antislash dans un attribut" bash tests/garde_lexer_antislash.sh "$b"
         banc "$p mode serve (variables du dialogue seulement)" bash tests/garde_html_serve.sh "$b"
     else
         banc "$p échappement" bash tests/garde_echappement_sortie.sh "$b"
@@ -222,6 +243,7 @@ if [ "$PARTIEL" -eq 1 ]; then
 else
     banc "comportement (tous les ports)" bash tests/comportement/run_all.sh
 fi
+banc "sermoman-mcp : protocole" bash sermoman-mcp/tests/verifie-protocole.sh
 banc "sermoman-mcp : vérité" env SERMO_SRC="$RACINE" bash sermoman-mcp/tests/verifie-verite.sh
 banc "sermoman-mcp : exemples" env SERMO_SRC="$RACINE" SERMO_PORTS_REQUIS="${PORTS[*]/%/sermo}" bash sermoman-mcp/tests/verifie-exemples.sh
 # gtk3 est toujours joué : c'est l'étalon auquel les valeurs se comparent
@@ -235,5 +257,7 @@ echo "Bancs : $joues joué(s), $echecs en échec. Journaux : $J"
 # Les chiffres de tout ce qui vient d'être joué, en un JSON (_journaux/bilan.json)
 # et une ligne « BILAN-JSON: … » que la trace du job garde : le site et
 # BILAN_SANTE.md les reprennent, personne ne les recopie à la main.
-bash ci/bilan-json.sh "$J" || ligne 'ÉCHEC ' "bilan json" "ci/bilan-json.sh rc=$?"
+# Un bilan qui échoue est un banc en échec : sans le compter, le job restait
+# vert avec des chiffres absents ou faux.
+bash ci/bilan-json.sh "$J" || { ligne 'ÉCHEC ' "bilan json" "ci/bilan-json.sh rc=$?"; echecs=$((echecs + 1)); }
 [ "$echecs" -eq 0 ]

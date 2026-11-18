@@ -219,6 +219,15 @@ Autres garde-fous :
   et un avertissement part sur la sortie d'erreur. `SERMO_INPUT_MAX` change la
   limite, en octets ; `0` la retire. La barre de progression n'est pas
   plafonnée : elle ne garde qu'une ligne à la fois.
+- **`--render-png` n'exécute aucune commande du dialogue** (3.3.0) : on peut
+  rendre l'aperçu d'un XML qu'on n'a pas écrit. `SERMO_RENDER_EXEC=1` les
+  permet, pour un dialogue de confiance.
+- **`SERMO_NO_FILES`** (3.3.0) ferme les fichiers nommés par le XML
+  (`<input file>`, `save:`, la condition `file_is_true()`).
+- **Noms réservés** (3.3.0) : une variable de widget nommée `SERMO_*`,
+  `HAPLO_*`, `LD_*`, `PATH`, `IFS`, `ENV`, `BASH_ENV`, `SHELLOPTS` ou `PS4`
+  n'est pas posée dans l'environnement des commandes : un dialogue ne peut pas
+  remplacer la liste blanche.
 
 **Durcissement du binaire** : cœur et backends compilent et lient avec
 `-D_FORTIFY_SOURCE=3`, `-fstack-protector-strong`, `-fstack-clash-protection`,

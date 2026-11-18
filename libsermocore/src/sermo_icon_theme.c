@@ -103,7 +103,14 @@ static int theme_load(const char *theme, IconTheme *t)
                     if (strcmp(t->dirs[i].path, line + 1) == 0) { cur = &t->dirs[i]; break; }
                 if (!cur && t->ndirs < MAX_DIRS) {
                     cur = &t->dirs[t->ndirs++];
-                    snprintf(cur->path, sizeof(cur->path), "%s", line + 1);
+                    /* Un nom de section plus long que le champ ne désigne
+                     * aucun dossier d'icônes réel : la section est ignorée,
+                     * pas tronquée (elle en désignerait un autre). */
+                    if ((size_t)snprintf(cur->path, sizeof(cur->path), "%s", line + 1) >= sizeof(cur->path)) {
+                        t->ndirs--;
+                        cur = NULL;
+                        continue;
+                    }
                     cur->min = cur->max = cur->size = 0;
                 }
             }
@@ -184,6 +191,35 @@ static int est_symbolique(const char *name)
     return n > 9 && strcmp(name + n - 9, "-symbolic") == 0;
 }
 
+/* Cache des thèmes lus. Jusqu'à la 3.3.0, chaque recherche relisait et
+ * réanalysait index.theme pour le thème, ses parents, Adwaita et hicolor,
+ * et cela pour le nom, sa variante symbolique et ses noms génériques :
+ * environ 30 ms par icône, 12 s pour un dialogue de 400 boutons à icône
+ * (mesuré). Un thème absent est gardé aussi (t == NULL). Les thèmes installés
+ * pendant la vie du dialogue ne sont donc pas vus — un dialogue ne dure pas
+ * assez pour que cela compte. */
+#define CACHE_THEMES 16
+static struct { char nom[64]; IconTheme *t; int pris; } k_themes[CACHE_THEMES];
+
+static IconTheme *theme_en_cache(const char *theme)
+{
+    int i;
+    IconTheme *t;
+    for (i = 0; i < CACHE_THEMES && k_themes[i].pris; i++)
+        if (strcmp(k_themes[i].nom, theme) == 0) return k_themes[i].t;
+    t = (IconTheme *)calloc(1, sizeof(IconTheme));
+    if (t && !theme_load(theme, t)) { free(t); t = NULL; }
+    if (i < CACHE_THEMES && strlen(theme) < sizeof(k_themes[i].nom)) {
+        snprintf(k_themes[i].nom, sizeof(k_themes[i].nom), "%s", theme);
+        k_themes[i].t = t;
+        k_themes[i].pris = 1;
+        return t;
+    }
+    /* Cache plein ou nom trop long : le thème sert une fois et reste
+     * alloué (cas rare, borné par la profondeur d'héritage). */
+    return t;
+}
+
 static char *lookup_in_theme(const char *theme, const char *name, int size, int depth,
                              char visited[MAX_DEPTH][64])
 {
@@ -195,9 +231,12 @@ static char *lookup_in_theme(const char *theme, const char *name, int size, int 
     for (i = 0; i < depth; i++) if (strcmp(visited[i], theme) == 0) return NULL;
     snprintf(visited[depth], 64, "%s", theme);
 
-    t = (IconTheme *)calloc(1, sizeof(IconTheme));
+    /* Le thème vient du cache : il n'est ni modifié ni libéré ici. Les
+     * dossiers déjà essayés se notent à part (essaye[]). */
+    char essaye[MAX_DIRS];
+    t = theme_en_cache(theme);
     if (!t) return NULL;
-    if (!theme_load(theme, t)) { free(t); return NULL; }
+    memset(essaye, 0, sizeof(essaye));
 
     /* 1. dossier dont l'intervalle contient la taille (le plus proche d'abord) */
     int best = -1, bestdist = 1 << 30;
@@ -213,7 +252,7 @@ static char *lookup_in_theme(const char *theme, const char *name, int size, int 
         int pick = -1, pd = 1 << 30;
         for (i = 0; i < t->ndirs; i++) {
             IconDir *d = &t->dirs[i];
-            if (d->size < 0) continue;              /* déjà essayé */
+            if (essaye[i]) continue;                /* déjà essayé */
             if (!symb && strstr(d->path, "symbolic")) continue;
             int dist = abs(d->size - size);
             if (size >= d->min && size <= d->max) dist = d->scalable ? 1 : 0;
@@ -221,20 +260,17 @@ static char *lookup_in_theme(const char *theme, const char *name, int size, int 
         }
         if (pick < 0) break;
         for (b = 0; b < k_nbases; b++)
-            if (try_file(k_bases[b], theme, t->dirs[pick].path, name, out, sizeof(out))) {
-                free(t);
+            if (try_file(k_bases[b], theme, t->dirs[pick].path, name, out, sizeof(out)))
                 return strdup(out);
-            }
-        t->dirs[pick].size = -1;
+        essaye[pick] = 1;
     }
     (void)best;
 
     /* 2. parents */
     for (i = 0; i < t->ninherits; i++) {
         char *r = lookup_in_theme(t->inherits[i], name, size, depth + 1, visited);
-        if (r) { free(t); return r; }
+        if (r) return r;
     }
-    free(t);
     return NULL;
 }
 
@@ -334,16 +370,49 @@ int sermo_desktop_is_dark(void)
     return 0;
 }
 
+/* Cache des réponses : un dialogue redemande souvent la même icône (une par
+ * rangée, une par bouton). Les réponses négatives sont gardées aussi. */
+#define CACHE_ICONES 128
+static struct { char *nom; int taille; char *chemin; } k_icones[CACHE_ICONES];
+static int k_nicones = 0;
+
+static char *icone_chercher(const char *name, int size);
+
 char *sermo_icon_lookup(const char *name, int size)
 {
-    char visited[MAX_DEPTH][64];
     char *r;
+    int i;
     if (!name || !*name) return NULL;
     if (size <= 0) size = 24;
     bases_init();
 
     /* un chemin absolu est rendu tel quel */
     if (name[0] == '/') return file_exists(name) ? strdup(name) : NULL;
+
+    for (i = 0; i < k_nicones; i++)
+        if (k_icones[i].taille == size && strcmp(k_icones[i].nom, name) == 0)
+            return k_icones[i].chemin ? strdup(k_icones[i].chemin) : NULL;
+    r = icone_chercher(name, size);
+    if (k_nicones < CACHE_ICONES) {
+        char *nom = strdup(name);
+        char *chemin = r ? strdup(r) : NULL;
+        if (nom && (chemin || !r)) {
+            k_icones[k_nicones].nom = nom;
+            k_icones[k_nicones].taille = size;
+            k_icones[k_nicones].chemin = chemin;
+            k_nicones++;
+        } else {
+            free(nom);
+            free(chemin);
+        }
+    }
+    return r;
+}
+
+static char *icone_chercher(const char *name, int size)
+{
+    char visited[MAX_DEPTH][64];
+    char *r;
 
     /* Comme GTK : le thème de la personne, puis Adwaita (le thème par défaut
      * de GTK), puis hicolor ; dans chacun, le nom, puis sa variante

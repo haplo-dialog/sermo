@@ -328,7 +328,7 @@ void widget_hscale_save(variable *var)
 	/* If we have a valid filename then open it and dump the
 	 * widget's data to it */
 	if (filename) {
-		if ((outfile = fopen(filename, "w"))) {
+		if ((outfile = sermo_fopen_output(filename))) {
 
 			digits = gtk_scale_get_digits(GTK_SCALE(var->Widget));
 			value = gtk_range_get_value(GTK_RANGE(var->Widget));

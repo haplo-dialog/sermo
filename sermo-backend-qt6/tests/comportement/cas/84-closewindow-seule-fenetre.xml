@@ -1,0 +1,3 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: closewindow: de la seule fenetre, depuis une minuterie : le dialogue se termine (EXIT=closewindow), sans variables -->
+<window><vbox><entry><variable>E</variable><default>v</default></entry><timer visible="false"><variable>T</variable><action>closewindow:W</action></timer></vbox><variable>W</variable></window>

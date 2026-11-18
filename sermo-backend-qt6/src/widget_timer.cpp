@@ -69,6 +69,9 @@ GtkWidget *widget_timer_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         if ((v = get_tag_attribute(attr, "interval")))
             n = atoi(v);
     }
+    /* Un intervalle nul ou négatif donnait un QTimer à 0 ms : un tic à chaque
+     * tour de boucle (749 en 2 s, mesuré). Borné à 1, comme gtk3sermo. */
+    if (n < 1) n = 1;
     double interval_ms = en_ms ? (double)n : (double)n * 1000.0;
 
     placeholder->setProperty("timerTicks", (qlonglong)0);
@@ -85,6 +88,9 @@ GtkWidget *widget_timer_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         ticks++;
         placeholder->setProperty("timerTicks", ticks);
         if (!acap) return;
+        /* disable: d'une minuterie : elle ne joue plus ses actions, comme l'étalon
+         * (gtk3sermo n'émet « tick » que si le widget est sensible). */
+        if (!placeholder->isEnabled()) return;
         GList *ae = nullptr;
         gchar *cmd = attributeset_get_first(&ae, acap, ATTR_ACTION);
         while (cmd) {
@@ -94,7 +100,7 @@ GtkWidget *widget_timer_create(AttributeSet *Attr, tag_attr *attr, gint Type)
             gchar *signal = attributeset_get_this_tagattr(&ae, acap, ATTR_ACTION, (gchar *)"signal");
             if ((!signal || g_ascii_strcasecmp(signal, "tick") == 0)
                 && condition_vraie(&ae, acap))   /* condition= : voir jouer_actions.h */
-                execute_action(nullptr, cmd, function);
+                execute_action((GtkWidget *)placeholder, cmd, function);
             cmd = attributeset_get_next(&ae, acap, ATTR_ACTION);
         }
     });

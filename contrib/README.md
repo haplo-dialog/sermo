@@ -40,17 +40,13 @@ ni arrêter sur la machine.
 ## Ce qui manque pour tenir la promesse « en fenêtre et en terminal »
 
 Ces outils veulent montrer la même interface en fenêtre et dans un terminal.
-Trois points l'empêchent encore, tous du côté de sermo, pas des scripts :
+Un point l'empêche encore, du côté de sermo, pas des scripts. Deux autres
+sont levés : l'écran ncurses s'ouvre maintenant sur `/dev/tty` quand la sortie
+est capturée (`sortie=$(choisir)`, banc
+`tests/garde_ncurses_sortie_capturee.sh`), et les `<action>` d'une `<list>`
+jouent sur les ports sans GTK.
 
-1. **Une sortie capturée éteint l'écran ncurses.** Les hubs écrivent
-   `sortie=$(choisir)` pour relire le choix. Quand sa sortie standard n'est pas
-   un terminal, `ncursessermo` passe en mode sans écran : il rend les variables et
-   sort. C'est aussi le cas de l'écriture courante `eval "$(… --program=…)"`.
-2. **Les actions d'une liste ne sont jouées que par les ports GTK.** Dans servys,
-   choisir un service devrait rafraîchir le panneau d'état. Les ports qt6, fltk1,
-   efl1, sdl3 et ncurses ne lisent pas les `<action>` d'une `<list>` (lu dans leur
-   code, pas essayé au clic) : il y faut passer par le bouton « Rafraîchir ».
-3. **`<input>bash "$SCRIPT_PATH" …</input>` passe par `/bin/sh`.** Les guillemets
+1. **`<input>bash "$SCRIPT_PATH" …</input>` passe par `/bin/sh`.** Les guillemets
    sont de la syntaxe shell : sermo le dit sur la sortie d'erreur à chaque appel,
    et un réglage qui refuse le repli vers le shell refuserait ces outils.
 

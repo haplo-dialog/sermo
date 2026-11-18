@@ -33,7 +33,7 @@ CI installs it: [`ci/dependances.txt`](ci/dependances.txt).
 ## 2. Compiling the core
 
 Pick **one** variant for the target backend (see
-[MANUEL_DEVELOPPEUR.en.md](MANUEL_DEVELOPPEUR.en.md) §2, French):
+[MANUEL_DEVELOPPEUR.en.md](MANUEL_DEVELOPPEUR.en.md) §2):
 
 ```bash
 cd libsermocore
@@ -104,7 +104,8 @@ paths ship the same thing.
 
 `<input modbus>`, `<input opcua>`, `<input mqtt>`, `<input mavlink>`,
 `<input media>` and `<action mqtt>`, `<action mavlink>`, `<action media>` go
-through eight small separate programs. They are built on their own, without
+through eight small separate programs, plus `sermo-media-images` (the picture
+inside the dialog's area under Wayland). They are built on their own, without
 the core:
 
 ```bash
@@ -115,11 +116,14 @@ cmake --build sermo-source/_build
 
 Each one is built only if its library is there: `libmodbus-dev`
 (`sermo-source-modbus`), `libopen62541-1.4-dev` (`sermo-source-opcua`),
-`libmosquitto-dev` (`sermo-source-mqtt` and `sermo-cible-mqtt`). Otherwise
+`libmosquitto-dev` (`sermo-source-mqtt` and `sermo-cible-mqtt`), `libmpv-dev`
+(`sermo-media-images`). Otherwise
 CMake warns and skips that program. With `-DSERMO_SOURCE_EXIGER=ON`, a missing
-library stops the build: the CI and the packages set it. MAVLink needs nothing
+library stops the build: the CI and the packages set it, and so does
+`ci/construire.sh` unless run with `SERMO_SOURCE_FACULTATIF=1` (since 3.3.0:
+it then skips those programs and says which). MAVLink needs nothing
 installed: its C headers are bundled (`sermo-source/tiers/mavlink`). The two
-media programs have no library: at run time, `sermo-cible-media` starts the
+media programs have no library of their own: at run time, `sermo-cible-media` starts the
 `mpv` program (in a `bwrap` sandbox when it is there), and `sermo-source-media`
 queries it.
 
@@ -139,6 +143,12 @@ kept only if the compiler actually uses it. Do not remove these flags: the
 `tests/garde_durcissement.sh` bench checks them. See
 [SECURITY.en.md](SECURITY.en.md).
 
+Since 3.3.0 each function is compiled into its own section
+(`-ffunction-sections -fdata-sections`) and the linker drops those nothing
+reaches (`-Wl,--gc-sections`): the weight of each binary is held by
+`tests/garde_poids.sh`. The core builds with `-Wall -Wextra`;
+`ci/construire.sh` prints the number of warnings of each target.
+
 Without `-DCMAKE_BUILD_TYPE`, every project builds as `Release`: that is what
 makes `_FORTIFY_SOURCE` effective (it only works with optimisation). A `Debug`
 build loses this protection. For the core:
@@ -149,14 +159,13 @@ bash tests/garde_fortify_coeur.sh libsermocore/_build/libsermocore.a
 
 ## 5. Checking
 
-Pass **the three gates** (see [MANUEL_DEVELOPPEUR.en.md](MANUEL_DEVELOPPEUR.en.md) §6,
-French):
+Pass **the three gates** (see [MANUEL_DEVELOPPEUR.en.md](MANUEL_DEVELOPPEUR.en.md) §6):
 
 ```bash
 BIN=sermo-backend-qt6/_build/qt6sermo
 TIMEOUT=5 bash tests/xml/run_tests.sh "$BIN"                       # 55 PASS
-bash tests/comportement/run.sh "$BIN"                             # 78 green
-xvfb-run -a bash tests/garde_echappement_sortie.sh "$BIN"          # OK — 4 cases
+bash tests/comportement/run.sh "$BIN"                             # 95 green
+xvfb-run -a bash tests/garde_echappement_sortie.sh "$BIN"          # OK — 6 cases
 ```
 
 Or build everything and check everything, exactly like the CI:

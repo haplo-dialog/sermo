@@ -162,7 +162,7 @@ GtkWidget *widget_button_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     }
 
     AttributeSet *acap = Attr;
-    QObject::connect(btn, &QPushButton::clicked, btn, [acap, Type]() {
+    QObject::connect(btn, &QPushButton::clicked, btn, [acap, Type, btn]() {
         if (!acap) return;
         GList *ae = nullptr;
         gchar *cmd = attributeset_get_first(&ae, acap, ATTR_ACTION);
@@ -174,12 +174,25 @@ GtkWidget *widget_button_create(AttributeSet *Attr, tag_attr *attr, gint Type)
             if ((!signal || g_ascii_strcasecmp(signal, "clicked") == 0
                  || (Type == WIDGET_TOGGLEBUTTON && g_ascii_strcasecmp(signal, "toggled") == 0))
                 && condition_vraie(&ae, acap))   /* condition= : voir jouer_actions.h */
-                execute_action(nullptr, cmd, function);
+                execute_action((GtkWidget *)btn, cmd, function);
             cmd = attributeset_get_next(&ae, acap, ATTR_ACTION);
         }
     });
 
     return (GtkWidget *)btn;
+}
+
+/* Crochet du contrat : « activate:NOM » sur un bouton — le même chemin qu'un
+ * clic (QAbstractButton::click joue le signal clicked). */
+extern "C" int sermo_be_button_click(void *w)
+{
+    QAbstractButton *b = qobject_cast<QAbstractButton *>(static_cast<QWidget *>(w));
+    if (!b) return 0;
+    /* Le signal, pas click() : Qt n'active pas un bouton grisé, alors que
+     * l'étalon joue ses actions sous activate: même grisé (mesuré le
+     * 2026-11-16 sur gtk3 et gtk4, et sur les sept autres ports). */
+    Q_EMIT b->clicked(b->isChecked());
+    return 1;
 }
 
 gchar *widget_button_envvar_construct(GtkWidget *widget)

@@ -90,9 +90,70 @@ static const gchar *_env_securite(const gchar *nom, const gchar *ancien,
     return valeur;
 }
 
+static gboolean _nom_reserve(const gchar *nom)
+{
+    static const gchar *const exacts[] = { "PATH", "IFS", "ENV", "BASH_ENV", "SHELLOPTS", "PS4", NULL };
+    gint i;
+
+    if (g_str_has_prefix(nom, "SERMO_") || g_str_has_prefix(nom, "HAPLO_") || g_str_has_prefix(nom, "LD_"))
+        return TRUE;
+    for (i = 0; exacts[i] != NULL; i++)
+        if (strcmp(nom, exacts[i]) == 0)
+            return TRUE;
+    return FALSE;
+}
+
+int sermo_exporter_variable(const char *nom, const char *valeur, int ecraser)
+{
+    static gchar *dits[16];          /* les noms deja signales (16 suffisent : au-dela, on se tait) */
+    gint i;
+
+    if (nom == NULL || *nom == '\0' || valeur == NULL)
+        return 0;
+    if (_nom_reserve(nom)) {
+        for (i = 0; i < 16 && dits[i] != NULL && strcmp(dits[i], nom) != 0; i++)
+            ;
+        if (i < 16 && dits[i] == NULL) {
+            dits[i] = g_strdup(nom);
+            g_warning("la variable de widget « %s » porte un nom reserve (SERMO_*, HAPLO_*, LD_*, PATH, IFS, "
+                      "ENV, BASH_ENV, SHELLOPTS, PS4) : elle n'est pas posee dans l'environnement des commandes", nom);
+        }
+        return 0;
+    }
+    g_setenv(nom, valeur, ecraser ? TRUE : FALSE);
+    return 1;
+}
+
+/*
+ * --render-png : aucune commande. Le rendu d'une image sert d'aperçu, souvent
+ * d'un XML qu'on n'a pas écrit (éditeur, CI, assistant) ; jusqu'à la 3.3.0 il
+ * exécutait pourtant les <input> du dialogue, et seul le serveur sermoia-mcp
+ * s'en gardait, en posant lui-même SERMO_ALLOWED_CMDS. gtkdialog.c appelle
+ * safe_exec_refuser_tout() dès qu'il lit --render-png, sauf demande expresse
+ * (SERMO_RENDER_EXEC=1) : la liste blanche vaut alors une entrée qu'aucune
+ * commande ne peut égaler, et tout — exec direct ou repli shell — est refusé
+ * par le chemin habituel.
+ */
+#define AUCUNE_COMMANDE "/sermo/render-png/aucune-commande"
+static gboolean refus_total = FALSE;
+
+void safe_exec_refuser_tout(void)
+{
+    refus_total = TRUE;
+}
+
+/* Pour ce qui lance un programme sans passer par safe_system/safe_popen :
+ * le <terminal> de gtk3 et gtk4 confie sa commande à VTE. */
+gboolean safe_exec_tout_refuse(void)
+{
+    return refus_total;
+}
+
 static const gchar *_allowed_cmds_env(void)
 {
     static gboolean signale = FALSE;
+    if (refus_total)
+        return AUCUNE_COMMANDE;
     return _env_securite("SERMO_ALLOWED_CMDS", "HAPLO_ALLOWED_CMDS", &signale);
 }
 
@@ -217,7 +278,10 @@ static gboolean _allowlist_permits(const gchar *argv0)
     }
     g_strfreev(allowed);
 
-    if (!ok)
+    if (!ok && refus_total)
+        g_critical("commande '%s' refusee : --render-png n'execute aucune commande "
+                   "(SERMO_RENDER_EXEC=1 pour les permettre)", argv0);
+    else if (!ok)
         g_critical("commande '%s' refusee : absente de SERMO_ALLOWED_CMDS", argv0);
     return ok;
 }
@@ -266,8 +330,31 @@ static gchar **_build_child_env(void)
 
         /* Drop any pathologically large variable defensively. */
         value_len = eq ? strlen(eq + 1) : 0;
-        if (value_len > MAX_INHERITED_VALUE)
+        if (value_len > MAX_INHERITED_VALUE) {
+            /* Dit une fois par nom — sauf pour une description de dialogue
+             * (elle commence par « < » : MAIN_DIALOG, une fenetre a lancer),
+             * que les commandes n'ont pas a recevoir. Une valeur de widget
+             * de plus de 8 Kio disparaissait sans un mot : la commande
+             * recevait une variable vide. */
+            const gchar *v = eq + 1;
+            while (*v == ' ' || *v == '\t' || *v == '\n' || *v == '\r')
+                v++;
+            if (*v != '<') {
+                static gchar *dits[16];
+                gchar *nom = g_strndup(entry, (gsize)(eq - entry));
+                gint k;
+                for (k = 0; k < 16 && dits[k] != NULL && strcmp(dits[k], nom) != 0; k++)
+                    ;
+                if (k < 16 && dits[k] == NULL) {
+                    dits[k] = nom;
+                    g_warning("la variable %s (%lu octets) depasse %d octets : elle n'est PAS transmise "
+                              "aux commandes du dialogue", nom, (unsigned long)value_len, MAX_INHERITED_VALUE);
+                } else {
+                    g_free(nom);
+                }
+            }
             continue;
+        }
 
         g_ptr_array_add(out, g_strdup(entry));
     }
@@ -336,7 +423,12 @@ reessai:
             return -1;
         }
         if (_allowlist_is_active()) {
-            g_critical("safe_system: repli shell refuse tant que SERMO_ALLOWED_CMDS est posee");
+            /* deux appels : g_critical du cœur neutre veut un format littéral */
+            if (refus_total)
+                g_critical("safe_system: commande refusee : --render-png n'execute aucune commande "
+                           "(SERMO_RENDER_EXEC=1 pour les permettre)");
+            else
+                g_critical("safe_system: repli shell refuse tant que SERMO_ALLOWED_CMDS est posee");
             return -1;
         }
         argv = g_new(gchar *, 4);
@@ -440,7 +532,12 @@ reessai:
             return NULL;
         }
         if (_allowlist_is_active()) {
-            g_critical("safe_popen: repli shell refuse tant que SERMO_ALLOWED_CMDS est posee");
+            /* deux appels : g_critical du cœur neutre veut un format littéral */
+            if (refus_total)
+                g_critical("safe_popen: commande refusee : --render-png n'execute aucune commande "
+                           "(SERMO_RENDER_EXEC=1 pour les permettre)");
+            else
+                g_critical("safe_popen: repli shell refuse tant que SERMO_ALLOWED_CMDS est posee");
             return NULL;
         }
         argv = g_new(gchar *, 4);

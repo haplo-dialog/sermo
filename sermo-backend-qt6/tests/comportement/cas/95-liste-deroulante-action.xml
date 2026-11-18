@@ -1,0 +1,22 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: l action d une liste deroulante joue quand son choix change, jamais au demarrage (C0 garde « deux », E0 intact) ; refresh: la joue si le choix n est plus le meme (C1 : deux puis un, E1 vide ; C2 : un puis un, E2 intact) ; clear: vide la liste et la joue si quelque chose etait choisi (C3 vide, E3 vide ; C4 sans choix, E4 intact ; C5 texte libre, E5 vide) ; refresh: efface le texte libre d un comboboxentry (C6 vide, E6 vide) ; removeselected: retire l element choisi et prend le precedent (C7 : deux puis un, E7 vide) -->
+<window><vbox>
+<entry><variable>E0</variable><default>zero</default></entry>
+<entry><variable>E1</variable><default>un</default></entry>
+<entry><variable>E2</variable><default>deux</default></entry>
+<entry><variable>E3</variable><default>trois</default></entry>
+<entry><variable>E4</variable><default>quatre</default></entry>
+<entry><variable>E5</variable><default>cinq</default></entry>
+<entry><variable>E6</variable><default>six</default></entry>
+<entry><variable>E7</variable><default>sept</default></entry>
+<comboboxtext><variable>C0</variable><item>un</item><item>deux</item><default>deux</default><action>clear:E0</action></comboboxtext>
+<comboboxtext><variable>C1</variable><item>un</item><item>deux</item><default>deux</default><action>clear:E1</action></comboboxtext>
+<comboboxtext><variable>C2</variable><item>un</item><item>deux</item><action>clear:E2</action></comboboxtext>
+<comboboxtext><variable>C3</variable><item>un</item><item>deux</item><action>clear:E3</action></comboboxtext>
+<comboboxentry><variable>C4</variable><item>un</item><item>deux</item><action>clear:E4</action></comboboxentry>
+<comboboxentry><variable>C5</variable><item>un</item><default>libre</default><action>clear:E5</action></comboboxentry>
+<comboboxentry><variable>C6</variable><item>un</item><default>libre</default><action>clear:E6</action></comboboxentry>
+<comboboxtext><variable>C7</variable><item>un</item><item>deux</item><item>trois</item><default>deux</default><action>clear:E7</action></comboboxtext>
+<timer visible="false" interval="1"><variable>T1</variable><action>disable:T1</action><action>refresh:C1</action><action>refresh:C2</action><action>clear:C3</action><action>clear:C4</action><action>clear:C5</action><action>refresh:C6</action><action>removeselected:C7</action></timer>
+<timer visible="false" interval="2"><variable>_F</variable><action>exit:fin</action></timer>
+</vbox></window>

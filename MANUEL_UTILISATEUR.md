@@ -2,7 +2,7 @@
 
 [English](MANUEL_UTILISATEUR.en.md)
 
-**Version :** 3.2.0
+**Version :** 3.3.0
 **Licence :** GPL-2.0-or-later | **Distributeur :** haplo-dialog (devel@haplo-dialog.fr)
 
 ---
@@ -82,14 +82,13 @@ joints à chaque publication, avec le fichier `SHA256SUMS` et sa signature
 gpg --import cle-haplo-dialog.asc            # https://haplo-dialog.fr/cle-haplo-dialog.asc
 gpg --verify SHA256SUMS.asc SHA256SUMS       # « Bonne signature de haplo-dialog <devel@haplo-dialog.fr> »
 sha256sum --ignore-missing -c SHA256SUMS
-sudo apt install ./sermo-backend-gtk3_3.2.0-1_amd64.deb     # GTK 3
-sudo apt install ./sermo-backend-fltk1_3.2.0-1_amd64.deb    # FLTK, sans tirer GTK ni Qt
-sudo apt install ./sermo-gtkdialog_3.2.0-1_all.deb          # + la commande gtkdialog
+sudo apt install ./sermo-backend-gtk3_3.3.0-1_amd64.deb     # GTK 3
+sudo apt install ./sermo-backend-fltk1_3.3.0-1_amd64.deb    # FLTK, sans tirer GTK ni Qt
+sudo apt install ./sermo-gtkdialog_3.3.0-1_all.deb          # + la commande gtkdialog
 ```
 
-Le `*` tient la place de la révision Debian de la publication (le chiffre
-après le tiret, par exemple `3.1.0-10`) : un seul fichier de chaque paquet doit
-se trouver dans le dossier.
+Le `-1` est la révision Debian de la publication (le chiffre après le
+tiret) : prenez celle des fichiers joints à la publication.
 
 L'empreinte de la clé doit être
 `66C7 F4AD 7A58 A037 967F  8339 3799 9F99 7570 F1ED` : comparez-la à celle du
@@ -181,6 +180,15 @@ déterministe pour la documentation, une vignette ou un test visuel :
 sermo --render-png sortie.png --file=mon_interface.xml
 ```
 
+**`--render-png` n'exécute aucune commande.** Les `<input>` qui lancent une
+commande restent vides dans l'image, et chaque refus est dit sur la sortie
+d'erreur : on peut ainsi rendre l'aperçu d'un XML qu'on n'a pas écrit. Pour
+l'image d'un dialogue avec ses vraies valeurs (une barre, une jauge, un
+tableau de bord), le demander : `SERMO_RENDER_EXEC=1 sermo --render-png …` —
+à réserver à un XML de confiance. Les `<input file>` sont lus dans les deux
+cas ; `SERMO_NO_FILES=1` les ferme. Jusqu'à la 3.2.0, `--render-png` exécutait
+les commandes du dialogue.
+
 Le rendu hors écran est disponible sur **sept backends graphiques** (`gtk3`,
 `gtk4`, `qt6`, `fltk1`, `efl1`, `sdl3`, `lvgl`) — `gtk3`/`gtk4`/`fltk1` via un display
 virtuel (xvfb) où le backend écrit lui-même le PNG, `qt6`/`efl1`/`sdl3` via leur
@@ -188,8 +196,8 @@ plateforme offscreen, et `lvgl` en dessinant l'image sans ouvrir de fenêtre.
 `ncurses` reste un affichage **terminal** (pas d'image ;
 aperçu texte via `--print-ir`), et `html` écrit une page, pas une image.
 
-La taille demandée par `default-width`/`default-height` est respectée sur ces
-six. Jusqu'à la 2.7.1, `qt6` l'ignorait et sortait parfois une image de 2×2
+La taille demandée par `default-width`/`default-height` est respectée sur les
+six premiers ; `lvgl` rend 500×330 pour 500×320 demandés. Jusqu'à la 2.7.1, `qt6` l'ignorait et sortait parfois une image de 2×2
 pixels quand la fenêtre contenait une liste déroulante — `tests/garde_taille_fenetre.sh`
 le vérifie désormais sur chaque port graphique.
 
@@ -453,6 +461,18 @@ sur l'un d'eux, le premier est coché (sur les neuf ports depuis la 2.8.2).
 </comboboxtext>
 ```
 
+`<comboboxentry>` s'écrit de même et ajoute un champ de saisie libre sur gtk3,
+gtk4 et qt6 ; ailleurs, c'est une liste simple. Un `<default>` absent de la
+liste reste la valeur d'un `<comboboxentry>` tant que rien n'est choisi, sur
+les neuf ports.
+
+L'`<action>` d'une liste déroulante joue quand le texte du widget change : un
+élément choisi, ou `refresh:`, `clear:`, `removeselected:` quand le choix n'est
+plus le même après. Elle ne joue jamais au démarrage, même si `<default>`
+choisit un élément. `clear:` vide la liste ; `refresh:` la recharge et efface
+le texte libre ; `removeselected:` retire l'élément choisi et prend le
+précédent. Même règle sur les neuf ports depuis la 3.3.0.
+
 #### `<list>` — Liste avec sélection
 
 ```xml
@@ -654,6 +674,8 @@ ANSI.
 
 Déclenche une action à intervalle régulier : `interval` compte en secondes
 entières, ou en millisecondes si `milliseconds="true"` (un booléen, pas une durée).
+Un `interval` nul ou négatif vaut 1. `disable:NOM` arrête la minuterie : elle ne
+joue plus ses actions et sa variable rend `false`, sur les neuf ports.
 
 ---
 
@@ -699,7 +721,9 @@ Variable : `true` quand activé, `false` sinon.
 
 Pour un dossier : `<filechooser action="select-folder">`.
 
-Le tag `<chooser>`, lui, embarque le sélecteur DANS la fenêtre (GTK 3 et GTK 4).
+Le tag `<chooser>`, lui, embarque le sélecteur DANS la fenêtre (GTK 3 et GTK 4) ;
+son `<default>` est le dossier montré, et la valeur de la variable tant que rien
+n'est choisi.
 Sur les autres ports, il devient un `<filechooser>` : un bouton qui ouvre le
 dialogue du toolkit.
 Variable : chemin absolu du fichier/dossier sélectionné.
@@ -715,6 +739,11 @@ navigateur **dans le terminal** (flèches, `..`, `h` pour les fichiers cachés).
 ```
 
 Variable : date au format ISO 8601 `YYYY-MM-DD`.
+
+Les attributs `year`, `month` et `day` posent la date par-dessus `<default>`
+(à défaut, par-dessus la date du jour) ; `month` compte de 0 (`month="1"` =
+février). Un attribut qui ne laisse pas une date existante est ignoré. Même
+règle sur les neuf ports depuis la 3.3.0.
 
 #### linkbutton — Bouton hyperlien
 
@@ -999,7 +1028,7 @@ choses :
 - **Mêmes valeurs sur les 9 ports** : la balise figure dans le banc de
   comportement (`tests/comportement/run_all.sh`), qui ouvre chaque cas sur les
   neuf ports et compare les variables rendues à celles de gtk3sermo. Joué en
-  entier le 2026-10-31 : 78 cas, 9 ports, 0 écart. « — » : la balise n'est pas
+  entier le 2026-11-16 : 95 cas, 9 ports, 0 écart. « — » : la balise n'est pas
   dans ce banc (`<terminal>` a son banc à part, `tests/garde_terminal.sh`).
 - **Ce qui change selon le port** : les différences d'affichage ou de
   fonction écrites dans ce manuel (§4.2 et §5). « Rien de signalé » veut dire
@@ -1007,14 +1036,14 @@ choses :
 
 | Balise | Mêmes valeurs sur les 9 ports | Ce qui change selon le port |
 |---|---|---|
-| `<window>` | oui (78 cas) | `resizable` : gtk3, gtk4, qt6, fltk1 ; `decorated`, `icon-name` : gtk3, gtk4 |
-| `<vbox>` | oui (78 cas) | rien de signalé |
+| `<window>` | oui (95 cas) | `resizable` : gtk3, gtk4, qt6, fltk1 ; `decorated`, `icon-name` : gtk3, gtk4 |
+| `<vbox>` | oui (95 cas) | rien de signalé |
 | `<hbox>` | — | rien de signalé |
 | `<frame>` | oui (2 cas) | rien de signalé |
-| `<notebook>` | oui (3 cas) | rien de signalé |
+| `<notebook>` | oui (4 cas) | rien de signalé |
 | `<expander>` | oui (3 cas) | rien de signalé |
 | `<grid>` | oui (2 cas) | rien de signalé |
-| `<table>` | oui (4 cas) | rien de signalé |
+| `<table>` | oui (7 cas) | rien de signalé |
 | `<aspectframe>` | — | rien de signalé |
 | `<eventbox>` | oui (1 cas) | rien de signalé |
 | `<paned>` | oui (1 cas) | poignée native (GtkPaned, QSplitter, Fl_Tile, elm_panes) ; sdl3 : poignée glissable ; ncurses : aux flèches |
@@ -1023,43 +1052,44 @@ choses :
 | `<flowbox>` | oui (1 cas) | reflux et sélection : gtk3, gtk4 seulement ; ailleurs N colonnes fixes, variable vide |
 | `<overlay>` | oui (1 cas) | ncurses : rien ne se superpose, les couches s'affichent l'une sous l'autre |
 | `<revealer>` | oui (1 cas) | transition animée : gtk3, gtk4 seulement |
-| `<entry>` | oui (34 cas) | rien de signalé |
+| `<entry>` | oui (46 cas) | rien de signalé |
 | `<password>` | oui (1 cas) | rien de signalé |
 | `<searchentry>` | oui (2 cas) | rien de signalé |
-| `<edit>` | oui (6 cas) | rien de signalé |
+| `<edit>` | oui (8 cas) | rien de signalé |
 | `<spinbutton>` | oui (4 cas) | rien de signalé |
-| `<hscale>` `<vscale>` | oui (4 cas) | rien de signalé |
-| `<checkbox>` | oui (10 cas) | rien de signalé |
+| `<hscale>` `<vscale>` | oui (6 cas) | rien de signalé |
+| `<checkbox>` | oui (11 cas) | rien de signalé |
 | `<radiobutton>` | oui (4 cas) | rien de signalé |
 | `<switch>` | oui (4 cas) | rien de signalé |
 | `<togglebutton>` | oui (4 cas) | rien de signalé |
-| `<comboboxtext>` | oui (3 cas) | rien de signalé |
+| `<comboboxtext>` | oui (6 cas) | rien de signalé |
 | `<combobox>` | oui (3 cas) | rien de signalé |
-| `<comboboxentry>` | oui (1 cas) | rien de signalé |
-| `<list>` | oui (5 cas) | rien de signalé |
-| `<tree>` | oui (3 cas) | rien de signalé |
-| `<calendar>` | oui (3 cas) | rien de signalé |
+| `<comboboxentry>` | oui (3 cas) | champ de saisie libre : gtk3, gtk4, qt6 ; ailleurs, une liste simple |
+| `<list>` | oui (9 cas) | rien de signalé |
+| `<tree>` | oui (5 cas) | rien de signalé |
+| `<calendar>` | oui (4 cas) | rien de signalé |
 | `<colorbutton>` | oui (3 cas) | rien de signalé |
 | `<fontbutton>` | oui (3 cas) | rien de signalé |
-| `<filechooser>` | oui (1 cas) | sélecteur du toolkit (gtk3, gtk4, qt6), du système par le portail XDG (sdl3), `elm_fileselector` (efl1), navigateur dans le terminal (ncurses) |
-| `<button>` | oui (3 cas) | rien de signalé |
+| `<filechooser>` | oui (2 cas) | sélecteur du toolkit (gtk3, gtk4, qt6), du système par le portail XDG (sdl3), `elm_fileselector` (efl1), navigateur dans le terminal (ncurses) |
+| `<chooser>` | oui (2 cas) | sélecteur embarqué dans la fenêtre : gtk3, gtk4 ; ailleurs, le bouton de `<filechooser>` ; `append:` (raccourci de dossier) : gtk3, gtk4 |
+| `<button>` | oui (4 cas) | rien de signalé |
 | `<linkbutton>` | oui (3 cas) | rien de signalé |
 | `<menubutton>` | oui (1 cas) | rien de signalé |
 | `<menubar>` `<menuitem>` | oui (3 cas) | rien de signalé |
 | `<toolbar>` | oui (1 cas) | rien de signalé |
-| `<text>` | oui (10 cas) | rien de signalé |
+| `<text>` | oui (11 cas) | rien de signalé |
 | `<pixmap>` | — | rien de signalé |
 | `<image>` | — | rien de signalé |
 | `<progressbar>` | oui (3 cas) | rien de signalé |
 | `<pulse>` | oui (1 cas) | rien de signalé |
 | `<levelbar>` | oui (3 cas) | rien de signalé |
 | `<spinner>` | — | rien de signalé |
-| `<statusbar>` | oui (2 cas) | rien de signalé |
+| `<statusbar>` | oui (3 cas) | rien de signalé |
 | `<infobar>` | oui (3 cas) | rien de signalé |
 | `<hseparator>` `<vseparator>` | — | rien de signalé |
 | `<drawingarea>` | oui (1 cas) | `embed` : gtk3, qt6 sous X11 ; `media` : gtk3 ; taille par attributs (gtk3, gtk4, qt6, fltk1, efl1) ou par `<width>`/`<height>` (sdl3, lvgl, ncurses, html) |
 | `<terminal>` | — | shell interactif : gtk3, gtk4 (et qt6 construit avec QTermWidget, pas le paquet Debian) ; ailleurs, la sortie de la commande en lecture seule |
-| `<timer>` | oui (76 cas) | rien de signalé |
+| `<timer>` | oui (93 cas) | rien de signalé |
 
 Attributs qui ne valent pas partout :
 
@@ -1082,17 +1112,17 @@ Options propres à certains ports : `--glade-xml` (gtk3, gtk4), ancrage Wayland
 | `CLOSEWINDOW` | `CLOSEWINDOW:NOM_WIDGET` | Ferme la fenêtre contenant le widget nommé. Le préfixe est bien `closewindow` : un préfixe inconnu n'est pas signalé, il part au shell comme commande ordinaire. |
 | `LAUNCH` | `LAUNCH:NOM_VAR` | Ouvre la fenêtre décrite dans la variable d'environnement `NOM_VAR` (voir §9.2) |
 | `REFRESH` | `REFRESH:NOM_WIDGET` | Relance l'`<input>` d'un widget |
-| `SAVE` | `SAVE:NOM_WIDGET` | Sauvegarde l'état d'un widget |
-| `CLEAR` | `CLEAR:NOM_WIDGET` | Vide le contenu d'un widget |
-| `APPEND` | `APPEND:SOURCE,CIBLE` | Copie la valeur du widget `SOURCE` dans le widget `CIBLE` : ajout d'une ligne pour une liste ou un arbre, texte inséré pour un champ |
+| `SAVE` | `SAVE:NOM_WIDGET` | Écrit la valeur du widget dans le fichier de son `<output file>chemin</output>` : le texte d'un champ, l'état d'une case, la date, la couleur… ; toutes les rangées d'une `<list>`, d'une liste déroulante, d'un `<tree>` ou d'une `<table>` (autant de colonnes que le `<label>` en nomme) ; le chemin d'un `<chooser>` ou d'un `<filechooser>`. Sur les neuf ports depuis la 3.3.0. Sans `<output file>`, un avertissement ; avec `SERMO_NO_FILES`, refusé. |
+| `CLEAR` | `CLEAR:NOM_WIDGET` | Vide le contenu d'un widget (le texte d'un champ, les rangées d'une liste ou d'une liste déroulante) |
+| `APPEND` | `APPEND:SOURCE,CIBLE` | Copie la valeur du widget `SOURCE` dans le widget `CIBLE` : remplace le texte d'une `<entry>`, l'insère dans un `<edit>`, ajoute une rangée en tête d'une `<list>` (et la choisit) ou à la fin d'un `<tree>` ou d'une `<table>` (découpée sur « \| » comme un `<item>`). Sur les neuf ports depuis la 3.3.0. Vers un `<chooser>` : un raccourci de dossier, gtk3 et gtk4 seulement. Une source vide ne copie rien ; une autre cible est refusée avec un avertissement. Un nom peut porter des chiffres (`append:SRC,T0`). |
 | `INSERT` | `INSERT:SOURCE,CIBLE` | Même effet qu'`APPEND` (le cœur appelle la même fonction) |
-| `REMOVESELECTED` | `REMOVESELECTED:NOM_WIDGET` | Retire la ou les lignes choisies d'une liste ou d'un arbre |
+| `REMOVESELECTED` | `REMOVESELECTED:NOM_WIDGET` | Retire la ou les lignes choisies d'une liste ou d'un arbre ; sur une liste déroulante, retire l'élément choisi et prend le précédent |
 | `FILESELECT` | `FILESELECT:NOM_VAR` | Ouvre un sélecteur de fichier |
-| `ENABLE` / `DISABLE` | `ENABLE:NOM_WIDGET` | (Dés)active un widget |
+| `ENABLE` / `DISABLE` | `ENABLE:NOM_WIDGET` | (Dés)active un widget ; `DISABLE` arrête une minuterie (`<timer>`) |
 | `SHOW` / `HIDE` | `SHOW:NOM_WIDGET` | (In)visibilise un widget |
 | `GRABFOCUS` | `GRABFOCUS:NOM_WIDGET` | Donne le focus clavier |
 | `PRESENTWINDOW` | `PRESENTWINDOW:NOM` | Met la fenêtre au premier plan |
-| `ACTIVATE` | `ACTIVATE:NOM_WIDGET` | Active le widget, comme un clic sur un bouton ou la touche Entrée dans un champ : ses propres actions jouent |
+| `ACTIVATE` | `ACTIVATE:NOM_WIDGET` | Active le widget comme un clic : un bouton joue ses actions (même grisé ; un `<button ok>` nu ferme le dialogue), une case, un bouton radio, un bouton à bascule ou un interrupteur bascule et joue les siennes. Sur les neuf ports depuis la 3.3.0. Sur gtk3 et gtk4 seulement, `activate:` vaut aussi la touche Entrée dans un champ. |
 | `COMMAND` | `COMMAND:commande` | Lance la commande, comme une action sans préfixe (§6.3) |
 | `BREAK` | `BREAK:` | Arrête la liste : les `<action>` suivantes du même signal ne jouent pas |
 | `PULSE` | `PULSE:NOM_WIDGET` | Fait avancer d'un pas le mouvement d'une `<progressbar>` (mode « activité », sans pourcentage) |
@@ -1185,7 +1215,8 @@ contraire en `_false` :
 | `sensitive_is_true(NOM)` / `sensitive_is_false(NOM)` | le widget `NOM` est actif (non grisé) |
 | `visible_is_true(NOM)` / `visible_is_false(NOM)` | le widget `NOM` est visible |
 
-Une condition inconnue fait jouer l'action quand même. Elle n'est signalée sur
+Une condition de plus de 4095 octets est refusée, avec un message : l'action
+ne joue pas. Une condition inconnue fait jouer l'action quand même. Elle n'est signalée sur
 la sortie d'erreur que si elle porte des parenthèses ; sans parenthèses, elle
 est ignorée sans message (seuls `active_is_true` et `active_is_false` sont
 admis nus, pour un `<timer>`). Un `NOM` inconnu rend la
@@ -1211,6 +1242,12 @@ vrais.
 
 À la fermeture, sermo émet sur stdout : `MA_VALEUR="contenu saisi"`.
 
+Les commandes du dialogue reçoivent aussi chaque variable dans leur
+environnement (`$MA_VALEUR`). Deux exceptions, dites par un avertissement : une
+variable nommée `SERMO_*`, `HAPLO_*`, `LD_*`, `PATH`, `IFS`, `ENV`, `BASH_ENV`,
+`SHELLOPTS` ou `PS4` n'y est pas posée (elle sort quand même à la fin), et une
+valeur de plus de 8 Kio n'est pas transmise.
+
 ### 7.2 Alimenter un widget depuis une commande
 
 ```xml
@@ -1233,6 +1270,10 @@ avertissement sur la sortie d'erreur. La variable d'environnement
 `SERMO_INPUT_MAX` change cette limite, en octets ; `0` la retire. La barre de
 progression n'est pas plafonnée. Voir
 [SECURITY.md](SECURITY.md#taille-de-ce-que-lit-un-input).
+
+`SERMO_NO_FILES=1` interdit tout fichier nommé par le XML : `<input file>`,
+`save:` vers un `<output file>`, la condition `file_is_true()`. Les images ne
+sont pas concernées.
 
 #### Lire un automate : `<input modbus>`, `<input opcua>`
 
@@ -1431,6 +1472,18 @@ matériel) : `examples/mavlink/`.
 
 #### Commander un drone : `<action mavlink>`
 
+> **Avant de faire voler quoi que ce soit.** Le pilotage (`pilote=…`) est
+> **expérimental** : il a été essayé contre ArduPilot Copter simulé (SITL) et
+> contre le faux drone des bancs, **jamais sur un vrai drone**. Commencez toujours en simulation, puis en
+> terrain dégagé, sans personne dessous, avec une radiocommande prête à
+> reprendre la main. **Le télépilote reste seul responsable du vol** et du
+> respect des règles (catégorie, zone, hauteur, vue directe) : dans l'Union
+> européenne, le
+> règlement (UE) 2019/947 (catégories, formation, enregistrement) ; en France,
+> les règles publiées par la DGAC. sermo **n'est pas une station sol
+> certifiée**, son pilotage n'est **pas fait pour un vol hors vue**, et il est
+> fourni **sans aucune garantie** (GPL, articles 11 et 12).
+
 ```xml
 <button><label>Retour au départ</label>
   <action mavlink>tcp://127.0.0.1:5760?ordre=rtl</action>
@@ -1488,6 +1541,8 @@ Les garde-fous, dans l'ordre où ils jouent :
 - **couper les moteurs se confirme** : le premier appui n'envoie rien, n'ouvre
   même pas la liaison, et le dit ; un second appui **dans les 5 s**, vers le
   même drone (même liaison, même `systeme=`), envoie l'ordre. Le drone tombe.
+  Un second appui à moins d'une demi-seconde du premier (rebond du bouton,
+  double clic) ne confirme rien : il faut appuyer encore.
   La confirmation demande `$XDG_RUNTIME_DIR` (chemin absolu, dossier à vous
   seul) : sans lui, rien n'est envoyé ;
 - **un seul émetteur** : sermo attend le battement de l'autopilote, lui envoie
@@ -1549,9 +1604,7 @@ pour une mission.
 </button>
 ```
 
-> **Le télépilote reste seul responsable du vol** et du respect des règles
-> (catégorie, zone, hauteur, vue directe). sermo **n'est pas une station sol
-> certifiée**, et son pilotage n'est **pas fait pour un vol hors vue**.
+Avant tout essai : relire l'avertissement en tête de « Commander un drone ».
 
 Pour ArduPilot Copter seulement. Ligne de la liste blanche, distincte des
 autres (sans elle, aucun ordre de pilotage ne part) :
@@ -1567,7 +1620,16 @@ pilotage lat 45.1234 lon 5.7654 rayon 300 hauteur 60 decollage 20 modes 4,5,6,9
   AUTO ne sont **jamais** pilotables. LOITER, POSHOLD, BRAKE en vol seulement.
 
 Chaque ordre se **confirme par deux appuis** dans les 5 s : le premier écrit
-ce qui partirait. Puis, avant l'envoi :
+ce qui partirait ; un second appui à moins d'une demi-seconde du premier ne
+compte pas (rebond, double clic). Puis, avant l'envoi :
+
+- **l'appareil** : un multirotor ou un hélicoptère sous ArduPilot (le type
+  annoncé par son battement) ; un avion ou un rover est refusé, ses numéros de
+  mode ne veulent pas dire la même chose ;
+- **un seul appareil, un seul émetteur** : si deux autopilotes battent sur la
+  liaison, il faut dire lequel avec `systeme=N`, sinon rien ne part ; en UDP,
+  l'ordre va à l'adresse d'où l'autopilote a battu, et si le même système parle
+  depuis deux adresses, rien ne part ;
 
 - **délai** : 2,5 s au plus entre le second appui et l'envoi (3,5 s pour
   désarmer), et l'état du drone relu moins de 0,5 s avant ; un lien trop lent
@@ -1709,7 +1771,7 @@ message le dit), et `<input media>` répond `stopped`.
 - **Pas d'évènement de fin** : un `<timer>` qui relit `etat` voit `playing` devenir
   `stopped`.
 - Quand la fenêtre se ferme (même si sermo est tué), le lecteur s'arrête. Une vidéo
-  s'affiche dans la fenêtre de mpv, sauf avec `dans=` (gtk3, X11).
+  s'affiche dans la fenêtre de mpv, sauf avec `dans=` (gtk3 et qt6 sous X11 ; gtk3 sous Wayland avec `media=`).
 
 Exemple complet : `examples/lecteur-media/`.
 
@@ -1976,6 +2038,28 @@ sermo --program=PRINCIPALE
   fenêtre qui le contient. D'où le `<variable>PARAMETRES</variable>` de la
   fenêtre (après son contenu) : c'est lui que l'action retrouve. Fermer la
   dernière fenêtre termine sermo avec `EXIT="closewindow"` (§3.2).
+- **Selon le port.** gtk3, gtk4, qt6, fltk1 et efl1 ouvrent une vraie seconde
+  fenêtre, à côté de la première. sdl3 et lvgl n'ont qu'une fenêtre native, et
+  ncurses qu'un terminal : la fenêtre lancée y prend la place de la
+  précédente, qui revient à l'écran au `closewindow:` ; les minuteries des
+  deux continuent.
+- **Sans écran** (html, ncurses sans terminal, lvgl sans affichage), il n'y a
+  pas d'horloge : chaque minuterie de chaque fenêtre ouverte joue **une
+  fois**, dans l'ordre où elle partirait à l'écran — une fenêtre lancée ajoute
+  les siennes, une fenêtre fermée les emporte, une fenêtre relancée les
+  rejoue. La page html reste celle de la première fenêtre. Un dialogue qui
+  lance plus de 64 fenêtres s'arrête en `EXIT="abort"`.
+- **Deux fenêtres, le même nom de variable.** Si une fenêtre lancée déclare
+  une variable qu'une fenêtre encore ouverte porte déjà (le même dialogue
+  ouvert deux fois, par exemple), la première garde `NOM` ; la seconde est
+  rangée sous `NOM__W<id>` (`NOM__W2` pour la deuxième fenêtre ouverte), avec
+  un avertissement, et c'est sous ces deux noms que les valeurs sortent à la
+  fin. Une action jouée **dans** la seconde fenêtre vise la sienne : sa
+  commande lit `$NOM` de sa fenêtre, et `refresh:NOM`, `clear:NOM`,
+  `save:NOM`… touchent son widget. Un nom qu'elle ne porte pas reste celui
+  de l'autre fenêtre.
+- Vérifié par `tests/garde_fenetres_multiples.sh` et
+  `tests/garde_fenetres_homonymes.sh` sur les neuf ports.
 
 ---
 

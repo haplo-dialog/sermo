@@ -166,7 +166,9 @@ topic missing from the catalogue is refused.
 - **What may run commands**: `sermo_run`, and only it — and it is **closed by default**
   since 3.2.0. Without `SERMO_ALLOWED_CMDS` in the server's environment the window opens
   but no command of the XML (`<input>`, `<action>`) is launched: the server sets the same
-  barrier as rendering, and its answer starts with "Commandes du XML BLOQUÉES". To allow
+  barrier as rendering, and its answer starts with "Commandes du XML BLOQUÉES". Since
+  3.3.0, closed also covers files (`SERMO_NO_FILES`): `<input file>` no longer returns a
+  file's content to the model, `save:` to `<output file>` writes nothing. To allow
   them, set `SERMO_ALLOWED_CMDS` to the list of commands the dialog needs (see
   `SECURITY.en.md` at the root): the core launches those, refuses the others and the
   `/bin/sh -c` fallback. There is no "allow everything" switch: whoever wants everything
@@ -203,7 +205,7 @@ The packages are attached to each release; check the signed checksums
 (`SHA256SUMS.asc`) first, as the [README](../README.en.md#install) explains.
 
 ```sh
-sudo apt install ./sermoia-mcp_3.1.2-2_amd64.deb ./sermo-backend-qt6_3.1.2-2_amd64.deb
+sudo apt install ./sermoia-mcp_3.3.0-1_amd64.deb ./sermo-backend-qt6_3.3.0-1_amd64.deb
 ```
 
 The package installs `/usr/bin/sermoia-mcp` and its catalogue in

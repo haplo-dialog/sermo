@@ -11,7 +11,7 @@ sermo suit un **versionnage sémantique** `MAJEUR.MINEUR.CORRECTIF` :
 
 ## Version courante
 
-`3.2.0`. La **première version 2.x publiée** a été la `2.7.3`.
+`3.3.0`. La **première version 2.x publiée** a été la `2.7.3`.
 
 **Pourquoi 3 sans rupture.** La 3.0.0 ne rompt ni le langage XML ni le contrat entre le cœur
 et les ports : le contrat y gagne trois fonctions facultatives, ce qui, selon la règle
@@ -20,12 +20,27 @@ la sortie de Linux (Windows, Android, BSD) et la lecture d'automates. Un script 
 écrit pour la 2.x marche avec la 3.0.0. Ce que chaque version apporte :
 [CHANGELOG.md](CHANGELOG.md).
 
+La 3.3.0 ajoute six fonctions facultatives au contrat (symboles faibles : un port
+écrit pour la 3.2 se lie toujours), d'où une version MINEURE.
+
 La ligne 2.x a commencé à `2.0.0`, version restée interne, comme toutes les
 versions jusqu'à la 2.7.2. Le passage à 2 tient au nouveau contrat entre le cœur et
 les backends : un backend de la lignée 1.x ne se lie pas au cœur 2.x. Le langage
 XML, lui, n'a pas été rompu : les scripts écrits pour gtkdialog ou sermo 1.x
 restent valides. Les comportements qui ont changé sont listés dans
 [MIGRATION.md](MIGRATION.md).
+
+## Rythme
+
+Depuis le 2026-11-06 : **au moins 14 jours entre deux versions mineures**. Une majeure
+s'annonce au moins un mois avant. Seule exception : une faille de sécurité ou une régression
+grave, avec la raison écrite dans l'entrée du CHANGELOG. Une version publiée ne se dépublie
+pas : si elle est mauvaise, un correctif annule le problème et le CHANGELOG le dit. Avant
+chaque version, la liste [PUBLIER.md](PUBLIER.md) est cochée, preuves à l'appui.
+
+Pourquoi : la 3.0.0, la 3.1.0, la 3.1.1, la 3.1.2 et la 3.2.0 sont sorties en trois
+semaines, et la 3.2.0 avec un README qui contredisait le code. Le délai laisse le temps de
+relire ce qu'on promet.
 
 ## La 1.x
 
@@ -67,11 +82,11 @@ voyait pas à la compilation, le binaire sortait en annonçant un numéro faux.
   qu'ils sont livrés ensemble. Un changement incompatible du contrat
   `sermo-contract.h` impose un bump MAJEUR, car un backend plus ancien ne se lierait
   plus au cœur.
-- `sermocore.pc` porte la version (`Version: 3.2.0`) : un backend construit à part
+- `sermocore.pc` porte la version (`Version: 3.3.0`) : un backend construit à part
   peut exiger un cœur minimal avec
   `pkg_check_modules(SERMOCORE REQUIRED sermocore>=2.7)`.
-- Les paquets Debian ajoutent une révision : `3.2.0-1` est la première
-  construction Debian de la 3.2.0.
+- Les paquets Debian ajoutent une révision : `3.3.0-1` est la première
+  construction Debian de la 3.3.0.
 
 ## Compatibilité des scripts
 

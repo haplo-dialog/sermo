@@ -5,6 +5,71 @@ Ce fichier résume les changements du point de vue de l'utilisateur.
 Pour l'historique technique complet, voir CHANGELOG.md.
 
 ──────────────────────────────────────────────────
+Version 3.3.0 (2026-11-18)
+──────────────────────────────────────────────────
+
+CHANGEMENT DE COMPORTEMENT — --render-png n'exécute plus les commandes du
+dialogue. Rendre en image un XML qu'on n'a pas écrit lançait ses <input> ;
+plus rien ne part, <terminal> compris, et le refus est dit sur la sortie
+d'erreur. Pour l'image d'un dialogue avec ses vraies valeurs, poser
+SERMO_RENDER_EXEC=1.
+
+Plusieurs fenêtres (launch:, closewindow:) sur les neuf ports. Hors gtk3 et
+gtk4, une seconde fenêtre ne marchait nulle part : qt6 sortait aussitôt,
+fltk1 laissait la fenêtre à l'écran, efl1 et sdl3 s'arrêtaient au second
+launch:, lvgl restait figé. Un même dialogue ouvert deux fois pilote
+maintenant chacun de ses exemplaires : une action vise d'abord la fenêtre du
+widget qui l'a déclenchée (manuel §9.2).
+
+Des actions qui ne faisaient rien hors gtk3 et gtk4, sans le dire, sont
+servies sur qt6, fltk1, efl1, sdl3, lvgl, ncurses et html :
+  save:      écrit la valeur du widget dans son <output file> ; les rangées
+             d'une <list>, d'un <tree>, d'une <table>, d'une liste
+             déroulante ; la valeur d'un <chooser> et d'un <filechooser>.
+  append:    remplace le texte d'une <entry>, l'ajoute à un <edit>, ajoute
+             une rangée à une <list>, un <tree> ou une <table>.
+  activate:  sur un <button>, joue ses actions comme un clic.
+  disable:   arrête vraiment une minuterie (<timer>).
+  l'<action> d'un <comboboxtext> ou d'un <comboboxentry> joue quand son
+             choix change ; clear: vide la liste ; removeselected: retire
+             l'élément choisi.
+append: accepte les noms de variables à chiffres (append:SRC,T0).
+
+<comboboxentry> garde son <default> sur les neuf ports, même absent de la
+liste. <calendar day= month= year=> pose la date partout de la même façon,
+et un attribut qui ne laisse pas une date existante est ignoré (gtk3
+rendait 2025-02-31). <chooser> rend son <default> tant que personne n'a
+choisi ; gtk3 rendait le premier fichier du dossier, gtk4 rien.
+
+Fermer la fenêtre par sa croix rend EXIT="abort" sur qt6, fltk1 et efl1,
+comme sur gtk3. Un « \ » dans un attribut entre guillemets
+(title="C:\dossier") ne fait plus perdre le texte qui le précède.
+
+Sécurité. Un widget nommé SERMO_ALLOWED_CMDS ne remplace plus la liste
+blanche : les noms réservés ne sont plus posés dans l'environnement.
+sermoia-mcp fermé ne lit ni n'écrit plus les fichiers nommés par le XML
+(SERMO_NO_FILES). sermoman-mcp survit à un JSON invalide et refuse une ligne
+de plus de 8 Mio. htmlsermo en mode serve refuse un hôte étranger et ne
+reste plus bloqué par une connexion muette.
+
+Pilotage MAVLink, refus ajoutés : appareil qui n'est ni multirotor ni
+hélicoptère, deux autopilotes sur la liaison sans systeme=, second appui à
+moins de 500 ms du premier, barrière d'autopilote à NaN, à zéro ou au type
+hors plage, même système vu depuis deux adresses UDP.
+
+Plus rapide : un dialogue de 2000 <entry> s'ouvre en 0,7 s au lieu de 7,5 s
+(gtk3) ; 400 boutons à icône en 1,2 s au plus, au lieu de 12 à 22 s, hors
+GTK ; sdl3 ne redessine plus 60 fois par seconde au repos (2 % d'un cœur au
+lieu de 13 %).
+<timer interval="0"> ne fige plus le dialogue. Les binaires sont plus légers
+de 4 à 17 %.
+
+Les recettes pour les autres systèmes (Arch, Alpine, Fedora, FreeBSD, OpenBSD,
+Gentoo, Nix, Slackware, Termux, Homebrew) construisent la 3.2.0 publiée ;
+elles annonçaient encore la 3.0.0. Arch, Alpine, Termux et OpenBSD vérifient
+maintenant la somme de l'archive qu'elles téléchargent.
+
+──────────────────────────────────────────────────
 Version 3.2.0 (2026-11-04)
 ──────────────────────────────────────────────────
 

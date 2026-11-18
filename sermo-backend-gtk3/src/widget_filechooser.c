@@ -319,7 +319,7 @@ void widget_filechooser_save(variable *var)
 	}
 
 	if (filename) {
-		if ((outfile = fopen(filename, "w"))) {
+		if ((outfile = sermo_fopen_output(filename))) {
 			file = gtk_file_chooser_get_file(GTK_FILE_CHOOSER(var->Widget));
 			if (file) {
 				path = g_file_get_path(file);

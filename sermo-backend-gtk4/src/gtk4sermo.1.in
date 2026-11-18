@@ -2,7 +2,7 @@
 .\" haplo-dialog <devel@haplo-dialog.fr>
 .\" This file is installed as /usr/share/man/man1/gtk4sermo.1
 .\"
-.TH GTK4SERMO 1 "October 2026" "sermo @PACKAGE_VERSION@" "sermo User Commands"
+.TH GTK4SERMO 1 "November 2026" "sermo @PACKAGE_VERSION@" "sermo User Commands"
 .SH NAME
 gtk4sermo \- GTK4 dialog box creator for shell scripts
 .SH SYNOPSIS
@@ -225,6 +225,18 @@ and exit without entering the event loop. A display is still needed; a virtual
 one
 .RB ( "xvfb\-run \-a" )
 will do.
+.IP
+The dialog's commands are not run: an
+.RB < input >
+or
+.RB < action >
+command and the
+.RB < terminal >
+start nothing, and each refusal is reported on standard error, so an XML you
+did not write can be previewed. Set
+.B SERMO_RENDER_EXEC=1
+for the image of a trusted dialog with its real values. Up to 3.2.0 the
+commands were run.
 .TP
 .BI \-\-space\-expand= BOOL
 Default value of the
@@ -415,6 +427,12 @@ wrote. It is meant for the other case: someone DEPLOYING a dialog into a
 less-trusted context (a kiosk, a guest session) who wants to bound what it can
 launch.
 .IP
+A widget whose variable bears a reserved name
+.RB ( SERMO_* ", " HAPLO_* ", " LD_* ", " PATH ", " IFS ", " ENV ", " BASH_ENV ,
+.BR SHELLOPTS ", " PS4 )
+is not set in the environment of the commands, and a warning says so: a
+dialog cannot replace this list. The value is still printed with the others.
+.IP
 The comparison is on the command as it will be run, never on its base name
 alone: an entry without a slash allows that name and the path
 .B PATH
@@ -425,6 +443,28 @@ set, the shell fallback is refused as well \(em otherwise
 would walk straight through the list by calling itself
 .BR sh .
 The tags of SOURCES AND TARGETS run a helper program: name it in the list.
+.TP
+.B SERMO_RENDER_EXEC
+Set to
+.BR 1 ,
+lets
+.B \-\-render\-png
+run the commands of the dialog, as it did up to 3.2.0. Any other value, or
+none: no command is run while rendering an image.
+.TP
+.B SERMO_NO_FILES
+When set (to anything but
+.BR 0 ),
+the dialog neither reads nor writes any file named by the XML:
+.RB < "input file" >,
+.B save:
+to an
+.RB < "output file" >,
+the
+.B file()
+condition. Images are not concerned. With
+.BR SERMO_ALLOWED_CMDS ,
+which closes commands, it lets you show an XML you did not write.
 .TP
 .B SERMO_SHELL
 The shell used for the fallback: the absolute path of an executable program

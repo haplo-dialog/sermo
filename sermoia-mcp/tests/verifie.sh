@@ -237,6 +237,35 @@ else
     echo "fermé par défaut : NON vérifié (ncursessermo non construit)"
 fi
 
+# ── 5 ter. Fermé par défaut vaut aussi pour les FICHIERS ─────────────────────
+# Sans liste : <input file> ne rend pas le contenu d'un fichier au modèle, et
+# save: vers <output file> n'écrit rien. Avec une liste : les deux marchent
+# (sinon on ne prouverait pas que c'est le mode fermé qui ferme).
+texte_de() { python3 -I -c 'import json,sys; print(json.loads(open(sys.argv[1]).readline())["result"]["content"][0]["text"])' "$1" 2>/dev/null; }
+if [ -x "$NC" ]; then
+    printf 'SECRET-%s\n' "$$" > "$T/secret.txt"; ecarts_avant=$ecarts
+    lire_xml() { printf '<window><vbox><entry><variable>E</variable><input file>%s</input></entry><timer milliseconds=\\"true\\" interval=\\"200\\"><action>exit:fin</action></timer></vbox></window>' "$T/secret.txt"; }
+    req_lire() { printf '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"sermo_run","arguments":{"xml":"%s","timeout":10}}}\n' "$(lire_xml)"; }
+    req_lire | SERMO_BIN="$NC" env -u SERMO_ALLOWED_CMDS -u SERMO_NO_FILES timeout 60 "$SERVEUR" > "$T/lire1.jsonl" 2>/dev/null
+    req_lire | SERMO_BIN="$NC" SERMO_ALLOWED_CMDS="$(command -v touch)" env -u SERMO_NO_FILES timeout 60 "$SERVEUR" > "$T/lire2.jsonl" 2>/dev/null
+    case "$(texte_de "$T/lire1.jsonl")" in *"SECRET-$$"*) ko "sermo_run SANS liste a rendu le contenu d'un fichier (<input file>)" ;; *'EXIT="fin"'*) ;; *) ko "sermo_run sans liste (<input file>) n'a pas rendu EXIT" ;; esac
+    case "$(texte_de "$T/lire2.jsonl")" in *"SECRET-$$"*) ;; *) ko "sermo_run AVEC liste ne lit plus <input file> (fichiers fermés à tort)" ;; esac
+    [ "$ecarts" -eq "$ecarts_avant" ] && echo "fichiers : sermo_run sans liste ne lit pas <input file> ; avec liste, il le lit (ncursessermo)"
+fi
+G3="$RACINE/sermo-backend-gtk3/_build/gtk3sermo"
+if [ -x "$G3" ] && command -v xvfb-run >/dev/null; then
+    ecarts_avant=$ecarts
+    ecrire_xml() { printf '<window><vbox><entry><variable>E</variable><default>ecrit</default><output file>%s</output></entry><timer milliseconds=\\"true\\" interval=\\"300\\"><action>save:E</action><action>exit:fin</action></timer></vbox></window>' "$1"; }
+    req_ecrire() { printf '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"sermo_run","arguments":{"xml":"%s","timeout":15}}}\n' "$(ecrire_xml "$1")"; }
+    req_ecrire "$T/ecrit-ferme" | SERMO_BIN="$G3" GTK_A11Y=none env -u SERMO_ALLOWED_CMDS -u SERMO_NO_FILES xvfb-run -a timeout 60 "$SERVEUR" > "$T/ecrire1.jsonl" 2>/dev/null
+    req_ecrire "$T/ecrit-ouvert" | SERMO_BIN="$G3" GTK_A11Y=none SERMO_ALLOWED_CMDS="$(command -v touch)" env -u SERMO_NO_FILES xvfb-run -a timeout 60 "$SERVEUR" > "$T/ecrire2.jsonl" 2>/dev/null
+    [ -e "$T/ecrit-ferme" ] && ko "sermo_run SANS liste a ÉCRIT un fichier (save: vers <output file>)"
+    [ -e "$T/ecrit-ouvert" ] || ko "sermo_run AVEC liste n'écrit plus <output file> (fichiers fermés à tort)"
+    [ "$ecarts" -eq "$ecarts_avant" ] && echo "fichiers : sermo_run sans liste n'écrit pas <output file> ; avec liste, il l'écrit (gtk3sermo)"
+else
+    echo "fichiers : écriture NON vérifiée (gtk3sermo non construit ou xvfb-run absent)"
+fi
+
 # ── 6. Catalogue métier : à jour des scripts d'examples/metiers ──────────────
 if [ -d "$RACINE/examples/metiers" ]; then
     m=$(bash "$ICI/outils/catalogue-metiers.sh" --verifier 2>&1) && echo "$m" || ko "$m"

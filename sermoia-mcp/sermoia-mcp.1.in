@@ -1,7 +1,7 @@
 .\" sermoia-mcp.1 — man page for sermoia-mcp
 .\" haplo-dialog <devel@haplo-dialog.fr>
 .\" Installed as /usr/share/man/man1/sermoia-mcp.1
-.TH SERMOIA-MCP 1 "October 2026" "sermo @PACKAGE_VERSION@" "sermo User Commands"
+.TH SERMOIA-MCP 1 "November 2026" "sermo @PACKAGE_VERSION@" "sermo User Commands"
 .SH NAME
 sermoia-mcp \- MCP server that has an AI assistant write, check and see sermo dialogs
 .SH SYNOPSIS
@@ -19,8 +19,12 @@ the tags and attributes of the sermo XML language;
 parse a dialog and report the first error;
 .TP
 .B sermo_run
-open a dialog for a person and return the values they entered (runs the
-commands of the dialog, and says so);
+open a dialog for a person and return the values they entered. Closed by
+default since 3.2.0: without
+.B SERMO_ALLOWED_CMDS
+in the server's environment the window opens but no command of the XML is
+run, and since 3.3.0 no file named by the XML is read or written; the answer
+says so;
 .TP
 .B sermo_render
 draw a dialog as a picture without running any of its commands;
@@ -39,6 +43,14 @@ sermo binary used by check, run and the text preview (default:
 .B SERMO_RENDER_BIN
 binary used by render (default: SERMO_BIN). A port that renders without a
 display, such as qt6sermo, needs no X server.
+.TP
+.B SERMO_ALLOWED_CMDS
+the commands
+.B sermo_run
+may start, as in
+.BR sermo (1).
+Unset: none, and the files named by the XML stay closed too
+.RB ( SERMO_NO_FILES ).
 .TP
 .B SERMO_EXAMPLES_DIR
 example catalogue (default: the installed one).

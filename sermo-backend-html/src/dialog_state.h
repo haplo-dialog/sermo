@@ -135,6 +135,8 @@ typedef struct WidgetNode {
     float        row_w;        /* hbox : largeur mesuree de la rangee (cadre a droite) */
     unsigned     bg_rgba, fg_rgba;   /* background/foreground (0 = theme) */
     char        *tooltip;
+    char        *texte_libre; /* <comboboxentry> : <default> absent de la liste, entier
+                               * (state.list.filter n'en garde que 255 octets, pour l'affichage) */
     char        *sortie;     /* bouton : valeur d'EXIT (mode serve) ; NULL = ne ferme pas */
 
     /* Propriétés de présentation (v2) */

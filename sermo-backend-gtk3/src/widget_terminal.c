@@ -35,6 +35,7 @@
 #include "signals.h"
 #include "tag_attributes.h"
 #include "sermo_input.h"
+#include "safe_exec.h"
 #if HAVE_VTE
 #include <vte/vte.h>
 #endif
@@ -66,7 +67,8 @@ void widget_terminal_clear(variable *var)
 #if HAVE_VTE
 	/* This won't result in child-exited being emitted */
 	vte_terminal_reset(VTE_TERMINAL(var->Widget), TRUE, TRUE);
-	widget_terminal_fork_command(var->Widget, var->widget_tag_attr);
+	if (!safe_exec_tout_refuse())
+		widget_terminal_fork_command(var->Widget, var->widget_tag_attr);
 #endif
 
 #ifdef DEBUG_TRANSITS
@@ -225,8 +227,14 @@ GtkWidget *widget_terminal_create(
 	if (width != -1 && height != -1)
 		vte_terminal_set_size(VTE_TERMINAL(widget), width, height);
 
-	/* And off we go... */
-	widget_terminal_fork_command(widget, attr);
+	/* And off we go... — sauf sous --render-png : un aperçu n'exécute rien
+	 * (safe_exec.c). Jusqu'à la 3.3.0 le terminal lançait quand même son
+	 * shell ou ses argvN, VTE ne passant pas par safe_system. */
+	if (safe_exec_tout_refuse())
+		g_critical("<terminal> : commande refusee : --render-png n'execute aucune commande "
+			   "(SERMO_RENDER_EXEC=1 pour l'autoriser)");
+	else
+		widget_terminal_fork_command(widget, attr);
 #else
 	/* If libvte support is missing then create a label instead — and say so
 	 * where the script author will look: a label alone went unnoticed. */

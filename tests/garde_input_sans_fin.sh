@@ -36,6 +36,12 @@
 
 set -u
 export LC_ALL=C   # ${#v} compte des octets
+# L'avertissement du plafond se reconnaît à un fragment ASCII. Sous LC_ALL=C,
+# une GLib ancienne (2.74, Debian 12) convertit ses messages vers le jeu de
+# caractères de la locale : « et é y deviennent « ? », et chercher « lecture
+# arrêtée » rendait le banc rouge alors que le plafond tenait — et muets les
+# trois contrôles qui vérifient son ABSENCE.
+PLAFOND='octets (limite SERMO_INPUT_MAX'
 BIN="${1:?usage: garde_input_sans_fin.sh /chemin/vers/binaire}"
 [[ -x "$BIN" ]] || { echo "binaire introuvable : $BIN" >&2; exit 2; }
 BIN=$(readlink -f -- "$BIN")
@@ -96,9 +102,9 @@ if [ "$RC" -ne 0 ]; then
 else
     [ "${#oui}" -eq "$LIM" ] || ko "sources sans fin : OUI fait ${#oui} octets, $LIM attendus"
     grep -q '^ZERO=""$' "$T/out" || ko "sources sans fin : ZERO absent ou non vide"
-    grep -q "« yes .*lecture arrêtée à $LIM octets" "$T/err" || ko "sources sans fin : pas d'avertissement pour \`yes\` sur la sortie d'erreur"
-    grep -q "« /dev/zero » : lecture arrêtée à $LIM octets" "$T/err" || ko "sources sans fin : pas d'avertissement pour /dev/zero sur la sortie d'erreur"
-    grep -q 'lecture arrêtée' "$T/out" && ko "sources sans fin : l'avertissement est parti sur la SORTIE"
+    grep -q "yes .* $LIM octets (limite SERMO_INPUT_MAX" "$T/err" || ko "sources sans fin : pas d'avertissement pour \`yes\` sur la sortie d'erreur"
+    grep -q "/dev/zero .* $LIM octets (limite SERMO_INPUT_MAX" "$T/err" || ko "sources sans fin : pas d'avertissement pour /dev/zero sur la sortie d'erreur"
+    grep -q "$PLAFOND" "$T/out" && ko "sources sans fin : l'avertissement est parti sur la SORTIE"
 fi
 
 # ── 2. Témoin : la même source finie, sans limite, se lit en entier ────────
@@ -108,7 +114,7 @@ $FERMER</vbox></window>" SERMO_INPUT_MAX=0
 oui=$(valeur OUI)
 [ "$RC" -eq 0 ] && [ "${#oui}" -eq 25000 ] \
     || ko "TÉMOIN : sans limite, 25000 octets attendus, ${#oui} lus (code $RC) — le cas 1 ne mesure rien"
-grep -q 'lecture arrêtée' "$T/err" && ko "TÉMOIN : un avertissement alors que SERMO_INPUT_MAX=0"
+grep -q "$PLAFOND" "$T/err" && ko "TÉMOIN : un avertissement alors que SERMO_INPUT_MAX=0"
 
 # ── 3. La barre de progression suit une commande sans fin sans grossir ──────
 barre() { printf '<window><vbox><progressbar><variable>PB</variable><input>%s</input></progressbar><timer interval="3"><variable>T</variable><action>exit:fin</action></timer></vbox></window>' "$1"; }
@@ -130,7 +136,7 @@ elif [ "$pic_fin" -le 0 ] || [ "$pic_sans_fin" -le 0 ]; then
 elif [ $((pic_sans_fin - pic_fin)) -ge 61440 ]; then
     ko "barre : \`yes 50\` fait grossir le processus de $(( (pic_sans_fin - pic_fin) / 1024 )) Mo en 3 s (echo 50 : $((pic_fin / 1024)) Mo)"
 fi
-grep -q 'lecture arrêtée' "$T/err" && ko "barre : la barre a été plafonnée — elle doit suivre sa commande jusqu'au bout"
+grep -q "$PLAFOND" "$T/err" && ko "barre : la barre a été plafonnée — elle doit suivre sa commande jusqu'au bout"
 
 # ── 4. Une barre dont la commande est refusée ───────────────────────────────
 lancer "$(barre 'yes 50')" SERMO_ALLOWED_CMDS=true

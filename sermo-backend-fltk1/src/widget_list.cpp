@@ -188,7 +188,11 @@ void widget_list_clear(variable *var)
 {
     if (!var || !var->Widget) return;
     Fl_Browser *br = (Fl_Browser *)var->Widget;
-    br->deselect();
+    /* clear: retire les rangées, comme l'étalon. Jusqu'à la 3.3.0 seule la
+     * sélection tombait : la variable sortait vide, mais les rangées restaient
+     * à l'écran, dans save: et sous un append: suivant. */
+    br->clear();
+    br->redraw();
 }
 
 void widget_list_refresh(variable *var)

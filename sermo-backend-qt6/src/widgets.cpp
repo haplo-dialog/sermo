@@ -1120,3 +1120,85 @@ QLayout *qt6_box_ranger(QWidget *box, tag_attr *attr, bool horizontal, int spaci
 
     return layout;
 }
+
+/* ─── append: et rangées de save: (contrat, sermo-contract.h) ────────────────
+ * Le cœur neutre ne sait pas toucher un widget Qt : jusqu'à la 3.3.0,
+ * append: n'y faisait rien et save: n'écrivait pas les listes. Même règle que
+ * l'étalon gtk3sermo : <entry>, le texte est remplacé ; <edit>, il est ajouté
+ * à la fin ; <list>, une rangée est ajoutée EN TÊTE et choisie. */
+#include <QtWidgets/QLineEdit>
+#include <QtWidgets/QTextEdit>
+#include <QtWidgets/QListWidget>
+#include <QtWidgets/QComboBox>
+#include <QtWidgets/QTreeWidget>
+#include <QtWidgets/QTreeWidgetItem>
+#include <QtGui/QTextCursor>
+
+extern "C" int sermo_be_widget_append(void *w, int type, const char *valeur)
+{
+    QWidget *q = static_cast<QWidget *>(w);
+    if (!q || !valeur) return 0;
+    QString texte = QString::fromUtf8(valeur);
+    switch (type) {
+    case WIDGET_ENTRY:
+        if (QLineEdit *le = qobject_cast<QLineEdit *>(q)) { le->setText(texte); return 1; }
+        return 0;
+    case WIDGET_EDIT:
+        if (QTextEdit *te = qobject_cast<QTextEdit *>(q)) {
+            QTextCursor c = te->textCursor();
+            c.movePosition(QTextCursor::End);
+            c.insertText(texte);
+            return 1;
+        }
+        return 0;
+    case WIDGET_LIST:
+        if (QListWidget *lw = qobject_cast<QListWidget *>(q)) {
+            lw->insertItem(0, texte);
+            lw->clearSelection();
+            lw->setCurrentRow(0);
+            if (QListWidgetItem *it = lw->item(0)) it->setSelected(true);
+            return 1;
+        }
+        return 0;
+    case WIDGET_TREE:
+    case WIDGET_TABLE:   /* une <table> est aussi un QTreeWidget */
+        /* une rangée À LA FIN, découpée sur « | » comme un <item> */
+        if (QTreeWidget *tw = qobject_cast<QTreeWidget *>(q)) {
+            QStringList cols = texte.split('|');
+            if (tw->columnCount() < cols.size()) tw->setColumnCount(cols.size());
+            new QTreeWidgetItem(tw, cols);
+            return 1;
+        }
+        return 0;
+    default:
+        return 0;
+    }
+}
+
+extern "C" char *sermo_be_widget_rows(void *w, int type)
+{
+    QWidget *q = static_cast<QWidget *>(w);
+    QStringList rangees;
+    if (!q) return NULL;
+    if (type == WIDGET_LIST) {
+        QListWidget *lw = qobject_cast<QListWidget *>(q);
+        if (!lw) return NULL;
+        for (int i = 0; i < lw->count(); i++) rangees << lw->item(i)->text();
+    } else if (type == WIDGET_COMBOBOXTEXT || type == WIDGET_COMBOBOXENTRY) {
+        QComboBox *cb = qobject_cast<QComboBox *>(q);
+        if (!cb) return NULL;
+        for (int i = 0; i < cb->count(); i++) rangees << cb->itemText(i);
+    } else if (type == WIDGET_TREE || type == WIDGET_TABLE) {
+        /* rangées brutes « a|b » : le cœur les ramène aux colonnes du <label> */
+        QTreeWidget *tw = qobject_cast<QTreeWidget *>(q);
+        if (!tw) return NULL;
+        for (int i = 0; i < tw->topLevelItemCount(); i++) {
+            QTreeWidgetItem *it = tw->topLevelItem(i);
+            QStringList cols;
+            for (int c = 0; c < tw->columnCount(); c++) cols << it->text(c);
+            rangees << cols.join(QChar('|'));
+        }
+    } else
+        return NULL;
+    return strdup(rangees.join(QChar('\n')).toUtf8().constData());
+}

@@ -94,7 +94,7 @@ GtkWidget *widget_notebook_create(
 	if (attr) {
 		if ((value = get_tag_attribute(attr, "tab-labels")) ||
 			(value = get_tag_attribute(attr, "labels")))	/* Deprecated */
-			labels = linecutter(strdup(value), '|');
+			labels = linecutter(g_strdup(value), '|');
 		tab_prefix = get_tag_attribute(attr, "tab-prefix");
 		tab_suffix = get_tag_attribute(attr, "tab-suffix");
 		if ((value = get_tag_attribute(attr, "tab-base-index")))
@@ -119,6 +119,7 @@ GtkWidget *widget_notebook_create(
 		gtk_notebook_append_page(GTK_NOTEBOOK(widget),
 			elements.widgets[count], label);
 	}
+	list_t_free(labels);	/* NULL admis */
 
 #ifdef DEBUG_TRANSITS
 	fprintf(stderr, "%s(): Exiting.\n", __func__);
@@ -350,7 +351,7 @@ void widget_notebook_save(variable *var)
 	/* If we have a valid filename then open it and dump the
 	 * widget's data to it */
 	if (filename) {
-		if ((outfile = fopen(filename, "w"))) {
+		if ((outfile = sermo_fopen_output(filename))) {
 			index = gtk_notebook_get_current_page(GTK_NOTEBOOK(var->Widget));
 			fprintf(outfile, "%i", index);
 			fclose(outfile);

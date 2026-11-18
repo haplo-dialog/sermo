@@ -1,0 +1,15 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: action save : un tree et une table ecrivent toutes leurs rangees dans leur <output file>, ramenees aux colonnes du <label> (une seule sans label), le tree avec icone|stock| devant -->
+<window><vbox>
+<tree><label>a|b</label><variable>TR</variable><item>un|1</item><item>deux</item><item>x|y|z</item><output file>tr.out</output></tree>
+<tree><variable>T0</variable><item>un|1</item><item>deux</item><output file>t0.out</output></tree>
+<table><label>a|b</label><variable>TA</variable><item>un|1</item><item>deux</item><item>x|y|z</item><output file>ta.out</output></table>
+<table><variable>B0</variable><item>un|1</item><item>deux</item><output file>b0.out</output></table>
+<entry><variable>FB0</variable><input>sh donnees/lire.sh b0.out</input></entry>
+<entry><variable>FTR</variable><input>sh donnees/lire.sh tr.out</input></entry>
+<entry><variable>FT0</variable><input>sh donnees/lire.sh t0.out</input></entry>
+<entry><variable>FTA</variable><input>sh donnees/lire.sh ta.out</input></entry>
+<timer visible="false"><variable>_T</variable>
+<action>save:TR</action><action>save:T0</action><action>save:TA</action><action>save:B0</action>
+<action>refresh:FTR</action><action>refresh:FT0</action><action>refresh:FTA</action><action>refresh:FB0</action>
+<action>exit:fin</action></timer></vbox></window>

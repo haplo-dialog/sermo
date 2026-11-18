@@ -9,6 +9,8 @@
 # Usage : ci/construire.sh [port …]        (défaut : les neuf)
 #         ports : gtk3 gtk4 qt6 fltk1 efl1 sdl3 lvgl ncurses html
 # Journaux : $SERMO_JOURNAUX (défaut : _journaux/), un fichier par cible.
+# SERMO_SOURCE_FACULTATIF=1 : les programmes d'aide dont la bibliothèque manque
+#         sont sautés au lieu de faire échouer (Termux, système sans libmodbus…).
 # Codes : 0 = tout est construit · 1 = au moins une cible a échoué
 
 set -uo pipefail
@@ -95,21 +97,39 @@ case " ${PORTS[*]} " in *" lvgl "*)
 esac
 
 # Les programmes d'aide de <input modbus> / <input opcua> / <input mqtt> (sermo_source.h).
+# SERMO_SOURCE_FACULTATIF=1 : ceux dont la bibliothèque manque (libmodbus,
+# open62541, libmosquitto, libmpv) ne sont pas construits, et c'est dit, au lieu
+# de faire échouer la construction. Les ports, eux, n'en dépendent pas.
 journal="$J/sermo-source.log"
-if { cmake -S "$RACINE/sermo-source" -B "$RACINE/sermo-source/_build" -DSERMO_SOURCE_EXIGER=ON \
-     && cmake --build "$RACINE/sermo-source/_build" -j"$N"; } > "$journal" 2>&1 \
-   && [ -x "$RACINE/sermo-source/_build/sermo-source-modbus" ] && [ -x "$RACINE/sermo-source/_build/sermo-source-opcua" ] \
-   && [ -x "$RACINE/sermo-source/_build/sermo-source-mqtt" ] \
-   && [ -x "$RACINE/sermo-source/_build/sermo-cible-mqtt" ] \
-   && [ -x "$RACINE/sermo-source/_build/sermo-source-mavlink" ] \
-   && [ -x "$RACINE/sermo-source/_build/sermo-cible-mavlink" ] \
-   && [ -x "$RACINE/sermo-source/_build/sermo-source-media" ] \
-   && [ -x "$RACINE/sermo-source/_build/sermo-cible-media" ]; then
+exiger=ON
+aides=(sermo-source-modbus sermo-source-opcua sermo-source-mqtt sermo-cible-mqtt
+       sermo-source-mavlink sermo-cible-mavlink sermo-source-media sermo-cible-media)
+if [ "${SERMO_SOURCE_FACULTATIF:-}" = 1 ]; then
+    exiger=OFF
+    aides=(sermo-source-mavlink sermo-cible-mavlink sermo-source-media sermo-cible-media)
+fi
+aides_ok=1; sautes=0
+if { cmake -S "$RACINE/sermo-source" -B "$RACINE/sermo-source/_build" -DSERMO_SOURCE_EXIGER=$exiger \
+     && cmake --build "$RACINE/sermo-source/_build" -j"$N"; } > "$journal" 2>&1; then
+    for a in "${aides[@]}"; do [ -x "$RACINE/sermo-source/_build/$a" ] || aides_ok=0; done
+else
+    aides_ok=0
+fi
+if [ "$aides_ok" -eq 1 ]; then
     printf 'OK     %-8s (%s avertissement(s))\n' source "$(grep -c 'warning:' "$journal")"
+    if [ "$exiger" = OFF ]; then
+        for a in sermo-source-modbus sermo-source-opcua sermo-source-mqtt sermo-cible-mqtt sermo-media-images; do
+            [ -x "$RACINE/sermo-source/_build/$a" ] || { printf '       %s : PAS construit (bibliothèque absente)\n' "$a"; sautes=$((sautes + 1)); }
+        done
+    fi
 else
     printf 'ÉCHEC  %-8s — voir %s\n' source "$journal"; tail -20 "$journal"
     echecs=$((echecs + 1))
 fi
 
 [ "$echecs" -eq 0 ] || { echo "ÉCHEC : $echecs cible(s)."; exit 1; }
-echo "Construction : tout est construit."
+if [ "$sautes" -gt 0 ]; then
+    echo "Construction : faite, sauf $sautes programme(s) d'aide sauté(s) (SERMO_SOURCE_FACULTATIF=1)."
+else
+    echo "Construction : tout est construit."
+fi

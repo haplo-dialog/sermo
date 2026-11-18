@@ -31,6 +31,22 @@ gint  safe_system(const gchar *command);
 /* Drop-in replacement for popen(cmd,"r"): returns FILE*, close with fclose(). */
 FILE *safe_popen (const gchar *command);
 
+/* Refuse désormais toute commande, comme une liste blanche qu'aucune commande
+ * ne peut satisfaire. Appelé par --render-png (sauf SERMO_RENDER_EXEC=1). */
+void safe_exec_refuser_tout(void);
+
+/* Vrai après safe_exec_refuser_tout(). À consulter par tout code qui lance un
+ * programme sans passer par safe_system/safe_popen (<terminal> via VTE). */
+gboolean safe_exec_tout_refuse(void);
+
+/* Pose la variable d'un widget dans l'environnement — sauf si son nom est
+ * RÉSERVÉ : SERMO_*, HAPLO_*, LD_*, PATH, IFS, ENV, BASH_ENV, SHELLOPTS, PS4.
+ * Un <variable>SERMO_ALLOWED_CMDS</variable> remplaçait la liste blanche par
+ * la valeur du widget, un <variable>PATH</variable> déplaçait la recherche
+ * des commandes. Le refus est dit une fois par nom ; la variable reste
+ * imprimée à la sortie comme les autres. Rend 1 si posée, 0 si refusée. */
+int sermo_exporter_variable(const char *nom, const char *valeur, int ecraser);
+
 #ifdef __cplusplus
 }
 #endif

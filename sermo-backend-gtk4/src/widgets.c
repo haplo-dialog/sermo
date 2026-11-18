@@ -298,6 +298,20 @@ char *widget_get_text_value(GtkWidget *widget, int type)
 			string = widget_filechooser_envvar_construct(widget);
 			return string;
 			break;
+		case WIDGET_CHOOSER: {
+			/* Jusqu'à la 3.3.0 ce type n'était pas lu du tout : la
+			 * variable d'un <chooser> sortait toujours vide, fichier
+			 * choisi compris. Rien de choisi : <default>, comme
+			 * <filechooser> et les autres ports. */
+			GFile *gfile = g_object_get_data(G_OBJECT(widget), "sermo-choisi")
+				? gtk_file_chooser_get_file(GTK_FILE_CHOOSER(widget)) : NULL;
+
+			string = gfile ? g_file_get_path(gfile) : NULL;
+			if (gfile) g_object_unref(gfile);
+			if (string == NULL)
+				string = g_strdup(g_object_get_data(G_OBJECT(widget), "sermo-defaut"));
+			return string;
+		}
 		case WIDGET_IMAGE:
 			string = widget_image_envvar_construct(widget);
 			return string;

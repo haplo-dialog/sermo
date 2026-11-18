@@ -6,7 +6,7 @@
 
 COMMENT=	dialog boxes for shell scripts, described in XML (ncurses)
 
-V=		3.0.0
+V=		3.2.0
 DISTNAME=	sermo-v${V}
 PKGNAME=	sermo-${V}
 CATEGORIES=	devel

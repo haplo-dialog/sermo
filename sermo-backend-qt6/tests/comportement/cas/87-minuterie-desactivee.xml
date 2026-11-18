@@ -1,0 +1,5 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: disable: d une minuterie : elle ne joue plus ses actions (un seul tic ecrit) et sa variable rend false -->
+<window><vbox><entry><variable>N</variable><input>sh donnees/lire.sh tics</input></entry>
+<timer milliseconds="true" interval="200" visible="false"><variable>T</variable><action>sh -c "echo t >> tics"</action><action>disable:T</action></timer>
+<timer interval="2" visible="false"><variable>F</variable><action>refresh:N</action><action>exit:fin</action></timer></vbox></window>

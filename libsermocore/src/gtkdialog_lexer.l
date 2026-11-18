@@ -66,6 +66,8 @@ gchar *Token;
 	 **************************************************************
 	* %option debug */
 
+%option noinput
+
 %x EMBEDDED
 %x ST_TAG_ATTR ST_QUOTED_TAGATTR
 %x ST_STRING ST_QUOTED_STRING
@@ -122,6 +124,14 @@ gchar *Token;
 					  yymore();						}
 
 <ST_QUOTED_TAGATTR>("\\\"")		{
+					  Token = "string";
+					  yymore();						}
+
+	/* Un « \ » qui n'ouvre pas « \" » : aucune règle ne le prenait, la règle
+	 * par défaut de flex l'écrivait sur la sortie et le texte accumulé AVANT
+	 * lui était perdu (title="debut\xfin" donnait « xfin »). Il reste dans la
+	 * valeur, avec le caractère qui le suit. */
+<ST_QUOTED_TAGATTR>\\(.|\n)		{
 					  Token = "string";
 					  yymore();						}
 					  
@@ -827,6 +837,9 @@ gchar *Token;
 					  yymore();						}
 
 <ST_QUOTED_STRING>"\\\""		{
+					  yymore();						}
+
+<ST_QUOTED_STRING>\\(.|\n)		{
 					  yymore();						}
 					  
 <ST_QUOTED_STRING>\"			{

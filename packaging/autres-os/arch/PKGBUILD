@@ -23,9 +23,9 @@ pkgname=(sermo-core-dev sermo-doc
          sermo-backend-lvgl
          sermo-backend-ncurses
          sermo-backend-html)
-pkgver=3.0.0
+pkgver=3.2.0
 pkgrel=1
-pkgdesc="Dialog boxes for shell scripts, described in XML (gtkdialog successor)"
+pkgdesc="Dialog boxes for shell scripts, described in XML"
 arch=(x86_64 aarch64)
 url="https://gitlab.com/haplo-dialog/sermo"
 license=(GPL-2.0-or-later)
@@ -35,7 +35,10 @@ makedepends=(cmake flex bison pkgconf texinfo
 # Le projet pose lui-même -D_FORTIFY_SOURCE=3, PIE, RELRO, CET : pas de LTO par-dessus.
 options=(!lto)
 source=("$pkgbase-$pkgver.tar.gz::https://gitlab.com/haplo-dialog/sermo/-/archive/v$pkgver/sermo-v$pkgver.tar.gz")
-sha256sums=('SKIP')
+# Somme de l'archive de l'étiquette v3.2.0 sur GitLab (la même que la formule
+# Homebrew, mesurée deux fois le 2026-11-05). À reposer à chaque version :
+# tests/garde_recettes_sommes.sh refuse « SKIP » et une somme qui diffère.
+sha256sums=('6fcaad45499c932eb5f7934ba851d804beeef70104307da42fc608e960efa178')
 
 _ports=(gtk3 gtk4 qt6 fltk1 efl1 sdl3 lvgl ncurses html)
 

@@ -94,6 +94,7 @@ typedef struct {
     GListStore         *store;
     GtkSingleSelection *selection;
     int                 n_cols;
+    int                 n_cols_label;   /* colonnes nommées par <label> (0 : pas de label) */
     gchar              *headers[TABLE_COLS_MAX];
 } TableData;
 
@@ -196,6 +197,7 @@ GtkWidget *widget_table_create(AttributeSet *Attr, tag_attr *attr, gint Type)
             int n = _parse_tsv(hdr, cells, TABLE_COLS_MAX);
             if (n > 0) {
                 td->n_cols = n;
+                td->n_cols_label = n;
                 for (int i = 0; i < n; i++)
                     td->headers[i] = g_strdup(cells[i] ? cells[i] : "");
                 for (int i = 0; i < n; i++) g_free(cells[i]);
@@ -343,7 +345,75 @@ void widget_table_clear(variable *var)
     if (td && td->store) g_list_store_remove_all(td->store);
 }
 
-void widget_table_refresh(variable *var) {}
+/* Une ligne « a|b|c » de plus dans le tableau. */
+static void table_ajouter(TableData *td, const char *texte)
+{
+    gchar *cells[TABLE_COLS_MAX] = {NULL};
+    int n = _parse_tsv(texte, cells, TABLE_COLS_MAX);
+    if (n <= 0) return;
+    if (g_list_model_get_n_items(G_LIST_MODEL(td->store)) < TABLE_ROWS_MAX) {
+        RowObject *ro = row_object_new(cells, n);
+        g_list_store_append(td->store, ro);
+        g_object_unref(ro);
+    }
+    for (int i = 0; i < n; i++) g_free(cells[i]);
+}
+
+/* append:SOURCE,TABLE — une rangée à la fin, découpée comme un <item>.
+ * Jusqu'à la 3.3.0 l'action n'était pas servie pour une <table>. */
+void widget_table_append_row(variable *var, const char *valeur)
+{
+    TableData *td;
+
+    if (!var || !var->Widget || !valeur) return;
+    td = g_object_get_data(G_OBJECT(var->Widget), "table_data");
+    if (td) table_ajouter(td, valeur);
+}
+
+/* La ligne choisie a changé : les <action> du tableau (cursor-changed chez
+ * gtk3sermo, GtkColumnView n'a pas ce signal). */
+static void table_selection_changee(GtkSingleSelection *sel, GParamSpec *p, gpointer data)
+{
+    (void)p;
+    variable *var = (variable *)data;
+    if (var && var->Widget && gtk_single_selection_get_selected(sel) != GTK_INVALID_LIST_POSITION)
+        on_any_widget_cursor_changed_event(var->Widget, var->Attributes);
+}
+
+/* refresh:TABLE — comme l'étalon gtk3sermo : les lignes de <input> (commande
+ * ou fichier) puis les <item> sont AJOUTÉES (clear: vide d'abord, si on le
+ * veut). Jusqu'à la 3.2.0 cette fonction était vide : le tableau gtk4 ne se
+ * rechargeait jamais et ses <action> ne partaient pas. */
+void widget_table_refresh(variable *var)
+{
+    if (!var || !var->Widget) return;
+    TableData *td = g_object_get_data(G_OBJECT(var->Widget), "table_data");
+    if (!td) return;
+    if (!g_object_get_data(G_OBJECT(var->Widget), "_initialised")) {
+        /* Premier passage, juste après la création : tout est déjà chargé. */
+        g_object_set_data(G_OBJECT(var->Widget), "_initialised", GINT_TO_POINTER(TRUE));
+        g_signal_connect(td->selection, "notify::selected", G_CALLBACK(table_selection_changee), var);
+        return;
+    }
+    GList *el = NULL;
+    for (gchar *act = attributeset_get_first(&el, var->Attributes, ATTR_INPUT); act;
+         act = attributeset_get_next(&el, var->Attributes, ATTR_INPUT)) {
+        FILE *fp = NULL;
+        if (input_is_shell_command(act))
+            fp = widget_opencommand(act + 8);
+        else if (strncasecmp(act, "file:", 5) == 0 && act[5] != '\0')
+            fp = sermo_fopen_input(act + 5);
+        if (!fp) continue;
+        char line[TABLE_LINE_MAX];
+        while (fgets(line, sizeof line, fp))
+            table_ajouter(td, line);
+        fclose(fp);   /* fclose, jamais pclose */
+    }
+    el = NULL;
+    for (gchar *item = attributeset_get_first(&el, var->Attributes, ATTR_ITEM); item;
+         item = attributeset_get_next(&el, var->Attributes, ATTR_ITEM))
+        if (*item) table_ajouter(td, item);
+}
 void widget_table_fileselect(variable *var, const gchar *n, const gchar *v) {}
 void widget_table_removeselected(variable *var)
 {
@@ -354,7 +424,41 @@ void widget_table_removeselected(variable *var)
     if (pos != GTK_INVALID_LIST_POSITION)
         g_list_store_remove(td->store, pos);
 }
-void widget_table_save(variable *var) {}
+/* save:TABLE — même fichier que gtk3sermo : une rangée par ligne, cellules
+ * séparées par « | », pas de saut de ligne final. */
+void widget_table_save(variable *var)
+{
+    if (!var || !var->Widget) return;
+    TableData *td = g_object_get_data(G_OBJECT(var->Widget), "table_data");
+    if (!td) return;
+    GList *el = NULL;
+    const gchar *filename = NULL;
+    for (gchar *act = attributeset_get_first(&el, var->Attributes, ATTR_OUTPUT); act;
+         act = attributeset_get_next(&el, var->Attributes, ATTR_OUTPUT))
+        if (strncasecmp(act, "file:", 5) == 0 && strlen(act) > 5) { filename = act + 5; break; }
+    if (!filename) {
+        g_warning("%s(): No <output file> directive found.", __func__);
+        return;
+    }
+    FILE *outfile = sermo_fopen_output(filename);
+    if (!outfile) {
+        g_warning("%s(): Couldn't open '%s' for writing.", __func__, filename);
+        return;
+    }
+    guint n = g_list_model_get_n_items(G_LIST_MODEL(td->store));
+    for (guint r = 0; r < n; r++) {
+        RowObject *row = ROW_OBJECT(g_list_model_get_item(G_LIST_MODEL(td->store), r));
+        if (r > 0) fputc('\n', outfile);
+        /* autant de colonnes que le <label> en nomme, une seule sans label :
+         * la forme de gtk3sermo, quel que soit le nombre de colonnes montrées
+         * (sans label, ce port en montre autant que la première rangée) */
+        for (int c = 0; c < (td->n_cols_label ? td->n_cols_label : 1); c++)
+            fprintf(outfile, "%s%s", c ? "|" : "",
+                    (row && c < row->n_cells && row->cells[c]) ? row->cells[c] : "");
+        if (row) g_object_unref(row);
+    }
+    fclose(outfile);
+}
 
 /* Stubs de fonctions de tri (interface conservée pour compatibilité) */
 gboolean widget_table_click_column_callback(GtkWidget *w, gint col, variable *var)

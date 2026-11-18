@@ -43,6 +43,7 @@
 #include "sermo_open_uri.h"
 #include "sermo_progress.h"
 #include "jouer_actions.h"
+#include "fenetres.h"
 
 /* Fourni par le cœur (actions.c), non exporté par ses en-têtes — comme dans sdl3. */
 void action_exitprogram(GtkWidget *widget, char *string);
@@ -117,6 +118,23 @@ int sermo_be_widget_activate(void *w)
     default:
         return 0;
     }
+}
+
+/* Crochet du contrat : « activate:NOM » sur un <button> — ce que fait un clic :
+ * ses actions jouent ; un bouton nu ferme le dialogue (EXIT = valeur de
+ * famille, sinon le libellé). Le cœur ne l'appelle que pour un bouton. */
+int sermo_be_button_click(void *w)
+{
+    WidgetNode *n = (WidgetNode *)w;
+    if (!n || n->type != WT_BUTTON) return 0;
+    if (n->var_name && strcmp(n->var_name, "__fontbutton__") == 0) return 0;
+    if (n->action && *n->action)
+        declencher(n, "clicked", NULL);   /* exit:… peut sortir ici */
+    else
+        action_exitprogram((GtkWidget *)n,
+            (char *)(n->tooltip ? n->tooltip
+                     : (n->label && n->label[0] ? n->label : "OK")));
+    return 1;
 }
 
 /* Crochet du contrat : l'état d'un widget pour condition="active_is_…/
@@ -195,34 +213,12 @@ static void fire_timers(WidgetNode *node)
     for (int i = 0; i < node->child_count; i++) fire_timers(node->children[i]);
 }
 
-/* Sans terminal : chacune une fois, de la plus courte à la plus longue —
- * l'ordre où elles partiraient à l'écran (un « exit:… » sort au passage). */
-static void lister_timers(WidgetNode *n, WidgetNode ***t, int *nb, int *cap)
+/* Sans terminal : chacune une fois, toutes fenêtres ouvertes confondues, dans
+ * l'ordre où elles partiraient à l'écran (fenetres.c ; un « exit:… » sort au
+ * passage). */
+static void tic(WidgetNode *minuterie)
 {
-    if (!n) return;
-    if (n->type == WT_TIMER && n->sensitive) {
-        if (*nb == *cap) { *cap = *cap ? *cap * 2 : 8; *t = realloc(*t, (size_t)*cap * sizeof **t); }
-        if (*t) (*t)[(*nb)++] = n;
-    }
-    for (int i = 0; i < n->child_count; i++) lister_timers(n->children[i], t, nb, cap);
-}
-static int par_intervalle(const void *a, const void *b)
-{
-    double x = intervalle(*(WidgetNode *const *)a), y = intervalle(*(WidgetNode *const *)b);
-    return (x > y) - (x < y);
-}
-static void fire_timers_une_fois(WidgetNode *root)
-{
-    WidgetNode **t = NULL;
-    int nb = 0, cap = 0;
-    lister_timers(root, &t, &nb, &cap);
-    /* tri par insertion : STABLE, deux délais égaux gardent l'ordre du document */
-    for (int i = 1; i < nb; i++)
-        for (int j = i; j > 0 && par_intervalle(&t[j - 1], &t[j]) > 0; j--) {
-            WidgetNode *x = t[j]; t[j] = t[j - 1]; t[j - 1] = x;
-        }
-    for (int i = 0; i < nb; i++) declencher(t[i], "tick", NULL);
-    free(t);
+    declencher(minuterie, "tick", NULL);
 }
 
 /* Barres de progression : relever ce que leurs commandes ont écrit.
@@ -261,7 +257,7 @@ static int run_headless(WidgetNode *root)
     const struct timespec pause = { 0, 20000000L };   /* 20 ms */
     while (servir_barres(root) > 0)
         nanosleep(&pause, NULL);
-    fire_timers_une_fois(root);   /* un « exit:… » sort ici via action_exitprogram */
+    minuteries_une_fois(tic);     /* un « exit:… » sort ici via action_exitprogram */
     return export_abort();
 }
 
@@ -517,7 +513,8 @@ static int largeur(WidgetNode *n)
     case WT_NOTEBOOK: {
         int t = 0;
         for (int i = 0; i < n->child_count; i++) {
-            const char *tl = (n->state.notebook.tab_labels && n->state.notebook.tab_labels[i])
+            const char *tl = (n->state.notebook.tab_labels && i < n->state.notebook.tab_count
+                              && n->state.notebook.tab_labels[i])
                              ? n->state.notebook.tab_labels[i] : "•";
             t += (int)g_utf8_strlen(tl, -1) + 3;
         }
@@ -961,7 +958,8 @@ static int draw_node_corps(WidgetNode *n, int y, int x, int w)
         int tx = x;
         for (int i = 0; i < n->child_count; i++) {
             char t[32];
-            const char *tl = (n->state.notebook.tab_labels && n->state.notebook.tab_labels[i])
+            const char *tl = (n->state.notebook.tab_labels && i < n->state.notebook.tab_count
+                              && n->state.notebook.tab_labels[i])
                              ? n->state.notebook.tab_labels[i] : "•";
             snprintf(t, sizeof t, " %s ", tl);
             if (i == cur) attron(A_REVERSE);
@@ -1376,11 +1374,19 @@ static int ecran_ouvrir(void)
     return 1;
 }
 
-static int run_interactive(WidgetNode *root, const char *title)
+/* Un terminal n'a qu'un écran : la fenêtre du dessus (la dernière lancée
+ * encore ouverte) l'occupe, celle d'avant revient à sa fermeture. Les
+ * minuteries et les barres de TOUTES les fenêtres ouvertes continuent.
+ * launch: rappelle cette boucle depuis une action ; elle ne rend alors jamais
+ * la main, comme le gtk_main imbriqué de l'étalon. */
+static int run_interactive(void)
 {
     g_focus_idx = 0;
 
     for (;;) {
+        WidgetNode *root = fenetre_dessus();
+        if (!root) { endwin(); return export_abort(); }
+        const char *title = root->label;
         erase();
         box(stdscr, 0, 0);
         /* Un terminal ne peut pas porter l'icône d'application : la marque
@@ -1397,8 +1403,15 @@ static int run_interactive(WidgetNode *root, const char *title)
         mvprintw(LINES - 1, 2, " Tab/fleches: naviguer  Entree/Espace: activer  q: quitter ");
         refresh();
 
-        fire_timers(root);     /* un exit:… sort ici via le cœur */
-        servir_barres(root);   /* les barres suivent leur commande */
+        /* Une action peut fermer une fenêtre : la pile est relue à chaque pas. */
+        for (int i = 0; i < fenetres_nb(); i++) {
+            WidgetNode *f = fenetre(i);
+            fire_timers(f);     /* un exit:… sort ici via le cœur */
+            if (fenetre(i) != f) { i--; continue; }
+            servir_barres(f);   /* les barres suivent leur commande */
+            if (fenetre(i) != f) i--;
+        }
+        if (fenetre_dessus() != root) continue;   /* une autre fenêtre est dessus : la dessiner */
         pulse_avance(root);    /* barres indéterminées : une frame de plus */
 
         int c = getch();
@@ -1478,8 +1491,13 @@ static int run_interactive(WidgetNode *root, const char *title)
                     int avant = n->state.list.selected_index;
                     n->state.list.selected_index =
                         (n->state.list.selected_index + 1) % n->state.list.item_count;
-                    if (n->state.list.selected_index != avant)
+                    if (n->state.list.selected_index != avant) {
                         liste_selection_changee(n);   /* WT_LIST seulement */
+                        /* liste déroulante : signal « changed » de l'étalon ;
+                         * ses <action> étaient muettes jusqu'à la 3.3.0 */
+                        if (n->type == WT_COMBOBOX && n->actions_attr)
+                            declencher(n, "changed", NULL);
+                    }
                 }
                 break;
             case WT_SPINBUTTON:
@@ -1540,15 +1558,23 @@ static int run_interactive(WidgetNode *root, const char *title)
 /* ─── Point d'entrée ───────────────────────────────────────────────────────── */
 int render_loop(WidgetNode *root, const char *title, int win_w, int win_h)
 {
-    (void)win_w; (void)win_h;
+    static int sans_ecran = -1;   /* décidé une fois : l'écran ne s'ouvre qu'une fois */
+    (void)win_w; (void)win_h; (void)title;
     if (!root) return 0;
+    /* Jusqu'à la 3.3.0 la boucle d'une fenêtre lancée ne servait qu'elle :
+     * la première était perdue, et sans terminal le dialogue sortait en
+     * EXIT="abort" sans jouer ses autres minuteries. */
+    int admise = fenetre_empiler(root);
     /* Sans écran : sur demande, ou quand personne ne peut taper (entrée
      * standard qui n'est pas un terminal), ou faute de terminal où dessiner.
      * Une sortie standard capturée ne suffit PAS à renoncer à l'écran. */
-    if (getenv("SERMO_NCURSES_BATCH") || !isatty(STDIN_FILENO) || !ecran_ouvrir()) {
+    if (sans_ecran < 0)
+        sans_ecran = getenv("SERMO_NCURSES_BATCH") || !isatty(STDIN_FILENO) || !ecran_ouvrir();
+    if (sans_ecran) {
+        if (!admise) return export_abort();
         listes_chargees(root);   /* un « exit:… » peut sortir ici, via le cœur */
         return run_headless(root);
     }
-    listes_chargees(root);       /* l'écran ouvert : une sortie le rend propre */
-    return run_interactive(root, title);
+    if (admise) listes_chargees(root);   /* l'écran ouvert : une sortie le rend propre */
+    return run_interactive();
 }

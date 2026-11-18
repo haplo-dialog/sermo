@@ -324,7 +324,7 @@ void widget_colorbutton_save(variable *var)
 	/* If we have a valid filename then open it and dump the
 	 * widget's data to it */
 	if (filename) {
-		if ((outfile = fopen(filename, "w"))) {
+		if ((outfile = sermo_fopen_output(filename))) {
 			gtk_color_chooser_get_rgba(GTK_COLOR_CHOOSER(GTK_COLOR_BUTTON(var->Widget)), &color);
 			if (gtk_color_button_get_use_alpha(GTK_COLOR_BUTTON(var->Widget))) {
 				fprintf(outfile, "#%02x%02x%02x|%u",

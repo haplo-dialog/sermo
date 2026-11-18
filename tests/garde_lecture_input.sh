@@ -28,8 +28,8 @@ declare -A PERMIS=(
     ['libsermocore/src/gtkdialog.c|sourcefile = fopen(name, "r");']=2
     ['libsermocore/src-gtk4/gtkdialog.c|sourcefile = fopen(name, "r");']=2
     # La condition « if file() » : une ligne de 64 octets au plus (fgets borné).
-    ['libsermocore/src/signals.c|if ((infile = fopen(argument, "r"))) {']=1
-    ['libsermocore/src-gtk4/signals.c|if ((infile = fopen(argument, "r"))) {']=1
+    ['libsermocore/src/signals.c|if (!sermo_fichiers_interdits() && (infile = fopen(argument, "r"))) {']=1
+    ['libsermocore/src-gtk4/signals.c|if (!sermo_fichiers_interdits() && (infile = fopen(argument, "r"))) {']=1
     # Les fichiers du thème d'icônes (index.theme, réglages GTK).
     ['libsermocore/src/sermo_icon_theme.c|f = fopen(path, "r");']=1
     ['libsermocore/src/sermo_icon_theme.c|if ((f = fopen(path, "r"))) {']=4

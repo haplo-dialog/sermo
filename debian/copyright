@@ -575,6 +575,7 @@ Files: contrib/trousses/CHARTE.md
        sermoman-mcp/data/examples/lecteur-media/lecteur-media.sh
        sermoman-mcp/data/examples/mavlink/drone-commande.sh
        sermoman-mcp/data/examples/mavlink/drone-lecture.sh
+       sermoman-mcp/data/examples/mavlink/drone-pilotage.sh
        sermoman-mcp/data/examples/showcase/01-formulaire.sh
        sermoman-mcp/data/examples/showcase/02-conteneurs.sh
        sermoman-mcp/data/examples/showcase/03-onglets.sh

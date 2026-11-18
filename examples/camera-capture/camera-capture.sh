@@ -6,8 +6,8 @@
 #            enregistrer, après une confirmation qui montre le fichier exact
 # Enrobe   : <action media> (paquet sermo-cible-media, mpv) ; la porte
 #            examples/approbation pour la confirmation
-# Ports    : image dans la fenêtre avec gtk3 et qt6 sous X11 ; ailleurs, dans la
-#            fenêtre de mpv (repli)
+# Ports    : image dans la fenêtre avec gtk3 et qt6 sous X11, gtk3 sous Wayland ;
+#            ailleurs, dans la fenêtre de mpv (repli)
 # Usage    : ./camera-capture.sh [binaire sermo]
 #            ./camera-capture.sh --xml           (le XML, sans l'ouvrir)
 #            Appelés par les boutons : --photo, --video

@@ -86,7 +86,7 @@ argument_pour() {
     esac
 }
 
-OK=0; CRASH=0; SYNTAX=0; NOWIN=0; RESERVE=0; REFAITS=0; DETAIL=()
+OK=0; CRASH=0; SYNTAX=0; NOWIN=0; RESERVE=0; REFAITS=0; SANS=0; DETAIL=()
 # Attente MAXIMALE d'une fenêtre, en secondes (l'écran est interrogé toutes les
 # 0,1 s : un exemple qui marche n'attend pas plus). 3 s donnaient des « aucune
 # fenêtre » sans défaut dès que le poste était chargé : mesuré le 2026-09-17 sur
@@ -135,6 +135,14 @@ DELAY="${EXAMPLE_DELAY:-10}"
 # du port, sans essai refait (vu deux fois sur gtk4 au banc complet ; ce qui
 # rend l'écran injoignable n'a pas été reproduit en 1 765 lancements).
 #
+# 2026-11-15 — le banc se figeait, rarement (une fois au banc complet, puis une
+# passe sur onze, tous les cœurs occupés) : « vivant » se lit sur le groupe de
+# processus de l'exemple, qui n'existe qu'une fois setsid(2) appelé par le
+# fils. Poste chargé, la première lecture arrivait avant : l'exemple passait
+# pour arrêté sans fenêtre, et son « wait » attendait sans fin un programme
+# bien vivant, que plus rien n'arrêtait. probe attend donc le groupe avant de
+# s'en servir.
+#
 # 2026-10-14 — trouvé : sans -noreset, Xvfb se réinitialise à chaque départ de
 # son dernier client (xdpyinfo ci-dessous, chaque xdotool) et refuse les
 # connexions pendant ce temps (détail : tests/outils/xvfb-run). -noreset est
@@ -147,6 +155,13 @@ probe() {
         xdpyinfo >/dev/null 2>&1 || { echo NODISPLAY; exit 0; }
         if [ -n "$2" ]; then mapfile -t A <<<"$2"; setsid "$0" "${A[@]}" >"$1" 2>&1 & else setsid "$0" >"$1" 2>&1 & fi
         pid=$!
+        # Le groupe -$pid n existe qu une fois setsid(2) appelé par le fils :
+        # on l attend (5 s au plus) avant de s en servir pour dire « vivant ».
+        for j in $(seq 1 250); do
+            kill -0 -- -$pid 2>/dev/null && break
+            kill -0 $pid 2>/dev/null || break
+            sleep 0.02
+        done
         for i in $(seq 1 '"$DELAY"'0); do
             if [ -n "$(xdotool search --onlyvisible --name . 2>/dev/null)" ] ||
                [ -n "$(xdotool search --onlyvisible --class . 2>/dev/null)" ]; then
@@ -216,7 +231,18 @@ for dir in $(find "$EXAMPLES" -maxdepth 1 -mindepth 1 -type d | sort); do
             [[ -n "$script" ]] || script="$(find "$dir" -maxdepth 1 -type f -executable | head -1)"
         fi
     fi
-    [[ -n "$script" && -f "$script" ]] || { printf '  %-16s %s\n' "$name" "(aucun script)"; continue; }
+    if [[ -z "$script" || ! -f "$script" ]]; then
+        # Deux dossiers connus n'ont pas de dialogue à ouvrir. Tout AUTRE
+        # dossier sans point d'entrée est un échec : jusqu'à la 3.3.0 il était
+        # écarté en silence, et le banc sortait vert sans l'avoir essayé.
+        case "$name" in
+            boites-a-outils) printf '  %-16s %s\n' "$name" "(banc à part : metiers/verifie.sh)" ;;
+            c_embedded)      printf '  %-16s %s\n' "$name" "(source C, pas un dialogue)" ;;
+            *) printf '  %-16s %s\n' "$name" "ÉCHEC : aucun script à jouer"
+               SANS=$((SANS + 1)); DETAIL+=("$name : aucun point d'entrée (ni « $name », ni « main », ni fichier à <window>)") ;;
+        esac
+        continue
+    fi
 
     # Exemples d'automates (examples/modbus, examples/opcua) : ils s'arrêtent
     # avant toute fenêtre si leur outil manque (mbpoll, client opcua-lire à
@@ -313,6 +339,7 @@ echo "  ================================================"
 printf '  %s exemples : %s OK · %s CRASH · %s SYNTAX · %s sans fenêtre\n' \
        "$TOTAL" "$OK" "$CRASH" "$SYNTAX" "$NOWIN"
 [[ $REFAITS -gt 0 ]] && printf '  (%s essai(s) refait(s) : écran virtuel injoignable, pas le programme)\n' "$REFAITS"
+[[ $SANS -gt 0 ]] && printf '  (%s dossier(s) sans script à jouer : compté(s) en échec)\n' "$SANS"
 [[ $RESERVE -gt 0 ]] && printf '  (%s exemple(s) réservé(s) à d’autres ports, non joué(s))\n' "$RESERVE"
 echo "  ================================================"
 if [[ ${#DETAIL[@]} -gt 0 ]]; then
@@ -321,4 +348,6 @@ if [[ ${#DETAIL[@]} -gt 0 ]]; then
     printf '    - %s\n' "${DETAIL[@]}"
 fi
 echo
-[[ $((CRASH+SYNTAX+NOWIN)) -eq 0 ]]
+# Aucun exemple joué n'est pas un succès : le banc n'aurait rien vérifié.
+[[ $TOTAL -gt 0 ]] || { echo "  ÉCHEC : aucun exemple joué dans $EXAMPLES"; exit 1; }
+[[ $((CRASH+SYNTAX+NOWIN+SANS)) -eq 0 ]]

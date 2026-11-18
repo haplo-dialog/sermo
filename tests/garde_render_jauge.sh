@@ -35,7 +35,7 @@ esac
 T=$(mktemp -d); trap 'rm -rf "$T"' EXIT
 rendre() {   # rendre <valeur> <fichier.png>
     export GARDE_JAUGE="<window default-width=\"300\"><vbox><levelbar range-min=\"0\" range-max=\"100\"><input>echo $1</input><variable>J</variable></levelbar><button ok></button></vbox></window>"
-    ( cd "$T" && env "${ENV_PRE[@]}" xvfb-run -a timeout 30 "$BIN" --program=GARDE_JAUGE --render-png="$2" ) >/dev/null 2>&1
+    ( cd "$T" && env "${ENV_PRE[@]}" SERMO_RENDER_EXEC=1 xvfb-run -a timeout 30 "$BIN" --program=GARDE_JAUGE --render-png="$2" ) >/dev/null 2>&1
 }
 rendre 25 "$T/quart.png"
 rendre 100 "$T/plein.png"

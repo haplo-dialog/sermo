@@ -57,10 +57,16 @@
       sous X11, `dans=$ZONE`), repli sur une fenêtre séparée ailleurs.
 - [x] **3.1.2** (2026-10-20) : sécurité du lecteur, la cage de mpv ne
       laisse plus joindre les sockets de session (bus D-Bus…).
-- [ ] **3.2.0** : piloter un drone (armer, décoller, changer de mode, se
-      déplacer) ; la vidéo dans la fenêtre du dialogue sur les autres ports et
-      sous Wayland (déjà faite en 3.1.1 pour gtk3 sous X11) ; le lecteur
-      essayé sous Wayland.
+- [x] **3.2.0** (2026-11-04) : piloter un drone (armer, désarmer, décoller,
+      changer de mode, aller à un point) ; photo et vidéo d'une caméra ; la
+      vidéo dans la fenêtre du dialogue sous Wayland pour gtk3, et sous X11
+      pour qt6.
+- [x] **3.3.0** (2026-11-18) : audit complet ; les sept ports sans GTK
+      rejoignent l'étalon gtk3 (actions, listes déroulantes, fenêtres) ; le
+      lecteur son et vidéo ne meurt plus sous Wayland sans X11.
+- [ ] **À venir**, reporté de la 3.2.0 : la vidéo dans la fenêtre du dialogue
+      sur les sept autres ports, et sous Wayland ailleurs que sur gtk3 ; le
+      lecteur son et vidéo essayé dans une vraie session Wayland.
 
-> La progression est **gardée par les trois bancs** (XML 55 · comportement 78 ·
+> La progression est **gardée par les trois bancs** (XML 55 · comportement 95 ·
 > gardes) : aucune phase n'avance en laissant un banc rouge.

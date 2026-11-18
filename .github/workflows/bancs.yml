@@ -22,7 +22,13 @@ on:
       - 'tests/**'
       - 'ci/**'
       - 'sermoman-mcp/**'
+      - 'sermoia-mcp/**'
+      - 'sermo-source/**'
+      - 'outils/**'
+      - 'debian/**'
+      - 'packaging/**'
       - 'examples/**'
+      - 'sermo.schema.json'
       - 'VERSION'
       - '.github/workflows/bancs.yml'
   pull_request:
@@ -51,7 +57,7 @@ jobs:
           apt-get update -qq
           apt-get install -y --no-install-recommends git ca-certificates
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: dépendances
         run: apt-get install -y --no-install-recommends $(grep -v '^#' ci/dependances.txt)
@@ -74,9 +80,63 @@ jobs:
 
       - name: journaux
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: journaux
           path: _journaux/
+          retention-days: 7
+          if-no-files-found: warn
+
+  # ASan, UBSan et fuzz : jumeau du job « sanitizers » de .gitlab-ci.yml. Sur
+  # étiquette et à la demande (40 min : pas à chaque poussée).
+  sanitizers:
+    if: github.event_name == 'workflow_dispatch' || github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    container: debian:testing
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      LANG: fr_FR.UTF-8
+    steps:
+      - name: git pour le checkout
+        run: |
+          apt-get update -qq
+          apt-get install -y --no-install-recommends git ca-certificates
+
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: dépendances
+        run: apt-get install -y --no-install-recommends $(grep -v '^#' ci/dependances.txt)
+
+      - name: locale française
+        run: |
+          sed -i 's/^# *fr_FR.UTF-8/fr_FR.UTF-8/' /etc/locale.gen
+          locale-gen
+
+      - name: dépôt lisible par git
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: ASan et UBSan sur le banc de comportement
+        run: bash tests/garde_sanitizers.sh "$GITHUB_WORKSPACE"
+
+      - name: fuites à l'export
+        run: |
+          bash tests/garde_fuite_refresh.sh sermo-backend-ncurses/_build_asan/ncursessermo
+          bash tests/garde_fuite_refresh.sh sermo-backend-html/_build_asan/htmlsermo
+
+      - name: fuzz de l'analyseur (2 min)
+        env:
+          ASAN_OPTIONS: detect_leaks=0:abort_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:abort_on_error=1
+        run: python3 -I tests/fuzz/fuzz.py sermo-backend-html/_build_asan/htmlsermo 120
+
+      - name: journaux
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: sanitizers
+          path: |
+            _build/sanitizers/
+            tests/fuzz/findings/
           retention-days: 7
           if-no-files-found: warn

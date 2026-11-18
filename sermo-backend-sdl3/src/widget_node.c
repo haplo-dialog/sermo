@@ -98,6 +98,7 @@ void widget_node_free(WidgetNode *node)
     free(node->var_name);
     free(node->label);
     free(node->action);
+    free(node->texte_libre);
     /* node->state n'a pas de pointeurs alloués dynamiquement (union de POD) */
     free(node);
 }

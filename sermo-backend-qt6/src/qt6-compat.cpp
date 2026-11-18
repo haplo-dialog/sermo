@@ -144,6 +144,8 @@ void *sermo_be_scroll_new(int w, int h) {
  */
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QWidget>
+#include <QtCore/QEventLoop>
+#include <QtCore/QTimer>
 #include <QtGui/QPixmap>
 #include <QtGui/QIcon>
 #include <QtGui/QPalette>
@@ -298,11 +300,58 @@ int sermo_be_run_loop(void) {
         fflush(stdout);
         exit(win ? 0 : 1);
     }
-    return qt6_app ? qt6_app->exec() : 0;      /* boucle d'événements */
+    if (!qt6_app) return 0;
+    /* launch: rappelle cette fonction depuis une action, la première boucle
+     * encore sur la pile. Un second QApplication::exec() est refusé par Qt
+     * (« The event loop is already running ») : il rendait la main aussitôt et
+     * le dialogue sortait en EXIT="abort", la seconde fenêtre à peine montée.
+     * Une boucle imbriquée sert toutes les fenêtres, comme le gtk_main
+     * imbriqué de l'étalon. */
+    static int profondeur = 0;
+    if (profondeur++ > 0) {
+        QEventLoop boucle;
+        boucle.exec();
+    } else {
+        qt6_app->exec();                       /* boucle d'événements */
+    }
+    /* La boucle n'a rendu la main que parce que la dernière fenêtre a été fermée
+     * (une action exit:… sort par exit() sans revenir ici) : même sortie que
+     * gtk3sermo, EXIT="abort". Jusqu'à la 3.2.0 ce port ne rendait RIEN, et un
+     * script ne pouvait pas distinguer « fermé » de « planté ». */
+    printf("EXIT=\"abort\"\n");
+    g_setenv("EXIT", "abort", TRUE);
+    fflush(stdout);
+    exit(EXIT_SUCCESS);
 }
 
 void sermo_be_app_quit(void) {
     if (qt6_app) qt6_app->quit();
+}
+
+/* closewindow: — ferme la fenêtre qui contient @w (contrat, facultatif). Le
+ * cœur a déjà retiré ses variables. Les minuteries sont arrêtées tout de
+ * suite ; la destruction attend le retour à la boucle (deleteLater) : l'action
+ * peut venir d'un widget de cette même fenêtre, encore en train de jouer sa
+ * liste d'actions. */
+int sermo_be_window_close(void *w) {
+    QWidget *q = static_cast<QWidget *>(w);
+    if (!q) return 0;
+    QWidget *haut = q->window();
+    if (!haut) return 0;
+    const QList<QTimer *> minuteries = haut->findChildren<QTimer *>();
+    for (QTimer *t : minuteries) t->stop();
+    haut->hide();
+    haut->deleteLater();
+    return 1;
+}
+
+/* launch: d'une fenêtre déjà ouverte : au premier plan (contrat, facultatif). */
+void sermo_be_window_present(void *w) {
+    QWidget *q = static_cast<QWidget *>(w);
+    if (!q || !q->window()) return;
+    q->window()->show();
+    q->window()->raise();
+    q->window()->activateWindow();
 }
 
 } /* extern "C" */

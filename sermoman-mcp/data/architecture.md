@@ -78,7 +78,7 @@ boucle d'évènements. Un backend ne dépend **que** de sa propre toolkit.
 | `sermo-backend-gtk4` | `gtk4sermo` | GTK 4 (C) | Cœur variante dédiée `SERMOCORE_GTK4` (GTK 4 a retiré `gtk_main`/`gtk_socket`/l'ancien modèle d'évènements). |
 | `sermo-backend-qt6` | `qt6sermo` | Qt 6 (C++) | Widgets en C++. `QApplication` reçoit un argv filtré (sermo garde sa propre CLI). Cœur neutre. |
 | `sermo-backend-fltk1` | `fltk1sermo` | FLTK 1.4 (C++) | Installation légère : ne tire ni GTK ni Qt. Cœur neutre. |
-| `sermo-backend-efl1` | `efl1sermo` | EFL / Elementary (C) | **Thème sombre par défaut** (sinon suit le thème système). `default-width/height` traités comme minimums. Cœur neutre. |
+| `sermo-backend-efl1` | `efl1sermo` | EFL / Elementary (C) | **Thème sombre, toujours** (`SERMO_DARK` n'y agit pas). `default-width/height` traités comme minimums. Cœur neutre. |
 | `sermo-backend-sdl3` | `sdl3sermo` | SDL 3 + Dear ImGui (C) | Rendu immédiat via Dear ImGui (vendorisé). Cœur neutre. |
 | `sermo-backend-lvgl` | `lvglsermo` | LVGL 9.6 (C), embarqué | Pour bornes et écrans embarqués : fenêtre Wayland ou X11, framebuffer sur demande (`SERMO_LVGL_FBDEV`). LVGL vit dans `tiers/lvgl/` (MIT). Cœur neutre. |
 | `sermo-backend-ncurses` | `ncursessermo` | ncursesw — **terminal** (C) | Rendu en mode texte : **images et icônes occultées** (pas de rendu graphique). Cœur neutre. |
@@ -94,8 +94,9 @@ de la virgule décimale locale.
 
 ## 3. Le contrat cœur ↔ backend (`sermo_be_*`)
 
-La frontière est déclarée dans `sermo_backend.h`, installé avec la lib. Le cœur
-**appelle**, le backend **fournit**. Le cœur ne nomme **aucun** toolkit.
+La frontière est déclarée dans `contract/sermo-contract.h` (sous licence MIT ;
+`sermo_backend.h`, installé avec la lib, ne déclare plus que
+`sermo_backend_toolkit_init`). Le cœur **appelle**, le backend **fournit**. Le cœur ne nomme **aucun** toolkit.
 
 - **`sermo_backend_toolkit_init(int *argc, char ***argv, int print_ir)`** — le
   backend initialise sa toolkit (`gtk_init`, `QApplication`, `SDL_Init`…), sans
@@ -114,8 +115,13 @@ En sens inverse, le backend rappelle `execute_action()` du cœur quand un
 La boucle d'évènements côté backend est exposée par **`sermo_be_run_loop`** : le
 cœur lance la boucle sans savoir de quel toolkit il s'agit.
 
-⚠️ Certains ponts portent encore un préfixe historique `qt6_*` ; leur
-généralisation en `sermo_be_*` est un chantier ouvert (Part 3).
+Onze fonctions `sermo_be_*` sont obligatoires. Neuf sont **facultatives**
+(symboles faibles : un port qui ne les fournit pas se lie quand même, et
+l'action correspondante n'est pas servie). La 3.3.0 en ajoute six :
+`sermo_be_button_click` (`activate:` sur un bouton), `sermo_be_window_new`,
+`sermo_be_window_present`, `sermo_be_window_close` (fenêtres multiples),
+`sermo_be_widget_append` et `sermo_be_widget_rows` (`append:`, `save:`). Les
+neuf ports les fournissent.
 
 ---
 
@@ -208,8 +214,8 @@ Aucune étape n'avance avec un banc rouge. Trois portes gardent chaque backend
   sans affichage. Attendu : **55 PASS**.
 - **Comportement** — `tests/comportement/` (aussi via `run_all.sh`) : les valeurs
   exportées (`VAR="valeur"`) doivent être **identiques** à celles de l'étalon
-  `gtk3sermo`. Attendu : **78/78**. Chaque cas se ferme seul, par un `<timer>`
-  déclenchant `exit:fin` ou (cas 41-42) par une barre de progression arrivée à 100 ; ncurses joue ce banc en mode **batch headless**, html en écrivant sa page vers `/dev/null`.
+  `gtk3sermo`. Attendu : **95/95** (3.3.0). Chaque cas se ferme seul, par un `<timer>`
+  déclenchant `exit:fin` ou (cas 41-42) par une barre de progression arrivée à 100, ou (cas 94) par `activate:` sur un bouton nu ; ncurses joue ce banc en mode **batch headless**, html en écrivant sa page vers `/dev/null`.
 - **Garde** — jeu de scripts `tests/garde_*.sh` : durcissement du binaire,
   échappement de la sortie (les valeurs à risque ne repassent pas par le shell),
   fonctions interdites, allowlist de commandes, absence d'en-tête de poste, etc.
@@ -227,7 +233,7 @@ backend, et `ci/bancs.sh` enchaîne tous les bancs sur les neuf.
   correct rend partout, aux nuances de rendu près (html l'écrit en page HTML).
 - Le **ncurses** est en terminal : pas d'image ni d'icône — prévoir un dialogue
   qui reste lisible en texte pur.
-- L'**efl1** est sombre par défaut.
+- L'**efl1** est toujours sombre.
 - Vérifier une syntaxe sans ouvrir de fenêtre : `--print-ir` (code de retour 0 =
   la syntaxe passe).
 

@@ -1,0 +1,3 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: closewindow: d un nom inconnu depuis une minuterie ne fait rien, puis exit (qt6 s arretait sur une assertion, code 134) -->
+<window><vbox><entry><variable>E</variable><default>reste</default></entry><timer visible="false"><variable>_T</variable><action>closewindow:INCONNUE</action><action>exit:fin</action></timer></vbox></window>

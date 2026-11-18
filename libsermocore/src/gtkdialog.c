@@ -234,7 +234,7 @@ gtkdialog_init(
 	{
 		"render-png", '\0',
 		0, G_OPTION_ARG_STRING, &option_render_png,
-		"Render the dialog offscreen to PNG FILE and exit (no display).", "FILE"
+		"Render the dialog to PNG FILE and exit; runs no command unless SERMO_RENDER_EXEC=1.", "FILE"
 	},
 	{ 
 		"space-expand", '\0', 
@@ -271,7 +271,7 @@ gtkdialog_init(
 	if (argc > 1 && g_utf8_strchr(argv[1], -1, ' ') != NULL) {
 		gint   optionindex;
 		gchar *tmp;
-		gchar *command_line;
+		gchar *command_line = NULL;
 
 		PIP_DEBUG("Must re-slice the options.");
 		/*
@@ -342,6 +342,14 @@ gtkdialog_init(
 				error->message);
 
 	g_option_context_free(context);
+
+	/* --render-png : un aperçu n'exécute rien (safe_exec.c). Qui veut l'image
+	 * d'un dialogue avec ses vraies valeurs le demande : SERMO_RENDER_EXEC=1. */
+	if (option_render_png != NULL && *option_render_png != '\0') {
+		const gchar *veut = g_getenv("SERMO_RENDER_EXEC");
+		if (veut == NULL || strcmp(veut, "1") != 0)
+			safe_exec_refuser_tout();
+	}
 }
 
 /* Chaîne entre apostrophes pour /bin/sh : ' devient '\'' (POSIX). */

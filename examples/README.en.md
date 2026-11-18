@@ -3,7 +3,7 @@
 
 [Français](README.md)
 
-The 76 folders of `examples/`, one line each, grouped by use. A link leads to the folder's README when it
+The 77 folders of `examples/`, one line each, grouped by use. A link leads to the folder's README when it
 has one.
 
 ## Where they are installed
@@ -61,7 +61,7 @@ Most come from gtkdialog. Each script picks its binary from `GTKDIALOG` (default
 - `hseparator/` — `<hseparator>`: horizontal separator.
 - `image/` — `<image>`: an image.
 - `infobar/` — `<infobar>`: a notification bar.
-- `layer-shell/` — `<window>` attributes to anchor a window under Wayland (bar, dock).
+- `layer-shell/` — `<window>` attributes to anchor a window under Wayland (bar, dock); gtk3sermo only.
 - `linkbutton/` — `<linkbutton>`: a link button.
 - `list/` — `<list>`: list with selection, actions, signals.
 - `menu/` — `<menu>`: a menu.
@@ -81,7 +81,7 @@ Most come from gtkdialog. Each script picks its binary from `GTKDIALOG` (default
 - `statusbar/` — `<statusbar>`: status bar.
 - `switch/` — `<switch>`: on/off switch.
 - `table/` — `<table>`: table.
-- `terminal/` — `<terminal>`: embedded terminal (gtk3sermo and gtk4sermo, with VTE).
+- `terminal/` — `<terminal>`: embedded terminal (interactive shell with gtk3sermo and gtk4sermo, VTE; elsewhere the command's output, read-only).
 - `text/` — `<text>`: text label.
 - `timer/` — `<timer>`: timer.
 - `togglebutton/` — `<togglebutton>`: toggle button.
@@ -114,12 +114,12 @@ Three complete applications, written by Thunor for gtkdialog (GPL-2.0 or later).
 - `modbus/` — read a Modbus/TCP controller, read-only, with a fake controller ([README](modbus/README.md) (French only)).
 - `opcua/` — read an OPC UA server, read-only, with a fake server and test certificates ([README](opcua/README.md) (French only)).
 - `domotique-mqtt/` — read MQTT sensors and control with a click, in native tags ([README](domotique-mqtt/README.md) (French only)).
-- `mavlink/` — a drone's telemetry, and safety orders from an allow-list ([README](mavlink/README.md) (French only)).
+- `mavlink/` — a drone's telemetry, safety orders and piloting (3.2.0) from an allow-list ([README](mavlink/README.md) (French only)).
 - `lecteur-media/` — play a sound or a video: play, pause, volume, state ([README](lecteur-media/README.md) (French only)).
 
 ## Network and hardware
 
-- `approbation/` — a human approval gate in one window; also used for the sends of `bus-can` and `liaison-serie` ([README](approbation/README.md) (French only)).
+- `approbation/` — a human approval gate in one window; also used for the sends of `bus-can` and `liaison-serie`, and for the photo and video of `camera-capture` ([README](approbation/README.md) (French only)).
 - `bluetooth-scan/` — Bluetooth devices in range, read-only ([README](bluetooth-scan/README.md) (French only)).
 - `bus-can/` — listen to a CAN bus, and send a frame only after confirmation ([README](bus-can/README.md) (French only)).
 - `camera-apercu/` — see a camera on a click, recording nothing ([README](camera-apercu/README.md) (French only)).

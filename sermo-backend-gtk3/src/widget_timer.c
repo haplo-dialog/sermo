@@ -44,6 +44,7 @@ static void widget_timer_input_by_command(variable *var, char *command);
 static void widget_timer_input_by_file(variable *var, char *filename);
 static void widget_timer_input_by_items(variable *var);
 gboolean widget_timer_timer_callback(gpointer data);
+static void widget_timer_detruit(GtkWidget *widget, gpointer data);
 
 /* Notes:
  * This is a custom widget in that it's a GtkLabel displaying the
@@ -231,6 +232,9 @@ void widget_timer_refresh(variable *var)
 			(value = get_tag_attribute(var->widget_tag_attr, "interval"))) {
 			interval = atoi(value);
 		}
+		/* Un intervalle nul ou négatif donnait une source sans attente :
+		 * un cœur saturé, les actions relancées sans arrêt. */
+		if (interval < 1) interval = 1;
 		if (milliseconds) {
 			/* Precision in milliseconds */
 			timer_id = g_timeout_add(
@@ -242,6 +246,11 @@ void widget_timer_refresh(variable *var)
 		}
 		/* Store the timer_id as a piece of widget data */
 		g_object_set_data(G_OBJECT(var->Widget), "_timer-id", GINT_TO_POINTER(timer_id));
+		/* La source part avec le widget. Sans cela elle survivait à la
+		 * fermeture de sa fenêtre, et une fenêtre relancée avant le tic
+		 * suivant se retrouvait avec deux minuteries pour une variable. */
+		g_signal_connect(G_OBJECT(var->Widget), "destroy",
+			G_CALLBACK(widget_timer_detruit), GUINT_TO_POINTER(timer_id));
 		/* Set the text of the label to its variable name */
 		g_snprintf(text, sizeof(text), 			"<span fgcolor='white' bgcolor='darkred'> %s </span>",
 			attributeset_get_first(&element, var->Attributes, ATTR_VARIABLE));
@@ -434,6 +443,16 @@ static void widget_timer_input_by_items(variable *var)
 /***********************************************************************
  * Timer Callback                                                      *
  ***********************************************************************/
+
+static void widget_timer_detruit(GtkWidget *widget, gpointer data)
+{
+	guint id = GPOINTER_TO_UINT(data);
+
+	(void)widget;
+	/* La source peut déjà s'être retirée d'elle-même (rappel rendu FALSE). */
+	if (id && g_main_context_find_source_by_id(NULL, id))
+		g_source_remove(id);
+}
 
 gboolean widget_timer_timer_callback(gpointer data)
 {

@@ -310,7 +310,7 @@ void widget_switch_save(variable *var)
 	}
 
 	if (filename) {
-		if ((outfile = fopen(filename, "w"))) {
+		if ((outfile = sermo_fopen_output(filename))) {
 			is_active = gtk_switch_get_active(GTK_SWITCH(var->Widget));
 			if (is_active) fprintf(outfile, "%s", "true");
 			else fprintf(outfile, "%s", "false");

@@ -20,6 +20,7 @@
 #include "tag_attributes.h"
 #include "widget_comboboxtext.h"
 #include "safe_exec.h"
+#include "jouer_actions.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -29,8 +30,14 @@ static void _cbt_selected(void *data, Evas_Object *obj, void *event_info)
     Elm_Object_Item *item = (Elm_Object_Item *)event_info;
     const char *label = elm_object_item_text_get(item);
     if (label) {
-        free(evas_object_data_get(obj, "text_val"));
+        char *avant = evas_object_data_get(obj, "text_val");
+        int change = !avant || strcmp(avant, label) != 0;
+        free(avant);
         evas_object_data_set(obj, "text_val", strdup(label));
+        /* choisir un autre élément joue les <action> de la liste (signal
+         * « changed » de l'étalon) ; muettes sur ce port jusqu'à la 3.3.0 */
+        if (change)
+            jouer_actions((GtkWidget *)obj, (AttributeSet *)data, "changed", NULL);
     }
 }
 
@@ -42,12 +49,29 @@ static void _cbt_select(Evas_Object *hs, const char *label)
     evas_object_data_set(hs, "text_val", strdup(label));
 }
 
+static char *_cbt_avant(Evas_Object *hs)
+{
+    const char *v = (const char *)evas_object_data_get(hs, "text_val");
+    return strdup(v ? v : "");
+}
+
+/* Règle de l'étalon gtk3sermo : les <action> jouent quand le texte du widget
+ * n'est plus le même après qu'avant. avant : copie libérée ici. */
+static void _cbt_jouer_si_change(variable *var, Evas_Object *hs, char *avant)
+{
+    const char *v = (const char *)evas_object_data_get(hs, "text_val");
+    int change = avant && strcmp(avant, v ? v : "") != 0;
+    free(avant);
+    if (change)
+        jouer_actions((GtkWidget *)hs, var->Attributes, "changed", NULL);
+}
+
 GtkWidget *widget_comboboxtext_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
     Evas_Object *parent = efl_main_win_get();
     Evas_Object *hs = elm_hoversel_add(parent ? parent : elm_win_add(NULL,"tmp",ELM_WIN_BASIC));
-    (void)Attr; (void)attr; (void)Type;
-    evas_object_smart_callback_add(hs, "selected", _cbt_selected, NULL);
+    (void)attr; (void)Type;
+    evas_object_smart_callback_add(hs, "selected", _cbt_selected, Attr);
     evas_object_data_set(hs, "text_val", strdup(""));
 
     /* <input>, <item> et <default> : chargés par widget_comboboxtext_refresh(),
@@ -70,8 +94,16 @@ gchar *widget_comboboxtext_envvar_all_construct(variable *var)
 }
 void widget_comboboxtext_clear(variable *var)
 {
+    Evas_Object *hs;
+    char *avant;
     if (!var || !var->Widget) return;
-    elm_hoversel_clear((Evas_Object *)var->Widget);
+    hs = (Evas_Object *)var->Widget;
+    avant = _cbt_avant(hs);
+    /* Comme l'étalon : la liste est vidée et plus rien n'est choisi. Jusqu'à
+     * la 3.3.0 ce port gardait le texte du dernier choix. */
+    elm_hoversel_clear(hs);
+    _cbt_select(hs, "");
+    _cbt_jouer_si_change(var, hs, avant);
 }
 void widget_comboboxtext_refresh(variable *var)
 {
@@ -82,6 +114,7 @@ void widget_comboboxtext_refresh(variable *var)
     gchar **lines, **p;
     gchar *item, *def;
     int initialised;
+    char *avant = NULL;
 
     if (!var || !var->Widget || !var->Attributes) return;
     hs = (Evas_Object *)var->Widget;
@@ -93,6 +126,7 @@ void widget_comboboxtext_refresh(variable *var)
 
     /* Étalon gtk3sermo : un refresh RECHARGE la liste, il ne l'allonge pas. */
     if (initialised) {
+        avant = _cbt_avant(hs);   /* rien au premier chargement, comme l'étalon */
         elm_hoversel_clear(hs);
         _cbt_select(hs, "");
     }
@@ -120,11 +154,11 @@ void widget_comboboxtext_refresh(variable *var)
 
     /* <default>, au premier passage seulement : l'élément de même texte. Un
      * défaut absent de la liste ne change rien, sauf pour comboboxentry où il
-     * devient le texte saisi — et seulement si la liste n'est pas vide
-     * (mesuré sur l'étalon). */
+     * devient le texte du widget, liste vide comprise (l'étalon le perdait
+     * sur une liste vide jusqu'à la 3.3.0). */
     el = NULL;
     def = attributeset_get_first(&el, var->Attributes, ATTR_DEFAULT);
-    if (!initialised && def && elm_hoversel_items_get(hs)) {
+    if (!initialised && def) {
         int trouve = 0;
         EINA_LIST_FOREACH(elm_hoversel_items_get(hs), l, it) {
             const char *t = elm_object_item_text_get(it);
@@ -137,7 +171,31 @@ void widget_comboboxtext_refresh(variable *var)
         if (!trouve && var->Type == WIDGET_COMBOBOXENTRY)
             _cbt_select(hs, def);
     }
+    _cbt_jouer_si_change(var, hs, avant);
 }
 void widget_comboboxtext_fileselect(variable *var, const char *n, const char *v) {}
-void widget_comboboxtext_removeselected(variable *var) {}
+void widget_comboboxtext_removeselected(variable *var)
+{
+    Evas_Object *hs;
+    const Eina_List *l;
+    Elm_Object_Item *it, *choisi = NULL;
+    char *avant;
+    int idx = -1, i = 0;
+
+    if (!var || !var->Widget) return;
+    hs = (Evas_Object *)var->Widget;
+    avant = _cbt_avant(hs);
+    /* Comme l'étalon : l'élément choisi est retiré, puis le précédent est
+     * choisi (le premier s'il n'y en a pas). Sans effet jusqu'à la 3.3.0. */
+    EINA_LIST_FOREACH(elm_hoversel_items_get(hs), l, it) {
+        const char *t = elm_object_item_text_get(it);
+        if (*avant && t && strcmp(t, avant) == 0) { choisi = it; idx = i; break; }
+        i++;
+    }
+    if (choisi) elm_object_item_del(choisi);
+    idx = idx > 0 ? idx - 1 : 0;
+    it = eina_list_nth(elm_hoversel_items_get(hs), idx);
+    _cbt_select(hs, it && elm_object_item_text_get(it) ? elm_object_item_text_get(it) : "");
+    _cbt_jouer_si_change(var, hs, avant);
+}
 void widget_comboboxtext_save(variable *var) {}

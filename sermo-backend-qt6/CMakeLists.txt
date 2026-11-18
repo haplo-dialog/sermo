@@ -10,6 +10,20 @@ string(STRIP "${SERMO_VERSION}" SERMO_VERSION)
 
 project(qt6sermo VERSION ${SERMO_VERSION} LANGUAGES C CXX)
 
+# Poids : chaque fonction et chaque donnée dans sa section, et l'éditeur de
+# liens retire celles que rien n'atteint (le cœur est une bibliothèque
+# statique : sans cela, tout ce qu'un fichier objet contient est lié dès
+# qu'une de ses fonctions sert). Mesuré le 2026-11-15 : html 399 → 359 Kio,
+# efl1 375 → 343, ncurses 387 → 347 (tests/garde_poids.sh).
+add_compile_options(-ffunction-sections -fdata-sections)
+# Le lieur d'Apple ne connaît pas --gc-sections : son équivalent est
+# -dead_strip (non essayé sur un Mac : aucun n'est à portée de ce dépôt).
+if(APPLE)
+  add_link_options(-Wl,-dead_strip)
+else()
+  add_link_options(-Wl,--gc-sections)
+endif()
+
 # config.h est ENGENDRÉ ici, pas versionné : une copie écrite à la main était
 # ignorée par git, donc absente de tout clone propre — le port ne compilait
 # pas ailleurs que sur le poste d'origine. La version suit désormais

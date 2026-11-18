@@ -112,6 +112,13 @@ v=$(lire "mqtt://127.0.0.1:$P1?sujet=maison/salon/temperature&cache=0"); rc=$?
 [ $rc = 0 ] && [ "$v" = 21.5 ] && ok "message retenu lu (21.5)" || ko "retenu : rc=$rc v=[$v] $(cat "$T/err")"
 
 # 2. message suivant (rien de retenu)
+# Octets de contrôle du réseau : ESC, CR, NUL deviennent des espaces (une
+# séquence de terminal n'arrive pas au dialogue) ; le saut de ligne reste.
+printf 'A\033[2JB\rC\000D\nE' | mosquitto_pub -p "$P1" -t maison/piege -s -r || exit 2
+v=$(lire "mqtt://127.0.0.1:$P1?sujet=maison/piege&cache=0" | od -An -c | tr -s ' \n' ' '); rc=$?
+case "$v" in *033*|*'\r'*|*'\0'*) ko "octets de contrôle transmis au dialogue : $v" ;;
+    *" A [ 2 J B C D \n E \n"*) ok "octets de contrôle neutralisés (ESC, CR, NUL), saut de ligne gardé" ;;
+    *) ko "message piégé rendu autrement qu'attendu : [$v] $(cat "$T/err")" ;; esac
 ( sleep 0.4; mosquitto_pub -p "$P1" -t maison/porte -m fermee ) &
 v=$(lire "mqtt://127.0.0.1:$P1?sujet=maison/porte&delai=3000&cache=0"); rc=$?; wait $!
 [ $rc = 0 ] && [ "$v" = fermee ] && ok "message suivant lu (fermee)" || ko "suivant : rc=$rc v=[$v] $(cat "$T/err")"

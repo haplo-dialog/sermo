@@ -21,6 +21,9 @@ Le mode `serve` est le seul écouteur réseau du projet. Ses gardes : écoute su
 `127.0.0.1` uniquement, port tiré par le noyau, jeton de 128 bits dans le chemin
 (comparé à temps constant), une seule page servie, requête bornée, une seule
 réponse puis sortie, délai d'expiration (`SERMO_HTML_TIMEOUT`, 300 s par défaut).
+Depuis la 3.3.0 : en-tête `Host` étranger refusé (403), en-têtes de protection
+(`X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy`), et une
+connexion muette ne retient plus le serveur.
 
 ## Variables d'environnement
 
@@ -48,4 +51,4 @@ Dépendances : celles du cœur seulement.
 ci/construire.sh html          # → sermo-backend-html/_build/htmlsermo
 ```
 
-Bancs : `ci/bancs.sh html` (XML 55/55, comportement 61/61, mesurés le 2026-10-10).
+Bancs : `ci/bancs.sh html` (XML 55/55, comportement 95/95, mesurés le 2026-11-16).

@@ -160,6 +160,22 @@ static void _append_row(GtkWidget *widget, list_t *sliced)
 }
 
 /* -----------------------------------------------------------------------
+ * Append (action append:SOURCE,TABLE)
+ * ----------------------------------------------------------------------- */
+/* Une rangée à la fin, découpée sur « | » comme un <item>. Jusqu'à la 3.3.0
+ * append: vers une <table> n'était pas servi (« Copy not implemented »). */
+void widget_table_append_row(variable *var, const char *valeur)
+{
+	list_t *sliced;
+
+	if (var == NULL || var->Widget == NULL || valeur == NULL)
+		return;
+	sliced = linecutter(g_strdup(valeur), '|');
+	_append_row(var->Widget, sliced);
+	if (sliced) list_t_free(sliced);
+}
+
+/* -----------------------------------------------------------------------
  * Clear
  * ----------------------------------------------------------------------- */
 
@@ -415,6 +431,11 @@ gchar *widget_table_envvar_construct(GtkWidget *widget)
 	model     = gtk_tree_view_get_model(GTK_TREE_VIEW(widget));
 	selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(widget));
 
+	/* exported-column hors du modèle : gtk_tree_model_get ne remplit rien et
+	 * la cellule, jamais écrite, était libérée telle quelle. */
+	if (column < 0 || !model || column >= gtk_tree_model_get_n_columns(model))
+		column = 0;
+
 	if (selectionmode == GTK_SELECTION_NONE) {
 		string = g_strdup("");
 
@@ -425,6 +446,7 @@ gchar *widget_table_envvar_construct(GtkWidget *widget)
 		for (row = rows; row != NULL; row = row->next) {
 			if (gtk_tree_model_get_iter(model, &iter,
 				(GtkTreePath *)row->data)) {
+				cell = NULL;
 				gtk_tree_model_get(model, &iter, column, &cell, -1);
 				if (first) {
 					text  = g_strconcat(line, cell ? cell : "", NULL);
@@ -663,7 +685,7 @@ void widget_table_save(variable *var)
 	}
 
 	if (filename) {
-		if ((outfile = fopen(filename, "w"))) {
+		if ((outfile = sermo_fopen_output(filename))) {
 			model = gtk_tree_view_get_model(GTK_TREE_VIEW(var->Widget));
 			ncols = _get_ncols(var->Widget);
 			valid = gtk_tree_model_get_iter_first(model, &iter);

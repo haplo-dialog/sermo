@@ -30,6 +30,11 @@ extern "C" {
  */
 int render_loop(WidgetNode *root, const char *title, int win_w, int win_h);
 
+/* launch: — reprend la boucle depuis une action, pour servir la fenêtre qui
+ * vient d'être construite (voir render.cpp). Ne rend la main que si toutes
+ * les fenêtres sont fermées. */
+void render_reprendre(void);
+
 #ifdef __cplusplus
 }
 #endif

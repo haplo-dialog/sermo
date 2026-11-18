@@ -132,6 +132,7 @@ override_dh_auto_install:
 	set -e; for d in approbation bluetooth-scan bus-can camera-apercu camera-capture certificat-tls dns-testeur \
 	    domotique-mqtt gnss-moniteur heure-ntp journal-direct lecteur-media liaison-serie \
 	    reseau-testeur usb-moniteur wifi-scan; do \
+	    test -d examples/$$d || { echo "debian/rules : examples/$$d manque" >&2; exit 1; }; \
 	    find examples/$$d -type f ! -name imgui.ini | while read -r f; do \
 	        case "$$f" in *.sh|*.py) m=0755 ;; *) m=0644 ;; esac; \
 	        install -D -m $$m "$$f" debian/sermo-doc/usr/share/doc/sermo-doc/$$f; \

@@ -156,7 +156,7 @@ void widget_vscale_save(variable *var)
         }
         act = attributeset_get_next(&element, var->Attributes, ATTR_OUTPUT);
     }
-    if (filename && (outfile = fopen(filename, "w"))) {
+    if (filename && (outfile = sermo_fopen_output(filename))) {
         fprintf(outfile, "%g\n", gtk_range_get_value(GTK_RANGE(var->Widget)));
         fclose(outfile);
     }

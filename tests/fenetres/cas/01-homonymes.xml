@@ -1,5 +1,5 @@
 <!-- SPDX-License-Identifier: GPL-2.0-or-later -->
-<!-- DESC: deux fenetres ouvertes en meme temps declarent la meme variable : la premiere garde la sienne, la seconde est rangee sous NOM__W<id> -->
+<!-- DESC: deux fenetres ouvertes en meme temps declarent la meme variable : la premiere garde la sienne, la seconde est rangee sous NOM__W<id>, avec son <default> et son <input> -->
 <window><vbox>
 <entry><variable>NOM</variable><default>un</default></entry>
 <progressbar><variable>P</variable><input>echo 100</input><action>launch:SECONDE</action></progressbar>

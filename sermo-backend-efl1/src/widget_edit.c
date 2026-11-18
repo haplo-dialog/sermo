@@ -117,3 +117,22 @@ void widget_edit_refresh(variable *var)
 void widget_edit_fileselect(variable *var, const char *n, const char *v) {}
 void widget_edit_removeselected(variable *var) {}
 void widget_edit_save(variable *var) {}
+
+/* append: vers <edit> : le texte est ajouté à la fin. */
+void efl1_edit_ajouter(GtkWidget *w, const char *texte);
+void efl1_edit_ajouter(GtkWidget *w, const char *texte)
+{
+    gchar *avant, *tout;
+    size_t n;
+
+    if (!w || !texte) return;
+    avant = widget_edit_envvar_construct(w);
+    n = strlen(avant) + strlen(texte) + 1;
+    tout = (gchar *)malloc(n);
+    if (tout) {
+        snprintf(tout, n, "%s%s", avant, texte);
+        _edit_set_plain(edit_entry(w), tout);
+        free(tout);
+    }
+    g_free(avant);
+}

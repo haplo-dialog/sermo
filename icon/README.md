@@ -10,7 +10,8 @@ Les icônes d'application des six ports graphiques
 engendrées depuis `haplo-dialog-hd.svg`, aux huit tailles du thème hicolor
 (16, 22, 24, 32, 48, 64, 128, 256), et installées par `debian/rules`.
 
-Le port **ncurses** n'a pas d'icône : un terminal ne peut pas en porter. La
+Les ports **lvgl** et **html** n'ont pas d'icône d'application. Le port
+**ncurses** non plus : un terminal ne peut pas en porter. La
 marque y est écrite en toutes lettres — « HD » dans le filet du haut de la
 fenêtre (`sermo-backend-ncurses/src/render_ncurses.c`).
 

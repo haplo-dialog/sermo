@@ -132,7 +132,20 @@ backend installé s'y enregistre, l'utilisateur choisit le défaut.
 
 ## 2. Historique des versions
 
-### 2.7.3 → 3.1.2, en bref (d'après CHANGELOG.md)
+### 2.7.3 → 3.3.0, en bref (d'après CHANGELOG.md)
+
+- **3.3.0** (2026-11-18) — audit complet ; les sept ports sans GTK
+  rejoignent gtk3 : `launch:` et `closewindow:`, `save:` et `append:`,
+  `activate:` sur un bouton, l'action des listes déroulantes, les attributs
+  `day`/`month`/`year` de `<calendar>`, `disable:` d'une minuterie, sur les
+  neuf ports ; `--render-png` n'exécute plus les commandes du dialogue (sauf
+  `SERMO_RENDER_EXEC=1`) ; `SERMO_NO_FILES` ; noms de variables réservés ;
+  95 cas de comportement.
+- **3.2.0** (2026-11-04) — piloter un drone ArduPilot Copter (`pilote=armer`,
+  `decoller`, `mode`, `aller`, `desarmer`), sous liste blanche et en deux
+  appuis ; photo et vidéo d'une caméra ; la vidéo dans la fenêtre sous
+  Wayland pour gtk3 et sous X11 pour qt6 ; `sermo.schema.json`, le langage lu
+  dans le code ; `sermo_run` de sermoia-mcp fermé par défaut.
 
 - **3.1.2** — sécurité du lecteur : la cage de mpv masque `/run/user` ; le bus
   D-Bus de session et les autres sockets de session n'y sont plus joignables
@@ -148,7 +161,7 @@ backend installé s'y enregistre, l'utilisateur choisit le défaut.
   et `<action mavlink>` (télémétrie ; réglage d'un paramètre drone désarmé,
   ordres de sécurité `rtl`, `land`, `terminaison` en deux appuis, envoi d'une
   mission jamais lancée), `<input media>` et `<action media>` (son et vidéo par
-  mpv, en cage bubblewrap) ; quinze exemples prêts à l'emploi. Prévu en 3.2.0 :
+  mpv, en cage bubblewrap) ; quinze exemples prêts à l'emploi. Prévu alors pour la 3.2.0 :
   le pilotage d'un drone, la vidéo dans la fenêtre du dialogue sur les autres
   ports et sous Wayland (déjà faite en 3.1.1 pour gtk3 sous X11), l'essai du
   lecteur sous Wayland.
@@ -406,7 +419,7 @@ la lignée sermo.
 - **MINEUR** — nouvelles capacités rétro-compatibles (widget, action, backend).
 - **CORRECTIF** — corrections sans changement d'interface.
 
-**Version courante : `3.2.0` ; la première version 2.x publiée a été la `2.7.3`.** La ligne 2.x s'est
+**Version courante : `3.3.0` ; la première version 2.x publiée a été la `2.7.3`.** La ligne 2.x s'est
 ouverte sur `2.0.0`, première édition modulaire, restée interne, dont le bump MAJEUR reflétait le changement du contrat de frontière cœur↔backend
 (`sermo_backend.h`, ponts `sermo_be_*`) ; le langage XML, lui, reste
 rétro-compatible avec gtkdialog / sermo 1.x.
@@ -415,7 +428,7 @@ Le cœur (`libsermocore`) et les backends **partagent le numéro de version** ta
 qu'ils sont livrés ensemble. Le contrat de frontière `sermo_backend.h` est le
 point de compatibilité : un changement incompatible impose un bump MAJEUR, car un
 backend ancien ne se lierait plus au cœur. `sermocore.pc` porte la version
-(`Version: 3.2.0`) ; un backend peut exiger une version minimale du cœur via
+(`Version: 3.3.0`) ; un backend peut exiger une version minimale du cœur via
 `pkg_check_modules(SERMOCORE REQUIRED sermocore>=X.Y)`.
 
 **Compatibilité des scripts.** Les scripts XML écrits pour gtkdialog / sermo

@@ -36,12 +36,19 @@ typedef struct {
 static Eina_Bool _timer_cb(void *data)
 {
     TimerData *td = (TimerData *)data;
+    /* Fenêtre fermée par closewindow: (efl_neutral_abi.c) : la minuterie s'arrête. */
+    Evas_Object *haut = elm_object_top_widget_get(td->placeholder);
+    if (haut && evas_object_data_get(haut, "sermo_fermee"))
+        return ECORE_CALLBACK_CANCEL;
     td->ticks++;
     /* TOUTES les actions, via le repartiteur du coeur (exit:, refresh:,
      * shell...) — safe_system direct traitait « exit:fin » comme une
      * commande et le dialogue ne se fermait jamais. */
     /* … chacune avec sa fonction (attribut function=) : voir jouer_actions.h */
-    jouer_actions((GtkWidget *)td->placeholder, td->Attr, "tick", NULL);
+    /* disable: d'une minuterie : elle ne joue plus ses actions, comme l'étalon
+     * (gtk3sermo n'émet « tick » que si le widget est sensible). */
+    if (!elm_object_disabled_get(td->placeholder))
+        jouer_actions((GtkWidget *)td->placeholder, td->Attr, "tick", NULL);
     return ECORE_CALLBACK_RENEW;
 }
 
@@ -56,11 +63,21 @@ GtkWidget *widget_timer_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     if (attr) {
         const char *v;
         /* g_ascii_strtod, pas atof : sous locale fr, atof("0.5") rend 0. */
+        /* Règle de l'étalon gtk3sermo : « milliseconds » est un BOOLÉEN (true,
+         * yes, 1) qui change l'unité de « interval », lu par atoi ; défaut 1 s,
+         * ou 1000 ms. Ce port lisait « milliseconds » comme un nombre :
+         * milliseconds="true" interval="200" battait à 1 s au lieu de 200 ms. */
+        int en_ms = 0;
+        long n = 1;
+        if ((v = get_tag_attribute(attr, "milliseconds")) &&
+            (g_ascii_strcasecmp(v, "true") == 0 || g_ascii_strcasecmp(v, "yes") == 0 || atoi(v) == 1)) {
+            en_ms = 1;
+            n = 1000;
+        }
         if ((v = get_tag_attribute(attr, "interval")))
-            interval = g_ascii_strtod(v, NULL);
-        if ((v = get_tag_attribute(attr, "milliseconds")))
-            interval = g_ascii_strtod(v, NULL) / 1000.0;
-        if (interval <= 0) interval = 1.0;
+            n = atoi(v);
+        interval = en_ms ? (double)n / 1000.0 : (double)n;
+        if (interval <= 0) interval = en_ms ? 0.001 : 1.0;
     }
 
     TimerData *td = calloc(1, sizeof(TimerData));
@@ -83,7 +100,7 @@ gchar *widget_timer_envvar_construct(GtkWidget *w)
     if (!w) return g_strdup("false");
     td = (TimerData *)evas_object_data_get((Evas_Object *)w, "timer_data");
     if (!td) return g_strdup("false");
-    return g_strdup(td->enabled ? "true" : "false");
+    return g_strdup(td->enabled && !elm_object_disabled_get((Evas_Object *)w) ? "true" : "false");
 }
 gchar *widget_timer_envvar_all_construct(variable *var)
 {

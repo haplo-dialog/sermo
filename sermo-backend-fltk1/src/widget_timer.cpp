@@ -11,8 +11,8 @@
  * <timer> → widget invisible (Fl_Box de taille nulle) + Fl::add_timeout()
  *
  * Attributs :
- *   interval   : délai en secondes (float, défaut 1.0)
- *   milliseconds : délai en ms (alternative à interval)
+ *   interval   : délai, en secondes (entier, défaut 1) ; en ms si milliseconds
+ *   milliseconds : booléen (true, yes, 1) : interval est en millisecondes
  *   visible    : si "false", widget invisible (défaut)
  *   function   : action à exécuter à chaque tick (via safe_exec)
  *
@@ -57,7 +57,12 @@ static void timer_cb(void *data)
      * commande shell…) — safe_system direct traitait « exit:fin » comme
      * une commande et le dialogue ne se fermait jamais. */
     /* … chacune avec sa fonction (attribut function=) : voir jouer_actions.h */
-    jouer_actions((GtkWidget *)td->widget, td->Attr, "tick", NULL);
+    /* disable: d'une minuterie : elle ne joue plus ses actions, comme l'étalon
+     * (gtk3sermo n'émet « tick » que si le widget est sensible). */
+    /* active_r() : la fenêtre fermée par closewindow: est désactivée, ses
+     * minuteries se taisent avec elle. */
+    if (td->widget->active_r())
+        jouer_actions((GtkWidget *)td->widget, td->Attr, "tick", NULL);
 
     /* Replanifier */
     Fl::add_timeout(td->interval, timer_cb, data);
@@ -84,11 +89,21 @@ GtkWidget *widget_timer_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         const char *v;
         /* g_ascii_strtod, pas atof : sous locale fr_FR, g_ascii_strtod("0.5", NULL) rend 0
          * en silence (piège documenté). */
+        /* Règle de l'étalon gtk3sermo : « milliseconds » est un BOOLÉEN (true,
+         * yes, 1) qui change l'unité de « interval », lu par atoi ; défaut 1 s,
+         * ou 1000 ms. Ce port lisait « milliseconds » comme un nombre :
+         * milliseconds="true" interval="200" battait à 1 s au lieu de 200 ms. */
+        int en_ms = 0;
+        long n = 1;
+        if ((v = get_tag_attribute(attr, "milliseconds")) &&
+            (g_ascii_strcasecmp(v, "true") == 0 || g_ascii_strcasecmp(v, "yes") == 0 || atoi(v) == 1)) {
+            en_ms = 1;
+            n = 1000;
+        }
         if ((v = get_tag_attribute(attr, "interval")))
-            td->interval = g_ascii_strtod(v, NULL);
-        if ((v = get_tag_attribute(attr, "milliseconds")))
-            td->interval = g_ascii_strtod(v, NULL) / 1000.0;
-        if (td->interval <= 0) td->interval = 1.0;
+            n = atoi(v);
+        td->interval = en_ms ? (double)n / 1000.0 : (double)n;
+        if (td->interval <= 0) td->interval = en_ms ? 0.001 : 1.0;
     }
 
     box->user_data(td);
@@ -107,7 +122,7 @@ gchar *widget_timer_envvar_construct(GtkWidget *widget)
     if (!box) return g_strdup("false");
     TimerData *td = (TimerData *)box->user_data();
     if (!td) return g_strdup("false");
-    return g_strdup(td->enabled ? "true" : "false");
+    return g_strdup(td->enabled && box->active() ? "true" : "false");
 }
 
 gchar *widget_timer_envvar_all_construct(variable *var)

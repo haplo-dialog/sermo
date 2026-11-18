@@ -33,9 +33,11 @@ l'utilisateur change.
   dans `lv_conf.h`) ; une icône symbolique prend la couleur du texte. Depuis la
   2.8.2, le port contient donc du C++.
 - **Clic** : le pilote X11 de LVGL relit la souris toutes les 33 ms et ne garde
-  que l'état du moment. Un clic plus bref (appui et relâche dans le même
-  relevé, comme `xdotool click`) est perdu ; un clic humain ne l'est pas. Les
-  essais automatiques doivent tenir l'appui (`mousedown`, ~0,1 s, `mouseup`).
+  que l'état du moment. Depuis la 3.3.0, le port retient la relâche jusqu'à ce
+  qu'un relevé ait vu l'appui : un clic bref (appui et relâche dans le même
+  relevé, comme `xdotool click`) n'est plus perdu.
+- **Une seule fenêtre native** : une fenêtre lancée par `launch:` prend la
+  place de la précédente, qui revient à l'écran au `closewindow:` (3.3.0).
 
 ## Construire
 
@@ -48,5 +50,5 @@ par `wayland-scanner`).
 ci/construire.sh lvgl          # → sermo-backend-lvgl/_build/lvglsermo
 ```
 
-Bancs : `ci/bancs.sh lvgl` (XML 55/55, comportement 61/61, taille de fenêtre,
-clic sur 17 widgets, exemples réels ; mesurés le 2026-10-10).
+Bancs : `ci/bancs.sh lvgl` (XML 55/55, comportement 95/95, taille de fenêtre,
+clic sur 17 widgets, exemples réels ; mesurés le 2026-11-16).

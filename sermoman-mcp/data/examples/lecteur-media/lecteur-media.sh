@@ -6,7 +6,7 @@
 # Enrobe   : rien : balises natives <action media> (sermo-cible-media) et <input media>
 #            (sermo-source-media), qui pilotent mpv
 # Ports    : tous (l'image d'une vidéo s'ouvre dans la fenêtre de mpv : cet exemple
-#            n'utilise pas dans= ; voir le manuel pour l'incrustation (gtk3, X11)) ;
+#            n'utilise pas dans= ; voir le manuel pour l'incrustation) ;
 #            ncursessermo : le son seul, s'il y a un serveur de son
 # Terminal : rien de perdu
 # Usage    : ./lecteur-media.sh [FICHIER] [binaire sermo]

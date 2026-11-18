@@ -55,9 +55,15 @@
       X11, `dans=$ZONE`), separate-window fallback elsewhere.
 - [x] **3.1.2** (2026-10-20): player security, mpv's cage no longer
       reaches the session sockets (D-Bus bus…).
-- [ ] **3.2.0**: pilot a drone (arm, take off, change mode, move); video in
-      the dialog's window on the other ports and under Wayland (already done
-      in 3.1.1 for gtk3 under X11); the player tried under Wayland.
+- [x] **3.2.0** (2026-11-04): pilot a drone (arm, disarm, take off, change
+      mode, go to a point); photo and video from a camera; video in the
+      dialog's window under Wayland for gtk3, and under X11 for qt6.
+- [x] **3.3.0** (2026-11-18): full audit; the seven non-GTK ports catch up
+      with the gtk3 reference (actions, drop-down lists, windows); the sound
+      and video player no longer dies under Wayland without X11.
+- [ ] **To come**, carried over from 3.2.0: video in the dialog's window on
+      the seven other ports, and under Wayland elsewhere than on gtk3; the
+      sound and video player tried in a real Wayland session.
 
-> Progress is **guarded by the three benches** (XML 55 · behaviour 78 · guards):
+> Progress is **guarded by the three benches** (XML 55 · behaviour 95 · guards):
 > no phase advances while a bench is red.

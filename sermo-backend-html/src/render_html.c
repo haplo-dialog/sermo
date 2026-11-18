@@ -549,7 +549,8 @@ static void render_node_corps(FILE *out, WidgetNode *n, int depth)
         if (cur < 0 || cur >= n->child_count) cur = 0;
         fputs("<div class=\"sermo-tabs\">", out);
         for (int i = 0; i < n->child_count; i++) {
-            const char *tl = (n->state.notebook.tab_labels && n->state.notebook.tab_labels[i])
+            const char *tl = (n->state.notebook.tab_labels && i < n->state.notebook.tab_count
+                              && n->state.notebook.tab_labels[i])
                              ? n->state.notebook.tab_labels[i] : "";
             fprintf(out, "<span class=\"sermo-tab%s\">", i == cur ? " sermo-tab-active" : "");
             html_escape(out, tl);

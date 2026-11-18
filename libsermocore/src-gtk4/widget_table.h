@@ -35,5 +35,6 @@ void widget_table_fileselect(
 void widget_table_refresh(variable *var);
 void widget_table_removeselected(variable *var);
 void widget_table_save(variable *var);
+void widget_table_append_row(variable *var, const char *valeur);
 
 #endif

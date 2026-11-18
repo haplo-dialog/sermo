@@ -26,6 +26,7 @@
 #define _GNU_SOURCE
 #endif
 #include <gtk/gtk.h>
+#include "sermo_input.h"
 #include "config.h"
 #include "gtk3d.h"
 #include "attributes.h"
@@ -601,7 +602,7 @@ void widget_button_save(variable *var)
 		/* If we have a valid filename then open it and dump the
 		 * widget's data to it */
 		if (filename) {
-			if ((outfile = fopen(filename, "w"))) {
+			if ((outfile = sermo_fopen_output(filename))) {
 				is_active = gtk_toggle_button_get_active(
 					GTK_TOGGLE_BUTTON(var->Widget));
 				if (is_active) fprintf(outfile, "%s", "true");

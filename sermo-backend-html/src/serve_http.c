@@ -37,6 +37,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <unistd.h>
 #include <errno.h>
 #include <time.h>
@@ -48,7 +49,12 @@
 
 #include "serve_http.h"
 
+#ifndef MSG_NOSIGNAL
+#define MSG_NOSIGNAL 0          /* macOS : SO_NOSIGPIPE sur la connexion, plus bas */
+#endif
+
 #define SERVE_MAX_REQ   (256 * 1024)   /* requête au-delà = coupée */
+#define CONNEXION_MAX_S 5      /* secondes laissées à un client pour envoyer sa requête */
 #define NONCE_BYTES     16             /* 128 bits */
 
 /* ─── Jeton ──────────────────────────────────────────────────────────────── */
@@ -160,7 +166,9 @@ static void print_form(char *body)
 static void send_all(int fd, const char *buf, size_t len)
 {
     while (len) {
-        ssize_t w = write(fd, buf, len);
+        /* MSG_NOSIGNAL : un navigateur qui ferme avant d'avoir tout lu ne doit
+         * pas tuer le programme par SIGPIPE (il n'aurait rendu aucune valeur). */
+        ssize_t w = send(fd, buf, len, MSG_NOSIGNAL);
         if (w <= 0) return;
         buf += w; len -= (size_t)w;
     }
@@ -174,6 +182,25 @@ static void send_simple(int fd, const char *status, const char *body)
         "Content-Length: %zu\r\nConnection: close\r\n\r\n", status, strlen(body));
     if (n > 0) send_all(fd, head, (size_t)n);
     send_all(fd, body, strlen(body));
+}
+
+/* L'en-tête Host vaut-il 127.0.0.1:PORT, localhost:PORT ou [::1]:PORT ? Absent
+ * (HTTP/1.0) : accepté. */
+static int hote_ok(const char *req, const char *hdr_end, unsigned port)
+{
+    const char *h = strcasestr(req, "\r\nhost:");
+    if (!h || h >= hdr_end) return 1;
+    h += 7;
+    while (*h == ' ' || *h == '\t') h++;
+    size_t n = strcspn(h, "\r\n");
+    while (n > 0 && (h[n - 1] == ' ' || h[n - 1] == '\t')) n--;
+    static const char *const noms[] = { "127.0.0.1", "localhost", "[::1]", NULL };
+    for (int i = 0; noms[i]; i++) {
+        char attendu[64];
+        int m = snprintf(attendu, sizeof attendu, "%s:%u", noms[i], port);
+        if (m > 0 && (size_t)m == n && strncasecmp(h, attendu, n) == 0) return 1;
+    }
+    return 0;
 }
 
 /* ─── Boucle ─────────────────────────────────────────────────────────────── */
@@ -224,6 +251,15 @@ int html_serve_once(const char *page, unsigned long len)
         int c = accept(srv, NULL, NULL);
         if (c < 0) { if (errno == EINTR) continue; break; }
 
+        /* Une connexion muette ne retient pas le serveur (il n'en sert qu'une à
+         * la fois) : quelques secondes pour envoyer la requête, pas plus. */
+        struct timeval tvc = { .tv_sec = left < CONNEXION_MAX_S ? left : CONNEXION_MAX_S, .tv_usec = 0 };
+        setsockopt(c, SOL_SOCKET, SO_RCVTIMEO, &tvc, sizeof tvc);
+        setsockopt(c, SOL_SOCKET, SO_SNDTIMEO, &tvc, sizeof tvc);
+#ifdef SO_NOSIGPIPE
+        setsockopt(c, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof one);
+#endif
+
         char *req = (char *)malloc(SERVE_MAX_REQ + 1);
         if (!req) { close(c); break; }
         size_t used = 0;
@@ -238,8 +274,14 @@ int html_serve_once(const char *page, unsigned long len)
             if (!hdr_end) {
                 hdr_end = strstr(req, "\r\n\r\n");
                 if (hdr_end) {
+                    /* Dans les EN-TÊTES seulement : le corps peut contenir la
+                     * même suite d'octets. */
                     const char *cl = strcasestr(req, "\r\ncontent-length:");
-                    if (cl) clen = strtol(cl + 17, NULL, 10);
+                    if (cl && cl < hdr_end) {
+                        char *fin_nombre;
+                        clen = strtol(cl + 17, &fin_nombre, 10);
+                        if (fin_nombre == cl + 17 || clen < 0 || clen > SERVE_MAX_REQ) clen = -2;   /* illisible */
+                    }
                 }
             }
             if (hdr_end) {
@@ -262,11 +304,21 @@ int html_serve_once(const char *page, unsigned long len)
             close(c); free(req); continue;
         }
 
+        /* L'hôte demandé est celui que le serveur a annoncé : une page d'un
+         * autre site qui ferait résoudre son propre nom vers 127.0.0.1 n'est
+         * pas servie (le jeton reste la barrière principale). */
+        if (!hote_ok(req, hdr_end, port)) {
+            send_simple(c, "403 Forbidden", "<p>403</p>");
+            close(c); free(req); continue;
+        }
+
         if (!strcmp(method, "GET")) {
-            char head[256];
+            char head[512];
             int hn = snprintf(head, sizeof head,
                 "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\n"
-                "Content-Length: %lu\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n", len);
+                "Content-Length: %lu\r\nCache-Control: no-store\r\n"
+                "X-Content-Type-Options: nosniff\r\nX-Frame-Options: DENY\r\nReferrer-Policy: no-referrer\r\n"
+                "Connection: close\r\n\r\n", len);
             if (hn > 0) send_all(c, head, (size_t)hn);
             send_all(c, page, (size_t)len);
             close(c); free(req); continue;
@@ -274,10 +326,19 @@ int html_serve_once(const char *page, unsigned long len)
 
         if (!strcmp(method, "POST")) {
             char *body = hdr_end + 4;
-            if (clen >= 0) {
-                size_t have = used - (size_t)(body - req);
-                if ((size_t)clen < have) body[clen] = '\0';
+            size_t have = used - (size_t)(body - req);
+            /* Un formulaire sans longueur, ou coupé en route (connexion perdue,
+             * délai), n'est PAS un formulaire : le prendre rendait des valeurs
+             * tronquées et terminait le dialogue. On attend le suivant. */
+            if (clen < 0) {
+                send_simple(c, clen == -1 ? "411 Length Required" : "400 Bad Request", "<p>longueur du corps absente ou illisible</p>");
+                close(c); free(req); continue;
             }
+            if (have < (size_t)clen) {
+                send_simple(c, "400 Bad Request", "<p>formulaire incomplet</p>");
+                close(c); free(req); continue;
+            }
+            body[clen] = '\0';
             print_form(body);
             send_simple(c, "200 OK",
                 "<!doctype html><meta charset=utf-8><title>sermo</title>"

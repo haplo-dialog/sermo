@@ -57,6 +57,14 @@ for p in "${PORTS[@]}"; do
     else
         echo "ÉCHEC : $p sous ASan/UBSan fatals — $(tail -1 "$J/comportement-$p.log")"; echecs=$((echecs + 1))
     fi
+    # Les cas à plusieurs fenêtres (tests/fenetres) : c'est là qu'une fenêtre
+    # fermée par l'action d'un de ses widgets faisait relire à gtk3 et gtk4 un
+    # objet libéré (cas 04, 16/11) — le corpus de comportement ne le jouait pas.
+    if TIMEOUT=60 sh "$RACINE/tests/garde_fenetres_homonymes.sh" "$b" > "$J/fenetres-$p.log" 2>&1; then
+        echo "OK     $p fenêtres : $(tail -1 "$J/fenetres-$p.log" | cut -c1-60)"
+    else
+        echo "ÉCHEC : $p sous ASan/UBSan fatals, cas à plusieurs fenêtres — $(grep -m1 -E 'ÉCART|BLOQ' "$J/fenetres-$p.log")"; echecs=$((echecs + 1))
+    fi
 done
 [ "$echecs" = 0 ] && echo "OK : ${#PORTS[@]} port(s) sans erreur ASan ni UBSan (témoin rouge vu)"
 [ "$echecs" = 0 ]

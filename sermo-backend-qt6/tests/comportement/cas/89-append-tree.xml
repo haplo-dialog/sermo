@@ -1,0 +1,16 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: action append vers un tree ou une table : une rangee ajoutee a la fin, decoupee sur | comme un <item> ; les noms de variables peuvent porter des chiffres (S1, T2) -->
+<window><vbox>
+<entry><variable>SRC</variable><default>n1|n2|n3</default></entry>
+<entry><variable>S1</variable><default>seul</default></entry>
+<tree><label>a|b</label><variable>T2</variable><item>un|1</item><output file>t2.out</output></tree>
+<tree><variable>T0</variable><item>un</item><output file>t0.out</output></tree>
+<table><label>a|b</label><variable>B2</variable><item>un|1</item><output file>b2.out</output></table>
+<entry><variable>FB2</variable><input>sh donnees/lire.sh b2.out</input></entry>
+<entry><variable>FT2</variable><input>sh donnees/lire.sh t2.out</input></entry>
+<entry><variable>FT0</variable><input>sh donnees/lire.sh t0.out</input></entry>
+<timer visible="false"><variable>_T</variable>
+<action>append:SRC,T2</action><action>append:S1,T2</action><action>append:SRC,T0</action><action>append:SRC,B2</action><action>append:S1,B2</action>
+<action>save:T2</action><action>save:T0</action><action>save:B2</action>
+<action>refresh:FT2</action><action>refresh:FT0</action><action>refresh:FB2</action>
+<action>exit:fin</action></timer></vbox></window>

@@ -6,6 +6,8 @@ Backend **SDL 3 + Dear ImGui** de sermo. Binaire : `sdl3sermo`.
 - **Spécificités** :
   - Rendu immédiat via **Dear ImGui** (vendorisé, cible `imgui`).
   - Parsing numérique **locale-C** (`g_ascii_strtod` réel via `strtod_l`).
+  - **Une seule fenêtre native** : une fenêtre lancée par `launch:` prend la
+    place de la précédente, qui revient à l'écran au `closewindow:` (3.3.0).
   - Écrit un `imgui.ini` à l'exécution (état de fenêtre ImGui) — ignoré par git.
   - ⚠️ Sous certains WM (xfwm4), lancer `sdl3sermo` **avant** de démarrer le WM
     pour un mapping/décoration corrects (cf. procédure de capture).

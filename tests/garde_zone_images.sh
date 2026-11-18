@@ -47,7 +47,7 @@ export XDG_RUNTIME_DIR=$RUN F
 # xvfb-run passe par sh (dash), qui perd les fonctions exportées : fichier à charger.
 { declare -f ecrire; echo "F='$F'"; } > "$RUN/fonctions.sh"
 export D='<window title="zi"><vbox><drawingarea width-request="160" height-request="120" media="t"><variable>Z</variable></drawingarea></vbox></window>'
-xvfb-run -a -s "-screen 0 300x200x24" bash -c '
+xvfb-run -a -s "-screen 0 300x200x24 -noreset" bash -c '
 B=$1; R=$2; shift 2
 . "$R/fonctions.sh"
 "$B" --program=D >"$R/log" 2>&1 & p=$!

@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-or-later */
-/* qt6-compat.h — Couche de compatibilité GTK/GLib → Qt6
+/* sermocore-shim.h — couche de compatibilité GTK/GLib du cœur « neutre »
+ * (née comme copie de qt6-compat.h du port Qt 6, d'où les noms « qt6_ »)
  * Force-inclus dans les unités C du core via -include dans CMakeLists.txt.
  *
  * haplo-dialog / qt6sermo 1.0.0

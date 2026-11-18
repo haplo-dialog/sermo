@@ -269,10 +269,18 @@ _compat_box_pack(GtkBox *box, GtkWidget *child,
 
 static inline void _compat_widget_destroy(GtkWidget *w)
 {
-    if (GTK_IS_WINDOW(w))
+    if (GTK_IS_WINDOW(w)) {
         gtk_window_destroy(GTK_WINDOW(w));
-    else
-        gtk_widget_unparent(w);
+    } else {
+        /* Par le conteneur quand il sait retirer un enfant : gtk_widget_unparent
+         * sur une rangée de GtkListBox laisse la liste avec une rangée libérée
+         * dans ses tables (clear: et removeselected: d'une <list>). */
+        GtkWidget *parent = gtk_widget_get_parent(w);
+        if (parent)
+            _compat_container_remove(parent, w);
+        else
+            gtk_widget_unparent(w);
+    }
 }
 
 #define gtk_widget_destroy(w) _compat_widget_destroy(GTK_WIDGET(w))

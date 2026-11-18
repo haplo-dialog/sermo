@@ -236,3 +236,44 @@ void widget_tree_removeselected(variable *var)
     if (sel) elm_object_item_del(sel);
 }
 void widget_tree_save(variable *var) {}
+
+/* ─── save: et append: (appelées par sermo_be_widget_rows/_append) ───────── */
+
+/* Toutes les rangées, une par ligne, sans la ligne d'en-têtes. malloc. */
+char *efl1_tree_rangees(GtkWidget *w);
+int   efl1_tree_ajouter(GtkWidget *w, const char *valeur);
+
+char *efl1_tree_rangees(GtkWidget *w)
+{
+    size_t pos = 0;
+    int premiere = 1;
+    char *r = (char *)malloc(1);
+    Elm_Object_Item *it;
+
+    if (!w || !r) { free(r); return NULL; }
+    r[0] = '\0';
+    for (it = elm_genlist_first_item_get((Evas_Object *)w); it; it = elm_genlist_item_next_get(it)) {
+        const char *t;
+        size_t l;
+        char *n;
+        if (elm_object_item_disabled_get(it)) continue;      /* en-têtes */
+        t = (const char *)elm_object_item_data_get(it);
+        l = t ? strlen(t) : 0;
+        n = (char *)realloc(r, pos + l + 2);
+        if (!n) { free(r); return NULL; }
+        r = n;
+        if (!premiere) r[pos++] = '\n';
+        premiere = 0;
+        if (l) memcpy(r + pos, t, l);
+        pos += l; r[pos] = '\0';
+    }
+    return r;
+}
+
+/* Une rangée à la fin, à colonnes si elle porte « | » (comme un <item>). */
+int efl1_tree_ajouter(GtkWidget *w, const char *valeur)
+{
+    if (!w || !valeur) return 0;
+    _tree_mesurer((Evas_Object *)w, valeur);
+    return _tree_ajouter((Evas_Object *)w, valeur) ? 1 : 0;
+}

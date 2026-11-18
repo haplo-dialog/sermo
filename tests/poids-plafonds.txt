@@ -4,6 +4,15 @@
 # dans le paquet). Mesuré le 15/10 sur la 3.0.0, plafond = mesure + ~10 %.
 # Relever un plafond est un choix écrit ici, jamais un réflexe pour faire
 # passer le banc.
+# 15/11 (3.3.0) — ncurses relevé de 380 à 420, décision de S. Cage : mesuré
+# 387 Kio (379 la veille, 347 sur la 3.0.0). Le poids vient de fonctions
+# ajoutées depuis (fenêtres multiples, save:/append: de <tree> et <table>,
+# <calendar>, <comboboxentry>, fenêtres homonymes), pas d'un gaspillage
+# repéré. Plafond = mesure + ~10 %, la règle d'origine. efl1 (375 pour 380)
+# et html (399 pour 400) sont les deux suivants à surveiller.
+# 15/11, plus tard — ncurses remis à 380, décision de S. Cage : le retrait du
+# code inatteignable à l'édition de liens (-ffunction-sections, --gc-sections)
+# l'a ramené à 347 Kio ; à 420 le plafond ne gardait plus rien.
 # port   mesuré   plafond
 gtk3      455      500
 gtk4      463      510

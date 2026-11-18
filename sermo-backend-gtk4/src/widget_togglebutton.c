@@ -132,7 +132,7 @@ void widget_togglebutton_save(variable *var)
         }
         act = attributeset_get_next(&element, var->Attributes, ATTR_OUTPUT);
     }
-    if (filename && (outfile = fopen(filename, "w"))) {
+    if (filename && (outfile = sermo_fopen_output(filename))) {
         fprintf(outfile, "%s\n",
             gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(var->Widget))
             ? "true" : "false");

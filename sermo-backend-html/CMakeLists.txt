@@ -14,6 +14,20 @@ string(STRIP "${SERMO_VERSION}" SERMO_VERSION)
 
 project(htmlsermo VERSION ${SERMO_VERSION} LANGUAGES C)
 
+# Poids : chaque fonction et chaque donnée dans sa section, et l'éditeur de
+# liens retire celles que rien n'atteint (le cœur est une bibliothèque
+# statique : sans cela, tout ce qu'un fichier objet contient est lié dès
+# qu'une de ses fonctions sert). Mesuré le 2026-11-15 : html 399 → 359 Kio,
+# efl1 375 → 343, ncurses 387 → 347 (tests/garde_poids.sh).
+add_compile_options(-ffunction-sections -fdata-sections)
+# Le lieur d'Apple ne connaît pas --gc-sections : son équivalent est
+# -dead_strip (non essayé sur un Mac : aucun n'est à portée de ce dépôt).
+if(APPLE)
+  add_link_options(-Wl,-dead_strip)
+else()
+  add_link_options(-Wl,--gc-sections)
+endif()
+
 # Le lien se fait en -pie : le code doit être compilé en -fPIE. Debian le fait par
 # défaut, pas toutes les distributions (Slackware 15 : « relocation R_X86_64_32 …
 # recompile with -fPIE », mesuré le 2026-10-10).
@@ -51,6 +65,7 @@ add_executable(htmlsermo
   src/printing.c
   src/sermo_backend_html.c
   src/render_html.c
+  src/fenetres.c            # fenêtres ouvertes (launch:, closewindow:)
   src/serve_http.c          # micro-serveur local (SERMO_HTML_MODE=serve)
   $<TARGET_OBJECTS:sermo_neutral_glist>
 )

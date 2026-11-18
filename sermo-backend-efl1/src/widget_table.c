@@ -47,7 +47,24 @@ typedef struct {
     int          n_cols;
     int          first_data; /* indice de la 1re rangée de données (1 sous un en-tête) */
     int          focus;      /* prend le focus à l'ouverture (sermo_focus.h) */
+    char        *rangees;    /* les rangées de données telles que reçues, une par
+                              * ligne : elm_table ne garde que des étiquettes, et
+                              * save: doit les rendre */
+    size_t       lg_rangees;
 } TableData;
+
+/* Retient une rangée de données pour save:. */
+static void _retenir(TableData *td, const char *ligne)
+{
+    size_t l = strcspn(ligne, "\r\n");
+    char *n = (char *)realloc(td->rangees, td->lg_rangees + l + 2);
+    if (!n) return;
+    td->rangees = n;
+    if (td->lg_rangees) n[td->lg_rangees++] = '\n';
+    memcpy(n + td->lg_rangees, ligne, l);
+    td->lg_rangees += l;
+    n[td->lg_rangees] = '\0';
+}
 
 /* ─── Ajoute une cellule label dans elm_table ─────────────────────────────── */
 static void _table_add_cell(Evas_Object *table, const char *text,
@@ -55,14 +72,18 @@ static void _table_add_cell(Evas_Object *table, const char *text,
 {
     Evas_Object *lbl = elm_label_add(table);
     if (!lbl) return;
+    /* Le texte d'une cellule vient du XML ou d'une commande : échappé avant
+     * d'être confié à elm_label, qui lit du balisage. */
+    gchar *propre = g_markup_escape_text(text ? text : "", -1);
     if (is_header) {
         /* En-tête en gras via markup EFL */
-        char *marked = snprintf_safe("<b>%s</b>", text ? text : "");
+        char *marked = snprintf_safe("<b>%s</b>", propre);
         elm_object_text_set(lbl, marked ? marked : "");
         free(marked);
     } else {
-        elm_object_text_set(lbl, text ? text : "");
+        elm_object_text_set(lbl, propre);
     }
+    g_free(propre);
     elm_table_pack(table, lbl, col, row, 1, 1);
     evas_object_show(lbl);
 }
@@ -134,6 +155,7 @@ GtkWidget *widget_table_create(AttributeSet *Attr, tag_attr *attr, gint Type)
         while (item && row < TABLE_ROWS_MAX) {
             if (*item) {
                 _parse_row(table, item, row, td->n_cols, 0);
+                _retenir(td, item);
                 /* Parite : la 1re ligne de donnees est selectionnee par
                  * defaut, et la variable exporte sa PREMIERE colonne. */
                 if (td->focus && td->selected && !*td->selected) {
@@ -180,6 +202,27 @@ void widget_table_clear(variable *var)
     td->n_rows = 0;
     td->first_data = 0;   /* elm_table_clear emporte aussi l'en-tête */
     free(td->selected); td->selected = strdup("");
+    free(td->rangees); td->rangees = NULL; td->lg_rangees = 0;
+}
+
+/* save: — les rangées de données, une par ligne (sermo_be_widget_rows). malloc. */
+char *efl1_table_rangees(GtkWidget *w);
+char *efl1_table_rangees(GtkWidget *w)
+{
+    TableData *td = w ? (TableData *)evas_object_data_get((Evas_Object *)w, "table_data") : NULL;
+    if (!td) return NULL;
+    return strdup(td->rangees ? td->rangees : "");
+}
+/* append: — une rangée de données à la fin (sermo_be_widget_append). */
+int efl1_table_ajouter(GtkWidget *w, const char *valeur);
+int efl1_table_ajouter(GtkWidget *w, const char *valeur)
+{
+    TableData *td = w ? (TableData *)evas_object_data_get((Evas_Object *)w, "table_data") : NULL;
+    if (!td || !valeur || td->n_rows >= TABLE_ROWS_MAX) return 0;
+    _parse_row(td->table, valeur, td->n_rows, td->n_cols, 0);
+    _retenir(td, valeur);
+    td->n_rows++;
+    return 1;
 }
 void widget_table_refresh(variable *var)
 {
@@ -198,6 +241,7 @@ void widget_table_refresh(variable *var)
     vide = td->n_rows <= td->first_data;
     for (p = lines; *p && td->n_rows < TABLE_ROWS_MAX; p++) {
         _parse_row(td->table, *p, td->n_rows, td->n_cols, 0);
+        _retenir(td, *p);
         /* Comme après <item> : un tableau sans rangée de données exporte la
          * 1re colonne de sa 1re rangée. */
         if (vide && p == lines) {

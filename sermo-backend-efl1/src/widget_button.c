@@ -157,6 +157,15 @@ GtkWidget *widget_button_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     return (GtkWidget *)btn;
 }
 
+/* Crochet du contrat : « activate:NOM » sur un bouton — le signal « clicked »
+ * d'Elementary, comme au clic (actions du bouton, ou sortie d'un bouton nu). */
+int sermo_be_button_click(void *w)
+{
+    if (!w) return 0;
+    evas_object_smart_callback_call((Evas_Object *)w, "clicked", NULL);
+    return 1;
+}
+
 gchar *widget_button_envvar_construct(GtkWidget *widget)
 {
     /* Comme l'étalon (gtk3 widget_button.c) : un bouton ordinaire exporte "",

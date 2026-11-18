@@ -1,0 +1,3 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: list : clear: vide la liste, puis exit (gtk4 liberait les rangees sans les retirer de la liste) -->
+<window><vbox><list><variable>LI</variable><item>x</item><item>y</item><item>z</item></list><timer visible="false"><variable>_T</variable><action>clear:LI</action><action>exit:fin</action></timer></vbox></window>

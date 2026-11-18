@@ -1,0 +1,7 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: une action jouee dans la seconde fenetre vise SA variable homonyme : sa commande lit $NOM de sa fenetre, clear:NOM vide son champ et pas celui de la premiere ; un nom qu elle ne porte pas (AUTRE2) reste celui de la premiere -->
+<window><vbox>
+<entry><variable>NOM</variable><default>un</default></entry>
+<entry><variable>LU</variable><input>sh donnees/lire.sh vu.txt</input></entry>
+<progressbar><variable>P</variable><input>echo 100</input><action>launch:ACTIONS</action></progressbar>
+<timer visible="false" interval="3"><variable>_F</variable><action>refresh:LU</action><action>exit:fin</action></timer></vbox></window>

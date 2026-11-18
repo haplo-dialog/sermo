@@ -1,8 +1,8 @@
 {
  "_": "Généré par outils/schema/generer.py depuis le code de sermo (lexer, grammaire, ports). Ne pas éditer : régénérer. tests/garde_schema.sh refuse un fichier qui diverge.",
  "langage": "sermo-xml",
- "version": "3.2.0",
- "commit": "e796e34",
+ "version": "3.3.0",
+ "commit": "c650ec7",
  "xml_strict": false,
  "note_xml": "Dialecte hérité de gtkdialog : <button ok>, <input file>, <action mqtt …> portent des attributs nus ; ce n'est pas du XML strict. Le validateur de référence est l'analyseur du cœur : sermoia-mcp sermo_check, ou <port>sermo --print-ir.",
  "racine": "window",
@@ -1608,7 +1608,8 @@
     ],
     "use-markup": [
      "gtk3",
-     "gtk4"
+     "gtk4",
+     "qt6"
     ],
     "width-request": [
      "qt6",
@@ -2137,6 +2138,7 @@
   "accept",
   "auto-refresh",
   "block-function-signals",
+  "day",
   "file-monitor",
   "fs-action",
   "fs-filters",
@@ -2145,12 +2147,14 @@
   "fs-title",
   "height",
   "hscrollbar-policy",
+  "month",
   "rate-limit",
   "scrollable",
   "sensitive",
   "shadow-type",
   "vscrollbar-policy",
-  "width"
+  "width",
+  "year"
  ],
  "attributs_hors_widget": {
   "height-request": [

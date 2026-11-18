@@ -149,6 +149,15 @@ GtkWidget *widget_terminal_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     term->setScrollBarPosition(QTermWidget::ScrollBarRight);
     term->setHistorySize(5000);
 
+    /* Sous --render-png, un aperçu n'exécute rien (safe_exec.c) : ni shell,
+     * ni commande injectée. QTermWidget lance son shell lui-même, sans passer
+     * par safe_system ; même garde que le <terminal> VTE de gtk3 et gtk4. */
+    if (safe_exec_tout_refuse()) {
+        g_critical("<terminal> : commande refusee : --render-png n'execute aucune commande "
+                   "(SERMO_RENDER_EXEC=1 pour l'autoriser)");
+        return (GtkWidget *)term;
+    }
+
     /* Démarrer le shell */
     term->startShellProgram();
 

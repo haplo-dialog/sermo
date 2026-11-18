@@ -139,6 +139,38 @@ void fltk_window_move(void *w, int x, int y)
     if (w) ((Fl_Window *)w)->position(x, y);
 }
 
+/* closewindow: — ferme la fenêtre qui contient @w (contrat, facultatif). Elle
+ * est cachée et désactivée, PAS détruite : l'action peut venir d'un de ses
+ * widgets, encore en train de jouer sa liste, et ses minuteries (qui se
+ * taisent une fois la fenêtre désactivée, voir widget_timer.cpp) gardent un
+ * pointeur sur leur boîte. Jusqu'à la 3.3.0 la fenêtre restait à l'écran et
+ * ses minuteries continuaient. */
+static Fl_Window *fenetre_de(void *w)
+{
+    Fl_Widget *q = (Fl_Widget *)w;
+    if (!q) return nullptr;
+    Fl_Window *f = q->as_window();
+    if (!f) f = q->window();
+    while (f && f->window()) f = f->window();
+    return f;
+}
+
+int fltk_window_close(void *w)
+{
+    Fl_Window *f = fenetre_de(w);
+    if (!f) return 0;
+    f->deactivate();
+    f->hide();
+    return 1;
+}
+
+/* launch: d'une fenêtre déjà ouverte : au premier plan. */
+void fltk_window_present(void *w)
+{
+    Fl_Window *f = fenetre_de(w);
+    if (f && f->active()) f->show();
+}
+
 /* ─── Constructeurs de widgets FLTK appelables depuis C ──────────────── */
 
 /* Enveloppe « scrolled window » : son enfant unique (zone de texte, liste,
@@ -170,6 +202,14 @@ void *fltk_scroll_new(int w, int h)
 void fltk_run(void)
 {
     Fl::run();
+    /* La boucle n'a rendu la main que parce que la dernière fenêtre a été fermée
+     * (une action exit:… sort par exit() sans revenir ici) : même sortie que
+     * gtk3sermo, EXIT="abort". Jusqu'à la 3.2.0 ce port ne rendait RIEN, et un
+     * script ne pouvait pas distinguer « fermé » de « planté ». */
+    printf("EXIT=\"abort\"\n");
+    g_setenv("EXIT", "abort", TRUE);
+    fflush(stdout);
+    exit(EXIT_SUCCESS);
 }
 
 /* ─── Rendu offscreen déterministe en PNG (--render-png FILE) ─────────────── *

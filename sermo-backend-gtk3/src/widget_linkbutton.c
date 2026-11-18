@@ -286,7 +286,7 @@ void widget_linkbutton_save(variable *var)
 	}
 
 	if (filename) {
-		if ((outfile = fopen(filename, "w"))) {
+		if ((outfile = sermo_fopen_output(filename))) {
 			uri = gtk_link_button_get_uri(GTK_LINK_BUTTON(var->Widget));
 			fprintf(outfile, "%s", uri ? uri : "");
 			fclose(outfile);

@@ -24,4 +24,8 @@ gint  safe_system(const gchar *command);
 /* Drop-in replacement for popen(cmd,"r"): returns FILE*, close with fclose(). */
 FILE *safe_popen (const gchar *command);
 
+/* Vrai sous --render-png (sauf SERMO_RENDER_EXEC=1) : rien ne doit etre lance.
+ * Defini dans le coeur (libsermocore/src/safe_exec.c). */
+gboolean safe_exec_tout_refuse(void);
+
 #endif /* SAFE_EXEC_H */

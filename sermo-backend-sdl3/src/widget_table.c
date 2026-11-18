@@ -53,6 +53,13 @@ static void table_append_row(WidgetNode *node, const char *line)
     node->state.table.rows = r + 1;
 }
 
+/* append: — une rangée à la fin (ajouter_sauver.h). */
+void sermo_table_ajouter(WidgetNode *node, const char *line);
+void sermo_table_ajouter(WidgetNode *node, const char *line)
+{
+    if (node && line) table_append_row(node, line);
+}
+
 GtkWidget *widget_table_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
     WidgetNode *node = widget_node_new(WT_TABLE, NULL, "table");

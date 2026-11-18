@@ -5,7 +5,7 @@
 #
 # Teste : <image icon-name="…"> (icones de theme), boutons avec icone
 #         (<input file icon="…">), disposition en grille, image fichier.
-#         Vérifie que les icones s'affichent (5 ports sur 6) et restent
+#         Vérifie que les icones s'affichent et restent
 #         coherentes.
 #
 # Usage :  ./05-boutons-icones.sh            (utilise gtk3sermo)

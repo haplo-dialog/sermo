@@ -3,7 +3,7 @@
 
 [English](README.en.md)
 
-Les 76 dossiers d'`examples/`, une ligne chacun, rangés par usage. Un lien mène au README du dossier quand
+Les 77 dossiers d'`examples/`, une ligne chacun, rangés par usage. Un lien mène au README du dossier quand
 il en a un.
 
 ## Où ils sont installés
@@ -61,7 +61,7 @@ La plupart viennent de gtkdialog. Chaque script choisit son binaire par `GTKDIAL
 - `hseparator/` — `<hseparator>` : séparateur horizontal.
 - `image/` — `<image>` : une image.
 - `infobar/` — `<infobar>` : une barre de notification.
-- `layer-shell/` — attributs de `<window>` pour ancrer une fenêtre sous Wayland (barre, dock).
+- `layer-shell/` — attributs de `<window>` pour ancrer une fenêtre sous Wayland (barre, dock) ; gtk3sermo seulement.
 - `linkbutton/` — `<linkbutton>` : un bouton lien.
 - `list/` — `<list>` : liste avec sélection, actions, signaux.
 - `menu/` — `<menu>` : un menu.
@@ -81,7 +81,7 @@ La plupart viennent de gtkdialog. Chaque script choisit son binaire par `GTKDIAL
 - `statusbar/` — `<statusbar>` : barre de statut.
 - `switch/` — `<switch>` : interrupteur.
 - `table/` — `<table>` : tableau.
-- `terminal/` — `<terminal>` : terminal intégré (gtk3sermo et gtk4sermo, avec VTE).
+- `terminal/` — `<terminal>` : terminal intégré (shell interactif avec gtk3sermo et gtk4sermo, VTE ; ailleurs, la sortie de la commande, en lecture seule).
 - `text/` — `<text>` : étiquette de texte.
 - `timer/` — `<timer>` : minuterie.
 - `togglebutton/` — `<togglebutton>` : bouton à bascule.
@@ -114,12 +114,12 @@ Trois applications complètes, écrites par Thunor pour gtkdialog (GPL-2.0 ou pl
 - `modbus/` — lire un automate Modbus/TCP, en lecture seule, avec un faux automate ([README](modbus/README.md)).
 - `opcua/` — lire un serveur OPC UA, en lecture seule, avec un faux serveur et des certificats d'essai ([README](opcua/README.md)).
 - `domotique-mqtt/` — lire des capteurs MQTT et commander d'un clic, en balises natives ([README](domotique-mqtt/README.md)).
-- `mavlink/` — télémétrie d'un drone, et ordres de sécurité sur liste blanche ([README](mavlink/README.md)).
+- `mavlink/` — télémétrie d'un drone, ordres de sécurité et pilotage (3.2.0) sur liste blanche ([README](mavlink/README.md)).
 - `lecteur-media/` — lire un son ou une vidéo : lire, pause, volume, état ([README](lecteur-media/README.md)).
 
 ## Réseau et matériel
 
-- `approbation/` — une porte d'approbation humaine en une fenêtre ; sert aussi aux envois de `bus-can` et `liaison-serie` ([README](approbation/README.md)).
+- `approbation/` — une porte d'approbation humaine en une fenêtre ; sert aussi aux envois de `bus-can` et `liaison-serie`, et à la photo et la vidéo de `camera-capture` ([README](approbation/README.md)).
 - `bluetooth-scan/` — les appareils Bluetooth à portée, en lecture seule ([README](bluetooth-scan/README.md)).
 - `bus-can/` — écouter un bus CAN, et n'y envoyer une trame qu'avec confirmation ([README](bus-can/README.md)).
 - `camera-apercu/` — voir une caméra sur un clic, sans rien enregistrer ([README](camera-apercu/README.md)).

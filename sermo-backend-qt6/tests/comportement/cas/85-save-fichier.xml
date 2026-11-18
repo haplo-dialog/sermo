@@ -1,0 +1,19 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: action save : chaque widget ecrit son <output file> — la valeur pour une entree, une zone de texte, une case, un curseur ; toutes les rangees pour une liste et une liste deroulante -->
+<window><vbox>
+<entry><variable>E</variable><default>bonjour é</default><output file>e.out</output></entry>
+<edit><variable>D</variable><default>ligne</default><output file>d.out</output></edit>
+<checkbox><label>c</label><variable>C</variable><default>true</default><output file>c.out</output></checkbox>
+<hscale range-min="0" range-max="10"><variable>H</variable><default>4</default><output file>h.out</output></hscale>
+<list><variable>L</variable><item>un</item><item>deux</item><output file>l.out</output></list>
+<comboboxtext><variable>K</variable><item>un</item><item>deux</item><default>deux</default><output file>k.out</output></comboboxtext>
+<entry><variable>FE</variable><input>sh donnees/lire.sh e.out</input></entry>
+<entry><variable>FD</variable><input>sh donnees/lire.sh d.out</input></entry>
+<entry><variable>FC</variable><input>sh donnees/lire.sh c.out</input></entry>
+<entry><variable>FH</variable><input>sh donnees/lire.sh h.out</input></entry>
+<entry><variable>FL</variable><input>sh donnees/lire.sh l.out</input></entry>
+<entry><variable>FK</variable><input>sh donnees/lire.sh k.out</input></entry>
+<timer visible="false"><variable>_T</variable>
+<action>save:E</action><action>save:D</action><action>save:C</action><action>save:H</action><action>save:L</action><action>save:K</action>
+<action>refresh:FE</action><action>refresh:FD</action><action>refresh:FC</action><action>refresh:FH</action><action>refresh:FL</action><action>refresh:FK</action>
+<action>exit:fin</action></timer></vbox></window>

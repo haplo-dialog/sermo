@@ -33,8 +33,9 @@ saisie utilisateur en exécution de code** que l'auteur n'a pas voulue.
   quatre caractères que le shell développe entre guillemets doubles
   (`\`, `"`, `$`, accent grave), pour que `eval "$(sermo …)"` ne réexécute pas ce
   qu'un utilisateur a tapé dans un champ. Vérifié par
-  `tests/garde_echappement_sortie.sh` (banc « garde », 4 cas : `$(`, `${`,
-  accent grave, et la ligne `EXIT=`). `\` et `"` ne sont pas joués par ce banc.
+  `tests/garde_echappement_sortie.sh` (banc « garde », 6 cas : `$(`, `${`,
+  accent grave, `"`, `\`, et la ligne `EXIT=` ; pour `"` et `\`, il vérifie
+  aussi qu'`eval` rend la valeur d'origine).
 - **`--do`** est la voie recommandée quand le dialogue peut être utilisé par
   quelqu'un d'autre que l'auteur : les valeurs arrivent par l'environnement et ne
   sont **jamais** relues comme du code.
@@ -73,10 +74,12 @@ segmentation (mesuré le 2026-09-17). Vérifié par
 
 ## Bornage optionnel de l'exécution (deux variables d'environnement)
 
-Deux garde-fous, **éteints par défaut**, permettent de déployer un dialogue dans
-un contexte moins fiable (kiosque, session invité) sans changer le script. Ils
-sont lus dans le cœur (`safe_exec.c`) et valent donc pour les
-neuf backends :
+Des garde-fous **éteints par défaut** (`SERMO_NO_SHELL_FALLBACK`,
+`SERMO_ALLOWED_CMDS`, `SERMO_NO_FILES`) permettent de déployer un dialogue dans
+un contexte moins fiable (kiosque, session invité) sans changer le script.
+Deux règles sont toujours actives depuis la 3.3.0 : aucune commande sous
+`--render-png`, et les noms de variables réservés. Tout est lu dans le cœur
+et vaut donc pour les neuf backends :
 
 - **`SERMO_NO_SHELL_FALLBACK`** — quand elle est posée (à n'importe quelle
   valeur), le repli `/bin/sh -c` (utilisé pour les commandes contenant des
@@ -84,6 +87,25 @@ neuf backends :
   programme **échoue proprement** (*fail-closed*) plutôt que d'ouvrir un shell.
   Les commandes sans métacaractère continuent de s'exécuter en direct par
   `exec()`. Vérifié par `tests/garde_option_do.sh`.
+- **`--render-png` n'exécute aucune commande** — l'aperçu en image d'un XML
+  qu'on n'a pas écrit ne lance ni `<input>` ni `<action>`, directement ou par
+  le shell ; le refus est dit sur la sortie d'erreur. `SERMO_RENDER_EXEC=1`
+  lève ce refus, pour l'image d'un dialogue de confiance avec ses vraies
+  valeurs. Jusqu'à la 3.2.0, `--render-png` exécutait les `<input>`. Vérifié
+  par `tests/garde_render_sans_commande.sh`.
+- **`SERMO_NO_FILES`** — quand elle est posée (à autre chose que `0`), le
+  dialogue ne lit ni n'écrit **aucun fichier nommé par le XML** : `<input
+  file>`, `save:` vers `<output file>` (les neuf ports), condition `file()`. Les
+  images ne sont pas concernées. Pour qui affiche un XML qu'il n'a pas écrit :
+  `SERMO_ALLOWED_CMDS` ferme les commandes, `SERMO_NO_FILES` ferme les
+  fichiers. `sermoia-mcp` la pose tant qu'il est fermé. Vérifié par
+  `sermoia-mcp/tests/verifie.sh`.
+- **Noms de variable réservés** — une variable de widget nommée `SERMO_*`,
+  `HAPLO_*`, `LD_*`, `PATH`, `IFS`, `ENV`, `BASH_ENV`, `SHELLOPTS` ou `PS4`
+  n'est **pas posée** dans l'environnement des commandes (elle reste imprimée
+  à la sortie) : avant la 3.3.0, `<variable>SERMO_ALLOWED_CMDS</variable>`
+  remplaçait la liste blanche par la valeur du widget. Vérifié par
+  `tests/garde_allowed_cmds.sh`.
 - **`SERMO_ALLOWED_CMDS`** — liste des commandes autorisées, séparées par des
   virgules (ex. `SERMO_ALLOWED_CMDS=ls,cat,/usr/local/bin/outil`). Tant qu'elle
   est posée, seules ces commandes peuvent être lancées, **et** le repli
@@ -109,7 +131,8 @@ Trois limites connues. Les deux premières ouvrent un chemin d'exécution qui ne
 passe pas par `safe_exec.c` : la liste et le refus de repli y sont sans effet.
 
 - **`<terminal>` ouvre un shell hors des deux garde-fous** (gtk3sermo et
-  gtk4sermo, les seuls qui aient ce widget). Le widget lance `/bin/sh` par VTE
+  gtk4sermo, les seuls où il ouvre un shell interactif ; ailleurs il montre la
+  sortie de sa commande, lancée par `safe_popen`). Le widget lance `/bin/sh` par VTE
   (`sermo-backend-gtk3/src/widget_terminal.c`), et la sortie de son `<input>`
   y est **tapée** comme au clavier (`vte_terminal_feed_child`). Une commande
   autorisée qui imprime une ligne fait donc exécuter cette ligne par le shell
@@ -242,8 +265,11 @@ commande qui lance un **programme d'aide** :
   Chaque ordre demande **deux appuis**, part moins de 2,5 s après le clic
   (3,5 s pour désarmer), exige la barrière de l'autopilote active et pas plus
   large que celle de la liste, le drone dedans, et un état relu de moins de
-  0,5 s ; armer et décoller ne se font qu'au sol, jamais forcés. Refus si une
-  autre station, un autre autopilote ou des messages signés sont vus. Le
+  0,5 s ; armer et décoller ne se font qu'au sol, jamais forcés. Le second
+  appui ne compte qu'à plus de 0,5 s du premier. Refus si l'appareil n'est ni
+  un multirotor ni un hélicoptère, si une autre station ou des messages signés
+  sont vus, si deux autopilotes battent sans `systeme=`, ou si, en UDP, le
+  système suivi parle depuis deux adresses. Le
   télépilote reste responsable du vol : sermo n'est pas une station sol
   certifiée.
 
@@ -347,7 +373,10 @@ lit le formulaire renvoyé. C'est le seul port qui ouvre une socket réseau.
   128 bits (tiré de `/dev/urandom`) dans l'adresse ; sans le bon jeton, 404.
   Seule cette page est servie, GET et POST seulement, requête bornée à
   256 Kio, délai `SERMO_HTML_TIMEOUT` (300 s par défaut), une seule réponse
-  de formulaire.
+  de formulaire. Depuis la 3.3.0 : un en-tête `Host` étranger est refusé (403),
+  la page part avec `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`
+  et `Referrer-Policy: no-referrer`, et une connexion muette ne retient plus
+  le serveur.
 - **Depuis la 3.1.0, seules les variables déclarées par le dialogue sont
   rendues**, avec la valeur reçue (sinon leur valeur de départ), et `EXIT`.
   Avant, chaque champ reçu ressortait : celui qui remplit la page pouvait en
@@ -382,13 +411,17 @@ exécution.
 
 ## Serveurs MCP
 
-- **`sermoia-mcp`** : seul l'outil `sermo_run` lance les commandes du dialogue,
-  avec les droits de l'utilisateur, comme le ferait le script. `sermo_check` et
+- **`sermoia-mcp`** : seul l'outil `sermo_run` peut lancer les commandes du
+  dialogue, avec les droits de l'utilisateur, et il est **fermé par défaut**
+  depuis la 3.2.0 : sans `SERMO_ALLOWED_CMDS` dans l'environnement du serveur,
+  aucune commande ne part ; depuis la 3.3.0, les fichiers nommés par le XML
+  sont fermés aussi (`SERMO_NO_FILES`). `sermo_check` et
   `sermo_render` n'exécutent rien : ils posent `SERMO_ALLOWED_CMDS` sur une
   commande qui n'existe pas, ce qui refuse toute commande et le repli
   `/bin/sh -c` (`sermoia-mcp/src/sermoia-mcp.c`, `AUCUNE_COMMANDE`). Jusqu'à la
-  2.8.1, `sermo_render` exécutait les `<input>` du dialogue. Pour borner
-  `sermo_run`, poser `SERMO_ALLOWED_CMDS` dans l'environnement du serveur.
+  2.8.1, `sermo_render` exécutait les `<input>` du dialogue. Pour ouvrir
+  `sermo_run`, lister dans `SERMO_ALLOWED_CMDS`, dans l'environnement du
+  serveur, les commandes dont le dialogue a besoin.
 - **`sermoman-mcp`** est en lecture seule : il sert la documentation, ne lance
   rien et n'écrit rien.
 
@@ -518,9 +551,12 @@ Certaines affirmations de ce document ne sont gardées par aucun banc de
   une liste de commandes est posée (voir plus haut).
 - **Un fichier Glade est du code**, et **`<linkbutton>`** ouvre son adresse hors
   de la liste des commandes (voir plus haut).
-- **Pas d'audit externe.** Ce qui est vérifié l'est par les bancs du dépôt
-  (`ci/bancs.sh`) et par les essais du mainteneur ; le code n'est pas relu en
-  entier. Les écarts ouverts sont
+- **Pas d'audit de sécurité professionnel.** Ce qui est vérifié l'est par les
+  bancs du dépôt (`ci/bancs.sh`) et par les essais du mainteneur. Deux
+  relectures extérieures ponctuelles ont eu lieu : un audit de la 3.2.0, et,
+  pour la 3.3.0, une relecture du code par une IA qui ne l'avait pas écrit
+  (2026-11-16) ; leurs constats sont au [CHANGELOG.md](CHANGELOG.md). Le code
+  n'est pas relu en entier. Les écarts ouverts sont
   dans [TODO.md](TODO.md).
 
 ## Signaler une faille
@@ -534,7 +570,7 @@ Certaines affirmations de ce document ne sont gardées par aucun banc de
   correctif, ou avis public avec contournement, au plus tard **90 jours** après
   le signalement, plus tôt si la faille est déjà publique.
 - **Versions suivies** : seule la dernière ligne publiée reçoit des
-  correctifs : la 3.1.x (la 3.1.2 depuis le 2026-10-19). La ligne 1.x n'en reçoit plus : passez à la 3.1
+  correctifs : la 3.3.x (3.3.0 du 2026-11-18). La ligne 1.x n'en reçoit plus : passez à la 3.x
   ([MIGRATION.md](MIGRATION.md)).
 - Si vous le souhaitez, votre nom figure dans le [CHANGELOG.md](CHANGELOG.md) avec
   le correctif.

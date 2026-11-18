@@ -76,6 +76,7 @@ printf '%s' "$L" >"$T/liste"; cp "$T/liste" "$T/liste-base"
 deux() {
     [ -n "${2:-}" ] && printf '%s' "$2" >"$T/liste"
     jouer "$1"; grep -q "appuyer encore" "$T/err" || echo "  (premier appui : $(cat "$T/err"))"
+    sleep 0.6   # un second appui à moins de 500 ms est un rebond
     jouer "$1"
     cp "$T/liste-base" "$T/liste"
 }
@@ -170,6 +171,7 @@ jouer "$S?ordre=rtl";                              refuse "une station sol prés
 wait "$STA"
 e=$(pilote etat); [ "$e" = "1 9" ] && ok "le mode n'a pas bougé (LAND)" || ko "état après refus : $e"
 jouer "$S?ordre=terminaison"
+sleep 0.6
 jouer "$S?ordre=terminaison";                      reussi "coupure, deux appuis : acceptée" "accepté par le drone"
 sleep 1; e=$(pilote etat); [ "${e%% *}" = 0 ] && ok "le drone est désarmé" || ko "état après coupure : $e"
 

@@ -1,22 +1,49 @@
 # TODO — sermo
 
-État : la 3.0.0 est publiée (2026-10-15) ; la 3.1.0 est publiée (2026-10-19)
-(MQTT, MAVLink, son et vidéo ; voir [CHANGELOG.md](CHANGELOG.md)). Neuf
-backends sur `libsermocore`, empaquetage séparé. Reste ci-dessous.
+État : la 3.3.0 est datée du 2026-11-18 : audit complet, les sept ports sans
+GTK rejoignent l'étalon gtk3 (voir [CHANGELOG.md](CHANGELOG.md)). La 3.2.0
+(2026-11-04) avait apporté le pilotage d'un drone ArduPilot Copter sous liste
+blanche, la caméra et le schéma du langage XML. Neuf backends sur
+`libsermocore`, empaquetage séparé. Reste ci-dessous.
 
-## Prévu en 3.2.0
+## Pilotage de drone (fait en 3.2.0, reste expérimental)
 
-- [ ] **Piloter un drone** : armer, décoller, changer de mode, se déplacer. La
-      3.1.0 ne fait que régler un drone au sol, donner les ordres de sécurité
-      (retour, atterrissage, coupure) et envoyer une mission sans la lancer.
-- [ ] **Vidéo intégrée, suite** : depuis la 3.1.1, gtk3 sous X11 l'affiche dans le
-      dialogue (`dans=$ZONE`) ; ailleurs (Wayland, autres ports), elle reste dans la
-      fenêtre de mpv.
-- [ ] **Lecteur son et vidéo sous Wayland** : essayé sous X11 seulement.
+- [x] **Piloter un drone** : armer, décoller, changer de mode, aller à un
+      point, désarmer (3.2.0).
+- [ ] **Essai en vol réel** : jusqu'ici ArduPilot Copter simulé (SITL) et le
+      faux drone des bancs seulement. Tant qu'il manque, le pilotage reste marqué expérimental
+      partout (README, manuel, site).
+
+## Reporté de la 3.2.0
+
+- [ ] **Vidéo intégrée, suite** : gtk3 l'affiche dans le dialogue sous X11
+      (3.1.1) et sous Wayland (3.2.0), qt6 sous X11 (3.2.0) ; ailleurs (autres
+      ports, qt6 sous Wayland), elle reste dans la fenêtre de mpv.
+- [ ] **Lecteur son et vidéo sous Wayland** : l'incrustation gtk3 a été
+      mesurée sous Wayland (sway, 3.2.0). Le 2026-11-17, le lecteur seul
+      (`sermo-cible-media`, vrai mpv 0.41 dans sa cage) a été essayé dans un
+      sway sans écran, sans X11 : lire, pause, aller, arrêter passent, image
+      vue dans la fenêtre de mpv — après correction (mpv mourait sans
+      `DISPLAY`, voir le journal 3.3.0). Reste : aucun banc ne le rejoue, et
+      rien n'a été essayé dans une vraie session Wayland (GNOME, KDE) ni
+      depuis un dialogue des ports autres que gtk3.
 - [ ] **Console lvgl en mode graphique** : à essayer sur une vraie console.
 
 ## Court terme
 
+- [ ] **Échec d'allocation dans les ports à `WidgetNode`** (sdl3, lvgl,
+      ncurses, html) : mesuré le 2026-11-16 sur html et ncurses, construits à
+      part sous ASan et UBSan, en faisant échouer tour à tour chacune des
+      allocations du port (259 et 230) sur un dialogue à listes, `<tree>`,
+      `<table>`, `append:`, `save:`, `refresh:`. Le dialogue s'arrête dans
+      deux cas sur trois : soit par l'arrêt voulu « out of memory » (70 fois),
+      soit sur un pointeur nul non testé (`g_list_append` du shim surtout,
+      `widget_node_new` non vérifié à la création des widgets, `g_strsplit`,
+      `sermo_be_widget_rows`). Aucune écriture hors tampon ni relecture de
+      mémoire libérée : c'est un arrêt, pas une corruption — ce que fait
+      aussi GLib sur les ports GTK. À faire si on veut un arrêt propre
+      partout : tester ces quatre points d'entrée. sdl3 et lvgl partagent ce
+      code mais n'ont pas été instrumentés.
 Trouvé le 2026-09-16 par les bancs réparés (`ci/bancs.sh`), **ouvert** :
 
 - [ ] **Écran virtuel parfois injoignable dans les bancs** (vu le 2026-09-30) : `xvfb-run -a`
@@ -41,6 +68,9 @@ Trouvé le 2026-09-16 par les bancs réparés (`ci/bancs.sh`), **ouvert** :
       route : sdl3 privé de son serveur X sort en **code 0** avec `EXIT="abort"`
       et un seul message SDL (un script ne voit pas l'échec) ; arrêté par SIGTERM
       il écrit aussi `EXIT="abort"`. Sa fenêtre fait toujours 800 px de large.
+      Rejoué le 2026-11-16 sur la 3.3.0 : efl1 arrêté par SIGTERM avec
+      `--program` n'écrit plus « syntax error », seulement `EXIT="abort"`. Le
+      reste du point (sdl3) n'a pas été rejoué.
 - [x] **`<notebook>` : l'`<input>` lu au premier passage ne change pas de page
       sur gtk3sermo** (mesuré le 2026-10-13 : `echo 1` à l'ouverture laisse la
       page 0 ; aux `refresh` suivants la page suit). gtk4sermo change bien de
@@ -96,14 +126,26 @@ l'étalon gtk3sermo mesurés (ou lus, quand c'est dit) pendant la réparation de
 - [ ] **`<edit>` avec `<default>` et `<input>`** : l'étalon garde `<default>` au
       démarrage ; qt6, fltk1 et efl1 gardent `<input>` (sdl3 et ncurses suivent
       l'étalon).
-- [ ] **`<comboboxentry>` ignore `<default>`** : `<default>choix</default>` est
-      exporté par gtk3 et qt6 seulement ; gtk4, fltk1, efl1, sdl3 et lvgl
-      exportent "" (mesuré le 2026-11-02 sur master et sur les binaires 3.1.2-2,
-      sans `<default>` les sept exportent "" ; `<comboboxtext>` avec `<default>`
-      est bon partout). La saisie au clavier est prouvée sur gtk3, gtk4, qt6 ;
-      [NON VÉRIFIÉ] sur les quatre autres (le harnais sans écran ne trouve pas
-      leur fenêtre). Le cas 23 passe par hasard. FLTK fusionne deux éléments de
-      même libellé dans `<comboboxtext>`.
+- [ ] **`<comboboxentry>`** : `<default>` est rendu sur les neuf ports depuis la
+      3.3.0 (cas 92 ; absent de la liste, il reste le texte du widget — sans
+      champ de saisie sur fltk1, efl1, sdl3, lvgl, ncurses et html, où il n'est
+      affiché que par sdl3). Saisie au clavier rejouée le 2026-11-16 avec de
+      vraies frappes (xdotool, xfwm4) : le texte tapé est rendu sur gtk3, gtk4
+      et qt6 ; fltk1 (Fl_Choice) et efl1 (hoversel) n'ont pas de champ, le
+      texte tapé y est perdu, comme sur lvgl. Le cas 23 passe par hasard. FLTK
+      fusionne deux éléments de même libellé dans `<comboboxtext>`.
+- [x] **`<action>` d'une liste déroulante hors GTK** (`<comboboxtext>`,
+      `<comboboxentry>`) : corrigé en 3.3.0 sur qt6, fltk1, efl1, sdl3, lvgl,
+      ncurses et html, selon la règle de l'étalon (cas 95 : rien au démarrage ;
+      `refresh:`, `clear:` et `removeselected:` jouent l'action si le texte du
+      widget change). Le choix par l'utilisateur a été essayé à la main le
+      2026-11-16 (xdotool sous Xvfb pour les sept ports à fenêtre, pseudo-
+      terminal pour ncurses) : l'action joue partout. Aucun banc ne rejoue ce
+      choix : le banc de clic ne regarde que la survie. html n'a pas de choix
+      interactif (formulaire rendu d'un coup). Levé : sur qt6 un
+      `<comboboxtext>` avait un champ de saisie que l'étalon n'a pas ; il
+      n'en a plus (3.3.0, seul `<comboboxentry>` est éditable ; frappe essayée
+      au clavier sur qt6 et gtk3 : même valeur, aucune action).
 - [ ] **`<input>` brut restant** : `<terminal>` des ports sans GTK (non promis),
       `<pixmap>` d'efl1 (« file:… » passé tel quel), et, lu dans le code de qt6
       [NON VÉRIFIÉ] : `<image>`/`<button>` comparent « file: » en tenant compte de
@@ -124,10 +166,12 @@ l'étalon gtk3sermo mesurés (ou lus, quand c'est dit) pendant la réparation de
       Avec `condition=` derrière « if true »/« if false », il faut désormais le
       préfixe ET la condition, partout, l'étalon compris (cas 69) : l'étalon
       laissait la condition seule décider.
-- [ ] **Deuxième fenêtre aux noms de variables déjà pris** (`launch:`) : le cœur
-      l'enregistre sous « NOM__W<id> » ; mesuré juste sur gtk3 (chaque `<input>`
-      une fois). Sur les ports sans GTK, désormais lus au refresh [NON VÉRIFIÉ] :
-      aucun déclencheur sans affichage n'a ouvert la fenêtre sur qt6.
+- [x] **Deuxième fenêtre aux noms de variables déjà pris** (`launch:`) : le cœur
+      l'enregistre sous « NOM__W<id> » et l'initialise désormais elle, pas son
+      homonyme de la première fenêtre (`<default>` et `<input>` mesurés sur les
+      neuf ports, banc « fenêtres homonymes », 2026-11-15). Une action jouée
+      dans la seconde fenêtre vise sa propre variable (`refresh:NOM`, `$NOM`),
+      cas 02 du même banc.
 - [ ] **Widgets numériques** de fltk1 : `<input>` lu à la création seulement, pas
       relu par `refresh:`.
 - [ ] **`<entry>` sur une seule ligne très longue** (mesuré le 2026-09-24 sur les
@@ -157,7 +201,8 @@ l'étalon gtk3sermo mesurés (ou lus, quand c'est dit) pendant la réparation de
 - [ ] **`<list>` et `<table>` rafraîchies en boucle** : chaque `refresh:` AJOUTE ses
       rangées, comme l'étalon ; un script qui rafraîchit sans `clear:` grossit sans
       fin. Comportement hérité de gtkdialog, à documenter.
-- [ ] **`<terminal>` hors GTK** : code partiel, non promis — Fl_Terminal (fltk1)
+- [ ] **`<terminal>` hors GTK** : il montre la sortie de sa commande, en lecture
+      seule (manuel §5.6) ; pas de terminal interactif. Reste : Fl_Terminal (fltk1)
       compilé mais variable vide ; QTermWidget (qt6) absent de la construction ;
       détection `ecore-exe` d'efl1 fausse (Ecore_Exe fait partie d'ecore).
 
@@ -282,7 +327,7 @@ Trouvé le 2026-09-16, **fermé en 2.7.0** (voir [CHANGELOG.md](CHANGELOG.md)) :
 
 ## Toujours vrai (garde-fous)
 
-- Ne jamais régresser ce que joue **`ci/bancs.sh`** (XML 55 · comportement 78 ·
+- Ne jamais régresser ce que joue **`ci/bancs.sh`** (XML 55 · comportement 95 ·
   gardes · exemples réels · scripts métier et boîtes à outils sur les neuf
   ports).
 - Ne jamais retirer un drapeau de durcissement (voir [SECURITY.md](SECURITY.md)).

@@ -30,6 +30,5 @@
  * ni VTE (le terminal passe par QTermWidget), ni enveloppe glib d'inotify. */
 #define HAVE_GLADE_LIB     0
 #define HAVE_VTE           0
-#define HAVE_SYS_INOTIFY_H 0
 
 #endif /* QT6SERMO_CONFIG_H */

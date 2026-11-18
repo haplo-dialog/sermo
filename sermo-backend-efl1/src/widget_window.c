@@ -129,7 +129,11 @@ GtkWidget *widget_window_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     return (GtkWidget *)win;
 }
 
-gchar *widget_window_envvar_construct(GtkWidget *w) { return g_strdup(""); }
+/* NULL, pas "" : une fenêtre n'exporte rien. La fenêtre lancée par launch:NOM
+ * porte <variable>NOM</variable>, et NOM est AUSSI la variable d'environnement
+ * qui contient son XML : exporter une valeur vide l'écrasait, et un second
+ * launch:NOM s'arrêtait sur « syntax error » (code 1). Comme gtk3, qt6, fltk1. */
+gchar *widget_window_envvar_construct(GtkWidget *w) { return NULL; }
 gchar *widget_window_envvar_all_construct(variable *var) { return NULL; }
 void   widget_window_clear(variable *var) {}
 void   widget_window_refresh(variable *var) {}

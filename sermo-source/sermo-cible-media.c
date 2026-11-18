@@ -28,10 +28,11 @@
  *                    « CAMÉRA ACTIVE » ; caméra occupée : refus, rien de forcé
  *   http(s)://, rtsp(s)://   hôte (nom ou [IPv6]), port, chemin aux caractères
  *                    sûrs ; jamais d'identifiants dans l'adresse
- *   identifiants=    HTTP(S) seulement : fichier à vous, en 600, une ligne
- *                    « utilisateur:mot de passe » ; passé à mpv par --include
- *                    d'un fichier 600 (en-tête Authorization), JAMAIS en argument.
- *                    RTSP à mot de passe : refusé (mpv ne le lit que dans l'adresse).
+ *   identifiants=    source réseau seulement : fichier à vous, en 600, une ligne
+ *                    « utilisateur:mot de passe ». HTTP(S) : passé à mpv par
+ *                    --include d'un fichier 600 (en-tête Authorization). RTSP :
+ *                    l'adresse complète n'existe qu'en mémoire et part par le
+ *                    socket de commande. JAMAIS en argument.
  *
  * DANS LA ZONE (Wayland…) : si la variable vaut « zone » (un <drawingarea
  * embed="true" media="NOM"> hors X11), le lecteur est sermo-media-images
@@ -40,7 +41,7 @@
  * La cage ne monte alors AUCUN accès à l'écran.
  *
  * DANS LA FENÊTRE : dans=$VARIABLE nomme la variable d'un <drawingarea> ; sermo
- * (gtk3, sous X11) y exporte l'identifiant X11 de la zone, donné à mpv par
+ * (gtk3 ou qt6, sous X11) y exporte l'identifiant X11 de la zone, donné à mpv par
  * --wid. Variable absente ou vide (Wayland, autre port, zone pas encore
  * affichée) : REPLI sur une fenêtre séparée, et c'est dit. Caméra incrustée :
  * « CAMÉRA ACTIVE » est écrit dans l'image, le titre n'étant plus visible.
@@ -612,6 +613,9 @@ lire(const char *nom, const char *dossier, const adresse_t *a)
 			return 1;
 		}
 		rtsp_auth = strncmp(source, "rtsp", 4) == 0;
+		if (strncmp(source, "http://", 7) == 0 || strncmp(source, "rtsp://", 7) == 0)
+			fputs(PROGRAMME ": attention : identifiants envoyés EN CLAIR (source http:// ou rtsp://) ; "
+			      "sur un réseau qui n'est pas le vôtre, préférer https:// ou rtsps://\n", stderr);
 	}
 	char wid[40] = "", osd[160] = "", images[700] = "", opt_images[720] = "";
 	int zone = 0;
@@ -742,6 +746,15 @@ lire(const char *nom, const char *dossier, const adresse_t *a)
 	if (*journal) argv[n++] = journal;
 	if (*opt_transport) argv[n++] = opt_transport;
 	if (zone) argv[n++] = opt_images;
+	{
+		/* Wayland sans X11 (ni XWayland) : dans la cage, sans carte graphique,
+		 * mpv 0.41 essaie ses sorties X11 et MEURT (« vo_x11_init: Assertion
+		 * `!vo->x11' failed », mesuré dans sway le 2026-11-17) au lieu de passer
+		 * à Wayland. On lui nomme Wayland ; avec DISPLAY, rien ne change. */
+		const char *w = getenv("WAYLAND_DISPLAY"), *x = getenv("DISPLAY");
+		if (!zone && !*wid && w && *w && !(x && *x))
+			argv[n++] = "--gpu-context=wayland";
+	}
 	if (*wid) {
 		/* Incrusté : mpv ne lit ni souris ni clavier de la fenêtre sermo (sinon,
 		 * mesuré sous xfwm4 : un clic laissé sur le bouton relançait l'action). */

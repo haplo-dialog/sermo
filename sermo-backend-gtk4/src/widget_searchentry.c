@@ -289,7 +289,7 @@ void widget_searchentry_save(variable *var)
 	}
 
 	if (filename) {
-		if ((outfile = fopen(filename, "w"))) {
+		if ((outfile = sermo_fopen_output(filename))) {
 			fprintf(outfile, "%s",
 				gtk_entry_get_text(GTK_ENTRY(var->Widget)));
 			fclose(outfile);

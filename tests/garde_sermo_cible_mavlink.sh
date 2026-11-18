@@ -76,6 +76,12 @@ B=$((20000 + $$ % 20000)); PD=$B; PA=$((B + 1)); PI=$((B + 2)); PM=$((B + 3)); P
 # position), en GUIDED, chacun avec un défaut.
 PG=$((B + 5)); PGA=$((B + 6)); PGC=$((B + 7)); PGL=$((B + 8)); PGX=$((B + 9)); PGS=$((B + 10)); PGM=$((B + 11))
 PGV=$((B + 12))   # armé, en vol, en LOITER (5)
+PGP=$((B + 13))   # un AVION (MAV_TYPE 1) sous ArduPilot
+PG2=$((B + 14))   # deux autopilotes (systèmes 1 et 2) sur le même lien
+PGN=$((B + 15))   # FENCE_RADIUS vaut NaN
+PU=$((B + 16))    # UDP : deux émetteurs pour le système 1
+PGT=$((B + 17))   # FENCE_TYPE vaut 1e30 : fini, hors de tout entier
+PGD=$((B + 18))   # FENCE_TYPE vaut 7,5 : pas un masque de bits
 python3 -I "$DRONE" --tcp "$PD" --journal "$T/j-desarme" >"$T/d.log" 2>&1 & PIDS+=($!)
 python3 -I "$DRONE" --tcp "$PA" --arme --journal "$T/j-arme" >"$T/a.log" 2>&1 & PIDS+=($!)
 python3 -I "$DRONE" --tcp "$PI" --intrus --journal "$T/j-intrus" >"$T/i.log" 2>&1 & PIDS+=($!)
@@ -87,6 +93,11 @@ python3 -I "$DRONE" --tcp "$PGX" --repond --mode 4 --px4 --journal "$T/j-px4" >"
 python3 -I "$DRONE" --tcp "$PGS" --repond --mode 4 --signe --journal "$T/j-signe" >"$T/gs.log" 2>&1 & PIDS+=($!)
 python3 -I "$DRONE" --tcp "$PGM" --repond --mode 4 --arme --sol --journal "$T/j-menteur" >"$T/gm.log" 2>&1 & PIDS+=($!)
 python3 -I "$DRONE" --tcp "$PGV" --repond --mode 5 --arme --journal "$T/j-loiter" >"$T/gv.log" 2>&1 & PIDS+=($!)
+python3 -I "$DRONE" --tcp "$PGP" --repond --mode 4 --type 1 --journal "$T/j-avion" >"$T/gp.log" 2>&1 & PIDS+=($!)
+python3 -I "$DRONE" --tcp "$PG2" --repond --mode 4 --second --journal "$T/j-deux" >"$T/g2.log" 2>&1 & PIDS+=($!)
+python3 -I "$DRONE" --tcp "$PGN" --repond --mode 4 --barriere-nan --journal "$T/j-nan" >"$T/gn.log" 2>&1 & PIDS+=($!)
+python3 -I "$DRONE" --tcp "$PGT" --repond --mode 4 --barriere-type 1e30 --journal "$T/j-type" >"$T/gt.log" 2>&1 & PIDS+=($!)
+python3 -I "$DRONE" --tcp "$PGD" --repond --mode 4 --barriere-type 7.5 --journal "$T/j-demi" >"$T/gd.log" 2>&1 & PIDS+=($!)
 # Lien muet : accepte la connexion TCP, n'envoie rien.
 python3 -I -c '
 import socket,sys
@@ -94,10 +105,10 @@ s=socket.socket(); s.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
 s.bind(("127.0.0.1",int(sys.argv[1]))); s.listen(16); c=[]
 while True: c.append(s.accept()[0])' "$PM" >/dev/null 2>&1 & PIDS+=($!)
 for i in $(seq 1 100); do
-    n=0; for p in $PD $PA $PI $PM $PG $PGA $PGC $PGL $PGX $PGS $PGM $PGV; do (exec 3<>/dev/tcp/127.0.0.1/$p) 2>/dev/null && n=$((n + 1)); done
-    [ $n = 12 ] && break; sleep 0.1
+    n=0; for p in $PD $PA $PI $PM $PG $PGA $PGC $PGL $PGX $PGS $PGM $PGV $PGP $PG2 $PGN; do (exec 3<>/dev/tcp/127.0.0.1/$p) 2>/dev/null && n=$((n + 1)); done
+    [ $n = 15 ] && break; sleep 0.1
 done
-[ $n = 12 ] || { echo "faux drones pas prêts"; tail -3 "$T"/*.log; exit 2; }
+[ $n = 15 ] || { echo "faux drones pas prêts"; tail -3 "$T"/*.log; exit 2; }
 
 echecs=0
 ko() { echo "ECHEC : $*"; echecs=$((echecs + 1)); }
@@ -216,6 +227,10 @@ jouer "$L" - 600 - "$D?ordre=terminaison";                       refuse "marque 
 rm -f -- "$M"/terminaison-*
 avant=$(commandes "$T/j-desarme")
 jouer "$L" - 600 - "$D?ordre=terminaison"
+# Un second appui collé au premier (rebond, double clic) ne confirme rien, et
+# la marque reste : l'appui suivant, plus de 500 ms après le premier, confirme.
+jouer "$L" - 600 - "$D?ordre=terminaison";                       refuse "coupure, second appui à moins de 500 ms : rien n'est envoyé" "trop rapproché"
+sleep 0.6
 jouer "$L" - 600 - "$D?ordre=terminaison&delai=2500"
 apres=$(commandes "$T/j-desarme")
 [ "$RC" = 1 ] && [ $((apres - avant)) = 1 ] && grep -q "pas confirmé" "$T/err" \
@@ -288,6 +303,7 @@ G="tcp://127.0.0.1:$PG"
 deux_appuis() {  # deux_appuis LISTE ADRESSE [VAR=valeur…]
     local l=$1 ad=$2; shift 2
     jouer "$l" - 600 - "$ad" "$@"; grep -q "appuyer encore" "$T/err" || { echo "  (premier appui : $(cat "$T/err"))"; }
+    sleep 0.6   # un second appui à moins de 500 ms est un rebond
     jouer "$l" - 600 - "$ad" "$@"
 }
 jouer "ordre rtl
@@ -327,6 +343,19 @@ deux_appuis "$LP" "tcp://127.0.0.1:$PGM?pilote=desarmer";     refuse "pilotage :
 deux_appuis "$LP" "tcp://127.0.0.1:$PGC?pilote=armer";        refuse "pilotage : barrière de l'autopilote coupée, refus" "inactive"
 deux_appuis "$LP" "tcp://127.0.0.1:$PGX?pilote=armer";        refuse "pilotage : autopilote PX4, refus" "pas ArduPilot"
 deux_appuis "$LP" "tcp://127.0.0.1:$PGS?pilote=armer";        refuse "pilotage : drone qui signe, refus" "signe ses messages"
+deux_appuis "$LP" "tcp://127.0.0.1:$PGP?pilote=armer";        refuse "pilotage : un avion (MAV_TYPE 1), refus" "ni un multirotor"
+deux_appuis "$LP" "tcp://127.0.0.1:$PGP?pilote=mode&mode=rtl"; refuse "pilotage : un avion, même le mode de secours est refusé" "ni un multirotor"
+deux_appuis "$LP" "tcp://127.0.0.1:$PGN?pilote=armer";        refuse "pilotage : FENCE_RADIUS NaN, refus" "incohérente"
+deux_appuis "$LP" "tcp://127.0.0.1:$PGT?pilote=armer";        refuse "pilotage : FENCE_TYPE 1e30 (hors de tout entier), refus" "incohérente (FENCE_TYPE"
+deux_appuis "$LP" "tcp://127.0.0.1:$PGD?pilote=armer";        refuse "pilotage : FENCE_TYPE 7,5 (pas un masque), refus" "incohérente (FENCE_TYPE"
+deux_appuis "$LP" "tcp://127.0.0.1:$PG2?pilote=armer";        refuse "pilotage : deux autopilotes sans systeme=, refus" "plusieurs autopilotes"
+jouer "ordre rtl
+" - 600 - "tcp://127.0.0.1:$PG2?ordre=rtl";                   refuse "ordre : deux autopilotes sans systeme=, refus" "plusieurs autopilotes"
+# Un second appui collé au premier ne confirme pas ; la marque reste.
+rm -f -- "$M"/pilote-*
+jouer "$LP" - 600 - "$G?pilote=armer"
+jouer "$LP" - 600 - "$G?pilote=armer";                        refuse "pilotage : second appui à moins de 500 ms, rien n'est envoyé" "trop rapproché"
+rm -f -- "$M"/pilote-*
 deux_appuis "$LP" "tcp://127.0.0.1:$PI?pilote=armer";         refuse "pilotage : une station sol parle, refus" "station sol parle déjà"
 deux_appuis "$LP" "tcp://127.0.0.1:$PGL?pilote=armer";        refuse "pilotage : battement lent (3 s), refus (délai ou état trop ancien)" "lien trop lent\|trop ancien"
 deux_appuis "pilotage lat 45.1534 lon 5.7654 rayon 300 hauteur 120 decollage 20 modes 4,9
@@ -340,6 +369,26 @@ deux_appuis "$LP" "$G?pilote=armer"
     && [ "$(cat "$T/j-guided.parametres")" = "400 1 0 0" ] \
     && ok "pilotage : armer, gardes passées, l'ordre part une fois (400, param1 1, param2 0 : jamais forcé)" \
     || ko "pilotage armer : code $RC, $(( $(total_commandes) - avant )) écriture(s), $(cat "$T/err")"
+# Deux autopilotes, mais systeme= dit lequel : l'ordre part vers lui seul.
+avant=$(total_commandes)
+deux_appuis "$LP" "tcp://127.0.0.1:$PG2?pilote=armer&systeme=1"
+[ "$RC" = 1 ] && [ $(( $(total_commandes) - avant )) = 1 ] && grep -q -x 'COMMAND_LONG:400' "$T/j-deux" && grep -q "pas confirmé" "$T/err" \
+    && ok "pilotage : deux autopilotes et systeme=1, l'ordre part une fois" \
+    || ko "pilotage deux autopilotes, systeme=1 : code $RC, $(( $(total_commandes) - avant )) écriture(s), $(cat "$T/err")"
+# UDP : deux émetteurs (deux adresses) annoncent le système 1 : aucun ordre.
+python3 -I "$DRONE" --udp "127.0.0.1:$PU" >/dev/null 2>&1 & U1=$!; PIDS+=($U1)
+python3 -I "$DRONE" --udp "127.0.0.1:$PU" >/dev/null 2>&1 & U2=$!; PIDS+=($U2)
+sleep 0.5
+BASE=$(total_commandes)   # les ordres partis exprès juste avant ne comptent pas
+jouer "ordre rtl
+" - 600 - "udp://127.0.0.1:$PU?ordre=rtl";                    refuse "UDP : deux émetteurs pour un même système, refus" "deux émetteurs"
+kill $U2 2>/dev/null; wait $U2 2>/dev/null
+# Un seul émetteur : l'ordre part (le faux drone UDP n'écoute pas : « pas confirmé »).
+jouer "ordre rtl
+" - 600 - "udp://127.0.0.1:$PU?ordre=rtl&delai=2500"
+[ "$RC" = 1 ] && grep -q "pas confirmé" "$T/err" && ok "UDP : un seul émetteur, l'ordre part" \
+    || ko "UDP un seul émetteur : code $RC, $(cat "$T/err")"
+kill $U1 2>/dev/null; wait $U1 2>/dev/null
 avant=$(total_commandes)
 deux_appuis "pilotage lat 45.1534 lon 5.7654 rayon 300 hauteur 120 decollage 20 modes 4,9
 " "tcp://127.0.0.1:$PGC?pilote=mode&mode=land"
@@ -383,6 +432,7 @@ deux_appuis "$LP" "$PA2?pilote=aller&lat=45.1244&lon=5.7654&hauteur=%24H" H=20
 if [ "$MODE" = isole ]; then
 rm -f -- "$M"/pilote-*
 jouer "$LP" - 600 - "$G?pilote=armer"
+sleep 0.6
 printf '%s' "$LP" >"$T/l-gel"
 unshare -rm bash -c '
     mount -t tmpfs tmpfs /root; mkdir -p /root/.config/sermo
@@ -412,6 +462,7 @@ if [ "$MODE" = isole ] && [ -x "$TC" ] && unshare -rn sh -c "ip link set lo up &
             XDG_RUNTIME_DIR="$3/run-lent" unshare -m bash -c "mount -t tmpfs tmpfs /root; mkdir -p /root/.config/sermo
                 cp \"$3/l-lente\" /root/.config/sermo/cibles-mavlink; chmod 600 /root/.config/sermo/cibles-mavlink
                 \"$4\" \"tcp://127.0.0.1:29931?pilote=armer\" 2>\"$3/err\"; echo \$? >\"$3/rc\""
+            sleep 0.6
         done
         kill $d' _ "$TC" "$DRONE" "$T" "$PROG"
     RC=$(cat "$T/rc" 2>/dev/null || echo ?)

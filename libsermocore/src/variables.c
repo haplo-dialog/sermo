@@ -26,6 +26,7 @@
 #include "config.h"
 #include "gtk3d.h"
 #include "variables.h"
+#include "sermo_input.h"
 #include "widgets.h"
 #include "widget_button.h"
 #include "widget_checkbox.h"
@@ -73,9 +74,6 @@
 #include "widget_vbox.h"
 #include "widget_window.h"
 #include "tag_attributes.h"
-#if HAVE_SYS_INOTIFY_H
-#include <sys/inotify.h>
-#endif
 
 extern gboolean option_no_warning;
 
@@ -84,11 +82,9 @@ extern gboolean option_no_warning;
 void variables_print_one(variable *var);
 #endif
 variable *variables_new(const char *name);
-/* Redundant: Not being used: variable *variables_set_widget(const char *name, GtkWidget *widget); */
-/* Redundant: Not being used: variable *variables_set_parent(const char *name, GtkWidget *parent); */
-/* Redundant: Not being used: variable *variables_set_type(const char *name, int type); */
 gboolean variables_is_avail_by_name(const char *name);
 int _tree_insert(variable *new, variable *actual);
+static variable *_tree_find_exact(const char *name, variable *actual);
 static variable *_tree_find(const char *name, variable *actual);
 static gint do_variables_count_widgets(variable *actual, gint n);
 static variable *do_find_variable_by_widget(variable *actual, GtkWidget *widget);
@@ -295,6 +291,16 @@ variable *variables_new_with_widget(AttributeSet *Attr,
 		var = variables_get_by_name(name);
 
 		if (!autonamed && var->Widget != NULL &&
+		    var->window_id != window_id &&
+		    strlen(name) > NAMELEN - 32) {
+			/* Nom si long que le suffixe serait coupé : la boucle
+			 * ci-dessous ne trouverait jamais de nom libre. La variable
+			 * reste partagée, comme avant le correctif, et c'est dit. */
+			g_warning("%s(): variable \"%.40s…\" : nom trop long pour "
+				  "distinguer la fenetre %d ; elle reprend la variable "
+				  "de la fenetre %d.", __func__, name, window_id,
+				  var->window_id);
+		} else if (!autonamed && var->Widget != NULL &&
 		    var->window_id != window_id) {
 			/* Build a unique suffixed name for this window's copy. */
 			gchar unique[NAMELEN + 1];
@@ -342,64 +348,13 @@ variable *variables_new_with_widget(AttributeSet *Attr,
  *                                                                     *
  ***********************************************************************/
 
-/* Redundant: Not being used.
-variable *variables_set_widget(const char *name, GtkWidget *widget)
-{
-	variable *var;
-#ifdef DEBUG
-	g_message("%s(): variable '%s'.", __func__, name);
-#endif
-	var = variables_get_by_name(name);
-	if (var == NULL)
-		var = variables_new(name);
-
-	var->Widget = widget;
-	return (var);
-} */
-
 /***********************************************************************
  *                                                                     *
  ***********************************************************************/
 
-/* Redundant: Not being used.
-#if 0
-variable *variables_set_parent(const char *name, GtkWidget *parent)
-{
-	variable *var;
-#ifdef DEBUG
-	g_message("%s(): Start with '%s'", __func__, name);
-#endif
-	var = variables_get_by_name(name);
-	if (var == NULL)
-		var = variables_new(name);
-
-	var->ParentWindow = parent;
-#ifdef DEBUG
-	g_message("%s(): End with '%s'", __func__, name);
-#endif
-	return var;
-}
-#endif */
-
 /***********************************************************************
  *                                                                     *
  ***********************************************************************/
-
-/* Redundant: Not being used.
-variable *variables_set_type(const char *name, int type)
-{
-	variable *var;
-#ifdef DEBUG
-	fprintf(stderr, "%s(): variable '%s'.\n", __func__, name);
-	fflush(stderr);
-#endif
-	var = variables_get_by_name(name);
-	if (var == NULL)
-		var = variables_new(name);
-
-	var->Type = type;
-	return (var);
-} */
 
 /***********************************************************************
  *                                                                     *
@@ -626,6 +581,191 @@ variable *variables_set_value(const char *name, const char *value)
  *                                                                     *
  ***********************************************************************/
 
+#ifdef SERMO_COEUR_NEUTRE
+/* Contrat (sermo-contract.h), FACULTATIFS, fournis par les ports sans GTK. */
+__attribute__((weak)) char *sermo_be_widget_rows(GtkWidget *widget, int type);
+__attribute__((weak)) int   sermo_be_widget_append(GtkWidget *widget, int type, const char *value);
+
+/* Rangées « a|b|c » (une par ligne) ramenées au nombre de colonnes du
+ * <label> — une seule sans <label> : les colonnes en trop tombent, celles qui
+ * manquent sortent vides, comme le modèle à colonnes fixes de l'étalon.
+ * Chaîne allouée par malloc (libérée par free), NULL faute de mémoire. */
+static char *rangees_en_colonnes(const char *rangees, const char *label, const char *devant)
+{
+	size_t ld = strlen(devant), nlignes = 1, pos = 0;
+	int ncols = 1, c;
+	const char *p;
+	char *out;
+
+	for (p = label; p && *p; p++)
+		if (*p == '|')
+			ncols++;
+	for (p = rangees; p && *p; p++)
+		if (*p == '\n')
+			nlignes++;
+	/* par rangée : le préfixe, au plus le texte reçu, ncols séparateurs */
+	out = malloc((rangees ? strlen(rangees) : 0) + nlignes * (ld + (size_t)ncols + 1) + 1);
+	if (out == NULL)
+		return NULL;
+	for (p = rangees; p && *p; ) {
+		size_t l = strcspn(p, "\n");
+		const char *fin = p + l, *q = p;
+
+		if (pos)
+			out[pos++] = '\n';
+		memcpy(out + pos, devant, ld);
+		pos += ld;
+		for (c = 0; c < ncols; c++) {
+			size_t n = 0;
+			if (c)
+				out[pos++] = '|';
+			if (q) {
+				while (q + n < fin && q[n] != '|')
+					n++;
+				memcpy(out + pos, q, n);
+				pos += n;
+				q = (q + n < fin) ? q + n + 1 : NULL;
+			}
+		}
+		p = *fin ? fin + 1 : fin;
+	}
+	out[pos] = '\0';
+	return out;
+}
+
+/* save: dans la variante neutre (les sept ports sans GTK). Leurs
+ * widget_*_save() sont vides : jusqu'à la 3.3.0, save: n'y écrivait aucun
+ * fichier. Pour les widgets dont l'étalon gtk3sermo écrit la valeur telle que
+ * la variable la rend (mesuré widget par widget), le cœur l'écrit lui-même
+ * dans l'<output file>, par widget_get_text_value() que chaque port fournit.
+ * Rend 1 si le type est de ceux-là (fichier écrit ou avertissement donné). */
+static int save_valeur_neutre(variable *var)
+{
+	GList *element = NULL;
+	gchar *act, *filename = NULL, *valeur;
+	char  *rangees = NULL;
+	FILE  *outfile;
+
+	switch (var->Type) {
+		case WIDGET_ENTRY:
+		case WIDGET_EDIT:
+		case WIDGET_PASSWORD:
+		case WIDGET_SEARCHENTRY:
+		case WIDGET_CHECKBOX:
+		case WIDGET_RADIOBUTTON:
+		case WIDGET_TOGGLEBUTTON:
+		case WIDGET_SWITCH:
+		case WIDGET_SPINBUTTON:
+		case WIDGET_HSCALE:
+		case WIDGET_VSCALE:
+		case WIDGET_COLORBUTTON:
+		case WIDGET_FONTBUTTON:
+		case WIDGET_CALENDAR:
+		case WIDGET_LINKBUTTON:
+		case WIDGET_STATUSBAR:
+		case WIDGET_INFOBAR:
+		case WIDGET_FILECHOOSER:   /* et <chooser>, qui en est un hors GTK */
+			break;
+		case WIDGET_LIST:
+		case WIDGET_COMBOBOXTEXT:
+		case WIDGET_COMBOBOXENTRY:
+			/* L'étalon écrit TOUTES les rangées, une par ligne : le port
+			 * les rend (sermo_be_widget_rows, contrat). */
+			if (!sermo_be_widget_rows)
+				return 0;
+			rangees = sermo_be_widget_rows(var->Widget, var->Type);
+			if (rangees == NULL)
+				return 0;
+			break;
+		case WIDGET_TREE:
+		case WIDGET_TABLE:
+			/* Le port rend ses rangées brutes (« a|b », une par ligne) ; le
+			 * cœur leur donne la forme de l'étalon : autant de colonnes que
+			 * le <label> en nomme (une sans <label>), et « icône|stock| »
+			 * devant chaque rangée d'un <tree>. Jusqu'à la 3.3.0, save: de
+			 * ces deux widgets n'écrivait rien hors GTK. */
+			if (!sermo_be_widget_rows)
+				return 0;
+			rangees = sermo_be_widget_rows(var->Widget, var->Type);
+			if (rangees == NULL)
+				return 0;
+			{
+				char *mises = rangees_en_colonnes(rangees,
+					attributeset_get_first(&element, var->Attributes, ATTR_LABEL),
+					var->Type == WIDGET_TREE ? "||" : "");
+				free(rangees);
+				rangees = mises;
+				element = NULL;
+				if (rangees == NULL)
+					return 0;
+			}
+			break;
+		default:
+			return 0;
+	}
+	for (act = attributeset_get_first(&element, var->Attributes, ATTR_OUTPUT); act;
+	     act = attributeset_get_next(&element, var->Attributes, ATTR_OUTPUT))
+		if (strncasecmp(act, "file:", 5) == 0 && strlen(act) > 5) {
+			filename = act + 5;
+			break;
+		}
+	if (filename == NULL) {
+		g_warning("%s(): No <output file> directive found.", __func__);
+		free(rangees);
+		return 1;
+	}
+	outfile = sermo_fopen_output(filename);
+	if (outfile == NULL) {
+		g_warning("%s(): Couldn't open '%s' for writing.", __func__, filename);
+		free(rangees);
+		return 1;
+	}
+	if (rangees) {
+		fputs(rangees, outfile);
+		free(rangees);
+		fclose(outfile);
+		return 1;
+	}
+	valeur = widget_get_text_value(var->Widget, var->Type);
+	if (valeur)
+		fputs(valeur, outfile);
+	g_free(valeur);
+	fclose(outfile);
+	return 1;
+}
+#endif
+
+/* save: d'un <chooser> : sa valeur (le fichier choisi, sinon <default>) dans
+ * son <output file>, comme un <filechooser>. Jusqu'à la 3.3.0 : « Save not
+ * implemented for this widget ». */
+static void chooser_save(variable *var)
+{
+	GList *element = NULL;
+	gchar *act, *filename = NULL, *valeur;
+	FILE  *outfile;
+
+	for (act = attributeset_get_first(&element, var->Attributes, ATTR_OUTPUT); act;
+	     act = attributeset_get_next(&element, var->Attributes, ATTR_OUTPUT))
+		if (strncasecmp(act, "file:", 5) == 0 && strlen(act) > 5) {
+			filename = act + 5;
+			break;
+		}
+	if (filename == NULL) {
+		g_warning("%s(): No <output file> directive found.", __func__);
+		return;
+	}
+	outfile = sermo_fopen_output(filename);
+	if (outfile == NULL) {
+		g_warning("%s(): Couldn't open '%s' for writing.", __func__, filename);
+		return;
+	}
+	valeur = widget_get_text_value(var->Widget, var->Type);
+	if (valeur)
+		fputs(valeur, outfile);
+	g_free(valeur);
+	fclose(outfile);
+}
+
 variable *variables_save(const char *name)
 {
 	variable *var;
@@ -635,6 +775,11 @@ variable *variables_save(const char *name)
 
 	if (var->Widget == NULL)
 		return (NULL);
+
+#ifdef SERMO_COEUR_NEUTRE
+	if (save_valeur_neutre(var))
+		return (var);
+#endif
 
 	switch (var->Type) {
 		case WIDGET_CANCELBUTTON:
@@ -676,6 +821,9 @@ variable *variables_save(const char *name)
 			break;
 		case WIDGET_FILECHOOSER:
 			widget_filechooser_save(var);
+			break;
+		case WIDGET_CHOOSER:
+			chooser_save(var);
 			break;
 		case WIDGET_CALENDAR:
 			widget_calendar_save(var);
@@ -816,8 +964,13 @@ variable *variables_refresh(const char *name)
 	 * causing the widget to display wrong data.
 	 *
 	 * This mirrors what action_shellcommand() and CommandRefresh already
-	 * do before invoking user commands (see actions.c). */
-	variables_export_all();
+	 * do before invoking user commands (see actions.c).
+	 *
+	 * Seul un <input> lit l'environnement pendant un rafraîchissement. Sans
+	 * ce test, chaque widget créé réexportait tous les autres : 2000 champs
+	 * simples coûtaient 7,5 s à l'ouverture (mesuré), contre 0,4 s pour 500. */
+	if (attributeset_is_avail(var->Attributes, ATTR_INPUT))
+		variables_export_all();
 
 	/* Get initialised state of widget */
 	if (g_object_get_data(G_OBJECT(var->Widget), "_initialised") != NULL)
@@ -1218,6 +1371,12 @@ variable *variables_hide(const char *name)
  * case à cocher, un bouton radio ou un bouton à bascule ne basculaient pas, et
  * leurs actions ne jouaient pas. Déclaré FAIBLE : sans lui, rien ne change. */
 __attribute__((weak)) int sermo_be_widget_activate(GtkWidget *widget);
+#ifdef SERMO_COEUR_NEUTRE
+/* « activate:NOM » sur un <button> : le port le clique (ses actions jouent, un
+ * bouton nu ferme le dialogue). Jusqu'à la 3.3.0 rien ne se passait hors GTK.
+ * Le cœur ne l'appelle que pour un bouton : lui seul connaît le type. */
+__attribute__((weak)) int sermo_be_button_click(GtkWidget *widget);
+#endif
 
 variable *variables_activate(const char *name)
 {
@@ -1237,6 +1396,17 @@ variable *variables_activate(const char *name)
 
 	if (sermo_be_widget_activate && sermo_be_widget_activate(var->Widget))
 		retval = TRUE;
+#ifdef SERMO_COEUR_NEUTRE
+	else if (sermo_be_button_click
+		 && ((var->Type & WIDGET_TYPE) == WIDGET_BUTTON
+		     || (var->Type & WIDGET_TYPE) == WIDGET_OKBUTTON
+		     || (var->Type & WIDGET_TYPE) == WIDGET_CANCELBUTTON
+		     || (var->Type & WIDGET_TYPE) == WIDGET_HELPBUTTON
+		     || (var->Type & WIDGET_TYPE) == WIDGET_NOBUTTON
+		     || (var->Type & WIDGET_TYPE) == WIDGET_YESBUTTON)
+		 && sermo_be_button_click(var->Widget))
+		retval = TRUE;
+#endif
 	else
 		retval = gtk_widget_activate(var->Widget);
 
@@ -1372,7 +1542,7 @@ int _tree_insert(variable *new, variable *actual)
 /* This function finds the variable by its name and returns the pointer
  * to it */
 
-static variable *_tree_find(const char *name, variable *actual)
+static variable *_tree_find_exact(const char *name, variable *actual)
 {
 	int compare;
 
@@ -1388,19 +1558,65 @@ static variable *_tree_find(const char *name, variable *actual)
 
 	if (compare < 0) {
 		if (actual->left != NULL)
-			return _tree_find(name, actual->left);
+			return _tree_find_exact(name, actual->left);
 		else
 			return NULL;
 	}
 
 	if (compare > 0) {
 		if (actual->right != NULL)
-			return _tree_find(name, actual->right);
+			return _tree_find_exact(name, actual->right);
 		else
 			return NULL;
 	}
 
 	return NULL; /* unreachable */
+}
+
+/***********************************************************************
+ * Fenêtre de l'action en cours                                        *
+ ***********************************************************************/
+/* Deux fenêtres ouvertes qui déclarent la même variable : la seconde est
+ * rangée sous « NOM__W<id> » (variables_new_with_widget). Une action jouée
+ * DANS cette seconde fenêtre écrit pourtant « refresh:NOM », et sa commande
+ * lit $NOM : jusqu'à la 3.3.0 les deux visaient la première fenêtre.
+ * Pendant une action, un nom se cherche d'abord dans la fenêtre du widget
+ * qui l'a déclenchée (execute_action pose cette fenêtre, 0 hors action), et
+ * son environnement reçoit aussi les variables de cette fenêtre sous leur
+ * nom d'origine. La sortie du dialogue ne change pas : NOM et NOM__W<id>. */
+static gint fenetre_des_actions = 0;
+
+gint variables_fenetre_des_actions(gint window_id)
+{
+	gint avant = fenetre_des_actions;
+
+	fenetre_des_actions = window_id;
+	return avant;
+}
+
+static variable *_tree_find(const char *name, variable *actual)
+{
+	if (actual == NULL && fenetre_des_actions > 0 && name != NULL) {
+		gchar     unique[NAMELEN + 1];
+		variable *sienne;
+
+		int       n = 2;
+
+		/* NOM__W<id>, puis NOM__W<id>_2, _3… : le premier nom peut être
+		 * celui d'une variable que l'auteur a nommée ainsi lui-même, dans
+		 * une autre fenêtre. Seule compte celle de la fenêtre de l'action. */
+		g_snprintf(unique, sizeof(unique), "%s__W%d", name, fenetre_des_actions);
+		while ((sienne = _tree_find_exact(unique, NULL)) != NULL) {
+			if (sienne->Widget != NULL &&
+			    sienne->window_id == fenetre_des_actions)
+				return sienne;
+			g_snprintf(unique, sizeof(unique), "%s__W%d_%d", name,
+				   fenetre_des_actions, n++);
+			if (strlen(name) > NAMELEN - 32)
+				break;
+		}
+	}
+	return _tree_find_exact(name, actual);
 }
 
 /***********************************************************************
@@ -1444,14 +1660,8 @@ gint variables_count_widgets(void)
 void variables_drop_by_window_id(variable *actual, gint window_id)
 {
 	gint              index = 0;
-#if HAVE_SYS_INOTIFY_H
-	gchar             fdname[16];
-	gchar             wdname[16];
-	gint              fd, wd;
-#else
 	GFileMonitor     *monitor;
 	gchar             name[16];
-#endif
 
 #ifdef DEBUG
 	GtkWidget *ancestor;
@@ -1496,27 +1706,6 @@ void variables_drop_by_window_id(variable *actual, gint window_id)
 				 * detect that var and var->widget are NULL */
 
 				/* Cancel any existing file monitors */
-#if HAVE_SYS_INOTIFY_H
-				while (TRUE) {
-					g_snprintf(fdname, sizeof(fdname), "_inotifyfd%i", index);
-					g_snprintf(wdname, sizeof(wdname), "_inotifywd%i", index);
-					if ((g_object_get_data(G_OBJECT(actual->Widget), fdname)) &&
-						(g_object_get_data(G_OBJECT(actual->Widget), wdname))) {
-						fd = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(actual->Widget),
-							fdname));
-						wd = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(actual->Widget),
-							wdname));
-#ifdef DEBUG
-						fprintf(stderr, "%s(): fd=%i wd=%i\n", __func__,
-							fd, wd);
-#endif
-						inotify_rm_watch(fd, wd);
-					} else {
-						break;
-					}
-					index++;
-				}
-#else
 				while (TRUE) {
 					g_snprintf(name, sizeof(name), "_monitor%i", index);
 					monitor = g_object_get_data(G_OBJECT(actual->Widget), name);
@@ -1532,7 +1721,6 @@ void variables_drop_by_window_id(variable *actual, gint window_id)
 					}
 					index++;
 				}
-#endif
 
 				actual->Widget = NULL;
 
@@ -1634,7 +1822,7 @@ static void _variables_seed_defaults(variable *actual)
 						       actual->Attributes,
 						       ATTR_DEFAULT);
 			if (defval != NULL)
-				g_setenv(actual->Name, defval, FALSE);
+				sermo_exporter_variable(actual->Name, defval, FALSE);
 		}
 	}
 
@@ -1764,7 +1952,36 @@ static void _variables_export(variable *actual)
 		/* Export the active element value into the environment.
 		 * g_setenv() handles memory safely (copies both name and value). */
 		if (value != NULL)
-			g_setenv(actual->Name, value, TRUE);
+			sermo_exporter_variable(actual->Name, value, TRUE);
+		/* Action jouée dans une fenêtre homonyme : sa variable est aussi
+		 * exportée sous son nom d'origine ($NOM), par-dessus celle de la
+		 * première fenêtre — exportée avant elle, « NOM » précédant
+		 * « NOM__W<id> » dans l'arbre. */
+		if (value != NULL && fenetre_des_actions > 0 &&
+		    actual->window_id == fenetre_des_actions) {
+			gchar        suffixe[32];
+			const gchar *fin;
+			gsize        ls;
+
+			/* NOM__W<id> ou NOM__W<id>_<n> (premier nom déjà pris). */
+			g_snprintf(suffixe, sizeof(suffixe), "__W%d", fenetre_des_actions);
+			ls = strlen(suffixe);
+			fin = NULL;	/* dernière occurrence (pas de g_strrstr dans le cœur neutre) */
+			for (const gchar *s = actual->Name; (s = strstr(s, suffixe)) != NULL; s++)
+				fin = s;
+			if (fin != NULL && fin != actual->Name) {
+				const gchar *q = fin + ls;
+
+				if (*q == '_' && q[1] >= '0' && q[1] <= '9')
+					for (q++; *q >= '0' && *q <= '9'; q++)
+						;
+				if (*q == '\0') {
+					gchar *base = g_strndup(actual->Name, fin - actual->Name);
+					sermo_exporter_variable(base, value, TRUE);
+					g_free(base);
+				}
+			}
+		}
 		/* widget_get_text_value() rend une chaîne allouée (contrat, widgets.h). */
 		g_free(value);
 
@@ -1794,26 +2011,26 @@ static void _variables_export(variable *actual)
 					}
 					itemlist = itemlist->next;
 				}
-				g_setenv(actual->Name, line, TRUE);
+				sermo_exporter_variable(actual->Name, line, TRUE);
 				g_free(line);
 				break;
 
 			case WIDGET_TABLE:
 				tmp = widget_table_envvar_all_construct(actual);
-				g_setenv(actual->Name, tmp, TRUE);
+				sermo_exporter_variable(actual->Name, tmp, TRUE);
 				g_free(tmp);
 				break;
 
 			case WIDGET_TREE:
 				tmp = widget_tree_envvar_all_construct(actual);
-				g_setenv(actual->Name, tmp, TRUE);
+				sermo_exporter_variable(actual->Name, tmp, TRUE);
 				g_free(tmp);
 				break;
 
 			case WIDGET_COMBOBOXENTRY:
 			case WIDGET_COMBOBOXTEXT:
 				tmp = widget_comboboxtext_envvar_all_construct(actual);
-				g_setenv(actual->Name, tmp, TRUE);
+				sermo_exporter_variable(actual->Name, tmp, TRUE);
 				g_free(tmp);
 				break;
 		}
@@ -1972,6 +2189,19 @@ int append_fromto_variable(const char *from, const char *to)
 		return FALSE;
 	}
 
+#ifdef SERMO_COEUR_NEUTRE
+	/* Ports sans GTK : les appels gtk_* ci-dessous sont des coquilles vides,
+	 * append: n'y faisait rien. Le port insère lui-même (contrat). */
+	{
+		int fait = sermo_be_widget_append
+		         ? sermo_be_widget_append(var_to->Widget, var_to->Type, value) : 0;
+		if (!fait)
+			g_warning("%s(): Copy not implemented for this widget.", __func__);
+		g_free(value);
+		return fait ? TRUE : FALSE;
+	}
+#endif
+
 	switch (var_to->Type) {
 		case WIDGET_LIST:
 			/* GTK3: gtk_list_item_new_with_label → GtkListBoxRow + GtkLabel */
@@ -1998,13 +2228,20 @@ int append_fromto_variable(const char *from, const char *to)
 		case WIDGET_EDIT:
 			gtk_text_buffer_insert_at_cursor(
 					gtk_text_view_get_buffer(GTK_TEXT_VIEW(var_to->Widget)), 
-					value, g_utf8_strlen(value, -1));
+					value, -1);	/* longueur en OCTETS : -1 = jusqu'au NUL (g_utf8_strlen comptait des caractères et coupait le texte accentué) */
 			break;
 /* GTK3: always available - removed version guard */
 		case WIDGET_TREE:
-			model = gtk_tree_view_get_model(GTK_TREE_VIEW(var_to->Widget));
-			gtk_tree_store_append(GTK_TREE_STORE(model), &iter, NULL); 
-			gtk_tree_store_set(GTK_TREE_STORE(model), &iter, 1, value, -1);
+#ifndef SERMO_COEUR_NEUTRE
+			/* Une rangée à la fin, découpée comme un <item> (le port). */
+			widget_tree_append_row(var_to, value);
+#endif
+			break;
+		case WIDGET_TABLE:
+#ifndef SERMO_COEUR_NEUTRE
+			/* Une rangée à la fin, découpée comme un <item> (le port). */
+			widget_table_append_row(var_to, value);
+#endif
 			break;
 
 /* GTK3: always available - removed version guard */

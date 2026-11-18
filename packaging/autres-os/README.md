@@ -11,13 +11,13 @@ Elles remplacent l'ancien kit `sermo-backend-qt6/packaging/`, écrit pour un
 |---|---|---|---|
 | Arch Linux | `arch/PKGBUILD` | 11 (paquets scindés d'un seul PKGBUILD) | non : `<port>sermo` |
 | Fedora / RPM | `rpm/sermo.spec` | 11 sous-paquets | oui : `alternatives` |
-| Gentoo | `gentoo/dev-util/sermo/sermo-3.0.0.ebuild` | 1, un drapeau USE par port | non : `<port>sermo` |
+| Gentoo | `gentoo/dev-util/sermo/sermo-3.2.0.ebuild` | 1, un drapeau USE par port | non : `<port>sermo` |
 | Slackware | `slackware/sermo.SlackBuild` | un `.txz` par port demandé | non : `<port>sermo` |
 | Alpine | `alpine/APKBUILD` | 8 sous-paquets (sans efl1 ni fltk1 : EFL absent, FLTK en 1.3), `provider_priority` | non : `<port>sermo` |
 | NixOS | `nix/default.nix` | une dérivation par port + `all` | non : `<port>sermo` |
 | Termux (Android) | `termux/build.sh` (format termux-packages) | 1, le port `ncurses` | oui : lien vers `ncursessermo` |
 | FreeBSD | `freebsd/devel/sermo/` (port : Makefile, pkg-plist, pkg-descr) | 1, le port `ncurses` | oui : lien vers `ncursessermo` |
-| OpenBSD | `openbsd/devel/sermo/` (port : Makefile, pkg/PLIST, pkg/DESCR) | 1, le port `ncurses` | oui : lien vers `ncursessermo` |
+| OpenBSD | `openbsd/devel/sermo/` (port : Makefile, distinfo, pkg/PLIST, pkg/DESCR) | 1, le port `ncurses` | oui : lien vers `ncursessermo` |
 | macOS (Homebrew) | `homebrew/sermo.rb` (formule) | 1, le port `ncurses` | oui : lien vers `ncursessermo` |
 
 Debian (`debian/`) reste la référence : il a `update-alternatives`, le paquet de
@@ -95,8 +95,14 @@ pkg install cmake flex bison pkg-config glib json-glib ncurses \
     gtk3 gtk4 libvte gtk-layer-shell \
     qt6-qtbase qt6-qtbase-gtk-platformtheme \
     sdl3 mesa-dev libx11 libpng libwayland libwayland-protocols libxkbcommon
-bash ci/construire.sh gtk3 gtk4 qt6 sdl3 lvgl ncurses html
+SERMO_SOURCE_FACULTATIF=1 bash ci/construire.sh gtk3 gtk4 qt6 sdl3 lvgl ncurses html
 ```
+
+- `SERMO_SOURCE_FACULTATIF=1` (depuis la 3.3.0) : sans elle, `ci/construire.sh`
+  exige les bibliothèques des programmes d'aide (libmodbus, open62541,
+  libmosquitto, libmpv) et échoue si l'une manque. Avec elle, les programmes
+  d'aide concernés sont sautés, et le script dit lesquels. Essayé sur Debian en
+  masquant deux bibliothèques, pas sur un appareil Termux.
 
 - `qt6-qtbase-gtk-platformtheme` : les fichiers CMake de Qt 6 empaquetés par
   Termux réclament `libqgtk3.so`, que ce paquet seul fournit ; sans lui,
@@ -241,8 +247,12 @@ shims lisent alors les nombres sous la locale C par `uselocale` le temps d'un
 
 **Non vérifié, ou à reprendre** :
 - une installation sur un système réel, hors conteneur ;
-- les sommes de contrôle de Termux, FreeBSD et OpenBSD (`SKIP`, `distinfo`) ;
-  celle de la formule Homebrew est posée (archive de l'étiquette `v3.0.0`).
+- la somme de contrôle de FreeBSD (`distinfo` absent) : avec `USE_GITLAB`, le
+  port tire l'archive par l'API de GitLab, pas par l'adresse des autres
+  recettes ; elle se pose sur FreeBSD par `make makesum`. Celles de Homebrew,
+  d'Arch, de Termux, d'Alpine et d'OpenBSD sont posées (archive de l'étiquette
+  `v3.2.0`, 8 588 340 octets, remesurée le 2026-11-14 ;
+  `tests/garde_recettes_sommes.sh` les tient égales).
 - Termux : la construction croisée de la ferme termux-packages (seule la
   construction sur l'appareil est rejouée) ; les ports graphiques sur un
   vrai écran (Termux:X11), le banc ne les ayant joués que sous Xvfb ; le
@@ -250,7 +260,7 @@ shims lisent alors les nombres sous la locale C par `uselocale` le temps d'un
 - FreeBSD : le cadre des ports lui-même (`bsd.port.mk`, `make stage-qa`,
   `portlint`).
 - OpenBSD : le cadre des ports lui-même (`bsd.port.mk`, `make port-lib-depends-check`,
-  `distinfo`).
+  `make checksum` contre le `distinfo` posé).
 - macOS : une installation sur un vrai Mac. Sur un runner macOS de GitHub
   (`.github/workflows/macos.yml`) : construction, banc de comportement 61/61,
   187 dialogues identiques à gtk3sermo (`examples/metiers/verifie.sh --ports gtk3

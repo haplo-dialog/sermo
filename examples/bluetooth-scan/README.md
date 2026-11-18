@@ -27,7 +27,7 @@ d'adaptateur ou service arrêté · `64` usage (option inconnue, durée hors de 
 ## Installation
 
 ```sh
-sudo apt install bluez
+sudo apt install bluez python3
 sudo systemctl enable --now bluetooth
 ```
 

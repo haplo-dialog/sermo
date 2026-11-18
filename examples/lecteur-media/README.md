@@ -61,6 +61,6 @@ Depuis les sources : `ci/construire.sh`, puis `SERMO_SOURCE_DIR=$PWD/sermo-sourc
 
 ## Limites
 
-- La vidéo s'affiche dans la fenêtre de mpv, pas dans celle de sermo : cet exemple n'utilise pas `dans=` ; voir le manuel pour l'incrustation (gtk3, X11).
+- La vidéo s'affiche dans la fenêtre de mpv, pas dans celle de sermo : cet exemple n'utilise pas `dans=` ; voir le manuel pour l'incrustation (gtk3 et qt6 sous X11 ; gtk3 sous Wayland avec `media=`).
 - Pas de liste de lecture, pas de sous-titres, pas d'enregistrement.
 - Essayé sous X11 (et xvfb) ; **Wayland non essayé**.

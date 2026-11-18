@@ -105,6 +105,12 @@ void          sermo_be_before_export(void);
  * ce que fait GTK. Les ports GTK n'ont rien à fournir. */
 int           sermo_be_widget_activate(sermo_widget *w);
 
+/* « activate:NOM » sur un <button> (ok, cancel, yes, no, help compris).
+ * FACULTATIF, déclaré FAIBLE par le cœur, qui ne l'appelle que pour un bouton.
+ * Le port le clique comme l'utilisateur : ses actions jouent, un bouton sans
+ * action ferme le dialogue avec sa valeur. Rend 1 si c'est fait, 0 sinon. */
+int           sermo_be_button_click(sermo_widget *w);
+
 /* État d'un widget, pour condition="active_is_…/sensitive_is_…/visible_is_…(NOM)".
  * FACULTATIF, déclaré FAIBLE par le cœur. quoi : 0 = actif (coché, enfoncé,
  * déplié), 1 = sensible, 2 = visible (le drapeau du widget lui-même, comme
@@ -112,6 +118,44 @@ int           sermo_be_widget_activate(sermo_widget *w);
  * cœur retombe alors sur GTK (ou sur le shim). Les ports GTK n'ont rien à
  * fournir. */
 int           sermo_be_widget_etat(sermo_widget *w, int quoi);
+
+/* « append:SOURCE,CIBLE » (action du cœur) vers un port sans GTK. FACULTATIF,
+ * déclaré FAIBLE par le cœur. type = le WIDGET_* de la cible, valeur = le
+ * texte de la source (jamais vide). Comme l'étalon gtk3sermo : <entry> — le
+ * texte est remplacé ; <edit> — le texte est ajouté ; <list> — une rangée est
+ * ajoutée EN TÊTE et choisie. Rend 1 si c'est fait, 0 si le port ne sait pas
+ * pour ce widget (le cœur avertit). Les ports GTK n'ont rien à fournir. */
+int           sermo_be_widget_append(sermo_widget *w, int type, const char *valeur);
+
+/* « closewindow:NOM » sur un port sans GTK. FACULTATIF, déclaré FAIBLE par le
+ * cœur. w = un widget de la fenêtre à fermer (pas forcément la fenêtre
+ * elle-même) ; le cœur a déjà retiré les variables de cette fenêtre. Le port
+ * ferme la fenêtre et arrête ses minuteries ; les autres fenêtres restent
+ * servies. Rend 1 si c'est fait. Le cœur termine lui-même le programme quand
+ * c'était la dernière (EXIT="closewindow"). */
+int           sermo_be_window_close(sermo_widget *w);
+
+/* « launch:NOM » quand la fenêtre NOM est déjà ouverte : le port la remet au
+ * premier plan. FACULTATIF, déclaré FAIBLE par le cœur. w = un widget de cette
+ * fenêtre. Un port qui sert launch: doit aussi accepter que sermo_be_run_loop()
+ * soit rappelée depuis une action, pendant qu'une première boucle tourne : la
+ * nouvelle boucle sert TOUTES les fenêtres et ne rend pas la main (comme le
+ * gtk_main imbriqué de l'étalon). */
+void          sermo_be_window_present(sermo_widget *w);
+
+/* « launch:NOM » va construire une nouvelle fenêtre : appelée juste avant que
+ * l'analyseur ne crée ses widgets. FACULTATIF, déclaré FAIBLE par le cœur ;
+ * utile à un port qui garde « la fenêtre en construction » dans une globale
+ * (efl1). */
+void          sermo_be_window_new(void);
+
+/* « save:NOM » d'un widget à rangées (<list>, <comboboxtext>,
+ * <comboboxentry>) sur un port sans GTK. FACULTATIF, déclaré FAIBLE par le
+ * cœur. Rend toutes les rangées, dans l'ordre, séparées par « \n », sans
+ * saut de ligne final — ce que l'étalon écrit dans l'<output file> — dans une
+ * chaîne allouée par malloc() que le cœur libère ; NULL si le port ne sait
+ * pas pour ce widget. Les ports GTK n'ont rien à fournir. */
+char         *sermo_be_widget_rows(sermo_widget *w, int type);
 
 /* Applique les attributs de balise à un widget natif (spécifique au toolkit :
  * introspection GObject pour GTK, réimplémentation pour les backends neutres). */

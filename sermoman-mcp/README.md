@@ -78,7 +78,7 @@ Redémarrez votre client : l'assistant dispose alors des outils ci-dessous.
 
 ## Vérifier que la documentation servie est juste
 
-Deux bancs **locaux** contrôlent la documentation contre le code réel du dépôt
+Trois bancs **locaux** contrôlent la documentation contre le code réel du dépôt
 modulaire (les binaires des backends dans `../sermo-backend-*/_build/` et les
 sources de `../libsermocore/`).
 
@@ -120,6 +120,16 @@ des sources et cibles (modbus, opcua, mqtt, mavlink, media).
 
 Codes de retour : `0` · `1` · `77` si les sources de `libsermocore` sont
 introuvables (poser `SERMO_SRC`).
+
+```sh
+./tests/verifie-protocole.sh
+```
+
+Le troisième banc éprouve le serveur lui-même : il survit aux requêtes
+invalides (JSON qui n'est pas un objet, octet hors UTF-8, `params` faux,
+méthode inconnue), répond à `ping`, et refuse sans la garder une ligne de plus
+de 8 Mio (-32600), puis sert la requête suivante (3.3.0). Codes de retour :
+`0` · `1` · `77` si `python3` manque.
 
 ## Signaler un bug, proposer une idée
 

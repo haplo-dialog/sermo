@@ -99,7 +99,7 @@ printf '%s\n' "$XML" >"$T/clic.xml"
 
 # clic_x CLIQUER(0|1) : ouvre le dialogue sous Xvfb, clique (ou pas), ferme.
 clic_x() {
-    env "${CLIC_ENV[@]}" SERMO_SOURCE_DIR="$T/aide" xvfb-run -a -s '-screen 0 800x600x24' timeout 60 sh -c '
+    env "${CLIC_ENV[@]}" SERMO_SOURCE_DIR="$T/aide" xvfb-run -a -s '-screen 0 800x600x24 -noreset' timeout 60 sh -c '
         for j in $(seq 1 50); do xdpyinfo >/dev/null 2>&1 && break; sleep 0.1; done
         "$1" --file="$2" >"$3/sortie" 2>"$3/err" &
         pid=$!

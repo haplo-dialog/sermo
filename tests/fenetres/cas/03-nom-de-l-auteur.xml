@@ -1,0 +1,8 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: l auteur nomme lui-meme une variable NOM__W2 dans la premiere fenetre : la copie de la seconde est rangee sous NOM__W2_2, et clear:NOM joue dans la seconde vide CETTE copie, pas la variable de l auteur -->
+<window><vbox>
+<entry><variable>NOM</variable><default>un</default></entry>
+<entry><variable>NOM__W2</variable><default>auteur</default></entry>
+<entry><variable>LU</variable><input>sh donnees/lire.sh vu.txt</input></entry>
+<progressbar><variable>P</variable><input>echo 100</input><action>launch:ACTIONS</action></progressbar>
+<timer visible="false" interval="3"><variable>_F</variable><action>refresh:LU</action><action>exit:fin</action></timer></vbox></window>

@@ -228,6 +228,47 @@ static gboolean try_set_property(GtkWidget *widget, namevalue  *nameval)
  *                                                                     *
  ***********************************************************************/
 
+/* Entier d'un attribut de <calendar>, borné : atoi() est indéfini hors de
+ * int, et « month + 1 » débordait pour 2147483647. strtol sature. */
+static int calendrier_entier(const char *s)
+{
+	long v = strtol(s, NULL, 10);
+
+	return v < -99999 ? -99999 : v > 99999 ? 99999 : (int)v;
+}
+
+/* <calendar day= month= year=> : la date est posée d'un seul geste, et un
+ * attribut qui ne laisse pas une date existante est ignoré. GtkCalendar 3
+ * accepte tout : day="31" month="1" rendait 2025-02-31, day="0" rendait
+ * 2025-03-00 (mesuré le 2026-11-15). Même règle que gtk4 et que les ports
+ * sans GTK ; « month » compte de 0. */
+static gboolean calendrier_poser_attributs(GtkWidget *widget, tag_attr *attr)
+{
+	const gchar *sa = NULL, *sm = NULL, *sj = NULL;
+	guint ua = 0, um = 0, uj = 0;
+	gint a, m, j, v, q;
+
+	for (q = 0; q < attr->n; ++q) {
+		if (strcmp(attr->pairs[q].name, "year") == 0)  sa = attr->pairs[q].value;
+		if (strcmp(attr->pairs[q].name, "month") == 0) sm = attr->pairs[q].value;
+		if (strcmp(attr->pairs[q].name, "day") == 0)   sj = attr->pairs[q].value;
+	}
+	if (!sa && !sm && !sj)
+		return FALSE;
+	gtk_calendar_get_date(GTK_CALENDAR(widget), &ua, &um, &uj);
+	a = (gint)ua; m = (gint)um + 1; j = (gint)uj;
+	if (sa && (v = calendrier_entier(sa)) >= 1 && v <= 9999 && g_date_valid_dmy(j, m, v))
+		a = v;
+	if (sm && (v = calendrier_entier(sm) + 1) >= 1 && v <= 12 && g_date_valid_dmy(j, v, a))
+		m = v;
+	if (sj && (v = calendrier_entier(sj)) >= 1 && v <= 31 && g_date_valid_dmy(v, m, a))
+		j = v;
+	gtk_calendar_select_day(GTK_CALENDAR(widget), 1);
+	gtk_calendar_select_month(GTK_CALENDAR(widget), (guint)(m - 1), (guint)a);
+	gtk_calendar_select_day(GTK_CALENDAR(widget), (guint)j);
+	return TRUE;
+}
+
 gint widget_set_tag_attributes(GtkWidget *widget, tag_attr *attr)
 {
 	gboolean	success;
@@ -241,9 +282,18 @@ gint widget_set_tag_attributes(GtkWidget *widget, tag_attr *attr)
 	if (attr == NULL)
 		return -1;
 	
+	gboolean	calendrier = GTK_IS_CALENDAR(widget)
+				&& calendrier_poser_attributs(widget, attr);
+
 	for (q = 0; q < attr->n; ++q) {
 		/* Thunor: killed tag attributes have null names */
 		if (attr->pairs[q].name[0] != 0) {
+			if (calendrier && (strcmp(attr->pairs[q].name, "year") == 0 ||
+			                   strcmp(attr->pairs[q].name, "month") == 0 ||
+			                   strcmp(attr->pairs[q].name, "day") == 0)) {
+				++retval;
+				continue;
+			}
 			/* use-markup d'un <text> : déjà posé à la création, et seulement
 			 * si le texte s'analyse en balisage (widget_text.c). Le reposer
 			 * ici forçait le balisage sur un texte simple (avertissement GTK). */

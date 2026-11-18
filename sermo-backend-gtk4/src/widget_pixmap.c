@@ -70,6 +70,24 @@ void widget_pixmap_clear(variable *var)
  * Create                                                              *
  ***********************************************************************/
 
+/* GTK4 : un GtkImage dessine tout, même un fichier, à la taille d'une ICÔNE
+ * (16 px) tant qu'on ne lui dit rien ; GTK3 prenait la taille de l'image. On
+ * lui donne donc pour « pixel-size » le plus grand côté de l'image : elle est
+ * alors rendue à sa taille, proportions gardées. */
+static void pixmap_taille_fichier(GtkWidget *image, const char *chemin)
+{
+	gint w = 0, h = 0;
+	if (image && chemin && gdk_pixbuf_get_file_info(chemin, &w, &h) && w > 0 && h > 0)
+		gtk_image_set_pixel_size(GTK_IMAGE(image), MAX(w, h));
+}
+
+static void pixmap_taille_pixbuf(GtkWidget *image, GdkPixbuf *pixbuf)
+{
+	if (image && pixbuf)
+		gtk_image_set_pixel_size(GTK_IMAGE(image),
+			MAX(gdk_pixbuf_get_width(pixbuf), gdk_pixbuf_get_height(pixbuf)));
+}
+
 GtkWidget *widget_pixmap_create(
 	AttributeSet *Attr, tag_attr *attr, gint Type)
 {
@@ -123,17 +141,13 @@ GtkWidget *widget_pixmap_create(
 				if (attr &&
 					(value = get_tag_attribute(attr, "theme-icon-size")))
 					theme_icon_size = atoi(value);
-				pixbuf = gtk_icon_theme_load_icon(icon_theme, icon_name,
-					theme_icon_size, 0, &error);
-				if (pixbuf) {
-					widget = gtk_image_new_from_pixbuf(pixbuf);
-					/* pixbuf is no longer required and should be unreferenced */
-					g_object_unref(pixbuf);
-				} else {
-					/* pixbuf is null (file not found) so by using this
-					 * function gtk will substitute a broken image icon */
-					widget = gtk_image_new_from_file("");
-				}
+				/* GTK4 n'a plus gtk_icon_theme_load_icon (le shim rendait NULL :
+				 * l'icône était TOUJOURS l'image cassée). L'image porte le nom
+				 * de l'icône et sa taille ; le thème fait le reste. */
+				(void)icon_theme; (void)error; (void)pixbuf;
+				widget = (gtk_image_new_from_icon_name)(icon_name);
+				if (theme_icon_size > 0)
+					gtk_image_set_pixel_size(GTK_IMAGE(widget), theme_icon_size);
 				break;	/* Only one image is required */
 			}
 			if (strlen(act) > 5) {
@@ -141,12 +155,14 @@ GtkWidget *widget_pixmap_create(
 				if (width == -1 && height == -1) {
 					/* Handle unscaled images */
 					widget = gtk_image_new_from_file(find_pixmap(file_name));
+					pixmap_taille_fichier(widget, find_pixmap(file_name));
 				} else {
 					/* Handle scaled images */
 					pixbuf = gdk_pixbuf_new_from_file_at_size(
 						find_pixmap(file_name), width, height, NULL);
 					if (pixbuf) {
 						widget = gtk_image_new_from_pixbuf(pixbuf);
+						pixmap_taille_pixbuf(widget, pixbuf);
 						/* pixbuf is no longer required and should be unreferenced */
 						g_object_unref(pixbuf);
 					} else {
@@ -387,12 +403,14 @@ static void widget_pixmap_input_by_file(variable *var, char *filename)
 	if (width == -1 && height == -1) {
 		/* Handle unscaled images */
 		gtk_image_set_from_file(GTK_IMAGE(var->Widget), find_pixmap(filename));
+		pixmap_taille_fichier(var->Widget, find_pixmap(filename));
 	} else {
 		/* Handle scaled images */
 		pixbuf = gdk_pixbuf_new_from_file_at_size(
 			find_pixmap(filename), width, height, NULL);
 		if (pixbuf) {
 			gtk_image_set_from_pixbuf(GTK_IMAGE(var->Widget), pixbuf);
+			pixmap_taille_pixbuf(var->Widget, pixbuf);
 			/* pixbuf is no longer required and should be unreferenced */
 			g_object_unref(pixbuf);
 		} else {

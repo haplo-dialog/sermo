@@ -37,5 +37,6 @@ void widget_tree_fileselect(
 void widget_tree_refresh(variable *var);
 void widget_tree_removeselected(variable *var);
 void widget_tree_save(variable *var);
+void widget_tree_append_row(variable *var, const char *valeur);
 
 #endif

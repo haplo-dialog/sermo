@@ -275,7 +275,7 @@ void widget_eventbox_save(variable *var)
 	/* If we have a valid filename then open it and dump the
 	 * widget's data to it */
 	if (filename) {
-		if ((outfile = fopen(filename, "w"))) {
+		if ((outfile = sermo_fopen_output(filename))) {
 
 			above_child = gtk_event_box_get_above_child(GTK_EVENT_BOX(var->Widget));
 			if (above_child) {

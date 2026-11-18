@@ -46,7 +46,7 @@ cat >"$T/d.xml" <<'XML'
 </vbox></window>
 XML
 
-SERMO_HTML_MODE=serve SERMO_HTML_TIMEOUT=20 "$BIN" --file="$T/d.xml" >"$T/sortie" 2>"$T/err" &
+SERMO_HTML_MODE=serve SERMO_HTML_TIMEOUT=40 "$BIN" --file="$T/d.xml" >"$T/sortie" 2>"$T/err" &
 p=$!
 url=
 for _ in $(seq 1 100); do
@@ -60,6 +60,36 @@ curl -s --max-time 5 "$url" >"$T/page.html"
 for v in NOM SECRET CHERCHE LANGUE CHOIX ACTIF BASCULE RESTE; do
     grep -q "name=\"$v\"" "$T/page.html" || ko "la page n'a pas de champ name=\"$v\" : le navigateur ne l'enverrait pas"
 done
+
+# ── Le serveur tient face à un client qui se tient mal ───────────────────────
+command -v python3 >/dev/null || { echo "outil manquant : python3" >&2; exit 2; }
+hp=${url#http://}; hp=${hp%%/*}; chemin=/${url##*/}
+# 1. Une connexion MUETTE (rien envoyé, gardée 12 s) ne retient pas le serveur :
+#    la page est servie à un autre client en moins de 9 s.
+python3 -I -c 'import socket,sys,time; s=socket.create_connection(("127.0.0.1",int(sys.argv[1]))); time.sleep(12)' "${hp#*:}" & muet=$!
+sleep 0.3
+curl -s --max-time 9 "$url" | grep -q 'name="NOM"' || ko "une connexion muette retient le serveur : la page n'est plus servie"
+kill "$muet" 2>/dev/null; wait "$muet" 2>/dev/null
+# 2. Un formulaire COUPÉ (500 octets annoncés, 11 envoyés) n'est pas pris pour
+#    une réponse : le dialogue reste ouvert, rien n'est rendu.
+python3 -I -c '
+import socket,sys
+s=socket.create_connection(("127.0.0.1",int(sys.argv[1])))
+s.sendall(("POST %s HTTP/1.1\r\nHost: 127.0.0.1:%s\r\nContent-Length: 500\r\n\r\nNOM=Tronque" % (sys.argv[2], sys.argv[1])).encode())
+s.shutdown(socket.SHUT_WR)
+try: s.recv(4096)
+except OSError: pass' "${hp#*:}" "$chemin"
+sleep 0.3
+kill -0 "$p" 2>/dev/null || ko "un formulaire coupé a terminé le dialogue (sortie : $(tr '\n' ' ' <"$T/sortie"))"
+[ -s "$T/sortie" ] && ko "un formulaire coupé a rendu des valeurs"
+# 3. Un autre nom d'hôte que celui annoncé est refusé (403), le dialogue reste.
+code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 -H 'Host: ailleurs.example' "$url")
+[ "$code" = 403 ] || ko "Host: ailleurs.example reçoit $code au lieu de 403"
+# 4. La page part avec ses en-têtes de protection.
+curl -s -D "$T/entetes" -o /dev/null --max-time 5 "$url"
+grep -qi '^x-frame-options: DENY' "$T/entetes" && grep -qi '^x-content-type-options: nosniff' "$T/entetes" \
+    || ko "en-têtes de protection absents de la page"
+kill -0 "$p" 2>/dev/null || ko "le serveur n'a pas survécu aux clients fautifs"
 
 curl -s --max-time 5 -X POST "$url" \
     --data-urlencode "NOM=Jean" --data-urlencode "SECRET=s3cr\$t" --data-urlencode "CHERCHE=x" \
@@ -86,4 +116,4 @@ done
 [ -s "$T/sortie" ] || ko "sortie vide"
 
 if [ "$echecs" -gt 0 ]; then echo "garde_html_serve : $echecs défaut(s)"; exit 1; fi
-echo "OK : mode serve — chaque champ nommé, valeurs reçues rendues, valeur de départ gardée, PATH et INTRUS ignorés"
+echo "OK : mode serve — chaque champ nommé, valeurs reçues rendues, valeur de départ gardée, PATH et INTRUS ignorés ; client muet, formulaire coupé et hôte étranger sans effet"

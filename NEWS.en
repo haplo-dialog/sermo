@@ -5,6 +5,71 @@ This file summarises changes from the user's point of view.
 For the full technical history, see CHANGELOG.en.md.
 
 ──────────────────────────────────────────────────
+Version 3.3.0 (2026-11-18)
+──────────────────────────────────────────────────
+
+CHANGE OF BEHAVIOUR — --render-png no longer runs the dialog's commands.
+Rendering an XML you did not write as an image used to run its <input>
+commands; nothing is started any more, <terminal> included, and the refusal
+is reported on standard error. For the image of a dialog with its real
+values, set SERMO_RENDER_EXEC=1.
+
+Several windows (launch:, closewindow:) on the nine ports. Outside gtk3 and
+gtk4, a second window worked nowhere: qt6 exited at once, fltk1 left the
+window on screen, efl1 and sdl3 stopped at the second launch:, lvgl froze.
+The same dialog opened twice now drives each of its copies: an action first
+looks in the window of the widget that triggered it (manual §9.2).
+
+Actions that silently did nothing outside gtk3 and gtk4 now work on qt6,
+fltk1, efl1, sdl3, lvgl, ncurses and html:
+  save:      writes the widget's value to its <output file>; the rows of a
+             <list>, a <tree>, a <table>, a drop-down list; the value of a
+             <chooser> and a <filechooser>.
+  append:    replaces the text of an <entry>, adds it to an <edit>, adds a
+             row to a <list>, a <tree> or a <table>.
+  activate:  on a <button>, runs its actions like a click.
+  disable:   really stops a <timer>.
+  the <action> of a <comboboxtext> or <comboboxentry> runs when its choice
+             changes; clear: empties the list; removeselected: removes the
+             chosen item.
+append: accepts variable names with digits (append:SRC,T0).
+
+<comboboxentry> keeps its <default> on the nine ports, even when it is not
+in the list. <calendar day= month= year=> sets the date the same way
+everywhere, and an attribute that does not leave an existing date is
+ignored (gtk3 returned 2025-02-31). <chooser> returns its <default> until
+someone chooses; gtk3 returned the first file of the folder, gtk4 nothing.
+
+Closing the window with its cross returns EXIT="abort" on qt6, fltk1 and
+efl1, as on gtk3. A "\" in a quoted attribute (title="C:\folder") no
+longer loses the text before it.
+
+Security. A widget named SERMO_ALLOWED_CMDS no longer replaces the
+allow-list: reserved names are no longer set in the environment. A closed
+sermoia-mcp no longer reads or writes the files named by the XML
+(SERMO_NO_FILES). sermoman-mcp survives invalid JSON and refuses a line
+longer than 8 MiB. htmlsermo in serve mode refuses a foreign host and is no
+longer held by a silent connection.
+
+MAVLink piloting, added refusals: a vehicle that is neither a multirotor
+nor a helicopter, two autopilots on the link without systeme=, a second
+press less than 500 ms after the first, an autopilot fence that is NaN,
+zero or of an out-of-range type, the same system seen from two UDP
+addresses.
+
+Faster: a dialog of 2000 <entry> opens in 0.7 s instead of 7.5 s (gtk3);
+400 icon buttons in 1.2 s at most, instead of 12 to 22 s, outside GTK; sdl3
+no longer redraws 60 times a second when idle (2 % of a core instead of
+13 %).
+<timer interval="0"> no longer freezes the dialog. Binaries are 4 to 17 %
+lighter.
+
+The recipes for other systems (Arch, Alpine, Fedora, FreeBSD, OpenBSD,
+Gentoo, Nix, Slackware, Termux, Homebrew) build the published 3.2.0; they
+still said 3.0.0. Arch, Alpine, Termux and OpenBSD now check the checksum of
+the archive they download.
+
+──────────────────────────────────────────────────
 Version 3.2.0 (2026-11-04)
 ──────────────────────────────────────────────────
 

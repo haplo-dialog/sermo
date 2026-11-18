@@ -21,7 +21,9 @@
 #include "tag_attributes.h"
 #include "safe_exec.h"
 #include "widget_comboboxtext.h"
+#include "jouer_actions.h"
 #include <FL/Fl_Choice.H>
+#include <string>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -36,6 +38,10 @@ public:
     SermoComboText(int x, int y, int w, int h)
         : Fl_Choice(x, y, w, h), initialise(false) {}
     bool initialise;
+    /* <comboboxentry> : son <default> absent de la liste. Fl_Choice n'a pas
+     * de champ de saisie ; le texte est gardé et exporté tant que rien n'est
+     * choisi (jusqu'à la 3.3.0 il était perdu). */
+    std::string libre;
 };
 
 /* Libellé d'élément de menu : FLTK 1.4.4 le recopie SANS borne dans un
@@ -84,6 +90,29 @@ void choice_select_text(Fl_Choice *ch, const char *text)
         ch->value(found);
 }
 
+/* Le texte du widget : l'élément choisi, sinon le texte libre. */
+std::string choice_texte(SermoComboText *ch)
+{
+    const Fl_Menu_Item *it = ch->mvalue();
+    return (it && it->label()) ? std::string(it->label()) : ch->libre;
+}
+
+/* Règle de l'étalon gtk3sermo : les <action> de la liste jouent (signal
+ * « changed ») quand son texte n'est plus le même après qu'avant. Jusqu'à la
+ * 3.3.0 ce port ne les jouait jamais. */
+void jouer_si_change(variable *v, SermoComboText *ch, const std::string &avant)
+{
+    if (avant != choice_texte(ch))
+        jouer_actions((GtkWidget *)ch, v->Attributes, "changed", NULL);
+}
+
+/* L'utilisateur choisit un élément : FLTK n'appelle ce rappel que si le choix
+ * a changé, et jamais quand le programme pose la valeur. */
+void choice_choisi(Fl_Widget *w, void *data)
+{
+    jouer_actions((GtkWidget *)w, (AttributeSet *)data, "changed", NULL);
+}
+
 } /* namespace */
 
 /* Partagé avec <combobox> (fltk-compat.h). */
@@ -94,20 +123,37 @@ void sermo_choice_add_literal(Fl_Choice *ch, const char *text)
 
 GtkWidget *widget_comboboxtext_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 {
-    (void)Attr; (void)attr; (void)Type;
+    (void)attr; (void)Type;
     /* Vide : <input>, <item> et <default> sont chargés par refresh. */
-    return (GtkWidget *)new SermoComboText(0, 0, 200, 30);
+    SermoComboText *ch = new SermoComboText(0, 0, 200, 30);
+    ch->callback(choice_choisi, (void *)Attr);
+    return (GtkWidget *)ch;
 }
 gchar *widget_comboboxtext_envvar_construct(GtkWidget *w)
 {
     Fl_Choice *c = (Fl_Choice *)w;
     const Fl_Menu_Item *it = c->mvalue();
-    return g_strdup(it && it->label() ? it->label() : "");
+    if (it && it->label()) return g_strdup(it->label());
+    SermoComboText *sc = dynamic_cast<SermoComboText *>((Fl_Widget *)w);
+    return g_strdup(sc ? sc->libre.c_str() : "");
 }
 gchar *widget_comboboxtext_envvar_all_construct(variable *v)
 { return v && v->Widget ? widget_comboboxtext_envvar_construct(v->Widget) : NULL; }
 void widget_comboboxtext_clear(variable *v)
-{ if (v && v->Widget) ((Fl_Choice *)v->Widget)->value(0); }
+{
+    if (!v || !v->Widget) return;
+    SermoComboText *ch = dynamic_cast<SermoComboText *>(v->Widget);
+    if (!ch) return;
+    std::string avant = choice_texte(ch);
+    /* Comme l'étalon : la liste est vidée (et le champ d'un <comboboxentry>),
+     * plus rien n'est choisi. Jusqu'à la 3.3.0 ce port gardait les éléments et
+     * choisissait le premier. */
+    ch->clear();
+    ch->value(-1);
+    if (v->Type == WIDGET_COMBOBOXENTRY) ch->libre.clear();
+    ch->redraw();
+    jouer_si_change(v, ch, avant);
+}
 void widget_comboboxtext_refresh(variable *v)
 {
     if (!v || !v->Widget) return;
@@ -115,8 +161,13 @@ void widget_comboboxtext_refresh(variable *v)
     if (!ch) { v->Widget->redraw(); return; }
 
     /* Déjà initialisé : l'étalon vide avant de recharger (sinon doublons). */
-    if (ch->initialise)
+    bool deja = ch->initialise;
+    std::string avant = choice_texte(ch);
+    if (ch->initialise) {
         ch->clear();
+        ch->value(-1);
+        if (v->Type == WIDGET_COMBOBOXENTRY) ch->libre.clear();
+    }
 
     /* <input> (commande ou fichier, décodé) : une ligne = un élément, lignes
      * vides comprises — l'étalon gtk3sermo les garde (mesuré : « \nun\n »
@@ -141,11 +192,31 @@ void widget_comboboxtext_refresh(variable *v)
     if (!ch->initialise) {
         el = NULL;
         gchar *def = attributeset_get_first(&el, v->Attributes, ATTR_DEFAULT);
-        if (def) choice_select_text(ch, def);
+        if (def) {
+            choice_select_text(ch, def);
+            if (v->Type == WIDGET_COMBOBOXENTRY && !ch->mvalue()) ch->libre = def;
+        }
         ch->initialise = true;
     }
     ch->redraw();
+    /* rien au premier chargement : l'étalon n'a pas encore branché ses signaux */
+    if (deja) jouer_si_change(v, ch, avant);
 }
 void widget_comboboxtext_fileselect(variable *v, const char*, const char*) {}
-void widget_comboboxtext_removeselected(variable *v) {}
+void widget_comboboxtext_removeselected(variable *v)
+{
+    if (!v || !v->Widget) return;
+    SermoComboText *ch = dynamic_cast<SermoComboText *>(v->Widget);
+    if (!ch) return;
+    std::string avant = choice_texte(ch);
+    /* Comme l'étalon : l'élément choisi est retiré, puis le précédent est
+     * choisi (le premier s'il n'y en a pas). Sans effet jusqu'à la 3.3.0. */
+    int idx = ch->value();
+    if (idx >= 0) ch->remove(idx);
+    if (v->Type == WIDGET_COMBOBOXENTRY) ch->libre.clear();
+    idx = idx > 0 ? idx - 1 : 0;
+    ch->value(ch->size() > 1 && idx < ch->size() - 1 ? idx : -1);
+    ch->redraw();
+    jouer_si_change(v, ch, avant);
+}
 void widget_comboboxtext_save(variable *v) {}

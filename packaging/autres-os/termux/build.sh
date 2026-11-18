@@ -18,10 +18,11 @@ TERMUX_PKG_HOMEPAGE=https://gitlab.com/haplo-dialog/sermo
 TERMUX_PKG_DESCRIPTION="Dialog boxes for shell scripts, described in XML (ncurses port)"
 TERMUX_PKG_LICENSE="GPL-2.0"
 TERMUX_PKG_MAINTAINER="s.cage <devel@haplo-dialog.fr>"
-TERMUX_PKG_VERSION=3.0.0
+TERMUX_PKG_VERSION=3.2.0
 TERMUX_PKG_SRCURL=https://gitlab.com/haplo-dialog/sermo/-/archive/v${TERMUX_PKG_VERSION}/sermo-v${TERMUX_PKG_VERSION}.tar.gz
-# La somme se pose à la publication de l'étiquette.
-TERMUX_PKG_SHA256=SKIP_CHECKSUM
+# Somme de l'archive de l'étiquette v3.2.0 sur GitLab (la même que la formule
+# Homebrew, mesurée deux fois le 2026-11-05). À reposer à chaque version.
+TERMUX_PKG_SHA256=6fcaad45499c932eb5f7934ba851d804beeef70104307da42fc608e960efa178
 TERMUX_PKG_DEPENDS="ncurses"
 TERMUX_PKG_BUILD_DEPENDS="flex, bison"
 TERMUX_PKG_BUILD_IN_SRC=true

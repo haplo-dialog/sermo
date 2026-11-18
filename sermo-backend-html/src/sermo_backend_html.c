@@ -30,6 +30,8 @@
 #include "attributes.h"        /* AttributeSet, ATTR_ACTION */
 #include "sermo_progress.h"      /* barres de progression lues au fil de l'eau */
 #include "jouer_actions.h"     /* jouer_actions() : actions avec leur fonction */
+#include "fenetres.h"          /* pile des fenêtres ouvertes, minuteries sans horloge */
+void action_exitprogram(GtkWidget *widget, char *string);   /* cœur (actions.c) : bouton nu activé */
 
 /* Globales que le cœur déclare extern (visibilité des widgets). */
 GList *widget_show_list = NULL;
@@ -155,6 +157,23 @@ int sermo_be_widget_activate(void *w)
     }
 }
 
+/* Crochet du contrat : « activate:NOM » sur un <button> — ce que fait un clic :
+ * ses actions jouent ; un bouton nu ferme le dialogue (EXIT = valeur de
+ * famille, sinon le libellé). Le cœur ne l'appelle que pour un bouton. */
+int sermo_be_button_click(void *w)
+{
+    WidgetNode *n = (WidgetNode *)w;
+    if (!n || n->type != WT_BUTTON) return 0;
+    if (n->var_name && strcmp(n->var_name, "__fontbutton__") == 0) return 0;
+    if (n->action && *n->action)
+        declencher(n, "clicked", NULL);   /* exit:… peut sortir ici */
+    else
+        action_exitprogram((GtkWidget *)n,
+            (char *)(n->tooltip ? n->tooltip
+                     : (n->label && n->label[0] ? n->label : "OK")));
+    return 1;
+}
+
 /* Crochet du contrat : l'état d'un widget pour condition="active_is_…/
  * sensitive_is_…/visible_is_…(NOM)" (le shim ne sait rien des nœuds).
  * quoi : 0 = actif, 1 = sensible, 2 = visible ; -1 = je ne sais pas. */
@@ -189,37 +208,14 @@ static void listes_chargees(WidgetNode *n)
     for (int i = 0; i < n->child_count; i++) listes_chargees(n->children[i]);
 }
 
-/* Rejoue les actions des <timer> de l'arbre, une fois. Un « exit:... » sort
- * via action_exitprogram (print_variables + exit), sans repasser par ici. */
-static void lister_timers(WidgetNode *n, WidgetNode ***t, int *nb, int *cap)
+/* Les <timer> : chacun joue une fois, toutes fenêtres ouvertes confondues,
+ * dans l'ordre où ils partiraient à l'écran (fenetres.c). Un « exit:… » sort
+ * via action_exitprogram (print_variables + exit), sans repasser par ici.
+ * Jusqu'à la 2.8.1 : l'ordre du document, et une minuterie de 8 s fermait le
+ * dialogue avant celle d'une seconde. */
+static void tic(WidgetNode *minuterie)
 {
-    if (!n) return;
-    if (n->type == WT_TIMER && n->sensitive) {
-        if (*nb == *cap) { *cap = *cap ? *cap * 2 : 8; *t = realloc(*t, (size_t)*cap * sizeof **t); }
-        if (*t) (*t)[(*nb)++] = n;
-    }
-    for (int i = 0; i < n->child_count; i++) lister_timers(n->children[i], t, nb, cap);
-}
-static int intervalle_ms(const WidgetNode *n)
-{
-    int ms = (n->label && *n->label) ? atoi(n->label) : 1000;
-    return ms > 0 ? ms : 1000;
-}
-/* Chacune une fois, de la plus courte à la plus longue (tri stable : deux
- * délais égaux gardent l'ordre du document) — l'ordre où elles partiraient
- * dans une fenêtre. Jusqu'à la 2.8.1 : l'ordre du document, et une minuterie
- * de 8 s fermait le dialogue avant celle d'une seconde. */
-static void fire_timers_once(WidgetNode *root)
-{
-    WidgetNode **t = NULL;
-    int nb = 0, cap = 0;
-    lister_timers(root, &t, &nb, &cap);
-    for (int i = 1; i < nb; i++)
-        for (int j = i; j > 0 && intervalle_ms(t[j - 1]) > intervalle_ms(t[j]); j--) {
-            WidgetNode *x = t[j]; t[j] = t[j - 1]; t[j - 1] = x;
-        }
-    for (int i = 0; i < nb; i++) declencher(t[i], "tick", NULL);
-    free(t);
+    declencher(minuterie, "tick", NULL);
 }
 
 /* Barres de progression : relever ce que leurs commandes ont écrit. Rend le
@@ -282,27 +278,38 @@ int sermo_be_run_loop(void)
         exit(EXIT_SUCCESS);
     }
 
+    /* launch: — le cœur rappelle cette fonction depuis une action. La page
+     * reste celle de la première fenêtre : jusqu'à la 3.3.0 la fenêtre lancée
+     * l'écrasait, ne jouait que ses propres minuteries et le dialogue sortait
+     * en EXIT="abort", celles de la première fenêtre perdues. */
+    static int profondeur = 0;
+    int lancee = profondeur++ > 0;
+    int admise = fenetre_empiler(root);
+
     /* 1) L'export HTML d'abord, INCONDITIONNELLEMENT : c'est la promesse du
      * backend, elle ne doit jamais dépendre de ce qu'un <timer> fait ensuite. */
-    render_html_export(root, title);
+    if (!lancee)
+        render_html_export(root, title);
 
     /* 2) Rejeu des timers, comme les autres backends en mode headless.
      * Si l'un déclenche « exit:... », action_exitprogram imprime les
      * variables et termine ici — on ne revient pas. */
-    listes_chargees(root);
-    int barres = servir_barres(root);
-    while (barres > 0) {
-        usleep(20000);
-        barres = servir_barres(root);
+    if (admise) {
+        listes_chargees(root);
+        int barres = servir_barres(root);
+        while (barres > 0) {
+            usleep(20000);
+            barres = servir_barres(root);
+        }
+        /* Les barres ont fini de lire leur commande : la page est réécrite avec
+         * leurs vraies valeurs. Écrite d'abord sans elles (promesse ci-dessus,
+         * une barre à 100 % peut faire sortir par « exit:… »), elle montrait
+         * toujours 0 % — « Progression (doit afficher 65 %) » vide dans la
+         * galerie du site. */
+        if (!lancee && a_des_barres(root))
+            render_html_export(root, title);
+        minuteries_une_fois(tic);
     }
-    /* Les barres ont fini de lire leur commande : la page est réécrite avec
-     * leurs vraies valeurs. Écrite d'abord sans elles (promesse ci-dessus,
-     * une barre à 100 % peut faire sortir par « exit:… »), elle montrait
-     * toujours 0 % — « Progression (doit afficher 65 %) » vide dans la
-     * galerie du site. */
-    if (a_des_barres(root))
-        render_html_export(root, title);
-    fire_timers_once(root);
 
     /* 3) Repli si aucun timer n'a fait sortir le programme : mêmes lignes
      * que les autres backends dans ce cas (variables + EXIT="abort"). */

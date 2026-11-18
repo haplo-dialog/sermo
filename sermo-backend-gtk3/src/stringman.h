@@ -72,37 +72,6 @@ ssize_t getline(char **lineptr, size_t *n, FILE *stream);
 gboolean input_is_shell_command(const gchar *command);
 const gchar *input_get_shell_command(const gchar *command);
 
-/* Redundant: Not being used
-gboolean command_is_shell_command(const gchar *command);
-const gchar *command_get_shell_command(const gchar *command);
-gboolean command_is_exit_command(const gchar *command);
-const gchar *command_get_exit_command(const gchar *command);
-gboolean command_is_exit_command(const gchar *command);
-const gchar *command_get_exit_command(const gchar *command);
-gboolean command_is_closewindow_command(const gchar *command);
-const gchar *command_get_closewindow_command(const gchar *command);
-gboolean command_is_launch_command(const gchar *command);
-const gchar *command_get_launch_command(const gchar *command);
-gboolean command_is_enable_command(const gchar *command);
-const gchar *command_get_enable_command(const gchar *command);
-gboolean command_is_disable_command(const gchar *command);
-const gchar *command_get_disable_command(const gchar *command);
-gboolean command_is_refresh_command(const gchar *command);
-const gchar *command_get_refresh_command(const gchar *command);
-gboolean command_is_save_command(const gchar *command);
-const gchar *command_get_save_command(const gchar *command);
-gboolean command_is_fileselect_command(const gchar *command);
-const gchar *command_get_fileselect_command(const gchar *command);
-gboolean command_is_clear_command(const gchar *command);
-const gchar *command_get_clear_command(const gchar *command);
-gboolean command_is_removeselected_command(const gchar *command);
-const gchar *command_get_removeselected_command(const gchar *command);
-gboolean command_is_insert_command(const gchar *command);
-const gchar *command_get_insert_command(const gchar *command);
-gboolean command_is_append_command(const gchar *command);
-const gchar *command_get_append_command(const gchar *command);
-*/
-
 void command_get_prefix(const gchar *string, gchar **prefix, gchar **command);
 CommandType command_prefix_get_type(const gchar *prefix);
 char *find_pixmap( char *filename );

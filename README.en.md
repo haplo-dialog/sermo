@@ -32,28 +32,32 @@ What comes from upstream and what was written here is counted file by file in
 
 ## Project status
 
-- Version **3.2.0**. sermo has **a single maintainer**, S. Cage. There is no team
+- Version **3.3.0**. sermo has **a single maintainer**, S. Cage. There is no team
   behind it: an answer may take time.
 - Part of the code, documentation and tests was written with the help of an AI
   (Claude, by Anthropic), under the maintainer's direction. The maintainer tests
   it and reports the defects found, but no longer reviews all of the code line by
   line: checking relies mainly on the tests, which anyone can re-run
   ([AUTHORS.en](AUTHORS.en)).
-- **What is verified**: 178 benches (XML parsing, exported values, security,
-  clicks, opening the real examples, MCP servers) on the nine ports in the full
-  run of 2026-10-11, detailed in [BILAN_SANTE.md](BILAN_SANTE.md) (French only).
-  In the full run (`ci/bancs.sh`, helper programs included):
-  265 tests, 0 failures (`master` branch, 2026-10-31, drone piloting included). In the run of 2026-10-18, one bench was red (forbidden functions
-  in the sound and video player code); it was fixed and then replayed green.
-  Every figure can be replayed with a command.
+- **What is verified**: benches for XML parsing, exported values, security,
+  clicks, opening the real examples and the MCP servers, on the nine ports and
+  the helper programs. The figures of the latest full run are kept in one place
+  only, [BILAN_SANTE.md](BILAN_SANTE.md) (French only), written by
+  `ci/bancs.sh && ci/bilan-md.sh`; each one can be replayed with that command.
 - **What sermo reads and writes outside**, through helper programs installed
   separately: a PLC over Modbus or OPC UA (read-only); MQTT home automation
-  (read, and publish if an allow-list permits it); a MAVLink drone (read its
-  telemetry; set a parameter of the disarmed drone, send it a mission without
-  starting it, or give a safety order: return to launch, land, motor cut-off in
-  two presses); sound and video, played by mpv. sermo does not fly a drone: it
-  does not arm it, take it off or steer it, apart from the safety return to
-  launch and landing. The packages are under "Install".
+  (read, and publish if an allow-list permits it); an ArduPilot Copter MAVLink
+  drone (read its telemetry; set a parameter, send a mission without starting
+  it, give a safety order; and, since 3.2.0, **fly** it: arm, take off, change
+  mode, go to a point, disarm — only if a `pilotage` line of the allow-list
+  permits it, two presses per order); sound and video, played by mpv. The
+  packages are under "Install".
+- **Drone piloting is experimental.** Tested against a simulated ArduPilot
+  Copter (SITL) and a fake drone, **never on a real drone**. Flying an aircraft is the
+  remote pilot's responsibility and falls under the regulations of their
+  country (in the European Union, Regulation (EU) 2019/947). sermo comes with
+  no warranty (GPL, sections 11 and 12); see the
+  [manual](MANUEL_UTILISATEUR.en.md), section on commanding a drone.
 - **Known gaps**: the ports without GTK still differ from gtk3sermo on a few
   points (`auto-refresh`, the label of the Cancel button, `<terminal>`…). They are
   listed in [TODO.md](TODO.md) (French only).
@@ -74,11 +78,12 @@ on benches that anyone can replay:
 - **Two commands, the same everywhere**: `bash ci/construire.sh` builds the core
   and the nine ports, `bash ci/bancs.sh` runs every bench. The CI runs these two
   scripts and nothing else; at home you get the same result. Last full run:
-  265 benches, 0 failures (2026-10-31).
+  345 benches, 0 failures (2026-11-17) — 344 where simulated ArduPilot is not
+  installed, its bench only running with it.
 - **One reference**: gtk3sermo. The behaviour bench opens each case on the nine
   ports and compares the values returned with those of gtk3sermo. When a port
   differs, the port is fixed; the expected value is never changed.
-- **No screen**: gtk3, gtk4 and fltk1 run under Xvfb, qt6, sdl3 and efl1 on
+- **No screen**: gtk3, gtk4, fltk1 and lvgl run under Xvfb, qt6, sdl3 and efl1 on
   their offscreen platform, ncurses in batch mode; html writes its page. Even on
   a workstation no window opens: the measurement is the CI's.
 - **A bench that checked nothing counts as a failure** (missing tool, binary not
@@ -183,7 +188,8 @@ exist only on some ports:
   page (embedded CSS, no JavaScript by default) into the file named by `SERMO_HTML_OUT`
   (default `sermo-output.html`). With `SERMO_HTML_MODE=serve`, a local
   micro-server serves the page and returns the values entered.
-- Only gtk3 and gtk4 have `<terminal>` (VTE) and `--glade-xml`; only gtk3 has
+- Only gtk3 and gtk4 have the interactive terminal (VTE) and `--glade-xml`;
+  elsewhere `<terminal>` shows its command's output, read-only. Only gtk3 has
   Wayland anchoring (`layer-shell`).
 - Each package pulls in its own library only: `sermo-backend-fltk1` installs
   neither GTK nor Qt, `sermo-backend-ncurses` needs nothing but ncurses.
@@ -216,20 +222,20 @@ for Android, the BSDs and macOS there are only the recipes.
 ## Install
 
 There is no apt repository. The Debian packages are attached to the
-[**v3.2.0**](https://gitlab.com/haplo-dialog/sermo/-/releases/v3.2.0) release,
+[**v3.3.0**](https://gitlab.com/haplo-dialog/sermo/-/releases/v3.3.0) release,
 with their checksums: download, check, install.
 
 ```sh
-U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/3.2.0
-for f in sermo-backend-gtk3_3.2.0-1_amd64.deb sermo-gtkdialog_3.2.0-1_all.deb SHA256SUMS SHA256SUMS.asc; do
+U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/3.3.0
+for f in sermo-backend-gtk3_3.3.0-1_amd64.deb sermo-gtkdialog_3.3.0-1_all.deb SHA256SUMS SHA256SUMS.asc; do
     curl -fLO "$U/$f"
 done
 curl -fLO https://haplo-dialog.fr/cle-haplo-dialog.asc
 gpg --import cle-haplo-dialog.asc
 gpg --verify SHA256SUMS.asc SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
-sudo apt install ./sermo-backend-gtk3_3.2.0-1_amd64.deb \
-                 ./sermo-gtkdialog_3.2.0-1_all.deb
+sudo apt install ./sermo-backend-gtk3_3.3.0-1_amd64.deb \
+                 ./sermo-gtkdialog_3.3.0-1_all.deb
 ```
 
 For another port, replace `gtk3` with `gtk4`, `qt6`, `fltk1`, `efl1`, `sdl3`,
@@ -261,7 +267,7 @@ install on top of the port (same download, same check):
 |---|---|
 | reading a PLC | `sermo-source-modbus`, `sermo-source-opcua` |
 | MQTT home automation | `sermo-source-mqtt` (read), `sermo-cible-mqtt` (publish) |
-| a MAVLink drone | `sermo-source-mavlink` (read), `sermo-cible-mavlink` (set, mission, safety orders) |
+| a MAVLink drone | `sermo-source-mavlink` (read), `sermo-cible-mavlink` (set, mission, safety orders, piloting) |
 | sound and video | `sermo-cible-media` (play; pulls in `mpv`, recommends `bubblewrap`), `sermo-source-media` (follow the state) |
 
 Installing only the reading side cannot write anything. The allow-lists and
@@ -297,7 +303,7 @@ container). Compiled from source without `install`: delete the build directory.
 
 ## Coming from 1.x
 
-Install the current (3.1.0) packages of the ports you use (`sermo-backend-gtk3`,
+Install the current (3.3.0) packages of the ports you use (`sermo-backend-gtk3`,
 `sermo-gtkdialog`…): apt removes the 1.x packages they replace (`gtk3sermo`,
 `gtksermo`…). The commands keep their names. What changes and what to do:
 [MIGRATION.en.md](MIGRATION.en.md).

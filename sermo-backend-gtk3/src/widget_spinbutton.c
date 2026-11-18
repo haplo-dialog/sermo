@@ -321,7 +321,7 @@ void widget_spinbutton_save(variable *var)
 	/* If we have a valid filename then open it and dump the
 	 * widget's data to it */
 	if (filename) {
-		if ((outfile = fopen(filename, "w"))) {
+		if ((outfile = sermo_fopen_output(filename))) {
 			digits = gtk_spin_button_get_digits(GTK_SPIN_BUTTON(var->Widget));
 			value = gtk_spin_button_get_value(GTK_SPIN_BUTTON(var->Widget));
 			switch (digits) {

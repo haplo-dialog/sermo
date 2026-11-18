@@ -65,8 +65,8 @@ backend(s):
 
 ```sh
 TIMEOUT=5 bash tests/xml/run_tests.sh <BIN>                       # 55 PASS
-bash tests/comportement/run.sh <BIN>                              # 78 green
-xvfb-run -a bash tests/garde_echappement_sortie.sh <BIN>          # OK — 4 cases
+bash tests/comportement/run.sh <BIN>                              # 95 green
+xvfb-run -a bash tests/garde_echappement_sortie.sh <BIN>          # OK — 6 cases
 ```
 
 A merge request that turns a bench red is not merged. If you add a capability,
@@ -87,7 +87,8 @@ bash ci/bancs.sh           # every bench; one log per bench in _journaux/bancs/,
 ```
 
 `ci/construire.sh` also builds, every time, the `sermoia-mcp` server and the
-eight helper programs of `sermo-source/` (all their libraries required), and
+eight helper programs of `sermo-source/` with `sermo-media-images` (all their
+libraries required), and
 the light variant of lvgl when lvgl is among the requested ports.
 
 `ci/bancs.sh` runs everything before concluding, prints one line per bench, and
@@ -97,6 +98,11 @@ the repository. At the end, `ci/bilan-json.sh` puts the figures of every bench
 in `_journaux/bilan.json` (and on one `BILAN-JSON:` line of the trace); that is
 where `ci/bilan-md.sh` rewrites the table of `BILAN_SANTE.md` and where the
 website takes "What the benches check" from — nobody copies a figure by hand.
+
+Before a release, or when you touch memory handling:
+`SERMO_BANC_SANITIZERS=1 bash ci/bancs.sh` also replays the behaviour bench
+under ASan and UBSan, every error fatal (about 40 more minutes for the nine
+ports).
 
 ## Where code goes
 

@@ -59,6 +59,7 @@
 #include "sermo_progress.h"
 #include "sermo_open_uri.h"
 #include "jouer_actions.h"
+#include "fenetres.h"
 
 /* Fourni par le cœur (actions.c), non exporté par ses en-têtes — comme dans sdl3. */
 void action_exitprogram(GtkWidget *widget, char *string);
@@ -70,9 +71,35 @@ extern char *option_render_png;
  * ═══════════════════════════════════════════════════════════════════════════ */
 /* Joue les actions d'un nœud : toutes, chacune avec sa fonction, quand le
  * créateur a gardé le jeu d'attributs ; sinon l'unique commande du nœud. */
+/* ─── Actions remises à la fin du tour LVGL ─────────────────────────────────
+ * Un clic ou un tic arrive PENDANT lv_timer_handler(). Si son action est
+ * launch:, le cœur rappelle la boucle du port sur place, et LVGL refuse que
+ * lv_timer_handler() soit rappelé depuis lui-même : la fenêtre lancée ne
+ * recevait plus ni dessin ni clic, le dialogue restait figé (jusqu'à la
+ * 3.3.0). Les actions nées pendant le tour attendent donc sa fin : la boucle
+ * les joue juste après, dans l'ordre, hors de LVGL. L'état du widget, lui,
+ * est posé tout de suite. Hors du tour (activate: joué par le cœur, sélection
+ * de départ, sans écran), rien n'attend. */
+typedef struct { WidgetNode *n; const char *s1, *s2; int bascule, actif; } ActionDue;
+#define ACTIONS_DUES_MAX 256
+static ActionDue g_dues[ACTIONS_DUES_MAX];
+static int       g_dues_tete, g_dues_nb;
+static int       g_dans_lvgl;      /* 1 pendant lv_timer_handler() */
+
+static int differer(WidgetNode *n, const char *s1, const char *s2, int bascule, int actif)
+{
+    if (!g_dans_lvgl) return 0;
+    if (g_dues_nb < ACTIONS_DUES_MAX) {
+        ActionDue *a = &g_dues[(g_dues_tete + g_dues_nb++) % ACTIONS_DUES_MAX];
+        a->n = n; a->s1 = s1; a->s2 = s2; a->bascule = bascule; a->actif = actif;
+    }
+    return 1;
+}
+
 static void declencher(WidgetNode *n, const char *signal1, const char *signal2)
 {
     if (!n) return;
+    if (differer(n, signal1, signal2, 0, 0)) return;
     if (n->actions_attr)
         jouer_actions((GtkWidget *)n, (AttributeSet *)n->actions_attr, signal1, signal2);
     else if (n->action && *n->action)
@@ -84,12 +111,28 @@ static void declencher(WidgetNode *n, const char *signal1, const char *signal2)
  * « if false » compris. */
 static void bascule_jouer(WidgetNode *n, int actif)
 {
+    if (differer(n, NULL, NULL, 1, actif)) return;
     if (n->actions_attr && n->type == WT_SWITCH)
         jouer_actions_interrupteur((GtkWidget *)n, (AttributeSet *)n->actions_attr, actif);
     else if (n->actions_attr)
         jouer_actions_bascule((GtkWidget *)n, (AttributeSet *)n->actions_attr, actif);
     else if (n->action && *n->action)
         execute_action((GtkWidget *)n, n->action, NULL);
+}
+
+/* Fin du tour LVGL : les actions remises, dans l'ordre. Une action launch: ne
+ * revient pas ; la boucle qu'elle ouvre joue alors le reste de la file. Une
+ * fenêtre fermée entre-temps emporte les siennes. */
+static void actions_dues_jouer(void)
+{
+    while (g_dues_nb > 0) {
+        ActionDue a = g_dues[g_dues_tete];
+        g_dues_tete = (g_dues_tete + 1) % ACTIONS_DUES_MAX;
+        g_dues_nb--;
+        if (!fenetre_ouverte(a.n)) continue;
+        if (a.bascule) bascule_jouer(a.n, a.actif);
+        else           declencher(a.n, a.s1, a.s2);
+    }
 }
 
 /* Pour widget_radiobutton.c : le bouton radio qu'un autre remplace au départ
@@ -146,6 +189,23 @@ int sermo_be_widget_activate(void *w)
     }
 }
 
+/* Crochet du contrat : « activate:NOM » sur un <button> — ce que fait un clic :
+ * ses actions jouent ; un bouton nu ferme le dialogue (EXIT = valeur de
+ * famille, sinon le libellé). Le cœur ne l'appelle que pour un bouton. */
+int sermo_be_button_click(void *w)
+{
+    WidgetNode *n = (WidgetNode *)w;
+    if (!n || n->type != WT_BUTTON) return 0;
+    if (n->var_name && strcmp(n->var_name, "__fontbutton__") == 0) return 0;
+    if (n->action && *n->action)
+        declencher(n, "clicked", NULL);   /* exit:… peut sortir ici */
+    else
+        action_exitprogram((GtkWidget *)n,
+            (char *)(n->tooltip ? n->tooltip
+                     : (n->label && n->label[0] ? n->label : "OK")));
+    return 1;
+}
+
 /* Crochet du contrat : l'état d'un widget pour condition="active_is_…/
  * sensitive_is_…/visible_is_…(NOM)" (le shim ne sait rien des nœuds).
  * quoi : 0 = actif, 1 = sensible, 2 = visible ; -1 = je ne sais pas. */
@@ -187,12 +247,12 @@ static void listes_chargees(WidgetNode *n)
     for (int i = 0; i < n->child_count; i++) listes_chargees(n->children[i]);
 }
 
-static void fire_timers(WidgetNode *node)
+/* Sans écran : chaque minuterie une fois, toutes fenêtres ouvertes confondues,
+ * dans l'ordre où elles partiraient à l'écran (fenetres.c). Jusqu'à la 3.3.0 :
+ * dans l'ordre du document, et celles de la seule fenêtre lancée. */
+static void tic(WidgetNode *minuterie)
 {
-    if (!node) return;
-    if (node->type == WT_TIMER)
-        declencher(node, "tick", NULL);
-    for (int i = 0; i < node->child_count; i++) fire_timers(node->children[i]);
+    declencher(minuterie, "tick", NULL);
 }
 
 /* Barres de progression : relever ce que leurs commandes ont écrit.
@@ -220,12 +280,15 @@ static int export_abort(void)
     return 0;
 }
 
+static int g_mode = -1;   /* -1 : pas encore choisi · 0 : sans écran · 1 : écran */
+
 static int run_headless(WidgetNode *root)
 {
+    g_mode = 0;
     listes_chargees(root);  /* un « exit:… » peut sortir ici, via le cœur */
     while (servir_barres(root) > 0)
         usleep(20000);
-    fire_timers(root);      /* un « exit:… » sort ici via action_exitprogram */
+    minuteries_une_fois(tic);   /* un « exit:… » sort ici via action_exitprogram */
     return export_abort();
 }
 
@@ -693,7 +756,9 @@ static void deroulant_change(lv_event_t *e)
     int i = (int)lv_dropdown_get_selected(lv_event_get_target_obj(e));
     if (i == n->state.list.selected_index) return;
     n->state.list.selected_index = i;
-    if (n->action && *n->action) declencher(n, "changed", NULL);
+    /* n->action est vide pour une liste déroulante : jusqu'à la 3.3.0 ce test
+     * portait sur lui et les <action> ne jouaient jamais. */
+    if (n->actions_attr) declencher(n, "changed", NULL);
 }
 
 static void glissiere_change(lv_event_t *e)
@@ -897,7 +962,11 @@ static void onglet_change(lv_event_t *e)
 static void minuterie_tic(lv_timer_t *t)
 {
     WidgetNode *n = (WidgetNode *)lv_timer_get_user_data(t);
-    declencher(n, "tick", NULL);                 /* exit:… sort ici */
+    /* closewindow: — la fenêtre est fermée, sa minuterie s'arrête. */
+    if (!fenetre_ouverte(n)) { lv_timer_delete(t); return; }
+    /* disable: d'une minuterie : elle ne joue plus ses actions (étalon). */
+    if (n->sensitive)
+        declencher(n, "tick", NULL);             /* exit:… sort ici */
 }
 
 static void ecran_ferme(lv_event_t *e)
@@ -2098,7 +2167,6 @@ static void synchroniser(WidgetNode *n)
  * fenêtre parmi les enfants de la racine — ses identifiants portent la base
  * de ressources de notre connexion — et on pose _NET_WM_NAME (UTF-8) et
  * WM_CLASS = lvglsermo, que les gestionnaires et les bancs lisent. */
-static Display *g_x;
 static Window   g_fenetre;
 
 static void fenetre_nommer(lv_display_t *d, const char *title)
@@ -2108,7 +2176,6 @@ static void fenetre_nommer(lv_display_t *d, const char *title)
     Display *x = h->display;
     Window racine, mere, *enfants = NULL;
     unsigned int nb = 0;
-    g_x = x;
     if (!XQueryTree(x, DefaultRootWindow(x), &racine, &mere, &enfants, &nb)) return;
     for (unsigned int i = 0; i < nb; i++)
         if ((enfants[i] & ~x->resource_mask) == x->resource_base) { g_fenetre = enfants[i]; break; }
@@ -2117,6 +2184,9 @@ static void fenetre_nommer(lv_display_t *d, const char *title)
 
     XClassHint classe = { (char *)"lvglsermo", (char *)"lvglsermo" };
     XSetClassHint(x, g_fenetre, &classe);
+    /* WM_NAME aussi : le pilote ne le pose qu'à la création, et une fenêtre
+     * lancée par launch: retitre celle-ci. */
+    XStoreName(x, g_fenetre, title);
     Atom utf8 = XInternAtom(x, "UTF8_STRING", False);
     XChangeProperty(x, g_fenetre, XInternAtom(x, "_NET_WM_NAME", False), utf8, 8,
                     PropModeReplace, (const unsigned char *)title, (int)strlen(title));
@@ -2125,35 +2195,53 @@ static void fenetre_nommer(lv_display_t *d, const char *title)
 
 /* Le pilote relit la souris toutes les LV_DEF_REFR_PERIOD ms et n'en garde que
  * l'état du moment : un appui et sa relâche arrivés entre deux relevés (un
- * clic d'outil, un toucher bref) ne font AUCUN clic. Avant chaque tour, une
- * relâche qui suit un appui encore en file est mise de côté, et rendue à la
- * file 60 ms plus tard — après au moins un relevé « appuyé ». */
-static XEvent   g_relache;
-static int      g_relache_tenue;
-static uint32_t g_relache_quand;
+ * clic d'outil, un toucher bref) ne font AUCUN clic.
+ *
+ * Le lien passe -Wl,--wrap=XCheckIfEvent (CMakeLists.txt) : chaque évènement
+ * que le pilote tire de la file passe ici. Après un appui du bouton gauche,
+ * sa relâche est remise en tête de file tant qu'aucun relevé n'a vu le bouton
+ * appuyé (clic_bref_releve, après chaque tour). Le pilote arrête là son tour
+ * et retrouve la relâche au suivant.
+ *
+ * Jusqu'à la 3.3.0 la garde regardait la file une fois, en début de tour, et
+ * rendait la relâche après 60 ms : un appui arrivé PENDANT le tour était pris
+ * par le pilote sans elle, et une boucle suspendue 60 ms rendait la relâche
+ * avant tout relevé (mesuré machine chargée : un clic perdu sur quatre). */
+#define APPUI_ATTENTE_MAX_MS 500       /* pas de relevé : on rend quand même */
+static lv_indev_t *g_souris;
+static int         g_appui_a_lire;     /* appui livré, pas encore relevé */
+static uint32_t    g_appui_quand;
 
-static Bool est_appui(Display *x, XEvent *e, XPointer a)
-{ (void)x; (void)a; return e->type == ButtonPress && e->xbutton.button == Button1; }
-static Bool est_relache(Display *x, XEvent *e, XPointer a)
-{ (void)x; (void)a; return e->type == ButtonRelease && e->xbutton.button == Button1; }
-
-static void clic_bref_tenir(void)
+Bool __real_XCheckIfEvent(Display *x, XEvent *e, Bool (*p)(Display *, XEvent *, XPointer), XPointer a);
+Bool __wrap_XCheckIfEvent(Display *x, XEvent *e, Bool (*p)(Display *, XEvent *, XPointer), XPointer a);
+Bool __wrap_XCheckIfEvent(Display *x, XEvent *e, Bool (*p)(Display *, XEvent *, XPointer), XPointer a)
 {
-    if (!g_x) return;
-    if (g_relache_tenue) {
-        if (lv_tick_elaps(g_relache_quand) >= 60) {
-            XPutBackEvent(g_x, &g_relache);
-            g_relache_tenue = 0;
+    if (!__real_XCheckIfEvent(x, e, p, a)) return False;
+    if (!g_souris || e->xbutton.button != Button1) return True;
+    if (e->type == ButtonPress) {
+        g_appui_a_lire = 1;
+        g_appui_quand = lv_tick_get();
+    } else if (e->type == ButtonRelease && g_appui_a_lire) {
+        if (lv_tick_elaps(g_appui_quand) < APPUI_ATTENTE_MAX_MS) {
+            XPutBackEvent(x, e);
+            return False;
         }
-        return;
+        g_appui_a_lire = 0;
     }
-    XEvent e;
-    if (!XCheckIfEvent(g_x, &e, est_appui, NULL)) return;
-    XEvent r;
-    if (XCheckIfEvent(g_x, &r, est_relache, NULL)) {
-        g_relache = r; g_relache_tenue = 1; g_relache_quand = lv_tick_get();
-    }
-    XPutBackEvent(g_x, &e);   /* l'appui retourne en tête de file */
+    return True;
+}
+
+/* Après chaque tour : le relevé a-t-il vu l'appui ? */
+static void clic_bref_releve(void)
+{
+    if (g_appui_a_lire && lv_indev_get_state(g_souris) == LV_INDEV_STATE_PRESSED)
+        g_appui_a_lire = 0;
+}
+
+static void clic_bref_armer(void)
+{
+    for (lv_indev_t *i = lv_indev_get_next(NULL); i; i = lv_indev_get_next(i))
+        if (lv_indev_get_type(i) == LV_INDEV_TYPE_POINTER) { g_souris = i; break; }
 }
 
 /* ─── --render-png : le dialogue dessiné dans une image, sans fenêtre ─────── */
@@ -2236,16 +2324,20 @@ static int run_png(WidgetNode *root, int win_w, int win_h)
 }
 
 /* Police, mise en page de l'écran, clavier, puis l'arbre. */
+static int g_lancee;   /* 1 : fenêtre ouverte par launch:, l'affichage a déjà son thème */
+
 static void preparer_ecran(WidgetNode *root)
 {
-    g_police = police_systeme(15);
-    /* La police va au THÈME, pas seulement à l'écran : le thème pose la sienne
-     * (Montserrat, sans accents) sur les onglets, les tableaux, les menus —
-     * « Général » y sortait « G?n?ral ». */
-    lv_display_t *d = lv_display_get_default();
-    lv_theme_t *th = lv_theme_default_init(d, lv_palette_main(LV_PALETTE_BLUE),
-                                           lv_palette_main(LV_PALETTE_RED), false, g_police);
-    if (th) lv_display_set_theme(d, th);
+    if (!g_lancee) {
+        g_police = police_systeme(15);
+        /* La police va au THÈME, pas seulement à l'écran : le thème pose la sienne
+         * (Montserrat, sans accents) sur les onglets, les tableaux, les menus —
+         * « Général » y sortait « G?n?ral ». */
+        lv_display_t *d = lv_display_get_default();
+        lv_theme_t *th = lv_theme_default_init(d, lv_palette_main(LV_PALETTE_BLUE),
+                                               lv_palette_main(LV_PALETTE_RED), false, g_police);
+        if (th) lv_display_set_theme(d, th);
+    }
     lv_obj_t *ecran = lv_screen_active();
     lv_obj_set_style_text_font(ecran, g_police, 0);
     lv_obj_set_style_pad_all(ecran, 8, 0);
@@ -2340,6 +2432,94 @@ static void evdev_trouve(lv_indev_t *i, lv_evdev_type_t type, void *ud)
     if (lv_indev_get_type(i) == LV_INDEV_TYPE_KEYPAD) lv_indev_set_group(i, lv_group_get_default());
 }
 
+/* ─── Une fenêtre du dialogue = un écran LVGL (launch: / closewindow:) ──────
+ * L'affichage n'a qu'une fenêtre native : l'écran de la fenêtre du dessus (la
+ * dernière lancée encore ouverte) y est chargé, celui d'avant revient à sa
+ * fermeture. Les minuteries LVGL ne tiennent pas à l'écran : celles des
+ * fenêtres couvertes continuent. */
+typedef struct { WidgetNode *racine; lv_obj_t *ecran; lv_group_t *groupe; } EcranFenetre;
+static EcranFenetre  g_ecrans[FENETRES_MAX];
+static int           g_nb_ecrans;
+static lv_display_t *g_x11;        /* l'affichage X11, pour retitrer la fenêtre */
+/* g_mode : -1 pas encore choisi · 0 sans écran · 1 écran (voir run_headless) */
+
+static EcranFenetre *ecran_de(const WidgetNode *racine)
+{
+    for (int i = 0; i < g_nb_ecrans; i++)
+        if (g_ecrans[i].racine == racine) return &g_ecrans[i];
+    return NULL;
+}
+
+/* Charge l'écran de la fenêtre du dessus, s'il ne l'est pas déjà. */
+static void montrer_dessus(void)
+{
+    WidgetNode   *r = fenetre_dessus();
+    EcranFenetre *e = r ? ecran_de(r) : NULL;
+    if (!e || lv_screen_active() == e->ecran) return;
+    lv_screen_load(e->ecran);
+    lv_group_set_default(e->groupe);
+    for (lv_indev_t *i = lv_indev_get_next(NULL); i; i = lv_indev_get_next(i))
+        if (lv_indev_get_type(i) == LV_INDEV_TYPE_KEYPAD) lv_indev_set_group(i, e->groupe);
+    if (g_x11) fenetre_nommer(g_x11, (r->label && *r->label) ? r->label : "lvglsermo");
+}
+
+/* Construit la fenêtre sur l'écran actif (la première) ou sur un écran neuf
+ * (launch:), et la range dans la table. */
+static void fenetre_ouvrir(WidgetNode *root)
+{
+    if (g_nb_ecrans >= FENETRES_MAX) return;
+    if (g_nb_ecrans > 0) {
+        g_lancee = 1;
+        lv_screen_load(lv_obj_create(NULL));
+    }
+    preparer_ecran(root);
+    g_ecrans[g_nb_ecrans++] = (EcranFenetre){ root, lv_screen_active(), lv_group_get_default() };
+    if (g_lancee && g_x11)
+        fenetre_nommer(g_x11, (root->label && *root->label) ? root->label : "lvglsermo");
+}
+
+/* closewindow: — la fenêtre a quitté la pile (fenetres.c). Les actions sont
+ * jouées hors du tour LVGL : l'écran peut être défait ici même. */
+static void fenetre_retiree(WidgetNode *racine)
+{
+    EcranFenetre *e = ecran_de(racine);
+    if (!e) return;                       /* sans écran */
+    EcranFenetre  f = *e;
+    *e = g_ecrans[--g_nb_ecrans];
+    montrer_dessus();
+    if (lv_screen_active() == f.ecran) return;   /* la dernière : le cœur sort */
+    if (f.groupe) lv_group_delete(f.groupe);
+    lv_obj_delete(f.ecran);
+    oublier(racine);
+}
+
+/* La boucle de l'écran, la même pour X11, Wayland et le framebuffer. launch:
+ * la rappelle depuis une action : elle ne rend alors jamais la main, comme le
+ * gtk_main imbriqué de l'étalon. */
+static int boucle(void)
+{
+    while (!g_fermee) {
+        g_dans_lvgl = 1;
+        uint32_t attente = lv_timer_handler();
+        g_dans_lvgl = 0;
+        /* La fenêtre vient d'être fermée : ses objets LVGL sont détruits, ne
+         * plus les parcourir. */
+        if (g_fermee) break;
+        if (g_souris) clic_bref_releve();
+        actions_dues_jouer();              /* exit:… sort ici, launch: ne revient pas */
+        for (int i = 0; i < fenetres_nb(); i++) {
+            WidgetNode *f = fenetre(i);
+            servir_barres(f);              /* une barre à 100 % joue ses actions */
+            if (fenetre(i) != f) { i--; continue; }
+            if (ecran_de(f)) synchroniser(f);
+        }
+        montrer_dessus();
+        if (attente > 20 || attente == LV_NO_TIMER_READY) attente = 20;
+        usleep(attente * 1000);
+    }
+    return export_abort();
+}
+
 static int run_fbdev(WidgetNode *root, const char *fb)
 {
     lv_init();
@@ -2356,16 +2536,10 @@ static int run_fbdev(WidgetNode *root, const char *fb)
         lv_indev_t *p = lv_evdev_create(LV_INDEV_TYPE_POINTER, ev);
         if (!p) fprintf(stderr, "lvglsermo: entrée %s inutilisable\n", ev);
     }
-    preparer_ecran(root);
+    g_mode = 1;
+    fenetre_ouvrir(root);
     listes_chargees(root);                 /* un « exit:… » peut sortir ici */
-    for (;;) {
-        uint32_t attente = lv_timer_handler();
-        servir_barres(root);
-        synchroniser(root);
-        if (attente > 20 || attente == LV_NO_TIMER_READY) attente = 20;
-        usleep(attente * 1000);
-    }
-    return 0;   /* jamais atteint : on sort par une action exit:… du cœur */
+    return boucle();   /* on sort par une action exit:… du cœur */
 }
 
 /* ─── Écran X11 : ouvert UNE fois, par le port, puis remis à LVGL ───────────
@@ -2435,22 +2609,16 @@ static int run_window(WidgetNode *root, const char *title, int win_w, int win_h)
         }
         if (!d) return run_headless(root);
         lv_x11_inputs_create(d, NULL);
+        clic_bref_armer();
         lv_display_add_event_cb(d, ecran_ferme, LV_EVENT_DELETE, NULL);
         fenetre_nommer(d, title);
+        g_x11 = d;
     }
 
-    preparer_ecran(root);
+    g_mode = 1;
+    fenetre_ouvrir(root);
     listes_chargees(root);                 /* un « exit:… » peut sortir ici */
-
-    while (!g_fermee) {
-        clic_bref_tenir();
-        uint32_t attente = lv_timer_handler();
-        servir_barres(root);
-        synchroniser(root);
-        if (attente > 20 || attente == LV_NO_TIMER_READY) attente = 20;
-        usleep(attente * 1000);
-    }
-    return export_abort();
+    return boucle();
 }
 
 /* ─── Point d'entrée ───────────────────────────────────────────────────────── */
@@ -2460,6 +2628,20 @@ int render_loop(WidgetNode *root, const char *title, int win_w, int win_h)
     const char *ecran = getenv("DISPLAY");
     if (option_render_png && *option_render_png)
         return run_png(root, win_w, win_h);
+    /* Jusqu'à la 3.3.0 une fenêtre lancée repartait de zéro (second lv_init,
+     * seconde fenêtre native) au milieu du tour LVGL de la première : le
+     * dialogue restait figé. */
+    int admise = fenetre_empiler(root);
+    fenetre_au_retrait = fenetre_retiree;
+    if (g_mode == 0)                       /* launch: sans écran */
+        return admise ? run_headless(root) : export_abort();
+    if (g_mode == 1) {                     /* launch: à l'écran */
+        if (admise) {
+            fenetre_ouvrir(root);
+            listes_chargees(root);         /* un « exit:… » peut sortir ici */
+        }
+        return boucle();
+    }
     const char *fb = getenv("SERMO_LVGL_FBDEV");
     if (fb && *fb && !getenv("SERMO_LVGL_BATCH"))
         return run_fbdev(root, fb);

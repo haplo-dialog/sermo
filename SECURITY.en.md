@@ -31,8 +31,9 @@ author did not intend.
 - **Output escaping**: exported values (`VAR="…"`) escape the four characters the
   shell expands inside double quotes (`\`, `"`, `$`, backtick), so
   `eval "$(sermo …)"` does not re-execute what a user typed. Verified by
-  `tests/garde_echappement_sortie.sh` (the "guard" bench, 4 cases: `$(`, `${`,
-  backtick, and the `EXIT=` line). `\` and `"` are not played by this bench.
+  `tests/garde_echappement_sortie.sh` (the "guard" bench, 6 cases: `$(`, `${`,
+  backtick, `"`, `\`, and the `EXIT=` line; for `"` and `\` it also checks
+  that `eval` returns the original value).
 - **`--do`** is the recommended path when the dialog may be used by someone other
   than the author: values arrive through the environment and are **never** read
   back as code.
@@ -67,16 +68,36 @@ unlimited control run) and `tests/unit/test_sermo_input.c`.
 
 ## Optional execution bounding (two environment variables)
 
-Two guards, **off by default**, let you deploy a dialog into a less-trusted
-context (a kiosk, a guest session) without changing the script. Both are read in
-the core (`safe_exec.c`) and therefore apply to all nine
-backends:
+Guards that are **off by default** (`SERMO_NO_SHELL_FALLBACK`,
+`SERMO_ALLOWED_CMDS`, `SERMO_NO_FILES`) let you deploy a dialog into a
+less-trusted context (a kiosk, a guest session) without changing the script.
+Two rules are always on since 3.3.0: no command under `--render-png`, and the
+reserved variable names. All are read in the core and therefore apply to all
+nine backends:
 
 - **`SERMO_NO_SHELL_FALLBACK`** — when set (to any value), the `/bin/sh -c`
   fallback (used for commands containing shell metacharacters) is **refused**
   instead of merely logged: the program **fails closed** rather than opening a
   shell. Commands without metacharacters still run directly via `exec()`.
   Verified by `tests/garde_option_do.sh`.
+- **`--render-png` runs no command** — the image preview of an XML you did
+  not write launches neither `<input>` nor `<action>`, directly or through the
+  shell; the refusal is reported on standard error. `SERMO_RENDER_EXEC=1`
+  lifts it, for the image of a trusted dialog with its real values. Up to
+  3.2.0, `--render-png` ran the `<input>` elements. Checked by
+  `tests/garde_render_sans_commande.sh`.
+- **`SERMO_NO_FILES`** — when set (to anything but `0`), the dialog neither
+  reads nor writes **any file named by the XML**: `<input file>`, `save:` to
+  `<output file>` (all nine ports), the `file()` condition. Images are not
+  concerned. For whoever displays XML they did not write:
+  `SERMO_ALLOWED_CMDS` closes commands, `SERMO_NO_FILES` closes files.
+  `sermoia-mcp` sets it while it is closed. Verified by
+  `sermoia-mcp/tests/verifie.sh`.
+- **Reserved variable names** — a widget variable named `SERMO_*`, `HAPLO_*`,
+  `LD_*`, `PATH`, `IFS`, `ENV`, `BASH_ENV`, `SHELLOPTS` or `PS4` is **not set**
+  in the environment of commands (it is still printed on exit): before 3.3.0,
+  `<variable>SERMO_ALLOWED_CMDS</variable>` replaced the allow-list with the
+  widget's value. Verified by `tests/garde_allowed_cmds.sh`.
 - **`SERMO_ALLOWED_CMDS`** — a comma-separated list of allowed commands (e.g.
   `SERMO_ALLOWED_CMDS=ls,cat,/usr/local/bin/tool`). While set, only those
   commands may run, **and** the `/bin/sh -c` fallback is refused (otherwise
@@ -103,7 +124,8 @@ through `safe_exec.c`, where neither the allow-list nor the refused fallback
 applies.
 
 - **`<terminal>` opens a shell outside both guards** (gtk3sermo and gtk4sermo,
-  the only ports that have the widget). It spawns `/bin/sh` through VTE
+  the only ports where it opens an interactive shell; elsewhere it shows its
+  command's output, run through `safe_popen`). It spawns `/bin/sh` through VTE
   (`sermo-backend-gtk3/src/widget_terminal.c`), and the output of its `<input>`
   is **typed into it** as if on a keyboard (`vte_terminal_feed_child`). An
   allowed command that prints a line therefore has that line run by the
@@ -230,8 +252,11 @@ that starts a **helper program**:
   **two presses**, leaves less than 2.5 s after the click (3.5 s to disarm),
   requires the autopilot's fence to be active and no wider than the list's,
   the drone inside it, and a state read less than 0.5 s ago; arming and
-  taking off happen on the ground only, never forced. Refused if another
-  station, another autopilot or signed messages are seen. The remote pilot
+  taking off happen on the ground only, never forced. The second press only
+  counts more than 0.5 s after the first. Refused if the vehicle is neither a
+  multirotor nor a helicopter, if another station or signed messages are
+  seen, if two autopilots beat without `systeme=`, or if, over UDP, the
+  followed system speaks from two addresses. The remote pilot
   remains responsible for the flight: sermo is not a certified ground station.
 
 ### Sound and video (`sermo-cible-media`, `sermo-source-media`)
@@ -328,7 +353,11 @@ reads the form sent back. It is the only port that opens a network socket.
 - **Loopback only** (`127.0.0.1`), port picked by the kernel, a 128-bit token
   (from `/dev/urandom`) in the address; without the right token, 404. Only
   this page is served, GET and POST only, request capped at 256 KiB, timeout
-  `SERMO_HTML_TIMEOUT` (300 s by default), a single form answer.
+  `SERMO_HTML_TIMEOUT` (300 s by default), a single form answer. Since 3.3.0:
+  a foreign `Host` header is refused (403), the page is sent with
+  `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` and
+  `Referrer-Policy: no-referrer`, and a silent connection no longer holds the
+  server.
 - **Since 3.1.0, only the variables declared by the dialog are returned**,
   with the value received (otherwise their starting value), and `EXIT`.
   Before, every field received came out: whoever fills in the page could add
@@ -362,13 +391,17 @@ act at run time — deduced from the missing notes, not measured at run time.
 
 ## MCP servers
 
-- **`sermoia-mcp`**: only the `sermo_run` tool launches the commands of the
-  dialog, with the user's rights, as the script would. `sermo_check` and
+- **`sermoia-mcp`**: only the `sermo_run` tool may launch the commands of the
+  dialog, with the user's rights, and it is **closed by default** since 3.2.0:
+  without `SERMO_ALLOWED_CMDS` in the server's environment no command is
+  launched; since 3.3.0 the files named by the XML are closed too
+  (`SERMO_NO_FILES`). `sermo_check` and
   `sermo_render` run nothing: they set `SERMO_ALLOWED_CMDS` to a command that
   does not exist, which refuses every command and the `/bin/sh -c` fallback
   (`sermoia-mcp/src/sermoia-mcp.c`, `AUCUNE_COMMANDE`). Up to 2.8.1,
-  `sermo_render` ran the dialog's `<input>`s. To bound `sermo_run`, set
-  `SERMO_ALLOWED_CMDS` in the server's environment.
+  `sermo_render` ran the dialog's `<input>`s. To open `sermo_run`, list in
+  `SERMO_ALLOWED_CMDS`, in the server's environment, the commands the dialog
+  needs.
 - **`sermoman-mcp`** is read-only: it serves the documentation, runs nothing
   and writes nothing.
 
@@ -494,8 +527,11 @@ They rest on a reading of the code or on a manual trial:
   when a command list is set (see above).
 - **A Glade file is code**, and **`<linkbutton>`** opens its address outside the
   command list (see above).
-- **No external audit.** What is verified is verified by the repository's benches
-  (`ci/bancs.sh`) and by the maintainer's own trials; the code is not entirely
+- **No professional security audit.** What is verified is verified by the
+  repository's benches (`ci/bancs.sh`) and by the maintainer's own trials. Two
+  occasional outside reviews took place: an audit of 3.2.0 and, for 3.3.0, a
+  review of the code by an AI that had not written it (2026-11-16); their
+  findings are in [CHANGELOG.en.md](CHANGELOG.en.md). The code is not entirely
   reviewed. Open gaps are listed in
   [TODO.md](TODO.md) (French only).
 
@@ -509,8 +545,8 @@ They rest on a reading of the code or on a manual trial:
 - **Timelines** — sermo has a single maintainer: acknowledgement within **14
   days**; a fix, or a public advisory with a workaround, no later than **90
   days** after the report, sooner if the vulnerability is already public.
-- **Supported versions**: only the latest published line receives fixes: 3.1.x
-  (3.1.2 since 2026-10-19). The 1.x line no longer does: move to 3.1
+- **Supported versions**: only the latest published line receives fixes: 3.3.x
+  (3.3.0 of 2026-11-18). The 1.x line no longer does: move to 3.x
   ([MIGRATION.en.md](MIGRATION.en.md)).
 - If you wish, your name goes into the [CHANGELOG.en.md](CHANGELOG.en.md) with the
   fix.

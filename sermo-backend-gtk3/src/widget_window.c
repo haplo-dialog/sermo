@@ -819,7 +819,7 @@ void widget_window_save(variable *var)
 	/* If we have a valid filename then open it and dump the
 	 * widget's data to it */
 	if (filename) {
-		if ((outfile = fopen(filename, "w"))) {
+		if ((outfile = sermo_fopen_output(filename))) {
 			fprintf(outfile, "%s", gtk_window_get_title(GTK_WINDOW(var->Widget)));
 			/* Close the file */
 			fclose(outfile);

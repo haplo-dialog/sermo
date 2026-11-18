@@ -8,7 +8,7 @@
 
 EAPI=8
 
-DESCRIPTION="Dialog boxes for shell scripts, described in XML (gtkdialog successor)"
+DESCRIPTION="Dialog boxes for shell scripts, described in XML"
 HOMEPAGE="https://gitlab.com/haplo-dialog/sermo"
 SRC_URI="https://gitlab.com/haplo-dialog/sermo/-/archive/v${PV}/sermo-v${PV}.tar.gz -> ${P}.tar.gz"
 S="${WORKDIR}/sermo-v${PV}"

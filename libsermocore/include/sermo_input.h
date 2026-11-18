@@ -53,8 +53,20 @@ size_t sermo_input_max(void);
  * impossible, rend @flux tel quel. NULL rend NULL. */
 FILE *sermo_input_wrap(FILE *flux, const char *source);
 
-/* fopen(@chemin, "r"), plafonné : la lecture d'un <input file>. */
+/* fopen(@chemin, "r"), plafonné : la lecture d'un <input file>. NULL (errno
+ * EACCES) si les fichiers sont interdits. */
 FILE *sermo_fopen_input(const char *chemin);
+
+/* fopen(@chemin, "w") : l'écriture d'un <output file> (save:). NULL (errno
+ * EACCES) si les fichiers sont interdits. */
+FILE *sermo_fopen_output(const char *chemin);
+
+/* SERMO_NO_FILES=1 dans l'environnement : le dialogue ne lit ni n'écrit aucun
+ * fichier nommé par le XML (<input file>, <output file>, condition file()).
+ * Pour qui affiche un XML qu'il n'a pas écrit (sermoia-mcp) : SERMO_ALLOWED_CMDS
+ * ferme les commandes, ceci ferme les fichiers. Les images ne sont pas
+ * concernées. Rend 1 si interdit. */
+int sermo_fichiers_interdits(void);
 
 /* Retire la limite d'un flux rendu par sermo_input_wrap() ou safe_popen(), et
  * rend le flux réel, que l'appelant fermera par fclose(). Pour un lecteur qui

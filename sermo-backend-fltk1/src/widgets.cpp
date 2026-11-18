@@ -289,9 +289,13 @@ char *widget_get_text_value(GtkWidget *widget, int type)
         return widget_colorbutton_envvar_construct(widget);
 
     case WIDGET_COMBOBOX:
+        return widget_combobox_envvar_construct(widget);
+
+    /* <comboboxentry> est créé et rafraîchi par widget_comboboxtext : sa
+     * valeur s'y lit aussi (texte libre du <default> compris). */
     case WIDGET_COMBOBOXENTRY:
     case WIDGET_COMBOBOXTEXT:
-        return widget_combobox_envvar_construct(widget);
+        return widget_comboboxtext_envvar_construct(widget);
 
     case WIDGET_EDIT:
         return widget_edit_envvar_construct(widget);
@@ -827,4 +831,80 @@ void widget_show_all(void)
     }
     g_list_free(widget_hide_list);
     widget_hide_list = NULL;
+}
+
+/* ─── append: et rangées de save: (contrat, sermo-contract.h) ────────────────
+ * Le cœur neutre ne sait pas toucher un widget FLTK : jusqu'à la 3.3.0,
+ * append: n'y faisait rien et save: n'écrivait pas les listes. Même règle que
+ * l'étalon gtk3sermo : <entry>, le texte est remplacé ; <edit>, il est ajouté
+ * à la fin ; <list>, une rangée est ajoutée EN TÊTE et choisie. */
+#include <FL/Fl_Input.H>
+#include <FL/Fl_Browser.H>
+#include <FL/Fl_Choice.H>
+#include <string>
+
+/* widget_tree.cpp, widget_table.cpp : leurs modèles y sont privés. */
+extern "C" char *fltk1_tree_rangees(void *w);
+extern "C" int   fltk1_tree_ajouter(void *w, const char *valeur);
+extern "C" char *fltk1_table_rangees(void *w);
+extern "C" int   fltk1_table_ajouter(void *w, const char *valeur);
+
+extern "C" int sermo_be_widget_append(void *w, int type, const char *valeur)
+{
+    if (!w || !valeur) return 0;
+    switch (type) {
+    case WIDGET_ENTRY: {
+        Fl_Input *in = (Fl_Input *)w;
+        in->value(valeur);
+        in->redraw();
+        return 1;
+    }
+    case WIDGET_EDIT: {
+        Fl_Input *in = (Fl_Input *)w;          /* Fl_Multiline_Input */
+        int fin = in->size();
+        in->replace(fin, fin, valeur);
+        in->redraw();
+        return 1;
+    }
+    case WIDGET_LIST: {
+        Fl_Browser *br = (Fl_Browser *)w;
+        br->insert(1, valeur);
+        br->deselect();
+        br->select(1);
+        br->redraw();
+        return 1;
+    }
+    case WIDGET_TREE:
+        return fltk1_tree_ajouter(w, valeur);   /* une rangée À LA FIN */
+    case WIDGET_TABLE:
+        return fltk1_table_ajouter(w, valeur);  /* de même */
+    default:
+        return 0;
+    }
+}
+
+extern "C" char *sermo_be_widget_rows(void *w, int type)
+{
+    std::string r;
+    if (!w) return NULL;
+    /* rangées brutes « a|b » : le cœur les ramène aux colonnes du <label> */
+    if (type == WIDGET_TREE)  return fltk1_tree_rangees(w);
+    if (type == WIDGET_TABLE) return fltk1_table_rangees(w);
+    if (type == WIDGET_LIST) {
+        Fl_Browser *br = (Fl_Browser *)w;
+        for (int i = 1; i <= br->size(); i++) {
+            const char *t = br->text(i);
+            if (i > 1) r += '\n';
+            if (t) r += t;
+        }
+    } else if (type == WIDGET_COMBOBOXTEXT || type == WIDGET_COMBOBOXENTRY) {
+        Fl_Choice *ch = (Fl_Choice *)w;
+        const Fl_Menu_Item *m = ch->menu();
+        for (int i = 0; m && i < ch->size() - 1; i++) {
+            if (i) r += '\n';
+            if (m[i].label()) r += m[i].label();
+        }
+    } else
+        return NULL;
+    return strdup(r.c_str());
 }

@@ -1,0 +1,3 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: statusbar et text : un texte avec balise et esperluette ressort tel quel (qt6 le lisait en HTML, efl1 en balisage) -->
+<window><vbox><statusbar><variable>SB</variable><default>a &lt;b&gt;gras&lt;/b&gt; &amp; fin</default></statusbar><text><variable>TX</variable><input>printf "%s" "&lt;i&gt;x&lt;/i&gt; &amp; y"</input></text><timer visible="false"><variable>_T</variable><action>exit:fin</action></timer></vbox></window>

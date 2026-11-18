@@ -107,3 +107,10 @@ void widget_entry_refresh(variable *var)
 void widget_entry_fileselect(variable *var, const char *n, const char *v) {}
 void widget_entry_removeselected(variable *var) {}
 void widget_entry_save(variable *var) {}
+
+/* append: vers <entry> : le texte est remplacé, comme sur l'étalon. */
+void efl1_entry_poser(GtkWidget *w, const char *texte);
+void efl1_entry_poser(GtkWidget *w, const char *texte)
+{
+    if (w && texte) texte_poser((Evas_Object *)w, texte);
+}

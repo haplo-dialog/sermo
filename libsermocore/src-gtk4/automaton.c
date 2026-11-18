@@ -38,6 +38,7 @@
 
 #include <gtk/gtk.h>
 
+#include "safe_exec.h"
 #include "config.h"
 #include "gtkdialog.h"
 #include "widgets.h"
@@ -124,6 +125,9 @@ GtkWidget *window = NULL;
 /*
  * Static function definitions.
  */
+/* Variable créée par le dernier instruction_execute_push() (NULL : aucune). */
+static variable *variable_poussee = NULL;
+
 static int 
 instruction_execute_push(token Token, 
 		AttributeSet *Attr, 
@@ -889,8 +893,18 @@ instruction_execute(instruction command)
 		/* These instructions will push widgets into the stack, some
 		 ** of them will remove elements from it.
 		 */
+		variable_poussee = NULL;
 		instruction_execute_push(Token, Attr, command.tag_attributes);
-		variables_refresh(attributeset_get_first(&element, Attr, ATTR_VARIABLE));
+		/* Le premier refresh vise la variable créée pour CE widget. Par le
+		 * nom du XML, le widget d'une seconde fenêtre aux noms déjà pris
+		 * (rangé sous NOM__W<id>) n'était jamais initialisé : c'est celui de
+		 * la première fenêtre qui était rafraîchi une seconde fois — ni
+		 * <default>, ni <input>, ni signaux pour le nouveau (jusqu'à la
+		 * 3.3.0, mesuré sur gtk3 et gtk4 : NOM__W2="" pour un champ dont le
+		 * défaut est « deux »). */
+		variables_refresh(variable_poussee
+			? variable_poussee->Name
+			: attributeset_get_first(&element, Attr, ATTR_VARIABLE));
 		Attr = NULL;
 		break;
 	case SET:
@@ -929,7 +943,7 @@ instruction_execute(instruction command)
 		stackelement s;
 		s = pop();
 		g_message("  -> %s := '%s'", Argument, s.cval);
-		g_setenv(Argument, s.cval, TRUE);
+		sermo_exporter_variable(Argument, s.cval, TRUE);
 		}
 		break;
 	case IMPUSH:
@@ -1143,7 +1157,9 @@ static GtkWidget *put_in_the_scrolled_window(GtkWidget *widget,
 	return scrolledwindow;
 }
 
-static
+/* Branchée par g_signal_connect : sans objet dans les variantes où cet appel
+ * est une macro vide. */
+static __attribute__((unused))
 gboolean widget_moved(GtkWidget *widget,
                       GdkEvent *event,
                       gpointer user_data){
@@ -1230,6 +1246,18 @@ create_gvim(AttributeSet * Attr)
 #endif /* GTK4_NO_SOCKET */
 
 /* GTK3: always available - removed version guard */
+/* GtkFileChooserWidget choisit de lui-même la première entrée du dossier
+ * une fois celui-ci chargé : sans ce drapeau la variable rendrait ce fichier
+ * sans que personne n'ait rien choisi. GTK 4 n'a plus de signal
+ * « selection-changed » : le geste (clic ou touche) est vu en phase de
+ * capture, avant les enfants du sélecteur. Rend FALSE : l'événement suit
+ * son cours. */
+static gboolean chooser_touche(GtkWidget *chooser)
+{
+	g_object_set_data(G_OBJECT(chooser), "sermo-choisi", GINT_TO_POINTER(1));
+	return FALSE;
+}
+
 static GtkWidget *
 create_chooser(AttributeSet *Attr)
 {
@@ -1263,9 +1291,26 @@ create_chooser(AttributeSet *Attr)
 				atoi(attributeset_get_first(&element, Attr, ATTR_WIDTH)),
 				atoi(attributeset_get_first(&element, Attr, ATTR_HEIGHT)));
 	
-	if (attributeset_is_avail(Attr, ATTR_DEFAULT))
+	if (attributeset_is_avail(Attr, ATTR_DEFAULT)) {
 		gtk_file_chooser_set_current_folder((GtkFileChooser *)chooser, 
 				attributeset_get_first(&element, Attr, ATTR_DEFAULT));
+		/* gardé pour l'export : tant que rien n'est choisi, la variable
+		 * rend <default> (voir widget_get_text_value, WIDGET_CHOOSER) */
+		g_object_set_data_full(G_OBJECT(chooser), "sermo-defaut",
+			g_strdup(attributeset_get_first(&element, Attr, ATTR_DEFAULT)), g_free);
+	}
+	/* Un choix ne compte que s'il vient d'un geste (voir chooser_touche). */
+	{
+		GtkGesture         *clic = gtk_gesture_click_new();
+		GtkEventController *touche = gtk_event_controller_key_new();
+
+		gtk_event_controller_set_propagation_phase(GTK_EVENT_CONTROLLER(clic), GTK_PHASE_CAPTURE);
+		gtk_event_controller_set_propagation_phase(touche, GTK_PHASE_CAPTURE);
+		g_signal_connect_swapped(clic, "pressed", G_CALLBACK(chooser_touche), chooser);
+		g_signal_connect_swapped(touche, "key-pressed", G_CALLBACK(chooser_touche), chooser);
+		gtk_widget_add_controller(chooser, GTK_EVENT_CONTROLLER(clic));
+		gtk_widget_add_controller(chooser, touche);
+	}
 	
 	act = attributeset_get_first(&element, Attr, ATTR_ACTION);
 	while (act != NULL) {
@@ -1618,10 +1663,15 @@ instruction_execute_push(
 	 ** Now we create a new variable or refresh the old one for this
 	 ** new widget.
 	 */
-	variables_new_with_widget(Attr, tag_attributes, Widget, Widget_Type);
+	variable_poussee = variables_new_with_widget(Attr, tag_attributes,
+		Widget, Widget_Type);
 
-	variables_set_attributes(attributeset_get_first(&element, Attr,
-		ATTR_VARIABLE), Attr);
+	/* Les attributs vont à la variable de ce widget (variables_new_with_widget
+	 * les y a déjà rangés). Par le nom du XML, ceux d'une seconde fenêtre
+	 * homonyme écrasaient ceux de la première. */
+	if (variable_poussee == NULL)
+		variables_set_attributes(attributeset_get_first(&element, Attr,
+			ATTR_VARIABLE), Attr);
 
 	/* Thunor: At this point Widget and possibly scrolled_window will
 	 * be non-NULL and they require registering in a list (actually two)
@@ -1704,7 +1754,7 @@ instruction_new(instruction new)
 	PIP_DEBUG("instruction_counter=%d, memory_counter=%d", 
 			instruction_counter, memory_counter);
 	
-	if (instruction_counter == memory_counter)
+	if ((size_t)instruction_counter == memory_counter)
 		_more_memory_needed();
 
 	program[instruction_counter++] = new;
@@ -1719,7 +1769,7 @@ instruction_get_pc(void)
 void
 instruction_set_jump(gint from, gint where)
 {
-	if (from >= memory_counter)
+	if (from < 0 || (size_t)from >= memory_counter)
 		g_error("Jump from a nonexistent instruction memory location.");
 	program[from].ival = where;
 }

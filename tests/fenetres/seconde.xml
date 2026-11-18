@@ -1,4 +1,5 @@
 <!-- SPDX-License-Identifier: GPL-2.0-or-later -->
 <window><vbox>
 <entry><variable>NOM</variable><default>deux</default></entry>
+<entry><variable>P</variable><input>echo lu</input></entry>
 </vbox><variable>SECONDE</variable></window>

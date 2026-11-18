@@ -186,6 +186,16 @@ GtkWidget *widget_button_create(AttributeSet *Attr, tag_attr *attr, gint Type)
 }
 
 /* ── widget_button_envvar_construct ──────────────────────────────────────── */
+/* Crochet du contrat : « activate:NOM » sur un bouton — son rappel, comme au
+ * clic (actions du bouton, ou sortie d'un bouton nu). */
+extern "C" int sermo_be_button_click(void *w)
+{
+    Fl_Widget *b = (Fl_Widget *)w;
+    if (!b || !b->callback()) return 0;
+    b->do_callback();
+    return 1;
+}
+
 gchar *widget_button_envvar_construct(GtkWidget *widget)
 {
     /* Comme l'étalon (gtk3 widget_button.c) : un bouton ordinaire exporte "",

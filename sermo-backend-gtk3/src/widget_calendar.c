@@ -314,7 +314,7 @@ void widget_calendar_save(variable *var)
 	}
 
 	if (filename) {
-		if ((outfile = fopen(filename, "w"))) {
+		if ((outfile = sermo_fopen_output(filename))) {
 			gtk_calendar_get_date(GTK_CALENDAR(var->Widget),
 				&year, &month, &day);
 			value = g_strdup_printf("%04u-%02u-%02u", year, month + 1, day);

@@ -115,14 +115,81 @@ void sermo_be_app_init(int *argc, char ***argv)
     (void)argc; (void)argv;   /* SDL_Init differe a render_loop */
 }
 
+/* ─── Pile des fenêtres ouvertes (launch: / closewindow:) ───────────────────
+ * Une seule fenêtre native : la dernière lancée encore ouverte est à l'écran
+ * (render.cpp sert « celle du dessus »), les autres attendent dessous, leurs
+ * minuteries en marche. */
+#define FENETRES_MAX 64
+static WidgetNode *g_fenetres[FENETRES_MAX];
+static int         g_nb_fenetres = 0;
+
+int         sdl3_fenetres_nb(void)   { return g_nb_fenetres; }
+WidgetNode *sdl3_fenetre(int i)      { return (i >= 0 && i < g_nb_fenetres) ? g_fenetres[i] : NULL; }
+WidgetNode *sdl3_fenetre_dessus(void){ return g_nb_fenetres > 0 ? g_fenetres[g_nb_fenetres - 1] : NULL; }
+
+static WidgetNode *racine_de(void *w)
+{
+    WidgetNode *n = (WidgetNode *)w;
+    while (n && n->parent) n = n->parent;
+    return n;
+}
+static int rang_de(const WidgetNode *racine)
+{
+    for (int i = 0; i < g_nb_fenetres; i++)
+        if (g_fenetres[i] == racine) return i;
+    return -1;
+}
+static void retirer(int i)
+{
+    for (; i + 1 < g_nb_fenetres; i++) g_fenetres[i] = g_fenetres[i + 1];
+    g_nb_fenetres--;
+}
+
+/* closewindow: — contrat, facultatif. L'arbre n'est pas libéré : l'action
+ * peut venir d'un de ses widgets, en cours de rendu. */
+int sermo_be_window_close(void *w)
+{
+    int i = rang_de(racine_de(w));
+    if (i < 0) return 0;
+    retirer(i);
+    return 1;
+}
+
+/* launch: d'une fenêtre déjà ouverte : elle repasse au-dessus. */
+void sermo_be_window_present(void *w)
+{
+    WidgetNode *r = racine_de(w);
+    int i = rang_de(r);
+    if (i < 0) return;
+    retirer(i);
+    g_fenetres[g_nb_fenetres++] = r;
+}
+
 int sermo_be_run_loop(void)
 {
+    static int profondeur = 0;
+
     if (option_print_ir)
         return 0;                     /* headless : le coeur imprime l'IR */
 
     WidgetNode *root = sdl3_root_window;
     if (!root)
         return 0;
+
+    if (g_nb_fenetres < FENETRES_MAX && rang_de(root) < 0)
+        g_fenetres[g_nb_fenetres++] = root;
+
+    /* launch: — rappelée depuis une action, la première boucle sur la pile.
+     * Jusqu'à la 3.3.0 une seconde render_loop() repartait de zéro (second
+     * SDL_Init, seconde fenêtre native, même contexte ImGui au milieu d'une
+     * image) et closewindow: laissait le dialogue figé. */
+    if (profondeur++ > 0 && !(option_render_png && *option_render_png)) {
+        render_reprendre();
+        printf("EXIT=\"abort\"\n");
+        g_setenv("EXIT", "abort", TRUE);
+        fflush(stdout);
+        exit(EXIT_SUCCESS);
+    }
 
     /* Rendu offscreen : dessine une frame dans un framebuffer cache, ecrit le
      * PNG et sort proprement — PAS de boucle d'evenements, PAS de EXIT="abort"

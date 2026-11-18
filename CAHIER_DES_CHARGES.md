@@ -4,7 +4,7 @@
 **Distribution cible :** Debian Testing
 **Lignée :** gtkdialog → sermo monolithique → sermo (édition modulaire) (GPL-2.0-or-later)
 **Distributeur :** haplo-dialog <devel@haplo-dialog.fr>
-**Statut :** Phase 1 & 2 terminées ; Phase 3 (frontière propre) en cours ; 3.0.0 publiée le 2026-10-15 ; 3.1.0 (2026-10-19, MQTT, MAVLink, son et vidéo), 3.1.1 et 3.1.2
+**Statut :** Phase 1 & 2 terminées ; Phase 3 (frontière propre) en cours ; 3.0.0 publiée le 2026-10-15 ; 3.1.0 (2026-10-19, MQTT, MAVLink, son et vidéo), 3.1.1 et 3.1.2 ; 3.2.0 (2026-11-04, pilotage d'un drone, photo et vidéo d'une caméra) ; 3.3.0 (2026-11-18, audit, parité des neuf ports)
 
 ---
 
@@ -58,8 +58,9 @@ cloisonnement de processus (IPC), nouveaux backends.
 - **liste blanche** : MQTT et MAVLink n'écrivent que ce qu'une liste écrite
   exprès permet (`cibles-mqtt`, `cibles-mavlink`) ; le lecteur son et vidéo
   n'envoie à mpv qu'une liste fermée de commandes, sur des sources filtrées ;
-- **exclu** : le pilotage d'un drone (armer, décoller, changer de mode, se
-  déplacer), prévu en 3.2.0.
+- **pilotage d'un drone** (armer, décoller, changer de mode, aller à un point,
+  désarmer) : livré en 3.2.0 pour un ArduPilot Copter, seulement si une ligne
+  `pilotage` de la liste blanche le permet, deux appuis par ordre.
 
 ## 3. Objectifs
 
@@ -75,7 +76,7 @@ cloisonnement de processus (IPC), nouveaux backends.
 - EF1 — Le cœur analyse le XML (lexer/parser Flex/Bison) et pilote variables,
   actions, exécution shell durcie, sans dépendance graphique (variante neutre).
 - EF2 — Chaque backend fournit les widgets natifs et la boucle d'évènements de sa
-  toolkit via le contrat `sermo_backend.h`.
+  toolkit via le contrat `contract/sermo-contract.h`.
 - EF3 — Le langage XML et les valeurs exportées (`NAME="value"`) sont identiques
   sur tous les backends.
 - EF4 — L'alias `sermo` (update-alternatives) est fourni ; la commande
@@ -92,7 +93,7 @@ cloisonnement de processus (IPC), nouveaux backends.
 - ENF1 — **Sécurité** : `safe_system`/`safe_popen`, pas de shell hors
   métacaractères, échappement de sortie, durcissement (FORTIFY=3, PIE, RELRO,
   CET) — voir [SECURITY.md](SECURITY.md).
-- ENF2 — **Vérifiabilité** : trois bancs rejouables (XML 55, comportement 78,
+- ENF2 — **Vérifiabilité** : trois bancs rejouables (XML 55, comportement 95,
   et les gardes `tests/garde_*.sh`) gardent chaque étape.
 - ENF3 — **Légèreté** : `sermo-core-dev` n'a aucune dépendance (bibliothèque
   statique) ; chaque
@@ -108,7 +109,7 @@ cloisonnement de processus (IPC), nouveaux backends.
 
 ## 7. Architecture cible
 
-Cœur `libsermocore` (analyse + exécution) ← contrat `sermo_backend.h` →
+Cœur `libsermocore` (analyse + exécution) ← contrat `contract/sermo-contract.h` →
 backends `sermo-backend-<t>` (rendu + boucle). Détail :
 [MANUEL_DEVELOPPEUR.md](MANUEL_DEVELOPPEUR.md).
 
@@ -136,18 +137,20 @@ Phase 2 (gtk4 24/24, doc, 9 .deb) ✅ ; Phase 3 (frontière propre) en cours
 (rename `sermo_be_*` fait ; gtk4 vendoré dans `src-gtk4/`, plus de dépendance
 à l'ancienne édition ; reste la source unique gtk3+gtk4 + l'IR). Sources et
 cibles : 3.0.0 (Modbus, OPC UA, en lecture seule) ✅ ; 3.1.0 (MQTT, MAVLink,
-son et vidéo) ✅ (2026-10-19) ; 3.2.0 : pilotage d'un drone, vidéo dans la
-fenêtre du dialogue sur les autres ports et sous Wayland (déjà faite en 3.1.1
-pour gtk3 sous X11), lecteur essayé sous Wayland.
+son et vidéo) ✅ (2026-10-19) ; 3.2.0 (pilotage d'un drone, photo et vidéo
+d'une caméra, vidéo dans la fenêtre sous Wayland pour gtk3 et sous X11 pour
+qt6) ✅ (2026-11-04). Reste : la vidéo dans la fenêtre sur les sept autres
+ports et sous Wayland ailleurs que sur gtk3, le lecteur essayé sous Wayland.
 
 ## 10. Critères d'acceptation
 
 - CA1 — Les sept backends lient et tournent sur `libsermocore`. ✅ (Neuf
   depuis la 2.8.0.)
-- CA2 — Chaque backend passe les trois bancs. ✅ **9/9** à 78/78 (comportement
+- CA2 — Chaque backend passe les trois bancs. ✅ **9/9** à 95/95 (comportement
   rejoué par `tests/comportement/run_all.sh`), XML 55/55, gardes — ncurses joue
   le comportement en mode batch headless — [BILAN_SANTE.md](BILAN_SANTE.md)
-  (3.1.0, 2026-10-18). Historique : 9/9 à 61/61 en 2.8.0 (2026-10-10).
+  (3.3.0, 2026-11-16). Historique : 9/9 à 78/78 en 3.1.0 (2026-10-18), à
+  61/61 en 2.8.0 (2026-10-10).
 - CA3 — Dépendances runtime disjointes, prouvées. ✅
 - CA4 — Aucun banc rouge introduit par la modularisation. ✅
 

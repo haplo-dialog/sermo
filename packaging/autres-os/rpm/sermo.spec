@@ -14,9 +14,9 @@
 %global _lto_cflags %{nil}
 
 Name:           sermo
-Version:        3.0.0
+Version:        3.2.0
 Release:        1%{?dist}
-Summary:        Dialog boxes for shell scripts, described in XML (gtkdialog successor)
+Summary:        Dialog boxes for shell scripts, described in XML
 License:        GPL-2.0-or-later
 URL:            https://gitlab.com/haplo-dialog/sermo
 Source0:        https://gitlab.com/haplo-dialog/sermo/-/archive/v%{version}/sermo-v%{version}.tar.gz
@@ -40,9 +40,9 @@ BuildRequires:  wayland-protocols-devel
 
 %description
 sermo builds native windows from an XML description, so that a shell script can
-show a real graphical interface without any toolkit knowledge. It succeeds
-gtkdialog and keeps its XML language. One hardened core parses the description
-and runs the actions; each backend draws it with one toolkit.
+show a real graphical interface without any toolkit knowledge. One hardened
+core parses the description and runs the actions; each backend draws it with
+one toolkit. Scripts written for gtkdialog run unchanged.
 
 %package -n sermo-core-devel
 Summary:        sermo dialog engine - static core library and headers

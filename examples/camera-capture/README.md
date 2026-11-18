@@ -1,12 +1,13 @@
 <!-- SPDX-License-Identifier: CC0-1.0 -->
 # camera-capture — photo et vidéo d'une caméra, après confirmation
 
-Une fenêtre qui montre la webcam **dans la fenêtre** (gtk3 et qt6 sous X11 ; ailleurs,
-dans la fenêtre de mpv), avec cinq boutons :
+Une fenêtre qui montre la webcam **dans la fenêtre** (gtk3 et qt6 sous X11, gtk3 sous
+Wayland ; ailleurs, dans la fenêtre de mpv), avec cinq boutons de caméra, et « Fermer »,
+qui l'éteint d'abord :
 
 | Bouton | Ce qu'il fait |
 |---|---|
-| Allumer | ouvre la caméra (`CC_CAMERA`, `/dev/video0` par défaut) ; « CAMÉRA ACTIVE » est écrit dans l'image |
+| Allumer | ouvre la caméra (`CC_CAMERA`, `/dev/video0` par défaut) ; « CAMÉRA ACTIVE » est écrit dans l'image (dans le titre de la fenêtre de mpv quand elle n'est pas incrustée) |
 | Photo… | demande confirmation, puis écrit une image JPEG |
 | Enregistrer 30 s… | demande confirmation, puis enregistre au plus `CC_DUREE` secondes (1 à 600) ; « ENREGISTREMENT » dans l'image et le titre |
 | Couper | finit l'enregistrement avant la durée |
@@ -19,6 +20,16 @@ dans la fenêtre de mpv), avec cinq boutons :
 ```
 
 Codes de sortie : `0` fait · `1` refusé ou annulé · `2` outil absent · `64` entrée invalide.
+
+## Installation
+
+```sh
+sudo apt install sermo-cible-media mpv bubblewrap
+```
+
+- `SERMO_SOURCE_DIR` : dossier des programmes d'aide (`/usr/libexec/sermo` par défaut).
+- `CC_APPROBATION` : chemin d'une autre porte d'approbation (`../approbation/approbation.sh` par défaut).
+- Sans la commande `xdg-user-dir`, les fichiers vont dans le dossier personnel.
 
 ## La confirmation
 

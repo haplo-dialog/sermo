@@ -31,6 +31,7 @@ GtkWidget *widget_infobar_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     icon->setStyleSheet("color:#89b4fa; font-size:16px; font-weight:bold;");
     QLabel *lbl  = new QLabel();
     lbl->setObjectName("ib_label");
+    lbl->setTextFormat(Qt::PlainText);   /* la ligne d'un <input> n'est pas du HTML */
     lbl->setWordWrap(true);
     lbl->setStyleSheet("color:#cdd6f4;");
     lay->addWidget(icon);

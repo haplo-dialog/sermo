@@ -35,7 +35,13 @@ GtkWidget *widget_statusbar_create(AttributeSet *Attr, tag_attr *attr, gint Type
         GList *el_def = NULL;
         gchar *def = attributeset_get_first(&el_def, Attr, ATTR_DEFAULT);
         if (def && *def) txt = def;
-        if (txt && *txt) elm_object_text_set(lbl, txt);
+        if (txt && *txt) {
+            /* elm_label lit du balisage : « <b> » ou « & » d'un texte brut
+             * disparaissaient ou cassaient l'affichage. */
+            gchar *m = g_markup_escape_text(txt, -1);
+            elm_object_text_set(lbl, m);
+            g_free(m);
+        }
     }
     evas_object_size_hint_weight_set(lbl, EVAS_HINT_EXPAND, 0.0);
     evas_object_size_hint_align_set(lbl, EVAS_HINT_FILL, 0.5);
@@ -46,8 +52,13 @@ GtkWidget *widget_statusbar_create(AttributeSet *Attr, tag_attr *attr, gint Type
 gchar *widget_statusbar_envvar_construct(GtkWidget *w)
 {
     if (!w) return g_strdup("");
+    /* Le libellé est posé échappé (balisage EFL) : la valeur rendue est le
+     * texte d'origine, pas « &amp; ». */
     const char *txt = elm_object_text_get((Evas_Object *)w);
-    return g_strdup(txt ? txt : "");
+    char *brut = txt ? elm_entry_markup_to_utf8(txt) : NULL;
+    gchar *r = g_strdup(brut ? brut : "");
+    free(brut);
+    return r;
 }
 gchar *widget_statusbar_envvar_all_construct(variable *var)
 {
@@ -75,7 +86,11 @@ void widget_statusbar_refresh(variable *var)
     if (!ligne) return;
     if (!(premier && (attributeset_get_first(&el, var->Attributes, ATTR_LABEL) ||
                       attributeset_get_first(&el2, var->Attributes, ATTR_DEFAULT))))
-        elm_object_text_set((Evas_Object *)var->Widget, ligne);
+    {
+        gchar *m = g_markup_escape_text(ligne, -1);   /* sortie de commande : jamais du balisage */
+        elm_object_text_set((Evas_Object *)var->Widget, m);
+        g_free(m);
+    }
     g_free(ligne);
 }
 void widget_statusbar_fileselect(variable *var, const char *n, const char *v) {}

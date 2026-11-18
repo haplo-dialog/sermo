@@ -69,6 +69,8 @@ gboolean variables_is_avail_by_name(const char *name);
 gint variables_count_widgets(void);
 void variables_drop_by_window_id(variable *actual, gint window_id);
 variable *find_variable_by_widget(GtkWidget *widget);
+/* Fenêtre de l'action en cours (0 : aucune) ; rend la précédente. */
+gint variables_fenetre_des_actions(gint window_id);
 void variables_initialize_all(void);
 void variables_seed_defaults(void);
 void variables_export_all(void);

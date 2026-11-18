@@ -187,8 +187,8 @@ GtkWidget *widget_menu_create(AttributeSet *Attr, tag_attr *attr, gint Type)
             QVariant a = holder->property("menuitem_action");
             if (a.isValid()) {
                 QString qcmd = a.toString();
-                QObject::connect(act, &QAction::triggered, [qcmd]() {
-                    execute_action(nullptr, qcmd.toUtf8().constData(), nullptr);
+                QObject::connect(act, &QAction::triggered, [qcmd, holder]() {
+                    execute_action((GtkWidget *)holder, qcmd.toUtf8().constData(), nullptr);
                 });
             }
             QString chk = holder->property("menuitem_check").toString();

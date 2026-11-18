@@ -143,9 +143,58 @@ static bool sermo_write_png_rgba_flipped(const char *path, int w, int h,
  * dimensionner la fenetre SDL au CONTENU (parite etalon — les bancs
  * cliquent « en bas de fenetre »). 0 = pas encore mesuree. */
 static float g_need_h = 0.0f;
+
+/* Veille de la boucle principale. Le rendu est en mode immédiat : jusqu'à la
+ * 3.3.0 la boucle redessinait tout 60 fois par seconde, qu'il se passe quelque
+ * chose ou non (13 % d'un cœur au repos, 50 % avec de grandes listes, mesuré).
+ * Désormais, sans évènement récent, elle attend le prochain évènement — au plus
+ * g_veille_ms, que chaque widget vivant raccourcit pendant son rendu : 16 ms
+ * pour ce qui s'anime ou relève un tube, l'échéance pour une minuterie. Le
+ * plafond de 250 ms sert tout le reste (infobulles, relectures) 4 fois par
+ * seconde. */
+#define VEILLE_MAX_MS 250
+static int g_veille_ms = VEILLE_MAX_MS;
+static inline void veille_au_plus(int ms)
+{
+    if (ms < 16) ms = 16;
+    if (ms < g_veille_ms) g_veille_ms = ms;
+}
 /* Fenetre SDL courante : le selecteur de fichier natif veut une fenetre mere
  * (sans elle, le dialogue s'ouvre detache et peut passer derriere). */
 static SDL_Window *g_sdl_window = nullptr;
+
+/* Une minuterie : échéance et tic. Servie par le rendu de sa fenêtre, ou par
+ * minuteries_seules() quand sa fenêtre n'est pas celle du dessus. */
+static void declencher(WidgetNode *n, const char *signal1, const char *signal2);
+static void minuterie_servir(WidgetNode *node)
+{
+    double now = SDL_GetTicks() / 1000.0;
+    double interval = 1.0;
+    if (node->label && *node->label)
+        interval = atoi(node->label) / 1000.0;   /* label = ms entieres */
+    if (interval <= 0) interval = 1.0;
+    if (node->state.scale.value <= 0.0) {
+        node->state.scale.value = now + interval;
+    } else if (now >= node->state.scale.value) {
+        node->state.scale.value = now + interval;
+        /* TOUTES les actions du timer, chacune avec sa fonction — sauf
+         * après disable: (l'étalon n'émet « tick » que si le widget est
+         * sensible). */
+        if (node->sensitive)
+            declencher(node, "tick", NULL);
+    }
+    /* se réveiller à l'échéance, pas avant */
+    veille_au_plus((int)((node->state.scale.value - SDL_GetTicks() / 1000.0) * 1000.0) + 1);
+}
+
+/* Fenêtres ouvertes mais recouvertes (launch:) : rien à dessiner, mais leurs
+ * minuteries continuent, comme sur l'étalon où toutes les fenêtres vivent. */
+static void minuteries_seules(WidgetNode *n)
+{
+    if (!n) return;
+    if (n->type == WT_TIMER) minuterie_servir(n);
+    for (int i = 0; i < n->child_count; i++) minuteries_seules(n->children[i]);
+}
 /* vrai pendant le rendu des enfants d'un hbox : les boutons pleine
  * largeur y ecraseraient leurs voisins */
 static bool g_in_hbox = false;
@@ -511,6 +560,23 @@ extern "C" int sermo_be_widget_activate(void *w)
     }
 }
 
+/* Crochet du contrat : « activate:NOM » sur un <button> — ce que fait un clic :
+ * ses actions jouent ; un bouton nu ferme le dialogue (EXIT = valeur de
+ * famille, sinon le libellé). Le cœur ne l'appelle que pour un bouton. */
+extern "C" int sermo_be_button_click(void *w)
+{
+    WidgetNode *n = (WidgetNode *)w;
+    if (!n || n->type != WT_BUTTON) return 0;
+    if (n->var_name && strcmp(n->var_name, "__fontbutton__") == 0) return 0;
+    if (n->action && *n->action)
+        declencher(n, "clicked", NULL);   /* exit:… peut sortir ici */
+    else
+        action_exitprogram((GtkWidget *)n,
+            (char *)(n->tooltip ? n->tooltip
+                     : (n->label && n->label[0] ? n->label : "OK")));
+    return 1;
+}
+
 /* Crochet du contrat : l'état d'un widget pour condition="active_is_…/
  * sensitive_is_…/visible_is_…(NOM)" (le shim ne sait rien des nœuds).
  * quoi : 0 = actif, 1 = sensible, 2 = visible ; -1 = je ne sais pas. */
@@ -608,9 +674,22 @@ static void render_widget(WidgetNode *node)
         !sermo_progress_poll((sermo_progress *)node->lecture))
         node->lecture = NULL;   /* rendue par le cœur */
     if (!node->visible && node->type != WT_TIMER) return;
+    /* Ce qui vit sans évènement garde la cadence d'origine. */
+    switch (node->type) {
+    case WT_PROGRESSBAR: case WT_SPINNER: case WT_PULSE:
+    case WT_TERMINAL_W:  case WT_DRAWINGAREA:
+        veille_au_plus(16);
+        break;
+    default: break;
+    }
 
-    /* Grisé */
-    if (!node->sensitive) {
+    /* Grisé. L'état est relevé UNE fois : une action jouée pendant le rendu
+     * de ce nœud peut le changer (« disable: » de soi-même, d'un bouton ou
+     * d'une minuterie), et EndDisabled() partait alors sans son
+     * BeginDisabled() — ImGui écrivait son diagnostic sur la SORTIE STANDARD,
+     * au milieu des variables. */
+    const bool grise = !node->sensitive;
+    if (grise) {
         ImGui::BeginDisabled(true);
     }
 
@@ -922,15 +1001,20 @@ static void render_widget(WidgetNode *node)
         const char *preview = (node->state.list.selected_index >= 0 &&
                                node->state.list.selected_index < node->state.list.item_count)
                               ? node->state.list.items[node->state.list.selected_index]
-                              : "—";
+                              /* texte libre d'un <comboboxentry> (<default> hors liste) */
+                              : node->state.list.filter[0] ? node->state.list.filter : "—";
         if (ImGui::BeginCombo(id, preview)) {
             for (int i = 0; i < node->state.list.item_count; i++) {
                 bool sel = (i == node->state.list.selected_index);
                 if (ImGui::Selectable(node->state.list.items[i], sel)) {
+                    bool change = (node->state.list.selected_index != i);
                     node->state.list.selected_index = i;
                     if (node->var_name)
                         set_widget_env_var(node->var_name,
                                           node->state.list.items[i]);
+                    /* choisir un autre élément joue les <action> de la liste
+                     * (signal « changed » de l'étalon) ; muettes jusqu'à la 3.3.0 */
+                    if (change && node->actions_attr) declencher(node, "changed", NULL);
                 }
                 if (sel) ImGui::SetItemDefaultFocus();
             }
@@ -1839,18 +1923,7 @@ static void render_widget(WidgetNode *node)
          * label = intervalle en secondes ; state.scale.value = prochaine
          * echeance (horloge SDL en secondes). L'action passe par le
          * repartiteur du coeur (exit:, refresh:, commande...). */
-        double now = SDL_GetTicks() / 1000.0;
-        double interval = 1.0;
-        if (node->label && *node->label)
-            interval = atoi(node->label) / 1000.0;   /* label = ms entieres */
-        if (interval <= 0) interval = 1.0;
-        if (node->state.scale.value <= 0.0) {
-            node->state.scale.value = now + interval;
-        } else if (now >= node->state.scale.value) {
-            node->state.scale.value = now + interval;
-            /* TOUTES les actions du timer, chacune avec sa fonction */
-            declencher(node, "tick", NULL);
-        }
+        minuterie_servir(node);
         break;
     }
 
@@ -2016,7 +2089,7 @@ static void render_widget(WidgetNode *node)
         break;
     }
 
-    if (!node->sensitive)
+    if (grise)
         ImGui::EndDisabled();
 }
 
@@ -2144,6 +2217,142 @@ static void sermo_x11_set_utf8_title(SDL_Window *w, const char *title)
 #else
 static void sermo_x11_set_utf8_title(SDL_Window *, const char *) {}
 #endif
+
+/* ─── Pile de fenêtres (launch: / closewindow:) ─────────────────────────────
+ * Ce port n'a qu'UNE fenêtre native et un contexte ImGui. Une fenêtre lancée
+ * par launch: prend la place de la précédente à l'écran ; closewindow: rend la
+ * place à celle d'en dessous. Les minuteries de toutes les fenêtres ouvertes
+ * tournent. La pile est tenue par sermo_backend_sdl3sermo.c. */
+extern "C" {
+WidgetNode *sdl3_fenetre_dessus(void);
+WidgetNode *sdl3_fenetre(int i);
+int         sdl3_fenetres_nb(void);
+}
+static WidgetNode *g_dessus = nullptr;      /* fenêtre servie à l'image précédente */
+static int  g_frames = 0, g_resized = 0;    /* auto-dimension de la fenêtre servie */
+static bool g_image_ouverte = false;        /* entre NewFrame() et la fin du rendu */
+
+static void boucle_principale(SDL_Window *window)
+{
+    bool running = true;
+    /* Images à pleine cadence après un évènement : ImGui met quelques images
+     * à se stabiliser (mise en page, survol, fenêtres surgissantes). */
+    int actives = 30;
+    while (running) {
+        SDL_Event ev;
+        bool vu = false;
+        const bool saisie = ImGui::GetIO().WantTextInput;   /* curseur clignotant */
+        auto traiter = [&](const SDL_Event &e) {
+            ImGui_ImplSDL3_ProcessEvent(&e);
+            if (e.type == SDL_EVENT_QUIT)
+                running = false;
+            if (e.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED &&
+                e.window.windowID == SDL_GetWindowID(window))
+                running = false;
+            vu = true;
+        };
+        if (actives <= 0 && !saisie && SDL_WaitEventTimeout(&ev, g_veille_ms))
+            traiter(ev);
+        while (SDL_PollEvent(&ev))
+            traiter(ev);
+        if (vu) actives = 10;
+        else if (actives > 0) actives--;
+        g_veille_ms = VEILLE_MAX_MS;   /* refixée par le rendu qui suit */
+
+        /* Nouvelle frame */
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplSDL3_NewFrame();
+        ImGui::NewFrame();
+
+        /* La fenêtre servie est celle du DESSUS de la pile (la dernière
+         * lancée encore ouverte). Elle change quand launch: en ouvre une ou
+         * que closewindow: ferme celle du dessus : titre, taille et
+         * auto-dimension repartent alors pour la nouvelle. */
+        WidgetNode *root = sdl3_fenetre_dessus();
+        if (!root) { ImGui::EndFrame(); break; }   /* toutes fermées */
+        if (root != g_dessus) {
+            g_dessus = root;
+            g_frames = 0; g_resized = 0;
+            const char *t = (root->label && *root->label) ? root->label : "sdl3sermo";
+            SDL_SetWindowTitle(window, t);
+            sermo_x11_set_utf8_title(window, t);
+            int cur_w, cur_h;
+            SDL_GetWindowSize(window, &cur_w, &cur_h);
+            SDL_SetWindowSize(window, root->width > 0 ? root->width : cur_w,
+                                      root->height > 0 ? root->height : cur_h);
+            actives = 30;
+        }
+        /* Les minuteries des fenêtres recouvertes continuent. */
+        for (int f = 0; f < sdl3_fenetres_nb(); f++)
+            if (sdl3_fenetre(f) != root) minuteries_seules(sdl3_fenetre(f));
+
+        /* Rendu de l'arbre de widgets */
+        g_image_ouverte = true;
+        render_widget(root);
+        g_image_ouverte = false;
+
+        /* Auto-dimension au contenu : hauteur mesuree pendant le rendu,
+         * appliquee une fois que la mise en page est stable. */
+        {
+            g_frames++;
+            if (!g_resized && g_frames >= 3 && g_need_h > 20.0f) {
+                int cur_w, cur_h;
+                SDL_GetWindowSize(window, &cur_w, &cur_h);
+                /* sans hauteur demandee : au contenu ; avec : la hauteur
+                 * demandee est un MINIMUM (GTK agrandit si le contenu
+                 * deborde — le pied de page etait coupe) */
+                if (root->height <= 0 || (int)g_need_h > cur_h) {
+                    SDL_SetWindowSize(window,
+                                      root->width > 0 ? root->width : cur_w,
+                                      (int)g_need_h);
+                }
+                g_resized = 1;
+            }
+        }
+
+        /* Rendu OpenGL */
+        ImGui::Render();
+        int fw, fh;
+        SDL_GetWindowSizeInPixels(window, &fw, &fh);
+        glViewport(0, 0, fw, fh);
+        glClearColor(0.118f, 0.118f, 0.180f, 1.0f); /* base Mocha */
+        glClear(GL_COLOR_BUFFER_BIT);
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        SDL_GL_SwapWindow(window);
+        /* ~60 Hz tant qu'il se passe quelque chose (la vsync est coupée) ;
+         * au repos, l'attente se fait en tête de boucle. */
+        if (actives > 0 || saisie) SDL_Delay(16);
+    }
+}
+
+/* launch: — le cœur rappelle sermo_be_run_loop() depuis une action, donc AU
+ * MILIEU d'une image (le rendu du widget cliqué est sur la pile). L'image en
+ * cours est abandonnée proprement — ImGui referme lui-même ce qui était
+ * ouvert, sans le dire sur la sortie standard —, puis la boucle reprend ici
+ * et sert la nouvelle fenêtre. Elle ne rend pas la main, comme le gtk_main
+ * imbriqué de l'étalon ; elle n'en sort que si toutes les fenêtres sont
+ * fermées. */
+extern "C" void render_reprendre(void)
+{
+    if (!g_sdl_window) return;
+    if (g_image_ouverte) {
+        ImGuiIO &io = ImGui::GetIO();
+        /* Ni assertion ni journal (il part sur la sortie standard) le temps
+         * de cette fermeture ; l'infobulle d'erreur, jamais dessinée ici,
+         * reste permise : ImGui refuse une reprise tout à fait muette. */
+        const bool a = io.ConfigErrorRecoveryEnableAssert,
+                   l = io.ConfigErrorRecoveryEnableDebugLog;
+        io.ConfigErrorRecoveryEnableAssert = false;
+        io.ConfigErrorRecoveryEnableDebugLog = false;
+        ImGui::EndFrame();
+        io.ConfigErrorRecoveryEnableAssert = a;
+        io.ConfigErrorRecoveryEnableDebugLog = l;
+        g_image_ouverte = false;
+    }
+    WidgetNode *nouvelle = sdl3_fenetre_dessus();
+    if (nouvelle) listes_chargees(nouvelle);
+    boucle_principale(g_sdl_window);
+}
 
 int render_loop(WidgetNode *root, const char *title, int win_w, int win_h)
 {
@@ -2317,59 +2526,10 @@ int render_loop(WidgetNode *root, const char *title, int win_w, int win_h)
     }
 
     /* ── Boucle principale ─────────────────────────────────────────────── */
+    g_dessus = root;
     listes_chargees(root);   /* un « exit:… » peut sortir ici, via le cœur */
-    bool running = true;
-    while (running) {
-        SDL_Event ev;
-        while (SDL_PollEvent(&ev)) {
-            ImGui_ImplSDL3_ProcessEvent(&ev);
-            if (ev.type == SDL_EVENT_QUIT)
-                running = false;
-            if (ev.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED &&
-                ev.window.windowID == SDL_GetWindowID(window))
-                running = false;
-        }
-
-        /* Nouvelle frame */
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplSDL3_NewFrame();
-        ImGui::NewFrame();
-
-        /* Rendu de l'arbre de widgets */
-        render_widget(root);
-
-        /* Auto-dimension au contenu : hauteur mesuree pendant le rendu,
-         * appliquee une fois que la mise en page est stable. */
-        {
-            static int frames = 0;
-            static int resized = 0;
-            frames++;
-            if (!resized && frames >= 3 && g_need_h > 20.0f) {
-                int cur_w, cur_h;
-                SDL_GetWindowSize(window, &cur_w, &cur_h);
-                /* sans hauteur demandee : au contenu ; avec : la hauteur
-                 * demandee est un MINIMUM (GTK agrandit si le contenu
-                 * deborde — le pied de page etait coupe) */
-                if (root->height <= 0 || (int)g_need_h > cur_h) {
-                    SDL_SetWindowSize(window,
-                                      root->width > 0 ? root->width : cur_w,
-                                      (int)g_need_h);
-                }
-                resized = 1;
-            }
-        }
-
-        /* Rendu OpenGL */
-        ImGui::Render();
-        int fw, fh;
-        SDL_GetWindowSizeInPixels(window, &fw, &fh);
-        glViewport(0, 0, fw, fh);
-        glClearColor(0.118f, 0.118f, 0.180f, 1.0f); /* base Mocha */
-        glClear(GL_COLOR_BUFFER_BIT);
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-        SDL_GL_SwapWindow(window);
-        SDL_Delay(16);   /* ~60 Hz, la vsync est coupee */
-    }
+    boucle_principale(window);
+    root = g_dessus ? g_dessus : root;
 
     /* ── Export final — garantit que --do reçoit tous les états widgets ── */
     render_export_all_from_tree(root);

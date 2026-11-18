@@ -1,0 +1,8 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: chooser et filechooser : tant que rien n est choisi la variable rend <default>, et save: l ecrit dans <output file> (gtk3 rendait la premiere entree du dossier, gtk4 rien ; save: n ecrivait rien hors GTK) -->
+<window><vbox>
+<chooser><variable>CH</variable><default>/usr/share</default><output file>ch.out</output></chooser>
+<filechooser><variable>FC</variable><default>/usr/lib</default><output file>fc.out</output></filechooser>
+<entry><variable>FCH</variable><input>sh donnees/lire.sh ch.out</input></entry>
+<entry><variable>FFC</variable><input>sh donnees/lire.sh fc.out</input></entry>
+<timer visible="false"><variable>_T</variable><action>save:CH</action><action>save:FC</action><action>refresh:FCH</action><action>refresh:FFC</action><action>exit:fin</action></timer></vbox></window>

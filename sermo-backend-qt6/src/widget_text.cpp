@@ -36,6 +36,15 @@ GtkWidget *widget_text_create(AttributeSet *Attr, tag_attr *attr, gint Type)
      * gtk4sermo centraient « Votre nom : », qt6sermo le collait à gauche.
      * Mesuré sur les captures des trois ports le 2026-09-03. */
     lbl->setAlignment(Qt::AlignCenter);
+    /* Texte brut, comme GtkLabel : QLabel devine le format (AutoText) et
+     * prenait pour du HTML la sortie d'un <input> qui commence par une balise
+     * (« <img src=…> » lu dans un fichier était interprété). Le balisage reste
+     * possible quand l'auteur le demande : use-markup="true", comme sur gtk3. */
+    {
+        const char *um = attr ? get_tag_attribute(attr, "use-markup") : nullptr;
+        bool balisage = um && (g_ascii_strcasecmp(um, "true") == 0 || g_ascii_strcasecmp(um, "yes") == 0 || atoi(um) == 1);
+        lbl->setTextFormat(balisage ? Qt::AutoText : Qt::PlainText);
+    }
 
     if (Attr) {
         /* <text><label>…</label></text> : cas le plus courant (était ignoré). */

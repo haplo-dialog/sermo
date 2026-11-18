@@ -167,7 +167,9 @@ sujet absent du catalogue est refusé.
 - **Ce qui peut exécuter** : `sermo_run`, et lui seul — et **fermé par défaut** depuis
   3.2.0. Sans `SERMO_ALLOWED_CMDS` dans l'environnement du serveur, la fenêtre s'ouvre
   mais aucune commande du XML (`<input>`, `<action>`) ne part : le serveur pose la même
-  barrière que le rendu, et sa réponse commence par « Commandes du XML BLOQUÉES ». Pour
+  barrière que le rendu, et sa réponse commence par « Commandes du XML BLOQUÉES ». Depuis
+  3.3.0, fermé vaut aussi pour les fichiers (`SERMO_NO_FILES`) : `<input file>` ne rend
+  plus le contenu d'un fichier au modèle, `save:` vers `<output file>` n'écrit rien. Pour
   les permettre, poser `SERMO_ALLOWED_CMDS` avec la liste des commandes dont le dialogue
   a besoin (voir `SECURITY.md` à la racine) : le cœur lance celles-là, refuse les
   autres et le repli `/bin/sh -c`. Il n'y a pas de « tout permis » : qui veut tout
@@ -204,7 +206,7 @@ Les paquets sont joints à chaque publication ; vérifiez d'abord les sommes sig
 (`SHA256SUMS.asc`), comme l'explique le [README](../README.md#installer).
 
 ```sh
-sudo apt install ./sermoia-mcp_3.1.2-2_amd64.deb ./sermo-backend-qt6_3.1.2-2_amd64.deb
+sudo apt install ./sermoia-mcp_3.3.0-1_amd64.deb ./sermo-backend-qt6_3.3.0-1_amd64.deb
 ```
 
 Le paquet installe `/usr/bin/sermoia-mcp` et son catalogue dans

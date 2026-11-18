@@ -77,12 +77,28 @@ void action_shellcommand(GtkWidget *widget, char *string);
  * directive.
  */
 
+#ifdef SERMO_COEUR_NEUTRE
+/* Fonctions FACULTATIVES du contrat (contract/sermo-contract.h), déclarées
+ * FAIBLES : hors GTK, « détruire la fenêtre » et « la présenter » étaient des
+ * opérations vides — closewindow: retirait les variables et laissait la
+ * fenêtre à l'écran, ses minuteries en marche. */
+__attribute__((weak)) int sermo_be_window_close(GtkWidget *widget);
+__attribute__((weak)) void sermo_be_window_present(GtkWidget *widget);
+__attribute__((weak)) void sermo_be_window_new(void);
+#endif
+
 void action_closewindow(GtkWidget *widget, char *string)
 {
 	GtkWidget        *window;
 	variable         *existing;
+#ifdef SERMO_COEUR_NEUTRE
+	GtkWidget        *dedans;
+#endif
 
-	g_assert(GTK_IS_WIDGET(widget));
+	/* @widget n'est pas employé : la fenêtre se trouve par le NOM. Un port
+	 * peut appeler sans widget (minuterie, menu) ; l'assertion qui était ici
+	 * arrêtait alors le programme (qt6, code 134). */
+	(void)widget;
 
 #ifdef DEBUG
 	fprintf(stderr, "%s(): Entering.\n", __func__);
@@ -112,9 +128,18 @@ void action_closewindow(GtkWidget *widget, char *string)
 
 		//Redundant: parent = gtk_widget_get_toplevel(existing->Widget);
 		window = gtk_widget_get_ancestor(existing->Widget, GTK_TYPE_WINDOW);
+#ifdef SERMO_COEUR_NEUTRE
+		dedans = existing->Widget;   /* variables_drop… le remet à NULL */
+#endif
 		//Redundant: variables_drop_by_parent(NULL, parent);
 		variables_drop_by_window_id(NULL, existing->window_id);
 		gtk_widget_destroy(window);
+#ifdef SERMO_COEUR_NEUTRE
+		/* Le port ferme la fenêtre qui contient ce widget (le shim ne sait
+		 * ni la trouver ni la détruire). */
+		if (sermo_be_window_close)
+			sermo_be_window_close(dedans);
+#endif
 
 #ifdef DEBUG
 		fprintf(stderr, "%s(): variables_count_widgets()=%i\n", __func__,
@@ -180,7 +205,9 @@ void action_launchwindow(GtkWidget *widget, char *string)
 	 * timer because this won't return and the timer stops functioning */
 	var = find_variable_by_widget(widget);
 
-	if (var->Type != WIDGET_TIMER) {
+	/* @var est NULL quand le widget d'origine n'a plus de variable : après un
+	 * closewindow: joué juste avant, ou si le port appelle sans widget. */
+	if (var == NULL || var->Type != WIDGET_TIMER) {
 
 		/* Thunor: Added to check that a program isn't already being parsed
 		 * as run_program() is not reentrant and it'll error with a parser
@@ -208,6 +235,10 @@ void action_launchwindow(GtkWidget *widget, char *string)
 				//Redundant: parent = gtk_widget_get_toplevel(existing->Widget);
 				window = gtk_widget_get_ancestor(existing->Widget, GTK_TYPE_WINDOW);
 				gtk_window_present(GTK_WINDOW(window));
+#ifdef SERMO_COEUR_NEUTRE
+				if (sermo_be_window_present)
+					sermo_be_window_present(existing->Widget);
+#endif
 
 			} else {
 
@@ -229,6 +260,18 @@ void action_launchwindow(GtkWidget *widget, char *string)
 					__func__, charsreaded, program_src);
 #endif
 
+#ifdef SERMO_COEUR_NEUTRE
+				/* Le port est prévenu : les widgets qui viennent vont
+				 * dans une AUTRE fenêtre. */
+				if (sermo_be_window_new)
+					sermo_be_window_new();
+#endif
+
+				/* La fenêtre qui s'ouvre se construit hors de toute action :
+				 * ses noms ne se cherchent pas dans la fenêtre du lanceur.
+				 * (Sur les ports sans GTK l'appel ne revient pas : la
+				 * fenêtre de l'action ne serait jamais remise à 0.) */
+				variables_fenetre_des_actions(0);
 				/* Call the parser to interpret the new code (it won't return) */
 				gtkdialog_parse();
 
@@ -503,7 +546,11 @@ int action_append(GtkWidget *widget, char *string)
 #ifndef _WIN32
 	regex_t twoparams;
 	regmatch_t matched[3];
-	char *regular = "[ ]*([A-Za-z_]+),[ ]*([A-Za-z_]+)";
+	/* Un nom de variable peut porter des chiffres après sa première lettre.
+	 * Jusqu'à la 3.3.0 le motif n'acceptait que lettres et « _ » :
+	 * « append:SRC,T0 » cherchait la variable « T » (« variable not found »),
+	 * « append:S1,T2 » était refusé (« needs two parameters »). */
+	char *regular = "[ ]*([A-Za-z_][A-Za-z0-9_]*),[ ]*([A-Za-z_][A-Za-z0-9_]*)";
 	char *from, *to;
 	int length_from, length_to;
 	
@@ -529,20 +576,26 @@ int action_append(GtkWidget *widget, char *string)
 	strncpy(to, string + matched[2].rm_so, length_to);
 	to[length_to] = '\0';
 
-	return append_fromto_variable(from, to);
+	{
+		int fait = append_fromto_variable(from, to);
+		g_free(from);
+		g_free(to);
+		regfree(&twoparams);
+		return fait;
+	}
 #else
 	/* Windows : pas de <regex.h>. Lecture à la main du même motif,
-	 * « [ ]*([A-Za-z_]+),[ ]*([A-Za-z_]+) », cherché comme regexec : au
+	 * « [ ]*([A-Za-z_][A-Za-z0-9_]*),[ ]*(idem) », cherché comme regexec : au
 	 * premier départ qui convient. */
 	g_assert(string != NULL);
 	for (const char *d = string; *d; d++) {
 		const char *a = d, *b, *c, *e;
 		while (*a == ' ') a++;
-		for (b = a; isalpha((unsigned char)*b) || *b == '_'; b++) ;
-		if (b == a || *b != ',') continue;
+		for (b = a; isalnum((unsigned char)*b) || *b == '_'; b++) ;
+		if (b == a || isdigit((unsigned char)*a) || *b != ',') continue;
 		for (c = b + 1; *c == ' '; c++) ;
-		for (e = c; isalpha((unsigned char)*e) || *e == '_'; e++) ;
-		if (e == c) continue;
+		for (e = c; isalnum((unsigned char)*e) || *e == '_'; e++) ;
+		if (e == c || isdigit((unsigned char)*c)) continue;
 		char *from = g_strndup(a, (size_t)(b - a));
 		char *to = g_strndup(c, (size_t)(e - c));
 		return append_fromto_variable(from, to);
@@ -651,7 +704,7 @@ void action_shellcommand(GtkWidget *widget, char *string)
  *                  1 if action function is valid
  *                  2 if break function detected */
 
-int execute_action(GtkWidget *widget, const char *command, const char *type)
+static int execute_action_jouer(GtkWidget *widget, const char *command, const char *type)
 {
 	gchar            *command_prefix;
 	gchar            *command_string;
@@ -780,5 +833,18 @@ int execute_action(GtkWidget *widget, const char *command, const char *type)
 		g_free(command_string);
 	}
 
+	return retval;
+}
+
+/* L'action se joue « dans » la fenêtre du widget qui la déclenche : pendant
+ * ce temps les noms de variables s'y cherchent d'abord (voir
+ * variables_fenetre_des_actions, variables.c). */
+int execute_action(GtkWidget *widget, const char *command, const char *type)
+{
+	variable *source = widget ? find_variable_by_widget(widget) : NULL;
+	gint      avant = variables_fenetre_des_actions(source ? source->window_id : 0);
+	int       retval = execute_action_jouer(widget, command, type);
+
+	variables_fenetre_des_actions(avant);
 	return retval;
 }

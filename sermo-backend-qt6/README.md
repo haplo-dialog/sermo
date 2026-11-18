@@ -17,8 +17,9 @@ Backend **Qt 6** de sermo. Binaire : `qt6sermo`. Langage : **C++**.
   export PKG_CONFIG_PATH=$PWD/../libsermocore/_install/lib/pkgconfig
   cmake -S . -B _build && make -C _build      # → _build/qt6sermo
   ```
-- **Bancs partagés** : le banc de comportement (`tests/comportement/`) et
-  `tests/run_examples.sh` vivent ici et servent **tous** les backends
-  (`bash ../tests/comportement/run.sh <binaire>`).
+- **Corpus partagé** : les cas de comportement (`tests/comportement/cas/`,
+  95 cas) vivent ici et servent **tous** les backends ; les lanceurs sont à la
+  racine (`bash ../tests/comportement/run.sh <binaire>`,
+  `../tests/run_examples.sh`).
 
 Documentation produit : à la **racine** du dépôt. GPL-2.0-or-later.

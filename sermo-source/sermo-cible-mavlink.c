@@ -56,7 +56,11 @@
  *     envoyée (le premier paramètre : ArduPilot ne relaie les messages des
  *     autres liens que vers un lien qui lui a déjà parlé), puis écoute
  *     ECOUTE_MS : si une station sol parle déjà (battement de type GCS),
- *     refus — un seul émetteur ;
+ *     refus — un seul émetteur ; refus aussi si DEUX autopilotes (deux
+ *     systèmes) battent sur le lien sans systeme= dans l'adresse, et, en UDP,
+ *     si le système suivi parle depuis deux adresses (l'adresse où sermo
+ *     écrit est celle du battement adopté ; aucun autre datagramme ne la
+ *     déplace) ;
  *  2. paramètre : lecture de sa valeur et de son type (un paramètre que
  *     l'autopilote ne connaît pas est refusé) ;
  *  3. attente du battement SUIVANT de l'autopilote, et envoi tout de suite
@@ -76,7 +80,9 @@
  * COUPURE DES MOTEURS : le premier appui n'envoie rien ; il pose une marque
  * datée (dossier $XDG_RUNTIME_DIR/sermo-cible-mavlink, à vous seul) et le dit.
  * Un second appui dans les CONFIRMATION_MS envoie l'ordre ; après, la marque
- * est périmée et l'on recommence.
+ * est périmée et l'on recommence. Un second appui à moins de
+ * CONFIRMATION_MIN_MS du premier ne confirme rien (rebond, double clic) : la
+ * marque reste, il faut appuyer encore.
  *
  * PILOTAGE (une ligne « pilotage » par fichier ; deux fichiers : la plus
  * stricte, même point de référence exigé) :
@@ -85,7 +91,9 @@
  *    DELAI_PILOTAGE_MS au plus (DELAI_DESARMER_MS pour désarmer : attendre
  *    ne fait que mieux vérifier qu'il est posé), et l'état du drone (battement, position, au
  *    sol / en vol) relu moins de ETAT_MAX_MS avant l'envoi ;
- *  - ArduPilot seulement ; drone qui signe ses messages : refus ;
+ *  - ArduPilot seulement, et un multirotor ou un hélicoptère (MAV_TYPE du
+ *    battement) : les numéros de mode sont ceux d'ArduCopter ; drone qui signe
+ *    ses messages : refus ;
  *  - modes : intersection de la liste figée (GUIDED 4, LOITER 5, POSHOLD 16,
  *    BRAKE 17 ; RTL 6, SMART_RTL 21, LAND 9) et de la ligne ; LOITER,
  *    POSHOLD, BRAKE en vol seulement ; STABILIZE, ACRO, ALT_HOLD, AUTO jamais ;
@@ -124,6 +132,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <netinet/in.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <time.h>
@@ -140,6 +149,7 @@
 #define LISTE_MAX 65536
 #define ECOUTE_MS 1100            /* une station sol bat à 1 Hz */
 #define CONFIRMATION_MS 5000
+#define CONFIRMATION_MIN_MS 500    /* en deçà : un rebond du bouton, pas une confirmation */
 #define RAYON_MAX 10000.0
 #define HAUTEUR_MAX 120.0
 #define DELAI_PILOTAGE_MS 2500    /* du second appui à l'envoi */
@@ -528,7 +538,9 @@ marque_heure(void)
 }
 
 /* Rend 1 si une marque FRAÎCHE existait (elle est effacée : on peut envoyer),
- * 0 si elle vient d'être posée (premier appui), -1 si impossible. */
+ * 0 si elle vient d'être posée (premier appui), 2 si le second appui suit le
+ * premier de moins de CONFIRMATION_MIN_MS (un rebond ou un double clic : la
+ * marque est gardée telle quelle, rien n'est confirmé), -1 si impossible. */
 static int
 marque_confirmer(const char *base, long systeme, const char *cle)
 {
@@ -544,14 +556,18 @@ marque_confirmer(const char *base, long systeme, const char *cle)
 		struct stat st;
 		int sure = fstat(fd, &st) == 0 && S_ISREG(st.st_mode) && st.st_uid == geteuid() && !(st.st_mode & 077);
 		close(fd);
-		unlink(chemin);
 		if (n > 0 && sure) {
 			t[n] = '\0';
 			char *fin;
 			long pose = strtol(t, &fin, 10);
-			if (*fin == '\n' && pose <= maintenant && maintenant - pose <= CONFIRMATION_MS)
+			if (*fin == '\n' && pose <= maintenant && maintenant - pose < CONFIRMATION_MIN_MS)
+				return 2;
+			if (*fin == '\n' && pose <= maintenant && maintenant - pose <= CONFIRMATION_MS) {
+				unlink(chemin);
 				return 1;
+			}
 		}
+		unlink(chemin);
 	}
 	fd = open(chemin, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0600);
 	if (fd < 0)
@@ -570,7 +586,16 @@ typedef struct {
 	int fd;
 	struct sockaddr_storage pair;     /* UDP : d'où parle l'autopilote */
 	socklen_t pair_n;
+	struct sockaddr_storage de;       /* UDP : d'où vient le datagramme en cours de lecture */
+	socklen_t de_n;
+	int pair_fige;                    /* UDP : l'adresse est celle du battement adopté, elle ne change plus */
+	int emetteur_double;              /* UDP : le système suivi a parlé depuis une AUTRE adresse */
+	int etranger;                     /* le message en cours vient de cette autre adresse */
 	long systeme;                     /* 0 : le premier autopilote entendu */
+	int systeme_donne;                /* systeme= est dans l'adresse */
+	uint32_t premier_autopilote;      /* système du premier battement d'autopilote entendu */
+	uint32_t autre_autopilote;        /* un SECOND système d'autopilote entendu, ou 0 */
+	int type;                         /* MAV_TYPE du dernier battement */
 	mavlink_status_t etat;
 	int autre_station;                /* système de la station sol entendue, ou 0 */
 	int position;                     /* une position de l'autopilote est arrivée */
@@ -604,6 +629,7 @@ noter_etat(canal_t *c, const mavlink_message_t *msg)
 	switch (msg->msgid) {
 	case MAVLINK_MSG_ID_HEARTBEAT:
 		c->autopilote = mavlink_msg_heartbeat_get_autopilot(msg);
+		c->type = mavlink_msg_heartbeat_get_type(msg);
 		c->arme = (mavlink_msg_heartbeat_get_base_mode(msg) & MAV_MODE_FLAG_SAFETY_ARMED) != 0;
 		c->mode = (int)mavlink_msg_heartbeat_get_custom_mode(msg);
 		c->t_battement = t;
@@ -654,6 +680,24 @@ noter_etat(canal_t *c, const mavlink_message_t *msg)
 	}
 }
 
+/* UDP : deux adresses égales (famille, hôte, port) ? */
+static int
+meme_adresse(const struct sockaddr_storage *a, socklen_t an, const struct sockaddr_storage *b, socklen_t bn)
+{
+	if (an != bn || a->ss_family != b->ss_family)
+		return 0;
+	if (a->ss_family == AF_INET) {
+		const struct sockaddr_in *x = (const struct sockaddr_in *)a, *y = (const struct sockaddr_in *)b;
+		return x->sin_port == y->sin_port && x->sin_addr.s_addr == y->sin_addr.s_addr;
+	}
+	if (a->ss_family == AF_INET6) {
+		const struct sockaddr_in6 *x = (const struct sockaddr_in6 *)a, *y = (const struct sockaddr_in6 *)b;
+		return x->sin6_port == y->sin6_port && memcmp(&x->sin6_addr, &y->sin6_addr, sizeof x->sin6_addr) == 0
+		       && x->sin6_scope_id == y->sin6_scope_id;
+	}
+	return 0;
+}
+
 /* Le message suivant, avant @fin. Rend 1 (dans @msg), 0 (délai), -1 (lien
  * fermé ou en panne, message dit). Toute station sol entendue est notée. */
 static int
@@ -669,8 +713,32 @@ recevoir(canal_t *c, mavlink_message_t *msg, long fin)
 			/* L'état se relève dès le premier message de l'autopilote, avant même
 			 * son adoption (le délai de pilotage compte) ; un autre système
 			 * adopté ensuite efface ce relevé (de_l_autopilote). */
+			c->etranger = 0;
 			if (msg->compid == MAV_COMP_ID_AUTOPILOT1 && msg->sysid != 0) {
+				/* Chaque système d'autopilote entendu est compté : sans systeme=,
+				 * deux appareils sur le lien et l'ordre irait au premier venu. */
+				if (msg->msgid == MAVLINK_MSG_ID_HEARTBEAT
+				    && mavlink_msg_heartbeat_get_autopilot(msg) != MAV_AUTOPILOT_INVALID
+				    && mavlink_msg_heartbeat_get_type(msg) != MAV_TYPE_GCS) {
+					if (c->premier_autopilote == 0)
+						c->premier_autopilote = msg->sysid;
+					else if (msg->sysid != c->premier_autopilote)
+						c->autre_autopilote = msg->sysid;
+				}
 				if (c->systeme != 0 ? msg->sysid == c->systeme : (c->candidat == 0 || msg->sysid == c->candidat)) {
+					if (c->lien->transport == LIEN_UDP) {
+						if (!c->pair_fige) {
+							/* Avant l'adoption : l'adresse suit le système écouté. */
+							memcpy(&c->pair, &c->de, c->de_n);
+							c->pair_n = c->de_n;
+						} else if (!meme_adresse(&c->pair, c->pair_n, &c->de, c->de_n)) {
+							/* Deux émetteurs pour un même système : ni l'état ni les
+							 * réponses de celui-ci ne comptent, et aucun ordre ne part. */
+							c->emetteur_double = 1;
+							c->etranger = 1;
+							return 1;
+						}
+					}
 					if (c->systeme == 0)
 						c->candidat = msg->sysid;
 					noter_etat(c, msg);
@@ -703,8 +771,10 @@ recevoir(canal_t *c, mavlink_message_t *msg, long fin)
 			return -1;
 		}
 		if (c->lien->transport == LIEN_UDP) {
-			memcpy(&c->pair, &de, den);
-			c->pair_n = den;
+			/* L'adresse du datagramme ; elle ne devient celle où l'on ÉCRIT que
+			 * si le datagramme porte un message du système suivi (plus haut). */
+			memcpy(&c->de, &de, den);
+			c->de_n = den;
 		}
 		c->n = n;
 		c->i = 0;
@@ -715,7 +785,7 @@ recevoir(canal_t *c, mavlink_message_t *msg, long fin)
 static int
 de_l_autopilote(canal_t *c, const mavlink_message_t *msg)
 {
-	if (msg->compid != MAV_COMP_ID_AUTOPILOT1)
+	if (msg->compid != MAV_COMP_ID_AUTOPILOT1 || c->etranger)
 		return 0;
 	if (c->systeme == 0) {
 		if (msg->msgid != MAVLINK_MSG_ID_HEARTBEAT || mavlink_msg_heartbeat_get_autopilot(msg) == MAV_AUTOPILOT_INVALID)
@@ -728,7 +798,52 @@ de_l_autopilote(canal_t *c, const mavlink_message_t *msg)
 			noter_etat(c, msg);
 		}
 	}
-	return msg->sysid == c->systeme;
+	if (msg->sysid != c->systeme)
+		return 0;
+	/* UDP : l'adresse du premier battement du système suivi est la sienne
+	 * pour toute la suite ; un autre datagramme ne la déplace plus. */
+	if (c->lien->transport == LIEN_UDP && !c->pair_fige && msg->msgid == MAVLINK_MSG_ID_HEARTBEAT) {
+		memcpy(&c->pair, &c->de, c->de_n);
+		c->pair_n = c->de_n;
+		c->pair_fige = 1;
+	}
+	return 1;
+}
+
+/* Un seul émetteur, un seul appareil : rend 1 (raison dite) s'il ne faut rien
+ * envoyer. */
+static int
+emetteurs_refuses(const canal_t *c)
+{
+	if (c->autre_station) {
+		conclure("une station sol parle déjà à ce drone (système %d) : un seul émetteur, rien n'est envoyé",
+		         c->autre_station == 256 ? 0 : c->autre_station);
+		return 1;
+	}
+	if (c->emetteur_double) {
+		conclure("deux émetteurs annoncent le système %ld sur ce lien (deux adresses UDP) : rien n'est envoyé",
+		         c->systeme);
+		return 1;
+	}
+	if (c->autre_autopilote && !c->systeme_donne) {
+		conclure("plusieurs autopilotes sur ce lien (systèmes %u et %u) : dire lequel avec systeme=N dans "
+		         "l'adresse ; rien n'est envoyé", (unsigned)c->premier_autopilote, (unsigned)c->autre_autopilote);
+		return 1;
+	}
+	return 0;
+}
+
+/* Les appareils dont les numéros de mode sont ceux d'ArduCopter. */
+static int
+type_copter(int type)
+{
+	switch (type) {
+	case MAV_TYPE_QUADROTOR: case MAV_TYPE_COAXIAL: case MAV_TYPE_HELICOPTER: case MAV_TYPE_HEXAROTOR:
+	case MAV_TYPE_OCTOROTOR: case MAV_TYPE_TRICOPTER: case MAV_TYPE_DODECAROTOR: case MAV_TYPE_DECAROTOR:
+		return 1;
+	default:
+		return 0;
+	}
 }
 
 static int
@@ -866,6 +981,13 @@ piloter(canal_t *c, pilote_t quoi, int i_mode, const pilotage_t *pl, const point
 		conclure("l'autopilote n'est pas ArduPilot (type %d) : pilotage refusé ; rien n'est envoyé", c->autopilote);
 		return 1;
 	}
+	/* Les modes, le décollage et « aller à » sont ceux d'ArduCopter : le même
+	 * numéro de mode désigne autre chose sur un avion ou un rover. */
+	if (!type_copter(c->type)) {
+		conclure("l'appareil n'est ni un multirotor ni un hélicoptère (type MAVLink %d) : le pilotage ne vaut que "
+		         "pour ArduCopter ; rien n'est envoyé", c->type);
+		return 1;
+	}
 	/* La barrière de l'autopilote : elle retient l'appareil après l'envoi. */
 	if (!secours) {
 		/* Lue pendant l'écoute ; ce qui manque est redemandé. */
@@ -884,6 +1006,20 @@ piloter(canal_t *c, pilote_t quoi, int i_mode, const pilotage_t *pl, const point
 					         noms_barriere[i]);
 				return 1;
 			}
+		}
+		for (int i = 0; i < 5; i++)
+			if (!isfinite(v[i]) || (i >= 3 && v[i] <= 0)) {
+				conclure("barrière de l'autopilote incohérente (%s = %g) : pilotage refusé ; rien n'est envoyé",
+				         noms_barriere[i], v[i]);
+				return 1;
+			}
+		/* FENCE_TYPE est un masque de bits : un nombre fini mais hors de
+		 * cette plage (un flottant va jusqu'à 3,4e38) rendait la conversion
+		 * en entier indéfinie, dans le contrôle même qui permet le pilotage. */
+		if (v[2] < 0 || v[2] > 65535 || v[2] != floor(v[2])) {
+			conclure("barrière de l'autopilote incohérente (%s = %g) : pilotage refusé ; rien n'est envoyé",
+			         noms_barriere[2], v[2]);
+			return 1;
 		}
 		if (v[0] < 1 || v[1] == 0 || ((long)v[2] & 3) != 3) {
 			conclure("barrière de l'autopilote inactive (FENCE_ENABLE %g, FENCE_ACTION %g, FENCE_TYPE %g) : seuls "
@@ -935,9 +1071,11 @@ piloter(canal_t *c, pilote_t quoi, int i_mode, const pilotage_t *pl, const point
 	       && (r = recevoir(c, &msg, attente < fin_ms ? attente : fin_ms)) == 1)
 		;
 	long maintenant = mavlink_maintenant_ms();
-	if (c->autre_station) {
-		conclure("une station sol parle déjà à ce drone (système %d) : un seul émetteur, rien n'est envoyé",
-		         c->autre_station == 256 ? 0 : c->autre_station);
+	if (emetteurs_refuses(c))
+		return 1;
+	if (!type_copter(c->type)) {
+		conclure("l'appareil n'est ni un multirotor ni un hélicoptère (type MAVLink %d) : le pilotage ne vaut que "
+		         "pour ArduCopter ; rien n'est envoyé", c->type);
 		return 1;
 	}
 	if (c->signe) {
@@ -1580,6 +1718,11 @@ main(int argc, char **argv)
 			conclure("pilotage : la confirmation demande $XDG_RUNTIME_DIR (à vous seul) ; rien n'est envoyé");
 			goto fin;
 		}
+		if (m == 2) {
+			conclure("%s (%s) : second appui trop rapproché du premier (moins de %d ms : rebond ou double clic) ; "
+			         "appuyer encore pour confirmer ; rien n'est envoyé", dit, base, CONFIRMATION_MIN_MS);
+			goto fin;
+		}
 		if (m == 0) {
 			conclure("%s (%s) : appuyer encore dans les %d s pour confirmer ; rien n'est envoyé", dit, base,
 			         CONFIRMATION_MS / 1000);
@@ -1595,6 +1738,11 @@ main(int argc, char **argv)
 			         "rien n'est envoyé");
 			goto fin;
 		}
+		if (m == 2) {
+			conclure("COUPURE DES MOTEURS : second appui trop rapproché du premier (moins de %d ms : rebond ou double "
+			         "clic) ; appuyer encore pour confirmer (le drone tombera) ; rien n'est envoyé", CONFIRMATION_MIN_MS);
+			goto fin;
+		}
 		if (m == 0) {
 			conclure("COUPURE DES MOTEURS : appuyer encore dans les %d s pour confirmer (le drone tombera) ; "
 			         "rien n'est envoyé", CONFIRMATION_MS / 1000);
@@ -1605,6 +1753,7 @@ main(int argc, char **argv)
 	long fin_ms = mavlink_maintenant_ms() + delai;
 	c.lien = &lien;
 	c.systeme = systeme;
+	c.systeme_donne = systeme != 0;
 	c.fd = lien_ouvrir(PROGRAMME, &lien, fin_ms, 1);
 	if (c.fd < 0) {
 		conclure("%s injoignable : rien n'est envoyé", base);
@@ -1676,11 +1825,8 @@ main(int argc, char **argv)
 	r = 0;
 	if (r < 0)
 		goto fin;
-	if (c.autre_station) {
-		conclure("une station sol parle déjà à ce drone (système %d) : un seul émetteur, rien n'est envoyé",
-		         c.autre_station == 256 ? 0 : c.autre_station);
+	if (emetteurs_refuses(&c))
 		goto fin;
-	}
 
 	if (pilote) {
 		code = piloter(&c, pilote, i_mode, &pl, &point_vise, debut, fin_ms, base);
@@ -1759,11 +1905,8 @@ main(int argc, char **argv)
 			arme = (mavlink_msg_heartbeat_get_base_mode(&msg) & MAV_MODE_FLAG_SAFETY_ARMED) ? 1 : 0;
 	if (r < 0)
 		goto fin;
-	if (c.autre_station) {
-		conclure("une station sol parle déjà à ce drone (système %d) : un seul émetteur, rien n'est envoyé",
-		         c.autre_station == 256 ? 0 : c.autre_station);
+	if (emetteurs_refuses(&c))
 		goto fin;
-	}
 	if (arme < 0) {
 		conclure("%s : l'autopilote s'est tu avant l'envoi (délai %ld ms) : rien n'est envoyé", base, delai);
 		goto fin;

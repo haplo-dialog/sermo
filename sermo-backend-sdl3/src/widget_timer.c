@@ -70,7 +70,8 @@ gchar *widget_timer_envvar_construct(GtkWidget *widget)
     /* Parite de VALEUR avec l'etalon : un timer exporte "true"/"false" */
     WidgetNode *n = (WidgetNode *)widget;
     if (!n) return g_strdup("false");
-    return g_strdup("true");
+    /* « false » après disable:, comme l'étalon (le port rendait toujours « true »). */
+    return g_strdup(n->sensitive ? "true" : "false");
 }
 
 gchar *widget_timer_envvar_all_construct(variable *var)

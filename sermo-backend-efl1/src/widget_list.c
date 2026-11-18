@@ -59,6 +59,11 @@ static void _list_sel(void *data, Evas_Object *obj, void *event_info)
 {
     Elm_Object_Item *item = (Elm_Object_Item *)event_info;
     const char *txt = elm_object_item_text_get(item);
+    /* Une rangée pas encore dessinée (ajoutée par append: dans une liste
+     * vide) n'a pas de texte d'objet : celui de sa donnée, qui est le même.
+     * Sans cela strdup(NULL) arrêtait le programme. */
+    if (!txt) txt = (const char *)elm_object_item_data_get(item);
+    if (!txt) txt = "";
     /* Construire la sélection (accumulation séparée par |) */
     char *cur = (char *)evas_object_data_get(obj, "selected");
     if (cur && *cur) {
@@ -192,3 +197,96 @@ void widget_list_removeselected(variable *var)
     if (sel) elm_object_item_del(sel);
 }
 void widget_list_save(variable *var) {}
+
+/* ─── append: et rangées de save: (contrat, sermo-contract.h) ────────────────
+ * Le cœur neutre ne sait pas toucher un widget EFL : jusqu'à la 3.3.0,
+ * append: n'y faisait rien et save: n'écrivait pas les listes. Même règle que
+ * l'étalon gtk3sermo : <entry>, le texte est remplacé ; <edit>, il est ajouté
+ * à la fin ; <list>, une rangée est ajoutée EN TÊTE et choisie. */
+void efl1_entry_poser(GtkWidget *w, const char *texte);
+void efl1_edit_ajouter(GtkWidget *w, const char *texte);
+char *efl1_tree_rangees(GtkWidget *w);
+int   efl1_tree_ajouter(GtkWidget *w, const char *valeur);
+char *efl1_table_rangees(GtkWidget *w);
+int   efl1_table_ajouter(GtkWidget *w, const char *valeur);
+int   sermo_be_widget_append(GtkWidget *w, int type, const char *valeur);
+char *sermo_be_widget_rows(GtkWidget *w, int type);
+
+int sermo_be_widget_append(GtkWidget *w, int type, const char *valeur)
+{
+    if (!w || !valeur) return 0;
+    switch (type) {
+    case WIDGET_ENTRY:
+        efl1_entry_poser(w, valeur);
+        return 1;
+    case WIDGET_EDIT:
+        efl1_edit_ajouter(w, valeur);
+        return 1;
+    case WIDGET_LIST: {
+        Evas_Object *gl = (Evas_Object *)w;
+        Eina_List *choisis = eina_list_clone(elm_genlist_selected_items_get(gl));
+        Elm_Object_Item *it;
+        EINA_LIST_FREE(choisis, it)
+            elm_genlist_item_selected_set(it, EINA_FALSE);
+        free(evas_object_data_get(gl, "selected"));
+        evas_object_data_set(gl, "selected", strdup(""));
+        it = elm_genlist_item_prepend(gl, _get_item_class(), strdup(valeur), NULL,
+                                      ELM_GENLIST_ITEM_NONE, NULL, NULL);
+        if (it) elm_genlist_item_selected_set(it, EINA_TRUE);
+        /* la valeur exportée : la rangée ajoutée, que le rappel de sélection
+         * ait joué ou non (moteur sans affichage) */
+        free(evas_object_data_get(gl, "selected"));
+        evas_object_data_set(gl, "selected", strdup(valeur));
+        return 1;
+    }
+    case WIDGET_TREE:
+        return efl1_tree_ajouter(w, valeur);     /* une rangée À LA FIN */
+    case WIDGET_TABLE:
+        return efl1_table_ajouter(w, valeur);    /* de même */
+    default:
+        return 0;
+    }
+}
+
+char *sermo_be_widget_rows(GtkWidget *w, int type)
+{
+    size_t taille = 1, pos = 0;
+    char *r = (char *)malloc(1);
+
+    if (!w || !r) { free(r); return NULL; }
+    r[0] = '\0';
+    /* rangées brutes « a|b » : le cœur les ramène aux colonnes du <label> */
+    if (type == WIDGET_TREE)  { free(r); return efl1_tree_rangees(w); }
+    if (type == WIDGET_TABLE) { free(r); return efl1_table_rangees(w); }
+    if (type == WIDGET_LIST) {
+        Elm_Object_Item *it;
+        for (it = elm_genlist_first_item_get((Evas_Object *)w); it;
+             it = elm_genlist_item_next_get(it)) {
+            const char *t = (const char *)elm_object_item_data_get(it);
+            size_t l = t ? strlen(t) : 0;
+            char *n = (char *)realloc(r, taille + l + 1);
+            if (!n) { free(r); return NULL; }
+            r = n;
+            if (pos) r[pos++] = '\n';
+            if (l) memcpy(r + pos, t, l);
+            pos += l; r[pos] = '\0'; taille = pos + 1;
+        }
+    } else if (type == WIDGET_COMBOBOXTEXT || type == WIDGET_COMBOBOXENTRY) {
+        const Eina_List *l;
+        Elm_Object_Item *it;
+        EINA_LIST_FOREACH(elm_hoversel_items_get((Evas_Object *)w), l, it) {
+            const char *t = elm_object_item_text_get(it);
+            size_t lg = t ? strlen(t) : 0;
+            char *n = (char *)realloc(r, taille + lg + 1);
+            if (!n) { free(r); return NULL; }
+            r = n;
+            if (pos) r[pos++] = '\n';
+            if (lg) memcpy(r + pos, t, lg);
+            pos += lg; r[pos] = '\0'; taille = pos + 1;
+        }
+    } else {
+        free(r);
+        return NULL;
+    }
+    return r;
+}

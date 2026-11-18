@@ -69,10 +69,13 @@ cher, à faire systématiquement.
 
 `sermo --render-png out.png --file=X` rend le dialogue en **image PNG** sans
 écran réel — de quoi **regarder** ce qui a été produit. Le rendu existe pour
-**six** backends graphiques (gtk3, gtk4, qt6, fltk1, efl1, sdl3) : offscreen pour
-qt6/efl1/sdl3, sous xvfb pour gtk3/gtk4/fltk1. La taille demandée par
-`default-width`/`default-height` est respectée sur ces six. `lvgl` a aussi
-l'option, et dessine l'image sans ouvrir de fenêtre. Le backend terminal
+les **sept** ports à image (gtk3, gtk4, qt6, fltk1, efl1, sdl3, lvgl) : offscreen
+pour qt6/efl1/sdl3, sous xvfb pour gtk3/gtk4/fltk1 ; `lvgl` dessine l'image
+sans ouvrir de fenêtre. La taille demandée par
+`default-width`/`default-height` est respectée sur les six premiers.
+**Aucune commande du dialogue n'est lancée pendant le rendu** (3.3.0) : un
+widget rempli par un `<input>` paraît vide, et le refus est dit sur la sortie
+d'erreur ; `SERMO_RENDER_EXEC=1` les permet, pour un dialogue de confiance. Le backend terminal
 `ncurses` n'a pas d'image ; pour lui, `--print-ir` tient lieu d'aperçu. `html`
 écrit une page, pas une image.
 
@@ -100,8 +103,11 @@ blanche écrite par l'utilisateur. Leurs pendants en lecture : `<input modbus>`,
 « SOURCES ET CIBLES » dans la référence.
 
 ⚠️ sermo n'a **pas** les `set:Widget.prop` ni le presse-papiers
-(`cut/copy/paste/selectall`) de gtkdialog3. `append:` / `insert:` sont
-incomplets — à éviter.
+(`cut/copy/paste/selectall`) de gtkdialog3. `append:SOURCE,CIBLE` (et
+`insert:`, même fonction) copie la valeur de SOURCE dans CIBLE sur les neuf
+ports depuis la 3.3.0 : texte d'une `<entry>`, ajout à un `<edit>`, rangée
+d'une `<list>`, d'un `<tree>` ou d'une `<table>` (découpée sur « | »). Vers un
+`<chooser>` : gtk3 et gtk4 seulement.
 
 ### Les pièges à connaître
 

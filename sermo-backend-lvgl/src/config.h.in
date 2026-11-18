@@ -39,6 +39,5 @@
 #  define HAVE_GLADE_LIB 0
 #endif
 #define HAVE_VTE           0
-#define HAVE_SYS_INOTIFY_H 0
 
 #endif /* LVGLSERMO_CONFIG_H */

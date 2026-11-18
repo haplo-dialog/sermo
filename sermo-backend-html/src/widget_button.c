@@ -62,7 +62,12 @@ GtkWidget *widget_button_create(AttributeSet *Attr, tag_attr *attr, gint Type)
     }
 
     WidgetNode *node = widget_node_new(WT_BUTTON, NULL, label);
-    if (action) node->action = strdup(action);
+    if (action) {
+        node->action = strdup(action);
+        /* toutes les actions, avec leur fonction (activate:NOM les joue) :
+         * voir jouer_actions.h */
+        node->actions_attr = (void *)Attr;
+    }
 
     /* Valeur d'EXIT, comme l'étalon gtk3sermo : une action « exit:X » ou
      * <action type="exit">X</action> rend X ; un bouton SANS action sort avec

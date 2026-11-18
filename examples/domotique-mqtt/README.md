@@ -5,7 +5,7 @@ Le seul exemple qui montre les deux balises MQTT de sermo, **sans aucun script e
 
 - `<input mqtt>` **lit** un sujet. Ici : température, humidité, état de la lampe, rafraîchis toutes les
   `MAISON_INTERVALLE` secondes. Programme d'aide : `sermo-source-mqtt`, lecture seule.
-- `<action mqtt>` **publie** une valeur, et **seulement depuis un bouton**. Ici : *Allumer* et *Éteindre*
+- `<action mqtt>` **publie** une valeur, et **seulement depuis un bouton ou une entrée de menu**. Ici : *Allumer* et *Éteindre*
   la lampe, et *Appliquer* la consigne du curseur (`valeur=$CONSIGNE`). Programme d'aide : `sermo-cible-mqtt`.
 
 ```sh

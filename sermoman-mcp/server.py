@@ -302,36 +302,80 @@ def _error(rid, code, message):
     _send({"jsonrpc": "2.0", "id": rid, "error": {"code": code, "message": message}})
 
 
-def main():
-    for line in sys.stdin:
-        line = line.strip()
-        if not line:
-            continue
+def _traiter(ligne):
+    """Une ligne reçue (octets). Ne lève jamais : un client qui envoie n'importe
+    quoi reçoit une erreur JSON-RPC, le serveur continue."""
+    try:
+        texte = ligne.decode("utf-8").strip()
+    except UnicodeDecodeError:
+        _error(None, -32700, "erreur d'analyse : la ligne n'est pas de l'UTF-8")
+        return
+    if not texte:
+        return
+    try:
+        req = json.loads(texte)
+    except (json.JSONDecodeError, RecursionError):
+        _error(None, -32700, "erreur d'analyse : JSON invalide")
+        return
+    if not isinstance(req, dict):
+        _error(None, -32600, "requête invalide : un objet JSON est attendu")
+        return
+    method = req.get("method")
+    rid = req.get("id")
+    notification = "id" not in req
+    if not isinstance(method, str):
+        if not notification:
+            _error(rid, -32600, "requête invalide : « method » manque")
+        return
+    if method == "initialize":
+        _respond(rid, {
+            "protocolVersion": "2024-11-05",
+            "capabilities": {"tools": {}},
+            "serverInfo": {"name": "sermoman-mcp", "version": VERSION},
+        })
+    elif notification:
+        pass  # notification (notifications/initialized, …) : aucune réponse attendue
+    elif method == "ping":
+        _respond(rid, {})
+    elif method == "tools/list":
+        _respond(rid, {"tools": TOOLS})
+    elif method == "tools/call":
+        params = req.get("params")
+        if not isinstance(params, dict) or not isinstance(params.get("arguments") or {}, dict):
+            _error(rid, -32602, "paramètres invalides : « params » et « arguments » sont des objets")
+            return
         try:
-            req = json.loads(line)
-        except json.JSONDecodeError:
+            text = _call_tool(params.get("name"), params.get("arguments") or {})
+            _respond(rid, {"content": [{"type": "text", "text": text}]})
+        except Exception as exc:  # noqa: BLE001 — renvoyé proprement au client
+            _error(rid, -32602, str(exc))
+    else:
+        _error(rid, -32601, "méthode inconnue : %s" % method)
+
+
+LIGNE_MAX = 8 * 1024 * 1024
+
+
+def main():
+    # Lecture en OCTETS : un octet hors UTF-8 faisait mourir le serveur avant
+    # même l'analyse (le décodage de sys.stdin levait).
+    #
+    # Lecture BORNÉE : « for ligne in sys.stdin.buffer » accumulait une ligne
+    # sans fin jusqu'à épuiser la mémoire. Au-delà de LIGNE_MAX (8 Mio, comme
+    # sermoia-mcp), la ligne est refusée et son reste est jeté par morceaux.
+    entree = sys.stdin.buffer
+    while True:
+        ligne = entree.readline(LIGNE_MAX + 1)
+        if not ligne:
+            break
+        if len(ligne) > LIGNE_MAX and not ligne.endswith(b"\n"):
+            while True:
+                reste = entree.readline(65536)
+                if not reste or reste.endswith(b"\n"):
+                    break
+            _error(None, -32600, "requête invalide : ligne de plus de %d octets" % LIGNE_MAX)
             continue
-        method = req.get("method")
-        rid = req.get("id")
-        if method == "initialize":
-            _respond(rid, {
-                "protocolVersion": "2024-11-05",
-                "capabilities": {"tools": {}},
-                "serverInfo": {"name": "sermoman-mcp", "version": VERSION},
-            })
-        elif method == "notifications/initialized":
-            pass  # notification : aucune réponse attendue
-        elif method == "tools/list":
-            _respond(rid, {"tools": TOOLS})
-        elif method == "tools/call":
-            params = req.get("params", {})
-            try:
-                text = _call_tool(params.get("name"), params.get("arguments") or {})
-                _respond(rid, {"content": [{"type": "text", "text": text}]})
-            except Exception as exc:  # noqa: BLE001 — renvoyé proprement au client
-                _error(rid, -32602, str(exc))
-        elif rid is not None:
-            _error(rid, -32601, "méthode inconnue : %s" % method)
+        _traiter(ligne)
 
 
 if __name__ == "__main__":

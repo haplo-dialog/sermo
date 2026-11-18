@@ -296,7 +296,7 @@ void widget_statusbar_save(variable *var)
 	/* If we have a valid filename then open it and dump the
 	 * widget's data to it */
 	if (filename) {
-		if ((outfile = fopen(filename, "w"))) {
+		if ((outfile = sermo_fopen_output(filename))) {
 
 			last_push = g_object_get_data(G_OBJECT(var->Widget), "_last_push");
 			fprintf(outfile, "%s", last_push);

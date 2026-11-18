@@ -34,7 +34,13 @@ workflow:
         - tests/**/*
         - ci/**/*
         - sermoman-mcp/**/*
+        - sermoia-mcp/**/*
+        - sermo-source/**/*
+        - outils/**/*
+        - debian/**/*
+        - packaging/**/*
         - examples/**/*
+        - sermo.schema.json
         - VERSION
         - .gitlab-ci.yml
 
@@ -63,6 +69,42 @@ bancs:
     expire_in: 1 week
     paths:
       - _journaux/
+
+# ── ASan, UBSan et fuzz ──────────────────────────────────────────────────────
+# Le cœur (trois variantes) et les neuf ports reconstruits sous ASan + UBSan,
+# le banc de comportement rejoué dessus (toute erreur est fatale), puis deux
+# minutes de fuzz de l'analyseur sur le binaire html instrumenté. Jusqu'à la
+# 3.2.0 rien de cela ne tournait en CI : SERMO_BANC_SANITIZERS n'était posé
+# nulle part. À part du job « bancs » (40 min de plus le feraient dépasser son
+# délai) : sur étiquette, sur pipeline planifié, et à la demande ailleurs.
+# Se rejoue chez soi : bash tests/garde_sanitizers.sh
+sanitizers:
+  image: debian:testing
+  interruptible: true
+  timeout: 2h
+  rules:
+    - if: $CI_COMMIT_TAG
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+    - when: manual
+      allow_failure: true
+  before_script:
+    - apt-get update -qq
+    - apt-get install -y --no-install-recommends $(grep -v '^#' ci/dependances.txt)
+    - git config --global --add safe.directory "$CI_PROJECT_DIR"
+    - sed -i 's/^# *fr_FR.UTF-8/fr_FR.UTF-8/' /etc/locale.gen && locale-gen
+    - export LANG=fr_FR.UTF-8
+  script:
+    - bash tests/garde_sanitizers.sh "$CI_PROJECT_DIR"
+    - bash tests/garde_fuite_refresh.sh sermo-backend-ncurses/_build_asan/ncursessermo
+    - bash tests/garde_fuite_refresh.sh sermo-backend-html/_build_asan/htmlsermo
+    - ASAN_OPTIONS=detect_leaks=0:abort_on_error=1 UBSAN_OPTIONS=halt_on_error=1:abort_on_error=1
+      python3 -I tests/fuzz/fuzz.py sermo-backend-html/_build_asan/htmlsermo 120
+  artifacts:
+    when: always
+    expire_in: 1 week
+    paths:
+      - _build/sanitizers/
+      - tests/fuzz/findings/
 
 # ── Paquets Debian ───────────────────────────────────────────────────────────
 # Sur étiquette seulement, et à la demande. Construit les .deb dans une Debian

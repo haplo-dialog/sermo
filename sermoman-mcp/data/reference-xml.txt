@@ -44,8 +44,9 @@ STRUCTURE GÉNÉRALE
            </vbox>
          </window>
 
-     Chaque dialogue a un unique élément racine <window> (plusieurs <window>
-     peuvent se suivre dans la même description : voir FENÊTRES MULTIPLES). Les
+     Chaque dialogue a un unique élément racine <window> (une seconde fenêtre
+     est une AUTRE description, dans sa propre variable d'environnement : voir
+     FENÊTRES MULTIPLES). Les
      widgets sont imbriqués dans des conteneurs (<hbox>, <vbox>, <frame>…).
 
 
@@ -125,11 +126,16 @@ OPTIONS
      --render-png FICHIER.png
             Rend l'interface en image, hors écran, sans ouvrir de fenêtre
             (capture déterministe pour la doc ou un test visuel). Disponible
-            sur six backends graphiques (gtk3, gtk4, qt6, fltk1, efl1,
-            sdl3), et la taille demandee par default-width/default-height
-            est respectee sur ces six ; lvgl a aussi l'option. ncurses reste
-            un affichage terminal : pas d'image ;
-            aperçu texte via --print-ir. html écrit une page, pas une image.
+            sur les sept ports à image (gtk3, gtk4, qt6, fltk1, efl1, sdl3,
+            lvgl) ; la taille demandée par default-width/default-height est
+            respectée sur les six premiers. ncurses reste un affichage
+            terminal : pas d'image ; aperçu texte via --print-ir. html écrit
+            une page, pas une image.
+            AUCUNE commande du dialogue n'est lancée pendant le rendu
+            (<input>, <action>, <terminal>) : un widget rempli par une
+            commande paraît vide, et le refus est dit sur la sortie d'erreur.
+            SERMO_RENDER_EXEC=1 les permet, pour un dialogue de confiance.
+            Jusqu'à la 3.2.0, les commandes étaient lancées.
 
      --space-expand=ETAT
             Valeur par défaut de l'état d'empaquetage « expand » (true/false)
@@ -507,7 +513,10 @@ WIDGETS —— RÉFÉRENCE COMPLÈTE
    Date et heure
      <calendar>
             Sélecteur de date graphique. Exporte la date au format ISO 8601
-            AAAA-MM-JJ.
+            AAAA-MM-JJ. Les attributs year, month et day posent la date
+            par-dessus <default>, sur les neuf ports ; month compte de 0
+            (month="1" = février). Un attribut qui ne laisse pas une date
+            existante est ignoré.
 
                 <calendar><variable>DATE</variable><default>2026-05-21</default></calendar>
 
@@ -790,25 +799,50 @@ ACTIONS
             shell comme commande ordinaire.
 
      LAUNCH:NOM
-            Ouvre une autre fenêtre, identifiée par son attribut name=.
+            Ouvre la fenêtre décrite dans la variable d'environnement NOM. Si
+            une fenêtre ouverte porte déjà un widget de ce nom, elle est
+            seulement remise au premier plan.
 
      REFRESH:NOM
             Relance l'<input> du widget nommé.
 
      SAVE:NOM
-            Sauvegarde l'état du widget nommé.
+            Écrit la valeur du widget (ou ses rangées : liste, liste
+            déroulante, arbre, table) dans le fichier que nomme sa balise
+            <output file>, sur les neuf ports.
 
      CLEAR:NOM
-            Vide le contenu du widget nommé.
+            Vide le contenu du widget nommé (texte d'un champ, rangées d'une
+            liste ou d'une liste déroulante).
 
-     APPEND:NOM
-            Ajoute du contenu au widget nommé.
+     APPEND:SOURCE,CIBLE (INSERT: fait de même)
+            Copie la valeur du widget SOURCE dans le widget CIBLE : remplace
+            le texte d'une <entry>, l'insère dans un <edit>, ajoute une rangée
+            à une <list>, un <tree> ou une <table> (découpée sur « | »). Sur
+            les neuf ports.
+
+     REMOVESELECTED:NOM
+            Retire la ou les rangées choisies d'une liste ou d'un arbre ; sur
+            une liste déroulante, l'élément choisi.
+
+     ACTIVATE:NOM
+            Active le widget comme un clic : un bouton joue ses actions (un
+            <button ok> nu ferme le dialogue), une case ou un interrupteur
+            bascule. Sur les neuf ports.
+
+     COMMAND:commande
+            Lance la commande, comme une action sans préfixe.
+
+     BREAK:
+            Arrête la liste : les <action> suivantes du même signal ne jouent
+            pas.
 
      FILESELECT:NOM
             Ouvre un sélecteur de fichier alimentant la variable nommée.
 
      ENABLE:NOM / DISABLE:NOM
-            (Dés)active le widget nommé.
+            (Dés)active le widget nommé. DISABLE arrête une minuterie
+            (<timer>).
 
      SHOW:NOM / HIDE:NOM
             (In)visibilise le widget nommé.
@@ -993,22 +1027,36 @@ ACTIONS CONDITIONNELLES
 
 
 FENÊTRES MULTIPLES
-     Une description peut contenir plusieurs <window>, chacune avec un attribut
-     name=. LAUNCH:NOM ouvre une fenêtre ; closewindow:NOM la ferme. Une
-     fenêtre secondaire démarre souvent cachée (visible="false").
+     Chaque fenêtre est une description à part, dans SA variable
+     d'environnement, exportée avant de lancer sermo. LAUNCH:NOM lit le XML
+     dans la variable NOM ; closewindow:NOM cherche le WIDGET nommé NOM et
+     ferme la fenêtre qui le contient, d'où le <variable> de chaque fenêtre.
 
-         <window title="Principal" name="PRINCIPALE">
+         export PRINCIPALE='
+         <window title="Principal">
            <vbox>
              <button><label>Réglages</label><action>LAUNCH:REGLAGES</action></button>
              <button><label>Quitter</label><action>EXIT:quitte</action></button>
            </vbox>
-         </window>
-         <window title="Réglages" name="REGLAGES" visible="false">
+           <variable>PRINCIPALE</variable>
+         </window>'
+         export REGLAGES='
+         <window title="Réglages">
            <vbox>
              <text><label>Fenêtre de réglages</label></text>
              <button><label>Fermer</label><action>closewindow:REGLAGES</action></button>
            </vbox>
-         </window>
+           <variable>REGLAGES</variable>
+         </window>'
+         sermo --program=PRINCIPALE
+
+     Sur les neuf ports depuis la 3.3.0 : vraie seconde fenêtre sur gtk3,
+     gtk4, qt6, fltk1 et efl1 ; sur sdl3, lvgl et ncurses, la fenêtre lancée
+     prend la place de la précédente, qui revient au closewindow:. LAUNCH: ne
+     marche pas depuis un <timer>. Fermer la dernière fenêtre termine sermo
+     avec EXIT="closewindow". Deux fenêtres au même nom de variable : la
+     seconde sort sous NOM__W<id>, et une action jouée dans une fenêtre vise
+     d'abord les widgets de cette fenêtre.
 
 
 VARIABLES DE SORTIE
@@ -1044,7 +1092,13 @@ SÉCURITÉ
             impossible. Sinon, repli journalisé sur /bin/sh -c, qui rend la
             pleine puissance du shell ET la pleine surface d'injection.
 
-     DEUX VERROUS, À POSER SOI-MÊME
+     TROIS VERROUS, À POSER SOI-MÊME
+            SERMO_NO_FILES=1
+                   Le dialogue ne lit ni n'écrit aucun fichier nommé par le
+                   XML : <input file>, save: vers un <output file>, la
+                   condition file_is_true(). Les images ne sont pas
+                   concernées.
+
             SERMO_NO_SHELL_FALLBACK=1
                    Refuse le repli /bin/sh -c et échoue proprement. Les
                    commandes sans métacaractère continuent de passer par
@@ -1091,6 +1145,13 @@ ENVIRONNEMENT
 
      SERMO_ALLOWED_CMDS
             Voir SÉCURITÉ. Liste blanche de commandes autorisées.
+
+     SERMO_NO_FILES
+            Voir SÉCURITÉ. Ferme les fichiers nommés par le XML.
+
+     SERMO_RENDER_EXEC
+            =1 : permet les commandes du dialogue sous --render-png (refusées
+            par défaut depuis la 3.3.0).
 
      SERMO_SOURCE_DIR
             Dossier des programmes d'aide des <input X> / <action X>
@@ -1176,4 +1237,4 @@ LICENCE
      Documentation sous licence GPL-2.0-or-later.
      Logiciel sous licence GPL-2.0-or-later.
 
-sermo 3.2.0                        2026-10                          SERMO-XML(5)
+sermo 3.3.0                        2026-10                          SERMO-XML(5)

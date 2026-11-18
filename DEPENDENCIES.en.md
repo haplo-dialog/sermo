@@ -74,7 +74,7 @@ They serve `<input modbus>`, `<input opcua>`, `<input mqtt>`,
 | `sermo-source-opcua` | `libopen62541-1.4-dev` | open62541 (`libopen62541-1.4`) |
 | `sermo-source-mqtt`, `sermo-cible-mqtt` | `libmosquitto-dev` | libmosquitto (`libmosquitto1`) |
 | `sermo-source-mavlink`, `sermo-cible-mavlink` | nothing: the MAVLink C headers are bundled (`sermo-source/tiers/mavlink`) | none, apart from `libc6` |
-| `sermo-source-media`, `sermo-cible-media` | nothing | `sermo-cible-media` requires the `mpv` program and recommends `bubblewrap` (mpv's sandbox, required for a network source); `sermo-source-media` recommends `sermo-cible-media` |
+| `sermo-source-media`, `sermo-cible-media` | nothing for these two programs; `libmpv-dev` for `sermo-media-images` (the picture inside the dialog's area, shipped with `sermo-cible-media`) | `sermo-cible-media` requires the `mpv` program and recommends `bubblewrap` (mpv's sandbox, required for a network source); `sermo-source-media` recommends `sermo-cible-media` |
 
 Without its library, a program is not built (CMake warns), unless
 `-DSERMO_SOURCE_EXIGER=ON` is set, which stops the build (see

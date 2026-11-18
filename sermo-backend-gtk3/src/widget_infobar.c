@@ -336,7 +336,7 @@ void widget_infobar_save(variable *var)
 	}
 
 	if (filename) {
-		if ((outfile = fopen(filename, "w"))) {
+		if ((outfile = sermo_fopen_output(filename))) {
 			label = GTK_WIDGET(
 				g_object_get_data(G_OBJECT(var->Widget), "_label"));
 			text = label ? gtk_label_get_text(GTK_LABEL(label)) : "";

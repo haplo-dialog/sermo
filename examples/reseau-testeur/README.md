@@ -45,7 +45,7 @@ Les actions du dialogue passent par `/bin/sh -c`, à cause des guillemets autour
 ## Ce que l'exemple garantit (testé par `tests/garde_reseau_testeur.sh`)
 
 - **Entrées vérifiées avant tout usage**, valeur entière :
-  - hôte : nom d'hôte, IPv4 ou IPv6 stricts, jamais commençant par `-` ;
+  - hôte : nom d'hôte, IPv4 stricte, ou IPv6 (chiffres hexadécimaux et `:`, 39 caractères au plus), jamais commençant par `-` ;
   - port : de 1 à 65535 ;
   - délai : de 1 à 60 s ;
   - trame : une seule ligne, 4 096 octets au plus ;

@@ -64,7 +64,9 @@ fi
 # avoir regardé, et un atof() dormait dans widget_levelbar.cpp de fltk1 : sous
 # une locale française il rendait ZÉRO, et <levelbar><default>0.5 ressortait
 # « 0 ». Un contrôle qui ne regarde pas doit se taire, pas dire OK.
-for f in "$SRC"/*.c "$SRC"/*.cpp "$SRC"/*.cc "$SRC"/*.h "$SRC"/*.hpp; do
+# Les sources flex et bison (.l, .y) portent du C écrit à la main : elles sont
+# examinées aussi (elles ne l'étaient pas jusqu'à la 3.2.0).
+for f in "$SRC"/*.c "$SRC"/*.cpp "$SRC"/*.cc "$SRC"/*.h "$SRC"/*.hpp "$SRC"/*.l "$SRC"/*.y; do
 	[ -e "$f" ] || continue
 	if est_engendre "$f"; then ignores=$((ignores + 1)); continue; fi
 	examines=$((examines + 1))

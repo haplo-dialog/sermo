@@ -26,6 +26,7 @@
 #define _GNU_SOURCE
 #endif
 #include <gtk/gtk.h>
+#include "sermo_input.h"
 #include "config.h"
 #include "gtk3d.h"
 #include "actions.h"
@@ -71,9 +72,6 @@
 #include "widget_window.h"
 #if HAVE_VTE
 #include <vte/vte.h>
-#endif
-#if HAVE_SYS_INOTIFY_H
-#include <sys/inotify.h>
 #endif
 
 /* Defines */
@@ -1109,35 +1107,20 @@ next_command:
  * Thanks and credit go to technosaurus for the inotify code.
  */
 
-#if HAVE_SYS_INOTIFY_H
-void on_any_widget_file_changed_event(gpointer data, gint source,
-	GdkInputCondition condition)
-#else
 void on_any_widget_file_changed_event(GFileMonitor *monitor, GFile *file,
 	GFile *other_file, GFileMonitorEvent event_type, variable *var)
-#endif
 {
-#if HAVE_SYS_INOTIFY_H
-	gchar             buffer[sizeof(struct inotify_event)];
-	variable         *var = (variable*)data;
-#endif
 
 #ifdef DEBUG_TRANSITS
 	fprintf(stderr, "%s(): Entering.\n", __func__);
 #endif
 
-#if HAVE_SYS_INOTIFY_H
-	/* Just clearing, don't care the type */
-	read(source, buffer, sizeof(buffer));
-
-#else
 #ifdef DEBUG_CONTENT
 	fprintf(stderr, "%s(): event_type=%i filename=%s\n", __func__,
 		event_type, g_file_get_path(file));
 #endif
 
 	if (event_type == G_FILE_MONITOR_EVENT_CHANGED)
-#endif
 	widget_signal_executor(var->Widget, var->Attributes, "file-changed");
 
 #ifdef DEBUG_TRANSITS
@@ -1149,30 +1132,15 @@ void on_any_widget_file_changed_event(GFileMonitor *monitor, GFile *file,
  *                                                                     *
  ***********************************************************************/
 
-#if HAVE_SYS_INOTIFY_H
-void on_any_widget_auto_refresh_event(gpointer data, gint source,
-	GdkInputCondition condition)
-#else
 void on_any_widget_auto_refresh_event(GFileMonitor *monitor, GFile *file,
 	GFile *other_file, GFileMonitorEvent event_type, variable *var)
-#endif
 {
-#if HAVE_SYS_INOTIFY_H
-	gchar             buffer[sizeof(struct inotify_event)];
-	variable         *var = (variable*)data;
-#endif
 
 #ifdef DEBUG_TRANSITS
 	fprintf(stderr, "%s(): Entering.\n", __func__);
 #endif
 
-#if HAVE_SYS_INOTIFY_H
-	/* Just clearing, don't care the type */
-	read(source, buffer, sizeof(buffer));
-
-#else
 	if (event_type == G_FILE_MONITOR_EVENT_CHANGED)
-#endif
 	switch (var->Type) {
 		case WIDGET_TOGGLEBUTTON:
 		case WIDGET_BUTTON:
@@ -1358,6 +1326,15 @@ void widget_signal_executor(GtkWidget *widget, AttributeSet *Attr,
 		__func__, signal_name, widget);
 #endif
 
+	/* Une action peut fermer la fenêtre de ce widget (closewindow: de sa
+	 * propre fenêtre) alors que d'autres actions suivent : GTK le détruisait
+	 * et la boucle relisait un objet libéré (heap-use-after-free vu par ASan,
+	 * relecture du 16/11). Le widget est tenu jusqu'à la fin de la boucle ;
+	 * les actions suivantes sont jouées, comme sur les ports sans GTK. */
+#ifndef SERMO_COEUR_NEUTRE
+	if (widget != NULL)
+		g_object_ref(widget);
+#endif
 	command = attributeset_get_first(&element, Attr, ATTR_ACTION);
 	while (command) {
 		execute = FALSE;
@@ -1564,6 +1541,10 @@ void widget_signal_executor(GtkWidget *widget, AttributeSet *Attr,
 		command = attributeset_get_next(&element, Attr, ATTR_ACTION);
 
 	}
+#ifndef SERMO_COEUR_NEUTRE
+	if (widget != NULL)
+		g_object_unref(widget);
+#endif
 
 #ifdef DEBUG_TRANSITS
 	fprintf(stderr, "%s(): Exiting.\n", __func__);
@@ -1588,7 +1569,7 @@ gboolean widget_signal_executor_eval_condition(gchar *condition)
 	#define           TYPE_CONDFUNC_SENSITIVE 4
 	#define           TYPE_CONDFUNC_VISIBLE 5
 	FILE             *infile;
-	gchar             argument[256];
+	gchar             argument[4096];
 	gchar             line[64] = "";
 	gint              condfunc = TYPE_CONDFUNC_UNKNOWN;
 	gint              count;
@@ -1649,6 +1630,14 @@ gboolean widget_signal_executor_eval_condition(gchar *condition)
 			condition = strchr(condition, '(') + 1;
 
 			/* Get argument and locate end */
+			/* Une condition plus longue que le tampon etait coupee puis
+			 * EXECUTEE telle quelle (command(...) : une autre commande que
+			 * celle ecrite). Elle est maintenant refusee, et c'est dit. */
+			if (strlen(condition) >= sizeof(argument)) {
+				g_warning("%s(): condition de plus de %d octets : refusee (tenue pour fausse)",
+					__func__, (int)sizeof(argument) - 1);
+				return FALSE;
+			}
 			g_strlcpy(argument, condition, sizeof(argument));
 			for (index = (gint)strlen(argument) - 1; index >= 0; index--) {
 				if (argument[index] == ')') {
@@ -1658,9 +1647,9 @@ gboolean widget_signal_executor_eval_condition(gchar *condition)
 			}
 
 			/* Fix any escaped double-quotes if present */
-			for (index = 0; index < strlen(argument); index++)
+			for (index = 0; index < (gint)strlen(argument); index++)
 				if (argument[index] == '\\' && argument[index + 1] == '"' )
-					for (count = index; count < strlen(argument); count++)
+					for (count = index; count < (gint)strlen(argument); count++)
 						argument[count] = argument[count + 1];
 
 			/* Remove enveloping spaces if present */
@@ -1758,7 +1747,7 @@ gboolean widget_signal_executor_eval_condition(gchar *condition)
 			 ***********************************************************/
 			} else if (condfunc == TYPE_CONDFUNC_FILE) {
 
-				if ((infile = fopen(argument, "r"))) {
+				if (!sermo_fichiers_interdits() && (infile = fopen(argument, "r"))) {
 					/* Just one line */
 					if (fgets(line, 64, infile)) {
 						/* Enforce end of string in case of max chars read */
@@ -1879,86 +1868,6 @@ gboolean widget_signal_executor_eval_condition(gchar *condition)
  * Thanks and credit go to technosaurus for the inotify code.
  */
 
-#if HAVE_SYS_INOTIFY_H
-void widget_file_monitor_try_create(variable *var, gchar *filename)
-{
-	gchar             fdname[16];
-	gchar             wdname[16];
-	gchar            *value;
-	gint              count;
-	gint              fd, wd;
-	gint              index = 0;
-
-#ifdef DEBUG_TRANSITS
-	fprintf(stderr, "%s(): Entering.\n", __func__);
-#endif
-
-	/* Is this file going to be monitored? */
-	if (var->widget_tag_attr) {
-
-		for (count = 0; count < 2; count++) {
-
-			/* Get file-monitor (custom) or auto-refresh (custom) */
-			if (((!count && (value = get_tag_attribute(var->widget_tag_attr,
-				"file-monitor"))) ||
-				(count && (value = get_tag_attribute(var->widget_tag_attr,
-				"auto-refresh")))) && ((strcasecmp(value, "true") == 0) ||
-				(strcasecmp(value, "yes") == 0) || (atoi(value) == 1))) {
-
-				if ((fd = inotify_init()) != -1) {
-
-					if ((wd = inotify_add_watch(fd, (gchar*)filename,
-						IN_MODIFY)) != -1) {
-#ifdef DEBUG_CONTENT
-						fprintf(stderr, "%s(): fd=%i wd=%i\n", __func__,
-							fd, wd);
-#endif
-						/* Generate unique name */
-						while (TRUE) {
-							g_snprintf(fdname, sizeof(fdname), "_inotifyfd%i", index);
-							g_snprintf(wdname, sizeof(wdname), "_inotifywd%i", index);
-							if (!(g_object_get_data(G_OBJECT(var->Widget),
-								fdname))) break;
-							index++;
-						}
-#ifdef DEBUG_CONTENT
-						fprintf(stderr, "%s(): fdname=%s wdname=%s\n",
-							__func__, fdname, wdname);
-#endif
-						/* Store fd as a piece of widget data */
-						g_object_set_data(G_OBJECT(var->Widget), fdname,
-							(gpointer)fd);
-
-						/* Store wd as a piece of widget data */
-						g_object_set_data(G_OBJECT(var->Widget), wdname,
-							(gpointer)wd);
-
-						if (!count) {
-							/* Connect to the "changed" signal which will reach
-							 * the application as the "file-changed" signal */
-							gdk_input_add(fd, GDK_INPUT_READ,
-								on_any_widget_file_changed_event, (gpointer)var); 
-						} else {
-							/* Connect to the "changed" signal which will call
-							 * the widget's refresh function directly without
-							 * being routed through gtk3sermo's signal handling
-							 * system and without emitting a signal (it's faster) */
-							gdk_input_add(fd, GDK_INPUT_READ,
-								on_any_widget_auto_refresh_event, (gpointer)var); 
-						}
-
-					} else {
-						if (fd != -1) close(fd);
-					}
-				}
-				if (fd == -1 || wd == -1)
-					g_warning("%s(): Couldn't create file monitor for '%s'.", __func__, filename);
-			}
-		}
-	}
-}
-
-#else
 void widget_file_monitor_try_create(variable *var, gchar *filename)
 {
 	GError           *error;
@@ -2050,4 +1959,3 @@ void widget_file_monitor_try_create(variable *var, gchar *filename)
 		}
 	}
 }
-#endif

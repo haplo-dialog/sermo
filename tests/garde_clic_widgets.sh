@@ -48,7 +48,7 @@ echec=0; joues=0
 # port dit ne pas le joindre ; essai() refait alors la mesure une fois.
 clic() {
 	LC_ALL=fr_FR.UTF-8 GSK_RENDERER=cairo \
-	xvfb-run -a -s '-screen 0 800x600x24' timeout $((DELAI + 33)) sh -c '
+	xvfb-run -a -s '-screen 0 800x600x24 -noreset' timeout $((DELAI + 33)) sh -c '
 		for j in $(seq 1 50); do xdpyinfo >/dev/null 2>&1 && break; sleep 0.1; done
 		xdpyinfo >/dev/null 2>&1 || { echo NODISPLAY; exit 0; }
 		"$1" --file="$2" >"$3" 2>&1 &

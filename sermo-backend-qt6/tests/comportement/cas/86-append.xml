@@ -1,0 +1,13 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: action append : vers une entree le texte est remplace, vers une zone de texte il est ajoute (deux fois : deux ajouts), vers une liste une rangee est ajoutee en tete et choisie -->
+<window><vbox>
+<entry><variable>SRC</variable><default>éè-fin</default></entry>
+<entry><variable>E</variable><default>avant</default></entry>
+<edit><variable>D</variable><default>a</default></edit>
+<list><variable>L</variable><item>un</item><item>deux</item><output file>l.out</output></list>
+<list><variable>V</variable></list>
+<entry><variable>FL</variable><input>sh donnees/lire.sh l.out</input></entry>
+<timer visible="false"><variable>_T</variable>
+<action>append:SRC,E</action><action>append:SRC,D</action><action>append:SRC,D</action><action>append:SRC,L</action><action>append:SRC,V</action>
+<action>save:L</action><action>refresh:FL</action>
+<action>exit:fin</action></timer></vbox></window>

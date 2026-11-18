@@ -1,0 +1,17 @@
+<!-- SPDX-License-Identifier: GPL-2.0-or-later -->
+<!-- DESC: calendar : les attributs day, month (compte de 0 : 1 = fevrier) et year posent la date, par-dessus le <default> ; un attribut qui ne laisse pas une date existante est ignore (jour 0, 31 avril, 29 fevrier 2023, jour 40, nombres hors de tout entier) -->
+<window><vbox>
+<calendar day="3" month="1" year="2025"><variable>CA</variable></calendar>
+<calendar day="29" month="1" year="2024"><variable>CB</variable></calendar>
+<calendar year="2030"><variable>CC</variable><default>2001-03-07</default></calendar>
+<calendar month="5"><variable>CD</variable><default>2001-03-07</default></calendar>
+<calendar day="31" month="11" year="1999"><variable>CE</variable><default>2001-03-07</default></calendar>
+<calendar day="0" year="2025"><variable>CF</variable><default>2001-03-07</default></calendar>
+<calendar day="31"><variable>CG</variable><default>2001-04-07</default></calendar>
+<calendar year="2023" month="1"><variable>CH</variable><default>2024-02-29</default></calendar>
+<calendar day="40"><variable>CI</variable><default>2001-03-07</default></calendar>
+<calendar month="2147483647"><variable>CJ</variable><default>2001-03-07</default></calendar>
+<calendar year="99999999999999999999"><variable>CK</variable><default>2001-03-07</default></calendar>
+<calendar day="-2147483648" month="-2147483649"><variable>CL</variable><default>2001-03-07</default></calendar>
+<timer visible="false"><variable>_T</variable><action>exit:fin</action></timer>
+</vbox></window>

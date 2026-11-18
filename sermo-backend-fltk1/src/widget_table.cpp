@@ -298,3 +298,32 @@ extern "C" void widget_table_removeselected(variable *var)
 }
 
 extern "C" void widget_table_save(variable * /*var*/) {}
+
+/* save: — toutes les rangées, « | » entre les colonnes, une par ligne
+ * (appelée par sermo_be_widget_rows). malloc. */
+extern "C" char *fltk1_table_rangees(void *w)
+{
+    HaploTable *ht = static_cast<HaploTable *>((Fl_Widget *)w);
+    std::string r;
+    if (!ht || !ht->td) return NULL;
+    for (size_t l = 0; l < ht->td->rows.size(); l++) {
+        if (l) r += '\n';
+        for (size_t c = 0; c < ht->td->rows[l].size(); c++) {
+            if (c) r += '|';
+            r += ht->td->rows[l][c];
+        }
+    }
+    return strdup(r.c_str());
+}
+
+/* append: — une rangée à la fin, découpée comme un <item>
+ * (appelée par sermo_be_widget_append). */
+extern "C" int fltk1_table_ajouter(void *w, const char *valeur)
+{
+    HaploTable *ht = static_cast<HaploTable *>((Fl_Widget *)w);
+    if (!ht || !ht->td || !valeur) return 0;
+    _append_row(ht->td, valeur);
+    _rebuild(ht);
+    ht->redraw();
+    return 1;
+}

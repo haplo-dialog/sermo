@@ -75,4 +75,14 @@ grep -q 'TEMOIN-REPLI' <<<"$(sortie SERMO_X=1)" || { echo "ECHEC DU TEMOIN : san
 grep -q 'TEMOIN-REPLI' <<<"$(sortie HAPLO_NO_SHELL_FALLBACK=1)" && { echo "ECHEC : HAPLO_NO_SHELL_FALLBACK (nom 1.x) est ignore"; exit 1; }
 grep -q 'HAPLO_NO_SHELL_FALLBACK est l.ancien nom' "$ERRF" || { echo "ECHEC : l'ancien nom HAPLO_NO_SHELL_FALLBACK n'est pas signale"; exit 1; }
 
-echo "OK : eteinte par defaut, mordante une fois posee ; ni shell, ni chemin d'un autre programme, ni faux homonyme ne la contournent ; noms 1.x encore lus"
+# 9 — un widget ne desarme pas la liste : sa variable s'appelle comme elle
+# ; sa valeur ne doit PAS arriver dans l'environnement.
+DIALOG='<window title="acl"><vbox><entry><variable>SERMO_ALLOWED_CMDS</variable><default>echo</default></entry><timer interval="1"><variable>T</variable><action>echo TEMOIN-WIDGET</action><action>exit:OK</action></timer></vbox></window>'
+# Sans --do : c'est l'action du dialogue lui-meme qui doit etre refusee.
+sans_do() { env "$@" timeout 25 xvfb-run -a "$BIN" --program=DIALOG 2>"$ERRF"; }
+grep -q 'TEMOIN-WIDGET' <<<"$(sans_do SERMO_ALLOWED_CMDS=ls)" && { echo "ECHEC : un widget nomme SERMO_ALLOWED_CMDS a remplace la liste"; exit 1; }
+grep -q 'nom reserve' "$ERRF" || { echo "ECHEC : le refus d'un nom de variable reserve n'est pas dit"; exit 1; }
+# temoin du temoin : avec echo dans la vraie liste, la meme action passe
+grep -q 'TEMOIN-WIDGET' <<<"$(sans_do SERMO_ALLOWED_CMDS=echo)" || { echo "ECHEC DU TEMOIN : l'action du minuteur devrait passer quand echo est liste"; exit 1; }
+
+echo "OK : eteinte par defaut, mordante une fois posee ; ni shell, ni chemin d'un autre programme, ni faux homonyme, ni variable de widget ne la contournent ; noms 1.x encore lus"

@@ -418,6 +418,52 @@ gchar *widget_tree_envvar_construct(GtkWidget *widget)
 }
 
 /***********************************************************************
+ * Append (action append:SOURCE,ARBRE)                                 *
+ ***********************************************************************/
+/* Ajoute une rangée à la fin, découpée sur « | » comme un <item>. Jusqu'à la
+ * 3.3.0 le cœur rangeait la valeur entière dans la colonne 1 du modèle, qui
+ * était la première colonne de texte de gtkdialog et qui est ici le nom
+ * d'icône : la rangée ajoutée s'affichait vide. */
+void widget_tree_append_row(variable *var, const char *valeur)
+{
+	GtkTreeIter       iter;
+	GtkTreeModel     *model;
+	gchar           **columns;
+	gint              n, ncolumns;
+
+	if (var == NULL || var->Widget == NULL || valeur == NULL)
+		return;
+	model = gtk_tree_view_get_model(GTK_TREE_VIEW(var->Widget));
+	ncolumns = gtk_tree_model_get_n_columns(model) - FirstDataColumn;
+
+	gtk_tree_store_append(GTK_TREE_STORE(model), &iter, NULL);
+	columns = g_strsplit(valeur, "|", 128);
+	for (n = 0; columns[n] != NULL && n < ncolumns; ++n) {
+		switch (gtk_tree_model_get_column_type(model, n + FirstDataColumn)) {
+			case G_TYPE_STRING:
+				gtk_tree_store_set(GTK_TREE_STORE(model), &iter,
+					n + FirstDataColumn, columns[n], -1);
+				break;
+			case G_TYPE_INT64:
+				gtk_tree_store_set(GTK_TREE_STORE(model), &iter,
+					n + FirstDataColumn, strtoll(columns[n], NULL, 0), -1);
+				break;
+			case G_TYPE_UINT64:
+				gtk_tree_store_set(GTK_TREE_STORE(model), &iter,
+					n + FirstDataColumn, strtoull(columns[n], NULL, 0), -1);
+				break;
+			case G_TYPE_DOUBLE:
+				gtk_tree_store_set(GTK_TREE_STORE(model), &iter,
+					n + FirstDataColumn, g_ascii_strtod(columns[n], NULL), -1);
+				break;
+			default:
+				break;
+		}
+	}
+	g_strfreev(columns);
+}
+
+/***********************************************************************
  * Fileselect                                                          *
  ***********************************************************************/
 
@@ -739,7 +785,7 @@ void widget_tree_save(variable *var)
 	/* If we have a valid filename then open it and dump the
 	 * widget's data to it */
 	if (filename) {
-		if ((outfile = fopen(filename, "w"))) {
+		if ((outfile = sermo_fopen_output(filename))) {
 
 			model = gtk_tree_view_get_model(GTK_TREE_VIEW(var->Widget));
 			columnmax = gtk_tree_model_get_n_columns(GTK_TREE_MODEL(model));
@@ -880,6 +926,7 @@ index-FirstDataColumn=%i user_type=%i\n", __func__, column_type,
 	}
 
 	treestore = gtk_tree_store_newv(ncolumns + FirstDataColumn, types);
+	g_free(types);	/* gtk_tree_store_newv en garde sa propre copie */
 
 	/* Free linecutter memory */
 	if (columns) list_t_free(columns);
@@ -1334,6 +1381,11 @@ static void widget_tree_pixmap_column_cell_layout_function(
 		g_object_set(G_OBJECT(cell), "icon-name", NULL, NULL);
 	}
 
+	/* gtk_tree_model_get rend des copies : sans cela, deux chaînes fuyaient
+	 * par rangée visible à chaque redessin. */
+	g_free(stock_id);
+	g_free(icon_name);
+
 #ifdef DEBUG_TRANSITS
 	fprintf(stderr, "%s(): Exiting.\n", __func__);
 #endif
@@ -1399,7 +1451,10 @@ static gint _widget_tree_natcmp(GtkTreeModel *model, GtkTreeIter *a,
 	fprintf(stderr, "%s(): r1=\"%s\" r2=\"%s\"\n", __func__, r1, r2);
 #endif
 
-	retval = strnatcmp(r1, r2, sensitive);
+	/* Une cellule vide est rendue NULL ; et les deux copies sont à nous. */
+	retval = strnatcmp(r1 ? r1 : "", r2 ? r2 : "", sensitive);
+	g_free(r1);
+	g_free(r2);
 
 #ifdef DEBUG_TRANSITS
 	fprintf(stderr, "%s(): Exiting.\n", __func__);

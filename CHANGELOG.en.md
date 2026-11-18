@@ -7,6 +7,529 @@ Versioning: see [VERSIONING.en.md](VERSIONING.en.md).
 internal; they are described below to keep track of what changed since 1.x. To
 move from 1.x to 2.x: [MIGRATION.en.md](MIGRATION.en.md).
 
+## [3.3.0] — 2026-11-18
+
+### Fixed
+
+- **Sound and video player under Wayland without X11**: in a Wayland session
+  with no `DISPLAY` (no XWayland), mpv started in its cage died at once
+  ("vo_x11_init: Assertion `!vo->x11' failed", mpv 0.41, measured in sway):
+  nothing played. `sermo-cible-media` now names Wayland to it
+  (`--gpu-context=wayland`); with `DISPLAY`, or a picture inside the dialog
+  window, nothing changes. Tried by hand (play, pause, seek, stop); no bench
+  replays it.
+
+- **`ci/construire.sh` without the helper programs' libraries**: the script
+  required libmodbus, open62541, libmosquitto and libmpv, and failed where one
+  is missing (Termux). With `SERMO_SOURCE_FACULTATIF=1` it skips the helper
+  programs concerned and says which; without it, nothing changes. Tried on
+  Debian with two libraries hidden, not on a Termux device.
+
+- **qt6: `<comboboxtext>` no longer has a text field.** It was editable like
+  `<comboboxentry>`: typing in it returned a text outside the list, which the
+  gtk3 reference cannot return, and ran the action. Only `<comboboxentry>` is
+  editable now.
+
+- **macOS: Apple's linker rejects `--gc-sections`.** The option this version
+  sets to make binaries lighter was unconditional in the nine
+  `CMakeLists.txt`; Apple's linker does not know it, its equivalent is
+  `-dead_strip`. Each port now picks according to the system. Read by the
+  documentation review of 16 November; **not tried on a Mac**: the macOS
+  workflow has not run since.
+
+- **Windows: `ncursessermo.exe` weighed 8.1 MB instead of 1.7.** With
+  `-fdata-sections`, set by this version, mingw-w64 stores uninitialised
+  arrays in the file: 6 MiB of zeros for the widget stack (`stack.c`). On
+  Windows the core no longer passes it; functions keep their own section.
+  Measured by cross-compiling and under Wine, **not on a real Windows**.
+  Nothing changes for other systems.
+
+- **qt6 built with QTermWidget: `<terminal>` started its shell under
+  `--render-png`.** Like the VTE terminal of gtk3 and gtk4, QTermWidget
+  starts its shell itself, without going through `safe_system`: the 3.3.0
+  refusal did not reach it. It now checks it. The Debian package of qt6 is not
+  built with QTermWidget and was not affected; the fixed branch could not be
+  compiled here (library missing on this machine).
+
+- **The `<action>` of a drop-down list did not run outside GTK.** On gtk3 and
+  gtk4, the action of a `<comboboxtext>` or `<comboboxentry>` runs when the
+  widget's text changes: an item is chosen, or `refresh:`, `clear:` and
+  `removeselected:` leave a different choice. On qt6, fltk1, efl1, sdl3,
+  lvgl, ncurses and html it never ran, silently. The seven ports now follow
+  the same rule, including "nothing at start-up", even when `<default>`
+  picks an item. Three value differences go with it: `clear:` empties the
+  list as the reference does (fltk1, sdl3, lvgl, ncurses and html kept the
+  items and returned the first one; efl1 kept the last choice); `refresh:`
+  erases the free text of a `<comboboxentry>` (it stayed on fltk1, sdl3,
+  lvgl, ncurses and html); `removeselected:` removes the chosen item and
+  takes the previous one (it did nothing on the seven ports). On gtk4,
+  `clear:`, `refresh:` and `removeselected:` left the text typed in a
+  `<comboboxentry>` in place, and Enter in that field ran nothing: the entry
+  field was looked up in the wrong place. Behaviour case 95, played on the
+  nine ports; choosing an item was tried by hand on the eight ports that
+  have a screen.
+
+- **`activate:` on a `<button>` did nothing outside GTK.** The manual
+  promises that `activate:NAME` runs the widget's actions "like a click on a
+  button"; that was true on gtk3 and gtk4 only. On qt6, fltk1, efl1, sdl3,
+  lvgl, ncurses and html, only toggle widgets were activated; for a button,
+  nothing ran and nothing said so. The contract gains an optional function
+  (`sermo_be_button_click`) that the core calls for a button: all its
+  actions run, and a bare button (`<button ok>`) closes the dialog with its
+  value, as on the reference port. A greyed button also runs its actions
+  under `activate:`, as gtk3 and gtk4 do (measured on 16/11). Behaviour case
+  94.
+
+- **gtk3, gtk4: freed memory read back when a window is closed by its own
+  widget.** A progress bar (or any widget going through the common action
+  loop) with an action `closewindow:` of its own window, followed by other
+  actions: GTK destroyed the widget, and the loop read it again for the next
+  action (`heap-use-after-free`, seen by ASan). The following actions were
+  not run, by accident. The widget is now held until the end of the loop and
+  the rest is run, as on the seven non-GTK ports, which did not have the
+  defect. Found while writing the case the external review of 16/11 could not
+  examine (windows case 04); the sanitizers bench now also plays the
+  multi-window cases.
+
+- **Sound and video player: the helper program could die on `SIGPIPE`.** If
+  the player closes its socket between the two sends of a command, the
+  program was killed (code 141) instead of returning its error; measured once
+  in 200 against a socket that closes at once. The sends no longer raise the
+  signal (`MSG_NOSIGNAL`), like the MQTT and MAVLink programs which already
+  ignored it. Seen by the external review of 16/11.
+
+- **Real-examples bench: a folder with no script passed silently.**
+  `tests/run_examples.sh` printed "no script" and went on without counting
+  a failure: an example whose entry point had vanished left the bench green
+  without being tried. Such a folder is now a failure (two named exceptions:
+  `boites-a-outils`, which has its own bench, and `c_embedded`, a C
+  source), and a run that plays no example fails too. Found by the external
+  review of 16/11.
+
+- **`<comboboxentry>`: a free `<default>` over 255 bytes came out cut on
+  sdl3, lvgl, ncurses and html.** These four ports stored the text missing
+  from the list in a 256-byte buffer; the other five return it whole. The
+  text is now kept whole for export (the buffer only serves the display).
+  Found by the external review of 16/11; behaviour case 92, extended (300
+  characters).
+
+- **`<calendar>`: an attribute beyond any integer overflowed.** `day`,
+  `month` and `year` were read with `atoi`, undefined outside `int`, and
+  `month="2147483647"` overflowed the "+ 1" that brings it from 0-based to
+  1-based (reported by UBSan on the neutral core and on gtk3). The read is
+  bounded; such an attribute is ignored like any date that does not exist.
+  Found by the external review of 16/11; behaviour case 91, extended.
+
+- **sermoman-mcp: an endless line exhausted memory.** The server read its
+  input line by line with no ceiling: 300 MB without a newline killed it
+  (`MemoryError`). A line over 8 MiB — sermoia-mcp's bound — is now refused
+  (-32600) without being kept, and the next request is served. Found by the
+  external review of 16/11; measured by `verifie-protocole.sh` under 256 MB
+  of memory.
+
+- **Same-named windows: the action targeted an author's variable named
+  `NOM__W2`.** If the first window itself declares a variable `NOM__W2`,
+  the second window's copy is stored as `NOM__W2_2`; but an action of the
+  second window only looked for `NOM__W2` and so acted on the author's
+  variable (`clear:NOM`, `$NOM` in the command). The lookup now follows the
+  `_2`, `_3`… suffixes and only keeps the variable of the action's window.
+  A name longer than 480 characters, whose suffix would be cut, stays shared
+  between the windows instead of hanging the dialog. Found by the external
+  review of 16/11; case 03 of the same-named windows bench, on all nine
+  ports.
+
+- **MAVLink piloting: `FENCE_TYPE` read without a range check.** The check
+  that allows piloting converted the value received from the drone to an
+  integer after only ruling out NaN and infinities; a finite but huge number
+  (a float goes up to 3.4e38) made that conversion undefined in C, and 7.5
+  passed for 7. `FENCE_TYPE` must now be an integer from 0 to 65535,
+  otherwise the fence is reported inconsistent and nothing is sent. Found by
+  the external review of 16/11; two cases in the fake-drone bench
+  (`--barriere-type`).
+
+- **`--render-png`: the `<terminal>` of gtk3 and gtk4 still ran its
+  command.** The 3.3.0 refusal goes through `safe_system` and `safe_popen`;
+  VTE spawns the terminal's shell or `argvN` itself, bypassing them. A dialog
+  rendered to an image therefore executed `argv0="/bin/sh" argv1="-c"
+  argv2="…"`. The terminal now consults the same refusal: nothing is
+  spawned, stderr says so, and `SERMO_RENDER_EXEC=1` allows it as for the
+  rest. Found by the external review of 16/11; `garde_render_sans_commande.sh`
+  measures it on gtk3 and gtk4.
+
+- **gtk3: `<calendar>` returned dates that do not exist.** GtkCalendar 3
+  accepts any attribute: `day="31" month="1"` gave 2025-02-31, `day="0"` gave
+  2025-03-00. As on gtk4 and the non-GTK ports, the date is set in one step
+  and an attribute that does not leave an existing date is ignored
+  (behaviour case 91, extended).
+
+- **`<chooser>`: a value nobody had chosen on gtk3, none on gtk4; silent
+  `save:`.**
+  - gtk3: the embedded picker selects the first entry of the folder by
+    itself; the variable returned that file (`/usr/share/accountsservice`
+    for `<default>/usr/share`).
+  - gtk4: the variable of a `<chooser>` was never read, it came out empty
+    even after a choice.
+  - On both, as long as the user has chosen nothing (no click, no key), the
+    variable now returns `<default>`, like `<filechooser>` and like the seven
+    non-GTK ports; afterwards, the chosen file.
+  - `save:` of a `<chooser>` wrote nothing on any port, that of a
+    `<filechooser>` nothing outside GTK: the value is written to the
+    `<output file>` on all nine.
+
+  Behaviour case 93. `append:` to a `<chooser>` remains specific to gtk3 and
+  gtk4: it adds a folder shortcut to the embedded picker's panel, which the
+  button of the other ports does not have.
+
+- **`append:` to a `<table>` was served on no port.** The reference answered
+  "Copy not implemented for this widget", and so did the other ports. A row
+  is now added at the end, split on "|" like an `<item>`, on all nine ports
+  (behaviour case 89). Along with it, gtk4 now writes a `<table>` without
+  `<label>` through `save:` as a single column, like the eight other ports —
+  it used to write as many as its first row had (case 88).
+
+- **Same-name windows: the second window's actions targeted the first.** In a
+  window where a variable is stored under `NAME__W<id>` (name already taken
+  by an open window), `refresh:NAME`, `clear:NAME`, `save:NAME`… and `$NAME`
+  in a command acted on the first window's widget, on all nine ports: opened
+  twice, a dialog always drove its first instance. During an action, a name
+  is now looked up first in the window of the widget that triggered it, and
+  the command also receives that window's variables under their original
+  name. The dialog output does not change (`NAME` and `NAME__W<id>`). Manual
+  §9.2, case 02 of the "fenêtres homonymes" bench.
+
+- **`<comboboxentry>` lost its `<default>` on seven ports.** Three distinct
+  defects, measured on 2026-11-15:
+  - efl1: the widget value was read by the `<combobox>` function and always
+    came out empty, even for a default present in the list;
+  - gtk4: a default absent from the list was meant to become the text of the
+    entry field, but it was set on the widget's internal box, hence nowhere;
+  - fltk1, sdl3, lvgl, ncurses, html: their drop-down has no entry field, a
+    default absent from the list was lost. It is now kept and exported as
+    long as nothing is chosen (sdl3 also displays it).
+
+  gtk3, the reference, itself lost the default of a `<comboboxentry>` without
+  `<item>`: fixed too. Behaviour case 92.
+
+- **`<calendar day= month= year=>`: ignored outside GTK, and day-dependent on
+  gtk4.** These three attributes set the date on top of `<default>` (`month`
+  counts from 0: 1 = February). The seven non-GTK ports ignored them and
+  opened the calendar on today's date. gtk4 applied them one by one, in
+  writing order, to the current date: `day="29" month="1" year="2024"` gave
+  2024-11-29 on a 15 November. The date is now set in one step on the eight
+  ports, as gtk3 returns it; an attribute that does not leave an existing
+  date is ignored (gtk3 itself then returned a wrong date such as 2025-02-31:
+  fixed afterwards, entry "gtk3: `<calendar>`" above). Behaviour case 91.
+
+- **`save:` of a `<tree>` and of a `<table>` wrote nothing outside GTK, and
+  `append:` to a `<tree>` added an empty row.**
+  - `save:`: on the seven non-GTK ports, no file was written for these two
+    widgets. Each port now returns its rows and the core gives them the
+    reference shape: as many columns as the `<label>` names (a single one
+    without `<label>`), and `icon|stock|` in front of each `<tree>` row.
+  - `append:` to a `<tree>`: gtk3 and gtk4 stored the whole value in the icon
+    name column (the first text column of the original gtkdialog): the added
+    row showed empty and `save:` wrote it as `value|||`. The seven other
+    ports added nothing. On all nine, the row is now added at the end and
+    split on "|" like an `<item>`.
+
+  Behaviour cases 88 and 89. Left out of this batch: `append:` to a
+  `<chooser>` (a folder shortcut, GTK only). `append:` to a `<table>` and
+  gtk4's `<table>` without `<label>` were dealt with afterwards (entry
+  "`append:` to a `<table>`", above).
+
+- **fltk1: `clear:` did not empty a `<list>`.** Only the selection was dropped:
+  the variable came out empty, but the rows stayed on screen, `save:` still
+  wrote them and a following `append:` was added on top. `clear:` now removes
+  the rows, as on the eight other ports (behaviour case 90).
+
+- **`append:` refused variable names containing digits.** The pattern that
+  reads "append:SOURCE,TARGET" only accepted letters and "_": `append:SRC,T0`
+  looked for variable "T" ("variable not found") and `append:S1,T2` was
+  refused ("needs two parameters"), on all nine ports. A name may now carry
+  digits after its first letter. The two names read were not freed either:
+  they are now.
+
+- **Second window reusing variable names: its widgets opened empty on gtk3
+  and gtk4.** When a window started by `launch:` declares a variable that a
+  window still open already holds, the core stores its widget under
+  `NAME__W<id>`. It then initialised it by the name written in the XML: the
+  first window's widget was refreshed a second time, and the second window's
+  one got neither its `<default>` nor its `<input>` (a field whose default is
+  "deux" came out as `NOM__W2=""`); the second window's attributes also
+  replaced those of the first window's variable. The seven non-GTK ports
+  already set the default. The first refresh now targets the variable created
+  for the widget. The "fenêtres homonymes" bench, so far played on gtk3 and
+  gtk4, now runs on all nine ports, `<input>` included.
+
+- **Multiple windows (`launch:`, `closewindow:`) on qt6, fltk1, efl1 and
+  sdl3.** Outside gtk3 and gtk4, a second window worked on no port:
+  - qt6: `launch:` called `QApplication::exec()` again, which Qt refuses; the
+    dialog exited at once with `EXIT="abort"`;
+  - fltk1: `closewindow:` dropped the variables but left the window on
+    screen, its timers running;
+  - efl1: every `<window>` shared a single native window (the second one was
+    stacked inside the first), `closewindow:` closed nothing, and a second
+    `launch:` of the same name stopped on "syntax error" (code 1);
+  - sdl3: `launch:` started a second render loop in the middle of a frame,
+    `closewindow:` left the dialog frozen, and the second `launch:` also
+    stopped on "syntax error".
+
+  The port contract gains three optional functions (`sermo_be_window_close`,
+  `sermo_be_window_present`, `sermo_be_window_new`). qt6, fltk1 and efl1 open
+  a real second window; sdl3, which has a single native window, shows the
+  last launched one and gives the place back to the previous one when it
+  closes. efl1 and sdl3 no longer export a window's variable: empty, it
+  overwrote the XML that `launch:` reads again. New bench
+  `tests/garde_fenetres_multiples.sh` (opening, closing and relaunching seen
+  on screen, variables compared with gtk3), green on gtk3, gtk4, qt6, fltk1,
+  efl1 and sdl3.
+- **Multiple windows on lvgl, ncurses and html.** The last three ports:
+  - lvgl: `launch:` re-entered the loop in the middle of an LVGL turn, which
+    LVGL refuses; the dialog stayed frozen. Actions born during an LVGL turn
+    (click, timer tick) now run right after it, in order; each `<window>` has
+    its own LVGL screen, the last launched one is displayed and the native
+    window is retitled;
+  - ncurses in a terminal: the launched window took the screen and the first
+    one was lost. The last launched window holds the screen, the previous one
+    comes back when it closes, the timers of all keep running;
+  - html, ncurses without a terminal, lvgl without a display: only the
+    launched window's timers ran, then the dialog exited with
+    `EXIT="abort"`; the html page was overwritten by the launched window.
+    Each timer of each open window now runs once, in the order it would fire
+    on screen (virtual clock: a launched window arms its own at the time of
+    its launch); the page remains that of the first window. lvgl without a
+    display used to run its timers in document order: it now follows the
+    same rule;
+  - all three no longer export a window's variable (same "syntax error" at
+    the second `launch:` as on efl1 and sdl3).
+
+  `tests/garde_fenetres_multiples.sh` runs on all nine ports: on screen for
+  lvgl, in a pseudo-terminal for ncurses, without a screen for html, ncurses
+  and lvgl (manual §9.2).
+- **`disable:` on a timer stopped nothing outside GTK.** On gtk3 and gtk4, a
+  disabled `<timer>` no longer runs its actions and its variable reads
+  `false`. On qt6, fltk1, efl1, sdl3 and lvgl it kept running them (9 ticks in
+  2 s instead of one, measured with a 200 ms timer that disables itself); on
+  fltk1, efl1, sdl3, lvgl, ncurses and html its variable always read `true`.
+  All seven ports now follow the reference. Case `87-minuterie-desactivee`,
+  green on all nine ports.
+- **sdl3: an ImGui diagnostic on standard output.** When a widget greyed
+  itself out while being rendered (a timer or a checkbox whose action is
+  `disable:` on itself), sdl3sermo wrote `[imgui-error] … Calling
+  EndDisabled() too many times!` among the variables, where the manual invites
+  passing the output to `eval`. The greyed state is now read once per frame.
+  New bench `tests/garde_sortie_variables_seules.sh`, run on all nine ports.
+- **`--render-png` ran the dialog's commands.** Rendering a preview of an XML
+  you did not write launched its `<input>` elements; only the sermoia-mcp
+  server guarded against it, by setting `SERMO_ALLOWED_CMDS` itself. The
+  refusal is now in the core: under `--render-png` no command runs — launched
+  directly, through the shell, or that of a `<progressbar>` — and the refusal
+  is reported on standard error. **Behaviour change**: for the image of a
+  dialog with its real values, set `SERMO_RENDER_EXEC=1`. New "render without
+  command" bench on the seven image ports, with its witness; the bar and
+  gauge benches set the variable. Reported by an external audit of 3.2.0.
+- **"Endless source" bench red on an old GLib**: it looked for "lecture
+  arrêtée" under `LC_ALL=C`, where Debian 12's GLib 2.74 replaces accented
+  letters with "?". It now looks for an ASCII fragment. Same audit.
+- **MAVLink piloting, four missing refusals** (`sermo-cible-mavlink`):
+  - the vehicle type was not read: an ArduPilot plane or rover received
+    ArduCopter mode numbers. `pilote=` is now refused unless the vehicle is a
+    multirotor or a helicopter;
+  - without `systeme=`, the order went to the first autopilot heard even when
+    a second one was beating on the link: refused, naming both system ids;
+  - a second press right after the first (bounce, double click) confirmed the
+    order: it no longer counts under 500 ms, and the mark stays;
+  - over UDP, the address sermo writes to followed the last datagram
+    received, whoever sent it: it is now that of the adopted heartbeat, and
+    the same system seen from two addresses refuses everything;
+  - an autopilot fence set to NaN or zero passed the comparisons: refused.
+  Fake-drone bench: 117 cases (plane, two autopilots, NaN, bounce, two UDP
+  senders). Not replayed against ArduPilot SITL.
+- **lvgl: a brief click could be lost.** LVGL's X11 driver samples the button
+  only every 33 ms; the port's guard looked at the queue once, at the start of
+  a loop turn, and gave the release back after 60 ms. A press arriving during
+  the turn, or a stalled loop, let press and release through between two
+  samples: no click. The release is now held where the driver reads it
+  (`--wrap=XCheckIfEvent`) until a sample has seen the press. Measured on a
+  saturated machine, "action mqtt/mavlink" bench, alternating runs: 2 lost
+  clicks out of 40 before, 0 out of 40 after.
+- **`save:` and `append:` on the seven non-GTK ports** (qt6, fltk1, efl1,
+  sdl3, lvgl, ncurses, html): `save:` wrote no file there and `append:` did
+  nothing, silently. As on gtk3sermo, measured widget by widget:
+  - `save:` writes to the `<output file>` the value of sixteen widgets
+    (`<entry>`, `<edit>`, `<password>`, `<searchentry>`, `<checkbox>`,
+    `<radiobutton>`, `<togglebutton>`, `<switch>`, `<spinbutton>`, `<hscale>`,
+    `<vscale>`, `<colorbutton>`, `<fontbutton>`, `<calendar>`, `<linkbutton>`,
+    `<statusbar>`, `<infobar>`) and every row of a `<list>`, a
+    `<comboboxtext>` or a `<comboboxentry>`;
+  - `append:` replaces the text of an `<entry>`, adds it to an `<edit>`, adds
+    a row at the top of a `<list>` and selects it;
+  - efl1: selecting a row not yet drawn stopped the program (`strdup(NULL)`),
+    seen with `append:` to an empty list.
+  Two optional functions in the port contract: `sermo_be_widget_append` and
+  `sermo_be_widget_rows`. Behaviour cases 85 and 86, at parity on the nine
+  ports. Still to write at that point on these seven ports: `save:` of a
+  `<tree>` and a `<table>` and `append:` to a `<tree>`; done since (entries
+  above). `append:` to a `<chooser>` remains specific to gtk3 and gtk4.
+- **Manual, tag table**: it counted 78 behaviour cases as of 2026-10-31;
+  there are 87. The total and the rows that had moved are recounted from the
+  cases in the repository.
+- **`sermo.schema.json`** regenerated: it still announced 3.2.0.
+- **Memory and crashes**:
+  - html, ncurses, lvgl, sdl3: string splitting (`g_strsplit` of the ports
+    without GLib) wrote one slot past its block when the limit equalled its
+    capacity (table or tree with 8 or 16 columns);
+  - qt6: a `closewindow:` action coming from a timer, a button or a menu
+    stopped the program on an assertion (code 134), and `launch:` on a
+    segmentation fault: the core no longer assumes an originating widget, and
+    qt6 passes its own;
+  - core: `closewindow:` followed by `launch:` in the same widget
+    dereferenced a null pointer;
+  - gtk4: `clear:` and `removeselected:` on a `<list>` freed the rows without
+    removing them from the list; `<terminal>` with 128 `argvN` had no room
+    for the final NULL;
+  - lvgl: after the window was closed, one last loop turn walked destroyed
+    objects;
+  - gtk3: `<table exported-column>` outside the model freed a cell that was
+    never filled;
+  - html, ncurses: `<notebook>` with fewer labels than pages read past the
+    end of the label array.
+  Four behaviour cases added (79 to 82), at parity on the nine ports.
+- **Trust boundaries**:
+  - closed `sermoia-mcp` still read and wrote files named by the XML
+    (`<input file>`, `save:` to `<output file>`): new core barrier
+    `SERMO_NO_FILES`, set by the server while it is closed;
+  - a widget named `SERMO_ALLOWED_CMDS` replaced the allow-list: widget
+    variables with reserved names are no longer set in the environment;
+  - a variable over 8 KiB was silently not passed to commands: it is now
+    said; a condition over 255 bytes was cut then executed: 4096 bytes,
+    refused beyond;
+  - `sermoman-mcp` died on JSON that is not an object or on a non-UTF-8
+    byte: JSON-RPC errors, `ping`, new protocol bench;
+  - `htmlsermo` in serve mode: a silent connection held the server, a
+    truncated form was taken as the answer, a client leaving early could
+    kill the program (SIGPIPE); foreign host refused (403), protective
+    headers;
+  - `sermo-source-mqtt`: ESC, CR and NUL in a message become spaces;
+    `sermo-cible-media`: a process id reused by another program is no longer
+    signalled, and credentials on `http://` or `rtsp://` are reported as
+    sent in clear.
+- **Language correctness and port parity**:
+  - a `\` in a quoted attribute (`title="C:\folder"`) lost all the text
+    before it;
+  - `append:` to an `<edit>` did not insert accented text (length counted in
+    characters, expected in bytes) — gtk3, gtk4;
+  - closing the window by its cross returned nothing on qt6, fltk1 and efl1:
+    `EXIT="abort"`, like gtk3;
+  - qt6 read the text of a `<text>`, `<statusbar>` or `<infobar>` as HTML
+    (output of an `<input>` included): plain text, markup on
+    `use-markup="true"`; efl1 escapes the status bar and table cells;
+  - fltk1 and efl1 read `milliseconds` as a number: `milliseconds="true"
+    interval="200"` ticked at 1 s (measured: 1.2 s, then 0.4 s);
+  - gtk4: a `<pixmap>` was rendered at icon size (a 27 × 89 pixel dialog
+    instead of 368 × 448) and a theme icon was always the broken image;
+    `<table>` did not reload (`refresh:`), did not save (`save:`) and did not
+    fire its actions.
+  New benches: window closing (seven ports), backslash, `append:`, pixmap
+  size, table; behaviour cases 83 and 84.
+- **CI and benches**:
+  - neither forge ran CI for a change in `sermo-source/`, `sermoia-mcp/`,
+    `outils/`, `debian/`, `packaging/` or `sermo.schema.json`: paths added;
+  - ASan, UBSan and the parser fuzz never ran in CI: new `sanitizers` job
+    (tag, scheduled pipeline, on demand);
+  - a failure of `ci/bilan-json.sh` was not counted: the job stayed green;
+  - upstream archive of the GitHub packages workflow: `S` flag of
+    `--transform` (GitLab's had it);
+  - GitHub workflows: `actions/checkout` and `actions/upload-artifact` pinned
+    to their commit hash (the `v4` tag can be moved); the macOS workflow now
+    only runs for what it builds or plays. Syntax checked, not run since;
+  - `garde_echappement_sortie` also tries the double quote and the backslash,
+    and checks that `eval` returns the original value;
+    `garde_fonctions_interdites` also reads the flex and bison sources, and
+    `sermoia-mcp`;
+  - the core is compiled with `-Wall -Wextra` (no warning was requested
+    before): six signed/unsigned comparisons, one possibly uninitialised
+    variable and one icon directory name truncation fixed.
+- **Leaks and performance**:
+  - gtk3sermo and gtk4sermo kept copies returned by GTK: two strings per
+    `<tree>` row on every redraw, two per natural-sort comparison, the text
+    of every row of a command-filled `<list>`, the active text of a
+    `<comboboxtext>` on every `refresh:`, the content of an `<edit>` on every
+    `save:`, the tab labels of a `<notebook>` (30 KiB lost in 30 rounds,
+    measured under LeakSanitizer);
+  - `<timer interval="0">` (or negative): the timer ran without waiting on
+    gtk3, gtk4 and qt6 (749 ticks in 2 s on qt6; on gtk3 and gtk4 the rest of
+    the dialog stopped responding). The interval is now at least 1. On gtk3
+    and gtk4 the timer also goes away with its widget: a relaunched window no
+    longer ends up with two timers;
+  - opening a large dialog: every created widget re-exported the variables of
+    all the others. 2000 `<entry>`: 7.5 s → 0.7 s on gtk3. The export now
+    only happens for a widget that carries an `<input>`;
+  - theme icons (qt6, fltk1, efl1, sdl3, lvgl, ncurses, html): every lookup
+    re-read `index.theme` of the theme, its parents, Adwaita and hicolor.
+    400 icon buttons: 12 to 22 s → 0.25 to 1.2 s. Loaded themes and answers
+    are kept for the life of the dialog (a theme installed meanwhile is not
+    seen);
+  - `linecutter` (splitting `a|b|c`) copied the rest of the string at every
+    separator: 60,000 columns, 1254 ms → 7 ms;
+  - sdl3sermo redrew everything 60 times a second, even when idle (13 % of a
+    core, 50 % with large lists). It now waits for the next event, 250 ms at
+    most, or for a timer deadline; progress bars, `<spinner>`, `<pulse>`,
+    terminal and drawing area keep their rate. Idle: 2 % (7 % with large
+    lists).
+  Measured and left as is: ncurses (0 % idle), lvgl (1 % idle; creating
+  several thousand rows remains slow there), efl1 (creating 1000 `<entry>`
+  takes 38 s inside EFL itself).
+  New benches: GTK widget leaks, zero interval (nine ports), opening a large
+  dialog.
+- **Packages**:
+  - the Arch (`sha256sums=('SKIP')`), Termux (`SKIP_CHECKSUM`) and Alpine
+    (`sha512sums="SKIP"`) recipes did not verify the archive they download,
+    and the OpenBSD port had no `distinfo`: all now carry the checksum of the
+    `v3.2.0` tag archive (8,588,340 bytes, measured again on 2026-11-14; the
+    SHA-256 is the one of the Homebrew formula). New bench
+    `garde_recettes_sommes` (no "SKIP", same version, checksums agree).
+    FreeBSD remains: its port pulls a different archive (GitLab API), so
+    `make makesum` on FreeBSD;
+  - `debian/rules`: a missing example directory went unnoticed (the `find`
+    failed inside a pipe, `sermo-doc` shipped without those examples); the
+    build now stops.
+- **Dead code removed** (about 2,250 lines, machine code unchanged):
+  - `libsermocore/include/qt6-compat.h` (1,235 lines): included by nothing
+    (the neutral core builds with `sermocore-shim.h`, the Qt 6 port with its
+    own copy) yet installed with the core headers;
+  - the inotify branch of file monitoring (32 `#if HAVE_SYS_INOTIFY_H`
+    blocks): the macro was 0 or undefined in every port, only the
+    GFileMonitor branch was ever compiled;
+  - 23 blocks of commented-out functions ("Redundant: Not being used") in
+    `stringman.c` and the copies of `stringman.h`.
+
+### Changed
+
+- **Lighter binaries on all nine ports.** Each function is compiled into its
+  own section and the linker drops those nothing reaches
+  (`-ffunction-sections -fdata-sections`, `-Wl,--gc-sections`, in the
+  `CMakeLists.txt` of the core and of each port). Measured after `strip`, in
+  KiB: gtk3 483 → 463, gtk4 495 → 467, qt6 539 → 519, fltk1 479 → 419,
+  efl1 375 → 343, sdl3 1203 → 999, lvgl 2431 → 2047, ncurses 387 → 347,
+  html 399 → 359. efl1 and html were 5 and 1 KiB below their ceiling
+  (`tests/poids-plafonds.txt`).
+- **gtkdialog is no longer the pitch, it is the origin.** The Debian package
+  descriptions say what sermo does, then "Scripts written for gtkdialog run
+  unchanged"; only `sermo-gtkdialog` still recalls the fork of gtkdialog
+  0.8.3. Same in the recipes outside Debian ("gtkdialog successor" removed),
+  in the Texinfo manual ("started as a fork" instead of "successor") and in
+  the qt6 AppStream file, which still said "three ports". The original
+  authors, the `gtkdialog` command and `MIGRATION.md` do not change. In
+  passing, the twelve over-long lines `lintian` reported in these
+  descriptions are rewrapped.
+- **Recipes outside Debian on 3.2.0**: Arch, Alpine, RPM, FreeBSD, OpenBSD,
+  Termux, Slackware, Nix and the Windows manifest still said 3.0.0; the Gentoo
+  ebuild is renamed `sermo-3.2.0.ebuild` (it takes its version from its name).
+  The Homebrew formula uses the archive of the `v3.2.0` tag.
+- **macOS workflow**: the number of the test archive is read from the formula
+  (it was fixed at 3.0.0, and `brew test` compares that number to `--version`).
+
 ## [3.2.0] — 2026-11-04
 
 ### Changed

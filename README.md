@@ -32,29 +32,33 @@ par fichier dans [LICENCES.md](LICENCES.md).
 
 ## État du projet
 
-- Version **3.2.0**. sermo est tenu par **un seul mainteneur**, S. Cage. Il n'y a
+- Version **3.3.0**. sermo est tenu par **un seul mainteneur**, S. Cage. Il n'y a
   pas d'équipe derrière : une réponse peut prendre du temps.
 - Une partie du code, de la documentation et des tests a été écrite avec l'aide
   d'une IA (Claude, d'Anthropic), sous la direction du mainteneur. Il l'essaie et
   en signale les défauts, mais ne relit plus tout le code ligne à ligne : la
   vérification repose surtout sur les bancs, que chacun peut rejouer
   ([AUTHORS](AUTHORS)).
-- **Ce qui est vérifié** : 178 bancs (analyse XML, valeurs exportées, sécurité,
-  clics, ouverture des exemples réels, serveurs MCP) sur les neuf ports au
-  passage complet du 2026-10-11, détaillé dans [BILAN_SANTE.md](BILAN_SANTE.md).
-  Au passage complet (`ci/bancs.sh`, programmes d'aide compris) :
-  265 bancs, 0 échec (branche `master`, 2026-10-31, pilotage de drone compris). Au passage du 2026-10-18, un banc était rouge (des fonctions
-  interdites dans le code du lecteur son et vidéo) ; il a été corrigé puis
-  rejoué vert. Chaque chiffre se rejoue par une commande.
+- **Ce qui est vérifié** : bancs d'analyse XML, de valeurs exportées, de
+  sécurité, de clics, d'ouverture des exemples réels et des serveurs MCP, sur les
+  neuf ports et les programmes d'aide. Les chiffres du dernier passage complet ne
+  sont tenus qu'à un endroit, [BILAN_SANTE.md](BILAN_SANTE.md), écrit par
+  `ci/bancs.sh && ci/bilan-md.sh` ; chacun se rejoue par cette commande.
 - **Ce que sermo lit et écrit dehors**, par des programmes d'aide installés à
   part : un automate en Modbus ou OPC UA (lecture seule) ; la domotique MQTT
-  (lire, et publier si une liste blanche le permet) ; un drone MAVLink (lire sa
-  télémétrie ; régler un paramètre du drone désarmé, lui envoyer une mission
-  sans la lancer, ou donner un ordre de sécurité : retour au départ,
-  atterrissage, coupure des moteurs en deux appuis) ; le son et la vidéo, joués
-  par mpv. sermo ne pilote pas un drone : il ne l'arme pas, ne le fait pas
-  décoller et ne le dirige pas, hors retour au départ et atterrissage de
-  sécurité. Les paquets sont dans « Installer ».
+  (lire, et publier si une liste blanche le permet) ; un drone MAVLink
+  ArduPilot Copter (lire sa télémétrie ; régler un paramètre, envoyer une
+  mission sans la lancer, donner un ordre de sécurité ; et, depuis la 3.2.0,
+  le **piloter** : armer, décoller, changer de mode, aller à un point,
+  désarmer — seulement si une ligne `pilotage` de la liste blanche le permet,
+  deux appuis par ordre) ; le son et la vidéo, joués par mpv. Les paquets sont
+  dans « Installer ».
+- **Pilotage de drone : expérimental.** Essayé contre ArduPilot Copter simulé
+  (SITL) et un faux drone, **jamais sur un vrai drone**. Faire voler un aéronef engage
+  la responsabilité de son télépilote et relève de la réglementation de son
+  pays (dans l'Union européenne, règlement (UE) 2019/947 ; en France, la
+  DGAC). sermo est fourni sans garantie (GPL, articles 11 et 12) ; voir le
+  [manuel](MANUEL_UTILISATEUR.md), section « Commander un drone ».
 - **Écarts connus** : les ports sans GTK s'écartent encore de gtk3sermo sur
   quelques points (`auto-refresh`, libellé du bouton Annuler, `<terminal>`…).
   Ils sont listés dans [TODO.md](TODO.md).
@@ -70,11 +74,12 @@ relecture ligne à ligne, mais sur des bancs que chacun peut rejouer :
 - **Deux commandes, les mêmes partout** : `bash ci/construire.sh` construit le
   cœur et les neuf ports, `bash ci/bancs.sh` joue tous les bancs. La CI lance ces
   deux scripts et rien d'autre ; chez soi, on obtient le même résultat. Dernier
-  passage complet : 265 bancs, 0 échec (2026-10-31).
+  passage complet : 345 bancs, 0 échec (2026-11-17) — 344 là où ArduPilot
+  simulé n'est pas installé, son banc ne jouant qu'avec lui.
 - **Un étalon** : gtk3sermo. Le banc de comportement ouvre chaque cas sur les
   neuf ports et compare les valeurs rendues à celles de gtk3sermo. Quand un port
   s'écarte, on répare le port ; on ne corrige jamais la valeur attendue.
-- **Sans écran** : gtk3, gtk4 et fltk1 tournent sous Xvfb, qt6, sdl3 et efl1 sur
+- **Sans écran** : gtk3, gtk4, fltk1 et lvgl tournent sous Xvfb, qt6, sdl3 et efl1 sur
   leur plateforme hors écran, ncurses en mode batch ; html écrit sa page. Même
   sur un poste de travail, aucune fenêtre ne s'ouvre : la mesure est celle de la CI.
 - **Un banc qui n'a rien vérifié compte comme un échec** (outil absent, binaire
@@ -182,7 +187,8 @@ balises n'existent que sur certains ports :
   en une page HTML autonome (CSS embarqué, sans JavaScript par défaut) dans le fichier que nomme
   `SERMO_HTML_OUT` (défaut `sermo-output.html`). Avec `SERMO_HTML_MODE=serve`,
   un micro-serveur local sert la page et renvoie les valeurs saisies.
-- Seuls gtk3 et gtk4 ont `<terminal>` (VTE) et `--glade-xml` ; seul gtk3 a
+- Seuls gtk3 et gtk4 ont le terminal interactif (VTE) et `--glade-xml` ; ailleurs,
+  `<terminal>` montre la sortie de sa commande, en lecture seule. Seul gtk3 a
   l'ancrage Wayland (`layer-shell`).
 - Chaque paquet ne tire que sa bibliothèque : `sermo-backend-fltk1` n'installe ni
   GTK ni Qt, `sermo-backend-ncurses` ne demande que ncurses.
@@ -215,20 +221,20 @@ binaire publié ; pour Android, les BSD et macOS, il n'y a que les recettes.
 ## Installer
 
 Il n'y a pas de dépôt apt. Les paquets Debian sont joints à la publication
-[**v3.2.0**](https://gitlab.com/haplo-dialog/sermo/-/releases/v3.2.0), avec leurs
+[**v3.3.0**](https://gitlab.com/haplo-dialog/sermo/-/releases/v3.3.0), avec leurs
 sommes de contrôle : on télécharge, on vérifie, on installe.
 
 ```sh
-U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/3.2.0
-for f in sermo-backend-gtk3_3.2.0-1_amd64.deb sermo-gtkdialog_3.2.0-1_all.deb SHA256SUMS SHA256SUMS.asc; do
+U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/3.3.0
+for f in sermo-backend-gtk3_3.3.0-1_amd64.deb sermo-gtkdialog_3.3.0-1_all.deb SHA256SUMS SHA256SUMS.asc; do
     curl -fLO "$U/$f"
 done
 curl -fLO https://haplo-dialog.fr/cle-haplo-dialog.asc
 gpg --import cle-haplo-dialog.asc
 gpg --verify SHA256SUMS.asc SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
-sudo apt install ./sermo-backend-gtk3_3.2.0-1_amd64.deb \
-                 ./sermo-gtkdialog_3.2.0-1_all.deb
+sudo apt install ./sermo-backend-gtk3_3.3.0-1_amd64.deb \
+                 ./sermo-gtkdialog_3.3.0-1_all.deb
 ```
 
 Pour un autre port, remplacez `gtk3` par `gtk4`, `qt6`, `fltk1`, `efl1`, `sdl3`,
@@ -260,7 +266,7 @@ en plus du port (même téléchargement, même vérification) :
 |---|---|
 | lire un automate | `sermo-source-modbus`, `sermo-source-opcua` |
 | la domotique MQTT | `sermo-source-mqtt` (lire), `sermo-cible-mqtt` (publier) |
-| un drone MAVLink | `sermo-source-mavlink` (lire), `sermo-cible-mavlink` (régler, mission, ordres de sécurité) |
+| un drone MAVLink | `sermo-source-mavlink` (lire), `sermo-cible-mavlink` (régler, mission, ordres de sécurité, pilotage) |
 | le son et la vidéo | `sermo-cible-media` (jouer ; tire `mpv`, recommande `bubblewrap`), `sermo-source-media` (suivre l'état) |
 
 Qui n'installe que la lecture ne peut rien écrire. Les listes blanches et les
@@ -296,7 +302,7 @@ Compilé depuis les sources sans `install` : supprimez le dossier de constructio
 
 ## Venir de la 1.x
 
-Installez les paquets actuels (3.1.0) des ports que vous utilisez (`sermo-backend-gtk3`,
+Installez les paquets actuels (3.3.0) des ports que vous utilisez (`sermo-backend-gtk3`,
 `sermo-gtkdialog`…) : apt retire les paquets 1.x qu'ils remplacent (`gtk3sermo`,
 `gtksermo`…). Les commandes gardent leur nom. Ce qui change et comment faire :
 [MIGRATION.md](MIGRATION.md).

@@ -352,9 +352,15 @@ char *widget_get_text_value(GtkWidget *widget, int type)
 /* GTK3/GTK4: gtk_file_chooser_get_filename() deprecated in GTK4 —
  * replaced by gtk_file_chooser_get_file() + g_file_get_path(). */
 		case WIDGET_CHOOSER: {
-			GFile *gfile = gtk_file_chooser_get_file(GTK_FILE_CHOOSER(widget));
+			/* Rien de choisi par l'utilisateur : <default>, comme
+			 * <filechooser> et comme les ports sans GTK (automaton.c
+			 * du cœur, chooser_selection_changee). */
+			GFile *gfile = g_object_get_data(G_OBJECT(widget), "sermo-choisi")
+				? gtk_file_chooser_get_file(GTK_FILE_CHOOSER(widget)) : NULL;
 			gchar *path  = gfile ? g_file_get_path(gfile) : NULL;
 			if (gfile) g_object_unref(gfile);
+			if (path == NULL)
+				path = g_strdup(g_object_get_data(G_OBJECT(widget), "sermo-defaut"));
 			return path;
 		}
 

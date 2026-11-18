@@ -308,7 +308,7 @@ void widget_edit_save(variable *var)
 	/* If we have a valid filename then open it and dump the
 	 * widget's data to it */
 	if (filename) {
-		if ((outfile = fopen(filename, "w"))) {
+		if ((outfile = sermo_fopen_output(filename))) {
 
 			/* Thunor: This is all original code moved across when refactoring */
 			buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(var->Widget));
@@ -316,6 +316,7 @@ void widget_edit_save(variable *var)
 			gtk_text_buffer_get_end_iter(buffer, &end);
 			text = gtk_text_buffer_get_text(buffer, &start, &end, FALSE);
 			fprintf(outfile, "%s", text);
+			g_free(text);	/* copie rendue par GTK */
 
 			/* Close the file */
 			fclose(outfile);
