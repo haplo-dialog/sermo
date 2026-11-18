@@ -11,7 +11,7 @@ Elles remplacent l'ancien kit `sermo-backend-qt6/packaging/`, écrit pour un
 |---|---|---|---|
 | Arch Linux | `arch/PKGBUILD` | 11 (paquets scindés d'un seul PKGBUILD) | non : `<port>sermo` |
 | Fedora / RPM | `rpm/sermo.spec` | 11 sous-paquets | oui : `alternatives` |
-| Gentoo | `gentoo/dev-util/sermo/sermo-3.2.0.ebuild` | 1, un drapeau USE par port | non : `<port>sermo` |
+| Gentoo | `gentoo/dev-util/sermo/sermo-3.3.0.ebuild` | 1, un drapeau USE par port | non : `<port>sermo` |
 | Slackware | `slackware/sermo.SlackBuild` | un `.txz` par port demandé | non : `<port>sermo` |
 | Alpine | `alpine/APKBUILD` | 8 sous-paquets (sans efl1 ni fltk1 : EFL absent, FLTK en 1.3), `provider_priority` | non : `<port>sermo` |
 | NixOS | `nix/default.nix` | une dérivation par port + `all` | non : `<port>sermo` |
@@ -251,7 +251,7 @@ shims lisent alors les nombres sous la locale C par `uselocale` le temps d'un
   port tire l'archive par l'API de GitLab, pas par l'adresse des autres
   recettes ; elle se pose sur FreeBSD par `make makesum`. Celles de Homebrew,
   d'Arch, de Termux, d'Alpine et d'OpenBSD sont posées (archive de l'étiquette
-  `v3.2.0`, 8 588 340 octets, remesurée le 2026-11-14 ;
+  `v3.3.0`, 8 711 109 octets, mesurée deux fois le 2026-11-18 ;
   `tests/garde_recettes_sommes.sh` les tient égales).
 - Termux : la construction croisée de la ferme termux-packages (seule la
   construction sur l'appareil est rejouée) ; les ports graphiques sur un

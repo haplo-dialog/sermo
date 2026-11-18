@@ -9,7 +9,7 @@
 # comportement de abuild (page de manuel hors -doc). Sans efl1 ni fltk1 : EFL
 # n'est pas dans Alpine, et sa FLTK est en 1.3 (sans Fl_Flex, que fltk1sermo demande).
 pkgname=sermo
-pkgver=3.2.0
+pkgver=3.3.0
 pkgrel=0
 pkgdesc="Dialog boxes for shell scripts, described in XML"
 url="https://gitlab.com/haplo-dialog/sermo"
@@ -100,8 +100,8 @@ backend_html() {
 	amove usr/bin/htmlsermo usr/share/man/man1/htmlsermo.1.gz
 }
 
-# Somme de l'archive de l'étiquette v3.2.0 sur GitLab (mesurée le 2026-11-14,
-# 8 588 340 octets). À reposer à chaque version : abuild checksum.
+# Somme de l'archive de l'étiquette v3.3.0 sur GitLab (mesurée le 2026-11-18,
+# 8 711 109 octets). À reposer à chaque version : abuild checksum.
 sha512sums="
-02a0aaf1d38a002cbb2acd2e36bcc9d2076c75d7d0e81350564eb32e82ae900f63611be08848e5a22819d52c37bde85328f60b3636fcddb2f63056fa956de4ef  sermo-3.2.0.tar.gz
+212ffd5694e70838f6634fb3867e588d618c26e13cde2777f5f9326482fbcf821aea8749067c81722ccaabd7bd3dc95c9d8d1339c04b5944f2866b6faaec3680  sermo-3.3.0.tar.gz
 "
