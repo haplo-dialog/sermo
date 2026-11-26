@@ -76,7 +76,7 @@ slack_desc() {  # paquet, description courte, détail
     echo "$1:"
     echo "$1: sermo builds native windows from an XML description, so that a shell"
     echo "$1: script can show a real graphical interface without any toolkit"
-    echo "$1: knowledge. Scripts written for gtkdialog run unchanged."
+    echo "$1: knowledge. It reads the gtkdialog XML language."
     echo "$1:"
     echo "$1: https://gitlab.com/haplo-dialog/sermo"
     echo "$1:"

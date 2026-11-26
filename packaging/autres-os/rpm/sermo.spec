@@ -42,7 +42,7 @@ BuildRequires:  wayland-protocols-devel
 sermo builds native windows from an XML description, so that a shell script can
 show a real graphical interface without any toolkit knowledge. One hardened
 core parses the description and runs the actions; each backend draws it with
-one toolkit. Scripts written for gtkdialog run unchanged.
+one toolkit. It reads the gtkdialog XML language.
 
 %package -n sermo-core-devel
 Summary:        sermo dialog engine - static core library and headers
