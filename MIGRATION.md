@@ -32,7 +32,8 @@ le [README](README.md#installer), puis installez ceux des ports que vous utilise
 apt retire lui-même les paquets 1.x qu'ils remplacent :
 
 ```sh
-sudo apt install ./sermo-backend-gtk3_3.3.0-1_amd64.deb ./sermo-gtkdialog_3.3.0-1_all.deb
+sudo apt install ./sermo-backend-gtk3_3.3.0-1_amd64.deb ./sermo-gtkdialog_3.3.0-1_all.deb \
+                 ./sermo-doc_3.3.0-1_all.deb
 ```
 
 Ajoutez `./sermo-backend-gtk4_3.3.0-1_amd64.deb` ou

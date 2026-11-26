@@ -84,7 +84,7 @@ gpg --verify SHA256SUMS.asc SHA256SUMS       # "Good signature from haplo-dialog
 sha256sum --ignore-missing -c SHA256SUMS
 sudo apt install ./sermo-backend-gtk3_3.3.0-1_amd64.deb     # GTK 3
 sudo apt install ./sermo-backend-fltk1_3.3.0-1_amd64.deb    # FLTK, without pulling in GTK or Qt
-sudo apt install ./sermo-gtkdialog_3.3.0-1_all.deb          # + the gtkdialog command
+sudo apt install ./sermo-gtkdialog_3.3.0-1_all.deb ./sermo-doc_3.3.0-1_all.deb   # + the gtkdialog command (needs sermo-doc)
 ```
 
 The `-1` is the Debian revision of the release (the number after the dash):

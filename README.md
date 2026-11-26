@@ -226,7 +226,8 @@ sommes de contrôle : on télécharge, on vérifie, on installe.
 
 ```sh
 U=https://gitlab.com/api/v4/projects/85674825/packages/generic/sermo/3.3.0
-for f in sermo-backend-gtk3_3.3.0-1_amd64.deb sermo-gtkdialog_3.3.0-1_all.deb SHA256SUMS SHA256SUMS.asc; do
+for f in sermo-backend-gtk3_3.3.0-1_amd64.deb sermo-gtkdialog_3.3.0-1_all.deb \
+         sermo-doc_3.3.0-1_all.deb SHA256SUMS SHA256SUMS.asc; do
     curl -fLO "$U/$f"
 done
 curl -fLO https://haplo-dialog.fr/cle-haplo-dialog.asc
@@ -234,7 +235,8 @@ gpg --import cle-haplo-dialog.asc
 gpg --verify SHA256SUMS.asc SHA256SUMS
 sha256sum --ignore-missing -c SHA256SUMS
 sudo apt install ./sermo-backend-gtk3_3.3.0-1_amd64.deb \
-                 ./sermo-gtkdialog_3.3.0-1_all.deb
+                 ./sermo-gtkdialog_3.3.0-1_all.deb \
+                 ./sermo-doc_3.3.0-1_all.deb
 ```
 
 Pour un autre port, remplacez `gtk3` par `gtk4`, `qt6`, `fltk1`, `efl1`, `sdl3`,

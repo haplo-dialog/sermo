@@ -139,7 +139,8 @@ as `.deb` files attached to the release. Installing the wanted current (3.3.0)
 packages from their files removes the 1.x packages they replace:
 
 ```sh
-sudo apt install ./sermo-backend-gtk3_3.3.0-1_amd64.deb ./sermo-gtkdialog_3.3.0-1_all.deb
+sudo apt install ./sermo-backend-gtk3_3.3.0-1_amd64.deb ./sermo-gtkdialog_3.3.0-1_all.deb \
+                 ./sermo-doc_3.3.0-1_all.deb
 ```
 
 Tested on 2026-09-17 in a clean Debian testing container, without network,
@@ -236,7 +237,7 @@ upstream…). Provenance, port by port, is detailed in
 
 ```sh
 sudo apt install ./sermo-backend-gtk3_3.3.0-1_amd64.deb      # GTK 3
-sudo apt install ./sermo-gtkdialog_3.3.0-1_all.deb           # + the gtkdialog command
+sudo apt install ./sermo-gtkdialog_3.3.0-1_all.deb ./sermo-doc_3.3.0-1_all.deb   # + the gtkdialog command (needs sermo-doc)
 sudo apt install ./sermo-core-dev_3.3.0-1_amd64.deb          # to build a backend
 
 sudo apt purge sermo-gtkdialog sermo-backend-gtk3            # remove everything

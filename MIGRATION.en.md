@@ -31,7 +31,8 @@ Download and check the current (3.3.0) packages attached to the release, as the
 apt removes the 1.x packages they replace by itself:
 
 ```sh
-sudo apt install ./sermo-backend-gtk3_3.3.0-1_amd64.deb ./sermo-gtkdialog_3.3.0-1_all.deb
+sudo apt install ./sermo-backend-gtk3_3.3.0-1_amd64.deb ./sermo-gtkdialog_3.3.0-1_all.deb \
+                 ./sermo-doc_3.3.0-1_all.deb
 ```
 
 Add `./sermo-backend-gtk4_3.3.0-1_amd64.deb` or
